@@ -1,10 +1,14 @@
+interface RoomMessage {
+    type: 'join' | 'joined';
+    room: string;
+}
+
 interface SignalingMessage {
-    type: 'offer' | 'answer' | 'candidate' | 'ready' | 'bye' | 'join' | 'joined';
+    type: 'offer' | 'answer' | 'candidate' | 'ready' | 'bye';
     sdp?: string;
     candidate?: string;
     sdpMid?: string | null;
     sdpMLineIndex?: number | null;
-    room?: string;
 }
 
 const roomInput = document.getElementById('roomInput') as HTMLInputElement;
@@ -44,21 +48,24 @@ function connectWebSocket(): void {
     };
 
     ws.onmessage = (e: MessageEvent) => {
-        const data: SignalingMessage = JSON.parse(e.data);
+        const data: RoomMessage | SignalingMessage = JSON.parse(e.data);
 
         switch (data.type) {
+            // Room/Connection messages
             case 'joined':
-                statusDiv.textContent = `Joined room: ${data.room}`;
+                statusDiv.textContent = `Joined room: ${(data as RoomMessage).room}`;
                 startButton.disabled = false;
                 break;
+
+            // RTC Signaling messages
             case 'offer':
-                if (localStream) handleOffer(data);
+                if (localStream) handleOffer(data as SignalingMessage);
                 break;
             case 'answer':
-                handleAnswer(data);
+                handleAnswer(data as SignalingMessage);
                 break;
             case 'candidate':
-                handleCandidate(data);
+                handleCandidate(data as SignalingMessage);
                 break;
             case 'ready':
                 // A peer joined. This tab will initiate a call unless in a call already.
@@ -95,7 +102,8 @@ joinButton.onclick = (): void => {
     // Wait for connection then join room
     const checkConnection = setInterval(() => {
         if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'join', room: currentRoom }));
+            const joinMessage: RoomMessage = { type: 'join', room: currentRoom! };
+            ws.send(JSON.stringify(joinMessage));
             joinButton.disabled = true;
             roomInput.disabled = true;
             clearInterval(checkConnection);
@@ -111,14 +119,16 @@ startButton.onclick = async (): Promise<void> => {
     hangupButton.disabled = false;
 
     if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'ready' }));
+        const readyMessage: SignalingMessage = { type: 'ready' };
+        ws.send(JSON.stringify(readyMessage));
     }
 };
 
 hangupButton.onclick = async (): Promise<void> => {
     hangup();
     if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'bye' }));
+        const byeMessage: SignalingMessage = { type: 'bye' };
+        ws.send(JSON.stringify(byeMessage));
     }
 };
 
@@ -169,7 +179,8 @@ async function makeCall(): Promise<void> {
 
     const offer = await pc!.createOffer();
     if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'offer', sdp: offer.sdp }));
+        const offerMessage: SignalingMessage = { type: 'offer', sdp: offer.sdp };
+        ws.send(JSON.stringify(offerMessage));
     }
     await pc!.setLocalDescription(offer);
 }
@@ -184,7 +195,8 @@ async function handleOffer(offer: SignalingMessage): Promise<void> {
 
     const answer = await pc!.createAnswer();
     if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'answer', sdp: answer.sdp }));
+        const answerMessage: SignalingMessage = { type: 'answer', sdp: answer.sdp };
+        ws.send(JSON.stringify(answerMessage));
     }
     await pc!.setLocalDescription(answer);
 }
