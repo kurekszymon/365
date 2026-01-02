@@ -1,0 +1,16 @@
+{
+    "name": "webrtc-signaling-server",
+    "version": "1.0.0",
+    "description": "WebRTC signaling server",
+    "main": "server.ts",
+    "scripts": {
+        "start": "bun run server.ts",
+        "dev": "bun run --hot server.ts"
+    },
+    "dependencies": {
+        "ws": "^8.18.0"
+    },
+    "devDependencies": {
+        "@types/ws": "^8.5.10"
+    }
+}
