@@ -12,16 +12,17 @@ interface SignalingMessage {
 }
 
 const roomInput = document.getElementById('roomInput') as HTMLInputElement;
+const statusDiv = document.getElementById('status') as HTMLDivElement;
+
 const joinButton = document.getElementById('joinButton') as HTMLButtonElement;
 const startButton = document.getElementById('startButton') as HTMLButtonElement;
 const hangupButton = document.getElementById('hangupButton') as HTMLButtonElement;
-const statusDiv = document.getElementById('status') as HTMLDivElement;
-
-startButton.disabled = true;
-hangupButton.disabled = true;
 
 const localVideo = document.getElementById('localVideo') as HTMLVideoElement;
 const remoteVideo = document.getElementById('remoteVideo') as HTMLVideoElement;
+
+startButton.disabled = true;
+hangupButton.disabled = true;
 
 let pc: RTCPeerConnection | null = null;
 let localStream: MediaStream | null = null;
@@ -29,15 +30,13 @@ let ws: WebSocket | null = null;
 let currentRoom: string | null = null;
 
 function connectWebSocket(): void {
-    ws = new WebSocket('ws://localhost:8080');
+    ws = new WebSocket('ws://localhost:8080'); // should upgrade ideally?
 
     ws.onopen = () => {
-        console.log('Connected to signaling server');
         statusDiv.textContent = 'Connected to server';
     };
 
     ws.onclose = () => {
-        console.log('Disconnected from signaling server');
         statusDiv.textContent = 'Disconnected from server';
         ws = null;
     };
@@ -51,24 +50,23 @@ function connectWebSocket(): void {
         const data: RoomMessage | SignalingMessage = JSON.parse(e.data);
 
         switch (data.type) {
-            // Room/Connection messages
+            // WSS
             case 'joined':
-                statusDiv.textContent = `Joined room: ${(data as RoomMessage).room}`;
+                statusDiv.textContent = `Joined room: ${data.room}`;
                 startButton.disabled = false;
                 break;
 
-            // RTC Signaling messages
+            // RTC
             case 'offer':
-                if (localStream) handleOffer(data as SignalingMessage);
+                if (localStream) handleOffer(data);
                 break;
             case 'answer':
-                handleAnswer(data as SignalingMessage);
+                handleAnswer(data);
                 break;
             case 'candidate':
-                handleCandidate(data as SignalingMessage);
+                handleCandidate(data);
                 break;
             case 'ready':
-                // A peer joined. This tab will initiate a call unless in a call already.
                 if (pc) {
                     console.log('already in call, ignoring');
                     return;
@@ -146,9 +144,8 @@ async function hangup(): Promise<void> {
 }
 
 function createPeerConnection(): void {
-    pc = new RTCPeerConnection({
-        iceServers: []
-    });
+    pc = new RTCPeerConnection({ iceServers: [] });
+
     pc.onicecandidate = (e: RTCPeerConnectionIceEvent) => {
         const message: SignalingMessage = {
             type: 'candidate',
@@ -172,7 +169,7 @@ function createPeerConnection(): void {
 }
 
 async function makeCall(): Promise<void> {
-    await createPeerConnection();
+    createPeerConnection();
 
     const offer = await pc!.createOffer();
     if (ws && ws.readyState === WebSocket.OPEN) {
@@ -187,7 +184,9 @@ async function handleOffer(offer: SignalingMessage): Promise<void> {
         console.error('existing peerconnection');
         return;
     }
-    await createPeerConnection();
+
+    createPeerConnection();
+
     await pc!.setRemoteDescription({ type: 'offer', sdp: offer.sdp! });
 
     const answer = await pc!.createAnswer();
@@ -206,18 +205,19 @@ async function handleAnswer(answer: SignalingMessage): Promise<void> {
     await pc.setRemoteDescription({ type: 'answer', sdp: answer.sdp! });
 }
 
-async function handleCandidate(candidate: SignalingMessage): Promise<void> {
+async function handleCandidate(message: SignalingMessage): Promise<void> {
     if (!pc) {
         console.error('no peerconnection');
         return;
     }
-    if (!candidate.candidate) {
-        await pc.addIceCandidate(null);
-    } else {
-        await pc.addIceCandidate(new RTCIceCandidate({
-            candidate: candidate.candidate,
-            sdpMid: candidate.sdpMid ?? undefined,
-            sdpMLineIndex: candidate.sdpMLineIndex ?? undefined,
-        }));
+    if (!message.candidate) {
+        await pc.addIceCandidate(null); // is this needed?
+        return;
     }
+
+    await pc.addIceCandidate(new RTCIceCandidate({
+        candidate: message.candidate,
+        sdpMid: message.sdpMid ?? undefined,
+        sdpMLineIndex: message.sdpMLineIndex ?? undefined,
+    }));
 }
