@@ -34,6 +34,18 @@
             <button id="hangupButton">Hang Up</button>
         </div>
 
+        <div class="box">
+            <h3>Data Channel (chat & files)</h3>
+            <div id="dcStatus">DC: not connected</div>
+            <div id="chatMessages"
+                style="height:120px;overflow:auto;border:1px solid #ccc;padding:6px;margin:6px 0;background:#fff"></div>
+            <input type="text" id="chatInput" placeholder="Type a message" />
+            <button id="sendChatButton">Send</button>
+            <div style="margin-top:8px">
+                <input type="file" id="fileInput" />
+                <button id="sendFileButton">Send File</button>
+            </div>
+        </div>
         <p>1. Enter a room name and click "Join Room"<br>
             2. Click "Start" to enable your camera and microphone<br>
             3. Share the room name with someone else to connect</p>

@@ -1,6 +1,11 @@
 import { WebSocketServer, WebSocket } from 'ws';
 
-const wss = new WebSocketServer({ port: 8080 });
+const wss = new WebSocketServer({
+    port: 8080,
+    // autoPong?
+    // clientTracking?
+    // read bout props here
+});
 
 const rooms = new Map<string, Set<WebSocket>>();
 
@@ -28,14 +33,12 @@ wss.on('connection', (ws: WebSocket) => {
                 rooms.get(currentRoom)!.add(ws);
                 console.log(`Client joined room: ${currentRoom}`);
 
-                // Notify client they joined
                 ws.send(JSON.stringify({ type: 'joined', room: currentRoom }));
 
-                // Notify others in the room that a new peer is ready
                 broadcastToRoom(currentRoom, { type: 'ready' }, ws);
             } else {
-                // Forward all other messages (offer, answer, candidate, bye) to peers in the same room
                 if (currentRoom) {
+                    // Forward all other messages (offer, answer, candidate, bye) to peers in the same room
                     broadcastToRoom(currentRoom, data, ws);
                 }
             }
@@ -50,10 +53,8 @@ wss.on('connection', (ws: WebSocket) => {
         if (currentRoom && rooms.has(currentRoom)) {
             rooms.get(currentRoom)!.delete(ws);
 
-            // Notify others that peer left
             broadcastToRoom(currentRoom, { type: 'bye' }, ws);
 
-            // Clean up empty rooms
             if (rooms.get(currentRoom)!.size === 0) {
                 rooms.delete(currentRoom);
             }
