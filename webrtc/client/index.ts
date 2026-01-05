@@ -82,7 +82,7 @@ function getOrCreateRemoteVideo(peerId: string): HTMLVideoElement {
 
         const label = document.createElement('div');
         label.className = 'video-label';
-        label.textContent = `Peer: ${peerId.slice(0, 8)}...`;
+        label.textContent = `Peer: ${peerId.slice(-12)}...`;
 
         container.appendChild(video);
         container.appendChild(label);
@@ -284,7 +284,7 @@ function connectWebSocket(): void {
         switch (data.type) {
             case 'joined': {
                 peerId = data.peerId;
-                statusDiv.textContent = `Joined room: ${data.room} (ID: ${peerId?.slice(0, 8)}...)`;
+                statusDiv.textContent = `Joined room: ${data.room} (ID: ${peerId?.slice(-12)}...)`;
 
                 // Initialize mediasoup device
                 device = new mediasoupClient.Device();
