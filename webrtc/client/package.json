@@ -1,0 +1,12 @@
+{
+    "name": "webrtc-sfu-client",
+    "version": "1.0.0",
+    "description": "WebRTC SFU client using mediasoup-client",
+    "type": "module",
+    "scripts": {
+        "dev": "bun index.html"
+    },
+    "dependencies": {
+        "mediasoup-client": "^3.18.3"
+    }
+}

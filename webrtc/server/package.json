@@ -1,13 +1,14 @@
 {
-    "name": "webrtc-signaling-server",
+    "name": "webrtc-sfu-server",
     "version": "1.0.0",
-    "description": "WebRTC signaling server",
+    "description": "WebRTC SFU server using mediasoup",
     "main": "server.ts",
     "scripts": {
         "start": "bun run server.ts",
         "dev": "bun run --hot server.ts"
     },
     "dependencies": {
+        "mediasoup": "^3.19.14",
         "ws": "^8.18.0"
     },
     "devDependencies": {
