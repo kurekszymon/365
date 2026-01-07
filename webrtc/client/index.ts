@@ -305,6 +305,12 @@ async function consumeProducer(producerPeerId: string, producerId: string, kind:
         remoteStream = new MediaStream();
         remoteStreams.set(streamKey, remoteStream);
     }
+
+    // Remove existing tracks of the same kind before adding new one
+    // This handles the case when a peer restarts their camera
+    const existingTracks = remoteStream.getTracks().filter(t => t.kind === consumer.track.kind);
+    existingTracks.forEach(track => remoteStream!.removeTrack(track));
+
     remoteStream.addTrack(consumer.track);
 
     // Update video element
@@ -377,7 +383,12 @@ function connectWebSocket(): void {
 
             case 'producerClosed': {
                 // Handle producer closed (peer stopped sharing or left)
+                // Two cases:
+                // 1. Server sends consumerId when consumer's producer closes
+                // 2. Server broadcasts peerId + producerId when producer explicitly closed
+
                 if (data.consumerId) {
+                    // Case 1: Direct consumer notification
                     const consumer = consumers.get(data.consumerId);
                     const info = consumerInfo.get(data.consumerId);
 
@@ -397,6 +408,38 @@ function connectWebSocket(): void {
                     }
 
                     consumerInfo.delete(data.consumerId);
+                } else if (data.peerId && data.producerId) {
+                    // Case 2: Broadcast notification - find and close matching consumers
+                    consumerInfo.forEach((info, consumerId) => {
+                        if (info.peerId === data.peerId) {
+                            const consumer = consumers.get(consumerId);
+                            if (consumer && consumer.producerId === data.producerId) {
+                                consumer.close();
+                                consumers.delete(consumerId);
+                                consumerInfo.delete(consumerId);
+
+                                // Clean up stream
+                                const streamKey = info.isScreen ? `screen-${info.peerId}` : info.peerId;
+                                const stream = remoteStreams.get(streamKey);
+                                if (stream) {
+                                    // Remove the track from the stream
+                                    stream.getTracks().forEach(track => {
+                                        if (track.id === consumer.track.id) {
+                                            stream.removeTrack(track);
+                                        }
+                                    });
+                                    // If stream is empty, clean up video element
+                                    if (stream.getTracks().length === 0) {
+                                        remoteStreams.delete(streamKey);
+                                        if (info.isScreen) {
+                                            screenShareContainer.innerHTML = '';
+                                            mainStage.classList.add('hidden');
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
                 }
                 break;
             }
