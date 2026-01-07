@@ -24,16 +24,24 @@
         </div>
 
         <div class="videos-grid">
-            <div class="local-video-container">
-                <video id="localVideo" playsinline autoplay muted></video>
-                <div class="video-label">You (local)</div>
+            <!-- Main stage for screen share -->
+            <div id="mainStage" class="main-stage hidden">
+                <div id="screenShareContainer" class="screen-share-main"></div>
             </div>
-            <div id="remoteVideos" class="remote-videos"></div>
+            <!-- Sidebar for participant videos -->
+            <div id="participantsSidebar" class="participants-sidebar">
+                <div class="local-video-container">
+                    <video id="localVideo" playsinline autoplay muted></video>
+                    <div class="video-label">You (local)</div>
+                </div>
+                <div id="remoteVideos"></div>
+            </div>
         </div>
 
         <div class="box">
             <button id="startButton">Start Camera</button>
             <button id="hangupButton">Stop Camera</button>
+            <button id="screenShareButton">Share Screen</button>
         </div>
 
         <div class="box">

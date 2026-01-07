@@ -259,12 +259,13 @@ async function handleMessage(ws: WebSocket, message: string): Promise<void> {
 
             send(ws, { type: 'produced', id: producer.id, kind: data.kind });
 
-            // Notify others about new producer
+            // Notify others about new producer (include appData for screen share identification)
             broadcastToRoom(room, {
                 type: 'newProducer',
                 peerId: peer.id,
                 producerId: producer.id,
                 kind: producer.kind,
+                appData: producer.appData,
             }, ws);
             break;
         }
@@ -284,6 +285,15 @@ async function handleMessage(ws: WebSocket, message: string): Promise<void> {
 
             const transport = peer.transports.get(transportId);
             if (!transport) return;
+
+            // Find the producer to get its appData
+            let producerAppData: Record<string, unknown> = {};
+            room.peers.forEach((p) => {
+                const producer = p.producers.get(producerId);
+                if (producer) {
+                    producerAppData = producer.appData as Record<string, unknown>;
+                }
+            });
 
             const consumer = await transport.consume({
                 producerId,
@@ -310,6 +320,7 @@ async function handleMessage(ws: WebSocket, message: string): Promise<void> {
                 producerId,
                 kind: consumer.kind,
                 rtpParameters: consumer.rtpParameters,
+                appData: producerAppData,
             });
             break;
         }
@@ -349,7 +360,7 @@ async function handleMessage(ws: WebSocket, message: string): Promise<void> {
             const room = rooms.get(peer.room);
             if (!room) return;
 
-            const producers: { peerId: string; producerId: string; kind: MediaKind; }[] = [];
+            const producers: { peerId: string; producerId: string; kind: MediaKind; appData: Record<string, unknown>; }[] = [];
 
             room.peers.forEach((p) => {
                 if (p.id !== peer.id) {
@@ -358,6 +369,7 @@ async function handleMessage(ws: WebSocket, message: string): Promise<void> {
                             peerId: p.id,
                             producerId: producer.id,
                             kind: producer.kind,
+                            appData: producer.appData as Record<string, unknown>,
                         });
                     });
                 }

@@ -8,11 +8,16 @@ let device: Device | null = null;
 let sendTransport: Transport | null = null;
 let recvTransport: Transport | null = null;
 let localStream: MediaStream | null = null;
+let screenStream: MediaStream | null = null;
 let peerId: string | null = null;
 
 const producers = new Map<string, Producer>();
+let screenProducer: Producer | null = null;
 const consumers = new Map<string, Consumer>();
 const remoteStreams = new Map<string, MediaStream>();
+
+// Track consumer to peer/type mapping for cleanup
+const consumerInfo = new Map<string, { peerId: string; isScreen: boolean; }>();
 
 // ─── DOM Elements ────────────────────────────────────────────────────────────
 
@@ -22,9 +27,13 @@ const statusDiv = document.getElementById('status') as HTMLDivElement;
 const joinButton = document.getElementById('joinButton') as HTMLButtonElement;
 const startButton = document.getElementById('startButton') as HTMLButtonElement;
 const hangupButton = document.getElementById('hangupButton') as HTMLButtonElement;
+const screenShareButton = document.getElementById('screenShareButton') as HTMLButtonElement;
 
 const localVideo = document.getElementById('localVideo') as HTMLVideoElement;
 const remoteVideosContainer = document.getElementById('remoteVideos') as HTMLDivElement;
+const localVideoContainer = document.querySelector('.local-video-container') as HTMLDivElement;
+const mainStage = document.getElementById('mainStage') as HTMLDivElement;
+const screenShareContainer = document.getElementById('screenShareContainer') as HTMLDivElement;
 
 const chatInput = document.getElementById('chatInput') as HTMLInputElement | null;
 const sendChatButton = document.getElementById('sendChatButton') as HTMLButtonElement | null;
@@ -33,8 +42,21 @@ const sendFileButton = document.getElementById('sendFileButton') as HTMLButtonEl
 const dcStatus = document.getElementById('dcStatus') as HTMLDivElement | null;
 const chatMessages = document.getElementById('chatMessages') as HTMLDivElement | null;
 
+
+startButton.addEventListener('click', () => {
+    localVideoContainer.classList.add('active');
+    remoteVideosContainer.classList.add('active');
+});
+
+hangupButton.addEventListener('click', () => {
+    localVideoContainer.classList.remove('active');
+    remoteVideosContainer.classList.remove('active');
+});
+
+
 startButton.disabled = true;
 hangupButton.disabled = true;
+screenShareButton.disabled = true;
 
 // ─── Utility ─────────────────────────────────────────────────────────────────
 
@@ -67,36 +89,61 @@ function appendMessage(text: string): void {
 
 // ─── Video Element Management ────────────────────────────────────────────────
 
-function getOrCreateRemoteVideo(peerId: string): HTMLVideoElement {
-    let video = document.getElementById(`video-${peerId}`) as HTMLVideoElement | null;
+function getOrCreateRemoteVideo(peerId: string, isScreen: boolean = false): HTMLVideoElement {
+    const elementId = isScreen ? `screen-${peerId}` : `video-${peerId}`;
+    let video = document.getElementById(elementId) as HTMLVideoElement | null;
+
     if (!video) {
         video = document.createElement('video');
-        video.id = `video-${peerId}`;
+        video.id = elementId;
         video.autoplay = true;
         video.playsInline = true;
-        video.className = 'remote-video';
-
-        const container = document.createElement('div');
-        container.id = `container-${peerId}`;
-        container.className = 'video-container';
 
         const label = document.createElement('div');
         label.className = 'video-label';
-        label.textContent = `Peer: ${peerId.slice(-12)}...`;
 
-        container.appendChild(video);
-        container.appendChild(label);
-        remoteVideosContainer.appendChild(container);
+        if (isScreen) {
+            // Screen share goes to main stage
+            video.className = 'screen-share-video';
+            label.textContent = `${peerId.slice(-8)}... is sharing`;
+
+            // Clear previous screen share if any
+            screenShareContainer.innerHTML = '';
+            screenShareContainer.appendChild(video);
+            screenShareContainer.appendChild(label);
+
+            // Show the main stage
+            mainStage.classList.remove('hidden');
+        } else {
+            // Camera video goes to sidebar
+            video.className = 'remote-video';
+            label.textContent = `Peer: ${peerId.slice(-8)}...`;
+
+            const container = document.createElement('div');
+            container.id = `container-${elementId}`;
+            container.className = 'video-container';
+            container.appendChild(video);
+            container.appendChild(label);
+            remoteVideosContainer.appendChild(container);
+        }
     }
     return video;
 }
 
 function removeRemoteVideo(peerId: string): void {
-    const container = document.getElementById(`container-${peerId}`);
+    // Remove camera video container
+    const container = document.getElementById(`container-video-${peerId}`);
     if (container) {
         container.remove();
     }
+    // Remove screen share - hide main stage
+    const screenVideo = document.getElementById(`screen-${peerId}`);
+    if (screenVideo) {
+        screenShareContainer.innerHTML = '';
+        mainStage.classList.add('hidden');
+    }
     remoteStreams.delete(peerId);
+    remoteStreams.delete(`screen-${peerId}`);
 }
 
 // ─── Transport Creation ──────────────────────────────────────────────────────
@@ -215,7 +262,7 @@ async function produceMedia(): Promise<void> {
     }
 }
 
-async function consumeProducer(producerPeerId: string, producerId: string, kind: string): Promise<void> {
+async function consumeProducer(producerPeerId: string, producerId: string, kind: string, appData?: { type?: string; }): Promise<void> {
     if (!recvTransport || !device) return;
 
     send({
@@ -230,6 +277,7 @@ async function consumeProducer(producerPeerId: string, producerId: string, kind:
         producerId: string;
         kind: string;
         rtpParameters: any;
+        appData?: { type?: string; };
     }>('consumed');
 
     const consumer = await recvTransport.consume({
@@ -244,19 +292,26 @@ async function consumeProducer(producerPeerId: string, producerId: string, kind:
     // Resume the consumer
     send({ type: 'resumeConsumer', consumerId: consumer.id });
 
-    // Add track to remote stream
-    let remoteStream = remoteStreams.get(producerPeerId);
+    // Determine if this is a screen share based on appData
+    const isScreen = appData?.type === 'screen' || response.appData?.type === 'screen';
+    const streamKey = isScreen ? `screen-${producerPeerId}` : producerPeerId;
+
+    // Track consumer info for cleanup
+    consumerInfo.set(consumer.id, { peerId: producerPeerId, isScreen });
+
+    // Add track to appropriate remote stream
+    let remoteStream = remoteStreams.get(streamKey);
     if (!remoteStream) {
         remoteStream = new MediaStream();
-        remoteStreams.set(producerPeerId, remoteStream);
+        remoteStreams.set(streamKey, remoteStream);
     }
     remoteStream.addTrack(consumer.track);
 
     // Update video element
-    const video = getOrCreateRemoteVideo(producerPeerId);
+    const video = getOrCreateRemoteVideo(producerPeerId, isScreen);
     video.srcObject = remoteStream;
 
-    console.log(`Consuming ${kind} from peer ${producerPeerId}`);
+    console.log(`Consuming ${kind}${isScreen ? ' (screen)' : ''} from peer ${producerPeerId}`);
 }
 
 // ─── WebSocket Handlers ──────────────────────────────────────────────────────
@@ -303,8 +358,8 @@ function connectWebSocket(): void {
 
             case 'producers': {
                 // Consume existing producers from other peers
-                for (const { peerId: prodPeerId, producerId, kind } of data.producers) {
-                    await consumeProducer(prodPeerId, producerId, kind);
+                for (const { peerId: prodPeerId, producerId, kind, appData } of data.producers) {
+                    await consumeProducer(prodPeerId, producerId, kind, appData);
                 }
                 break;
             }
@@ -316,7 +371,7 @@ function connectWebSocket(): void {
 
             case 'newProducer': {
                 // New producer from another peer - consume it
-                await consumeProducer(data.peerId, data.producerId, data.kind);
+                await consumeProducer(data.peerId, data.producerId, data.kind, data.appData);
                 break;
             }
 
@@ -324,10 +379,24 @@ function connectWebSocket(): void {
                 // Handle producer closed (peer stopped sharing or left)
                 if (data.consumerId) {
                     const consumer = consumers.get(data.consumerId);
+                    const info = consumerInfo.get(data.consumerId);
+
                     if (consumer) {
                         consumer.close();
                         consumers.delete(data.consumerId);
                     }
+
+                    // If this was a screen share, hide the main stage
+                    if (info?.isScreen) {
+                        const screenVideo = document.getElementById(`screen-${info.peerId}`);
+                        if (screenVideo) {
+                            screenShareContainer.innerHTML = '';
+                            mainStage.classList.add('hidden');
+                        }
+                        remoteStreams.delete(`screen-${info.peerId}`);
+                    }
+
+                    consumerInfo.delete(data.consumerId);
                 }
                 break;
             }
@@ -487,6 +556,7 @@ startButton.onclick = async (): Promise<void> => {
 
     startButton.disabled = true;
     hangupButton.disabled = false;
+    screenShareButton.disabled = false;
 
     // Start producing
     await produceMedia();
@@ -495,6 +565,9 @@ startButton.onclick = async (): Promise<void> => {
 };
 
 hangupButton.onclick = async (): Promise<void> => {
+    // Stop screen sharing first if active
+    await stopScreenShare();
+
     // Close all producers
     producers.forEach((producer) => {
         send({ type: 'closeProducer', producerId: producer.id });
@@ -511,6 +584,7 @@ hangupButton.onclick = async (): Promise<void> => {
 
     startButton.disabled = false;
     hangupButton.disabled = true;
+    screenShareButton.disabled = true;
 
     if (dcStatus) dcStatus.textContent = 'Chat: disconnected';
 };
@@ -541,3 +615,134 @@ if (sendFileButton && fileInput) {
         }
     };
 }
+
+// ─── Screen Sharing ──────────────────────────────────────────────────────────
+
+async function startScreenShare(): Promise<void> {
+    if (!sendTransport) {
+        console.error('Send transport not ready');
+        return;
+    }
+
+    try {
+        // Request screen capture with optional audio
+        screenStream = await navigator.mediaDevices.getDisplayMedia({
+            video: {
+                width: { ideal: 1920, max: 1920 },
+                height: { ideal: 1080, max: 1080 },
+                frameRate: { ideal: 30, max: 30 },
+            },
+            audio: true, // Request audio (works for tab audio in Chrome)
+        });
+
+        const videoTrack = screenStream.getVideoTracks()[0];
+        if (videoTrack) {
+            // Produce screen video as a separate track with appData to identify it
+            screenProducer = await sendTransport.produce({
+                track: videoTrack,
+                encodings: [
+                    { maxBitrate: 500000 },
+                    { maxBitrate: 1000000 },
+                    { maxBitrate: 5000000 },
+                ],
+                codecOptions: {
+                    videoGoogleStartBitrate: 1000,
+                },
+                appData: { type: 'screen' },
+            });
+
+            console.log('Screen producer created:', screenProducer.id);
+
+            // Show local screen share preview in main stage
+            showLocalScreenShare(screenStream);
+
+            // Handle user stopping screen share via browser UI
+            videoTrack.onended = () => {
+                console.log('Screen share ended by user');
+                stopScreenShare();
+            };
+
+            screenShareButton.textContent = 'Stop Sharing';
+            screenShareButton.classList.add('sharing');
+        }
+
+        // If tab audio is captured, produce it as well
+        const audioTrack = screenStream.getAudioTracks()[0];
+        if (audioTrack) {
+            const screenAudioProducer = await sendTransport.produce({
+                track: audioTrack,
+                appData: { type: 'screen-audio' },
+            });
+            producers.set(screenAudioProducer.id, screenAudioProducer);
+            console.log('Screen audio producer created:', screenAudioProducer.id);
+        }
+
+    } catch (error) {
+        if ((error as Error).name === 'NotAllowedError') {
+            console.log('User cancelled screen share');
+        } else {
+            console.error('Error starting screen share:', error);
+        }
+    }
+}
+
+function showLocalScreenShare(stream: MediaStream): void {
+    // Clear and show main stage with local preview
+    screenShareContainer.innerHTML = '';
+
+    const video = document.createElement('video');
+    video.id = 'local-screen-preview';
+    video.autoplay = true;
+    video.playsInline = true;
+    video.muted = true;
+    video.srcObject = stream;
+
+    const label = document.createElement('div');
+    label.className = 'video-label';
+    label.textContent = 'You are sharing your screen';
+
+    const indicator = document.createElement('div');
+    indicator.className = 'sharing-indicator';
+    indicator.textContent = '● LIVE';
+
+    screenShareContainer.appendChild(video);
+    screenShareContainer.appendChild(label);
+    screenShareContainer.appendChild(indicator);
+
+    mainStage.classList.remove('hidden');
+}
+
+function hideLocalScreenShare(): void {
+    const preview = document.getElementById('local-screen-preview');
+    if (preview) {
+        screenShareContainer.innerHTML = '';
+        mainStage.classList.add('hidden');
+    }
+}
+
+async function stopScreenShare(): Promise<void> {
+    if (screenProducer) {
+        send({ type: 'closeProducer', producerId: screenProducer.id });
+        screenProducer.close();
+        screenProducer = null;
+    }
+
+    if (screenStream) {
+        screenStream.getTracks().forEach((track) => track.stop());
+        screenStream = null;
+    }
+
+    // Hide the local screen preview
+    hideLocalScreenShare();
+
+    screenShareButton.textContent = 'Share Screen';
+    screenShareButton.classList.remove('sharing');
+}
+
+screenShareButton.onclick = async (): Promise<void> => {
+    if (screenProducer) {
+        await stopScreenShare();
+    } else {
+        await startScreenShare();
+    }
+};
