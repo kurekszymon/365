@@ -19,6 +19,29 @@ const remoteStreams = new Map<string, MediaStream>();
 // Track consumer to peer/type mapping for cleanup
 const consumerInfo = new Map<string, { peerId: string; isScreen: boolean; }>();
 
+// Peer color palette for annotations
+const PEER_COLORS = [
+    '#FF4444', // Red
+    '#44FF44', // Green
+    '#4444FF', // Blue
+    '#FFAA00', // Orange
+    '#AA44FF', // Purple
+    '#44FFFF', // Cyan
+    '#FF44AA', // Pink
+    '#AAFF44', // Lime
+];
+const peerColorMap = new Map<string, string>();
+let nextColorIndex = 0;
+
+// Get or assign a color for a peer
+function getPeerColor(peerId: string): string {
+    if (!peerColorMap.has(peerId)) {
+        peerColorMap.set(peerId, PEER_COLORS[nextColorIndex % PEER_COLORS.length]);
+        nextColorIndex++;
+    }
+    return peerColorMap.get(peerId)!;
+}
+
 // ─── DOM Elements ────────────────────────────────────────────────────────────
 
 const roomInput = document.getElementById('roomInput') as HTMLInputElement;
@@ -37,6 +60,7 @@ const screenShareContainer = document.getElementById('screenShareContainer') as 
 
 // Annotation elements
 const annotationCanvas = document.getElementById('annotationCanvas') as HTMLCanvasElement;
+const labelsCanvas = document.getElementById('labelsCanvas') as HTMLCanvasElement;
 const annotationToolbar = document.getElementById('annotationToolbar') as HTMLDivElement;
 const drawTool = document.getElementById('drawTool') as HTMLButtonElement;
 const eraserTool = document.getElementById('eraserTool') as HTMLButtonElement;
@@ -361,6 +385,11 @@ function connectWebSocket(): void {
                 peerId = data.peerId;
                 statusDiv.textContent = `Joined room: ${data.room} (ID: ${peerId?.slice(-12)}...)`;
 
+                // Assign and display user's color
+                const myColor = getPeerColor(peerId!);
+                colorPicker.value = myColor;
+                colorPicker.title = `Your color: ${myColor}`;
+
                 // Initialize mediasoup device
                 device = new mediasoupClient.Device();
                 await device.load({ routerRtpCapabilities: data.routerRtpCapabilities });
@@ -541,7 +570,10 @@ function handleDataChannelMessage(from: string, payload: any): void {
         }
     } else if (payload.msgType === 'annotation-draw') {
         // Receive and draw annotation from remote peer
-        drawRemoteAnnotation(payload);
+        drawRemoteAnnotation(payload, from);
+    } else if (payload.msgType === 'annotation-stroke-end') {
+        // Remote peer stopped drawing - start fade timer
+        handleRemoteStrokeEnd(from);
     } else if (payload.msgType === 'annotation-clear') {
         // Clear canvas when remote peer clears
         clearAnnotationCanvas(false);
@@ -682,17 +714,36 @@ if (sendFileButton && fileInput) {
 // ─── Annotation System ───────────────────────────────────────────────────────
 
 const annotationCtx = annotationCanvas.getContext('2d')!;
+const labelsCtx = labelsCanvas.getContext('2d')!;
 let isDrawing = false;
 let lastX = 0;
 let lastY = 0;
 let currentTool: 'draw' | 'eraser' = 'draw';
 let annotationsVisible = true;
 
+// Cursor-following labels that fade after stroke ends
+interface CursorLabel {
+    peerId: string;
+    displayName: string;
+    x: number;
+    y: number;
+    color: string;
+    opacity: number;
+    isDrawing: boolean;
+    fadeStartTime: number | null;
+}
+const cursorLabels = new Map<string, CursorLabel>();
+const LABEL_FADE_DELAY = 1500; // ms after mouseup before fade starts
+const LABEL_FADE_DURATION = 500; // ms to fade out
+let labelAnimationId: number | null = null;
+
 // Resize canvas to match main stage
 function resizeAnnotationCanvas(): void {
     const rect = mainStage.getBoundingClientRect();
     annotationCanvas.width = rect.width;
     annotationCanvas.height = rect.height;
+    labelsCanvas.width = rect.width;
+    labelsCanvas.height = rect.height;
 }
 
 // Initialize canvas on window resize
@@ -722,6 +773,12 @@ function startDrawing(e: MouseEvent | TouchEvent): void {
     const canvasCoords = toCanvasCoords(coords);
     lastX = canvasCoords.x;
     lastY = canvasCoords.y;
+
+    // Show local cursor label
+    if (currentTool !== 'eraser' && peerId) {
+        const myColor = getPeerColor(peerId);
+        updateCursorLabel('local', 'You', canvasCoords.x, canvasCoords.y, myColor, true);
+    }
 }
 
 function draw(e: MouseEvent | TouchEvent): void {
@@ -732,12 +789,19 @@ function draw(e: MouseEvent | TouchEvent): void {
     const coords = getNormalizedCoords(point);
     const canvasCoords = toCanvasCoords(coords);
 
-    const color = currentTool === 'eraser' ? 'rgba(0,0,0,1)' : colorPicker.value;
+    // Use peer's assigned color (local user gets their color too)
+    const myColor = peerId ? getPeerColor(peerId) : colorPicker.value;
+    const color = currentTool === 'eraser' ? 'rgba(0,0,0,1)' : myColor;
     const size = parseInt(brushSize.value);
     const compositeOp = currentTool === 'eraser' ? 'destination-out' : 'source-over';
 
     // Draw locally
     drawLine(lastX, lastY, canvasCoords.x, canvasCoords.y, color, size, compositeOp);
+
+    // Update local cursor label position
+    if (currentTool !== 'eraser' && peerId) {
+        updateCursorLabel('local', 'You', canvasCoords.x, canvasCoords.y, myColor, true);
+    }
 
     // Send to peers (normalized coordinates)
     send({
@@ -759,6 +823,19 @@ function draw(e: MouseEvent | TouchEvent): void {
 }
 
 function stopDrawing(): void {
+    if (isDrawing && currentTool !== 'eraser') {
+        // Start fade timer for local label
+        const label = cursorLabels.get('local');
+        if (label) {
+            label.isDrawing = false;
+            label.fadeStartTime = Date.now() + LABEL_FADE_DELAY;
+        }
+        // Broadcast stroke end to peers
+        send({
+            type: 'dataChannelMessage',
+            payload: { msgType: 'annotation-stroke-end' },
+        });
+    }
     isDrawing = false;
 }
 
@@ -769,7 +846,7 @@ function drawLine(
     compositeOp: GlobalCompositeOperation
 ): void {
     annotationCtx.globalCompositeOperation = compositeOp;
-    annotationCtx.strokeStyle = color;
+    annotationCtx.strokeStyle = annotationsVisible ? color : 'transparent';
     annotationCtx.lineWidth = size;
     annotationCtx.lineCap = 'round';
     annotationCtx.lineJoin = 'round';
@@ -780,21 +857,134 @@ function drawLine(
     annotationCtx.stroke();
 }
 
-function drawRemoteAnnotation(payload: any): void {
+function drawRemoteAnnotation(payload: any, fromPeerId: string): void {
     const fromCoords = toCanvasCoords({ x: payload.fromX, y: payload.fromY });
     const toCoords = toCanvasCoords({ x: payload.toX, y: payload.toY });
+
+    // Use peer's assigned color (override their color choice for visual distinction)
+    const peerColor = getPeerColor(fromPeerId);
+    const color = payload.compositeOp === 'destination-out' ? 'rgba(0,0,0,1)' : peerColor;
 
     drawLine(
         fromCoords.x, fromCoords.y,
         toCoords.x, toCoords.y,
-        payload.color,
+        color,
         payload.size,
         payload.compositeOp
     );
+
+    // Update remote peer's cursor label (follows their cursor)
+    if (payload.compositeOp !== 'destination-out') {
+        updateCursorLabel(fromPeerId, fromPeerId.slice(-6), toCoords.x, toCoords.y, peerColor, true);
+    }
+}
+
+function handleRemoteStrokeEnd(fromPeerId: string): void {
+    const label = cursorLabels.get(fromPeerId);
+    if (label) {
+        label.isDrawing = false;
+        label.fadeStartTime = Date.now() + LABEL_FADE_DELAY;
+    }
+}
+
+function updateCursorLabel(id: string, displayName: string, x: number, y: number, color: string, isDrawing: boolean): void {
+    let label = cursorLabels.get(id);
+    if (!label) {
+        label = {
+            peerId: id,
+            displayName,
+            x,
+            y,
+            color,
+            opacity: 1,
+            isDrawing,
+            fadeStartTime: null,
+        };
+        cursorLabels.set(id, label);
+    } else {
+        label.x = x;
+        label.y = y;
+        label.color = color;
+        label.isDrawing = isDrawing;
+        label.opacity = 1;
+        label.fadeStartTime = null; // Reset fade when drawing resumes
+    }
+
+    // Start animation loop if not running
+    if (!labelAnimationId) {
+        labelAnimationId = requestAnimationFrame(animateLabels);
+    }
+}
+
+function animateLabels(): void {
+    const now = Date.now();
+
+    // Clear labels canvas
+    labelsCtx.clearRect(0, 0, labelsCanvas.width, labelsCanvas.height);
+
+    let hasActiveLabels = false;
+
+    // Update and draw each cursor label
+    cursorLabels.forEach((label, id) => {
+        // Calculate opacity based on fade state
+        if (label.fadeStartTime !== null) {
+            const fadeElapsed = now - label.fadeStartTime;
+            if (fadeElapsed >= LABEL_FADE_DURATION) {
+                // Fully faded, remove label
+                cursorLabels.delete(id);
+                return;
+            } else if (fadeElapsed > 0) {
+                // Currently fading
+                label.opacity = 1 - fadeElapsed / LABEL_FADE_DURATION;
+            }
+        }
+
+        // Draw label
+        renderLabel(label);
+        hasActiveLabels = true;
+    });
+
+    // Continue animation if there are active labels
+    if (hasActiveLabels) {
+        labelAnimationId = requestAnimationFrame(animateLabels);
+    } else {
+        labelAnimationId = null;
+    }
+}
+
+function renderLabel(label: CursorLabel): void {
+    const padding = 4;
+    const fontSize = 11;
+
+    labelsCtx.save();
+    labelsCtx.globalAlpha = label.opacity;
+    labelsCtx.font = `bold ${fontSize}px sans-serif`;
+
+    const textWidth = labelsCtx.measureText(label.displayName).width;
+    const boxWidth = textWidth + padding * 2;
+    const boxHeight = fontSize + padding * 2;
+
+    // Position label above and to the right of cursor
+    const labelX = Math.min(label.x + 10, labelsCanvas.width - boxWidth - 5);
+    const labelY = Math.max(label.y - 20, boxHeight + 5);
+
+    // Draw background pill
+    labelsCtx.fillStyle = label.color;
+    labelsCtx.beginPath();
+    labelsCtx.roundRect(labelX, labelY - boxHeight + padding, boxWidth, boxHeight, 4);
+    labelsCtx.fill();
+
+    // Draw text
+    labelsCtx.fillStyle = '#FFFFFF';
+    labelsCtx.fillText(label.displayName, labelX + padding, labelY);
+    labelsCtx.restore();
 }
 
 function clearAnnotationCanvas(broadcast: boolean = true): void {
     annotationCtx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+    // Also clear temporary labels
+    labelsCtx.clearRect(0, 0, labelsCanvas.width, labelsCanvas.height);
+    cursorLabels.clear();
 
     if (broadcast) {
         send({
@@ -836,7 +1026,7 @@ clearCanvasBtn.onclick = () => clearAnnotationCanvas(true);
 toggleAnnotationsBtn.onclick = () => {
     annotationsVisible = !annotationsVisible;
     annotationCanvas.style.opacity = annotationsVisible ? '1' : '0';
-    toggleAnnotationsBtn.textContent = annotationsVisible ? '👁️' : '🚫';
+    toggleAnnotationsBtn.textContent = annotationsVisible ? '👆' : '🚫';
 };
 
 // Canvas event listeners
