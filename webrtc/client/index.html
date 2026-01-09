@@ -27,6 +27,17 @@
             <!-- Main stage for screen share -->
             <div id="mainStage" class="main-stage hidden">
                 <div id="screenShareContainer" class="screen-share-main"></div>
+                <!-- Annotation canvas overlay -->
+                <canvas id="annotationCanvas" class="annotation-canvas"></canvas>
+                <!-- Annotation toolbar -->
+                <div id="annotationToolbar" class="annotation-toolbar">
+                    <button id="drawTool" class="tool-btn active" title="Draw">✏️</button>
+                    <button id="eraserTool" class="tool-btn" title="Eraser">🧹</button>
+                    <input type="color" id="colorPicker" value="#ff0000" title="Color">
+                    <input type="range" id="brushSize" min="2" max="20" value="4" title="Brush Size">
+                    <button id="clearCanvas" class="tool-btn" title="Clear All">🗑️</button>
+                    <button id="toggleAnnotations" class="tool-btn" title="Toggle Annotations">👁️</button>
+                </div>
             </div>
             <!-- Sidebar for participant videos -->
             <div id="participantsSidebar" class="participants-sidebar">

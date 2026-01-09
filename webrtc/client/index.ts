@@ -35,6 +35,16 @@ const localVideoContainer = document.querySelector('.local-video-container') as 
 const mainStage = document.getElementById('mainStage') as HTMLDivElement;
 const screenShareContainer = document.getElementById('screenShareContainer') as HTMLDivElement;
 
+// Annotation elements
+const annotationCanvas = document.getElementById('annotationCanvas') as HTMLCanvasElement;
+const annotationToolbar = document.getElementById('annotationToolbar') as HTMLDivElement;
+const drawTool = document.getElementById('drawTool') as HTMLButtonElement;
+const eraserTool = document.getElementById('eraserTool') as HTMLButtonElement;
+const colorPicker = document.getElementById('colorPicker') as HTMLInputElement;
+const brushSize = document.getElementById('brushSize') as HTMLInputElement;
+const clearCanvasBtn = document.getElementById('clearCanvas') as HTMLButtonElement;
+const toggleAnnotationsBtn = document.getElementById('toggleAnnotations') as HTMLButtonElement;
+
 const chatInput = document.getElementById('chatInput') as HTMLInputElement | null;
 const sendChatButton = document.getElementById('sendChatButton') as HTMLButtonElement | null;
 const fileInput = document.getElementById('fileInput') as HTMLInputElement | null;
@@ -112,8 +122,9 @@ function getOrCreateRemoteVideo(peerId: string, isScreen: boolean = false): HTML
             screenShareContainer.appendChild(video);
             screenShareContainer.appendChild(label);
 
-            // Show the main stage
+            // Show the main stage and enable annotations
             mainStage.classList.remove('hidden');
+            enableAnnotations();
         } else {
             // Camera video goes to sidebar
             video.className = 'remote-video';
@@ -141,6 +152,9 @@ function removeRemoteVideo(peerId: string): void {
     if (screenVideo) {
         screenShareContainer.innerHTML = '';
         mainStage.classList.add('hidden');
+        // Disable annotations and clear canvas
+        disableAnnotations();
+        clearAnnotationCanvas(false);
     }
     remoteStreams.delete(peerId);
     remoteStreams.delete(`screen-${peerId}`);
@@ -525,6 +539,12 @@ function handleDataChannelMessage(from: string, payload: any): void {
             }
             incomingFiles.delete(payload.id);
         }
+    } else if (payload.msgType === 'annotation-draw') {
+        // Receive and draw annotation from remote peer
+        drawRemoteAnnotation(payload);
+    } else if (payload.msgType === 'annotation-clear') {
+        // Clear canvas when remote peer clears
+        clearAnnotationCanvas(false);
     }
 }
 
@@ -659,6 +679,177 @@ if (sendFileButton && fileInput) {
     };
 }
 
+// ─── Annotation System ───────────────────────────────────────────────────────
+
+const annotationCtx = annotationCanvas.getContext('2d')!;
+let isDrawing = false;
+let lastX = 0;
+let lastY = 0;
+let currentTool: 'draw' | 'eraser' = 'draw';
+let annotationsVisible = true;
+
+// Resize canvas to match main stage
+function resizeAnnotationCanvas(): void {
+    const rect = mainStage.getBoundingClientRect();
+    annotationCanvas.width = rect.width;
+    annotationCanvas.height = rect.height;
+}
+
+// Initialize canvas on window resize
+window.addEventListener('resize', resizeAnnotationCanvas);
+
+// Get normalized coordinates (0-1 range) for syncing across different screen sizes
+function getNormalizedCoords(e: MouseEvent | Touch): { x: number; y: number; } {
+    const rect = annotationCanvas.getBoundingClientRect();
+    return {
+        x: (e.clientX - rect.left) / rect.width,
+        y: (e.clientY - rect.top) / rect.height,
+    };
+}
+
+// Convert normalized coords back to canvas coords
+function toCanvasCoords(normalized: { x: number; y: number; }): { x: number; y: number; } {
+    return {
+        x: normalized.x * annotationCanvas.width,
+        y: normalized.y * annotationCanvas.height,
+    };
+}
+
+function startDrawing(e: MouseEvent | TouchEvent): void {
+    isDrawing = true;
+    const point = 'touches' in e ? e.touches[0] : e;
+    const coords = getNormalizedCoords(point);
+    const canvasCoords = toCanvasCoords(coords);
+    lastX = canvasCoords.x;
+    lastY = canvasCoords.y;
+}
+
+function draw(e: MouseEvent | TouchEvent): void {
+    if (!isDrawing) return;
+    e.preventDefault();
+
+    const point = 'touches' in e ? e.touches[0] : e;
+    const coords = getNormalizedCoords(point);
+    const canvasCoords = toCanvasCoords(coords);
+
+    const color = currentTool === 'eraser' ? 'rgba(0,0,0,1)' : colorPicker.value;
+    const size = parseInt(brushSize.value);
+    const compositeOp = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+
+    // Draw locally
+    drawLine(lastX, lastY, canvasCoords.x, canvasCoords.y, color, size, compositeOp);
+
+    // Send to peers (normalized coordinates)
+    send({
+        type: 'dataChannelMessage',
+        payload: {
+            msgType: 'annotation-draw',
+            fromX: lastX / annotationCanvas.width,
+            fromY: lastY / annotationCanvas.height,
+            toX: coords.x,
+            toY: coords.y,
+            color,
+            size,
+            compositeOp,
+        },
+    });
+
+    lastX = canvasCoords.x;
+    lastY = canvasCoords.y;
+}
+
+function stopDrawing(): void {
+    isDrawing = false;
+}
+
+function drawLine(
+    fromX: number, fromY: number,
+    toX: number, toY: number,
+    color: string, size: number,
+    compositeOp: GlobalCompositeOperation
+): void {
+    annotationCtx.globalCompositeOperation = compositeOp;
+    annotationCtx.strokeStyle = color;
+    annotationCtx.lineWidth = size;
+    annotationCtx.lineCap = 'round';
+    annotationCtx.lineJoin = 'round';
+
+    annotationCtx.beginPath();
+    annotationCtx.moveTo(fromX, fromY);
+    annotationCtx.lineTo(toX, toY);
+    annotationCtx.stroke();
+}
+
+function drawRemoteAnnotation(payload: any): void {
+    const fromCoords = toCanvasCoords({ x: payload.fromX, y: payload.fromY });
+    const toCoords = toCanvasCoords({ x: payload.toX, y: payload.toY });
+
+    drawLine(
+        fromCoords.x, fromCoords.y,
+        toCoords.x, toCoords.y,
+        payload.color,
+        payload.size,
+        payload.compositeOp
+    );
+}
+
+function clearAnnotationCanvas(broadcast: boolean = true): void {
+    annotationCtx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+
+    if (broadcast) {
+        send({
+            type: 'dataChannelMessage',
+            payload: { msgType: 'annotation-clear' },
+        });
+    }
+}
+
+function enableAnnotations(): void {
+    annotationCanvas.classList.add('drawing');
+    annotationCanvas.classList.remove('erasing');
+    resizeAnnotationCanvas();
+}
+
+function disableAnnotations(): void {
+    annotationCanvas.classList.remove('drawing', 'erasing');
+}
+
+// Tool button handlers
+drawTool.onclick = () => {
+    currentTool = 'draw';
+    drawTool.classList.add('active');
+    eraserTool.classList.remove('active');
+    annotationCanvas.classList.remove('erasing');
+    annotationCanvas.classList.add('drawing');
+};
+
+eraserTool.onclick = () => {
+    currentTool = 'eraser';
+    eraserTool.classList.add('active');
+    drawTool.classList.remove('active');
+    annotationCanvas.classList.remove('drawing');
+    annotationCanvas.classList.add('erasing');
+};
+
+clearCanvasBtn.onclick = () => clearAnnotationCanvas(true);
+
+toggleAnnotationsBtn.onclick = () => {
+    annotationsVisible = !annotationsVisible;
+    annotationCanvas.style.opacity = annotationsVisible ? '1' : '0';
+    toggleAnnotationsBtn.textContent = annotationsVisible ? '👁️' : '🚫';
+};
+
+// Canvas event listeners
+annotationCanvas.addEventListener('mousedown', startDrawing);
+annotationCanvas.addEventListener('mousemove', draw);
+annotationCanvas.addEventListener('mouseup', stopDrawing);
+annotationCanvas.addEventListener('mouseleave', stopDrawing);
+
+// Touch support
+annotationCanvas.addEventListener('touchstart', startDrawing, { passive: false });
+annotationCanvas.addEventListener('touchmove', draw, { passive: false });
+annotationCanvas.addEventListener('touchend', stopDrawing);
+
 // ─── Screen Sharing ──────────────────────────────────────────────────────────
 
 async function startScreenShare(): Promise<void> {
@@ -753,6 +944,9 @@ function showLocalScreenShare(stream: MediaStream): void {
     screenShareContainer.appendChild(indicator);
 
     mainStage.classList.remove('hidden');
+
+    // Enable annotations
+    enableAnnotations();
 }
 
 function hideLocalScreenShare(): void {
@@ -760,6 +954,9 @@ function hideLocalScreenShare(): void {
     if (preview) {
         screenShareContainer.innerHTML = '';
         mainStage.classList.add('hidden');
+        // Disable annotations and clear canvas
+        disableAnnotations();
+        clearAnnotationCanvas(false);
     }
 }
 
