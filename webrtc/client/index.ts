@@ -76,6 +76,20 @@ const sendFileButton = document.getElementById('sendFileButton') as HTMLButtonEl
 const dcStatus = document.getElementById('dcStatus') as HTMLDivElement | null;
 const chatMessages = document.getElementById('chatMessages') as HTMLDivElement | null;
 
+// Chat sidebar elements
+const chatSidebar = document.getElementById('chatSidebar') as HTMLDivElement;
+const toggleChatButton = document.getElementById('toggleChatButton') as HTMLButtonElement;
+const closeChatButton = document.getElementById('closeChatButton') as HTMLButtonElement;
+
+// Toggle chat sidebar
+toggleChatButton.addEventListener('click', () => {
+    chatSidebar.classList.toggle('open');
+});
+
+closeChatButton.addEventListener('click', () => {
+    chatSidebar.classList.remove('open');
+});
+
 
 startButton.addEventListener('click', () => {
     localVideoContainer.classList.add('active');

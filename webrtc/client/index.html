@@ -55,19 +55,26 @@
             <button id="startButton">Start Camera</button>
             <button id="hangupButton">Stop Camera</button>
             <button id="screenShareButton">Share Screen</button>
+            <button id="toggleChatButton">💬 Chat</button>
         </div>
 
-        <div class="box">
-            <h3>Chat & File Transfer</h3>
-            <div id="dcStatus">Chat: not connected</div>
-            <div id="chatMessages"></div>
-            <div class="chat-input-row">
-                <input type="text" id="chatInput" placeholder="Type a message..." />
-                <button id="sendChatButton">Send</button>
+        <!-- Collapsible Chat Sidebar -->
+        <div id="chatSidebar" class="chat-sidebar">
+            <div class="chat-sidebar-header">
+                <h3>Chat & File Transfer</h3>
+                <button id="closeChatButton" class="close-chat-btn">✕</button>
             </div>
-            <div class="file-row">
-                <input type="file" id="fileInput" />
-                <button id="sendFileButton">Send File</button>
+            <div class="chat-sidebar-content">
+                <div id="dcStatus">Chat: not connected</div>
+                <div id="chatMessages"></div>
+                <div class="chat-input-row">
+                    <input type="text" id="chatInput" placeholder="Type a message..." />
+                    <button id="sendChatButton">Send</button>
+                </div>
+                <div class="file-row">
+                    <input type="file" id="fileInput" />
+                    <button id="sendFileButton">Send File</button>
+                </div>
             </div>
         </div>
 

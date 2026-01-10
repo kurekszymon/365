@@ -1,6 +1,5 @@
 button {
     margin: 0 20px 0 0;
-    width: 83px;
 }
 
 button#screenShareButton {
@@ -269,4 +268,152 @@ button {
 .file-row {
     display: flex;
     gap: 10px;
+}
+
+/* ─── Chat Sidebar ──────────────────────────────────────────────────────────── */
+
+.chat-sidebar {
+    position: fixed;
+    right: -400px;
+    top: 0;
+    width: 380px;
+    height: 100vh;
+    background: #fff;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+    transition: right 0.3s ease;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-sidebar.open {
+    right: 0;
+}
+
+.chat-sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #ddd;
+    background: #f8f9fa;
+}
+
+.chat-sidebar-header h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.close-chat-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: transparent;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    transition: background 0.2s, color 0.2s;
+}
+
+.close-chat-btn:hover {
+    background: #e0e0e0;
+    color: #000;
+}
+
+.chat-sidebar-content {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#dcStatus {
+    padding: 8px 12px;
+    background: #e8f5e9;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: #2e7d32;
+}
+
+#chatMessages {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background: #fafafa;
+    min-height: 200px;
+}
+
+#chatMessages>div {
+    margin-bottom: 8px;
+    padding: 6px 10px;
+    background: #fff;
+    border-radius: 6px;
+    font-size: 14px;
+    word-wrap: break-word;
+}
+
+.chat-input-row {
+    margin-bottom: 12px;
+}
+
+.chat-input-row input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.chat-input-row button,
+.file-row button {
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s;
+    width: auto;
+    margin: 0;
+    height: 38px;
+}
+
+.chat-input-row button:hover,
+.file-row button:hover {
+    background: #2980b9;
+}
+
+.file-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.file-row input[type="file"] {
+    flex: 1;
+    font-size: 13px;
+}
+
+#toggleChatButton {
+    width: auto;
+    padding: 0 16px;
+    background: #3498db;
+    color: white;
+}
+
+#toggleChatButton:hover {
+    background: #2980b9;
 }
