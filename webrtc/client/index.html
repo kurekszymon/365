@@ -68,13 +68,12 @@
                 <div id="dcStatus">Chat: not connected</div>
                 <div id="chatMessages"></div>
                 <div class="chat-input-row">
-                    <input type="text" id="chatInput" placeholder="Type a message..." />
-                    <button id="sendChatButton">Send</button>
+                    <button id="attachFileButton" class="attach-btn" title="Attach file">📎</button>
+                    <input type="file" id="fileInput" style="display: none;" />
+                    <input type="text" id="chatInput" placeholder="Type a message or attach a file..." />
+                    <button id="sendButton">💬</button>
                 </div>
-                <div class="file-row">
-                    <input type="file" id="fileInput" />
-                    <button id="sendFileButton">Send File</button>
-                </div>
+                <div id="selectedFileName" class="selected-file"></div>
             </div>
         </div>
 

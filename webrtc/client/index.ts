@@ -70,9 +70,10 @@ const clearCanvasBtn = document.getElementById('clearCanvas') as HTMLButtonEleme
 const toggleAnnotationsBtn = document.getElementById('toggleAnnotations') as HTMLButtonElement;
 
 const chatInput = document.getElementById('chatInput') as HTMLInputElement | null;
-const sendChatButton = document.getElementById('sendChatButton') as HTMLButtonElement | null;
+const sendButton = document.getElementById('sendButton') as HTMLButtonElement | null;
+const attachFileButton = document.getElementById('attachFileButton') as HTMLButtonElement | null;
 const fileInput = document.getElementById('fileInput') as HTMLInputElement | null;
-const sendFileButton = document.getElementById('sendFileButton') as HTMLButtonElement | null;
+const selectedFileName = document.getElementById('selectedFileName') as HTMLDivElement | null;
 const dcStatus = document.getElementById('dcStatus') as HTMLDivElement | null;
 const chatMessages = document.getElementById('chatMessages') as HTMLDivElement | null;
 
@@ -698,9 +699,41 @@ hangupButton.onclick = async (): Promise<void> => {
     if (dcStatus) dcStatus.textContent = 'Chat: disconnected';
 };
 
-// Chat UI handlers
-if (sendChatButton && chatInput) {
-    sendChatButton.onclick = () => {
+// Unified Chat & File UI handlers
+let selectedFile: File | null = null;
+
+// Attach file button - opens file picker
+if (attachFileButton && fileInput) {
+    attachFileButton.onclick = () => {
+        fileInput.click();
+    };
+
+    fileInput.onchange = () => {
+        const files = fileInput.files;
+        if (files && files.length > 0) {
+            selectedFile = files[0];
+            if (selectedFileName) {
+                selectedFileName.textContent = `📎 ${selectedFile.name}`;
+                selectedFileName.style.display = 'block';
+            }
+        }
+    };
+}
+
+// Unified send button - handles both text and files
+if (sendButton && chatInput) {
+    sendButton.onclick = async () => {
+        // extract to `sendMessage` function
+        if (selectedFile) {
+            await sendFileMessage(selectedFile);
+            selectedFile = null;
+            if (fileInput) fileInput.value = '';
+            if (selectedFileName) {
+                selectedFileName.textContent = '';
+                selectedFileName.style.display = 'none';
+            }
+        }
+        // Send text message if there's text
         const text = chatInput.value.trim();
         if (text) {
             sendChatMessage(text);
@@ -708,19 +741,10 @@ if (sendChatButton && chatInput) {
         }
     };
 
-    chatInput.onkeypress = (e) => {
+    chatInput.onkeypress = async (e) => {
         if (e.key === 'Enter') {
-            sendChatButton.click();
-        }
-    };
-}
-
-if (sendFileButton && fileInput) {
-    sendFileButton.onclick = async () => {
-        const files = fileInput.files;
-        if (files && files.length > 0) {
-            await sendFileMessage(files[0]);
-            fileInput.value = '';
+            // Trigger the same logic as the send button
+            sendButton.click();
         }
     };
 }
