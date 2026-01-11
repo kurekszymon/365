@@ -720,31 +720,32 @@ if (attachFileButton && fileInput) {
     };
 }
 
-// Unified send button - handles both text and files
-if (sendButton && chatInput) {
-    sendButton.onclick = async () => {
-        // extract to `sendMessage` function
-        if (selectedFile) {
-            await sendFileMessage(selectedFile);
-            selectedFile = null;
-            if (fileInput) fileInput.value = '';
-            if (selectedFileName) {
-                selectedFileName.textContent = '';
-                selectedFileName.style.display = 'none';
-            }
-        }
-        // Send text message if there's text
-        const text = chatInput.value.trim();
-        if (text) {
-            sendChatMessage(text);
-            chatInput.value = '';
-        }
-    };
+const sendMessageInChat = async () => {
+    if (!chatInput) {
+        return;
+    }
 
+    if (selectedFile) {
+        await sendFileMessage(selectedFile);
+        selectedFile = null;
+        if (fileInput) fileInput.value = '';
+        if (selectedFileName) {
+            selectedFileName.textContent = '';
+            selectedFileName.style.display = 'none';
+        }
+    }
+    // Send text message if there's text
+    const text = chatInput.value.trim();
+    if (text) {
+        sendChatMessage(text);
+        chatInput.value = '';
+    }
+};
+if (sendButton && chatInput) {
+    sendButton.onclick = sendMessageInChat;
     chatInput.onkeypress = async (e) => {
         if (e.key === 'Enter') {
-            // Trigger the same logic as the send button
-            sendButton.click();
+            sendMessageInChat();
         }
     };
 }
