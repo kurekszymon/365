@@ -16,6 +16,11 @@ let screenProducer: Producer | null = null;
 const consumers = new Map<string, Consumer>();
 const remoteStreams = new Map<string, MediaStream>();
 
+// Recording state
+let mediaRecorder: MediaRecorder | null = null;
+let recordedChunks: Blob[] = [];
+let isRecording = false;
+
 // Track consumer to peer/type mapping for cleanup
 const consumerInfo = new Map<string, { peerId: string; isScreen: boolean; }>();
 
@@ -51,6 +56,7 @@ const joinButton = document.getElementById('joinButton') as HTMLButtonElement;
 const startButton = document.getElementById('startButton') as HTMLButtonElement;
 const hangupButton = document.getElementById('hangupButton') as HTMLButtonElement;
 const screenShareButton = document.getElementById('screenShareButton') as HTMLButtonElement;
+const recordButton = document.getElementById('recordButton') as HTMLButtonElement;
 
 const localVideo = document.getElementById('localVideo') as HTMLVideoElement;
 const remoteVideosContainer = document.getElementById('remoteVideos') as HTMLDivElement;
@@ -163,6 +169,7 @@ function getOrCreateRemoteVideo(peerId: string, isScreen: boolean = false): HTML
 
             // Show the main stage and enable annotations
             mainStage.classList.remove('hidden');
+            recordButton.disabled = false;
             enableAnnotations();
         } else {
             // Camera video goes to sidebar
@@ -189,6 +196,12 @@ function removeRemoteVideo(peerId: string): void {
     // Remove screen share - hide main stage
     const screenVideo = document.getElementById(`screen-${peerId}`);
     if (screenVideo) {
+        // Stop recording if active
+        if (isRecording) {
+            stopRecording();
+        }
+        recordButton.disabled = true;
+
         screenShareContainer.innerHTML = '';
         mainStage.classList.add('hidden');
         // Disable annotations and clear canvas
@@ -1174,13 +1187,20 @@ function showLocalScreenShare(stream: MediaStream): void {
 
     mainStage.classList.remove('hidden');
 
-    // Enable annotations
+    // Enable recording and annotations
+    recordButton.disabled = false;
     enableAnnotations();
 }
 
 function hideLocalScreenShare(): void {
     const preview = document.getElementById('local-screen-preview');
     if (preview) {
+        // Stop recording if active
+        if (isRecording) {
+            stopRecording();
+        }
+        recordButton.disabled = true;
+
         screenShareContainer.innerHTML = '';
         mainStage.classList.add('hidden');
         // Disable annotations and clear canvas
@@ -1213,5 +1233,160 @@ screenShareButton.onclick = async (): Promise<void> => {
         await stopScreenShare();
     } else {
         await startScreenShare();
+    }
+};
+
+// ─── Screen Recording ────────────────────────────────────────────────────────
+
+let recordingCanvas: HTMLCanvasElement | null = null;
+let recordingCtx: CanvasRenderingContext2D | null = null;
+let recordingAnimationId: number | null = null;
+
+function startRecordingLoop(videoElement: HTMLVideoElement): void {
+    if (!recordingCanvas || !recordingCtx) return;
+
+    // Draw the video
+    const videoRect = videoElement.getBoundingClientRect();
+    const mainRect = mainStage.getBoundingClientRect();
+
+    // Calculate video position within main stage
+    const offsetX = videoRect.left - mainRect.left;
+    const offsetY = videoRect.top - mainRect.top;
+
+    // Clear and draw video
+    recordingCtx.fillStyle = '#1a1a2e';
+    recordingCtx.fillRect(0, 0, recordingCanvas.width, recordingCanvas.height);
+    recordingCtx.drawImage(videoElement, offsetX, offsetY, videoRect.width, videoRect.height);
+
+    // Draw annotations overlay
+    recordingCtx.drawImage(annotationCanvas, 0, 0);
+
+    if (isRecording) {
+        recordingAnimationId = requestAnimationFrame(() => startRecordingLoop(videoElement));
+    }
+}
+
+function getRecordableStream(): MediaStream | null {
+    // Try to get the screen share video element (local or remote)
+    const localPreview = document.getElementById('local-screen-preview') as HTMLVideoElement | null;
+    const remoteScreen = screenShareContainer.querySelector('video') as HTMLVideoElement | null;
+
+    const videoElement = localPreview || remoteScreen;
+    if (!videoElement || !videoElement.srcObject) {
+        return null;
+    }
+
+    // Create a canvas to capture both video and annotations
+    recordingCanvas = document.createElement('canvas');
+    recordingCtx = recordingCanvas.getContext('2d')!;
+
+    // Match the main stage dimensions
+    const rect = mainStage.getBoundingClientRect();
+    recordingCanvas.width = rect.width;
+    recordingCanvas.height = rect.height;
+
+    // Get stream from canvas
+    const canvasStream = recordingCanvas.captureStream(30);
+
+    // Try to add audio from the video source
+    const sourceStream = videoElement.srcObject as MediaStream;
+    const audioTracks = sourceStream.getAudioTracks();
+    if (audioTracks.length > 0) {
+        canvasStream.addTrack(audioTracks[0].clone());
+    }
+
+    return canvasStream;
+}
+
+function startRecording(): void {
+    // Try to get the screen share video element (local or remote)
+    const localPreview = document.getElementById('local-screen-preview') as HTMLVideoElement | null;
+    const remoteScreen = screenShareContainer.querySelector('video') as HTMLVideoElement | null;
+    const videoElement = localPreview || remoteScreen;
+
+    if (!videoElement) {
+        alert('No screen share to record. Start or view a screen share first.');
+        return;
+    }
+
+    const stream = getRecordableStream();
+    if (!stream) {
+        alert('No screen share to record. Start or view a screen share first.');
+        return;
+    }
+
+    recordedChunks = [];
+    isRecording = true;
+
+    // Start the capture loop now that isRecording is true
+    startRecordingLoop(videoElement);
+
+    // Use VP9 for better quality, fallback to VP8
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+        ? 'video/webm;codecs=vp9'
+        : 'video/webm;codecs=vp8';
+
+    mediaRecorder = new MediaRecorder(stream, {
+        mimeType,
+        videoBitsPerSecond: 5000000, // 5 Mbps
+    });
+
+    mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+            recordedChunks.push(event.data);
+        }
+    };
+
+    mediaRecorder.onstop = () => {
+        // Create and download the recording
+        const blob = new Blob(recordedChunks, { type: mimeType });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `recording-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.webm`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        URL.revokeObjectURL(url);
+        recordedChunks = [];
+
+        appendMessage('📹 Recording saved!');
+    };
+
+    mediaRecorder.start(1000); // Collect data every second
+
+    recordButton.textContent = '⏹ Stop';
+    recordButton.classList.add('recording');
+
+    appendMessage('📹 Recording started...');
+}
+
+function stopRecording(): void {
+    isRecording = false;
+
+    if (recordingAnimationId) {
+        cancelAnimationFrame(recordingAnimationId);
+        recordingAnimationId = null;
+    }
+
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+    }
+
+    mediaRecorder = null;
+    recordingCanvas = null;
+    recordingCtx = null;
+
+    recordButton.textContent = '⏺ Record';
+    recordButton.classList.remove('recording');
+}
+
+recordButton.onclick = (): void => {
+    if (isRecording) {
+        stopRecording();
+    } else {
+        startRecording();
     }
 };
