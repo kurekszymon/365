@@ -67,7 +67,6 @@ const screenShareContainer = document.getElementById('screenShareContainer') as 
 // Annotation elements
 const annotationCanvas = document.getElementById('annotationCanvas') as HTMLCanvasElement;
 const labelsCanvas = document.getElementById('labelsCanvas') as HTMLCanvasElement;
-const annotationToolbar = document.getElementById('annotationToolbar') as HTMLDivElement;
 const drawTool = document.getElementById('drawTool') as HTMLButtonElement;
 const eraserTool = document.getElementById('eraserTool') as HTMLButtonElement;
 const colorPicker = document.getElementById('colorPicker') as HTMLInputElement;
@@ -1058,19 +1057,29 @@ function disableAnnotations(): void {
     annotationCanvas.classList.remove('drawing', 'erasing');
 }
 
+const toggleActiveToolbarBtn = (btn: HTMLButtonElement) => {
+    [drawTool, eraserTool, toggleAnnotationsBtn].forEach(el => el.classList.remove('active'));
+
+    btn.classList.add('active');
+};
+
 // Tool button handlers
 drawTool.onclick = () => {
     currentTool = 'draw';
-    drawTool.classList.add('active');
-    eraserTool.classList.remove('active');
+    if (!annotationsVisible) {
+        annotationsVisible = !annotationsVisible;
+    }
+    toggleActiveToolbarBtn(drawTool);
     annotationCanvas.classList.remove('erasing');
     annotationCanvas.classList.add('drawing');
 };
 
 eraserTool.onclick = () => {
     currentTool = 'eraser';
-    eraserTool.classList.add('active');
-    drawTool.classList.remove('active');
+    if (!annotationsVisible) {
+        annotationsVisible = !annotationsVisible;
+    }
+    toggleActiveToolbarBtn(eraserTool);
     annotationCanvas.classList.remove('drawing');
     annotationCanvas.classList.add('erasing');
 };
@@ -1078,9 +1087,11 @@ eraserTool.onclick = () => {
 clearCanvasBtn.onclick = () => clearAnnotationCanvas(true);
 
 toggleAnnotationsBtn.onclick = () => {
-    annotationsVisible = !annotationsVisible;
-    annotationCanvas.style.opacity = annotationsVisible ? '1' : '0';
-    toggleAnnotationsBtn.textContent = annotationsVisible ? '👆' : '🚫';
+    if (annotationsVisible) {
+        annotationsVisible = !annotationsVisible;
+    }
+
+    toggleActiveToolbarBtn(toggleAnnotationsBtn);
 };
 
 // Canvas event listeners
