@@ -680,6 +680,7 @@ startButton.onclick = async (): Promise<void> => {
     startButton.disabled = true;
     hangupButton.disabled = false;
     screenShareButton.disabled = false;
+    recordButton.disabled = false; // Enable recording when camera starts
 
     // Start producing
     await produceMedia();
@@ -708,6 +709,7 @@ hangupButton.onclick = async (): Promise<void> => {
     startButton.disabled = false;
     hangupButton.disabled = true;
     screenShareButton.disabled = true;
+    recordButton.disabled = true; // Disable recording when camera stops
 
     if (dcStatus) dcStatus.textContent = 'Chat: disconnected';
 };
@@ -1242,84 +1244,265 @@ let recordingCanvas: HTMLCanvasElement | null = null;
 let recordingCtx: CanvasRenderingContext2D | null = null;
 let recordingAnimationId: number | null = null;
 
-function startRecordingLoop(videoElement: HTMLVideoElement): void {
+// Recording dimensions
+const RECORDING_WIDTH = 1920;
+const RECORDING_HEIGHT = 1080;
+const THUMBNAIL_WIDTH = 160;
+const THUMBNAIL_HEIGHT = 90;
+const THUMBNAIL_GAP = 8;
+const THUMBNAIL_MARGIN = 16;
+
+function getParticipantVideos(): HTMLVideoElement[] {
+    const videos: HTMLVideoElement[] = [];
+
+    // Add local video if active
+    if (localVideo.srcObject) {
+        videos.push(localVideo);
+    }
+
+    // Add all remote camera videos (not screen shares)
+    const remoteVideoElements = remoteVideosContainer.querySelectorAll('video');
+    remoteVideoElements.forEach(v => videos.push(v as HTMLVideoElement));
+
+    return videos;
+}
+
+function drawVideoMaintainAspect(
+    ctx: CanvasRenderingContext2D,
+    video: HTMLVideoElement,
+    x: number, y: number,
+    maxWidth: number, maxHeight: number,
+    fillBackground: boolean = true
+): void {
+    if (!video.videoWidth || !video.videoHeight) return;
+
+    const videoAspect = video.videoWidth / video.videoHeight;
+    const containerAspect = maxWidth / maxHeight;
+
+    let drawWidth = maxWidth;
+    let drawHeight = maxHeight;
+    let drawX = x;
+    let drawY = y;
+
+    if (videoAspect > containerAspect) {
+        drawHeight = maxWidth / videoAspect;
+        drawY = y + (maxHeight - drawHeight) / 2;
+    } else {
+        drawWidth = maxHeight * videoAspect;
+        drawX = x + (maxWidth - drawWidth) / 2;
+    }
+
+    if (fillBackground) {
+        ctx.fillStyle = '#2d2d44';
+        ctx.fillRect(x, y, maxWidth, maxHeight);
+    }
+
+    ctx.drawImage(video, drawX, drawY, drawWidth, drawHeight);
+}
+
+function drawThumbnailStrip(ctx: CanvasRenderingContext2D, videos: HTMLVideoElement[]): void {
+    if (videos.length === 0) return;
+
+    // Position thumbnails at bottom-right
+    const stripWidth = videos.length * (THUMBNAIL_WIDTH + THUMBNAIL_GAP) - THUMBNAIL_GAP;
+    const startX = RECORDING_WIDTH - stripWidth - THUMBNAIL_MARGIN;
+    const startY = RECORDING_HEIGHT - THUMBNAIL_HEIGHT - THUMBNAIL_MARGIN;
+
+    videos.forEach((video, index) => {
+        const x = startX + index * (THUMBNAIL_WIDTH + THUMBNAIL_GAP);
+        const y = startY;
+
+        // Draw thumbnail background with rounded corners
+        ctx.fillStyle = '#2d2d44';
+        ctx.beginPath();
+        ctx.roundRect(x, y, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, 6);
+        ctx.fill();
+
+        // Draw video
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(x, y, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, 6);
+        ctx.clip();
+        drawVideoMaintainAspect(ctx, video, x, y, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, false);
+        ctx.restore();
+
+        // Draw label
+        const label = video === localVideo ? 'You' : `P${index + 1}`; // todo show peer id
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.beginPath();
+        ctx.roundRect(x, y + THUMBNAIL_HEIGHT - 20, THUMBNAIL_WIDTH, 20, [0, 0, 6, 6]);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText(label, x + 6, y + THUMBNAIL_HEIGHT - 6);
+
+        ctx.strokeStyle = video === localVideo ? '#3498db' : 'rgba(255,255,255,0.3)'; // todo add actual detection
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(x, y, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, 6);
+        ctx.stroke();
+    });
+}
+
+function drawParticipantGrid(ctx: CanvasRenderingContext2D, videos: HTMLVideoElement[]): void {
+    if (videos.length === 0) return;
+
+    // Calculate grid layout
+    const cols = Math.ceil(Math.sqrt(videos.length));
+    const rows = Math.ceil(videos.length / cols);
+    const cellWidth = RECORDING_WIDTH / cols;
+    const cellHeight = RECORDING_HEIGHT / rows;
+    const padding = 4;
+
+    videos.forEach((video, index) => {
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+        const x = col * cellWidth + padding;
+        const y = row * cellHeight + padding;
+        const w = cellWidth - padding * 2;
+        const h = cellHeight - padding * 2;
+
+        // Draw video with rounded corners
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, 8);
+        ctx.clip();
+        drawVideoMaintainAspect(ctx, video, x, y, w, h);
+        ctx.restore();
+
+        // Draw label
+        const label = video === localVideo ? 'You' : `Peer ${index}`;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.beginPath();
+        ctx.roundRect(x, y + h - 28, w, 28, [0, 0, 8, 8]);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillText(label, x + 12, y + h - 9);
+    });
+}
+
+function startRecordingLoop(): void {
     if (!recordingCanvas || !recordingCtx) return;
 
-    // Draw the video
-    const videoRect = videoElement.getBoundingClientRect();
-    const mainRect = mainStage.getBoundingClientRect();
+    const ctx = recordingCtx;
 
-    // Calculate video position within main stage
-    const offsetX = videoRect.left - mainRect.left;
-    const offsetY = videoRect.top - mainRect.top;
+    // Clear canvas
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, RECORDING_WIDTH, RECORDING_HEIGHT);
 
-    // Clear and draw video
-    recordingCtx.fillStyle = '#1a1a2e';
-    recordingCtx.fillRect(0, 0, recordingCanvas.width, recordingCanvas.height);
-    recordingCtx.drawImage(videoElement, offsetX, offsetY, videoRect.width, videoRect.height);
+    // Get screen share video (local or remote)
+    const localPreview = document.getElementById('local-screen-preview') as HTMLVideoElement | null;
+    const remoteScreen = screenShareContainer.querySelector('video') as HTMLVideoElement | null;
+    const screenVideo = localPreview || remoteScreen;
 
-    // Draw annotations overlay
-    recordingCtx.drawImage(annotationCanvas, 0, 0);
+    // Get participant videos
+    const participantVideos = getParticipantVideos();
+
+    if (screenVideo) {
+        // Teams-style layout: Screen share main + participant thumbnails
+
+        // Draw screen share as main content (full canvas with padding for thumbnails)
+        const mainHeight = RECORDING_HEIGHT - (participantVideos.length > 0 ? THUMBNAIL_HEIGHT + THUMBNAIL_MARGIN * 2 : 0);
+        drawVideoMaintainAspect(ctx, screenVideo, 0, 0, RECORDING_WIDTH, mainHeight);
+
+        // Draw annotations overlay (scale to match)
+        if (annotationCanvas.width > 0 && annotationCanvas.height > 0) {
+            const scaleX = RECORDING_WIDTH / annotationCanvas.width;
+            const scaleY = mainHeight / annotationCanvas.height;
+            const scale = Math.min(scaleX, scaleY);
+            const scaledW = annotationCanvas.width * scale;
+            const scaledH = annotationCanvas.height * scale;
+            const offsetX = (RECORDING_WIDTH - scaledW) / 2;
+            const offsetY = (mainHeight - scaledH) / 2;
+            ctx.drawImage(annotationCanvas, offsetX, offsetY, scaledW, scaledH);
+        }
+
+        // Draw "LIVE" indicator for local screen share
+        if (localPreview) {
+            ctx.fillStyle = '#e74c3c';
+            ctx.beginPath();
+            ctx.roundRect(16, 16, 60, 24, 4);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillText('● LIVE', 24, 33);
+        }
+
+        // Draw participant thumbnails at bottom
+        if (participantVideos.length > 0) {
+            drawThumbnailStrip(ctx, participantVideos);
+        }
+    } else if (participantVideos.length > 0) {
+        // No screen share - just show participant grid
+        drawParticipantGrid(ctx, participantVideos);
+    }
+
+    // Draw timestamp
+    const now = new Date();
+    const timestamp = now.toLocaleTimeString();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(RECORDING_WIDTH - 80, 12, 68, 22);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '12px monospace';
+    ctx.fillText(timestamp, RECORDING_WIDTH - 74, 27);
 
     if (isRecording) {
-        recordingAnimationId = requestAnimationFrame(() => startRecordingLoop(videoElement));
+        recordingAnimationId = requestAnimationFrame(startRecordingLoop);
     }
 }
 
 function getRecordableStream(): MediaStream | null {
-    // Try to get the screen share video element (local or remote)
+    // Check for any recordable content
     const localPreview = document.getElementById('local-screen-preview') as HTMLVideoElement | null;
     const remoteScreen = screenShareContainer.querySelector('video') as HTMLVideoElement | null;
+    const hasScreenShare = !!(localPreview || remoteScreen);
+    const participantVideos = getParticipantVideos();
 
-    const videoElement = localPreview || remoteScreen;
-    if (!videoElement || !videoElement.srcObject) {
+    if (!hasScreenShare && participantVideos.length === 0) {
         return null;
     }
 
-    // Create a canvas to capture both video and annotations
+    // Create canvas for recording
     recordingCanvas = document.createElement('canvas');
+    recordingCanvas.width = RECORDING_WIDTH;
+    recordingCanvas.height = RECORDING_HEIGHT;
     recordingCtx = recordingCanvas.getContext('2d')!;
 
-    // Match the main stage dimensions
-    const rect = mainStage.getBoundingClientRect();
-    recordingCanvas.width = rect.width;
-    recordingCanvas.height = rect.height;
-
-    // Get stream from canvas
+    // Get canvas stream
     const canvasStream = recordingCanvas.captureStream(30);
 
-    // Try to add audio from the video source
-    const sourceStream = videoElement.srcObject as MediaStream;
-    const audioTracks = sourceStream.getAudioTracks();
-    if (audioTracks.length > 0) {
-        canvasStream.addTrack(audioTracks[0].clone());
+    // Try to add audio - prefer screen share audio, fallback to local audio
+    const screenVideo = localPreview || remoteScreen;
+    if (screenVideo?.srcObject) {
+        const sourceStream = screenVideo.srcObject as MediaStream;
+        const audioTracks = sourceStream.getAudioTracks();
+        if (audioTracks.length > 0) {
+            canvasStream.addTrack(audioTracks[0].clone());
+        }
+    } else if (localStream) {
+        // Use local microphone audio
+        const audioTracks = localStream.getAudioTracks();
+        if (audioTracks.length > 0) {
+            canvasStream.addTrack(audioTracks[0].clone());
+        }
     }
 
     return canvasStream;
 }
 
 function startRecording(): void {
-    // Try to get the screen share video element (local or remote)
-    const localPreview = document.getElementById('local-screen-preview') as HTMLVideoElement | null;
-    const remoteScreen = screenShareContainer.querySelector('video') as HTMLVideoElement | null;
-    const videoElement = localPreview || remoteScreen;
-
-    if (!videoElement) {
-        alert('No screen share to record. Start or view a screen share first.');
-        return;
-    }
-
     const stream = getRecordableStream();
     if (!stream) {
-        alert('No screen share to record. Start or view a screen share first.');
+        alert('No video to record. Start your camera or view a screen share first.');
         return;
     }
 
     recordedChunks = [];
     isRecording = true;
 
-    // Start the capture loop now that isRecording is true
-    startRecordingLoop(videoElement);
+    // Start the capture loop
+    startRecordingLoop();
 
     // Use VP9 for better quality, fallback to VP8
     const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
@@ -1338,7 +1521,6 @@ function startRecording(): void {
     };
 
     mediaRecorder.onstop = () => {
-        // Create and download the recording
         const blob = new Blob(recordedChunks, { type: mimeType });
         const url = URL.createObjectURL(blob);
 
@@ -1355,12 +1537,12 @@ function startRecording(): void {
         appendMessage('📹 Recording saved!');
     };
 
-    mediaRecorder.start(1000); // Collect data every second
+    mediaRecorder.start(1000);
 
     recordButton.textContent = '⏹ Stop';
     recordButton.classList.add('recording');
 
-    appendMessage('📹 Recording started...');
+    appendMessage('📹 Session recording started...');
 }
 
 function stopRecording(): void {
