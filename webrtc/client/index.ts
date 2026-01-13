@@ -20,6 +20,11 @@ const remoteStreams = new Map<string, MediaStream>();
 let mediaRecorder: MediaRecorder | null = null;
 let recordedChunks: Blob[] = [];
 let isRecording = false;
+let recordingStartTime: number = 0;
+let recordingTimerInterval: ReturnType<typeof setInterval> | null = null;
+
+// Track which peers are recording
+const peersRecording = new Set<string>();
 
 // Track consumer to peer/type mapping for cleanup
 const consumerInfo = new Map<string, { peerId: string; isScreen: boolean; }>();
@@ -57,6 +62,9 @@ const startButton = document.getElementById('startButton') as HTMLButtonElement;
 const hangupButton = document.getElementById('hangupButton') as HTMLButtonElement;
 const screenShareButton = document.getElementById('screenShareButton') as HTMLButtonElement;
 const recordButton = document.getElementById('recordButton') as HTMLButtonElement;
+const recordingTimer = document.getElementById('recordingTimer') as HTMLSpanElement;
+const recordingIndicator = document.getElementById('recordingIndicator') as HTMLDivElement;
+const recordingBy = document.getElementById('recordingBy') as HTMLSpanElement;
 
 const localVideo = document.getElementById('localVideo') as HTMLVideoElement;
 const remoteVideosContainer = document.getElementById('remoteVideos') as HTMLDivElement;
@@ -604,6 +612,33 @@ function handleDataChannelMessage(from: string, payload: any): void {
     } else if (payload.msgType === 'annotation-clear') {
         // Clear canvas when remote peer clears
         clearAnnotationCanvas(false);
+    } else if (payload.msgType === 'recording-status') {
+        // Handle peer recording status
+        handlePeerRecordingStatus(from, payload.isRecording);
+    }
+}
+
+function handlePeerRecordingStatus(peerId: string, isRecording: boolean): void {
+    if (isRecording) {
+        peersRecording.add(peerId);
+    } else {
+        peersRecording.delete(peerId);
+    }
+    updateRecordingIndicator();
+}
+
+function updateRecordingIndicator(): void {
+    if (peersRecording.size === 0) {
+        recordingIndicator.classList.add('hidden');
+    } else {
+        recordingIndicator.classList.remove('hidden');
+        if (peersRecording.size === 1) {
+            const peerId = [...peersRecording][0];
+            recordingBy.textContent = `${peerId.slice(-6)}... is recording`;
+        } // TODO handle case for everyone is recording
+        else {
+            recordingBy.textContent = `${peersRecording.size} peers are recording`;
+        }
     }
 }
 
@@ -1550,14 +1585,41 @@ function startRecording(): void {
 
     mediaRecorder.start(1000);
 
+    // Start timer
+    recordingStartTime = Date.now();
+    recordingTimer.classList.remove('hidden');
+    recordingTimerInterval = setInterval(updateRecordingTimer, 1000);
+    updateRecordingTimer();
+
     recordButton.textContent = '⏹ Stop';
     recordButton.classList.add('recording');
+
+    // Broadcast recording status to peers
+    send({
+        type: 'dataChannelMessage',
+        payload: { msgType: 'recording-status', isRecording: true },
+    });
 
     appendMessage('📹 Session recording started...');
 }
 
+function updateRecordingTimer(): void {
+    const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+    const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+    const seconds = (elapsed % 60).toString().padStart(2, '0');
+    recordingTimer.textContent = `${minutes}:${seconds}`;
+}
+
 function stopRecording(): void {
     isRecording = false;
+
+    // Stop timer
+    if (recordingTimerInterval) {
+        clearInterval(recordingTimerInterval);
+        recordingTimerInterval = null;
+    }
+    recordingTimer.classList.add('hidden');
+    recordingTimer.textContent = '00:00';
 
     if (recordingAnimationId) {
         cancelAnimationFrame(recordingAnimationId);
@@ -1574,6 +1636,12 @@ function stopRecording(): void {
 
     recordButton.textContent = '⏺ Record';
     recordButton.classList.remove('recording');
+
+    // Broadcast recording stopped to peers
+    send({
+        type: 'dataChannelMessage',
+        payload: { msgType: 'recording-status', isRecording: false },
+    });
 }
 
 recordButton.onclick = (): void => {

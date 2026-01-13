@@ -41,6 +41,60 @@ button#recordButton.recording {
     }
 }
 
+/* Recording timer */
+.recording-timer {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    background: #e74c3c;
+    color: white;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 14px;
+    font-weight: bold;
+    margin-right: 10px;
+    animation: pulse-record 1.5s infinite;
+}
+
+.recording-timer.hidden {
+    display: none;
+}
+
+/* Recording indicator (for peers) */
+.recording-indicator {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: rgba(231, 76, 60, 0.95);
+    color: white;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 1001;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.recording-indicator.hidden {
+    display: none;
+}
+
+.recording-indicator .rec-dot {
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    border-radius: 50%;
+    animation: blink-dot 1s infinite;
+}
+
+@keyframes blink-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
 /* ─── Teams-like Layout ─────────────────────────────────────────────────────── */
 
 .videos-grid {

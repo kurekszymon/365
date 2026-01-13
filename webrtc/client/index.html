@@ -56,7 +56,14 @@
             <button id="hangupButton">Stop Camera</button>
             <button id="screenShareButton">Share Screen</button>
             <button id="recordButton" disabled>⏺ Record</button>
+            <span id="recordingTimer" class="recording-timer hidden">00:00</span>
             <button id="toggleChatButton">💬 Chat</button>
+        </div>
+
+        <!-- Recording indicator (shown when any peer is recording) -->
+        <div id="recordingIndicator" class="recording-indicator hidden">
+            <span class="rec-dot"></span>
+            <span id="recordingBy">Recording</span>
         </div>
 
         <!-- Collapsible Chat Sidebar -->
