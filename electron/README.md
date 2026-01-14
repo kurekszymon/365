@@ -9,3 +9,13 @@ The executable runs the JavaScript entry point found in the main property of you
 Renderer processes (or renderers for short) are responsible for displaying graphical content. You can load a web page into a renderer by pointing it to either a web address or a local HTML file. Renderers behave very similarly to regular web pages and have access to the same web APIs.
 
 Preload scripts are injected before a web page loads in the renderer, similar to a Chrome extension's content scripts. To add features to your renderer that require privileged access, you can define global objects through the contextBridge API.
+
+
+A preload script contains code that runs before your web page is loaded into the browser window. It has access to both DOM APIs and Node.js environment, and is often used to expose privileged APIs to the renderer via the contextBridge API.
+
+Because the main and renderer processes have very different responsibilities, Electron apps often use the preload script to set up inter-process communication (IPC) interfaces to pass arbitrary messages between the two kinds of processes.
+
+read more on process model
+https://www.electronjs.org/docs/latest/tutorial/process-model
+read more on IPC
+https://www.electronjs.org/docs/latest/tutorial/ipc
