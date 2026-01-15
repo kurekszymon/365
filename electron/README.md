@@ -19,3 +19,8 @@ read more on process model
 https://www.electronjs.org/docs/latest/tutorial/process-model
 read more on IPC
 https://www.electronjs.org/docs/latest/tutorial/ipc
+
+
+# electron-forge
+use forge to package and distribute your app
+apps need to be packaged to use deep linking
