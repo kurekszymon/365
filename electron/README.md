@@ -1,6 +1,10 @@
 # electron
 
-notes from docs
+## idea
+
+idea is to have a running webapp and run it inside electron, check how to use broadcast channel in connection with ipc / renderers and main processes, how to pass values from outside to inside.
+
+## notes from docs
 
 Many of Electron's core modules are Node.js event emitters that adhere to Node's asynchronous event-driven architecture. The app module is one of these emitters.
 
