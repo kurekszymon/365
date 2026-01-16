@@ -10,7 +10,11 @@ const createWindow = () => {
         }
     });
 
-    win.loadFile('index.html');
+    win.loadFile('../19/dist/index.html', {
+        query: {
+            id: '123', name: 'test'
+        }
+    });
 };
 
 app.whenReady().then(() => {
