@@ -1,15 +1,23 @@
 {
-  "name": "electron",
-  "packageManager": "yarn@4.12.0",
-  "main": "main.js",
-  "version": "0.0.1",
+  "name": "electron-app",
+  "productName": "electron",
+  "version": "1.0.0",
+  "description": "description required",
+  "main": ".vite/build/main.js",
+  "private": true,
   "scripts": {
-    "start": "electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
-    "build:renderer": "cd ../19 && yarn build",
-    "dev": "yarn build:renderer && yarn start"
+    "copy:renderer": "cp ../19/dist/index.html . && cp -r ../19/dist/assets ./assets",
+    "start": "yarn copy:renderer && electron-forge start",
+    "package": "yarn copy:renderer && electron-forge package",
+    "make": "yarn copy:renderer && electron-forge make",
+    "publish": "electron-forge publish",
+    "lint": "eslint --ext .ts,.tsx ."
   },
+  "keywords": [],
+  "author": {
+    "name": "Szymon Kurek"
+  },
+  "license": "MIT",
   "devDependencies": {
     "@electron-forge/cli": "^7.11.1",
     "@electron-forge/maker-deb": "^7.11.1",
@@ -18,8 +26,16 @@
     "@electron-forge/maker-zip": "^7.11.1",
     "@electron-forge/plugin-auto-unpack-natives": "^7.11.1",
     "@electron-forge/plugin-fuses": "^7.11.1",
-    "@electron/fuses": "^1.0.0",
-    "electron": "^39.2.7"
+    "@electron-forge/plugin-vite": "^7.11.1",
+    "@electron/fuses": "^1.8.0",
+    "@types/electron-squirrel-startup": "^1.0.2",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "electron": "40.0.0",
+    "eslint": "^8.57.1",
+    "eslint-plugin-import": "^2.32.0",
+    "typescript": "~4.5.4",
+    "vite": "^5.4.21"
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.1"

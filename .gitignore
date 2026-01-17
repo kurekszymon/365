@@ -1,2 +1,4 @@
 */**/node_modules
 */overview
+.DS_Store
+./*/DS_Store
