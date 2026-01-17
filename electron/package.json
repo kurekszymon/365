@@ -6,7 +6,9 @@
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "electron-forge make",
+    "build:renderer": "cd ../19 && yarn build",
+    "dev": "yarn build:renderer && yarn start"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.11.1",

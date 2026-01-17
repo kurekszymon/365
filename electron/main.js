@@ -15,10 +15,22 @@ const createWindow = () => {
             id: '123', name: 'test'
         }
     });
+
+    mainWindow.webContents.openDevTools();
 };
 
 app.whenReady().then(() => {
     ipcMain.handle('ping', () => 'pong');
+
+
+    ipcMain.on('message-from-renderer', (_, data) => {
+        console.log('Main received:', data);
+
+        BrowserWindow.getAllWindows().forEach(win => {
+            win.webContents.send('message-from-main', data);
+        });
+    });
+
 
     createWindow();
 

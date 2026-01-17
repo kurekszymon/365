@@ -7,3 +7,8 @@ contextBridge.exposeInMainWorld('versions', {
 
     ping: () => ipcRenderer.invoke('ping') // never directly expose ipcRenderer
 });
+
+contextBridge.exposeInMainWorld('electronAPI', {
+    sendMessage: (data) => ipcRenderer.send('message-from-renderer', data),
+    onMessage: (callback) => ipcRenderer.on('message-from-main', (event, data) => callback(data))
+});
