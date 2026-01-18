@@ -1,6 +1,6 @@
 {
-  "name": "electron-app",
-  "productName": "electron",
+  "name": "electron",
+  "productName": "electron-product",
   "version": "1.0.0",
   "description": "description required",
   "main": ".vite/build/main.js",

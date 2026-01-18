@@ -2679,31 +2679,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-app@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "electron-app@workspace:."
-  dependencies:
-    "@electron-forge/cli": "npm:^7.11.1"
-    "@electron-forge/maker-deb": "npm:^7.11.1"
-    "@electron-forge/maker-rpm": "npm:^7.11.1"
-    "@electron-forge/maker-squirrel": "npm:^7.11.1"
-    "@electron-forge/maker-zip": "npm:^7.11.1"
-    "@electron-forge/plugin-auto-unpack-natives": "npm:^7.11.1"
-    "@electron-forge/plugin-fuses": "npm:^7.11.1"
-    "@electron-forge/plugin-vite": "npm:^7.11.1"
-    "@electron/fuses": "npm:^1.8.0"
-    "@types/electron-squirrel-startup": "npm:^1.0.2"
-    "@typescript-eslint/eslint-plugin": "npm:^5.62.0"
-    "@typescript-eslint/parser": "npm:^5.62.0"
-    electron: "npm:40.0.0"
-    electron-squirrel-startup: "npm:^1.0.1"
-    eslint: "npm:^8.57.1"
-    eslint-plugin-import: "npm:^2.32.0"
-    typescript: "npm:~4.5.4"
-    vite: "npm:^5.4.21"
-  languageName: unknown
-  linkType: soft
-
 "electron-installer-common@npm:^0.10.2":
   version: 0.10.4
   resolution: "electron-installer-common@npm:0.10.4"
@@ -2805,6 +2780,31 @@ __metadata:
   checksum: 10c0/acd42835a64f007817ba43969d7bdd1281f109f26fbf4c6639208a8262b80ee1b89dfb844a30de694baa152ff4afc1be1d1e09b0a69629a57be03f9bbf3f9416
   languageName: node
   linkType: hard
+
+"electron@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "electron@workspace:."
+  dependencies:
+    "@electron-forge/cli": "npm:^7.11.1"
+    "@electron-forge/maker-deb": "npm:^7.11.1"
+    "@electron-forge/maker-rpm": "npm:^7.11.1"
+    "@electron-forge/maker-squirrel": "npm:^7.11.1"
+    "@electron-forge/maker-zip": "npm:^7.11.1"
+    "@electron-forge/plugin-auto-unpack-natives": "npm:^7.11.1"
+    "@electron-forge/plugin-fuses": "npm:^7.11.1"
+    "@electron-forge/plugin-vite": "npm:^7.11.1"
+    "@electron/fuses": "npm:^1.8.0"
+    "@types/electron-squirrel-startup": "npm:^1.0.2"
+    "@typescript-eslint/eslint-plugin": "npm:^5.62.0"
+    "@typescript-eslint/parser": "npm:^5.62.0"
+    electron: "npm:40.0.0"
+    electron-squirrel-startup: "npm:^1.0.1"
+    eslint: "npm:^8.57.1"
+    eslint-plugin-import: "npm:^2.32.0"
+    typescript: "npm:~4.5.4"
+    vite: "npm:^5.4.21"
+  languageName: unknown
+  linkType: soft
 
 "emoji-regex@npm:^8.0.0":
   version: 8.0.0
