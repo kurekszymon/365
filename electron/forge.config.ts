@@ -10,6 +10,12 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses';
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    protocols: [
+      {
+        name: 'Custom protocol',
+        schemes: ['electron-protocol']
+      }
+    ]
   },
   rebuildConfig: {},
   makers: [

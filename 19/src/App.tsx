@@ -54,6 +54,10 @@ function App() {
 
       <button onClick={handleSendMessage}>Send Message</button>
       <button onClick={handlePing}>Ping</button>
+
+      <button onClick={() => {
+        window.open('electron-protocol://open');
+      }}>open in electron</button>
     </>
   );
 }
