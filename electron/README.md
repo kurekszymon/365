@@ -4,6 +4,15 @@
 
 idea is to have a running webapp and run it inside electron, check how to use broadcast channel in connection with ipc / renderers and main processes, how to pass values from outside to inside.
 
+## communication
+<!-- feels like im trying to add broadcast channel everywhere. -->
+
+broadcast channel feels not needed, seems like renderer is a frontend app that gets rendered by the node process (main).
+you can communicate with renderer, using IPC, or you can also pass url params when using `loadFile(file, opts)`.
+im yet to discover how to pass it to loadURL, as it seems to be ignored (it's valid for vite dev server, and not applied in electron.)
+
+to open electron app from web you'd need to setup custom protocol - define it in `main` and register in `forge.config`
+
 ## notes from docs
 
 Many of Electron's core modules are Node.js event emitters that adhere to Node's asynchronous event-driven architecture. The app module is one of these emitters.
