@@ -9,7 +9,16 @@ idea is to have a running webapp and run it inside electron, check how to use br
 
 broadcast channel feels not needed, seems like renderer is a frontend app that gets rendered by the node process (main).
 you can communicate with renderer, using IPC, or you can also pass url params when using `loadFile(file, opts)`.
-im yet to discover how to pass it to loadURL, as it seems to be ignored (it's valid for vite dev server, and not applied in electron.)
+~~im yet to discover how to pass it to loadURL, as it seems to be ignored (it's valid for vite dev server, and not applied in electron.)~~
+with `loadURL` it as straight forward as it gets (don't know why it wouldn't work initially but it seems fine now.)
+```
+const url = new URL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+url.searchParams.append('name', '123');
+url.searchParams.append('id', '456');
+
+mainWindow.loadURL(url.toString()) // works
+mainWindow.loadURL(`${MAIN_WINDOW_VITE_DEV_SERVER_URL}?name=123&id=456`); // works too
+```
 
 to open electron app from web you'd need to setup custom protocol - define it in `main` and register in `forge.config`
 
