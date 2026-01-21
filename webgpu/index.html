@@ -1,0 +1,62 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>WebGPU Life</title>
+</head>
+
+<body>
+  <canvas width="512" height="512"></canvas>
+  <script type="module">
+    const canvas = document.querySelector("canvas");
+
+
+    // setup webgpu
+    if (!navigator.gpu) {
+      throw new Error("WebGPU not supported on this browser.");
+    }
+
+    const adapter = await navigator.gpu.requestAdapter();
+    if (!adapter) {
+      throw new Error("No appropriate GPUAdapter found.");
+    }
+
+    const device = await adapter.requestDevice();
+
+
+    // draw
+    const encoder = device.createCommandEncoder(); // interface for recording gpu commands
+    const context = canvas.getContext("webgpu");
+    const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
+
+    context.configure({
+      device: device,
+      format: canvasFormat,
+    });
+
+    const pass = encoder.beginRenderPass({
+      colorAttachments: [{
+        view: context.getCurrentTexture().createView(),
+        loadOp: "clear", // indicates what to do on texture load
+        clearValue: [0, 0.5, 0, 1], //  pass colors as arra7 shorthand
+        clearValue: { r: 0, g: 0, b: 0.4, a: 1 }, // pass colors as an object
+        storeOp: "store", // what to do with results of drawings
+      }]
+    });
+
+    pass.end();
+
+    // // calling commands like beginRenderPass or pass.end() doesn't do anything
+    // // it records the commands for the gpu to do later -> that's probably why we use this encoder
+
+    device.queue.submit([encoder.finish()])
+
+    console.log(adapter, navigator.gpu, device)
+
+    // Your WebGPU code will begin here!
+  </script>
+</body>
+
+</html>
