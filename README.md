@@ -20,6 +20,16 @@ this allowed me to understand initial overhead sfu conferencing brings, and what
 
 ## electron
 
+**project goal**: run existing wasm application inside electron; add a possibility to open desktop application from within the app (open in desktop).
+
+I was fairly successful in doing this, electron setup was not complicated at all, i just spent too much time debugging an issue after running `create-electron-app@latest electron`, since it's a limitation on macos and it was not possible to open packaged app with such name.
+key takeways:
+- use `preload` scripts to setup [communication](https://www.electronjs.org/docs/latest/tutorial/ipc) between `main` and `renderer` process
+- `renderer` is a process responsible for well, rendering web content, it MAY have access to node.js environment
+- `main` process is an entry point for electron app.
+- [processes](https://www.electronjs.org/docs/latest/tutorial/process-model) share the same global object, but due to [context isolation](https://www.electronjs.org/docs/latest/tutorial/context-isolation) you cannot set and retrieve properties on global object.
+- opening desktop app from web is as simple as registering protocol in config (if using electron forge)
+
 [link](./electron/README.md)
 
 ## react 19

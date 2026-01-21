@@ -2,7 +2,9 @@
 
 ## idea
 
-idea is to have a running webapp and run it inside electron, check how to use broadcast channel in connection with ipc / renderers and main processes, how to pass values from outside to inside.
+~~idea is to have a running webapp and run it inside electron, check how to use broadcast channel in connection with ipc / renderers and main processes, how to pass values from outside to inside.~~
+basically the idea for the app was to get familiar with electron, and see how to setup such app and open it from browser (custom protocol -> [link](https://www.electronjs.org/docs/latest/tutorial/launch-app-from-url-in-another-app)).
+see what's behind ipcs, get familiar with processes and how electron apps are running. the goal for this was to run existing wasm application inside a desktop process.
 
 ## communication
 <!-- feels like im trying to add broadcast channel everywhere. -->
