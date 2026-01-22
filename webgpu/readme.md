@@ -7,6 +7,34 @@ https://gpuweb.github.io/gpuweb/
 
 i saw that my documenting progress is not going super well, so I decided to keep the changelog of what I was doing with potentially some notes on topics i learn
 
+
+### 22.01.2026
+- shader module can't be used on it's own, it's needed to use the most complex object in the entire api instead `GPURenderPipeline`
+  it controls how geometry is drawn, which shaders are used, how to interpret vertex buffer data, etc
+- fragment shaders are also defined as functions that instead of a position return vec4f of color (denoted with @fragment)
+- vertex shaders are defined as functions that runs for each vertex defined in vertexBuffer (denoted with @vertex)
+- shaders are created like
+```js
+/**
+ * returns {GPUShaderModule}
+*/
+const cellShaderModule = device.createShaderModule({
+  label: "Cell shader",
+  code: `
+    // Your shader code (WGSL-wee gee sel) will go here
+  `
+});
+```
+<!-- DRAWING GEOMETRY SECTION -->
+- `GPUBuffer` manages GPU-side memory
+- to draw more complex geometry it's possible to use Index Buffer (not part of the tutorial).
+- to calculate color to pixels drawn on the texture, one would use a *fragment shader*
+- to transform the vertices into a clip space (or do any math calculations to do that) it is needed to use *vertex shaders*
+- triangles are most commonly used to draw shapes, corner points that defines them are called *vertices*
+- *Clip Space* is somewhat limited cartesian coordinate system, where X, Y and Z can only be represented by values between <-1, 1>;
+![clip space](assets/clip-space.png)
+
+
 ### 21.01.2026
 
 - started going over [game of life tutorial](https://codelabs.developers.google.com/your-first-webgpu-app)

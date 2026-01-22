@@ -46,6 +46,85 @@
       }]
     });
 
+    // DRAWING GEOMETRY
+
+    const vertices = new Float32Array([
+      //   X,    Y,
+      -0.8, -0.8, // Triangle 1 (Blue)
+      0.8, -0.8,
+      0.8, 0.8,
+
+      -0.8, -0.8, // Triangle 2 (Red)
+      0.8, 0.8,
+      -0.8, 0.8,
+    ]);
+
+    const vertexBuffer = device.createBuffer({
+      label: "Cell vertices",
+      size: vertices.byteLength,
+      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, // pass flags separated by |
+    });
+
+    // copy vertex data into the buffer
+    device.queue.writeBuffer(vertexBuffer, /*bufferOffset=*/0, vertices);
+
+    // define vertex data structure with `GPUVertexBufferLayout`
+    const vertexBufferLayout = {
+      // no of bytes to skip forward in the buffer when looking for next vertex
+      arrayStride: 8, // 2x32bit floats -> 8 bytes
+      attributes: [{
+        format: "float32x2", // data format held by vertex
+        offset: 0,
+        shaderLocation: 0, // Position, see vertex shader 0-15
+      }],
+    };
+
+    const cellShaderModule = device.createShaderModule({
+      label: "Cell shader",
+      code: `
+        @vertex
+        fn vertexNone() -> @builtin(position) vec4f {
+          // this code renders nothing, since it points to 0, 0, 0, and it's being discarded
+          return vec4f(0, 0, 0, 1); // (X, Y, Z, W)
+        }
+
+        @vertex
+        fn vertexMain(@location(0) pos: vec2f) -> @builtin(position) vec4f {
+          // uses @location(0) to match with vertexBufferLayout.attributes[0].shaderLocation
+          // return vec4f(pos.x, pos.y, 0, 1);
+          // since it's common to pass 2d vector into vec4f, there is a shorthand for that
+          return vec4f(pos, 0, 1);
+        }
+
+        @fragment
+        fn fragmentMain() -> @location(0) vec4f {
+          return vec4f(1, 0, 0, 1); // (Red, Green, Blue, Alpha)
+        }
+      `
+    });
+
+    const cellPipeline = device.createRenderPipeline({
+      label: "Cell pipeline",
+      layout: "auto",
+      vertex: {
+        module: cellShaderModule,
+        entryPoint: "vertexMain",
+        buffers: [vertexBufferLayout]
+      },
+      fragment: {
+        module: cellShaderModule,
+        entryPoint: "fragmentMain",
+        targets: [{
+          format: canvasFormat
+        }]
+      }
+    });
+
+
+    pass.setPipeline(cellPipeline);
+    pass.setVertexBuffer(0, vertexBuffer);
+    pass.draw(vertices.length / 2); // 6 vertices
+
     pass.end();
 
     // // calling commands like beginRenderPass or pass.end() doesn't do anything
@@ -53,9 +132,7 @@
 
     device.queue.submit([encoder.finish()])
 
-    console.log(adapter, navigator.gpu, device)
 
-    // Your WebGPU code will begin here!
   </script>
 </body>
 
