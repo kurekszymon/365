@@ -10,6 +10,7 @@
 <body>
   <canvas width="512" height="512"></canvas>
   <script type="module">
+    const GRID_SIZE = 4;
     const canvas = document.querySelector("canvas");
 
 
@@ -59,14 +60,24 @@
       -0.8, 0.8,
     ]);
 
+
+
     const vertexBuffer = device.createBuffer({
       label: "Cell vertices",
       size: vertices.byteLength,
       usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, // pass flags separated by |
     });
 
+    const uniformArray = new Float32Array([GRID_SIZE, GRID_SIZE]);
+    const uniformBuffer = device.createBuffer({
+      label: "Grid Uniforms",
+      size: uniformArray.byteLength,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    });
+
     // copy vertex data into the buffer
     device.queue.writeBuffer(vertexBuffer, /*bufferOffset=*/0, vertices);
+    device.queue.writeBuffer(uniformBuffer, 0, uniformArray);
 
     // define vertex data structure with `GPUVertexBufferLayout`
     const vertexBufferLayout = {
@@ -82,6 +93,8 @@
     const cellShaderModule = device.createShaderModule({
       label: "Cell shader",
       code: `
+        @group(0) @binding(0) var<uniform> grid: vec2f; // note that it's used in vertexMain
+
         @vertex
         fn vertexNone() -> @builtin(position) vec4f {
           // this code renders nothing, since it points to 0, 0, 0, and it's being discarded
@@ -89,11 +102,23 @@
         }
 
         @vertex
-        fn vertexMain(@location(0) pos: vec2f) -> @builtin(position) vec4f {
+        fn vertexMain(
+          @location(0) pos: vec2f,
+          @builtin(instance_index) instance: u32)
+          -> @builtin(position) vec4f {
           // uses @location(0) to match with vertexBufferLayout.attributes[0].shaderLocation
           // return vec4f(pos.x, pos.y, 0, 1);
           // since it's common to pass 2d vector into vec4f, there is a shorthand for that
-          return vec4f(pos, 0, 1);
+
+          let i = f32(instance);
+          // let cell = vec2f(1, 1); // define the vector to offset drawn square
+          // let cell = vec2f(i, i); // use instance index instead of hardcoding the value to allow instances to not be drawn on top of each other
+          let cell = vec2f(i % grid.x, floor(i / grid.x)); // calculate position for each instance (adjust by x / y)
+
+          let cellOffset = cell  / grid * 2;
+          let gridPos = (pos + 1) / grid - 1 + cellOffset; // normalize the position
+
+          return vec4f(gridPos, 0, 1);
         }
 
         @fragment
@@ -120,10 +145,25 @@
       }
     });
 
+    const bindGroup = device.createBindGroup({
+      label: "Cell renderer bind group",
+      layout: cellPipeline.getBindGroupLayout(0), // corresponds to @group() in shader
+      entries: [{
+        binding: 0, // @binding in shader
+        resource: { buffer: uniformBuffer }
+      }],
+    });
+
 
     pass.setPipeline(cellPipeline);
     pass.setVertexBuffer(0, vertexBuffer);
-    pass.draw(vertices.length / 2); // 6 vertices
+
+    pass.setBindGroup(0, bindGroup); // 0 here corresponds to @group
+
+    pass.draw(
+      vertices.length / 2, // 6 vertices
+      GRID_SIZE * GRID_SIZE // how many times to draw
+    ); // 6 vertices
 
     pass.end();
 

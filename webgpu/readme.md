@@ -7,8 +7,36 @@ https://gpuweb.github.io/gpuweb/
 
 i saw that my documenting progress is not going super well, so I decided to keep the changelog of what I was doing with potentially some notes on topics i learn
 
+### 23.01
+- [blog post on webGPU](https://surma.dev/things/webgpu/)
+- in the shader instead of `pos` arguments, there is also access to [built-in values](https://gpuweb.github.io/gpuweb/wgsl/#built-in-values) calculated by WebGPU
+```js
+/**
+ * this allows to use instancing, calling it like this will
+ * render defined shader number of times specifed as second argument
+ * additional logic needs to be handled in the shader
+ */
+pass.draw(number_of_vertices, howManyTimesToDraw)
+```
+- `pass.setBindGroup(0, bindGroup); // first parameter corresponds to @group in shader` needs to be called before drawing
+- GPUBindGroup is an immutable handle - you cannot change resources it is pointing to after it was created, but contents of those resources can be changed
+- *bind group* is a collection of resources for shader to access at the same time
+- declaring uniform in the shader is not enough, `createBindGroup` is required for this purpose like
+```js
+/**
+ * @returns {GPUBindGroup}
+ */
+const bindGroup = device.createBindGroup({
+  label: "Cell renderer bind group",
+  layout: cellPipeline.getBindGroupLayout(0), // corresponds to @group() in shader
+  entries: [{
+    binding: 0, // corresponds to @binding() in shader
+    resource: { buffer: uniformBuffer }
+  }],
+});
+```
 
-### 22.01.2026
+### 22.01
 - shader module can't be used on it's own, it's needed to use the most complex object in the entire api instead `GPURenderPipeline`
   it controls how geometry is drawn, which shaders are used, how to interpret vertex buffer data, etc
 - fragment shaders are also defined as functions that instead of a position return vec4f of color (denoted with @fragment)
@@ -16,7 +44,7 @@ i saw that my documenting progress is not going super well, so I decided to keep
 - shaders are created like
 ```js
 /**
- * returns {GPUShaderModule}
+ * @returns {GPUShaderModule}
 */
 const cellShaderModule = device.createShaderModule({
   label: "Cell shader",
@@ -35,7 +63,7 @@ const cellShaderModule = device.createShaderModule({
 ![clip space](assets/clip-space.png)
 
 
-### 21.01.2026
+### 21.01
 
 - started going over [game of life tutorial](https://codelabs.developers.google.com/your-first-webgpu-app)
 
