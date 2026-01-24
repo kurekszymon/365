@@ -7,6 +7,11 @@ https://gpuweb.github.io/gpuweb/
 
 i saw that my documenting progress is not going super well, so I decided to keep the changelog of what I was doing with potentially some notes on topics i learn
 
+
+### 24.01
+- passing data between vertex shader to fragment shader requires specifying `location()` to point to the data that needs to be passed
+- use structs to share input/output types between shaders
+
 ### 23.01
 - [blog post on webGPU](https://surma.dev/things/webgpu/)
 - in the shader instead of `pos` arguments, there is also access to [built-in values](https://gpuweb.github.io/gpuweb/wgsl/#built-in-values) calculated by WebGPU

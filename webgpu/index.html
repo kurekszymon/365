@@ -10,7 +10,7 @@
 <body>
   <canvas width="512" height="512"></canvas>
   <script type="module">
-    const GRID_SIZE = 4;
+    const GRID_SIZE = 32;
     const canvas = document.querySelector("canvas");
 
 
@@ -93,6 +93,16 @@
     const cellShaderModule = device.createShaderModule({
       label: "Cell shader",
       code: `
+        struct VertexInput {
+          @location(0) pos: vec2f,
+          @builtin(instance_index) instance: u32,
+        };
+
+        struct VertexOutput {
+          @builtin(position) pos: vec4f,
+          @location(0) cell: vec2f
+        };
+
         @group(0) @binding(0) var<uniform> grid: vec2f; // note that it's used in vertexMain
 
         @vertex
@@ -102,28 +112,37 @@
         }
 
         @vertex
-        fn vertexMain(
-          @location(0) pos: vec2f,
-          @builtin(instance_index) instance: u32)
-          -> @builtin(position) vec4f {
+        fn vertexMain(input: VertexInput) -> VertexOutput {
           // uses @location(0) to match with vertexBufferLayout.attributes[0].shaderLocation
           // return vec4f(pos.x, pos.y, 0, 1);
           // since it's common to pass 2d vector into vec4f, there is a shorthand for that
 
-          let i = f32(instance);
+          let i = f32(input.instance);
           // let cell = vec2f(1, 1); // define the vector to offset drawn square
           // let cell = vec2f(i, i); // use instance index instead of hardcoding the value to allow instances to not be drawn on top of each other
           let cell = vec2f(i % grid.x, floor(i / grid.x)); // calculate position for each instance (adjust by x / y)
 
           let cellOffset = cell  / grid * 2;
-          let gridPos = (pos + 1) / grid - 1 + cellOffset; // normalize the position
+          let gridPos = (input.pos + 1) / grid - 1 + cellOffset; // normalize the position
 
-          return vec4f(gridPos, 0, 1);
+          // moving to structs
+          var output: VertexOutput;
+          output.pos = vec4f(gridPos, 0, 1);
+          output.cell = cell;
+
+          return output;
         }
 
         @fragment
-        fn fragmentMain() -> @location(0) vec4f {
-          return vec4f(1, 0, 0, 1); // (Red, Green, Blue, Alpha)
+        fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
+          // input: VertexOutput - as whatver is being returned from vertex shader is being passed to fragment shader
+          // return vec4f(1, 0, 0, 1); // (Red, Green, Blue, Alpha)
+          // vec4f(input.cell, 0, 1) -> fragment function expect each channel to be <0, 1> whereas vec2f result in numbers <0, 32> hence tha value is immediately clamped
+          // vec4f(input.cell / grid, 0, 1) -> ensures smoother transition between colors as it's adjusted by the size of the grid
+          let c = input.cell / grid;
+
+          // return vec4f(c, 0, 1); // since cell is vec2f it resolves to (cell.x, cell.y, Blue, Alpha)
+          return vec4f(c, 1-c.x, 1); // utilizes blue channel to brighten the color palette
         }
       `
     });
