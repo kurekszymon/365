@@ -7,6 +7,12 @@ https://gpuweb.github.io/gpuweb/
 
 i saw that my documenting progress is not going super well, so I decided to keep the changelog of what I was doing with potentially some notes on topics i learn
 
+### 25.01
+- different layers require different bindings, that then need to be reference from `createBindGroup`
+- GPU only exposes few data types that it can effectively work with, hence there's a need to use uint32[] instead of i.e. byte array to save memory
+- storage buffer does not require specified size, can be very large, it's good to use them as general "storage"
+- storage buffer are general use buffers that can be read and write from compute shaders and read from vertex shaders
+- managing the state with storage buffer
 
 ### 24.01
 - passing data between vertex shader to fragment shader requires specifying `location()` to point to the data that needs to be passed

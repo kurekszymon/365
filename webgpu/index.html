@@ -75,9 +75,21 @@
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
 
+    const cellStateArray = new Uint32Array(GRID_SIZE * GRID_SIZE);
+    const cellStateStorage = device.createBuffer({
+      label: "Cell State",
+      size: cellStateArray.byteLength,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+    })
+
+    for (let i = 0; i < cellStateArray.length; i += 3) {
+      cellStateArray[i] = 1;
+    }
+
     // copy vertex data into the buffer
     device.queue.writeBuffer(vertexBuffer, /*bufferOffset=*/0, vertices);
     device.queue.writeBuffer(uniformBuffer, 0, uniformArray);
+    device.queue.writeBuffer(cellStateStorage, 0, cellStateArray);
 
     // define vertex data structure with `GPUVertexBufferLayout`
     const vertexBufferLayout = {
@@ -104,6 +116,7 @@
         };
 
         @group(0) @binding(0) var<uniform> grid: vec2f; // note that it's used in vertexMain
+        @group(0) @binding(1) var<storage> cellState: array<u32>; // for storage bufer (NOTE binding changed)
 
         @vertex
         fn vertexNone() -> @builtin(position) vec4f {
@@ -121,9 +134,11 @@
           // let cell = vec2f(1, 1); // define the vector to offset drawn square
           // let cell = vec2f(i, i); // use instance index instead of hardcoding the value to allow instances to not be drawn on top of each other
           let cell = vec2f(i % grid.x, floor(i / grid.x)); // calculate position for each instance (adjust by x / y)
+          let state = f32(cellState[input.instance]); // as state is stored as flat uint32 array we could use instance to index it
 
           let cellOffset = cell  / grid * 2;
-          let gridPos = (input.pos + 1) / grid - 1 + cellOffset; // normalize the position
+          // * state to scale the cell to turn on / off (since the state will only resolve to 0 and 1)
+          let gridPos = (input.pos * state + 1) / grid - 1 + cellOffset; // normalize the position
 
           // moving to structs
           var output: VertexOutput;
@@ -164,15 +179,21 @@
       }
     });
 
+
+
     const bindGroup = device.createBindGroup({
       label: "Cell renderer bind group",
       layout: cellPipeline.getBindGroupLayout(0), // corresponds to @group() in shader
       entries: [{
         binding: 0, // @binding in shader
         resource: { buffer: uniformBuffer }
-      }],
+      },
+      {
+        binding: 1,
+        resource: { buffer: cellStateStorage }
+      }
+      ],
     });
-
 
     pass.setPipeline(cellPipeline);
     pass.setVertexBuffer(0, vertexBuffer);
