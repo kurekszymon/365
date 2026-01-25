@@ -2,10 +2,15 @@
 
 ## docs
 https://gpuweb.github.io/gpuweb/
+https://webgpufundamentals.org/webgpu/lessons/
 
 ## changelog format
 
 i saw that my documenting progress is not going super well, so I decided to keep the changelog of what I was doing with potentially some notes on topics i learn
+
+### 26.01
+- [found additional resource for learning webgpu](https://webgpufundamentals.org/webgpu/lessons/)
+
 
 ### 25.01
 - use `renderLoop` to show data updating over time, can use manual approach (like currently done in index.html) or `requestAnimationLoop`
