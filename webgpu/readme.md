@@ -8,6 +8,10 @@ https://gpuweb.github.io/gpuweb/
 i saw that my documenting progress is not going super well, so I decided to keep the changelog of what I was doing with potentially some notes on topics i learn
 
 ### 25.01
+- use `renderLoop` to show data updating over time, can use manual approach (like currently done in index.html) or `requestAnimationLoop`
+- updating state in place corrupts the results being drawn, it's best to use pingpong pattern and keep two versions of state between renders
+  meaning the next step of simulation will only use result of the last step
+- when writeBuffer is called - buffer was already sent to gpu - no need to preserve TypedArray state
 - different layers require different bindings, that then need to be reference from `createBindGroup`
 - GPU only exposes few data types that it can effectively work with, hence there's a need to use uint32[] instead of i.e. byte array to save memory
 - storage buffer does not require specified size, can be very large, it's good to use them as general "storage"
