@@ -10,7 +10,10 @@ i saw that my documenting progress is not going super well, so I decided to keep
 
 ### 26.01
 - [found additional resource for learning webgpu](https://webgpufundamentals.org/webgpu/lessons/)
-
+- compute shaders seems to be highly customizable in a sense that it needs to be specified how many instances it has, how many invocations, which invocation
+is being processed, which data to access, etc
+- writing and reading are exclusive to buffers chosen for this specific purpose (like storage buffers)
+- compute shaders are similar to vertex and fragment shader, but unlike those two, they don't have specified inputs and outputs
 
 ### 25.01
 - use `renderLoop` to show data updating over time, can use manual approach (like currently done in index.html) or `requestAnimationLoop`
