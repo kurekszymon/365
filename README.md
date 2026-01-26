@@ -6,6 +6,7 @@ Created this repo so i can explore some programming concepts I wanted and learn 
   - [webrtc](#webrtc)
   - [electron](#electron)
   - [react 19](#react-19)
+  - [webgpu](#webgpu)
 
 ## webrtc
 
@@ -33,3 +34,12 @@ key takeways:
 [link](./electron/README.md)
 
 ## react 19
+
+## webgpu
+
+**project goal** I did not set any specific project goal here, maybe that's the issue. I tried to go over basic tutorial to get some understanding of what webgpu is and how to work with that, but it's _extremely_ hard, at least for me to understand the math behind it.
+
+I want to come back to it when I will have bit more time a day to be able to draw and understand what's what there.
+- got to know what's the process of using WebGPU
+- was able to render some squares based on shaders
+- future reference listed in #docs section in [read more](./webgpu/readme.md)
