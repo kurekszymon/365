@@ -16,3 +16,8 @@ initially I have thought that I would like to create an app with
   - use sqlite to check how to talk to DB with cpp (are there any orms?)
   - use ffmpeg (app idea to have a shared cpp backend and build it per platform with bridges like swig/wasm) - make it easy to record and stack clips (i dont want to learn any graphics software)
   - tbc
+
+### 27.01
+
+- added preferred folder structure for libraries
+- setup project with basic cmake and main.cpp
