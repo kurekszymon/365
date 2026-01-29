@@ -61,3 +61,21 @@ while I find using `revert` good for actually reverting changes that introduce b
 what I really needed in this case was good ol'
 
 ## reset
+
+`git reset` allows you to reverse what you did in previous commits (including staged and unstaged changes, depending on the flag you pass to it)
+
+while writing this article I looked up docs for git reset, to confirm if I was using it correctly, and I learned there are three more flags on top of what I use (five in total).
+
+I'll only focus on the three options I use (I incorporated `--mixed` after looking at the docs), skipping remaining two since I don't want to cover something I don't know.
+
+- soft (`git reset --soft HEAD~X`) rewinds current branch by *X* commits but keeps all your work (files/changes) in your working tree and staged - known by git basically. After running this command you can run `git commit -m 'msg'` to effectively SQUASH your commits. (I'd also choose this over `git rebase -i HEAD~x`)
+- mixed (`git reset --mixed HEAD~X`) is the default option, it works similarly to `soft`, but your files won't be on the index (staged), so running `git add` before `commit` is necessary.
+- hard (`git reset --hard HEAD~X`) can be dangereous. In addition to rewinding commits, you will also lose *all* uncommited and *all* untracked changes. As far as I know there is no way to recover them.
+
+Personally I use `git reset` in various situations. Whether I want to squash my changes, or I need to rebase and I don't want to deal with not important conflicts I'd do
+```sh
+git reset --soft HEAD~X && git stash && git rebase <target> && git stash apply
+```
+Not everything goes smoothly with resets and rebases, and that's why you can always rely on the bookkeeping:
+
+## reflog
