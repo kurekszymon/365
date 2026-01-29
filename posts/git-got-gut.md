@@ -72,6 +72,8 @@ I'll only focus on the three options I use (I incorporated `--mixed` after looki
 - mixed (`git reset --mixed HEAD~X`) is the default option, it works similarly to `soft`, but your files won't be on the index (staged), so running `git add` before `commit` is necessary.
 - hard (`git reset --hard HEAD~X`) can be dangereous. In addition to rewinding commits, you will also lose *all* uncommited and *all* untracked changes. As far as I know there is no way to recover them.
 
+---
+
 Personally I use `git reset` in various situations. Whether I want to squash my changes, or I need to rebase and I don't want to deal with not important conflicts I'd do
 ```sh
 git reset --soft HEAD~X && git stash && git rebase <target> && git stash apply
