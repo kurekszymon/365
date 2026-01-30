@@ -27,6 +27,10 @@ I would the reader knows at least basics of git.
 
 other than that I think it should be fairly easy to understand what I'm trying to convey
 
+## amend 
+
+-- start with local changes
+
 ## revert (and why it's not what you may think)
 
 When I initially stumbled upon `git revert` I thought that's exactly what I need - to revert changes I pushed making a fool out of myself. Pocketing my pride I typed `git log`, copied first hash that appeared in my terminal and passed it to `git revert {hash}`.
@@ -78,6 +82,8 @@ Personally I use `git reset` in various situations. Whether I want to squash my 
 ```sh
 git reset --soft HEAD~X && git stash && git rebase <target> && git stash apply
 ```
-Not everything goes smoothly with resets and rebases, and that's why you can always rely on the bookkeeping:
+
+Just remember, that after rewinding your commits with reset, you'd need to `push --force` or `push --force-with-lease`.
+Not everything goes smoothly with resets and rebases, sometimes you push wrong state to the remote branch, and that's why you can always rely on the bookkeeping:
 
 ## reflog
