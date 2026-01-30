@@ -87,3 +87,34 @@ Just remember, that after rewinding your commits with reset, you'd need to `push
 Not everything goes smoothly with resets and rebases, sometimes you push wrong state to the remote branch, and that's why you can always rely on the bookkeeping:
 
 ## reflog
+
+Whatever (that changes HEAD) you do in git is being tracked. Fortunately for you, it's not your personal data, processed by some company, but local history of your edits. One can see it as a safety net, where all else has failed you.
+
+result of `git reflog` 
+```sh
+5f6e9f4 (HEAD -> main, origin/main, chore/show-reflog) HEAD@{0}: checkout: moving from main to chore/show-reflog
+5f6e9f4 (HEAD -> main, origin/main, chore/show-reflog) HEAD@{1}: commit: posts: git-got-gut small tweaks
+2be797d HEAD@{2}: commit: mds: [WIP] git-got-gut
+5f99db1 HEAD@{3}: commit: mds: [WIP] git-got-gut: reset
+```
+
+what's most interesting there for the user is the hash on the left hand side that let you go back in time to specific HEAD change. It does allow you to "revert" something you've already force pushed to remote.
+
+going back in time using `git reflog`: 
+```sh
+git reset --hard 2be797d 
+git log 
+# should display changes FROM the commit you've passed to git reset --hard
+
+commit 2be797ded3e9bea998ffd1d79771fc7b92f0e1e7
+Author: Szymon Kurek
+Date:   Thu Jan 29 22:37:03 2026 +0100
+
+    mds: [WIP] git-got-gut
+
+commit 5f99db1202fbf09128b5098fd87ca9daead0b3df
+Author: Szymon Kurek
+Date:   Thu Jan 29 22:34:12 2026 +0100
+
+    mds: [WIP] git-got-gut: reset
+```
