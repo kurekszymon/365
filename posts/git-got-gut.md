@@ -16,7 +16,7 @@ this will be solely based on my experience and the way I like to work with git. 
 
 ## assumption
 
-like in all cases, one needs to make *some* assumptions about the end user / consumer. while I don't expect any consumers of this article (besides those I've forcefully requested to read it - sorry guys - and github does have statistics for page views, so I will be able to tell whether or not you opened a link).
+like in all cases, one needs to make *some* assumptions about the end user / consumer. while I don't expect any consumers of this article (besides those I've forcefully requested to read it - sorry guys - and GitHub does have statistics for page views, so I will be able to tell whether or not you opened a link).
 
 I would the reader knows at least basics of git.
 - pull
@@ -137,3 +137,22 @@ For me reflog is the last safety net - if I mess up rebases, resets, commits in 
 It's also very convenient you don't have to do *anything* in order to get this bookkeeper and all benefits that comes from this.
 
 Note: `reflog` is a LOCAL tracker of your changes - your peers or the remote does not know about this. Reflog also eventually expires, but I have never experienced a case where I would need to worry about the time of it - most commonly I reach for it when I messed up just now, or relatively not a long time ago.
+
+## wrapping up
+
+People always say to keep your commits small and to commit often - but why does that matter? Hopefully after reading previous sections you'd know why, but it's still convenient to _not_ commit as often as people say.
+My main reason why is that modern IDEs, like VS Code, Zed or Cursor do have git client built-in. 
+It's very comfortable to just go ahead and preview files you've changed to have self imposed code review and be aware of your own changes.
+
+There is a catch though - you don't have *any* baseline of when things started to *not* work as you'd expect, and that's the case especially for the changes with a lot of boilerplate, and editing lots of files before seeing a change in the ui.
+
+My advice on this, and something that I am still working on in my own setup, is to commit every time you have a meaningful / working change. 
+Push it to the remote even - because no one cares, unless you *actually* open a pr. 
+Before opening a pr you can squash your commits and nobody will know that you've changed one variable name 14 times because you didn't know if it should be named `isCorrectFilterApplied` or `isFilterCorrectlyApplied`.
+Rewrite your history before the pr. 
+Open branch with no changes if you are scared to do so - do everything you need to feel *safe* before pushing it to the remote. 
+Your company won't care for any extra branch opened, especially if you don't push it to the remote (no one will track you down if you do it - unless you don't open a PR, in most setups reviewers won't be notified, look up CODEOWNERS file in your project).
+
+Most importantly - do your own research on git commands, make them yours, feel good and safe when using this, experiment on your personal projects and custom branches - it's not that hard. Be mindful of what might happen, paste it to LLM if you are not sure (please don't paste any company secrets there).
+
+Git is easy - own the process.
