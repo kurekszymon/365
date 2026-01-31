@@ -41,7 +41,7 @@ git commit --amend -m "message" -m "description" -m "paragraph" # adds staged ch
 
 --- 
 
-Out of every method resolving around reversibility, I think amend is my most commonly used command. Whether I forget to stage files, want to overwrite commit date, or don't want to run CI/CD more than once (commit -> build -> squash -> build -> merge ), I'd just amend commit and force push it to the remote presquashed. It's not a must have tool in your belt, but it's pretty convenient if you ask me. 
+Out of every method resolving around reversibility, I think amend is my most commonly used command. Whether I forget to stage files, want to overwrite commit date, or don't want to run CI/CD more than once (commit -> build -> squash -> build -> merge ), I'd just amend commit and force push it to the remote pre-squashed. It's not a must have tool in your belt, but it's pretty convenient if you ask me. 
 
 ## revert (and why it's not what you may think)
 
@@ -86,7 +86,7 @@ I'll only focus on the three options I use (I incorporated `--mixed` after looki
 
 - soft (`git reset --soft HEAD~X`) rewinds current branch by *X* commits but keeps all your work (files/changes) in your working tree and staged - known by git basically. After running this command you can run `git commit -m 'msg'` to effectively SQUASH your commits. (I'd also choose this over `git rebase -i HEAD~x`)
 - mixed (`git reset --mixed HEAD~X`) is the default option, it works similarly to `soft`, but your files won't be on the index (staged), so running `git add` before `commit` is necessary.
-- hard (`git reset --hard HEAD~X`) can be dangereous. In addition to rewinding commits, you will also lose *all* uncommited and *all* untracked changes. As far as I know there is no way to recover them.
+- hard (`git reset --hard HEAD~X`) can be dangerous. In addition to rewinding commits, you will also lose *all* uncommited and *all* untracked changes. As far as I know there is no way to recover them.
 
 ---
 
