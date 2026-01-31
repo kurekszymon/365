@@ -156,3 +156,26 @@ Your company won't care for any extra branch opened, especially if you don't pus
 Most importantly - do your own research on git commands, make them yours, feel good and safe when using this, experiment on your personal projects and custom branches - it's not that hard. Be mindful of what might happen, paste it to LLM if you are not sure (please don't paste any company secrets there).
 
 Git is easy - own the process.
+
+## POST SCRIPTUM (convenience)
+
+as I named this markdown file `git-got-gut` and not `reversible-git` I want to give you some tips I often use in my workflow.
+
+`git switch -` -> when I need to rebase, I'd only need to remember the branch I need to rebase on, i.e. 
+```sh 
+git branch --show-current # feature/branch-1293
+git switch master
+git branch --show-current # master
+git pull 
+git switch - # switches to the branch you switched from to the current one
+git branch --show-current # feature/branch-1293
+```
+
+```sh
+git diff > diff.txt # share your local diff with your colleagues 
+git apply diff.txt # that they can easily apply your changes on their branch without pushing to the remote
+git log --author 'Szymon Kurek' # filter logs by the author
+git log --grep 'fix' # filter logs with grepped text
+```
+
+<!--tbc?-->
