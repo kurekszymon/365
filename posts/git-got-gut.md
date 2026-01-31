@@ -27,9 +27,21 @@ I would the reader knows at least basics of git.
 
 other than that I think it should be fairly easy to understand what I'm trying to convey
 
-## amend 
+## amend (don't let them know you've been working overnight)
 
--- start with local changes
+Amending a commit is the most lightweight version of reversibility used by me. To me it somehow resembles this plane taking off without passengers meme - changes are commited, but not complete. 
+Amend works in both cases (local / pushed to remote) - with a difference of a force push (local changes you can just amend, when you are amending commit that's already pushed to the remote, you edit tip of your HEAD, meaning you need to overwrite origin HEAD). 
+Whenever you forget to add tracked files, stage changes, you've misspeled your commit message, or (my personal favorite) you don't want your colleagues to know that you've been working over time so you want to overwrite commit date - `git commit --amend` is your friend. 
+
+```sh
+git commit --amend # adds staged changes and opens default text editor so you can change message
+git commit --amend --no-edit # adds staged changes to your last commit without changing message
+git commit --amend -m "message" -m "description" -m "paragraph" # adds staged changes to your last commit and edit commit message in place
+```
+
+--- 
+
+Out of every method resolving around reversibility, I think amend is my most commonly used command. Whether I forget to stage files, want to overwrite commit date, or don't want to run CI/CD more than once (commit -> build -> squash -> build -> merge ), I'd just amend commit and force push it to the remote presquashed. It's not a must have tool in your belt, but it's pretty convenient if you ask me. 
 
 ## revert (and why it's not what you may think)
 
@@ -64,7 +76,7 @@ while I find using `revert` good for actually reverting changes that introduce b
 
 what I really needed in this case was good ol'
 
-## reset
+## reset (the goat)
 
 `git reset` allows you to reverse what you did in previous commits (including staged and unstaged changes, depending on the flag you pass to it)
 
@@ -86,7 +98,7 @@ git reset --soft HEAD~X && git stash && git rebase <target> && git stash apply
 Just remember, that after rewinding your commits with reset, you'd need to `push --force` or `push --force-with-lease`.
 Not everything goes smoothly with resets and rebases, sometimes you push wrong state to the remote branch, and that's why you can always rely on the bookkeeping:
 
-## reflog
+## reflog (time machine)
 
 Whatever (that changes HEAD) you do in git is being tracked. Fortunately for you, it's not your personal data, processed by some company, but local history of your edits. One can see it as a safety net, where all else has failed you.
 
