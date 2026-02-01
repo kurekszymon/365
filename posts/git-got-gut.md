@@ -1,12 +1,12 @@
 # git got gut
 
-
 ## preface
-*you need to be familiar with git* - that's just the requirement nowadays - whether you are an experienced engineer or just getting started.
-using it doesn't need to be complicated - it was created in 3 days, after all - but sometimes can be overwhelming.
-there are countless videos, articles, tips and tricks on how to use `git` efficiently, but all those materials rarely touch on the fact that made using it easier for me mentally - *almost* everything is reversible.
 
-if you were to follow a *proper* route of learning `git` and after [downloading git](https://git-scm.com/install/) you'd click on [Learn->Book](https://git-scm.com/book/en/v2), and read it, you would learn how to [undo things](https://git-scm.com/book/en/v2/Git-Basics-Undoing-Things) or [how to rewrite history](https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History) or [that you shouldn't be worried to use reset](https://git-scm.com/book/en/v2/Git-Tools-Reset-Demystified) and that is super useful! I don't know anyone who did it though.
+_you need to be familiar with git_ - that's just the requirement nowadays - whether you are an experienced engineer or just getting started.
+using it doesn't need to be complicated - it was created in 3 days, after all - but sometimes can be overwhelming.
+there are countless videos, articles, tips and tricks on how to use `git` efficiently, but all those materials rarely touch on the fact that made using it easier for me mentally - _almost_ everything is reversible.
+
+if you were to follow a _proper_ route of learning `git` and after [downloading git](https://git-scm.com/install/) you'd click on [Learn->Book](https://git-scm.com/book/en/v2), and read it, you would learn how to [undo things](https://git-scm.com/book/en/v2/Git-Basics-Undoing-Things) or [how to rewrite history](https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History) or [that you shouldn't be worried to use reset](https://git-scm.com/book/en/v2/Git-Tools-Reset-Demystified) and that is super useful! I don't know anyone who did it though.
 
 whether you are using cli or some desktop client like Sourcetree or GitHub Desktop I think being aware of reversibility of commands can be beneficial for your work with this tool.
 
@@ -16,9 +16,10 @@ this will be solely based on my experience and the way I like to work with git. 
 
 ## assumption
 
-like in all cases, one needs to make *some* assumptions about the end user / consumer. while I don't expect any consumers of this article (besides those I've forcefully requested to read it - sorry guys - and GitHub does have statistics for page views, so I will be able to tell whether or not you opened a link).
+like in all cases, one needs to make _some_ assumptions about the end user / consumer. while I don't expect any consumers of this article (besides those I've forcefully requested to read it - sorry guys - and GitHub does have statistics for page views, so I will be able to tell whether or not you opened a link).
 
 I assume the reader knows at least basics of git.
+
 - pull
 - switch / checkout
 - add
@@ -29,9 +30,9 @@ other than that I think it should be fairly easy to understand what I'm trying t
 
 ## amend (don't let them know you've been working overnight)
 
-Amending a commit is the most lightweight version of reversibility used by me. To me it somehow resembles this plane taking off without passengers meme - changes are committed, but not complete. 
-Amend works in both cases (local / pushed to remote) - with a difference of a force push (local changes you can just amend, when you are amending commit that's already pushed to the remote, you edit the tip of your HEAD, meaning you need to overwrite origin HEAD). 
-Whenever you forget to add tracked files, stage changes, you've misspelled your commit message, or (my personal favorite) you don't want your colleagues to know that you've been working over time so you want to overwrite commit date - `git commit --amend` is your friend. 
+Amending a commit is the most lightweight version of reversibility used by me. To me it somehow resembles this plane taking off without passengers meme - changes are committed, but not complete.
+Amend works in both cases (local / pushed to remote) - with a difference of a force push (local changes you can just amend, when you are amending commit that's already pushed to the remote, you edit the tip of your HEAD, meaning you need to overwrite origin HEAD).
+Whenever you forget to add tracked files, stage changes, you've misspelled your commit message, or (my personal favorite) you don't want your colleagues to know that you've been working over time so you want to overwrite commit date - `git commit --amend` is your friend.
 
 ```sh
 git commit --amend # adds staged changes and opens default text editor so you can change message
@@ -39,17 +40,19 @@ git commit --amend --no-edit # adds staged changes to your last commit without c
 git commit --amend -m "message" -m "description" -m "paragraph" # adds staged changes to your last commit and edit commit message in place
 ```
 
---- 
+---
 
-Out of every method resolving around reversibility, I think amend is my most commonly used command. Whether I forget to stage files, want to overwrite commit date, or don't want to run CI/CD more than once (commit -> build -> squash -> build -> merge ), I'd just amend commit and force push it to the remote pre-squashed. It's not a must have tool in your belt, but it's pretty convenient if you ask me. 
+Out of every method resolving around reversibility, I think amend is my most commonly used command. Whether I forget to stage files, want to overwrite commit date, or don't want to run CI/CD more than once (commit -> build -> squash -> build -> merge ), I'd just amend commit and force push it to the remote pre-squashed. It's not a must have tool in your belt, but it's pretty convenient if you ask me.
 
 ## revert (and why it's not what you may think)
 
 When I initially stumbled upon `git revert` I thought that's exactly what I need - to revert changes I pushed making a fool out of myself. Pocketing my pride I typed `git log`, copied first hash that appeared in my terminal and passed it to `git revert {hash}`.
+
 ```sh
 [master 478a0082a] Revert "shameful commit"
  2 files changed, 5 insertions(+), 21 deletions(-)
 ```
+
 looks pretty darn good if you ask me. Time to `git push` that thing.
 
 ```sh
@@ -84,13 +87,14 @@ while writing this article I looked up docs for git reset, to confirm if I was u
 
 I'll only focus on the three options I use (I incorporated `--mixed` after looking at the docs), skipping remaining two since I don't want to cover something I don't know.
 
-- soft (`git reset --soft HEAD~X`) rewinds current branch by *X* commits but keeps all your work (files/changes) in your working tree and staged - known by git basically. After running this command you can run `git commit -m 'msg'` to effectively SQUASH your commits. (I'd also choose this over `git rebase -i HEAD~x`)
+- soft (`git reset --soft HEAD~X`) rewinds current branch by _X_ commits but keeps all your work (files/changes) in your working tree and staged - known by git basically. After running this command you can run `git commit -m 'msg'` to effectively SQUASH your commits. (I'd also choose this over `git rebase -i HEAD~x`)
 - mixed (`git reset --mixed HEAD~X`) is the default option, it works similarly to `soft`, but your files won't be on the index (staged), so running `git add` before `commit` is necessary.
-- hard (`git reset --hard HEAD~X`) can be dangerous. In addition to rewinding commits, you will also lose *all* uncommitted and *all* untracked changes. As far as I know there is no way to recover them.
+- hard (`git reset --hard HEAD~X`) can be dangerous. In addition to rewinding commits, you will also lose _all_ uncommitted and _all_ untracked changes. As far as I know there is no way to recover them.
 
 ---
 
 Personally I use `git reset` in various situations. Whether I want to squash my changes, or I need to rebase and I don't want to deal with not important conflicts I'd do
+
 ```sh
 git reset --soft HEAD~X && git stash && git rebase <target> && git stash apply
 ```
@@ -102,7 +106,8 @@ Not everything goes smoothly with resets and rebases, sometimes you push wrong s
 
 Whatever (that changes HEAD) you do in git is being tracked. Fortunately for you, it's not your personal data, processed by some company, but local history of your edits. One can see it as a safety net, where all else has failed you.
 
-result of `git reflog` 
+result of `git reflog`
+
 ```sh
 5f6e9f4 (HEAD -> main, origin/main, chore/show-reflog) HEAD@{0}: checkout: moving from main to chore/show-reflog
 5f6e9f4 (HEAD -> main, origin/main, chore/show-reflog) HEAD@{1}: commit: posts: git-got-gut small tweaks
@@ -112,10 +117,11 @@ result of `git reflog`
 
 what's most interesting there for the user is the hash on the left hand side that lets you go back in time to specific HEAD change. It does allow you to "revert" something you've already force pushed to remote.
 
-going back in time using `git reflog`: 
+going back in time using `git reflog`:
+
 ```sh
-git reset --hard 2be797d 
-git log 
+git reset --hard 2be797d
+git log
 # should display changes FROM the commit you've passed to git reset --hard
 
 commit 2be797ded3e9bea998ffd1d79771fc7b92f0e1e7
@@ -131,26 +137,26 @@ Date:   Thu Jan 29 22:34:12 2026 +0100
     mds: [WIP] git-got-gut: reset
 ```
 
---- 
+---
 
 For me reflog is the last safety net - if I mess up rebases, resets, commits in order I would go back in time to place before I started to mess up.
-It's also very convenient you don't have to do *anything* in order to get this bookkeeping and all benefits that come from this.
+It's also very convenient you don't have to do _anything_ in order to get this bookkeeping and all benefits that come from this.
 
 Note: `reflog` is a LOCAL tracker of your changes - your peers or the remote does not know about this. Reflog also eventually expires, but I have never experienced a case where I would need to worry about the time of it - most commonly I reach for it when I messed up just now, or relatively not a long time ago.
 
 ## wrapping up
 
 People always say to keep your commits small and to commit often - but why does that matter? Hopefully after reading previous sections you'd know why, but it's still convenient to _not_ commit as often as people say.
-My main reason why is that modern IDEs, like VS Code, Zed or Cursor do have git client built-in. 
+My main reason why is that modern IDEs, like VS Code, Zed or Cursor do have git client built-in.
 It's very comfortable to just go ahead and preview files you've changed to have self-imposed code review and be aware of your own changes.
 
-There is a catch though - you don't have *any* baseline of when things started to *not* work as you'd expect, and that's the case especially for the changes with a lot of boilerplate, and editing lots of files before seeing a change in the ui.
+There is a catch though - you don't have _any_ baseline of when things started to _not_ work as you'd expect, and that's the case especially for the changes with a lot of boilerplate, and editing lots of files before seeing a change in the ui.
 
-My advice on this, and something that I am still working on in my own setup, is to commit every time you have a meaningful / working change. 
-Push it to the remote even - because no one cares, unless you *actually* open a pr. 
+My advice on this, and something that I am still working on in my own setup, is to commit every time you have a meaningful / working change.
+Push it to the remote even - because no one cares, unless you _actually_ open a pr.
 Before opening a pr you can squash your commits and nobody will know that you've changed one variable name 14 times because you didn't know if it should be named `isCorrectFilterApplied` or `isFilterCorrectlyApplied`.
-Rewrite your history before the pr. 
-Open branch with no changes if you are scared to do so - do everything you need to feel *safe* before pushing it to the remote. 
+Rewrite your history before the pr.
+Open branch with no changes if you are scared to do so - do everything you need to feel _safe_ before pushing it to the remote.
 Your company won't care about an extra branch opened, especially if you don't push it to the remote (no one will track you down if you do it - unless you don't open a PR, in most setups reviewers won't be notified, look up CODEOWNERS file in your project).
 
 Most importantly - do your own research on git commands, make them yours, feel good and safe when using this, experiment on your personal projects and custom branches - it's not that hard. Be mindful of what might happen, paste it to LLM if you are not sure (please don't paste any company secrets there).
