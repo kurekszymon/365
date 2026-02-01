@@ -2,12 +2,8 @@
 
 #include "internal/helpers/returnInternalNumber.h"
 
-namespace sk::helpers
-{
+namespace sk::helpers {
 
-  int returnNumber()
-  {
-    return sk::helpers::returnInternalNumber();
-  }
+int returnNumber() { return sk::helpers::returnInternalNumber(); }
 
-}
+} // namespace sk::helpers

@@ -1,6 +1,5 @@
 #pragma once
 
-namespace sk::helpers
-{
-  int returnNumber();
+namespace sk::helpers {
+int returnNumber();
 }

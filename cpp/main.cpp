@@ -1,27 +1,24 @@
 #include <print>
 
-#include <opencv2/opencv.hpp>
 #include <iostream>
+#include <opencv2/opencv.hpp>
 
 #include "helpers/returnNumber.h"
 
-int main()
-{
+int main() {
   int number = sk::helpers::returnNumber();
   std::print("hello from print {}", number);
 
   std::string imagePath = "fixtures/input.jpg";
   cv::Mat img = cv::imread(imagePath);
 
-  if (img.empty())
-  {
+  if (img.empty()) {
     std::cerr << "Could not open or find the image!" << std::endl;
     return -1;
   }
 
   cv::CascadeClassifier faceCascade;
-  if (!faceCascade.load("fixtures/haarcascade_frontalface_default.xml"))
-  {
+  if (!faceCascade.load("fixtures/haarcascade_frontalface_default.xml")) {
     // https://github.com/opencv/opencv/blob/master/data/haarcascades/haarcascade_frontalface_default.xml
     std::cerr << "Error loading cascade file!" << std::endl;
     return -1;
@@ -29,17 +26,18 @@ int main()
 
   std::vector<cv::Rect> faces;
   cv::Mat gray;
-  cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY); // detection works better in grayscale
+  cv::cvtColor(img, gray,
+               cv::COLOR_BGR2GRAY); // detection works better in grayscale
   faceCascade.detectMultiScale(gray, faces, 1.1, 10);
 
-  for (const auto &face : faces)
-  {
+  for (const auto &face : faces) {
     cv::Mat faceROI = img(face);
 
-    cv::GaussianBlur(faceROI, faceROI, cv::Size(51, 51), 0);
+    cv::GaussianBlur(faceROI, faceROI, cv::Size(101, 101),
+                     0); // cv::Size dictates how blurred the face should be
   }
 
-  cv::imwrite("output.jpg", img);
+  cv::imwrite("fixtures/output.jpg", img);
   cv::imshow("Blurred Faces", img);
   cv::waitKey(0);
 
