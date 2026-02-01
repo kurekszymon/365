@@ -15,7 +15,14 @@ initially I have thought that I would like to create an app with
 - i most certainly want to:
   - use sqlite to check how to talk to DB with cpp (are there any orms?)
   - use ffmpeg (app idea to have a shared cpp backend and build it per platform with bridges like swig/wasm) - make it easy to record and stack clips (i dont want to learn any graphics software)
-  - tbc
+  - use opencv for various tasks i.e. blurring faces
+
+### 1.02
+
+- FetchContent requires you to manually build the dependency on your local machine (failed for me for OpenCV, used conan instead)
+- sample face blurring app in main.cpp (move to seperate lib)
+- use conan to install opencv
+- use conan presets to build the app `cmake --build --preset conan-release`
 
 ### 27.01
 
