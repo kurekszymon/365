@@ -33,8 +33,17 @@ int main() {
   for (const auto &face : faces) {
     cv::Mat faceROI = img(face);
 
-    cv::GaussianBlur(faceROI, faceROI, cv::Size(101, 101),
+    cv::Mat blurredFace;
+    cv::GaussianBlur(faceROI, blurredFace, cv::Size(101, 101),
                      0); // cv::Size dictates how blurred the face should be
+
+    cv::Mat mask = cv::Mat::zeros(faceROI.size(), faceROI.type());
+    cv::Point center(faceROI.cols / 2, faceROI.rows / 2);
+    cv::Size axes(faceROI.cols / 2, faceROI.rows / 2);
+
+    cv::ellipse(mask, center, axes, 0, 0, 360, cv::Scalar(255, 255, 255), -1);
+
+    blurredFace.copyTo(faceROI, mask);
   }
 
   cv::imwrite("fixtures/output.jpg", img);
