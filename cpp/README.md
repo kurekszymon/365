@@ -18,6 +18,19 @@ initially I have thought that I would like to create an app with
   - use ffmpeg (app idea to have a shared cpp backend and build it per platform with bridges like swig/wasm) - make it easy to record and stack clips (i dont want to learn any graphics software)
   - use opencv for various tasks i.e. blurring faces
 
+### 03.02
+
+- added background removal with grabcut (only work with single face right now)
+- background removal attempts face detection using haar cascade (model in fixtures), if no face is found it will fall back to centered rectangle (70% of the screen)
+- create 3 version of the image to choose from - either decide on one or make it return all three, or return rgbas for this, so it can be recreated by open cv or canvas on the frontend.
+- still using `cv::imshow` + `cv::waitKey()` for local debugging, need to be removed when using it in apps.
+
+todos:
+
+- move opencv related code to `lib/` folder, create own `CMakeLists.txt`
+- compile with emscripten
+- combine with index.html demo (+ canvas)
+
 ### 02.02
 
 - cv::Mat is always a rectangle, in order to achieve oval blur over faces, you need to create an oval-shaped mask and blend it with original image
