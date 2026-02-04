@@ -7,15 +7,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(lib)
 
-find_package(OpenCV REQUIRED)
-
 add_executable(tools)
 
 target_link_libraries(tools
   PRIVATE
   helpers
-
-  opencv::opencv
+  imageprocessing
 )
 
 target_sources(tools

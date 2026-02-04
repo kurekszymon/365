@@ -18,6 +18,10 @@ initially I have thought that I would like to create an app with
   - use ffmpeg (app idea to have a shared cpp backend and build it per platform with bridges like swig/wasm) - make it easy to record and stack clips (i dont want to learn any graphics software)
   - use opencv for various tasks i.e. blurring faces
 
+### 04.02
+
+- moved code related to opencv to seperate lib
+
 ### 03.02
 
 - added background removal with grabcut (only work with single face right now)
@@ -27,7 +31,7 @@ initially I have thought that I would like to create an app with
 
 todos:
 
-- move opencv related code to `lib/` folder, create own `CMakeLists.txt`
+- ~~move opencv related code to `lib/` folder, create own `CMakeLists.txt`~~ -> 04.02
 - compile with emscripten
 - combine with index.html demo (+ canvas)
 
