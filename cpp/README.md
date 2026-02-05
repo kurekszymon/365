@@ -13,11 +13,31 @@ with my background in web development I do like to have web version of a project
 I've decided I will work on this project from time to time instead, to work on my DSA skills, using problems from leetcode.
 To not only solve leetcode problems I would like to have it working with emscripten (and native) in a way that I could run the program and have working leetcode solution for the passed number, like `leet(168)`, copied to clipboard.
 
+## build
+
+```sh
+cmake -G Ninja -B build
+cd build && ninja
+./cpproblem
+```
+
+## run with wasm
+
+tbd
+
+### 06.02
+
+- have easy leet problem solved to have an example for file reading
+- have easy file reader, to be improved with comment stripping, etc.
+- stop compiling helpers, use it only for example purposes
+- add structure for dsa lib
+
 ### 05.02
 
 - tried to compile the app with emscripten so it could be demoed easily.
 - OpenCV is not the easiest thing to compile for webassembly, so after spending some time doing that (for now created `emscripten.profile` on `emsdk` branch) i decided to look for some alternatives for image processing that can be compiled from cpp to js
-- revamped goals section [commit ref]()
+- revamped goals section [commit ref](4483445a054549061a3a344a4b2784f4d7f6e114)
+- removed conan and opencv deps
 
 ### 04.02
 
