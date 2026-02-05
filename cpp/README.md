@@ -18,6 +18,11 @@ initially I have thought that I would like to create an app with
   - use ffmpeg (app idea to have a shared cpp backend and build it per platform with bridges like swig/wasm) - make it easy to record and stack clips (i dont want to learn any graphics software)
   - use opencv for various tasks i.e. blurring faces
 
+### 05.02
+
+- tried to compile the app with emscripten so it could be demoed easily.
+- OpenCV is not the easiest thing to compile for webassembly, so after spending some time doing that (for now created `emscripten.profile` on `emsdk` branch) i decided to look for some alternatives for image processing that can be compiled from cpp to js
+
 ### 04.02
 
 - moved code related to opencv to seperate lib
