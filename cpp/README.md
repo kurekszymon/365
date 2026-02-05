@@ -7,21 +7,17 @@ i want to keep journal on what I did each day for this part especially to see if
 ## goals
 
 goals for this part of the repo would probably be changed / added over the time i will work on this.
-ideally it would be a set of tools that i will use
-initially I have thought that I would like to create an app with
 
-- proper division on libs / apps / core project
-- use CMake to build project (wanted to try bazel but just from reading about it, it doesn't seem to be a popular choice - want to have ease of finding materials on why things won't build)
-- probably use conan to manage dependencies (probably as I needed to migrate off of conan in my first cpp project, as FTXUI was outdated at that time in conan artifactory, so I replaced with FetchContent) - [commit ref](https://github.com/kurekszymon/eddy.sh.cpp/commit/a18de8ad5606f3561d0b921ddebb235cb8c0177e)
-- i most certainly want to:
-  - use sqlite to check how to talk to DB with cpp (are there any orms?)
-  - use ffmpeg (app idea to have a shared cpp backend and build it per platform with bridges like swig/wasm) - make it easy to record and stack clips (i dont want to learn any graphics software)
-  - use opencv for various tasks i.e. blurring faces
+initially I wanted to have a set of tools to just do "fun" stuff, like image/video processing, with opencv and ffmpeg.
+with my background in web development I do like to have web version of a project im working on, and with opencv and ffmpeg it's not so easy to have it working with webassembly.
+I've decided I will work on this project from time to time instead, to work on my DSA skills, using problems from leetcode.
+To not only solve leetcode problems I would like to have it working with emscripten (and native) in a way that I could run the program and have working leetcode solution for the passed number, like `leet(168)`, copied to clipboard.
 
 ### 05.02
 
 - tried to compile the app with emscripten so it could be demoed easily.
 - OpenCV is not the easiest thing to compile for webassembly, so after spending some time doing that (for now created `emscripten.profile` on `emsdk` branch) i decided to look for some alternatives for image processing that can be compiled from cpp to js
+- revamped goals section [commit ref]()
 
 ### 04.02
 
