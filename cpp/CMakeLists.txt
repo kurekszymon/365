@@ -12,7 +12,6 @@ add_executable(tools)
 target_link_libraries(tools
   PRIVATE
   helpers
-  imageprocessing
 )
 
 target_sources(tools
