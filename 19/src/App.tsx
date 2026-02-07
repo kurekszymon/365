@@ -1,17 +1,19 @@
-import { useEffect, useState } from 'react';
-import './App.css';
+import { useEffect, useState } from "react";
+import "./App.css";
+import { usePostHog } from "@posthog/react";
 
 const params = new URLSearchParams(document.location.search);
 
-type Message = { id: 'string', name: 'string'; };
+type Message = { id: "string"; name: "string" };
 function App() {
+  const posthog = usePostHog();
   const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
     if (window.electronAPI) {
       window.electronAPI.onMessage((data: Message) => {
-        console.log('received from electron:', data);
-        setMessages(prev => [...prev, data]);
+        console.log("received from electron:", data);
+        setMessages((prev) => [...prev, data]);
       });
     }
   }, []);
@@ -19,7 +21,7 @@ function App() {
   const handleSendMessage = () => {
     const message = {
       id: crypto.randomUUID(),
-      name: (Math.random() + 1).toString(36).substring(7)
+      name: (Math.random() + 1).toString(36).substring(7),
     };
 
     if (window.electronAPI) {
@@ -28,6 +30,10 @@ function App() {
   };
 
   const handlePing = async () => {
+    posthog.capture("ping", {
+      pong: true,
+    });
+
     if (window.versions) {
       const response = await window.versions.ping();
       console.log(response); // 'pong'
@@ -36,28 +42,35 @@ function App() {
 
   return (
     <>
-      <h1>Search params: id - {params.get('id')}</h1>
-      <h1>Search params: name - {params.get('name')}</h1>
+      <h1>Search params: id - {params.get("id")}</h1>
+      <h1>Search params: name - {params.get("name")}</h1>
 
       {window.versions && (
         <p>
-          Chrome: {window.versions.chrome()}, Node: {window.versions.node()}, Electron: {window.versions.electron()}
+          Chrome: {window.versions.chrome()}, Node: {window.versions.node()},
+          Electron: {window.versions.electron()}
         </p>
       )}
 
       <div>
         <h2>Messages</h2>
         {messages.map((message, idx) => (
-          <h3 key={idx}>{message.id} - {message.name}</h3>
+          <h3 key={idx}>
+            {message.id} - {message.name}
+          </h3>
         ))}
       </div>
 
       <button onClick={handleSendMessage}>Send Message</button>
       <button onClick={handlePing}>Ping</button>
 
-      <button onClick={() => {
-        window.open('electron-protocol://open');
-      }}>open in electron</button>
+      <button
+        onClick={() => {
+          window.open("electron-protocol://open");
+        }}
+      >
+        open in electron
+      </button>
     </>
   );
 }
