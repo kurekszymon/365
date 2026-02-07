@@ -24,6 +24,7 @@ cd build && ninja
 ## run with wasm
 
 tbd
+note: current implementation of copying source code wouldn't work for wasm (didn't test it yet, but it don't expect accessing filesystem from web to be possible)
 
 ### 06.02
 
