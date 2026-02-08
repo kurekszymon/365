@@ -11,6 +11,9 @@
   },
   "dependencies": {
     "@posthog/react": "^1.7.0",
+    "@tanstack/react-router": "^1.159.3",
+    "@tanstack/router-devtools": "^1.159.3",
+    "csstype": "^3.2.3",
     "posthog-js": "^1.342.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
