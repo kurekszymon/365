@@ -1,20 +1,21 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
-import { usePostHog } from '@posthog/react';
-import { notesStore } from '../lib/notes';
-import { tracking } from '../lib/tracking';
-import { broadcastManager } from '../lib/broadcast';
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { usePostHog } from "@posthog/react";
+import { tracking } from "../lib/tracking";
+import { broadcastManager } from "../lib/broadcast";
+import { useNotesStore } from "../lib/notesStore";
 
-export const Route = createFileRoute('/new')({
+export const Route = createFileRoute("/new")({
   component: NewNotePage,
 });
 
 function NewNotePage() {
   const navigate = useNavigate();
   const posthog = usePostHog();
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [tagInput, setTagInput] = useState('');
+  const { createNote } = useNotesStore();
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -22,7 +23,7 @@ function NewNotePage() {
     const tag = tagInput.trim();
     if (tag && !tags.includes(tag)) {
       setTags([...tags, tag]);
-      setTagInput('');
+      setTagInput("");
     }
   };
 
@@ -31,7 +32,7 @@ function NewNotePage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       handleAddTag();
     }
@@ -39,7 +40,7 @@ function NewNotePage() {
 
   const handleSave = async () => {
     if (!title.trim() && !content.trim()) {
-      alert('Please add a title or content for your note');
+      alert("Please add a title or content for your note");
       return;
     }
 
@@ -47,24 +48,24 @@ function NewNotePage() {
 
     try {
       tracking.setPostHog(posthog);
-      const note = notesStore.createNote(title, content, tags);
+      const note = createNote(title, content, tags);
 
       tracking.trackNoteCreated(note.id, note.title, note.tags.length);
-      tracking.trackButtonClick('save_note', 'new_note_page');
+      tracking.trackButtonClick("save_note", "new_note_page");
 
       // Broadcast to other tabs
-      broadcastManager.broadcast('NOTE_CREATED', {
+      broadcastManager.broadcast("NOTE_CREATED", {
         noteId: note.id,
         title: note.title,
         tagsCount: note.tags.length,
       });
 
       // Navigate to the new note
-      await navigate({ to: '/notes/$noteId', params: { noteId: note.id } });
+      await navigate({ to: "/notes/$noteId", params: { noteId: note.id } });
     } catch (error) {
-      console.error('Failed to save note:', error);
-      tracking.trackError(error as Error, 'save_note');
-      alert('Failed to save note. Please try again.');
+      console.error("Failed to save note:", error);
+      tracking.trackError(error as Error, "save_note");
+      alert("Failed to save note. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -72,12 +73,12 @@ function NewNotePage() {
 
   const handleCancel = () => {
     if (title.trim() || content.trim() || tags.length > 0) {
-      if (!window.confirm('Discard this note? All changes will be lost.')) {
+      if (!window.confirm("Discard this note? All changes will be lost.")) {
         return;
       }
     }
-    tracking.trackButtonClick('cancel_note', 'new_note_page');
-    navigate({ to: '/notes' });
+    tracking.trackButtonClick("cancel_note", "new_note_page");
+    navigate({ to: "/notes" });
   };
 
   return (
@@ -85,11 +86,19 @@ function NewNotePage() {
       <div className="page-header">
         <h1>Create New Note</h1>
         <div className="header-actions">
-          <button onClick={handleCancel} className="btn btn-secondary" disabled={isSaving}>
+          <button
+            onClick={handleCancel}
+            className="btn btn-secondary"
+            disabled={isSaving}
+          >
             Cancel
           </button>
-          <button onClick={handleSave} className="btn btn-primary" disabled={isSaving}>
-            {isSaving ? 'Saving...' : 'Save Note'}
+          <button
+            onClick={handleSave}
+            className="btn btn-primary"
+            disabled={isSaving}
+          >
+            {isSaving ? "Saving..." : "Save Note"}
           </button>
         </div>
       </div>
@@ -138,7 +147,11 @@ function NewNotePage() {
               onKeyDown={handleKeyDown}
               className="form-input"
             />
-            <button onClick={handleAddTag} className="btn btn-secondary" type="button">
+            <button
+              onClick={handleAddTag}
+              className="btn btn-secondary"
+              type="button"
+            >
               Add Tag
             </button>
           </div>
@@ -165,7 +178,9 @@ function NewNotePage() {
           <div className="form-stats">
             <span>Characters: {content.length}</span>
             <span>•</span>
-            <span>Words: {content.trim().split(/\s+/).filter(Boolean).length}</span>
+            <span>
+              Words: {content.trim().split(/\s+/).filter(Boolean).length}
+            </span>
             <span>•</span>
             <span>Tags: {tags.length}</span>
           </div>

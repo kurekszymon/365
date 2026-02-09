@@ -9,7 +9,7 @@ export type Note = {
   tags: string[];
 };
 
-const NOTES_STORAGE_KEY = 'notes-app-notes';
+const NOTES_STORAGE_KEY = "notes-app-notes";
 
 export class NotesStore {
   private static instance: NotesStore;
@@ -31,11 +31,16 @@ export class NotesStore {
       const stored = localStorage.getItem(NOTES_STORAGE_KEY);
       if (stored) {
         const notesArray: Note[] = JSON.parse(stored);
-        this.notes = new Map(notesArray.map(note => [note.id, note]));
+        this.notes = new Map(notesArray.map((note) => [note.id, note]));
       }
     } catch (error) {
-      console.error('Failed to load notes from storage:', error);
+      console.error("Failed to load notes from storage:", error);
     }
+  }
+
+  // Reload notes from localStorage (for cross-tab sync)
+  reload() {
+    this.loadFromStorage();
   }
 
   private saveToStorage() {
@@ -43,12 +48,14 @@ export class NotesStore {
       const notesArray = Array.from(this.notes.values());
       localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notesArray));
     } catch (error) {
-      console.error('Failed to save notes to storage:', error);
+      console.error("Failed to save notes to storage:", error);
     }
   }
 
   getAllNotes(): Note[] {
-    return Array.from(this.notes.values()).sort((a, b) => b.updatedAt - a.updatedAt);
+    return Array.from(this.notes.values()).sort(
+      (a, b) => b.updatedAt - a.updatedAt,
+    );
   }
 
   getNote(id: string): Note | undefined {
@@ -59,7 +66,7 @@ export class NotesStore {
     const now = Date.now();
     const note: Note = {
       id: crypto.randomUUID(),
-      title: title.trim() || 'Untitled Note',
+      title: title.trim() || "Untitled Note",
       content,
       createdAt: now,
       updatedAt: now,
@@ -71,7 +78,10 @@ export class NotesStore {
     return note;
   }
 
-  updateNote(id: string, updates: Partial<Omit<Note, 'id' | 'createdAt'>>): Note | undefined {
+  updateNote(
+    id: string,
+    updates: Partial<Omit<Note, "id" | "createdAt">>,
+  ): Note | undefined {
     const note = this.notes.get(id);
     if (!note) {
       return undefined;
@@ -102,21 +112,22 @@ export class NotesStore {
       return this.getAllNotes();
     }
 
-    return this.getAllNotes().filter(note =>
-      note.title.toLowerCase().includes(lowerQuery) ||
-      note.content.toLowerCase().includes(lowerQuery) ||
-      note.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+    return this.getAllNotes().filter(
+      (note) =>
+        note.title.toLowerCase().includes(lowerQuery) ||
+        note.content.toLowerCase().includes(lowerQuery) ||
+        note.tags.some((tag) => tag.toLowerCase().includes(lowerQuery)),
     );
   }
 
   getNotesByTag(tag: string): Note[] {
-    return this.getAllNotes().filter(note => note.tags.includes(tag));
+    return this.getAllNotes().filter((note) => note.tags.includes(tag));
   }
 
   getAllTags(): string[] {
     const tagsSet = new Set<string>();
-    this.notes.forEach(note => {
-      note.tags.forEach(tag => tagsSet.add(tag));
+    this.notes.forEach((note) => {
+      note.tags.forEach((tag) => tagsSet.add(tag));
     });
     return Array.from(tagsSet).sort();
   }

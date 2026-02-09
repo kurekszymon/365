@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { usePostHog } from "@posthog/react";
-import { notesStore } from "../lib/notes";
 import { tracking } from "../lib/tracking";
 import { broadcastManager } from "../lib/broadcast";
 import { seedSampleNotes } from "../lib/seedData";
 import type { BroadcastMessage } from "../lib/broadcast";
+import { useNotesStore } from "../lib/notesStore";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -13,8 +13,9 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const posthog = usePostHog();
-  const [notesCount, setNotesCount] = useState(notesStore.getNotesCount());
-  const [tagsCount, setTagsCount] = useState(notesStore.getAllTags().length);
+  const { notes, allTags, refreshNotes } = useNotesStore();
+  const notesCount = notes.length;
+  const tagsCount = allTags.length;
   const [broadcastMessages, setBroadcastMessages] = useState<
     BroadcastMessage[]
   >([]);
@@ -39,12 +40,6 @@ function Home() {
       tracking.trackBroadcastReceived(message.type, message.tabId);
 
       setBroadcastMessages((prev) => [...prev.slice(-9), message]);
-
-      // Update counts when notes change
-      if (message.type.startsWith("NOTE_")) {
-        setNotesCount(notesStore.getNotesCount());
-        setTagsCount(notesStore.getAllTags().length);
-      }
     });
 
     return () => {
@@ -65,8 +60,7 @@ function Home() {
     const added = seedSampleNotes();
     if (added) {
       tracking.trackButtonClick("seed_sample_data", "home");
-      setNotesCount(notesStore.getNotesCount());
-      setTagsCount(notesStore.getAllTags().length);
+      refreshNotes();
     }
   };
 

@@ -1,10 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { useEffect } from 'react';
-import { usePostHog } from '@posthog/react';
-import { tracking } from '../lib/tracking';
-import { broadcastManager } from '../lib/broadcast';
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { usePostHog } from "@posthog/react";
+import { tracking } from "../lib/tracking";
+import { broadcastManager } from "../lib/broadcast";
 
-export const Route = createFileRoute('/about')({
+export const Route = createFileRoute("/about")({
   component: AboutPage,
 });
 
@@ -13,7 +13,7 @@ function AboutPage() {
 
   useEffect(() => {
     tracking.setPostHog(posthog);
-    tracking.trackPageView('/about');
+    tracking.trackPageView("/about");
   }, [posthog]);
 
   return (
@@ -26,9 +26,10 @@ function AboutPage() {
         <section className="about-section">
           <h2>📝 What is this?</h2>
           <p>
-            This is a modern note-taking application built to demonstrate several web
-            technologies working together seamlessly. It's designed to be simple,
-            fast, and provide real-time synchronization across browser tabs.
+            This is a modern note-taking application built to demonstrate
+            several web technologies working together seamlessly. It's designed
+            to be simple, fast, and provide real-time synchronization across
+            browser tabs.
           </p>
         </section>
 
@@ -44,20 +45,20 @@ function AboutPage() {
               applications with file-based routing
             </li>
             <li>
-              <strong>PostHog</strong> - Product analytics platform for tracking user
-              interactions and understanding app usage
+              <strong>PostHog</strong> - Product analytics platform for tracking
+              user interactions and understanding app usage
             </li>
             <li>
               <strong>BroadcastChannel API</strong> - Native browser API for
               cross-tab/window communication
             </li>
             <li>
-              <strong>LocalStorage</strong> - Browser storage for persisting notes
-              offline
+              <strong>LocalStorage</strong> - Browser storage for persisting
+              notes offline
             </li>
             <li>
-              <strong>TypeScript</strong> - Type-safe JavaScript for better developer
-              experience
+              <strong>TypeScript</strong> - Type-safe JavaScript for better
+              developer experience
             </li>
             <li>
               <strong>Vite</strong> - Lightning-fast build tool and dev server
@@ -69,28 +70,28 @@ function AboutPage() {
           <h2>✨ Features</h2>
           <ul className="features-list">
             <li>
-              <strong>Create & Edit Notes:</strong> Simple interface for managing your
-              notes with title, content, and tags
+              <strong>Create & Edit Notes:</strong> Simple interface for
+              managing your notes with title, content, and tags
             </li>
             <li>
-              <strong>Search & Filter:</strong> Quickly find notes by searching content
-              or filtering by tags
+              <strong>Search & Filter:</strong> Quickly find notes by searching
+              content or filtering by tags
             </li>
             <li>
-              <strong>Real-time Sync:</strong> Changes are instantly synchronized across
-              all open tabs using BroadcastChannel API
+              <strong>Real-time Sync:</strong> Changes are instantly
+              synchronized across all open tabs using BroadcastChannel API
             </li>
             <li>
-              <strong>Offline Support:</strong> All notes are stored in your browser's
-              LocalStorage
+              <strong>Offline Support:</strong> All notes are stored in your
+              browser's LocalStorage
             </li>
             <li>
-              <strong>Analytics Tracking:</strong> PostHog integration tracks user
-              interactions for insights
+              <strong>Analytics Tracking:</strong> PostHog integration tracks
+              user interactions for insights
             </li>
             <li>
-              <strong>Type Safety:</strong> Full TypeScript support for better code
-              quality
+              <strong>Type Safety:</strong> Full TypeScript support for better
+              code quality
             </li>
           </ul>
         </section>
@@ -98,19 +99,19 @@ function AboutPage() {
         <section className="about-section">
           <h2>🔄 BroadcastChannel API</h2>
           <p>
-            The BroadcastChannel API allows different tabs, windows, and workers from
-            the same origin to communicate with each other. This app uses it to sync
-            note changes in real-time across all open instances.
+            The BroadcastChannel API allows different tabs, windows, and workers
+            from the same origin to communicate with each other. This app uses
+            it to sync note changes in real-time across all open instances.
           </p>
           <div className="info-box">
             <p>
-              <strong>Try it out:</strong> Open this app in multiple browser tabs and
-              create, edit, or delete notes. You'll see the changes instantly reflected
-              in all tabs!
+              <strong>Try it out:</strong> Open this app in multiple browser
+              tabs and create, edit, or delete notes. You'll see the changes
+              instantly reflected in all tabs!
             </p>
           </div>
           <p>
-            <strong>Browser Support:</strong>{' '}
+            <strong>Browser Support:</strong>{" "}
             {broadcastManager.isSupported() ? (
               <span className="status-badge status-success">
                 ✅ Your browser supports BroadcastChannel
@@ -162,8 +163,8 @@ function AboutPage() {
           <h2>💾 Data Storage</h2>
           <div className="info-box info-box-warning">
             <p>
-              <strong>Important:</strong> All your notes are stored locally in your
-              browser's LocalStorage. This means:
+              <strong>Important:</strong> All your notes are stored locally in
+              your browser's LocalStorage. This means:
             </p>
             <ul>
               <li>Your data never leaves your device</li>
@@ -177,14 +178,14 @@ function AboutPage() {
         <section className="about-section">
           <h2>🚀 Get Started</h2>
           <p>
-            Ready to start taking notes? Head over to the{' '}
+            Ready to start taking notes? Head over to the{" "}
             <a href="/new" className="link">
               New Note
-            </a>{' '}
-            page to create your first note, or check out{' '}
+            </a>{" "}
+            page to create your first note, or check out{" "}
             <a href="/notes" className="link">
               All Notes
-            </a>{' '}
+            </a>{" "}
             to see your collection.
           </p>
         </section>

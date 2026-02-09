@@ -31,28 +31,24 @@ class BroadcastManager {
       this.channel.onmessage = (event: MessageEvent<BroadcastMessage>) => {
         console.log("[BroadcastChannel] Received message:", event.data);
 
-        // Don't process messages from the same tab
         if (event.data.tabId === this.tabId) {
+          // don't process messages from the same tab
           return;
         }
 
-        // Notify listeners
         const typeListeners = this.listeners.get(event.data.type);
         if (typeListeners) {
           typeListeners.forEach((callback) => callback(event.data));
         }
 
-        // Notify wildcard listeners
         const wildcardListeners = this.listeners.get("*");
         if (wildcardListeners) {
           wildcardListeners.forEach((callback) => callback(event.data));
         }
       };
 
-      // Announce tab opened
       this.broadcast("TAB_OPENED", { tabId: this.tabId });
 
-      // Announce tab closed on beforeunload
       window.addEventListener("beforeunload", () => {
         this.broadcast("TAB_CLOSED", { tabId: this.tabId });
       });
@@ -113,5 +109,4 @@ class BroadcastManager {
   }
 }
 
-// Singleton instance
 export const broadcastManager = new BroadcastManager();

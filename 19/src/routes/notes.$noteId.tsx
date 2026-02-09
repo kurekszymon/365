@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { usePostHog } from "@posthog/react";
-import { notesStore, type Note } from "../lib/notes";
 import { tracking } from "../lib/tracking";
 import { broadcastManager } from "../lib/broadcast";
+import { useNotesStore } from "../lib/notesStore";
 
 export const Route = createFileRoute("/notes/$noteId")({
   component: NoteDetailPage,
@@ -13,13 +13,16 @@ function NoteDetailPage() {
   const { noteId } = Route.useParams();
   const navigate = useNavigate();
   const posthog = usePostHog();
-  const [note, setNote] = useState<Note | undefined>(
-    notesStore.getNote(noteId),
-  );
+  const {
+    notes,
+    updateNote: updateNoteInStore,
+    deleteNote: deleteNoteFromStore,
+  } = useNotesStore();
+  const note = notes.find((n) => n.id === noteId);
   const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState(note?.title || "");
-  const [editContent, setEditContent] = useState(note?.content || "");
-  const [editTags, setEditTags] = useState<string[]>(note?.tags || []);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [editTags, setEditTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
 
   useEffect(() => {
@@ -33,31 +36,22 @@ function NoteDetailPage() {
     tracking.trackNoteViewed(note.id, note.title);
     tracking.trackPageView(`/notes/${noteId}`);
 
-    // Listen for note updates from other tabs
-    const unsubscribe = broadcastManager.on("*", (message) => {
+    const unsubscribe = broadcastManager.on("NOTE_DELETED", (message) => {
       const payload = message.payload as { noteId?: string } | undefined;
-      if (message.type === "NOTE_UPDATED" && payload?.noteId === noteId) {
-        const updatedNote = notesStore.getNote(noteId);
-        setNote(updatedNote);
-        if (updatedNote && !isEditing) {
-          setEditTitle(updatedNote.title);
-          setEditContent(updatedNote.content);
-          setEditTags(updatedNote.tags);
-        }
-      } else if (
-        message.type === "NOTE_DELETED" &&
-        payload?.noteId === noteId
-      ) {
+      if (payload?.noteId === noteId) {
         navigate({ to: "/notes" });
       }
     });
 
-    return () => {
-      unsubscribe();
-    };
-  }, [posthog, noteId, note, isEditing, navigate]);
+    return () => unsubscribe();
+  }, [posthog, noteId, note, navigate]);
 
   const handleEdit = () => {
+    if (note) {
+      setEditTitle(note.title);
+      setEditContent(note.content);
+      setEditTags(note.tags);
+    }
     setIsEditing(true);
     tracking.trackButtonClick("edit_note", "note_detail");
   };
@@ -75,14 +69,13 @@ function NoteDetailPage() {
   const handleSaveEdit = () => {
     if (!note) return;
 
-    const updatedNote = notesStore.updateNote(note.id, {
+    const updatedNote = updateNoteInStore(note.id, {
       title: editTitle,
       content: editContent,
       tags: editTags,
     });
 
     if (updatedNote) {
-      setNote(updatedNote);
       setIsEditing(false);
       tracking.trackNoteUpdated(
         updatedNote.id,
@@ -104,7 +97,7 @@ function NoteDetailPage() {
     if (!note) return;
 
     if (window.confirm(`Are you sure you want to delete "${note.title}"?`)) {
-      const deleted = notesStore.deleteNote(note.id);
+      const deleted = deleteNoteFromStore(note.id);
       if (deleted) {
         tracking.trackNoteDeleted(note.id);
         tracking.trackButtonClick("delete_note", "note_detail");

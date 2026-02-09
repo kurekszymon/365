@@ -16,7 +16,8 @@
     "csstype": "^3.2.3",
     "posthog-js": "^1.342.1",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "zustand": "^5.0.11"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

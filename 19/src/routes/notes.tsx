@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
 import { usePostHog } from "@posthog/react";
-import { notesStore, type Note } from "../lib/notes";
+import { notesStore } from "../lib/notes";
 import { tracking } from "../lib/tracking";
 import { broadcastManager } from "../lib/broadcast";
+import { useNotesStore } from "../lib/notesStore";
 
 export const Route = createFileRoute("/notes")({
   component: NotesPage,
@@ -11,26 +12,13 @@ export const Route = createFileRoute("/notes")({
 
 function NotesPage() {
   const posthog = usePostHog();
-  const [notes, setNotes] = useState<Note[]>(notesStore.getAllNotes());
+  const { notes, allTags, deleteNote: deleteNoteFromStore } = useNotesStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [allTags, setAllTags] = useState<string[]>(notesStore.getAllTags());
 
   useEffect(() => {
     tracking.setPostHog(posthog);
     tracking.trackPageView("/notes");
-
-    // Listen for note changes from other tabs
-    const unsubscribe = broadcastManager.on("*", (message) => {
-      if (message.type.startsWith("NOTE_")) {
-        setNotes(notesStore.getAllNotes());
-        setAllTags(notesStore.getAllTags());
-      }
-    });
-
-    return () => {
-      unsubscribe();
-    };
   }, [posthog]);
 
   const filteredNotes = useMemo(() => {
@@ -58,12 +46,10 @@ function NotesPage() {
 
   const handleDeleteNote = (noteId: string) => {
     if (window.confirm("Are you sure you want to delete this note?")) {
-      const deleted = notesStore.deleteNote(noteId);
+      const deleted = deleteNoteFromStore(noteId);
       if (deleted) {
         tracking.trackNoteDeleted(noteId);
         broadcastManager.broadcast("NOTE_DELETED", { noteId });
-        setNotes(notesStore.getAllNotes());
-        setAllTags(notesStore.getAllTags());
       }
     }
   };
