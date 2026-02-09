@@ -5,6 +5,15 @@ playground for anything react.
 - build it and use from `../electron`
 - check posthog
 
+## 09.02
+
+- used claude sonnet (and opus later, after quality went downhill) to migrate from local state to zustand.
+- refresh state between the tabs with broadcast channel and reloading state from local storage
+- removed some markdown files i initially omitted in yesterday's claude fiesta
+- used discriminated union to have typesafety in payloads
+
+i sometimes wonder how people are able to use 10 agents at once if one is able to generate so much mess
+
 ## 08.02
 
 used claude to generate a notes app to better test posthog.
