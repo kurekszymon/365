@@ -37,8 +37,7 @@ function NoteDetailPage() {
     tracking.trackPageView(`/notes/${noteId}`);
 
     const unsubscribe = broadcastManager.on("NOTE_DELETED", (message) => {
-      const payload = message.payload as { noteId?: string } | undefined;
-      if (payload?.noteId === noteId) {
+      if (message.payload.noteId === noteId) {
         navigate({ to: "/notes" });
       }
     });

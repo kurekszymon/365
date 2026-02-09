@@ -1,16 +1,48 @@
-// BroadcastChannel manager for cross-tab communication with PostHog tracking
+// BroadcastChannel manager for cross-tab communication
 
-export type BroadcastMessage = {
-  type:
-    | "NOTE_CREATED"
-    | "NOTE_UPDATED"
-    | "NOTE_DELETED"
-    | "TAB_OPENED"
-    | "TAB_CLOSED";
-  payload?: unknown;
+type NoteCreatedMessage = {
+  type: "NOTE_CREATED";
+  payload: { noteId: string; title: string; tagsCount: number };
+};
+
+type NoteUpdatedMessage = {
+  type: "NOTE_UPDATED";
+  payload: { noteId: string; title: string; contentLength: number };
+};
+
+type NoteDeletedMessage = {
+  type: "NOTE_DELETED";
+  payload: { noteId: string };
+};
+
+type TabOpenedMessage = {
+  type: "TAB_OPENED";
+  payload: { tabId: string };
+};
+
+type TabClosedMessage = {
+  type: "TAB_CLOSED";
+  payload: { tabId: string };
+};
+
+type BroadcastPayload =
+  | NoteCreatedMessage
+  | NoteUpdatedMessage
+  | NoteDeletedMessage
+  | TabOpenedMessage
+  | TabClosedMessage;
+
+export type BroadcastMessage = BroadcastPayload & {
   timestamp: number;
   tabId: string;
 };
+
+export type BroadcastMessageType = BroadcastMessage["type"];
+
+type PayloadForType<T extends BroadcastMessageType> = Extract<
+  BroadcastPayload,
+  { type: T }
+>["payload"];
 
 class BroadcastManager {
   private channel: BroadcastChannel | null = null;
@@ -32,7 +64,6 @@ class BroadcastManager {
         console.log("[BroadcastChannel] Received message:", event.data);
 
         if (event.data.tabId === this.tabId) {
-          // don't process messages from the same tab
           return;
         }
 
@@ -59,25 +90,33 @@ class BroadcastManager {
     }
   }
 
-  broadcast(type: BroadcastMessage["type"], payload?: unknown) {
+  broadcast<T extends BroadcastMessageType>(
+    type: T,
+    payload: PayloadForType<T>,
+  ) {
     if (!this.channel) {
       console.warn("[BroadcastChannel] Channel not initialized");
       return;
     }
 
-    const message: BroadcastMessage = {
+    const message = {
       type,
       payload,
       timestamp: Date.now(),
       tabId: this.tabId,
-    };
+    } as BroadcastMessage;
 
     console.log("[BroadcastChannel] Broadcasting:", message);
     this.channel.postMessage(message);
   }
 
+  on<T extends BroadcastMessageType>(
+    type: T,
+    callback: (message: Extract<BroadcastMessage, { type: T }>) => void,
+  ): () => void;
+  on(type: "*", callback: (message: BroadcastMessage) => void): () => void;
   on(
-    type: BroadcastMessage["type"] | "*",
+    type: BroadcastMessageType | "*",
     callback: (message: BroadcastMessage) => void,
   ) {
     if (!this.listeners.has(type)) {
@@ -85,7 +124,6 @@ class BroadcastManager {
     }
     this.listeners.get(type)!.add(callback);
 
-    // Return unsubscribe function
     return () => {
       this.listeners.get(type)?.delete(callback);
     };

@@ -50,8 +50,9 @@ function Home() {
   const handleTestBroadcast = () => {
     tracking.trackButtonClick("test_broadcast", "home");
     broadcastManager.broadcast("NOTE_CREATED", {
+      noteId: crypto.randomUUID(),
       title: "Test Note",
-      timestamp: Date.now(),
+      tagsCount: 0,
     });
     tracking.trackBroadcastSent("NOTE_CREATED", tabId);
   };
