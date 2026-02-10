@@ -5,6 +5,13 @@ playground for anything react.
 - build it and use from `../electron`
 - check posthog
 
+## 10.02
+
+- add lazy loading for routes
+  todo:
+- add proper skeletons for loading state
+- investigate why main file is still 500kb
+
 ## 09.02
 
 - used claude sonnet (and opus later, after quality went downhill) to migrate from local state to zustand.
