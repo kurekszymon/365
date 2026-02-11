@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { notesStore, type Note } from "./notes";
+import { notesStore, type Note, type Drawing } from "./notes";
 import { broadcastManager } from "./broadcast";
 
 interface NotesState {
@@ -9,7 +9,12 @@ interface NotesState {
   // Actions
   loadNotes: () => void;
   loadTags: () => void;
-  createNote: (title: string, content: string, tags: string[]) => Note;
+  createNote: (
+    title: string,
+    content: string,
+    tags: string[],
+    drawings?: Drawing[],
+  ) => Note;
   updateNote: (
     id: string,
     updates: Partial<Omit<Note, "id" | "createdAt">>,
@@ -30,8 +35,13 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     set({ allTags: notesStore.getAllTags() });
   },
 
-  createNote: (title: string, content: string, tags: string[]) => {
-    const note = notesStore.createNote(title, content, tags);
+  createNote: (
+    title: string,
+    content: string,
+    tags: string[],
+    drawings: Drawing[] = [],
+  ) => {
+    const note = notesStore.createNote(title, content, tags, drawings);
     get().refreshNotes();
     return note;
   },

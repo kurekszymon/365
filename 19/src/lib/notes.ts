@@ -1,5 +1,11 @@
 // Notes storage and management with localStorage
 
+export type Drawing = {
+  id: string;
+  dataUrl: string;
+  createdAt: number;
+};
+
 export type Note = {
   id: string;
   title: string;
@@ -7,6 +13,7 @@ export type Note = {
   createdAt: number;
   updatedAt: number;
   tags: string[];
+  drawings: Drawing[];
 };
 
 const NOTES_STORAGE_KEY = "notes-app-notes";
@@ -62,7 +69,12 @@ export class NotesStore {
     return this.notes.get(id);
   }
 
-  createNote(title: string, content: string, tags: string[] = []): Note {
+  createNote(
+    title: string,
+    content: string,
+    tags: string[] = [],
+    drawings: Drawing[] = [],
+  ): Note {
     const now = Date.now();
     const note: Note = {
       id: crypto.randomUUID(),
@@ -71,6 +83,7 @@ export class NotesStore {
       createdAt: now,
       updatedAt: now,
       tags,
+      drawings,
     };
 
     this.notes.set(note.id, note);

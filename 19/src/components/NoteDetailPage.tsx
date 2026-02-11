@@ -4,6 +4,8 @@ import { usePostHog } from "@posthog/react";
 import { tracking } from "../lib/tracking";
 import { broadcastManager } from "../lib/broadcast";
 import { useNotesStore } from "../lib/notesStore";
+import type { Drawing } from "../lib/notes";
+import CanvasDrawing from "./CanvasDrawing";
 
 interface NoteDetailPageProps {
   noteId: string;
@@ -23,6 +25,9 @@ export default function NoteDetailPage({ noteId }: NoteDetailPageProps) {
   const [editContent, setEditContent] = useState("");
   const [editTags, setEditTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [editDrawings, setEditDrawings] = useState<Drawing[]>([]);
+  const [showCanvas, setShowCanvas] = useState(false);
+  const [editingDrawingId, setEditingDrawingId] = useState<string | null>(null);
 
   useEffect(() => {
     tracking.setPostHog(posthog);
@@ -49,6 +54,7 @@ export default function NoteDetailPage({ noteId }: NoteDetailPageProps) {
       setEditTitle(note.title);
       setEditContent(note.content);
       setEditTags(note.tags);
+      setEditDrawings(note.drawings || []);
     }
     setIsEditing(true);
     tracking.trackButtonClick("edit_note", "note_detail");
@@ -59,8 +65,11 @@ export default function NoteDetailPage({ noteId }: NoteDetailPageProps) {
       setEditTitle(note.title);
       setEditContent(note.content);
       setEditTags(note.tags);
+      setEditDrawings(note.drawings || []);
     }
     setIsEditing(false);
+    setShowCanvas(false);
+    setEditingDrawingId(null);
     tracking.trackButtonClick("cancel_edit", "note_detail");
   };
 
@@ -71,6 +80,7 @@ export default function NoteDetailPage({ noteId }: NoteDetailPageProps) {
       title: editTitle,
       content: editContent,
       tags: editTags,
+      drawings: editDrawings,
     });
 
     if (updatedNote) {
@@ -123,6 +133,39 @@ export default function NoteDetailPage({ noteId }: NoteDetailPageProps) {
     }
   };
 
+  const handleAddDrawing = (dataUrl: string) => {
+    const newDrawing: Drawing = {
+      id: crypto.randomUUID(),
+      dataUrl,
+      createdAt: Date.now(),
+    };
+    setEditDrawings([...editDrawings, newDrawing]);
+    setShowCanvas(false);
+    setEditingDrawingId(null);
+  };
+
+  const handleUpdateDrawing = (dataUrl: string) => {
+    if (!editingDrawingId) return;
+    setEditDrawings(
+      editDrawings.map((d) =>
+        d.id === editingDrawingId ? { ...d, dataUrl } : d,
+      ),
+    );
+    setShowCanvas(false);
+    setEditingDrawingId(null);
+  };
+
+  const handleDeleteDrawing = (drawingId: string) => {
+    if (window.confirm("Delete this drawing?")) {
+      setEditDrawings(editDrawings.filter((d) => d.id !== drawingId));
+    }
+  };
+
+  const handleEditDrawing = (drawing: Drawing) => {
+    setEditingDrawingId(drawing.id);
+    setShowCanvas(true);
+  };
+
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("en-US", {
       year: "numeric",
@@ -144,6 +187,28 @@ export default function NoteDetailPage({ noteId }: NoteDetailPageProps) {
         >
           Back to Notes
         </button>
+      </div>
+    );
+  }
+
+  if (showCanvas && isEditing) {
+    const editingDrawing = editingDrawingId
+      ? editDrawings.find((d) => d.id === editingDrawingId)
+      : null;
+
+    return (
+      <div className="note-detail-page">
+        <div className="page-header">
+          <h1>{editingDrawing ? "Edit Drawing" : "Add Drawing"}</h1>
+        </div>
+        <CanvasDrawing
+          initialData={editingDrawing?.dataUrl}
+          onSave={editingDrawing ? handleUpdateDrawing : handleAddDrawing}
+          onCancel={() => {
+            setShowCanvas(false);
+            setEditingDrawingId(null);
+          }}
+        />
       </div>
     );
   }
@@ -251,6 +316,47 @@ export default function NoteDetailPage({ noteId }: NoteDetailPageProps) {
               )}
             </div>
 
+            <div className="form-group">
+              <label className="form-label">Drawings</label>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowCanvas(true)}
+              >
+                🎨 Add Drawing
+              </button>
+
+              {editDrawings.length > 0 && (
+                <div className="drawings-list">
+                  {editDrawings.map((drawing) => (
+                    <div key={drawing.id} className="drawing-item">
+                      <img
+                        src={drawing.dataUrl}
+                        alt="Drawing"
+                        className="drawing-preview"
+                      />
+                      <div className="drawing-actions">
+                        <button
+                          type="button"
+                          className="btn btn-text btn-sm"
+                          onClick={() => handleEditDrawing(drawing)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-text btn-sm btn-danger"
+                          onClick={() => handleDeleteDrawing(drawing.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="form-footer">
               <div className="form-stats">
                 <span>Characters: {editContent.length}</span>
@@ -261,6 +367,8 @@ export default function NoteDetailPage({ noteId }: NoteDetailPageProps) {
                 </span>
                 <span>•</span>
                 <span>Tags: {editTags.length}</span>
+                <span>•</span>
+                <span>Drawings: {editDrawings.length}</span>
               </div>
             </div>
           </div>
@@ -296,12 +404,35 @@ export default function NoteDetailPage({ noteId }: NoteDetailPageProps) {
               )}
             </div>
 
+            {note.drawings && note.drawings.length > 0 && (
+              <div className="note-drawings">
+                <h3>Drawings</h3>
+                <div className="drawings-list">
+                  {note.drawings.map((drawing) => (
+                    <div key={drawing.id} className="drawing-item">
+                      <img
+                        src={drawing.dataUrl}
+                        alt="Drawing"
+                        className="drawing-preview"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="note-stats">
               <span>{note.content.length} characters</span>
               <span>•</span>
               <span>
                 {note.content.trim().split(/\s+/).filter(Boolean).length} words
               </span>
+              {note.drawings && note.drawings.length > 0 && (
+                <>
+                  <span>•</span>
+                  <span>{note.drawings.length} drawings</span>
+                </>
+              )}
             </div>
           </div>
         )}

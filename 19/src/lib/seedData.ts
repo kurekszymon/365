@@ -22,6 +22,7 @@ Here are some things you can do:
 - Filter by tags
 - Edit and delete notes
 - See real-time updates across browser tabs
+- Add drawings and sketches to your notes!
 
 Try opening this app in multiple tabs and creating a new note. You'll see it appear in all tabs instantly thanks to the BroadcastChannel API!`,
     ["welcome", "tutorial", "getting-started"],

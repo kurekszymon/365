@@ -4,6 +4,8 @@ import { usePostHog } from "@posthog/react";
 import { tracking } from "../lib/tracking";
 import { broadcastManager } from "../lib/broadcast";
 import { useNotesStore } from "../lib/notesStore";
+import type { Drawing } from "../lib/notes";
+import CanvasDrawing from "./CanvasDrawing";
 
 export default function NewNotePage() {
   const navigate = useNavigate();
@@ -14,6 +16,9 @@ export default function NewNotePage() {
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [drawings, setDrawings] = useState<Drawing[]>([]);
+  const [showCanvas, setShowCanvas] = useState(false);
+  const [editingDrawingId, setEditingDrawingId] = useState<string | null>(null);
 
   const handleAddTag = () => {
     const tag = tagInput.trim();
@@ -34,9 +39,40 @@ export default function NewNotePage() {
     }
   };
 
+  const handleAddDrawing = (dataUrl: string) => {
+    const newDrawing: Drawing = {
+      id: crypto.randomUUID(),
+      dataUrl,
+      createdAt: Date.now(),
+    };
+    setDrawings([...drawings, newDrawing]);
+    setShowCanvas(false);
+    setEditingDrawingId(null);
+  };
+
+  const handleUpdateDrawing = (dataUrl: string) => {
+    if (!editingDrawingId) return;
+    setDrawings(
+      drawings.map((d) => (d.id === editingDrawingId ? { ...d, dataUrl } : d)),
+    );
+    setShowCanvas(false);
+    setEditingDrawingId(null);
+  };
+
+  const handleDeleteDrawing = (drawingId: string) => {
+    if (window.confirm("Delete this drawing?")) {
+      setDrawings(drawings.filter((d) => d.id !== drawingId));
+    }
+  };
+
+  const handleEditDrawing = (drawing: Drawing) => {
+    setEditingDrawingId(drawing.id);
+    setShowCanvas(true);
+  };
+
   const handleSave = async () => {
-    if (!title.trim() && !content.trim()) {
-      alert("Please add a title or content for your note");
+    if (!title.trim() && !content.trim() && drawings.length === 0) {
+      alert("Please add a title, content, or drawing for your note");
       return;
     }
 
@@ -44,7 +80,7 @@ export default function NewNotePage() {
 
     try {
       tracking.setPostHog(posthog);
-      const note = createNote(title, content, tags);
+      const note = createNote(title, content, tags, drawings);
 
       tracking.trackNoteCreated(note.id, note.title, note.tags.length);
       tracking.trackButtonClick("save_note", "new_note_page");
@@ -68,7 +104,12 @@ export default function NewNotePage() {
   };
 
   const handleCancel = () => {
-    if (title.trim() || content.trim() || tags.length > 0) {
+    if (
+      title.trim() ||
+      content.trim() ||
+      tags.length > 0 ||
+      drawings.length > 0
+    ) {
       if (!window.confirm("Discard this note? All changes will be lost.")) {
         return;
       }
@@ -76,6 +117,28 @@ export default function NewNotePage() {
     tracking.trackButtonClick("cancel_note", "new_note_page");
     navigate({ to: "/notes" });
   };
+
+  if (showCanvas) {
+    const editingDrawing = editingDrawingId
+      ? drawings.find((d) => d.id === editingDrawingId)
+      : null;
+
+    return (
+      <div className="new-note-page">
+        <div className="page-header">
+          <h1>{editingDrawing ? "Edit Drawing" : "Add Drawing"}</h1>
+        </div>
+        <CanvasDrawing
+          initialData={editingDrawing?.dataUrl}
+          onSave={editingDrawing ? handleUpdateDrawing : handleAddDrawing}
+          onCancel={() => {
+            setShowCanvas(false);
+            setEditingDrawingId(null);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="new-note-page">
@@ -170,6 +233,47 @@ export default function NewNotePage() {
           )}
         </div>
 
+        <div className="form-group">
+          <label className="form-label">Drawings</label>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setShowCanvas(true)}
+          >
+            🎨 Add Drawing
+          </button>
+
+          {drawings.length > 0 && (
+            <div className="drawings-list">
+              {drawings.map((drawing) => (
+                <div key={drawing.id} className="drawing-item">
+                  <img
+                    src={drawing.dataUrl}
+                    alt="Drawing"
+                    className="drawing-preview"
+                  />
+                  <div className="drawing-actions">
+                    <button
+                      type="button"
+                      className="btn btn-text btn-sm"
+                      onClick={() => handleEditDrawing(drawing)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-text btn-sm btn-danger"
+                      onClick={() => handleDeleteDrawing(drawing.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="form-footer">
           <div className="form-stats">
             <span>Characters: {content.length}</span>
@@ -179,6 +283,8 @@ export default function NewNotePage() {
             </span>
             <span>•</span>
             <span>Tags: {tags.length}</span>
+            <span>•</span>
+            <span>Drawings: {drawings.length}</span>
           </div>
         </div>
       </div>
