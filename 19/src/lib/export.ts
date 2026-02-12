@@ -1,6 +1,6 @@
 // Export utilities for notes
 
-import type { Note } from "./notes";
+import type { Note, Drawing } from "./notes";
 
 /**
  * Download a file with the given content
@@ -50,10 +50,40 @@ function sanitizeFilename(name: string): string {
 }
 
 /**
- * Convert a single note to Markdown format
+ * Create a numbered reference for an image
  */
-export function noteToMarkdown(note: Note): string {
+function createImageRef(index: number): string {
+  return `$img_${index}`;
+}
+
+/**
+ * Extract image data from drawings and create a reference map
+ */
+function extractImageAssets(
+  drawings: Drawing[],
+  startIndex: number = 1,
+): { refs: string[]; assets: Record<string, string> } {
+  const refs: string[] = [];
+  const assets: Record<string, string> = {};
+
+  drawings.forEach((drawing, i) => {
+    const ref = createImageRef(startIndex + i);
+    refs.push(ref);
+    assets[ref] = drawing.dataUrl;
+  });
+
+  return { refs, assets };
+}
+
+/**
+ * Convert a single note to Markdown format with numbered image references
+ */
+export function noteToMarkdown(
+  note: Note,
+  imageStartIndex: number = 1,
+): { content: string; assets: Record<string, string> } {
   const lines: string[] = [];
+  let assets: Record<string, string> = {};
 
   // Title
   lines.push(`# ${note.title}`);
@@ -80,18 +110,44 @@ export function noteToMarkdown(note: Note): string {
     lines.push("");
   }
 
-  // Drawings
+  // Drawings with numbered references
   if (note.drawings && note.drawings.length > 0) {
+    const { refs, assets: drawingAssets } = extractImageAssets(
+      note.drawings,
+      imageStartIndex,
+    );
+    assets = drawingAssets;
+
     lines.push("---");
     lines.push("");
     lines.push(`## Drawings (${note.drawings.length})`);
     lines.push("");
-    note.drawings.forEach((drawing, index) => {
+    refs.forEach((ref, index) => {
       lines.push(`### Drawing ${index + 1}`);
-      lines.push(`![Drawing ${index + 1}](${drawing.dataUrl})`);
+      lines.push(`![Drawing ${index + 1}](${ref})`);
       lines.push("");
     });
   }
+
+  return { content: lines.join("\n"), assets };
+}
+
+/**
+ * Format assets section for Markdown
+ */
+function formatAssetsSection(assets: Record<string, string>): string {
+  const entries = Object.entries(assets);
+  if (entries.length === 0) return "";
+
+  const lines: string[] = [];
+  lines.push("---");
+  lines.push("");
+  lines.push("## Assets");
+  lines.push("");
+  lines.push("<!-- Image data for numbered references -->");
+  lines.push("```json");
+  lines.push(JSON.stringify(assets, null, 2));
+  lines.push("```");
 
   return lines.join("\n");
 }
@@ -101,6 +157,8 @@ export function noteToMarkdown(note: Note): string {
  */
 export function notesToMarkdown(notes: Note[]): string {
   const lines: string[] = [];
+  let allAssets: Record<string, string> = {};
+  let imageIndex = 1;
 
   lines.push("# Notes Export");
   lines.push("");
@@ -124,23 +182,107 @@ export function notesToMarkdown(notes: Note[]): string {
   notes.forEach((note, index) => {
     lines.push(`<a id="note-${index + 1}"></a>`);
     lines.push("");
-    lines.push(noteToMarkdown(note));
+
+    const drawingCount = note.drawings?.length || 0;
+    const { content, assets } = noteToMarkdown(note, imageIndex);
+    lines.push(content);
     lines.push("");
+
+    // Merge assets
+    allAssets = { ...allAssets, ...assets };
+    imageIndex += drawingCount;
+
     if (index < notes.length - 1) {
       lines.push("---");
       lines.push("");
     }
   });
 
+  // Add assets section at the end
+  if (Object.keys(allAssets).length > 0) {
+    lines.push("");
+    lines.push(formatAssetsSection(allAssets));
+  }
+
   return lines.join("\n");
 }
 
 /**
- * Export a single note as JSON
+ * Prepare note for JSON export with numbered image references
+ */
+function prepareNoteForJson(
+  note: Note,
+  imageStartIndex: number = 1,
+): { note: NoteWithRefs; assets: Record<string, string> } {
+  const assets: Record<string, string> = {};
+
+  const noteWithRefs: NoteWithRefs = {
+    id: note.id,
+    title: note.title,
+    content: note.content,
+    createdAt: note.createdAt,
+    updatedAt: note.updatedAt,
+    tags: note.tags,
+    drawingRefs: [],
+  };
+
+  if (note.drawings && note.drawings.length > 0) {
+    note.drawings.forEach((drawing, i) => {
+      const ref = createImageRef(imageStartIndex + i);
+      noteWithRefs.drawingRefs.push({
+        ref,
+        id: drawing.id,
+        createdAt: drawing.createdAt,
+      });
+      assets[ref] = drawing.dataUrl;
+    });
+  }
+
+  return { note: noteWithRefs, assets };
+}
+
+interface DrawingRef {
+  ref: string;
+  id: string;
+  createdAt: number;
+}
+
+interface NoteWithRefs {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+  tags: string[];
+  drawingRefs: DrawingRef[];
+}
+
+interface ExportDataWithRefs {
+  exportedAt: number;
+  exportedAtFormatted: string;
+  version: string;
+  notesCount: number;
+  notes: NoteWithRefs[];
+  assets: Record<string, string>;
+}
+
+/**
+ * Export a single note as JSON with numbered references
  */
 export function exportNoteAsJson(note: Note): void {
   const filename = `note_${sanitizeFilename(note.title)}_${formatDateForFilename(note.createdAt)}.json`;
-  const content = JSON.stringify(note, null, 2);
+
+  const { note: noteWithRefs, assets } = prepareNoteForJson(note);
+
+  const exportData = {
+    exportedAt: Date.now(),
+    exportedAtFormatted: formatDate(Date.now()),
+    version: "1.0",
+    note: noteWithRefs,
+    assets,
+  };
+
+  const content = JSON.stringify(exportData, null, 2);
   downloadFile(filename, content, "application/json");
 }
 
@@ -149,22 +291,44 @@ export function exportNoteAsJson(note: Note): void {
  */
 export function exportNoteAsMarkdown(note: Note): void {
   const filename = `note_${sanitizeFilename(note.title)}_${formatDateForFilename(note.createdAt)}.md`;
-  const content = noteToMarkdown(note);
-  downloadFile(filename, content, "text/markdown");
+
+  const { content, assets } = noteToMarkdown(note);
+  let finalContent = content;
+
+  if (Object.keys(assets).length > 0) {
+    finalContent += "\n" + formatAssetsSection(assets);
+  }
+
+  downloadFile(filename, finalContent, "text/markdown");
 }
 
 /**
- * Export all notes as a single JSON file
+ * Export all notes as a single JSON file with numbered references
  */
 export function exportAllNotesAsJson(notes: Note[]): void {
   const filename = `notes_export_${formatDateForFilename(Date.now())}.json`;
-  const exportData = {
+
+  let allAssets: Record<string, string> = {};
+  let imageIndex = 1;
+  const notesWithRefs: NoteWithRefs[] = [];
+
+  notes.forEach((note) => {
+    const drawingCount = note.drawings?.length || 0;
+    const { note: noteWithRefs, assets } = prepareNoteForJson(note, imageIndex);
+    notesWithRefs.push(noteWithRefs);
+    allAssets = { ...allAssets, ...assets };
+    imageIndex += drawingCount;
+  });
+
+  const exportData: ExportDataWithRefs = {
     exportedAt: Date.now(),
     exportedAtFormatted: formatDate(Date.now()),
     version: "1.0",
     notesCount: notes.length,
-    notes: notes,
+    notes: notesWithRefs,
+    assets: allAssets,
   };
+
   const content = JSON.stringify(exportData, null, 2);
   downloadFile(filename, content, "application/json");
 }
@@ -203,7 +367,9 @@ export function exportNoteAsText(note: Note): void {
   if (note.drawings && note.drawings.length > 0) {
     lines.push("");
     lines.push("-".repeat(40));
-    lines.push(`[Note contains ${note.drawings.length} drawing(s) - export as Markdown or JSON to include them]`);
+    lines.push(
+      `[Note contains ${note.drawings.length} drawing(s) - export as Markdown or JSON to include them]`,
+    );
   }
 
   const content = lines.join("\n");
