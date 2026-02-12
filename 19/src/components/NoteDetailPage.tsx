@@ -6,6 +6,11 @@ import { broadcastManager } from "../lib/broadcast";
 import { useNotesStore } from "../lib/notesStore";
 import type { Drawing } from "../lib/notes";
 import CanvasDrawing from "./CanvasDrawing";
+import {
+  exportNoteAsJson,
+  exportNoteAsMarkdown,
+  exportNoteAsText,
+} from "../lib/export";
 
 interface NoteDetailPageProps {
   noteId: string;
@@ -28,6 +33,7 @@ export default function NoteDetailPage({ noteId }: NoteDetailPageProps) {
   const [editDrawings, setEditDrawings] = useState<Drawing[]>([]);
   const [showCanvas, setShowCanvas] = useState(false);
   const [editingDrawingId, setEditingDrawingId] = useState<string | null>(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   useEffect(() => {
     tracking.setPostHog(posthog);
@@ -166,6 +172,27 @@ export default function NoteDetailPage({ noteId }: NoteDetailPageProps) {
     setShowCanvas(true);
   };
 
+  const handleExportJson = () => {
+    if (!note) return;
+    exportNoteAsJson(note);
+    tracking.trackButtonClick("export_note_json", "note_detail");
+    setShowExportMenu(false);
+  };
+
+  const handleExportMarkdown = () => {
+    if (!note) return;
+    exportNoteAsMarkdown(note);
+    tracking.trackButtonClick("export_note_markdown", "note_detail");
+    setShowExportMenu(false);
+  };
+
+  const handleExportText = () => {
+    if (!note) return;
+    exportNoteAsText(note);
+    tracking.trackButtonClick("export_note_text", "note_detail");
+    setShowExportMenu(false);
+  };
+
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("en-US", {
       year: "numeric",
@@ -225,6 +252,37 @@ export default function NoteDetailPage({ noteId }: NoteDetailPageProps) {
         <div className="header-actions">
           {!isEditing ? (
             <>
+              <div className="export-dropdown">
+                <button
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  className="btn btn-secondary"
+                >
+                  {/*todo replace with icon*/}
+                  Export ▾
+                </button>
+                {showExportMenu && (
+                  <div className="export-menu">
+                    <button
+                      onClick={handleExportMarkdown}
+                      className="export-menu-item"
+                    >
+                      📝 Markdown (.md)
+                    </button>
+                    <button
+                      onClick={handleExportJson}
+                      className="export-menu-item"
+                    >
+                      📦 JSON (.json)
+                    </button>
+                    <button
+                      onClick={handleExportText}
+                      className="export-menu-item"
+                    >
+                      📄 Plain Text (.txt)
+                    </button>
+                  </div>
+                )}
+              </div>
               <button onClick={handleEdit} className="btn btn-secondary">
                 Edit
               </button>

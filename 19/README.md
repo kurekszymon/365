@@ -5,12 +5,26 @@ playground for anything react.
 - build it and use from `../electron`
 - check posthog
 
+## 11.02
+
+- export functionality: JSON, Markdown, Plain Text
+- export single note or all notes at once
+- drawings embedded in Markdown exports as base64 images
+
+todo:
+
+- images are stored as base64 in both markdown and json, either dont export images or only include names and download to local pc
+- add import
+- split css file to react components so main bundle wouldnt be that big
+
 ## 10.02
 
 - add lazy loading for routes
+- added canvas drawing support to notes (pen, eraser, colors, brush sizes, undo/redo)
+- drawings stored as base64 PNG in localStorage alongside note content
   todo:
 - add proper skeletons for loading state
-- investigate why main file is still 500kb
+- investigate why main file is still 500kb (realized it's probably because css)
 
 ## 09.02
 

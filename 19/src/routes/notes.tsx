@@ -5,6 +5,7 @@ import { notesStore } from "../lib/notes";
 import { tracking } from "../lib/tracking";
 import { broadcastManager } from "../lib/broadcast";
 import { useNotesStore } from "../lib/notesStore";
+import { exportAllNotesAsJson, exportAllNotesAsMarkdown } from "../lib/export";
 
 export const Route = createFileRoute("/notes")({
   component: NotesPage,
@@ -15,6 +16,7 @@ function NotesPage() {
   const { notes, allTags, deleteNote: deleteNoteFromStore } = useNotesStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   useEffect(() => {
     tracking.setPostHog(posthog);
@@ -59,6 +61,18 @@ function NotesPage() {
     setSelectedTag(null);
   };
 
+  const handleExportAllJson = () => {
+    exportAllNotesAsJson(notes);
+    tracking.trackButtonClick("export_all_json", "notes_page");
+    setShowExportMenu(false);
+  };
+
+  const handleExportAllMarkdown = () => {
+    exportAllNotesAsMarkdown(notes);
+    tracking.trackButtonClick("export_all_markdown", "notes_page");
+    setShowExportMenu(false);
+  };
+
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("en-US", {
       year: "numeric",
@@ -73,9 +87,37 @@ function NotesPage() {
     <div className="notes-page">
       <div className="page-header">
         <h1>All Notes</h1>
-        <Link to="/new" className="btn btn-primary">
-          + Create New Note
-        </Link>
+        <div className="header-actions">
+          {notes.length > 0 && (
+            <div className="export-dropdown">
+              <button
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                className="btn btn-secondary"
+              >
+                Export All ▾
+              </button>
+              {showExportMenu && (
+                <div className="export-menu">
+                  <button
+                    onClick={handleExportAllMarkdown}
+                    className="export-menu-item"
+                  >
+                    📝 Markdown (.md)
+                  </button>
+                  <button
+                    onClick={handleExportAllJson}
+                    className="export-menu-item"
+                  >
+                    📦 JSON (.json)
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          <Link to="/new" className="btn btn-primary">
+            + Create New Note
+          </Link>
+        </div>
       </div>
 
       <div className="filters-section">
