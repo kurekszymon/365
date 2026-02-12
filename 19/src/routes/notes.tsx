@@ -5,7 +5,11 @@ import { notesStore } from "../lib/notes";
 import { tracking } from "../lib/tracking";
 import { broadcastManager } from "../lib/broadcast";
 import { useNotesStore } from "../lib/notesStore";
-import { exportAllNotesAsJson, exportAllNotesAsMarkdown } from "../lib/export";
+import {
+  exportAllNotesAsJson,
+  exportAllNotesAsMarkdown,
+  triggerImportDialog,
+} from "../lib/export";
 
 export const Route = createFileRoute("/notes")({
   component: NotesPage,
@@ -13,10 +17,16 @@ export const Route = createFileRoute("/notes")({
 
 function NotesPage() {
   const posthog = usePostHog();
-  const { notes, allTags, deleteNote: deleteNoteFromStore } = useNotesStore();
+  const {
+    notes,
+    allTags,
+    deleteNote: deleteNoteFromStore,
+    refreshNotes,
+  } = useNotesStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
   useEffect(() => {
     tracking.setPostHog(posthog);
@@ -73,6 +83,37 @@ function NotesPage() {
     setShowExportMenu(false);
   };
 
+  const handleImport = async () => {
+    setIsImporting(true);
+    tracking.trackButtonClick("import_notes", "notes_page");
+
+    try {
+      const result = await triggerImportDialog();
+
+      if (result.success) {
+        refreshNotes();
+        alert(
+          `Successfully imported ${result.importedCount} note(s)!${
+            result.skippedCount > 0
+              ? `\n${result.skippedCount} note(s) were skipped.`
+              : ""
+          }`,
+        );
+      } else if (
+        result.errors.length > 0 &&
+        !result.errors.includes("Import cancelled") &&
+        !result.errors.includes("No file selected")
+      ) {
+        alert(`Import failed:\n${result.errors.join("\n")}`);
+      }
+    } catch (error) {
+      console.error("Import error:", error);
+      alert("An unexpected error occurred during import.");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("en-US", {
       year: "numeric",
@@ -88,6 +129,13 @@ function NotesPage() {
       <div className="page-header">
         <h1>All Notes</h1>
         <div className="header-actions">
+          <button
+            onClick={handleImport}
+            className="btn btn-secondary"
+            disabled={isImporting}
+          >
+            {isImporting ? "Importing..." : "📥 Import"}
+          </button>
           {notes.length > 0 && (
             <div className="export-dropdown">
               <button

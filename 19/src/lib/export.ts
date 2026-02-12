@@ -1,6 +1,109 @@
-// Export utilities for notes
+/**
+ * # Notes Export/Import System
+ *
+ * This module handles exporting and importing notes with their associated drawings.
+ *
+ * ## Why Numbered Image References?
+ *
+ * Instead of embedding large base64 strings directly in the content, we use numbered
+ * references like `$img_1`, `$img_2`, etc. This approach has several benefits:
+ *
+ * 1. **Readability**: The note content stays clean and human-readable
+ * 2. **Manageability**: Easy to see how many images exist and their relationships
+ * 3. **Deduplication**: Assets are stored once in a separate section
+ * 4. **Import-friendly**: Simple to parse and reconstruct notes programmatically
+ * 5. **Smaller diffs**: When editing exports, changes to content don't affect image data
+ *
+ * ## Export Format Structure
+ *
+ * ### JSON Format
+ * ```json
+ * {
+ *   "exportedAt": 1707654000000,
+ *   "version": "1.0",
+ *   "notesCount": 2,
+ *   "notes": [
+ *     {
+ *       "id": "uuid",
+ *       "title": "Note Title",
+ *       "content": "Text content...",
+ *       "tags": ["tag1", "tag2"],
+ *       "drawingRefs": [
+ *         { "ref": "$img_1", "id": "drawing-uuid", "createdAt": 1707600000000 }
+ *       ]
+ *     }
+ *   ],
+ *   "assets": {
+ *     "$img_1": "data:image/png;base64,..."
+ *   }
+ * }
+ * ```
+ *
+ * ### Markdown Format
+ * Notes are exported with image references in the content, and all assets
+ * are collected in a JSON code block at the end of the file. This keeps
+ * the document readable while preserving all image data for import.
+ *
+ * ## Import Process
+ *
+ * 1. Parse the JSON file to extract notes and assets
+ * 2. For each note, resolve `drawingRefs` by looking up `$img_X` in assets
+ * 3. Reconstruct full `Drawing` objects with the base64 data
+ * 4. Generate new IDs to avoid conflicts with existing notes
+ * 5. Save to the notes store
+ */
 
 import type { Note, Drawing } from "./notes";
+import { notesStore } from "./notes";
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface DrawingRef {
+  ref: string;
+  id: string;
+  createdAt: number;
+}
+
+interface NoteWithRefs {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+  tags: string[];
+  drawingRefs: DrawingRef[];
+}
+
+interface SingleNoteExportData {
+  exportedAt: number;
+  exportedAtFormatted: string;
+  version: string;
+  note: NoteWithRefs;
+  assets: Record<string, string>;
+}
+
+interface ExportDataWithRefs {
+  exportedAt: number;
+  exportedAtFormatted: string;
+  version: string;
+  notesCount: number;
+  notes: NoteWithRefs[];
+  assets: Record<string, string>;
+}
+
+export interface ImportResult {
+  success: boolean;
+  importedCount: number;
+  skippedCount: number;
+  errors: string[];
+  importedNotes: Note[];
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
 
 /**
  * Download a file with the given content
@@ -50,7 +153,8 @@ function sanitizeFilename(name: string): string {
 }
 
 /**
- * Create a numbered reference for an image
+ * Create a numbered reference for an image (e.g., "$img_1", "$img_2")
+ * These references are used instead of inline base64 to keep exports readable
  */
 function createImageRef(index: number): string {
   return `$img_${index}`;
@@ -58,6 +162,7 @@ function createImageRef(index: number): string {
 
 /**
  * Extract image data from drawings and create a reference map
+ * Returns both the refs (for use in note content) and assets (for the assets section)
  */
 function extractImageAssets(
   drawings: Drawing[],
@@ -75,8 +180,13 @@ function extractImageAssets(
   return { refs, assets };
 }
 
+// ============================================================================
+// EXPORT FUNCTIONS
+// ============================================================================
+
 /**
  * Convert a single note to Markdown format with numbered image references
+ * Images are referenced as $img_X and actual data is returned separately in assets
  */
 export function noteToMarkdown(
   note: Note,
@@ -134,6 +244,8 @@ export function noteToMarkdown(
 
 /**
  * Format assets section for Markdown
+ * Assets are stored as JSON in a code block at the end of the file
+ * This keeps the main content readable while preserving all image data
  */
 function formatAssetsSection(assets: Record<string, string>): string {
   const entries = Object.entries(assets);
@@ -144,7 +256,7 @@ function formatAssetsSection(assets: Record<string, string>): string {
   lines.push("");
   lines.push("## Assets");
   lines.push("");
-  lines.push("<!-- Image data for numbered references -->");
+  lines.push("<!-- Image data for numbered references. Used for import. -->");
   lines.push("```json");
   lines.push(JSON.stringify(assets, null, 2));
   lines.push("```");
@@ -154,6 +266,7 @@ function formatAssetsSection(assets: Record<string, string>): string {
 
 /**
  * Convert multiple notes to a single Markdown document
+ * Includes table of contents and all assets collected at the end
  */
 export function notesToMarkdown(notes: Note[]): string {
   const lines: string[] = [];
@@ -209,6 +322,7 @@ export function notesToMarkdown(notes: Note[]): string {
 
 /**
  * Prepare note for JSON export with numbered image references
+ * Separates drawing data from note structure for cleaner exports
  */
 function prepareNoteForJson(
   note: Note,
@@ -241,31 +355,6 @@ function prepareNoteForJson(
   return { note: noteWithRefs, assets };
 }
 
-interface DrawingRef {
-  ref: string;
-  id: string;
-  createdAt: number;
-}
-
-interface NoteWithRefs {
-  id: string;
-  title: string;
-  content: string;
-  createdAt: number;
-  updatedAt: number;
-  tags: string[];
-  drawingRefs: DrawingRef[];
-}
-
-interface ExportDataWithRefs {
-  exportedAt: number;
-  exportedAtFormatted: string;
-  version: string;
-  notesCount: number;
-  notes: NoteWithRefs[];
-  assets: Record<string, string>;
-}
-
 /**
  * Export a single note as JSON with numbered references
  */
@@ -274,7 +363,7 @@ export function exportNoteAsJson(note: Note): void {
 
   const { note: noteWithRefs, assets } = prepareNoteForJson(note);
 
-  const exportData = {
+  const exportData: SingleNoteExportData = {
     exportedAt: Date.now(),
     exportedAtFormatted: formatDate(Date.now()),
     version: "1.0",
@@ -344,6 +433,7 @@ export function exportAllNotesAsMarkdown(notes: Note[]): void {
 
 /**
  * Export a single note as plain text
+ * Note: Drawings are not included in plain text exports
  */
 export function exportNoteAsText(note: Note): void {
   const filename = `note_${sanitizeFilename(note.title)}_${formatDateForFilename(note.createdAt)}.txt`;
@@ -374,4 +464,256 @@ export function exportNoteAsText(note: Note): void {
 
   const content = lines.join("\n");
   downloadFile(filename, content, "text/plain");
+}
+
+// ============================================================================
+// IMPORT FUNCTIONS
+// ============================================================================
+
+/**
+ * Reconstruct a Drawing object from a reference and assets map
+ */
+function resolveDrawingRef(
+  drawingRef: DrawingRef,
+  assets: Record<string, string>,
+): Drawing | null {
+  const dataUrl = assets[drawingRef.ref];
+  if (!dataUrl) {
+    console.warn(`Asset not found for reference: ${drawingRef.ref}`);
+    return null;
+  }
+
+  return {
+    id: crypto.randomUUID(), // Generate new ID to avoid conflicts
+    dataUrl,
+    createdAt: drawingRef.createdAt,
+  };
+}
+
+/**
+ * Reconstruct a full Note from NoteWithRefs and assets
+ */
+function reconstructNote(
+  noteWithRefs: NoteWithRefs,
+  assets: Record<string, string>,
+): Note {
+  const drawings: Drawing[] = [];
+
+  noteWithRefs.drawingRefs.forEach((ref) => {
+    const drawing = resolveDrawingRef(ref, assets);
+    if (drawing) {
+      drawings.push(drawing);
+    }
+  });
+
+  return {
+    id: crypto.randomUUID(), // Generate new ID to avoid conflicts
+    title: noteWithRefs.title,
+    content: noteWithRefs.content,
+    createdAt: noteWithRefs.createdAt,
+    updatedAt: noteWithRefs.updatedAt,
+    tags: noteWithRefs.tags,
+    drawings,
+  };
+}
+
+/**
+ * Validate the structure of imported JSON data
+ */
+function validateImportData(
+  data: unknown,
+): data is ExportDataWithRefs | SingleNoteExportData {
+  if (!data || typeof data !== "object") {
+    return false;
+  }
+
+  const obj = data as Record<string, unknown>;
+
+  // Check for required fields
+  if (typeof obj.version !== "string" || typeof obj.assets !== "object") {
+    return false;
+  }
+
+  // Check if it's a single note export
+  if ("note" in obj && obj.note && typeof obj.note === "object") {
+    return true;
+  }
+
+  // Check if it's a multi-note export
+  if ("notes" in obj && Array.isArray(obj.notes)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Check if data is a single note export
+ */
+function isSingleNoteExport(
+  data: ExportDataWithRefs | SingleNoteExportData,
+): data is SingleNoteExportData {
+  return "note" in data && !("notes" in data);
+}
+
+/**
+ * Import notes from a JSON string
+ *
+ * Process:
+ * 1. Parse JSON and validate structure
+ * 2. Extract notes and assets
+ * 3. Resolve drawing references to full Drawing objects
+ * 4. Generate new IDs to avoid conflicts
+ * 5. Save to notes store
+ *
+ * @param jsonString - The JSON content to import
+ * @returns ImportResult with success status and details
+ */
+export function importNotesFromJson(jsonString: string): ImportResult {
+  const result: ImportResult = {
+    success: false,
+    importedCount: 0,
+    skippedCount: 0,
+    errors: [],
+    importedNotes: [],
+  };
+
+  // Parse JSON
+  let data: unknown;
+  try {
+    data = JSON.parse(jsonString);
+  } catch (e) {
+    result.errors.push(
+      `Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`,
+    );
+    return result;
+  }
+
+  // Validate structure
+  if (!validateImportData(data)) {
+    result.errors.push(
+      "Invalid export format: missing required fields (version, assets, notes/note)",
+    );
+    return result;
+  }
+
+  const assets = data.assets as Record<string, string>;
+
+  // Get notes array
+  let notesToImport: NoteWithRefs[];
+  if (isSingleNoteExport(data)) {
+    notesToImport = [data.note];
+  } else {
+    notesToImport = data.notes;
+  }
+
+  // Import each note
+  notesToImport.forEach((noteWithRefs, index) => {
+    try {
+      // Validate note structure
+      if (!noteWithRefs.title || typeof noteWithRefs.title !== "string") {
+        result.errors.push(`Note ${index + 1}: Missing or invalid title`);
+        result.skippedCount++;
+        return;
+      }
+
+      // Reconstruct full note with resolved drawings
+      const note = reconstructNote(noteWithRefs, assets);
+
+      // Save to store
+      const savedNote = notesStore.createNote(
+        note.title,
+        note.content,
+        note.tags,
+        note.drawings,
+      );
+
+      result.importedNotes.push(savedNote);
+      result.importedCount++;
+    } catch (e) {
+      result.errors.push(
+        `Note ${index + 1} (${noteWithRefs.title || "unknown"}): ${e instanceof Error ? e.message : "Import error"}`,
+      );
+      result.skippedCount++;
+    }
+  });
+
+  result.success = result.importedCount > 0;
+  return result;
+}
+
+/**
+ * Import notes from a File object
+ * Reads the file and delegates to importNotesFromJson
+ */
+export async function importNotesFromFile(file: File): Promise<ImportResult> {
+  // Validate file type
+  if (!file.name.endsWith(".json")) {
+    return {
+      success: false,
+      importedCount: 0,
+      skippedCount: 0,
+      errors: [
+        "Only JSON files are supported for import. Export your notes as JSON to use import.",
+      ],
+      importedNotes: [],
+    };
+  }
+
+  // Read file content
+  try {
+    const content = await file.text();
+    return importNotesFromJson(content);
+  } catch (e) {
+    return {
+      success: false,
+      importedCount: 0,
+      skippedCount: 0,
+      errors: [
+        `Failed to read file: ${e instanceof Error ? e.message : "Read error"}`,
+      ],
+      importedNotes: [],
+    };
+  }
+}
+
+/**
+ * Create a file input and trigger import
+ * Returns a promise that resolves when import is complete
+ */
+export function triggerImportDialog(): Promise<ImportResult> {
+  return new Promise((resolve) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) {
+        resolve({
+          success: false,
+          importedCount: 0,
+          skippedCount: 0,
+          errors: ["No file selected"],
+          importedNotes: [],
+        });
+        return;
+      }
+
+      const result = await importNotesFromFile(file);
+      resolve(result);
+    };
+
+    input.oncancel = () => {
+      resolve({
+        success: false,
+        importedCount: 0,
+        skippedCount: 0,
+        errors: ["Import cancelled"],
+        importedNotes: [],
+      });
+    };
+
+    input.click();
+  });
 }
