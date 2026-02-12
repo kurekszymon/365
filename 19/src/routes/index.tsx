@@ -106,10 +106,13 @@ function Home() {
         <h2>Features</h2>
         <ul className="features-list">
           <li>✨ Create and manage notes with tags</li>
+          <li>🎨 Canvas drawing with pen, eraser, colors, and brush sizes</li>
           <li>🔍 Search through your notes instantly</li>
           <li>
             🔄 Real-time sync across browser tabs using BroadcastChannel API
           </li>
+          <li>📤 Export notes as JSON, Markdown, or Plain Text</li>
+          <li>📥 Import notes from JSON backups</li>
           <li>📊 Analytics tracking with PostHog</li>
           <li>💾 Local storage for offline access</li>
         </ul>

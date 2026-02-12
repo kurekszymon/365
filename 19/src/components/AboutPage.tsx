@@ -69,8 +69,18 @@ export default function AboutPage() {
               managing your notes with title, content, and tags
             </li>
             <li>
+              <strong>Canvas Drawing:</strong> Add sketches and drawings to your
+              notes with pen, eraser, multiple colors, and adjustable brush
+              sizes
+            </li>
+            <li>
               <strong>Search & Filter:</strong> Quickly find notes by searching
               content or filtering by tags
+            </li>
+            <li>
+              <strong>Export & Import:</strong> Export notes as JSON, Markdown,
+              or Plain Text. Import from JSON backups with numbered image
+              references for clean, manageable files
             </li>
             <li>
               <strong>Real-time Sync:</strong> Changes are instantly
@@ -155,7 +165,7 @@ export default function AboutPage() {
         </section>
 
         <section className="about-section">
-          <h2>💾 Data Storage</h2>
+          <h2>💾 Data Storage & Backup</h2>
           <div className="info-box info-box-warning">
             <p>
               <strong>Important:</strong> All your notes are stored locally in
@@ -168,6 +178,11 @@ export default function AboutPage() {
               <li>Notes won't sync across different browsers or devices</li>
             </ul>
           </div>
+          <p>
+            <strong>Tip:</strong> Use the Export feature to create backups of
+            your notes. JSON exports preserve all data including drawings and
+            can be imported later to restore your notes.
+          </p>
         </section>
 
         <section className="about-section">
