@@ -7,14 +7,14 @@ playground for anything react.
 
 ## 11.02
 
-- export functionality: JSON, Markdown, Plain Text
-- export single note or all notes at once
-- drawings embedded in Markdown exports as base64 images
+- export functionality: JSON, Markdown, Plain Text (single note or all notes)
+- **refined export format**: images use numbered references (`$img_1`, `$img_2`) instead of inline base64
+- assets stored in separate section at end of file
+- **import functionality**: JSON import with file picker, validates and resolves image refs
+- comprehensive docs in `/src/lib/export.ts` explaining the numbered reference system
 
 todo:
 
-- images are stored as base64 in both markdown and json, either dont export images or only include names and download to local pc
-- add import
 - split css file to react components so main bundle wouldnt be that big
 
 ## 10.02
