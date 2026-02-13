@@ -4,6 +4,32 @@ playground for anything react.
 
 - build it and use from `../electron`
 - check posthog
+- finally use broadcast channel to sync tabs
+- use local storage
+
+## 12.02
+
+i was wrong about css splitting (still 1k line of `index.css` is not great).
+actual issue with the size was external libraries and the fact that `/` and `/notes` routes are not lazy loaded.
+to split library code in smaller chunks, so they are not loaded within `dist/assets/index-{hash}.js` you'd need to define `build.rollupOptions.output.manualChunks` option in config (vite ofcourse)
+[docs ref](https://vite.dev/guide/build#chunking-strategy)
+
+```js
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // group libraries with custom name
+          "react-vendor": ["react", "react-dom"],
+          "posthog-vendor": ["posthog-js", "@posthog/react"],
+          "router-vendor": ["@tanstack/react-router"],
+        },
+      },
+    },
+  },
+```
+
+- split libraries from `index.js`
 
 ## 11.02
 
