@@ -1,6 +1,10 @@
 # notes
 
-instead of crashing the program on unsuccessful operation with expect
+- const
+  The type of constants must always be annotated, like `const NUMBER: i32 = 3`
+
+- match:
+  instead of crashing the program on unsuccessful operation with expect
 
 ```rs
 let guess: u32 = guess.trim().parse().expect("Expect message");
