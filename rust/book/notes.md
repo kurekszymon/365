@@ -1,5 +1,9 @@
 # notes
 
+- stack (arr) v heap (vector)
+- u8-u128; i8-i128;
+- data types: `scalar` (int, float, bool, char) and `compound` (tuple, array)
+- variables are shadowed
 - const
   The type of constants must always be annotated, like `const NUMBER: i32 = 3`
 
