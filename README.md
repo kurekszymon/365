@@ -19,6 +19,10 @@ Created this repo so i can explore some programming concepts I wanted and learn 
 
 - researching about js memory usage for numbers vs rust/cpp:
   https://angular.love/here-is-what-you-need-to-know-about-javascripts-number-type
+- rust optional parameters (function arguments)
+  https://hoverbear.org/blog/optional-arguments/
+- gpui rendering 120 fps for text editor
+  https://zed.dev/blog/videogame#gpui-rendering
 
 ## webrtc
 

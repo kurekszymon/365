@@ -4,6 +4,7 @@
 
 - get familiar with rust fundamentals with [the book](https://doc.rust-lang.org/book/)
 - write my own code editor (crazy idea probably)
+  - use GUI framework (floem (lapce) / GPUI (zed))
   - text editor
   - file explorer
   - git explorer
