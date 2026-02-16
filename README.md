@@ -17,6 +17,7 @@ Created this repo so i can explore some programming concepts I wanted and learn 
 
 ### found during some researching
 
+- set of aricles on memory (V8) https://v8.dev/blog/tags/memory
 - researching about js memory usage for numbers vs rust/cpp:
   https://angular.love/here-is-what-you-need-to-know-about-javascripts-number-type
 - rust optional parameters (function arguments)

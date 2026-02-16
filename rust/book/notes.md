@@ -1,5 +1,54 @@
 # notes
 
+- in idiomatic Rust, functions do not take ownership of their arguments unless they need to
+- rules of references
+  - At any given time, you can have either one mutable reference or any number of immutable references.
+  - References must always be valid.
+- it is not possible to modify borrowed (like - const std::string& value?)
+- unless it's marked as mutable like (some_string: &mut String), so opposite of cpp where you need to mark it as const
+- unlike a pointer, a reference is guaranteed to point to a valid value of a particular type for the life of that reference
+- you can use a value without transferring ownership by using a references
+- it is possible to return more than one thing by using a tuple
+
+```rs
+fn calculate_length(s: String) -> (String, usize) {
+    let length = s.len(); // len() returns the length of a String
+
+    (s, length)
+}
+```
+
+- variables on the stack are copied i.e.
+
+```rs
+let i = 8;
+let i2 = i; // make a copy of i
+```
+
+but variables on the heap are being transferred
+
+```rs
+let d = String::from("hello");
+let e = d;
+// d is no longer valid here
+// for easier mental memory (maybe i dont understand cpp to proper level, but I think of it as
+// auto e = std::move(d))
+```
+
+it is possible to make a deep copy with
+
+```rs
+let d = String::from("Hello");
+d.clone();
+```
+
+- ownership rules (seems like unique pointer?)
+  - Each value in Rust has an owner.
+  - There can only be one owner at a time.
+  - When the owner goes out of scope, the value will be dropped.
+- heap is slower than stack as you need to allocate data and follow the pointer
+- data with _unknown size_ must be stored on the HEAP
+- data stored on STACK must have _fixed size_
 - machine code generated from for loops can be more efficient as well because the index doesn’t need to be compared to the length of the array at every iteration. (but it can)
 - loops can be labeled (to distingiush which loop to break out from)
 - `if` is an expression, so it can be used to assign values in `let` block (seems similar to ocaml?)
