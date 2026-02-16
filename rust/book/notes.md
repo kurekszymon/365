@@ -87,6 +87,7 @@ if number != 0 {
 
 - stack (arr) v heap (vector)
 - u8-u128; i8-i128;
+- use [value; size]; to declare array (MIND THE ;)
 - data types: `scalar` (int, float, bool, char) and `compound` (tuple, array)
 - variables are shadowed
 - const
