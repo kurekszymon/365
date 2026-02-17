@@ -7,6 +7,13 @@ if it's desired to consume this section, mind that more complex things (furthr i
 
 ## actual notes
 
+- it's possible to reexport modules brought with `use` like `pub use std::collections::HashMap`
+- marking `enum` as `pub` makes all it fields `pub`
+- marking `struct` as `pub` only makes the `struct` public, all internal fields stay private. it's required to mark each field `pub`
+- [read more on imports](rust/book/c7-crates-restaurant/src/lib.rs)
+- it is possible to import from parent by prefixing an import with `super::`
+- absolute paths for imports are prefixed with `crate`
+- module contnts are _private_ by default - need to explicitly mark them as `pub`
 - enums can hold data, for mental model it can be used instead of
 
 ```rs

@@ -1,0 +1,6 @@
+[package]
+name = "c7-crates-restaurant"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
