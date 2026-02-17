@@ -7,6 +7,54 @@ if it's desired to consume this section, mind that more complex things (furthr i
 
 ## actual notes
 
+- enums can hold data, for mental model it can be used instead of
+
+```rs
+enum IpAddrKind {
+      V4,
+      V6,
+  }
+
+struct IpAddr {
+    kind: IpAddrKind,
+    address: String,
+}
+
+// instead use
+enum IpAddr {
+    V4(String)
+    V6(String)
+}
+
+// and then access with `match` or `if let`
+ let home = IpAddr::V4(String::from("127.0.0.1"));
+match home {
+    IpAddr::V4(str) => {
+        println!(" Matched ipv4: {str}")
+    }
+    _ => (), // exhaustive / catch - all
+}
+
+let home6 = IpAddr::V6(String::from("::1"));
+
+if let IpAddr::V6(addr) = home6 {
+    println!("matched ipv6 {addr}")
+} else {
+    println!("didnt match : (") // happens when home6 resolves to IpAddr::V4
+}
+// or return early with let else
+fn option_fn() -> Option<i32> {
+    let home = IpAddr::V4(String::from("127.0.0.1"));
+
+    let IpAddr::V6(_) = home else {
+        println!("return early");
+        return None;
+    };
+
+    return Some(5);
+}
+```
+
 - associated functions that don't take &self as first argument are most commonly used to create the instance
 - `dbg!` macro takes ownership of an argument (as opposed to `println!` )
 - it is possible to `pritnln!` structs if a struct `#[derives(Debug)]` trait
