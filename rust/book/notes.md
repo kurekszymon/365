@@ -1,5 +1,15 @@
 # notes
 
+## note on notes
+
+instead of scrolling down to write a note i just write it on top (pushing it on the stack);
+if it's desired to consume this section, mind that more complex things (furthr in book) will be on top.
+
+## actual notes
+
+- associated functions that don't take &self as first argument are most commonly used to create the instance
+- `dbg!` macro takes ownership of an argument (as opposed to `println!` )
+- it is possible to `pritnln!` structs if a struct `#[derives(Debug)]` trait
 - in idiomatic Rust, functions do not take ownership of their arguments unless they need to
 - rules of references
   - At any given time, you can have either one mutable reference or any number of immutable references.
