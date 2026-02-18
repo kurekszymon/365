@@ -7,6 +7,26 @@ if it's desired to consume this section, mind that more complex things (furthr i
 
 ## actual notes
 
+- it is possible to retrieve a value from hashmap or set it if it doesnt exist
+
+```rs
+let blue = scores.entry(String::from("Blue")).or_insert(20);
+// this will return a mutable reference to an Entry that can be modified like
+*blue += 2;
+
+```
+
+- HashMap needs to have same types for keys and same types for value `HashMap<K,V>;`
+- creating string slices with ranges is dangereous, as String doesn't support indexes, rather it splits by _bytes_
+- there are a lot of methods of string concatenation like
+
+```rs
+s.push('1');
+s.push_str(" string ");
+let s3 = s + &s2; // takes ownership of s, takes reference to s2
+let s = format!("{s1}-{s2}-{s3}"); // doesn't take reference, easily tracable
+```
+
 - it's possible to reexport modules brought with `use` like `pub use std::collections::HashMap`
 - marking `enum` as `pub` makes all it fields `pub`
 - marking `struct` as `pub` only makes the `struct` public, all internal fields stay private. it's required to mark each field `pub`
