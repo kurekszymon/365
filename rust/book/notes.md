@@ -7,6 +7,19 @@ if it's desired to consume this section, mind that more complex things (furthr i
 
 ## actual notes
 
+- to propagate an error it is possible to use `?` operator (only in functions that return `Result<T, E>`) like
+
+```rs
+fn read_username_from_file() -> Result<String, io::Error> {
+    let mut username = String::new();
+    File::open("hello.txt")?.read_to_string(&mut username)?;
+    Ok(username)
+}
+```
+
+- there is an option to return (propagate) the error, similarly to `go` convention
+- there is verbose error handling with i.e. `match` or easy, defaulting to `panic!` with `unwrap` or `expect` to provide custom erorr message
+- rust distinguishes 2 types of errors - recoverable handled by `Result<T,E>` and unrecoverable with `panic!`
 - it is possible to retrieve a value from hashmap or set it if it doesnt exist
 
 ```rs
