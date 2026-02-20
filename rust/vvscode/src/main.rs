@@ -2,6 +2,7 @@ use gpui::{
     App, Application, Bounds, Context, FocusHandle, KeyBinding, KeyDownEvent, SharedString, Window,
     WindowBounds, WindowOptions, actions, div, prelude::*, px, rgb, size,
 };
+use ropey::Rope;
 
 // ── Actions ──────────────────────────────────────────────────────────────────
 
@@ -13,7 +14,7 @@ actions!(
 // ── Editor ───────────────────────────────────────────────────────────────────
 
 struct Editor {
-    lines: Vec<String>,
+    rope: Rope,
     cursor_row: usize,
     cursor_col: usize,
     scroll_offset: usize,
@@ -22,56 +23,103 @@ struct Editor {
 impl Editor {
     fn new() -> Self {
         Self {
-            lines: vec![String::new()],
+            rope: Rope::new(),
             cursor_row: 0,
             cursor_col: 0,
             scroll_offset: 0,
         }
     }
 
-    fn insert_char(&mut self, ch: char) {
-        let line = &mut self.lines[self.cursor_row];
-        if self.cursor_col > line.len() {
-            self.cursor_col = line.len();
+    /// Number of lines in the buffer (always >= 1).
+    fn len_lines(&self) -> usize {
+        self.rope.len_lines()
+    }
+
+    /// Visual length of a line (excluding trailing newline characters).
+    fn line_len(&self, row: usize) -> usize {
+        let line = self.rope.line(row);
+        let len = line.len_chars();
+        if len == 0 {
+            return 0;
         }
-        line.insert(self.cursor_col, ch);
+        let last = line.char(len - 1);
+        if last == '\n' {
+            if len >= 2 && line.char(len - 2) == '\r' {
+                len - 2
+            } else {
+                len - 1
+            }
+        } else {
+            len
+        }
+    }
+
+    /// Get the text content of a line without trailing newline.
+    fn line_text(&self, row: usize) -> String {
+        let line = self.rope.line(row);
+        let mut s = line.to_string();
+        if s.ends_with('\n') {
+            s.pop();
+            if s.ends_with('\r') {
+                s.pop();
+            }
+        }
+        s
+    }
+
+    /// Absolute char offset for the current cursor position.
+    fn cursor_char_offset(&self) -> usize {
+        self.rope.line_to_char(self.cursor_row) + self.cursor_col
+    }
+
+    /// Clamp cursor_col to the current line length.
+    fn clamp_cursor_col(&mut self) {
+        let len = self.line_len(self.cursor_row);
+        if self.cursor_col > len {
+            self.cursor_col = len;
+        }
+    }
+
+    fn insert_char(&mut self, ch: char) {
+        self.clamp_cursor_col();
+        let offset = self.cursor_char_offset();
+        self.rope.insert_char(offset, ch);
         self.cursor_col += 1;
     }
 
     fn insert_newline(&mut self) {
-        let line = &mut self.lines[self.cursor_row];
-        if self.cursor_col > line.len() {
-            self.cursor_col = line.len();
-        }
-        let remainder = line[self.cursor_col..].to_string();
-        line.truncate(self.cursor_col);
+        self.clamp_cursor_col();
+        let offset = self.cursor_char_offset();
+        self.rope.insert_char(offset, '\n');
         self.cursor_row += 1;
-        self.lines.insert(self.cursor_row, remainder);
         self.cursor_col = 0;
     }
 
     fn backspace(&mut self) {
         if self.cursor_col > 0 {
-            let line = &mut self.lines[self.cursor_row];
-            if self.cursor_col <= line.len() {
-                line.remove(self.cursor_col - 1);
-            }
+            self.clamp_cursor_col();
+            let offset = self.cursor_char_offset();
+            self.rope.remove(offset - 1..offset);
             self.cursor_col -= 1;
         } else if self.cursor_row > 0 {
-            let removed = self.lines.remove(self.cursor_row);
+            let prev_line_len = self.line_len(self.cursor_row - 1);
+            // The newline char sits right before the start of the current line
+            let line_start = self.rope.line_to_char(self.cursor_row);
+            self.rope.remove(line_start - 1..line_start);
             self.cursor_row -= 1;
-            self.cursor_col = self.lines[self.cursor_row].len();
-            self.lines[self.cursor_row].push_str(&removed);
+            self.cursor_col = prev_line_len;
         }
     }
 
     fn delete(&mut self) {
-        let line_len = self.lines[self.cursor_row].len();
+        let line_len = self.line_len(self.cursor_row);
         if self.cursor_col < line_len {
-            self.lines[self.cursor_row].remove(self.cursor_col);
-        } else if self.cursor_row + 1 < self.lines.len() {
-            let next = self.lines.remove(self.cursor_row + 1);
-            self.lines[self.cursor_row].push_str(&next);
+            let offset = self.cursor_char_offset();
+            self.rope.remove(offset..offset + 1);
+        } else if self.cursor_row + 1 < self.len_lines() {
+            // Remove the newline at end of current line to join with next
+            let offset = self.cursor_char_offset();
+            self.rope.remove(offset..offset + 1);
         }
     }
 
@@ -80,15 +128,15 @@ impl Editor {
             self.cursor_col -= 1;
         } else if self.cursor_row > 0 {
             self.cursor_row -= 1;
-            self.cursor_col = self.lines[self.cursor_row].len();
+            self.cursor_col = self.line_len(self.cursor_row);
         }
     }
 
     fn move_right(&mut self) {
-        let line_len = self.lines[self.cursor_row].len();
+        let line_len = self.line_len(self.cursor_row);
         if self.cursor_col < line_len {
             self.cursor_col += 1;
-        } else if self.cursor_row + 1 < self.lines.len() {
+        } else if self.cursor_row + 1 < self.len_lines() {
             self.cursor_row += 1;
             self.cursor_col = 0;
         }
@@ -97,7 +145,7 @@ impl Editor {
     fn move_up(&mut self) {
         if self.cursor_row > 0 {
             self.cursor_row -= 1;
-            let line_len = self.lines[self.cursor_row].len();
+            let line_len = self.line_len(self.cursor_row);
             if self.cursor_col > line_len {
                 self.cursor_col = line_len;
             }
@@ -105,9 +153,9 @@ impl Editor {
     }
 
     fn move_down(&mut self) {
-        if self.cursor_row + 1 < self.lines.len() {
+        if self.cursor_row + 1 < self.len_lines() {
             self.cursor_row += 1;
-            let line_len = self.lines[self.cursor_row].len();
+            let line_len = self.line_len(self.cursor_row);
             if self.cursor_col > line_len {
                 self.cursor_col = line_len;
             }
@@ -119,7 +167,7 @@ impl Editor {
     }
 
     fn move_end(&mut self) {
-        self.cursor_col = self.lines[self.cursor_row].len();
+        self.cursor_col = self.line_len(self.cursor_row);
     }
 
     fn ensure_cursor_visible(&mut self, visible_lines: usize) {
@@ -316,8 +364,9 @@ impl Workspace {
 
     fn render_editor(&self) -> impl IntoElement {
         let visible_lines: usize = 40;
+        let total_lines = self.editor.len_lines();
         let start = self.editor.scroll_offset;
-        let end = (start + visible_lines).min(self.editor.lines.len());
+        let end = (start + visible_lines).min(total_lines);
 
         let mut editor_content = div()
             .flex()
@@ -332,7 +381,8 @@ impl Workspace {
 
         for i in start..end {
             let line_num = i + 1;
-            let line = &self.editor.lines[i];
+            let line = self.editor.line_text(i);
+            let line_visual_len = self.editor.line_len(i);
             let is_current_line = i == self.editor.cursor_row;
 
             let line_bg = if is_current_line {
@@ -349,10 +399,9 @@ impl Workspace {
 
             // Build display text with cursor
             let display_text = if is_current_line {
-                let col = self.editor.cursor_col.min(line.len());
+                let col = self.editor.cursor_col.min(line_visual_len);
                 let before: String = line.chars().take(col).collect();
-                // Use a block cursor representation
-                let cursor_char = if col < line.len() {
+                let cursor_char = if col < line_visual_len {
                     line.chars().skip(col).take(1).collect::<String>()
                 } else {
                     " ".to_string()
@@ -360,7 +409,7 @@ impl Workspace {
                 let after_cursor: String = line.chars().skip(col + 1).collect();
                 (before, cursor_char, after_cursor)
             } else {
-                (line.clone(), String::new(), String::new())
+                (line, String::new(), String::new())
             };
 
             let line_el = if is_current_line {
@@ -407,10 +456,10 @@ impl Workspace {
                             .child(SharedString::from(format!("{}", line_num))),
                     )
                     .child(div().flex_1().pl(px(4.0)).text_color(rgb(0xd4d4d4)).child(
-                        if line.is_empty() {
+                        if display_text.0.is_empty() {
                             SharedString::from(" ")
                         } else {
-                            SharedString::from(line.clone())
+                            SharedString::from(display_text.0)
                         },
                     ))
             };
@@ -422,6 +471,9 @@ impl Workspace {
     }
 
     fn render_status_bar(&self) -> impl IntoElement {
+        let total_lines = self.editor.len_lines();
+        let total_chars = self.editor.rope.len_chars();
+
         div()
             .flex()
             .w_full()
@@ -441,6 +493,10 @@ impl Workspace {
                 div()
                     .flex()
                     .gap(px(12.0))
+                    .child(SharedString::from(format!(
+                        "{} lines, {} chars",
+                        total_lines, total_chars
+                    )))
                     .child("UTF-8")
                     .child("Rust")
                     .child("Spaces: 4"),
