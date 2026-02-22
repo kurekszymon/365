@@ -1,5 +1,6 @@
 use gpui::{
     Context, FocusHandle, KeyDownEvent, SharedString, Window, actions, div, prelude::*, px, rgb,
+    rgba,
 };
 
 use crate::editor::Editor;
@@ -256,7 +257,8 @@ impl Workspace {
 
             // Build the text content area based on cursor/selection state
             let text_content = if has_selection && selection.is_some() {
-                // Line has selection — split into before / selected / after
+                // Line has selection — render full text unsplit with
+                // absolutely-positioned selection highlight overlay.
                 let (sel_start, sel_end) = selection.unwrap();
                 let sel_start = sel_start.min(line_visual_len);
                 let sel_end = sel_end.min(line_visual_len);
@@ -267,27 +269,39 @@ impl Workspace {
                     .skip(sel_start)
                     .take(sel_end - sel_start)
                     .collect();
-                let after: String = line.chars().skip(sel_end).collect();
+                let full_text = if line.is_empty() {
+                    " ".to_string()
+                } else {
+                    line.clone()
+                };
 
-                let mut content = div().flex().text_color(rgb(0xd4d4d4));
-
-                if !before.is_empty() {
-                    content = content.child(SharedString::from(before));
-                }
-                content = content.child(div().bg(rgb(0x264f78)).text_color(rgb(0xd4d4d4)).child(
-                    if selected.is_empty() {
-                        SharedString::from(" ")
-                    } else {
-                        SharedString::from(selected)
-                    },
-                ));
-                if !after.is_empty() {
-                    content = content.child(SharedString::from(after));
-                }
-
-                // If cursor is on this line (at one end of the selection), show a
-                // thin-style indicator via the selection highlight — no block cursor
-                content
+                div()
+                    .relative()
+                    .text_color(rgb(0xd4d4d4))
+                    .child(SharedString::from(full_text))
+                    .child(
+                        div()
+                            .absolute()
+                            .top_0()
+                            .left_0()
+                            .bottom_0()
+                            .flex()
+                            .child(
+                                // Invisible spacer to position selection start
+                                div().opacity(0.).child(SharedString::from(before)),
+                            )
+                            .child(
+                                // Selection highlight: semi-transparent bg
+                                // with invisible text just for sizing.
+                                div().bg(rgba(0x264f7882)).child(div().opacity(0.).child(
+                                    if selected.is_empty() {
+                                        SharedString::from(" ")
+                                    } else {
+                                        SharedString::from(selected)
+                                    },
+                                )),
+                            ),
+                    )
             } else if is_cursor_line {
                 // No selection, cursor line — render full text unsplit with
                 // an absolutely-positioned cursor overlay so nothing shifts.
