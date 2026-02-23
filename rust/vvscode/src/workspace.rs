@@ -237,8 +237,8 @@ impl Workspace {
 
         for i in start..end {
             let line_num = i + 1;
-            let line = self.editor.line_text(i);
-            let line_visual_len = self.editor.line_len(i);
+            let line_text = self.editor.line_text(i);
+            let line_visual_len = line_text.chars().count();
             let is_cursor_line = i == cursor_row;
 
             let line_bg = if is_cursor_line && !has_selection {
@@ -263,22 +263,28 @@ impl Workspace {
                 let sel_start = sel_start.min(line_visual_len);
                 let sel_end = sel_end.min(line_visual_len);
 
-                let before: String = line.chars().take(sel_start).collect();
-                let selected: String = line
-                    .chars()
-                    .skip(sel_start)
-                    .take(sel_end - sel_start)
-                    .collect();
-                let full_text = if line.is_empty() {
-                    " ".to_string()
-                } else {
-                    line.clone()
-                };
+                // Derive substrings via &str byte slicing from the single line_text.
+                // We to_owned() the slices before moving line_text — still cheaper
+                // than separate rope traversals (simple memcpy vs chunk reassembly).
+                let byte_start = line_text
+                    .char_indices()
+                    .nth(sel_start)
+                    .map_or(line_text.len(), |(b, _)| b);
+                let byte_end = line_text
+                    .char_indices()
+                    .nth(sel_end)
+                    .map_or(line_text.len(), |(b, _)| b);
+                let before = line_text[..byte_start].to_owned();
+                let selected = line_text[byte_start..byte_end].to_owned();
 
                 div()
                     .relative()
                     .text_color(rgb(0xd4d4d4))
-                    .child(SharedString::from(full_text))
+                    .child(SharedString::from(if line_visual_len == 0 {
+                        " ".to_string()
+                    } else {
+                        line_text
+                    }))
                     .child(
                         div()
                             .absolute()
@@ -306,17 +312,20 @@ impl Workspace {
                 // No selection, cursor line — render full text unsplit with
                 // an absolutely-positioned cursor overlay so nothing shifts.
                 let col = cursor_col.min(line_visual_len);
-                let before: String = line.chars().take(col).collect();
-                let full_text = if line.is_empty() {
-                    " ".to_string()
-                } else {
-                    line.clone()
-                };
+                let byte_col = line_text
+                    .char_indices()
+                    .nth(col)
+                    .map_or(line_text.len(), |(b, _)| b);
+                let before = line_text[..byte_col].to_owned();
 
                 div()
                     .relative()
                     .text_color(rgb(0xd4d4d4))
-                    .child(SharedString::from(full_text))
+                    .child(SharedString::from(if line_visual_len == 0 {
+                        " ".to_string()
+                    } else {
+                        line_text
+                    }))
                     .child(
                         div()
                             .absolute()
@@ -333,11 +342,13 @@ impl Workspace {
                     )
             } else {
                 // Normal line — no cursor, no selection
-                div().text_color(rgb(0xd4d4d4)).child(if line.is_empty() {
-                    SharedString::from(" ")
-                } else {
-                    SharedString::from(line)
-                })
+                div()
+                    .text_color(rgb(0xd4d4d4))
+                    .child(if line_visual_len == 0 {
+                        SharedString::from(" ")
+                    } else {
+                        SharedString::from(line_text)
+                    })
             };
 
             let line_el = div()
@@ -351,7 +362,7 @@ impl Workspace {
                         .text_right()
                         .pr(px(12.0))
                         .flex_shrink_0()
-                        .child(SharedString::from(format!("{}", line_num))),
+                        .child(SharedString::from(line_num.to_string())),
                 )
                 .child(div().flex().flex_1().pl(px(4.0)).child(text_content));
 
@@ -363,12 +374,14 @@ impl Workspace {
 
     fn render_status_bar(&self) -> impl IntoElement {
         let total_lines = self.editor.len_lines();
-        let total_chars = self.editor.rope.len_chars();
+        let total_chars = self.editor.visible_char_count();
         let cursor_row = self.editor.cursor_row();
         let cursor_col = self.editor.cursor_col();
 
         let sel_info = if self.editor.has_selection() {
-            let count = self.editor.selection_end() - self.editor.selection_start();
+            let count = self
+                .editor
+                .visible_char_count_in(self.editor.selection_start(), self.editor.selection_end());
             format!(" ({} selected)", count)
         } else {
             String::new()

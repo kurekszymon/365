@@ -55,17 +55,29 @@ impl Editor {
         }
     }
 
+    /// Count of visible characters (excluding `\n` and `\r`) in the entire buffer.
+    pub fn visible_char_count(&self) -> usize {
+        self.rope
+            .chars()
+            .filter(|&c| c != '\n' && c != '\r')
+            .count()
+    }
+
+    /// Count of visible characters (excluding `\n` and `\r`) in a char range.
+    pub fn visible_char_count_in(&self, start: usize, end: usize) -> usize {
+        self.rope
+            .slice(start..end)
+            .chars()
+            .filter(|&c| c != '\n' && c != '\r')
+            .count()
+    }
+
     /// Get the text content of a line without trailing newline.
     pub fn line_text(&self, row: usize) -> String {
-        let line = self.rope.line(row);
-        let mut s = line.to_string();
-        if s.ends_with('\n') {
-            s.pop();
-            if s.ends_with('\r') {
-                s.pop();
-            }
-        }
-        s
+        let start = self.rope.line_to_char(row);
+        self.rope
+            .slice(start..start + self.line_len(row))
+            .to_string()
     }
 
     /// Clamp cursor to valid range.
