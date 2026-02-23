@@ -258,7 +258,7 @@ impl Workspace {
             // Build the text content area based on cursor/selection state
             let text_content = if has_selection && selection.is_some() {
                 // Line has selection — render full text unsplit with
-                // absolutely-positioned selection highlight overlay.
+                // absolutely-positioned selection highlight + cursor overlay.
                 let (sel_start, sel_end) = selection.unwrap();
                 let sel_start = sel_start.min(line_visual_len);
                 let sel_end = sel_end.min(line_visual_len);
@@ -277,7 +277,19 @@ impl Workspace {
                 let before = line_text[..byte_start].to_owned();
                 let selected = line_text[byte_start..byte_end].to_owned();
 
-                div()
+                // Also compute cursor position for this line if it's the cursor line
+                let cursor_before = if is_cursor_line {
+                    let col = cursor_col.min(line_visual_len);
+                    let byte_col = line_text
+                        .char_indices()
+                        .nth(col)
+                        .map_or(line_text.len(), |(b, _)| b);
+                    Some(line_text[..byte_col].to_owned())
+                } else {
+                    None
+                };
+
+                let mut el = div()
                     .relative()
                     .text_color(rgb(0xd4d4d4))
                     .child(SharedString::from(if line_visual_len == 0 {
@@ -307,7 +319,23 @@ impl Workspace {
                                     },
                                 )),
                             ),
-                    )
+                    );
+
+                // Show cursor bar on the cursor line even during selection
+                if let Some(cb) = cursor_before {
+                    el = el.child(
+                        div()
+                            .absolute()
+                            .top_0()
+                            .left_0()
+                            .bottom_0()
+                            .flex()
+                            .child(div().opacity(0.).child(SharedString::from(cb)))
+                            .child(div().w(px(2.0)).bg(rgb(0xd4d4d4))),
+                    );
+                }
+
+                el
             } else if is_cursor_line {
                 // No selection, cursor line — render full text unsplit with
                 // an absolutely-positioned cursor overlay so nothing shifts.
@@ -435,10 +463,9 @@ impl Workspace {
 
 impl Render for Workspace {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        // Ensure cursor is visible (estimate ~40 visible lines)
-        self.editor.ensure_cursor_visible(40);
-
-        let _ = self.focus_handle.focus(window);
+        if !self.focus_handle.is_focused(window) {
+            let _ = self.focus_handle.focus(window);
+        }
 
         let mut main_content = div().flex().flex_1().w_full().overflow_hidden();
 

@@ -410,18 +410,4 @@ impl Editor {
         }
         self.preferred_col = None;
     }
-
-    // ── Scrolling ────────────────────────────────────────────────────────
-
-    pub fn ensure_cursor_visible(&mut self, visible_lines: usize) {
-        if visible_lines == 0 {
-            return;
-        }
-        let row = self.cursor_row();
-        if row < self.scroll_offset {
-            self.scroll_offset = row;
-        } else if row >= self.scroll_offset + visible_lines {
-            self.scroll_offset = row - visible_lines + 1;
-        }
-    }
 }
