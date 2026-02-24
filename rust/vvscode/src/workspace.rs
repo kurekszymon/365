@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use gpui::{
     ClickEvent, Context, FocusHandle, KeyDownEvent, SharedString, Window, actions, div, prelude::*,
     px, rgb, rgba,
@@ -149,6 +151,56 @@ impl Workspace {
         cx.notify();
     }
 
+    /// Recursively collect directory entries into a flat list for the file explorer.
+    /// Returns Vec of (display_name, is_directory, relative_path).
+    fn collect_file_tree(dir: &Path, prefix: &str, depth: usize) -> Vec<(String, bool, String)> {
+        let indent = "  ".repeat(depth);
+
+        let mut dirs: Vec<_> = Vec::new();
+        let mut files: Vec<_> = Vec::new();
+
+        let Ok(read_dir) = std::fs::read_dir(dir) else {
+            return Vec::new();
+        };
+
+        for entry in read_dir.flatten() {
+            let name = entry.file_name().to_string_lossy().to_string();
+            let is_dir = entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
+            if is_dir {
+                dirs.push(name);
+            } else {
+                files.push(name);
+            }
+        }
+
+        dirs.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+        files.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+
+        let mut result: Vec<(String, bool, String)> = Vec::new();
+
+        for d in dirs {
+            let rel = if prefix.is_empty() {
+                d.clone()
+            } else {
+                format!("{}/{}", prefix, d)
+            };
+            result.push((format!("{}{}/", indent, d), true, String::new()));
+            let children = Self::collect_file_tree(&dir.join(&d), &rel, depth + 1);
+            result.extend(children);
+        }
+
+        for f in files {
+            let rel = if prefix.is_empty() {
+                f.clone()
+            } else {
+                format!("{}/{}", prefix, f)
+            };
+            result.push((format!("{}{}", indent, f), false, rel));
+        }
+
+        result
+    }
+
     fn open_file(&mut self, relative_path: &str) {
         let full_path = format!("{}/{}", self.project_root, relative_path);
         match std::fs::read_to_string(&full_path) {
@@ -165,29 +217,24 @@ impl Workspace {
     }
 
     fn render_left_panel(&self, cx: &mut Context<Self>) -> impl IntoElement {
-        // TODO: use actual files
-        let files: Vec<(&str, bool, &str)> = vec![
-            ("src/", true, ""),
-            ("  main.rs", false, "src/main.rs"),
-            ("  editor.rs", false, "src/editor.rs"),
-            ("  workspace.rs", false, "src/workspace.rs"),
-            ("Cargo.toml", false, "Cargo.toml"),
-            ("Cargo.lock", false, "Cargo.lock"),
-            ("README.md", false, "README.md"),
-        ];
+        let files = Self::collect_file_tree(Path::new(&self.project_root), "", 0);
 
         let mut entries = div().flex().flex_col().gap(px(2.0)).px(px(8.0));
 
-        for (name, is_dir, path) in files {
-            let color = if is_dir { rgb(0xc8ccd4) } else { rgb(0x9da5b4) };
-            let is_current = self.current_file.as_deref() == Some(path);
+        for (name, is_dir, path) in &files {
+            let color = if *is_dir {
+                rgb(0xc8ccd4)
+            } else {
+                rgb(0x9da5b4)
+            };
+            let is_current = self.current_file.as_deref() == Some(path.as_str());
             let entry_bg = if is_current {
                 rgb(0x2c313a)
             } else {
                 rgb(0x21252b)
             };
 
-            let entry_id = if path.is_empty() {
+            let entry_id = if *is_dir {
                 SharedString::from(format!("dir-{}", name.trim()))
             } else {
                 SharedString::from(format!("file-{}", path))
@@ -202,10 +249,10 @@ impl Workspace {
                 .rounded(px(3.0))
                 .bg(entry_bg)
                 .hover(|s| s.bg(rgb(0x2c313a)))
-                .child(SharedString::from(name.to_string()));
+                .child(SharedString::from(name.clone()));
 
             if !is_dir && !path.is_empty() {
-                let path_owned = path.to_string();
+                let path_owned = path.clone();
                 entry = entry.cursor_pointer().on_click(cx.listener(
                     move |this, _: &ClickEvent, window, cx| {
                         this.open_file(&path_owned);
