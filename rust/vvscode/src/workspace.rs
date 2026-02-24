@@ -1,9 +1,20 @@
 use gpui::{
-    Context, FocusHandle, KeyDownEvent, SharedString, Window, actions, div, prelude::*, px, rgb,
-    rgba,
+    ClickEvent, Context, FocusHandle, KeyDownEvent, SharedString, Window, actions, div, prelude::*,
+    px, rgb, rgba,
 };
 
 use crate::editor::Editor;
+
+// ── Layout constants (pixels) ────────────────────────────────────────────────
+const TITLE_BAR_H: f32 = 36.0;
+const STATUS_BAR_H: f32 = 24.0;
+const BOTTOM_PANEL_H: f32 = 180.0;
+const LINE_HEIGHT: f32 = 22.0; // Monaco text_sm effective line height
+const LEFT_PANEL_W: f32 = 220.0;
+const RIGHT_PANEL_W: f32 = 200.0;
+const GUTTER_W: f32 = 50.0;
+const TEXT_PAD_LEFT: f32 = 4.0;
+const CHAR_WIDTH: f32 = 8.41; // Monaco text_sm approximate character width
 
 // ── Actions ──────────────────────────────────────────────────────────────────
 
@@ -25,20 +36,55 @@ pub struct Workspace {
     right_panel_visible: bool,
     editor: Editor,
     focus_handle: FocusHandle,
+    current_file: Option<String>,
+    project_root: String,
 }
 
 impl Workspace {
     pub fn new(cx: &mut Context<Self>) -> Self {
+        let project_root = std::env::current_dir()
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_else(|_| ".".to_string());
         Self {
             left_panel_visible: false,
             bottom_panel_visible: false,
             right_panel_visible: false,
             editor: Editor::new(),
             focus_handle: cx.focus_handle(),
+            current_file: None,
+            project_root,
         }
     }
 
-    fn handle_key_down(&mut self, ev: &KeyDownEvent, _window: &mut Window, cx: &mut Context<Self>) {
+    fn compute_visible_lines(&self, window: &Window) -> usize {
+        let window_h: f32 = window.viewport_size().height.into();
+        let chrome = TITLE_BAR_H + STATUS_BAR_H;
+        let bottom = if self.bottom_panel_visible {
+            BOTTOM_PANEL_H
+        } else {
+            0.0
+        };
+        let available = (window_h - chrome - bottom).max(0.0);
+        (available / LINE_HEIGHT).floor().max(1.0) as usize
+    }
+
+    fn compute_visible_cols(&self, window: &Window) -> usize {
+        let window_w: f32 = window.viewport_size().width.into();
+        let left = if self.left_panel_visible {
+            LEFT_PANEL_W
+        } else {
+            0.0
+        };
+        let right = if self.right_panel_visible {
+            RIGHT_PANEL_W
+        } else {
+            0.0
+        };
+        let available = (window_w - left - right - GUTTER_W - TEXT_PAD_LEFT).max(0.0);
+        (available / CHAR_WIDTH).floor().max(1.0) as usize
+    }
+
+    fn handle_key_down(&mut self, ev: &KeyDownEvent, window: &mut Window, cx: &mut Context<Self>) {
         let keystroke = &ev.keystroke;
         let key = keystroke.key.as_str();
         let shift = keystroke.modifiers.shift;
@@ -96,14 +142,89 @@ impl Workspace {
         }
 
         self.editor.clamp();
+        let visible_lines = self.compute_visible_lines(window);
+        let visible_cols = self.compute_visible_cols(window);
+        self.editor
+            .ensure_cursor_visible(visible_lines, visible_cols);
         cx.notify();
     }
 
-    fn render_left_panel(&self) -> impl IntoElement {
+    fn open_file(&mut self, relative_path: &str) {
+        let full_path = format!("{}/{}", self.project_root, relative_path);
+        match std::fs::read_to_string(&full_path) {
+            Ok(content) => {
+                self.editor.load_text(&content);
+                self.current_file = Some(relative_path.to_string());
+            }
+            Err(e) => {
+                self.editor
+                    .load_text(&format!("Error opening {}: {}", relative_path, e));
+                self.current_file = Some(relative_path.to_string());
+            }
+        }
+    }
+
+    fn render_left_panel(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        // TODO: use actual files
+        let files: Vec<(&str, bool, &str)> = vec![
+            ("src/", true, ""),
+            ("  main.rs", false, "src/main.rs"),
+            ("  editor.rs", false, "src/editor.rs"),
+            ("  workspace.rs", false, "src/workspace.rs"),
+            ("Cargo.toml", false, "Cargo.toml"),
+            ("Cargo.lock", false, "Cargo.lock"),
+            ("README.md", false, "README.md"),
+        ];
+
+        let mut entries = div().flex().flex_col().gap(px(2.0)).px(px(8.0));
+
+        for (name, is_dir, path) in files {
+            let color = if is_dir { rgb(0xc8ccd4) } else { rgb(0x9da5b4) };
+            let is_current = self.current_file.as_deref() == Some(path);
+            let entry_bg = if is_current {
+                rgb(0x2c313a)
+            } else {
+                rgb(0x21252b)
+            };
+
+            let entry_id = if path.is_empty() {
+                SharedString::from(format!("dir-{}", name.trim()))
+            } else {
+                SharedString::from(format!("file-{}", path))
+            };
+
+            let mut entry = div()
+                .id(entry_id)
+                .px(px(6.0))
+                .py(px(3.0))
+                .text_sm()
+                .text_color(color)
+                .rounded(px(3.0))
+                .bg(entry_bg)
+                .hover(|s| s.bg(rgb(0x2c313a)))
+                .child(SharedString::from(name.to_string()));
+
+            if !is_dir && !path.is_empty() {
+                let path_owned = path.to_string();
+                entry = entry.cursor_pointer().on_click(cx.listener(
+                    move |this, _: &ClickEvent, window, cx| {
+                        this.open_file(&path_owned);
+                        let visible_lines = this.compute_visible_lines(window);
+                        let visible_cols = this.compute_visible_cols(window);
+                        this.editor
+                            .ensure_cursor_visible(visible_lines, visible_cols);
+                        cx.notify();
+                    },
+                ));
+            }
+
+            entries = entries.child(entry);
+        }
+
         div()
             .flex()
             .flex_col()
-            .w(px(220.0))
+            .w(px(LEFT_PANEL_W))
             .h_full()
             .bg(rgb(0x21252b))
             .border_r_1()
@@ -117,37 +238,14 @@ impl Workspace {
                     .font_weight(gpui::FontWeight::BOLD)
                     .child("EXPLORER"),
             )
-            .child(
-                div()
-                    .flex()
-                    .flex_col()
-                    .gap(px(2.0))
-                    .px(px(8.0))
-                    .child(Self::file_entry("src/", true))
-                    .child(Self::file_entry("  main.rs", false))
-                    .child(Self::file_entry("Cargo.toml", false))
-                    .child(Self::file_entry("Cargo.lock", false))
-                    .child(Self::file_entry("README.md", false)),
-            )
-    }
-
-    fn file_entry(name: &str, is_dir: bool) -> impl IntoElement {
-        let color = if is_dir { rgb(0xc8ccd4) } else { rgb(0x9da5b4) };
-        div()
-            .px(px(6.0))
-            .py(px(3.0))
-            .text_sm()
-            .text_color(color)
-            .rounded(px(3.0))
-            .hover(|s| s.bg(rgb(0x2c313a)))
-            .child(SharedString::from(name.to_string()))
+            .child(entries)
     }
 
     fn render_right_panel(&self) -> impl IntoElement {
         div()
             .flex()
             .flex_col()
-            .w(px(200.0))
+            .w(px(RIGHT_PANEL_W))
             .h_full()
             .bg(rgb(0x21252b))
             .border_l_1()
@@ -178,7 +276,7 @@ impl Workspace {
             .flex()
             .flex_col()
             .w_full()
-            .h(px(180.0))
+            .h(px(BOTTOM_PANEL_H))
             .bg(rgb(0x1e1e1e))
             .border_t_1()
             .border_color(rgb(0x181a1f))
@@ -214,11 +312,11 @@ impl Workspace {
             )
     }
 
-    fn render_editor(&self) -> impl IntoElement {
-        let visible_lines: usize = 40;
+    fn render_editor(&self, visible_lines: usize) -> impl IntoElement {
         let total_lines = self.editor.len_lines();
         let start = self.editor.scroll_offset;
         let end = (start + visible_lines).min(total_lines);
+        let h_off = self.editor.h_scroll_offset;
 
         let cursor_row = self.editor.cursor_row();
         let cursor_col = self.editor.cursor_col();
@@ -241,6 +339,33 @@ impl Workspace {
             let line_visual_len = line_text.chars().count();
             let is_cursor_line = i == cursor_row;
 
+            // ── Horizontal scroll: derive display text ───────────────────
+            let (display_text, display_len) = if h_off < line_visual_len {
+                let byte_offset = line_text
+                    .char_indices()
+                    .nth(h_off)
+                    .map_or(line_text.len(), |(b, _)| b);
+                (
+                    line_text[byte_offset..].to_string(),
+                    line_visual_len - h_off,
+                )
+            } else {
+                (String::new(), 0)
+            };
+
+            let display_cursor_col = if is_cursor_line {
+                cursor_col.saturating_sub(h_off)
+            } else {
+                0
+            };
+
+            let selection = self.editor.selection_on_line(i);
+            let display_selection: Option<(usize, usize)> = selection.and_then(|(s, e)| {
+                let ds = s.saturating_sub(h_off);
+                let de = e.saturating_sub(h_off);
+                if ds >= de { None } else { Some((ds, de)) }
+            });
+
             let line_bg = if is_cursor_line && !has_selection {
                 rgb(0x2a2d32)
             } else {
@@ -253,38 +378,33 @@ impl Workspace {
                 rgb(0x5a5a5a)
             };
 
-            let selection = self.editor.selection_on_line(i);
-
             // Build the text content area based on cursor/selection state
-            let text_content = if has_selection && selection.is_some() {
-                // Line has selection — render full text unsplit with
+            let text_content = if has_selection && display_selection.is_some() {
+                // Line has visible selection — render display text with
                 // absolutely-positioned selection highlight + cursor overlay.
-                let (sel_start, sel_end) = selection.unwrap();
-                let sel_start = sel_start.min(line_visual_len);
-                let sel_end = sel_end.min(line_visual_len);
+                let (sel_start, sel_end) = display_selection.unwrap();
+                let sel_start = sel_start.min(display_len);
+                let sel_end = sel_end.min(display_len);
 
-                // Derive substrings via &str byte slicing from the single line_text.
-                // We to_owned() the slices before moving line_text — still cheaper
-                // than separate rope traversals (simple memcpy vs chunk reassembly).
-                let byte_start = line_text
+                let byte_start = display_text
                     .char_indices()
                     .nth(sel_start)
-                    .map_or(line_text.len(), |(b, _)| b);
-                let byte_end = line_text
+                    .map_or(display_text.len(), |(b, _)| b);
+                let byte_end = display_text
                     .char_indices()
                     .nth(sel_end)
-                    .map_or(line_text.len(), |(b, _)| b);
-                let before = line_text[..byte_start].to_owned();
-                let selected = line_text[byte_start..byte_end].to_owned();
+                    .map_or(display_text.len(), |(b, _)| b);
+                let before = display_text[..byte_start].to_owned();
+                let selected = display_text[byte_start..byte_end].to_owned();
 
                 // Also compute cursor position for this line if it's the cursor line
                 let cursor_before = if is_cursor_line {
-                    let col = cursor_col.min(line_visual_len);
-                    let byte_col = line_text
+                    let col = display_cursor_col.min(display_len);
+                    let byte_col = display_text
                         .char_indices()
                         .nth(col)
-                        .map_or(line_text.len(), |(b, _)| b);
-                    Some(line_text[..byte_col].to_owned())
+                        .map_or(display_text.len(), |(b, _)| b);
+                    Some(display_text[..byte_col].to_owned())
                 } else {
                     None
                 };
@@ -292,10 +412,10 @@ impl Workspace {
                 let mut el = div()
                     .relative()
                     .text_color(rgb(0xd4d4d4))
-                    .child(SharedString::from(if line_visual_len == 0 {
+                    .child(SharedString::from(if display_len == 0 {
                         " ".to_string()
                     } else {
-                        line_text
+                        display_text
                     }))
                     .child(
                         div()
@@ -337,22 +457,22 @@ impl Workspace {
 
                 el
             } else if is_cursor_line {
-                // No selection, cursor line — render full text unsplit with
+                // No selection, cursor line — render display text with
                 // an absolutely-positioned cursor overlay so nothing shifts.
-                let col = cursor_col.min(line_visual_len);
-                let byte_col = line_text
+                let col = display_cursor_col.min(display_len);
+                let byte_col = display_text
                     .char_indices()
                     .nth(col)
-                    .map_or(line_text.len(), |(b, _)| b);
-                let before = line_text[..byte_col].to_owned();
+                    .map_or(display_text.len(), |(b, _)| b);
+                let before = display_text[..byte_col].to_owned();
 
                 div()
                     .relative()
                     .text_color(rgb(0xd4d4d4))
-                    .child(SharedString::from(if line_visual_len == 0 {
+                    .child(SharedString::from(if display_len == 0 {
                         " ".to_string()
                     } else {
-                        line_text
+                        display_text
                     }))
                     .child(
                         div()
@@ -370,13 +490,11 @@ impl Workspace {
                     )
             } else {
                 // Normal line — no cursor, no selection
-                div()
-                    .text_color(rgb(0xd4d4d4))
-                    .child(if line_visual_len == 0 {
-                        SharedString::from(" ")
-                    } else {
-                        SharedString::from(line_text)
-                    })
+                div().text_color(rgb(0xd4d4d4)).child(if display_len == 0 {
+                    SharedString::from(" ")
+                } else {
+                    SharedString::from(display_text)
+                })
             };
 
             let line_el = div()
@@ -385,14 +503,21 @@ impl Workspace {
                 .bg(line_bg)
                 .child(
                     div()
-                        .w(px(50.0))
+                        .w(px(GUTTER_W))
                         .text_color(gutter_color)
                         .text_right()
                         .pr(px(12.0))
                         .flex_shrink_0()
                         .child(SharedString::from(line_num.to_string())),
                 )
-                .child(div().flex().flex_1().pl(px(4.0)).child(text_content));
+                .child(
+                    div()
+                        .flex()
+                        .flex_1()
+                        .pl(px(TEXT_PAD_LEFT))
+                        .overflow_hidden()
+                        .child(text_content),
+                );
 
             editor_content = editor_content.child(line_el);
         }
@@ -418,7 +543,7 @@ impl Workspace {
         div()
             .flex()
             .w_full()
-            .h(px(24.0))
+            .h(px(STATUS_BAR_H))
             .bg(rgb(0x007acc))
             .items_center()
             .justify_between()
@@ -446,10 +571,14 @@ impl Workspace {
     }
 
     fn render_title_bar(&self) -> impl IntoElement {
+        let title = match &self.current_file {
+            Some(f) => format!("vvscode — {}", f),
+            None => "vvscode — untitled".to_string(),
+        };
         div()
             .flex()
             .w_full()
-            .h(px(36.0))
+            .h(px(TITLE_BAR_H))
             .bg(rgb(0x21252b))
             .border_b_1()
             .border_color(rgb(0x181a1f))
@@ -457,12 +586,14 @@ impl Workspace {
             .justify_center()
             .text_xs()
             .text_color(rgb(0x9da5b4))
-            .child("vvscode — main.rs")
+            .child(SharedString::from(title))
     }
 }
 
 impl Render for Workspace {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let visible_lines = self.compute_visible_lines(window);
+
         if !self.focus_handle.is_focused(window) {
             let _ = self.focus_handle.focus(window);
         }
@@ -471,13 +602,13 @@ impl Render for Workspace {
 
         // Left panel
         if self.left_panel_visible {
-            main_content = main_content.child(self.render_left_panel());
+            main_content = main_content.child(self.render_left_panel(cx));
         }
 
         // Center: editor + optional bottom panel
         let mut center = div().flex().flex_col().flex_1().h_full().overflow_hidden();
 
-        center = center.child(self.render_editor());
+        center = center.child(self.render_editor(visible_lines));
 
         if self.bottom_panel_visible {
             center = center.child(self.render_bottom_panel());
@@ -505,8 +636,12 @@ impl Render for Workspace {
                 this.right_panel_visible = !this.right_panel_visible;
                 cx.notify();
             }))
-            .on_action(cx.listener(|this, _: &SelectAll, _window, cx| {
+            .on_action(cx.listener(|this, _: &SelectAll, window, cx| {
                 this.editor.select_all();
+                let visible_lines = this.compute_visible_lines(window);
+                let visible_cols = this.compute_visible_cols(window);
+                this.editor
+                    .ensure_cursor_visible(visible_lines, visible_cols);
                 cx.notify();
             }))
             .on_key_down(cx.listener(Self::handle_key_down))

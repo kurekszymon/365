@@ -8,6 +8,7 @@ pub struct Editor {
     pub anchor: usize,                // selection anchor (== cursor when no selection)
     pub preferred_col: Option<usize>, // sticky column for up/down movement
     pub scroll_offset: usize,         // line offset for vertical scrolling
+    pub h_scroll_offset: usize,       // column offset for horizontal scrolling
 }
 
 impl Editor {
@@ -18,6 +19,7 @@ impl Editor {
             anchor: 0,
             preferred_col: None,
             scroll_offset: 0,
+            h_scroll_offset: 0,
         }
     }
 
@@ -409,5 +411,40 @@ impl Editor {
             self.collapse_to_cursor();
         }
         self.preferred_col = None;
+    }
+
+    // ── Scrolling ────────────────────────────────────────────────────────
+
+    /// Adjust scroll offsets so the cursor is always visible in the viewport.
+    pub fn ensure_cursor_visible(&mut self, visible_lines: usize, visible_cols: usize) {
+        let row = self.cursor_row();
+        let col = self.cursor_col();
+
+        // Vertical: keep cursor row inside [scroll_offset, scroll_offset + visible_lines)
+        if row < self.scroll_offset {
+            self.scroll_offset = row;
+        } else if row >= self.scroll_offset + visible_lines {
+            self.scroll_offset = row.saturating_sub(visible_lines - 1);
+        }
+
+        // Horizontal: keep cursor col inside [h_scroll_offset, h_scroll_offset + visible_cols)
+        let h_margin = 5;
+        if col < self.h_scroll_offset {
+            self.h_scroll_offset = col.saturating_sub(h_margin);
+        } else if col >= self.h_scroll_offset + visible_cols {
+            self.h_scroll_offset = col.saturating_sub(visible_cols - 1) + h_margin;
+        }
+    }
+
+    // ── File loading ─────────────────────────────────────────────────────
+
+    /// Replace the entire buffer with the given text, resetting cursor and scroll.
+    pub fn load_text(&mut self, text: &str) {
+        self.rope = Rope::from_str(text);
+        self.cursor = 0;
+        self.anchor = 0;
+        self.preferred_col = None;
+        self.scroll_offset = 0;
+        self.h_scroll_offset = 0;
     }
 }
