@@ -1,9 +1,11 @@
 use std::path::Path;
 
 use gpui::{
-    ClickEvent, Context, FocusHandle, KeyDownEvent, SharedString, Window, actions, div, prelude::*,
-    px, rgb, rgba,
+    ClickEvent, Context, FocusHandle, KeyDownEvent, ScrollDelta, ScrollWheelEvent, SharedString,
+    Window, actions, div, prelude::*, px, rgb, rgba,
 };
+
+const SCROLL_SENSITIVITY: f32 = 1.0;
 
 use crate::editor::Editor;
 
@@ -148,6 +150,49 @@ impl Workspace {
         let visible_cols = self.compute_visible_cols(window);
         self.editor
             .ensure_cursor_visible(visible_lines, visible_cols);
+        cx.notify();
+    }
+
+    fn handle_scroll_wheel(
+        &mut self,
+        ev: &ScrollWheelEvent,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let total_lines = self.editor.len_lines();
+        let visible_lines = self.compute_visible_lines(window);
+
+        // Convert delta to line/col counts
+        let (delta_x, delta_y): (f32, f32) = match ev.delta {
+            ScrollDelta::Pixels(point) => {
+                // Touchpad: pixel-precise deltas — convert to lines/cols
+                let dy: f32 = point.y.into();
+                let dx: f32 = point.x.into();
+                (-dx / CHAR_WIDTH, -dy / LINE_HEIGHT)
+            }
+            ScrollDelta::Lines(point) => {
+                // Mouse wheel: already in line units (typically ±3)
+                (-point.x * SCROLL_SENSITIVITY, -point.y * SCROLL_SENSITIVITY)
+            }
+        };
+
+        // ── Vertical scroll ──────────────────────────────────────────────
+        if delta_y.abs() > 0.01 {
+            let max_offset = total_lines.saturating_sub(visible_lines);
+            let new = (self.editor.scroll_offset as f32 + delta_y)
+                .round()
+                .clamp(0.0, max_offset as f32);
+            self.editor.scroll_offset = new as usize;
+        }
+
+        // ── Horizontal scroll ────────────────────────────────────────────
+        if delta_x.abs() > 0.01 {
+            let new = (self.editor.h_scroll_offset as f32 + delta_x)
+                .round()
+                .max(0.0);
+            self.editor.h_scroll_offset = new as usize;
+        }
+
         cx.notify();
     }
 
@@ -692,6 +737,7 @@ impl Render for Workspace {
                 cx.notify();
             }))
             .on_key_down(cx.listener(Self::handle_key_down))
+            .on_scroll_wheel(cx.listener(Self::handle_scroll_wheel))
             .flex()
             .flex_col()
             .size_full()

@@ -328,7 +328,7 @@ It is NOT called inside `Editor` methods. This is intentional — `Editor` is a 
 
 ### What we don't do (yet)
 
-1. **Mouse wheel scrolling.** `scroll_offset` can be adjusted by mouse events, but no handler is wired up yet.
+1. ~~**Mouse wheel scrolling.** `scroll_offset` can be adjusted by mouse events, but no handler is wired up yet.~~ → Done. See **ADR-003** (scroll wheel and touchpad scrolling).
 2. **Measured font metrics.** `LINE_HEIGHT` and `CHAR_WIDTH` are hardcoded approximations. They'd need to be queried from GPUI's text layout to be truly accurate, but GPUI doesn't expose that simply at the application level.
 3. **Smooth scrolling.** The viewport jumps instantly. Animation would require interpolating `scroll_offset` over frames.
 4. **Scroll bar.** No visual indicator of scroll position. Would need the ratio `scroll_offset / total_lines` to render a thumb.
