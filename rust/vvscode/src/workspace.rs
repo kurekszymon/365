@@ -19,6 +19,8 @@ const RIGHT_PANEL_W: f32 = 200.0;
 const GUTTER_W: f32 = 50.0;
 const TEXT_PAD_LEFT: f32 = 4.0;
 const CHAR_WIDTH: f32 = 8.41; // Monaco text_sm approximate character width
+const PANEL_ENTRY_H: f32 = 24.0; // left panel entry height (text_sm + py(3) padding)
+const PANEL_HEADER_H: f32 = 34.0; // "EXPLORER" header height (text_xs + py(10) + px(12))
 
 // ── Actions ──────────────────────────────────────────────────────────────────
 
@@ -42,6 +44,8 @@ pub struct Workspace {
     focus_handle: FocusHandle,
     current_file: Option<String>,
     project_root: String,
+    file_tree: Vec<(String, bool, String)>, // cached: (display_name, is_dir, rel_path)
+    left_panel_scroll: usize,               // entry offset for left panel scrolling
 }
 
 impl Workspace {
@@ -49,6 +53,7 @@ impl Workspace {
         let project_root = std::env::current_dir()
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|_| ".".to_string());
+        let file_tree = Self::collect_file_tree(Path::new(&project_root), "", 0);
         Self {
             left_panel_visible: false,
             bottom_panel_visible: false,
@@ -57,7 +62,26 @@ impl Workspace {
             focus_handle: cx.focus_handle(),
             current_file: None,
             project_root,
+            file_tree,
+            left_panel_scroll: 0,
         }
+    }
+
+    fn refresh_file_tree(&mut self) {
+        self.file_tree = Self::collect_file_tree(Path::new(&self.project_root), "", 0);
+        self.left_panel_scroll = 0;
+    }
+
+    fn compute_visible_panel_entries(&self, window: &Window) -> usize {
+        let window_h: f32 = window.viewport_size().height.into();
+        let chrome = TITLE_BAR_H + STATUS_BAR_H;
+        let bottom = if self.bottom_panel_visible {
+            BOTTOM_PANEL_H
+        } else {
+            0.0
+        };
+        let available = (window_h - chrome - bottom - PANEL_HEADER_H).max(0.0);
+        (available / PANEL_ENTRY_H).floor().max(1.0) as usize
     }
 
     fn compute_visible_lines(&self, window: &Window) -> usize {
@@ -153,28 +177,35 @@ impl Workspace {
         cx.notify();
     }
 
+    /// Convert a scroll delta into (columns, lines) as f32.
+    fn scroll_delta(delta: &ScrollDelta) -> (f32, f32) {
+        match delta {
+            ScrollDelta::Pixels(point) => {
+                let dy: f32 = point.y.into();
+                let dx: f32 = point.x.into();
+                (-dx / CHAR_WIDTH, -dy / LINE_HEIGHT)
+            }
+            ScrollDelta::Lines(point) => {
+                (-point.x * SCROLL_SENSITIVITY, -point.y * SCROLL_SENSITIVITY)
+            }
+        }
+    }
+
     fn handle_scroll_wheel(
         &mut self,
         ev: &ScrollWheelEvent,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        // Skip if pointer is over the left panel — handled by its own handler.
+        let pointer_x: f32 = ev.position.x.into();
+        if self.left_panel_visible && pointer_x < LEFT_PANEL_W {
+            return;
+        }
+
         let total_lines = self.editor.len_lines();
         let visible_lines = self.compute_visible_lines(window);
-
-        // Convert delta to line/col counts
-        let (delta_x, delta_y): (f32, f32) = match ev.delta {
-            ScrollDelta::Pixels(point) => {
-                // Touchpad: pixel-precise deltas — convert to lines/cols
-                let dy: f32 = point.y.into();
-                let dx: f32 = point.x.into();
-                (-dx / CHAR_WIDTH, -dy / LINE_HEIGHT)
-            }
-            ScrollDelta::Lines(point) => {
-                // Mouse wheel: already in line units (typically ±3)
-                (-point.x * SCROLL_SENSITIVITY, -point.y * SCROLL_SENSITIVITY)
-            }
-        };
+        let (delta_x, delta_y) = Self::scroll_delta(&ev.delta);
 
         // ── Vertical scroll ──────────────────────────────────────────────
         if delta_y.abs() > 0.01 {
@@ -191,6 +222,26 @@ impl Workspace {
                 .round()
                 .max(0.0);
             self.editor.h_scroll_offset = new as usize;
+        }
+
+        cx.notify();
+    }
+
+    fn handle_left_panel_scroll(
+        &mut self,
+        ev: &ScrollWheelEvent,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let (_delta_x, delta_y) = Self::scroll_delta(&ev.delta);
+
+        if delta_y.abs() > 0.01 {
+            let visible = self.compute_visible_panel_entries(window);
+            let max_offset = self.file_tree.len().saturating_sub(visible);
+            let new = (self.left_panel_scroll as f32 + delta_y)
+                .round()
+                .clamp(0.0, max_offset as f32);
+            self.left_panel_scroll = new as usize;
         }
 
         cx.notify();
@@ -261,12 +312,19 @@ impl Workspace {
         }
     }
 
-    fn render_left_panel(&self, cx: &mut Context<Self>) -> impl IntoElement {
-        let files = Self::collect_file_tree(Path::new(&self.project_root), "", 0);
+    fn render_left_panel(&self, window: &Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let visible_entries = self.compute_visible_panel_entries(window);
+        let start = self.left_panel_scroll;
+        let end = (start + visible_entries).min(self.file_tree.len());
 
-        let mut entries = div().flex().flex_col().gap(px(2.0)).px(px(8.0));
+        let mut entries = div()
+            .flex()
+            .flex_col()
+            .gap(px(2.0))
+            .px(px(8.0))
+            .overflow_hidden();
 
-        for (name, is_dir, path) in &files {
+        for (name, is_dir, path) in &self.file_tree[start..end] {
             let color = if *is_dir {
                 rgb(0xc8ccd4)
             } else {
@@ -331,6 +389,7 @@ impl Workspace {
                     .child("EXPLORER"),
             )
             .child(entries)
+            .on_scroll_wheel(cx.listener(Self::handle_left_panel_scroll))
     }
 
     fn render_right_panel(&self) -> impl IntoElement {
@@ -694,7 +753,7 @@ impl Render for Workspace {
 
         // Left panel
         if self.left_panel_visible {
-            main_content = main_content.child(self.render_left_panel(cx));
+            main_content = main_content.child(self.render_left_panel(window, cx));
         }
 
         // Center: editor + optional bottom panel
@@ -718,6 +777,9 @@ impl Render for Workspace {
             .track_focus(&self.focus_handle)
             .on_action(cx.listener(|this, _: &ToggleLeftPanel, _window, cx| {
                 this.left_panel_visible = !this.left_panel_visible;
+                if this.left_panel_visible {
+                    this.refresh_file_tree();
+                }
                 cx.notify();
             }))
             .on_action(cx.listener(|this, _: &ToggleBottomPanel, _window, cx| {
