@@ -501,7 +501,7 @@ This prevents the two scrollbar thumbs from overlapping in the corner. It also m
 
 ### Scrollbar drag-to-scroll
 
-All three scrollbar thumbs (editor vertical, editor horizontal, left panel vertical) are draggable. Grab the thumb and drag to scroll the corresponding content continuously.
+All three scrollbar thumbs (editor vertical, editor horizontal, left panel vertical) are draggable. Grab the thumb and drag to scroll the corresponding content continuously. Clicking the track (outside the thumb) jumps the viewport to that position and seamlessly transitions into a drag.
 
 #### Drag state
 
@@ -647,12 +647,87 @@ Like scroll wheel, scrollbar drag does **not** call `ensure_cursor_visible`. The
 
 ---
 
+### Click-to-scroll on scrollbar tracks
+
+Clicking the scrollbar track (the empty area outside the thumb) jumps the viewport so the thumb centers on the click position. This matches VS Code's default `editor.scrollbar.scrollByPage: false` behavior.
+
+#### How it works
+
+Each track div has its own `on_mouse_down` handler in addition to the thumb's handler. GPUI events bubble from inner to outer, so a click on the thumb fires the thumb handler first, then the track handler. The track handler detects this and skips:
+
+```rs
+// On the editor vertical scrollbar track div:
+.on_mouse_down(MouseButton::Left, cx.listener(move |this, ev: &MouseDownEvent, _window, cx| {
+    let mouse_y: f32 = ev.position.y.into();
+    let y_in_track = mouse_y - v_track_top;
+    // Skip if click is on the thumb (thumb handler already fired)
+    if y_in_track >= thumb_top && y_in_track <= thumb_top + thumb_h {
+        return;
+    }
+    // Center thumb on click position
+    let target_top = (y_in_track - thumb_h / 2.0).clamp(0.0, track_h - thumb_h);
+    let ratio = target_top / (track_h - thumb_h).max(1.0);
+    let new_offset = (ratio * max_v_offset).round().clamp(0.0, max_v_offset);
+    this.editor.scroll_offset = new_offset as usize;
+    // Initiate drag so user can keep sliding after click
+    this.scrollbar_drag = Some(ScrollbarDragState {
+        kind: ScrollbarDragKind::EditorVertical,
+        start_mouse: mouse_y,
+        start_offset: new_offset,
+        scroll_per_px: scroll_per_px_v,
+        max_scroll: max_v_offset,
+    });
+    cx.notify();
+}))
+```
+
+#### Window-to-track coordinate conversion
+
+The track is absolutely positioned within a parent div. To convert from window-relative mouse coordinates to track-relative coordinates, we subtract the track's known top (or left) position in window space:
+
+| Scrollbar           | Offset formula                                        | Why                                                       |
+| ------------------- | ----------------------------------------------------- | --------------------------------------------------------- |
+| Editor vertical     | `y_in_track = mouse_y - TITLE_BAR_H`                  | Editor starts below the title bar                         |
+| Editor horizontal   | `x_in_track = mouse_x - left_w`                       | Editor starts after the left panel (0 if panel is hidden) |
+| Left panel vertical | `y_in_track = mouse_y - TITLE_BAR_H - PANEL_HEADER_H` | Entries area starts below title bar + "EXPLORER" header   |
+
+These are the same layout-constant approximations used everywhere else. A few pixels off just shifts the jump target slightly — the `.clamp()` keeps it within bounds.
+
+#### Centering the thumb on the click
+
+The goal is to place the thumb's center at the click position:
+
+```
+target_top = (y_in_track - thumb_h / 2).clamp(0, track_h - thumb_h)
+ratio = target_top / (track_h - thumb_h)
+new_offset = ratio * max_scroll
+```
+
+The `.clamp()` ensures the thumb doesn't go above the top or below the bottom of the track. Clicking near the very top centers as high as possible; clicking near the very bottom centers as low as possible.
+
+#### Seamless click-then-drag
+
+After jumping, the handler also sets `scrollbar_drag` with the current mouse position and the _new_ (post-jump) offset. This means the existing `on_mouse_move` handler on the root div immediately takes over. The user can click the track and, without releasing, drag to fine-tune the position. This feels natural — it's the same behavior as VS Code and macOS system scrollbars.
+
+#### Thumb hit-test to avoid double-fire
+
+When the user clicks on the thumb itself, both handlers fire (bubble order: thumb first, then track). The track handler checks whether the click falls within the thumb's bounds:
+
+```rs
+if y_in_track >= thumb_top && y_in_track <= thumb_top + thumb_h {
+    return;
+}
+```
+
+If it does, the track handler returns early. The thumb's own handler already set up the drag state. Without this guard, the track handler would overwrite the drag's `start_offset` with a re-centered position, causing a visual jump when dragging starts.
+
+---
+
 ### What we don't do (yet)
 
 1. **Smooth (sub-line) scrolling.** Touchpad pixel deltas are converted to integer line offsets via `.round()`. True smooth scrolling would require a fractional `scroll_offset: f32` and rendering partial lines at the top of the viewport. This is a significant change to the rendering model.
 2. **Scroll momentum / inertia.** macOS provides momentum events after a touchpad swipe (the `TouchPhase` field on `ScrollWheelEvent`). We don't distinguish between direct and momentum phases — they all scroll equally. To add inertia damping or cancellation on touch, we'd check `ev.touch_phase`.
-3. **Scrollbar click-to-scroll.** Clicking on the scrollbar track (not the thumb) should jump the viewport to that position. Would need `on_mouse_down` on the track div, converting click Y position to a scroll offset.
-4. **Scrollbar hover highlight.** VS Code brightens the thumb on hover (`scrollbarSlider.hoverBackground`). Would need an `.id()` on the thumb div and a `.hover()` style with a brighter `rgba` value, e.g. `rgba(0x797979aa)`.
-5. **File watcher for tree refresh.** The cached file tree goes stale while the panel is open. External file changes (git checkout, file creation) won't appear until the panel is toggled. A `notify`-based file watcher or manual refresh keybinding would fix this.
-6. **Right panel scrolling.** When git preview or other content lands in the right panel, it will need its own scroll offset and the same separate-handler treatment.
-7. **Cached `max_line_len`.** Currently computed from scratch every frame by iterating all lines. Should be cached and invalidated on text edits for large files.
+3. **Scrollbar hover highlight.** VS Code brightens the thumb on hover (`scrollbarSlider.hoverBackground`). Would need an `.id()` on the thumb div and a `.hover()` style with a brighter `rgba` value, e.g. `rgba(0x797979aa)`.
+4. **File watcher for tree refresh.** The cached file tree goes stale while the panel is open. External file changes (git checkout, file creation) won't appear until the panel is toggled. A `notify`-based file watcher or manual refresh keybinding would fix this.
+5. **Right panel scrolling.** When git preview or other content lands in the right panel, it will need its own scroll offset and the same separate-handler treatment.
+6. **Cached `max_line_len`.** Currently computed from scratch every frame by iterating all lines. Should be cached and invalidated on text edits for large files.

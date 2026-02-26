@@ -435,6 +435,8 @@ impl Workspace {
 
             let scroll_per_px_lp = max_offset / (track_h - thumb_h).max(1.0);
 
+            let lp_track_top = TITLE_BAR_H + PANEL_HEADER_H; // track top in window coords
+
             entries_wrapper = entries_wrapper.child(
                 div()
                     .absolute()
@@ -442,6 +444,29 @@ impl Workspace {
                     .right_0()
                     .w(px(SCROLLBAR_SIZE))
                     .h(px(track_h))
+                    .on_mouse_down(
+                        MouseButton::Left,
+                        cx.listener(move |this, ev: &MouseDownEvent, _window, cx| {
+                            let mouse_y: f32 = ev.position.y.into();
+                            let y_in_track = mouse_y - lp_track_top;
+                            if y_in_track >= thumb_top && y_in_track <= thumb_top + thumb_h {
+                                return;
+                            }
+                            let target_top =
+                                (y_in_track - thumb_h / 2.0).clamp(0.0, track_h - thumb_h);
+                            let ratio = target_top / (track_h - thumb_h).max(1.0);
+                            let new_off = (ratio * max_offset).round().clamp(0.0, max_offset);
+                            this.left_panel_scroll = new_off as usize;
+                            this.scrollbar_drag = Some(ScrollbarDragState {
+                                kind: ScrollbarDragKind::LeftPanel,
+                                start_mouse: mouse_y,
+                                start_offset: new_off,
+                                scroll_per_px: scroll_per_px_lp,
+                                max_scroll: max_offset,
+                            });
+                            cx.notify();
+                        }),
+                    )
                     .child(
                         div()
                             .absolute()
@@ -811,6 +836,7 @@ impl Workspace {
             };
             let thumb_top = v_scroll_ratio * (track_h - thumb_h);
             let scroll_per_px_v = max_v_offset / (track_h - thumb_h).max(1.0);
+            let v_track_top = TITLE_BAR_H; // track top in window coords
 
             editor_content = editor_content.child(
                 div()
@@ -819,6 +845,33 @@ impl Workspace {
                     .right_0()
                     .w(px(SCROLLBAR_SIZE))
                     .h(px(track_h))
+                    .on_mouse_down(
+                        MouseButton::Left,
+                        cx.listener(move |this, ev: &MouseDownEvent, _window, cx| {
+                            let mouse_y: f32 = ev.position.y.into();
+                            let y_in_track = mouse_y - v_track_top;
+                            // Skip if click is on the thumb (thumb handler already fired)
+                            if y_in_track >= thumb_top && y_in_track <= thumb_top + thumb_h {
+                                return;
+                            }
+                            // Center thumb on click position
+                            let target_top =
+                                (y_in_track - thumb_h / 2.0).clamp(0.0, track_h - thumb_h);
+                            let ratio = target_top / (track_h - thumb_h).max(1.0);
+                            let new_offset =
+                                (ratio * max_v_offset).round().clamp(0.0, max_v_offset);
+                            this.editor.scroll_offset = new_offset as usize;
+                            // Initiate drag so user can keep sliding after click
+                            this.scrollbar_drag = Some(ScrollbarDragState {
+                                kind: ScrollbarDragKind::EditorVertical,
+                                start_mouse: mouse_y,
+                                start_offset: new_offset,
+                                scroll_per_px: scroll_per_px_v,
+                                max_scroll: max_v_offset,
+                            });
+                            cx.notify();
+                        }),
+                    )
                     .child(
                         div()
                             .absolute()
@@ -863,6 +916,7 @@ impl Workspace {
             };
             let thumb_left = h_scroll_ratio * (track_w - thumb_w);
             let scroll_per_px_h = max_h_scroll / (track_w - thumb_w).max(1.0);
+            let h_track_left = left_w; // track left in window coords
 
             editor_content = editor_content.child(
                 div()
@@ -871,6 +925,30 @@ impl Workspace {
                     .left_0()
                     .h(px(SCROLLBAR_SIZE))
                     .w(px(track_w))
+                    .on_mouse_down(
+                        MouseButton::Left,
+                        cx.listener(move |this, ev: &MouseDownEvent, _window, cx| {
+                            let mouse_x: f32 = ev.position.x.into();
+                            let x_in_track = mouse_x - h_track_left;
+                            if x_in_track >= thumb_left && x_in_track <= thumb_left + thumb_w {
+                                return;
+                            }
+                            let target_left =
+                                (x_in_track - thumb_w / 2.0).clamp(0.0, track_w - thumb_w);
+                            let ratio = target_left / (track_w - thumb_w).max(1.0);
+                            let new_offset =
+                                (ratio * max_h_scroll).round().clamp(0.0, max_h_scroll);
+                            this.editor.h_scroll_offset = new_offset as usize;
+                            this.scrollbar_drag = Some(ScrollbarDragState {
+                                kind: ScrollbarDragKind::EditorHorizontal,
+                                start_mouse: mouse_x,
+                                start_offset: new_offset,
+                                scroll_per_px: scroll_per_px_h,
+                                max_scroll: max_h_scroll,
+                            });
+                            cx.notify();
+                        }),
+                    )
                     .child(
                         div()
                             .absolute()
