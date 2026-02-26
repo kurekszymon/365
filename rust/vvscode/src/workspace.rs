@@ -21,6 +21,8 @@ const TEXT_PAD_LEFT: f32 = 4.0;
 const CHAR_WIDTH: f32 = 8.41; // Monaco text_sm approximate character width
 const PANEL_ENTRY_H: f32 = 24.0; // left panel entry height (text_sm + py(3) padding)
 const PANEL_HEADER_H: f32 = 34.0; // "EXPLORER" header height (text_xs + py(10) + px(12))
+const SCROLLBAR_SIZE: f32 = 14.0; // width for vertical scrollbar, height for horizontal
+const SCROLLBAR_MIN_THUMB: f32 = 20.0; // minimum thumb dimension in pixels
 
 // ── Actions ──────────────────────────────────────────────────────────────────
 
@@ -94,6 +96,18 @@ impl Workspace {
         };
         let available = (window_h - chrome - bottom).max(0.0);
         (available / LINE_HEIGHT).floor().max(1.0) as usize
+    }
+
+    fn max_line_len(&self) -> usize {
+        let total = self.editor.len_lines();
+        let mut max = 0;
+        for i in 0..total {
+            let ll = self.editor.line_len(i);
+            if ll > max {
+                max = ll;
+            }
+        }
+        max
     }
 
     fn compute_visible_cols(&self, window: &Window) -> usize {
@@ -371,6 +385,53 @@ impl Workspace {
             entries = entries.child(entry);
         }
 
+        // ── Left panel scrollbar ─────────────────────────────────────────
+        let total_entries = self.file_tree.len();
+        let mut entries_wrapper = div().relative().flex_1().overflow_hidden().child(entries);
+
+        if total_entries > visible_entries {
+            let window_h: f32 = window.viewport_size().height.into();
+            let chrome = TITLE_BAR_H + STATUS_BAR_H;
+            let bottom = if self.bottom_panel_visible {
+                BOTTOM_PANEL_H
+            } else {
+                0.0
+            };
+            let panel_h = (window_h - chrome - bottom).max(0.0);
+            let track_h = (panel_h - PANEL_HEADER_H).max(0.0);
+
+            let thumb_ratio = visible_entries as f32 / total_entries as f32;
+            let thumb_h = (thumb_ratio * track_h)
+                .max(SCROLLBAR_MIN_THUMB)
+                .min(track_h);
+            let max_offset = total_entries.saturating_sub(visible_entries) as f32;
+            let scroll_ratio = if max_offset > 0.0 {
+                (self.left_panel_scroll as f32 / max_offset).clamp(0.0, 1.0)
+            } else {
+                0.0
+            };
+            let thumb_top = scroll_ratio * (track_h - thumb_h);
+
+            entries_wrapper = entries_wrapper.child(
+                div()
+                    .absolute()
+                    .top_0()
+                    .right_0()
+                    .w(px(SCROLLBAR_SIZE))
+                    .h(px(track_h))
+                    .child(
+                        div()
+                            .absolute()
+                            .top(px(thumb_top))
+                            .left(px(2.0))
+                            .w(px(SCROLLBAR_SIZE - 4.0))
+                            .h(px(thumb_h))
+                            .bg(rgba(0x79797966))
+                            .rounded(px(5.0)),
+                    ),
+            );
+        }
+
         div()
             .flex()
             .flex_col()
@@ -388,7 +449,7 @@ impl Workspace {
                     .font_weight(gpui::FontWeight::BOLD)
                     .child("EXPLORER"),
             )
-            .child(entries)
+            .child(entries_wrapper)
             .on_scroll_wheel(cx.listener(Self::handle_left_panel_scroll))
     }
 
@@ -463,7 +524,9 @@ impl Workspace {
             )
     }
 
-    fn render_editor(&self, visible_lines: usize) -> impl IntoElement {
+    fn render_editor(&self, window: &Window) -> impl IntoElement {
+        let visible_lines = self.compute_visible_lines(window);
+        let visible_cols = self.compute_visible_cols(window);
         let total_lines = self.editor.len_lines();
         let start = self.editor.scroll_offset;
         let end = (start + visible_lines).min(total_lines);
@@ -473,7 +536,30 @@ impl Workspace {
         let cursor_col = self.editor.cursor_col();
         let has_selection = self.editor.has_selection();
 
+        // ── Scrollbar geometry ───────────────────────────────────────────
+        let window_h: f32 = window.viewport_size().height.into();
+        let window_w: f32 = window.viewport_size().width.into();
+        let chrome_v = TITLE_BAR_H + STATUS_BAR_H;
+        let bottom = if self.bottom_panel_visible {
+            BOTTOM_PANEL_H
+        } else {
+            0.0
+        };
+        let editor_h = (window_h - chrome_v - bottom).max(0.0);
+        let left_w = if self.left_panel_visible {
+            LEFT_PANEL_W
+        } else {
+            0.0
+        };
+        let right_w = if self.right_panel_visible {
+            RIGHT_PANEL_W
+        } else {
+            0.0
+        };
+        let editor_w = (window_w - left_w - right_w).max(0.0);
+
         let mut editor_content = div()
+            .relative()
             .flex()
             .flex_col()
             .flex_1()
@@ -673,6 +759,78 @@ impl Workspace {
             editor_content = editor_content.child(line_el);
         }
 
+        // ── Vertical scrollbar ───────────────────────────────────────────
+        if total_lines > visible_lines {
+            let track_h = editor_h - SCROLLBAR_SIZE; // leave corner for horizontal
+            let thumb_ratio = visible_lines as f32 / total_lines as f32;
+            let thumb_h = (thumb_ratio * track_h)
+                .max(SCROLLBAR_MIN_THUMB)
+                .min(track_h);
+            let max_v_offset = total_lines.saturating_sub(visible_lines) as f32;
+            let v_scroll_ratio = if max_v_offset > 0.0 {
+                (self.editor.scroll_offset as f32 / max_v_offset).clamp(0.0, 1.0)
+            } else {
+                0.0
+            };
+            let thumb_top = v_scroll_ratio * (track_h - thumb_h);
+
+            editor_content = editor_content.child(
+                div()
+                    .absolute()
+                    .top_0()
+                    .right_0()
+                    .w(px(SCROLLBAR_SIZE))
+                    .h(px(track_h))
+                    .child(
+                        div()
+                            .absolute()
+                            .top(px(thumb_top))
+                            .left(px(2.0))
+                            .w(px(SCROLLBAR_SIZE - 4.0))
+                            .h(px(thumb_h))
+                            .bg(rgba(0x79797966))
+                            .rounded(px(5.0)),
+                    ),
+            );
+        }
+
+        // ── Horizontal scrollbar ─────────────────────────────────────────
+        let max_col = self.max_line_len();
+        let total_content_cols = max_col.max(self.editor.h_scroll_offset + visible_cols);
+        if total_content_cols > visible_cols {
+            let track_w = editor_w - SCROLLBAR_SIZE; // leave corner for vertical
+            let thumb_ratio = visible_cols as f32 / total_content_cols as f32;
+            let thumb_w = (thumb_ratio * track_w)
+                .max(SCROLLBAR_MIN_THUMB)
+                .min(track_w);
+            let max_h_scroll = total_content_cols.saturating_sub(visible_cols) as f32;
+            let h_scroll_ratio = if max_h_scroll > 0.0 {
+                (self.editor.h_scroll_offset as f32 / max_h_scroll).clamp(0.0, 1.0)
+            } else {
+                0.0
+            };
+            let thumb_left = h_scroll_ratio * (track_w - thumb_w);
+
+            editor_content = editor_content.child(
+                div()
+                    .absolute()
+                    .bottom_0()
+                    .left_0()
+                    .h(px(SCROLLBAR_SIZE))
+                    .w(px(track_w))
+                    .child(
+                        div()
+                            .absolute()
+                            .top(px(2.0))
+                            .left(px(thumb_left))
+                            .h(px(SCROLLBAR_SIZE - 4.0))
+                            .w(px(thumb_w))
+                            .bg(rgba(0x79797966))
+                            .rounded(px(5.0)),
+                    ),
+            );
+        }
+
         editor_content
     }
 
@@ -743,8 +901,6 @@ impl Workspace {
 
 impl Render for Workspace {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let visible_lines = self.compute_visible_lines(window);
-
         if !self.focus_handle.is_focused(window) {
             let _ = self.focus_handle.focus(window);
         }
@@ -759,7 +915,7 @@ impl Render for Workspace {
         // Center: editor + optional bottom panel
         let mut center = div().flex().flex_col().flex_1().h_full().overflow_hidden();
 
-        center = center.child(self.render_editor(visible_lines));
+        center = center.child(self.render_editor(window));
 
         if self.bottom_panel_visible {
             center = center.child(self.render_bottom_panel());

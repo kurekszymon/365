@@ -1,6 +1,6 @@
 # Architecture Decisions
 
-## ADR-003: Scroll wheel, touchpad scrolling, file tree caching, and left panel scrolling
+## ADR-003: Scroll wheel, touchpad scrolling, file tree caching, left panel scrolling, and scrollbars
 
 **Builds on:** ADR-002 (autoscroll), which established `scroll_offset` and `h_scroll_offset` on `Editor`
 
@@ -356,10 +356,153 @@ There is no conflict between autoscroll and scroll wheel — they both write to 
 
 ---
 
+### Scrollbars
+
+Visual indicators of scroll position, rendered as absolutely-positioned overlay divs. Purely decorative for now — no click-to-drag interaction.
+
+#### Layout constants
+
+```rs
+const SCROLLBAR_SIZE: f32 = 14.0;     // width for vertical scrollbar, height for horizontal
+const SCROLLBAR_MIN_THUMB: f32 = 20.0; // minimum thumb dimension in pixels
+```
+
+`SCROLLBAR_SIZE` is the total width (vertical) or height (horizontal) of the scrollbar track area. The thumb itself is inset by 2px on each side, giving a 10px-wide rounded pill inside a 14px track. `SCROLLBAR_MIN_THUMB` prevents the thumb from becoming an invisible sliver on very long files.
+
+#### Thumb appearance
+
+- **Track:** transparent — no visible background, matching VS Code's default
+- **Thumb:** `rgba(0x79797966)` — semi-transparent gray, same as VS Code's `scrollbarSlider.background`
+- **Shape:** `rounded(px(5.0))` — pill-shaped with 5px border radius
+- **Inset:** 2px from the track edges (`left(px(2.0))` for vertical, `top(px(2.0))` for horizontal) so the thumb doesn't touch the viewport border
+
+#### Editor vertical scrollbar
+
+Shown when `total_lines > visible_lines`. Positioned at the right edge of the editor area.
+
+```rs
+let track_h = editor_h - SCROLLBAR_SIZE; // leave corner for horizontal scrollbar
+let thumb_ratio = visible_lines as f32 / total_lines as f32;
+let thumb_h = (thumb_ratio * track_h).max(SCROLLBAR_MIN_THUMB).min(track_h);
+
+let max_v_offset = total_lines.saturating_sub(visible_lines) as f32;
+let v_scroll_ratio = if max_v_offset > 0.0 {
+    (self.editor.scroll_offset as f32 / max_v_offset).clamp(0.0, 1.0)
+} else {
+    0.0
+};
+let thumb_top = v_scroll_ratio * (track_h - thumb_h);
+```
+
+The thumb height is proportional to `visible_lines / total_lines` — if you can see half the file, the thumb fills half the track. Clamped to `[SCROLLBAR_MIN_THUMB, track_h]` so it's always visible and never overflows.
+
+The thumb position maps `scroll_offset / max_scroll_offset` to `[0, track_h - thumb_h]`. At offset 0, the thumb is at the top. At max offset, the thumb is at the bottom.
+
+The track height is `editor_h - SCROLLBAR_SIZE` to leave a square corner gap at the bottom-right where the horizontal scrollbar ends. This avoids visual overlap.
+
+#### Editor horizontal scrollbar
+
+Shown when the content is wider than the viewport. The "content width" is:
+
+```rs
+let max_col = self.max_line_len();
+let total_content_cols = max_col.max(self.editor.h_scroll_offset + visible_cols);
+```
+
+`max_line_len()` iterates all lines and returns the longest `line_len`. Since horizontal scroll has no ceiling (you can scroll past the longest line into empty space), we take `max(max_line_len, h_scroll_offset + visible_cols)` to ensure the scrollbar still makes sense when scrolled past the end.
+
+```rs
+let track_w = editor_w - SCROLLBAR_SIZE; // leave corner for vertical scrollbar
+let thumb_ratio = visible_cols as f32 / total_content_cols as f32;
+let thumb_w = (thumb_ratio * track_w).max(SCROLLBAR_MIN_THUMB).min(track_w);
+
+let max_h_scroll = total_content_cols.saturating_sub(visible_cols) as f32;
+let h_scroll_ratio = if max_h_scroll > 0.0 {
+    (self.editor.h_scroll_offset as f32 / max_h_scroll).clamp(0.0, 1.0)
+} else {
+    0.0
+};
+let thumb_left = h_scroll_ratio * (track_w - thumb_w);
+```
+
+Same proportional math as the vertical scrollbar, applied horizontally. Track width is `editor_w - SCROLLBAR_SIZE` to leave the corner gap.
+
+#### `max_line_len` helper
+
+```rs
+fn max_line_len(&self) -> usize {
+    let total = self.editor.len_lines();
+    let mut max = 0;
+    for i in 0..total {
+        let ll = self.editor.line_len(i);
+        if ll > max { max = ll; }
+    }
+    max
+}
+```
+
+O(n_lines) per frame. Each `line_len` call is O(1) on the Rope (just checks the last character of the line slice). For typical files (< 10k lines), this is negligible. For very large files, we'd want to cache this value and invalidate on edit — but that's premature optimization for now.
+
+#### Left panel vertical scrollbar
+
+Shown when `file_tree.len() > visible_entries`. The entries section is wrapped in a `relative()` container that also holds the scrollbar:
+
+```rs
+let mut entries_wrapper = div().relative().flex_1().overflow_hidden().child(entries);
+
+if total_entries > visible_entries {
+    let track_h = (panel_h - PANEL_HEADER_H).max(0.0);
+    let thumb_ratio = visible_entries as f32 / total_entries as f32;
+    let thumb_h = (thumb_ratio * track_h).max(SCROLLBAR_MIN_THUMB).min(track_h);
+    // ... position thumb based on left_panel_scroll / max_offset ...
+    entries_wrapper = entries_wrapper.child(scrollbar_div);
+}
+```
+
+The track height is the panel height minus the "EXPLORER" header (`PANEL_HEADER_H`), since the header doesn't scroll. The thumb position maps `left_panel_scroll / max_offset` to the track range, same as the editor scrollbar.
+
+No horizontal scrollbar on the left panel — file names are short, and `overflow_hidden` clips long ones.
+
+#### How `render_editor` gets pixel dimensions
+
+`render_editor` now takes `window: &Window` instead of `visible_lines: usize`, and computes everything internally:
+
+```rs
+fn render_editor(&self, window: &Window) -> impl IntoElement {
+    let visible_lines = self.compute_visible_lines(window);
+    let visible_cols = self.compute_visible_cols(window);
+
+    // Pixel dimensions for scrollbar positioning
+    let window_h: f32 = window.viewport_size().height.into();
+    let window_w: f32 = window.viewport_size().width.into();
+    let editor_h = (window_h - TITLE_BAR_H - STATUS_BAR_H - bottom_panel_h).max(0.0);
+    let editor_w = (window_w - left_panel_w - right_panel_w).max(0.0);
+    // ...
+}
+```
+
+These pixel dimensions are approximations — they use the same layout constants (`TITLE_BAR_H`, `LEFT_PANEL_W`, etc.) that the rest of the code uses. A few pixels off doesn't cause visual bugs, it just shifts the scrollbar thumb slightly. The important thing is that the thumb stays within the track bounds, which is guaranteed by the `.clamp(0.0, 1.0)` on the scroll ratio.
+
+The outer editor div is now `.relative()` so the scrollbar children (`.absolute()`) are positioned relative to it rather than the window.
+
+#### Corner gap
+
+Both scrollbars leave a `SCROLLBAR_SIZE`-pixel gap in the bottom-right corner:
+
+- Vertical track height = `editor_h - SCROLLBAR_SIZE`
+- Horizontal track width = `editor_w - SCROLLBAR_SIZE`
+
+This prevents the two scrollbar thumbs from overlapping in the corner. It also matches VS Code's behavior — there's a small empty square in the bottom-right when both scrollbars are visible.
+
+---
+
 ### What we don't do (yet)
 
 1. **Smooth (sub-line) scrolling.** Touchpad pixel deltas are converted to integer line offsets via `.round()`. True smooth scrolling would require a fractional `scroll_offset: f32` and rendering partial lines at the top of the viewport. This is a significant change to the rendering model.
 2. **Scroll momentum / inertia.** macOS provides momentum events after a touchpad swipe (the `TouchPhase` field on `ScrollWheelEvent`). We don't distinguish between direct and momentum phases — they all scroll equally. To add inertia damping or cancellation on touch, we'd check `ev.touch_phase`.
-3. **Scroll bars.** No visual indicator of scroll position. Would need `scroll_offset / total_lines` for vertical thumb position and some max-column computation for horizontal.
-4. **File watcher for tree refresh.** The cached file tree goes stale while the panel is open. External file changes (git checkout, file creation) won't appear until the panel is toggled. A `notify`-based file watcher or manual refresh keybinding would fix this.
-5. **Right panel scrolling.** When git preview or other content lands in the right panel, it will need its own scroll offset and the same separate-handler treatment.
+3. **Scrollbar click-to-scroll.** Clicking on the scrollbar track should jump the viewport to that position. Would need `on_mouse_down` on the track div, converting click Y position to a scroll offset.
+4. **Scrollbar drag.** Dragging the thumb should continuously scroll. Would need `on_drag` / mouse capture, tracking the delta from the initial click position and mapping it to scroll offset changes.
+5. **Scrollbar hover highlight.** VS Code brightens the thumb on hover (`scrollbarSlider.hoverBackground`). Would need a `.hover()` style on the thumb div with a brighter `rgba` value, e.g. `rgba(0x797979aa)`.
+6. **File watcher for tree refresh.** The cached file tree goes stale while the panel is open. External file changes (git checkout, file creation) won't appear until the panel is toggled. A `notify`-based file watcher or manual refresh keybinding would fix this.
+7. **Right panel scrolling.** When git preview or other content lands in the right panel, it will need its own scroll offset and the same separate-handler treatment.
+8. **Cached `max_line_len`.** Currently computed from scratch every frame by iterating all lines. Should be cached and invalidated on text edits for large files.
