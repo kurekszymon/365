@@ -358,7 +358,7 @@ There is no conflict between autoscroll and scroll wheel — they both write to 
 
 ### Scrollbars
 
-Visual indicators of scroll position, rendered as absolutely-positioned overlay divs. Purely decorative for now — no click-to-drag interaction.
+Visual indicators of scroll position, rendered as absolutely-positioned overlay divs. The thumbs are draggable — grab any scrollbar thumb and drag to scroll the corresponding content.
 
 #### Layout constants
 
@@ -375,6 +375,7 @@ const SCROLLBAR_MIN_THUMB: f32 = 20.0; // minimum thumb dimension in pixels
 - **Thumb:** `rgba(0x79797966)` — semi-transparent gray, same as VS Code's `scrollbarSlider.background`
 - **Shape:** `rounded(px(5.0))` — pill-shaped with 5px border radius
 - **Inset:** 2px from the track edges (`left(px(2.0))` for vertical, `top(px(2.0))` for horizontal) so the thumb doesn't touch the viewport border
+- **Cursor:** `cursor_pointer` on hover, signaling the thumb is interactive
 
 #### Editor vertical scrollbar
 
@@ -465,10 +466,10 @@ No horizontal scrollbar on the left panel — file names are short, and `overflo
 
 #### How `render_editor` gets pixel dimensions
 
-`render_editor` now takes `window: &Window` instead of `visible_lines: usize`, and computes everything internally:
+`render_editor` now takes `window: &Window` and `cx: &mut Context<Self>` instead of `visible_lines: usize`, and computes everything internally:
 
 ```rs
-fn render_editor(&self, window: &Window) -> impl IntoElement {
+fn render_editor(&self, window: &Window, cx: &mut Context<Self>) -> impl IntoElement {
     let visible_lines = self.compute_visible_lines(window);
     let visible_cols = self.compute_visible_cols(window);
 
@@ -480,6 +481,8 @@ fn render_editor(&self, window: &Window) -> impl IntoElement {
     // ...
 }
 ```
+
+The `cx` parameter is needed so the thumb divs can register `on_mouse_down` handlers via `cx.listener()`.
 
 These pixel dimensions are approximations — they use the same layout constants (`TITLE_BAR_H`, `LEFT_PANEL_W`, etc.) that the rest of the code uses. A few pixels off doesn't cause visual bugs, it just shifts the scrollbar thumb slightly. The important thing is that the thumb stays within the track bounds, which is guaranteed by the `.clamp(0.0, 1.0)` on the scroll ratio.
 
@@ -496,13 +499,160 @@ This prevents the two scrollbar thumbs from overlapping in the corner. It also m
 
 ---
 
+### Scrollbar drag-to-scroll
+
+All three scrollbar thumbs (editor vertical, editor horizontal, left panel vertical) are draggable. Grab the thumb and drag to scroll the corresponding content continuously.
+
+#### Drag state
+
+```rs
+#[derive(Clone, Copy)]
+enum ScrollbarDragKind {
+    EditorVertical,
+    EditorHorizontal,
+    LeftPanel,
+}
+
+#[derive(Clone, Copy)]
+struct ScrollbarDragState {
+    kind: ScrollbarDragKind,
+    start_mouse: f32,   // mouse position (Y or X) at drag start
+    start_offset: f32,  // scroll offset at drag start
+    scroll_per_px: f32, // scroll-offset units per pixel of mouse movement
+    max_scroll: f32,    // maximum scroll offset (for clamping)
+}
+```
+
+`Workspace` stores `scrollbar_drag: Option<ScrollbarDragState>`. It's `None` when idle and `Some(...)` during a drag.
+
+#### The `scroll_per_px` conversion factor
+
+The key insight: the scrollbar thumb maps a scroll offset range to a pixel range. If the thumb can slide across `track_length - thumb_size` pixels, and the scroll offset ranges from `0` to `max_scroll`, then:
+
+```
+scroll_per_px = max_scroll / (track_length - thumb_size)
+```
+
+This is a constant (for a given frame) that converts pixel movement of the mouse into scroll offset change. It's computed at render time and captured by the `on_mouse_down` closure.
+
+For the editor vertical scrollbar:
+
+```rs
+let scroll_per_px_v = max_v_offset / (track_h - thumb_h).max(1.0);
+```
+
+The `.max(1.0)` prevents division by zero when the thumb fills the entire track.
+
+#### Mouse event wiring: three handlers
+
+**1. `on_mouse_down` on each thumb** — initiates the drag:
+
+```rs
+// On the vertical scrollbar thumb div:
+.on_mouse_down(MouseButton::Left, cx.listener(move |this, ev: &MouseDownEvent, _window, _cx| {
+    let mouse_y: f32 = ev.position.y.into();
+    this.scrollbar_drag = Some(ScrollbarDragState {
+        kind: ScrollbarDragKind::EditorVertical,
+        start_mouse: mouse_y,
+        start_offset: this.editor.scroll_offset as f32,
+        scroll_per_px: scroll_per_px_v,
+        max_scroll: max_v_offset,
+    });
+}))
+```
+
+Note that `start_offset` reads the _current_ scroll offset at event time (`this.editor.scroll_offset`), not the one captured at render time. This handles the case where the offset changed between render and click (e.g., from a scroll wheel event).
+
+`scroll_per_px` and `max_scroll` are captured at render time. They depend on window geometry and document size, which are unlikely to change between render and click. If the window resizes, the next render recomputes them.
+
+Each scrollbar kind (editor vertical, editor horizontal, left panel) has its own `on_mouse_down` with the appropriate `ScrollbarDragKind`, `scroll_per_px`, and axis.
+
+**2. `on_mouse_move` on the root div** — updates scroll during drag:
+
+```rs
+.on_mouse_move(cx.listener(|this, ev: &MouseMoveEvent, _window, cx| {
+    if let Some(drag) = this.scrollbar_drag {
+        // Safety: if button was released outside the window, clear drag
+        if ev.pressed_button != Some(MouseButton::Left) {
+            this.scrollbar_drag = None;
+            return;
+        }
+        let current: f32 = match drag.kind {
+            ScrollbarDragKind::EditorVertical | ScrollbarDragKind::LeftPanel => {
+                ev.position.y.into()
+            }
+            ScrollbarDragKind::EditorHorizontal => ev.position.x.into(),
+        };
+        let delta = current - drag.start_mouse;
+        let new_offset = (drag.start_offset + delta * drag.scroll_per_px)
+            .round()
+            .clamp(0.0, drag.max_scroll);
+        match drag.kind {
+            ScrollbarDragKind::EditorVertical => {
+                this.editor.scroll_offset = new_offset as usize;
+            }
+            ScrollbarDragKind::EditorHorizontal => {
+                this.editor.h_scroll_offset = new_offset as usize;
+            }
+            ScrollbarDragKind::LeftPanel => {
+                this.left_panel_scroll = new_offset as usize;
+            }
+        }
+        cx.notify();
+    }
+}))
+```
+
+The handler early-returns when `scrollbar_drag` is `None` (the common case — most mouse moves aren't drags). This keeps the overhead negligible.
+
+**3. `on_mouse_up` on the root div** — ends the drag:
+
+```rs
+.on_mouse_up(MouseButton::Left, cx.listener(|this, _ev: &MouseUpEvent, _window, _cx| {
+    this.scrollbar_drag = None;
+}))
+```
+
+#### Why the root div for move/up handlers
+
+The `on_mouse_down` is on the thumb, but `on_mouse_move` and `on_mouse_up` are on the root div (`size_full()`, covering the entire window). This is necessary because during a drag, the mouse moves away from the thumb — it could be anywhere in the window. If these handlers were on the thumb div, they'd stop firing as soon as the cursor left the thumb bounds.
+
+GPUI's `on_mouse_move` has a `hitbox.is_hovered()` check, so it only fires when the mouse is within the element's bounds. The root div covers the entire window, so it catches all movement within the window.
+
+#### Safety: detecting button release outside the window
+
+If the user drags the scrollbar thumb, moves the mouse outside the application window, and releases the button there, the `on_mouse_up` event never fires (it's outside the root div's bounds). The drag state would be stuck.
+
+The `on_mouse_move` handler guards against this:
+
+```rs
+if ev.pressed_button != Some(MouseButton::Left) {
+    this.scrollbar_drag = None;
+    return;
+}
+```
+
+`MouseMoveEvent.pressed_button` reports which button is currently held. When the mouse re-enters the window after an external release, `pressed_button` is `None`, and the handler clears the stale drag state.
+
+#### Interaction with scroll wheel
+
+Scroll wheel and scrollbar drag both write to the same offset fields (`scroll_offset`, `h_scroll_offset`, `left_panel_scroll`). There's no conflict:
+
+- During a drag, `start_offset` was captured at mouse-down time. Scroll wheel events during a drag would change the offset, but the next mouse-move overwrites it based on `start_offset + delta * scroll_per_px`. The visual effect is that the drag "wins" — the scroll wheel change is immediately overridden. This is acceptable because simultaneously dragging a scrollbar and using the scroll wheel is not a realistic user scenario.
+- After a drag ends (`on_mouse_up`), scroll wheel events work normally.
+
+#### Interaction with autoscroll
+
+Like scroll wheel, scrollbar drag does **not** call `ensure_cursor_visible`. The cursor may scroll off-screen. The next keystroke will snap the viewport back to the cursor via autoscroll.
+
+---
+
 ### What we don't do (yet)
 
 1. **Smooth (sub-line) scrolling.** Touchpad pixel deltas are converted to integer line offsets via `.round()`. True smooth scrolling would require a fractional `scroll_offset: f32` and rendering partial lines at the top of the viewport. This is a significant change to the rendering model.
 2. **Scroll momentum / inertia.** macOS provides momentum events after a touchpad swipe (the `TouchPhase` field on `ScrollWheelEvent`). We don't distinguish between direct and momentum phases — they all scroll equally. To add inertia damping or cancellation on touch, we'd check `ev.touch_phase`.
-3. **Scrollbar click-to-scroll.** Clicking on the scrollbar track should jump the viewport to that position. Would need `on_mouse_down` on the track div, converting click Y position to a scroll offset.
-4. **Scrollbar drag.** Dragging the thumb should continuously scroll. Would need `on_drag` / mouse capture, tracking the delta from the initial click position and mapping it to scroll offset changes.
-5. **Scrollbar hover highlight.** VS Code brightens the thumb on hover (`scrollbarSlider.hoverBackground`). Would need a `.hover()` style on the thumb div with a brighter `rgba` value, e.g. `rgba(0x797979aa)`.
-6. **File watcher for tree refresh.** The cached file tree goes stale while the panel is open. External file changes (git checkout, file creation) won't appear until the panel is toggled. A `notify`-based file watcher or manual refresh keybinding would fix this.
-7. **Right panel scrolling.** When git preview or other content lands in the right panel, it will need its own scroll offset and the same separate-handler treatment.
-8. **Cached `max_line_len`.** Currently computed from scratch every frame by iterating all lines. Should be cached and invalidated on text edits for large files.
+3. **Scrollbar click-to-scroll.** Clicking on the scrollbar track (not the thumb) should jump the viewport to that position. Would need `on_mouse_down` on the track div, converting click Y position to a scroll offset.
+4. **Scrollbar hover highlight.** VS Code brightens the thumb on hover (`scrollbarSlider.hoverBackground`). Would need an `.id()` on the thumb div and a `.hover()` style with a brighter `rgba` value, e.g. `rgba(0x797979aa)`.
+5. **File watcher for tree refresh.** The cached file tree goes stale while the panel is open. External file changes (git checkout, file creation) won't appear until the panel is toggled. A `notify`-based file watcher or manual refresh keybinding would fix this.
+6. **Right panel scrolling.** When git preview or other content lands in the right panel, it will need its own scroll offset and the same separate-handler treatment.
+7. **Cached `max_line_len`.** Currently computed from scratch every frame by iterating all lines. Should be cached and invalidated on text edits for large files.

@@ -1,8 +1,9 @@
 use std::path::Path;
 
 use gpui::{
-    ClickEvent, Context, FocusHandle, KeyDownEvent, ScrollDelta, ScrollWheelEvent, SharedString,
-    Window, actions, div, prelude::*, px, rgb, rgba,
+    ClickEvent, Context, FocusHandle, KeyDownEvent, MouseButton, MouseDownEvent, MouseMoveEvent,
+    MouseUpEvent, ScrollDelta, ScrollWheelEvent, SharedString, Window, actions, div, prelude::*,
+    px, rgb, rgba,
 };
 
 const SCROLL_SENSITIVITY: f32 = 1.0;
@@ -36,6 +37,24 @@ actions!(
     ]
 );
 
+// ── Scrollbar drag state ─────────────────────────────────────────────────────
+
+#[derive(Clone, Copy)]
+enum ScrollbarDragKind {
+    EditorVertical,
+    EditorHorizontal,
+    LeftPanel,
+}
+
+#[derive(Clone, Copy)]
+struct ScrollbarDragState {
+    kind: ScrollbarDragKind,
+    start_mouse: f32,   // mouse position (Y or X) at drag start
+    start_offset: f32,  // scroll offset at drag start
+    scroll_per_px: f32, // scroll-offset units per pixel of mouse movement
+    max_scroll: f32,    // maximum scroll offset (for clamping)
+}
+
 // ── Workspace ────────────────────────────────────────────────────────────────
 
 pub struct Workspace {
@@ -48,6 +67,7 @@ pub struct Workspace {
     project_root: String,
     file_tree: Vec<(String, bool, String)>, // cached: (display_name, is_dir, rel_path)
     left_panel_scroll: usize,               // entry offset for left panel scrolling
+    scrollbar_drag: Option<ScrollbarDragState>,
 }
 
 impl Workspace {
@@ -66,6 +86,7 @@ impl Workspace {
             project_root,
             file_tree,
             left_panel_scroll: 0,
+            scrollbar_drag: None,
         }
     }
 
@@ -412,6 +433,8 @@ impl Workspace {
             };
             let thumb_top = scroll_ratio * (track_h - thumb_h);
 
+            let scroll_per_px_lp = max_offset / (track_h - thumb_h).max(1.0);
+
             entries_wrapper = entries_wrapper.child(
                 div()
                     .absolute()
@@ -427,7 +450,21 @@ impl Workspace {
                             .w(px(SCROLLBAR_SIZE - 4.0))
                             .h(px(thumb_h))
                             .bg(rgba(0x79797966))
-                            .rounded(px(5.0)),
+                            .rounded(px(5.0))
+                            .cursor_pointer()
+                            .on_mouse_down(
+                                MouseButton::Left,
+                                cx.listener(move |this, ev: &MouseDownEvent, _window, _cx| {
+                                    let mouse_y: f32 = ev.position.y.into();
+                                    this.scrollbar_drag = Some(ScrollbarDragState {
+                                        kind: ScrollbarDragKind::LeftPanel,
+                                        start_mouse: mouse_y,
+                                        start_offset: this.left_panel_scroll as f32,
+                                        scroll_per_px: scroll_per_px_lp,
+                                        max_scroll: max_offset,
+                                    });
+                                }),
+                            ),
                     ),
             );
         }
@@ -524,7 +561,7 @@ impl Workspace {
             )
     }
 
-    fn render_editor(&self, window: &Window) -> impl IntoElement {
+    fn render_editor(&self, window: &Window, cx: &mut Context<Self>) -> impl IntoElement {
         let visible_lines = self.compute_visible_lines(window);
         let visible_cols = self.compute_visible_cols(window);
         let total_lines = self.editor.len_lines();
@@ -773,6 +810,7 @@ impl Workspace {
                 0.0
             };
             let thumb_top = v_scroll_ratio * (track_h - thumb_h);
+            let scroll_per_px_v = max_v_offset / (track_h - thumb_h).max(1.0);
 
             editor_content = editor_content.child(
                 div()
@@ -789,7 +827,21 @@ impl Workspace {
                             .w(px(SCROLLBAR_SIZE - 4.0))
                             .h(px(thumb_h))
                             .bg(rgba(0x79797966))
-                            .rounded(px(5.0)),
+                            .rounded(px(5.0))
+                            .cursor_pointer()
+                            .on_mouse_down(
+                                MouseButton::Left,
+                                cx.listener(move |this, ev: &MouseDownEvent, _window, _cx| {
+                                    let mouse_y: f32 = ev.position.y.into();
+                                    this.scrollbar_drag = Some(ScrollbarDragState {
+                                        kind: ScrollbarDragKind::EditorVertical,
+                                        start_mouse: mouse_y,
+                                        start_offset: this.editor.scroll_offset as f32,
+                                        scroll_per_px: scroll_per_px_v,
+                                        max_scroll: max_v_offset,
+                                    });
+                                }),
+                            ),
                     ),
             );
         }
@@ -810,6 +862,7 @@ impl Workspace {
                 0.0
             };
             let thumb_left = h_scroll_ratio * (track_w - thumb_w);
+            let scroll_per_px_h = max_h_scroll / (track_w - thumb_w).max(1.0);
 
             editor_content = editor_content.child(
                 div()
@@ -826,7 +879,21 @@ impl Workspace {
                             .h(px(SCROLLBAR_SIZE - 4.0))
                             .w(px(thumb_w))
                             .bg(rgba(0x79797966))
-                            .rounded(px(5.0)),
+                            .rounded(px(5.0))
+                            .cursor_pointer()
+                            .on_mouse_down(
+                                MouseButton::Left,
+                                cx.listener(move |this, ev: &MouseDownEvent, _window, _cx| {
+                                    let mouse_x: f32 = ev.position.x.into();
+                                    this.scrollbar_drag = Some(ScrollbarDragState {
+                                        kind: ScrollbarDragKind::EditorHorizontal,
+                                        start_mouse: mouse_x,
+                                        start_offset: this.editor.h_scroll_offset as f32,
+                                        scroll_per_px: scroll_per_px_h,
+                                        max_scroll: max_h_scroll,
+                                    });
+                                }),
+                            ),
                     ),
             );
         }
@@ -915,7 +982,7 @@ impl Render for Workspace {
         // Center: editor + optional bottom panel
         let mut center = div().flex().flex_col().flex_1().h_full().overflow_hidden();
 
-        center = center.child(self.render_editor(window));
+        center = center.child(self.render_editor(window, cx));
 
         if self.bottom_panel_visible {
             center = center.child(self.render_bottom_panel());
@@ -931,6 +998,43 @@ impl Render for Workspace {
         div()
             .key_context("Workspace")
             .track_focus(&self.focus_handle)
+            .on_mouse_move(cx.listener(|this, ev: &MouseMoveEvent, _window, cx| {
+                if let Some(drag) = this.scrollbar_drag {
+                    // Safety: if button was released outside the window, clear drag
+                    if ev.pressed_button != Some(MouseButton::Left) {
+                        this.scrollbar_drag = None;
+                        return;
+                    }
+                    let current: f32 = match drag.kind {
+                        ScrollbarDragKind::EditorVertical | ScrollbarDragKind::LeftPanel => {
+                            ev.position.y.into()
+                        }
+                        ScrollbarDragKind::EditorHorizontal => ev.position.x.into(),
+                    };
+                    let delta = current - drag.start_mouse;
+                    let new_offset = (drag.start_offset + delta * drag.scroll_per_px)
+                        .round()
+                        .clamp(0.0, drag.max_scroll);
+                    match drag.kind {
+                        ScrollbarDragKind::EditorVertical => {
+                            this.editor.scroll_offset = new_offset as usize;
+                        }
+                        ScrollbarDragKind::EditorHorizontal => {
+                            this.editor.h_scroll_offset = new_offset as usize;
+                        }
+                        ScrollbarDragKind::LeftPanel => {
+                            this.left_panel_scroll = new_offset as usize;
+                        }
+                    }
+                    cx.notify();
+                }
+            }))
+            .on_mouse_up(
+                MouseButton::Left,
+                cx.listener(|this, _ev: &MouseUpEvent, _window, _cx| {
+                    this.scrollbar_drag = None;
+                }),
+            )
             .on_action(cx.listener(|this, _: &ToggleLeftPanel, _window, cx| {
                 this.left_panel_visible = !this.left_panel_visible;
                 if this.left_panel_visible {
