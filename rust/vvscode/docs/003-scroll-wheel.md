@@ -93,6 +93,48 @@ fn visible_file_tree(&self) -> Vec<(String, bool, String)> {
 
 Because `collect_file_tree` emits entries depth-first (directory, then its children, then siblings), the `skip_prefix` approach works: once a collapsed directory is encountered, all subsequent entries with `rel_path` starting with `collapsed_dir/` are skipped until an entry outside the subtree is reached.
 
+#### `toggle_collapse_all` (collapse / expand all toggle)
+
+Toggles between collapsing and expanding all directories:
+
+```rs
+fn toggle_collapse_all(&mut self) {
+    let dirs_in_file_tree = self
+        .file_tree
+        .iter()
+        .filter(|(_, is_dir, _)| *is_dir)
+        .count();
+
+    if self.collapsed_dirs.len() != dirs_in_file_tree {
+        for (_name, is_dir, rel_path) in &self.file_tree {
+            if *is_dir {
+                self.collapsed_dirs.insert(rel_path.clone());
+            }
+        }
+    } else {
+        self.collapsed_dirs.clear();
+    }
+
+    self.left_panel_scroll = 0;
+}
+```
+
+The method counts all directories in the cached `file_tree` and compares that to the size of `collapsed_dirs`. If they differ (at least one directory is still expanded), it collapses all — inserting every directory's `rel_path` into the set. If they're equal (everything is already collapsed), it expands all by clearing the set. This gives a natural toggle: press once to collapse, press again to expand. `left_panel_scroll` resets to 0 in both cases since the visible list changes dramatically.
+
+Available via:
+
+- **`Cmd+Shift+E`** keybinding (`ToggleCollapseAll` action registered in `main.rs`)
+- **⊟ button** in the EXPLORER header bar (rendered as a clickable icon right-aligned next to "EXPLORER")
+
+#### Why `collapsed_dirs` and not `expanded_dirs`
+
+We considered flipping the flag — tracking which directories are _expanded_ rather than which are _collapsed_. With `expanded_dirs`, "Collapse All" becomes `expanded_dirs.clear()`, which is simpler. But `collapsed_dirs` is the better choice:
+
+- **Default UX.** All dirs expanded on open — you see the full tree immediately. With `expanded_dirs`, the user would have to manually expand every folder after opening the panel or refreshing the tree.
+- **Tree refresh.** New directories created between refreshes appear expanded automatically. With `expanded_dirs`, new dirs would be invisible until manually expanded.
+- **Memory.** Typical usage: most directories are expanded, user collapses a few. `collapsed_dirs` stores the minority.
+- **Toggle is simple.** Compare `collapsed_dirs.len()` to directory count — collapse all or `clear()`.
+
 #### When the cache is rebuilt
 
 | Trigger                     | Why                                    |
@@ -260,7 +302,7 @@ This guard is necessary because GPUI bubbles scroll events from inner to outer e
 - Can't scroll past `visible_file_tree().len() - visible_entries` (last entry at bottom of panel)
 - If the filtered tree fits entirely in the panel, `max_offset` is 0 and scrolling is locked
 - Horizontal scrolling is ignored — file names are short, `overflow_hidden` clips long ones
-- When a directory is collapsed, `left_panel_scroll` is clamped to the new filtered tree length to prevent it from pointing past the end
+- When a directory is collapsed (individually or via the collapse/expand toggle), `left_panel_scroll` is clamped to the new filtered tree length to prevent it from pointing past the end. `toggle_collapse_all()` resets it to 0 directly since the visible list changes dramatically in both directions.
 
 ---
 
@@ -388,6 +430,7 @@ There is no conflict between autoscroll and scroll wheel — they both write to 
 | `handle_left_panel_scroll` | Scroll gesture over left panel area              |
 | `refresh_file_tree`        | Reset to 0 on tree rebuild                       |
 | Directory collapse toggle  | Clamped to filtered tree length after collapsing |
+| `toggle_collapse_all`      | Reset to 0 after collapse/expand all toggle      |
 
 ---
 
@@ -769,3 +812,4 @@ If it does, the track handler returns early. The thumb's own handler already set
 6. **Cached `max_line_len`.** Currently computed from scratch every frame by iterating all lines. Should be cached and invalidated on text edits for large files.
 7. **Persistent collapse state.** `collapsed_dirs` is in-memory only — collapsing a folder is lost when the app restarts. Could be serialized to a workspace settings file.
 8. **Lazy tree expansion.** Currently `collect_file_tree` walks the entire directory tree recursively on startup. With collapsible folders, we could defer loading children until a directory is first expanded, improving startup time on large projects.
+9. ~~**Expand All action.** The inverse of `ToggleCollapseAll` — would be `collapsed_dirs.clear()`. Not yet wired up as an action or button.~~ → Done. `toggle_collapse_all()` now toggles: if all dirs are collapsed it expands all, otherwise it collapses all. Same `Cmd+Shift+E` keybinding and ⊟ button.

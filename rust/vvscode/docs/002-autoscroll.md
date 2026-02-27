@@ -310,6 +310,75 @@ When a directory is collapsed, all its children (files and nested directories) a
 
 Directory entries store their relative path in the third tuple element (e.g. `"src"`, `"src/components"`). Previously this was `String::new()` — it was changed to support collapse identification.
 
+#### Collapse / Expand All toggle
+
+A `ToggleCollapseAll` action toggles between collapsing and expanding all directories. It's available two ways:
+
+1. **Keyboard shortcut:** `Cmd+Shift+E` (registered as a `KeyBinding` in `main.rs`)
+2. **Header button:** A ⊟ icon in the EXPLORER header bar, right-aligned next to the title
+
+```rs
+fn toggle_collapse_all(&mut self) {
+    let dirs_in_file_tree = self
+        .file_tree
+        .iter()
+        .filter(|(_, is_dir, _)| *is_dir)
+        .count();
+
+    if self.collapsed_dirs.len() != dirs_in_file_tree {
+        for (_name, is_dir, rel_path) in &self.file_tree {
+            if *is_dir {
+                self.collapsed_dirs.insert(rel_path.clone());
+            }
+        }
+    } else {
+        self.collapsed_dirs.clear();
+    }
+
+    self.left_panel_scroll = 0;
+}
+```
+
+The method counts all directories in the cached `file_tree` and compares that to the size of `collapsed_dirs`. If they differ (i.e. at least one directory is still expanded), it collapses all — inserting every directory's `rel_path` into the set. If they're equal (everything is already collapsed), it expands all by clearing the set. This gives a natural toggle: press once to collapse, press again to expand. `left_panel_scroll` resets to 0 in both cases since the visible list changes dramatically.
+
+The header button is rendered alongside the "EXPLORER" label using a flex row with `justify_between`:
+
+```rs
+div()
+    .flex().items_center().justify_between()
+    .px(px(12.0)).py(px(10.0))
+    .child(/* "EXPLORER" label */)
+    .child(
+        div()
+            .id("collapse-all-btn")
+            .text_xs().text_color(rgb(0x8b919a))
+            .cursor_pointer()
+            .hover(|s| s.text_color(rgb(0xc8ccd4)))
+            .child("⊟")
+            .on_click(cx.listener(|this, _: &ClickEvent, _window, cx| {
+                this.toggle_collapse_all();
+                cx.notify();
+            })),
+    )
+```
+
+"Expand All" is built into the same action — when all directories are already collapsed, `toggle_collapse_all()` clears `collapsed_dirs` instead.
+
+#### Why `collapsed_dirs` and not `expanded_dirs`
+
+We considered flipping the flag — tracking which directories are _expanded_ rather than which are _collapsed_. With `expanded_dirs`, "Collapse All" becomes `expanded_dirs.clear()`, which is arguably simpler. But `collapsed_dirs` is the better choice for this codebase:
+
+| Factor                        | `collapsed_dirs` (current)                                    | `expanded_dirs` (alternative)                                        |
+| ----------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------- |
+| **Default UX**                | All dirs expanded on open — you see the full tree immediately | All dirs collapsed on open — user must manually expand every folder  |
+| **Tree refresh**              | New directories appear expanded — visible without interaction | New directories appear collapsed — invisible until manually expanded |
+| **"Collapse All"**            | Insert all dir paths into the set                             | Clear the set — simpler                                              |
+| **"Expand All"**              | Clear the set — built into the same toggle                    | Insert all dir paths into the set                                    |
+| **Memory (typical use)**      | Stores the minority (few collapsed dirs)                      | Stores the majority (most dirs expanded)                             |
+| **After `refresh_file_tree`** | New dirs are automatically visible                            | New dirs are automatically hidden                                    |
+
+The default-expanded behavior is critical. When a user opens the explorer or refreshes the tree (e.g. after `ToggleLeftPanel`), they expect to see their project structure. With `expanded_dirs`, every `refresh_file_tree()` call would either need to pre-populate the set with all directory paths (defeating the purpose) or leave new directories invisible. `collapsed_dirs` gets the right default behavior for free.
+
 Key implementation details:
 
 - **`.id()` is required.** GPUI's `on_click` needs the element to be `Stateful<Div>`, not plain `Div`. Adding `.id()` makes it stateful. Without it, the code won't compile.
@@ -363,7 +432,7 @@ It is NOT called inside `Editor` methods. This is intentional — `Editor` is a 
 3. **Smooth scrolling.** The viewport jumps instantly. Animation would require interpolating `scroll_offset` over frames.
 4. **Scroll bar.** No visual indicator of scroll position. Would need the ratio `scroll_offset / total_lines` to render a thumb.
 5. **Horizontal scroll reset.** When switching files, `h_scroll_offset` resets to 0 (via `load_text`). But navigating within a file doesn't reset it when moving to a short line — the viewport stays scrolled right even if the line is shorter. This matches VS Code behavior.
-6. ~~**Collapsible folders.** Directory entries in the explorer are not interactive — they can't be collapsed or expanded.~~ → Done. Collapse state is stored in `collapsed_dirs: HashSet<String>` on `Workspace`. A `visible_file_tree()` helper filters the cached `file_tree` to skip children of collapsed directories.
+6. ~~**Collapsible folders.** Directory entries in the explorer are not interactive — they can't be collapsed or expanded.~~ → Done. Directories are clickable with chevron indicators (▶/▼). Collapse state is stored in `collapsed_dirs: HashSet<String>` on `Workspace`. A `visible_file_tree()` helper filters the cached `file_tree` to skip children of collapsed directories. Collapse/Expand All toggle available via ⊟ button in EXPLORER header and `Cmd+Shift+E`.
 
 ---
 
@@ -402,8 +471,17 @@ File preview:
 
 Collapsible folders:
   collapsed_dirs: HashSet<String> — stores rel_paths of collapsed directories
+  Why not expanded_dirs: default-expanded is the right UX (see full rationale above)
   visible_file_tree() filters file_tree, skipping children of collapsed dirs
   collect_file_tree stores rel_path for dirs (was String::new(), now e.g. "src")
   Scroll + scrollbar use filtered tree length, not raw file_tree.len()
   left_panel_scroll clamped on collapse to prevent overflow
+
+Collapse / Expand All toggle:
+  ToggleCollapseAll action — toggles between collapse all and expand all
+  If not all dirs collapsed: inserts all dir rel_paths into collapsed_dirs
+  If all dirs already collapsed: clears collapsed_dirs (expand all)
+  ⊟ button in EXPLORER header (on_click → toggle_collapse_all())
+  Cmd+Shift+E keybinding (registered in main.rs)
+  left_panel_scroll reset to 0 in both directions
 ```

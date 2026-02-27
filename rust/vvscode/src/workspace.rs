@@ -34,7 +34,8 @@ actions!(
         ToggleLeftPanel,
         ToggleBottomPanel,
         ToggleRightPanel,
-        SelectAll
+        SelectAll,
+        ToggleCollapseAll
     ]
 );
 
@@ -95,6 +96,26 @@ impl Workspace {
 
     fn refresh_file_tree(&mut self) {
         self.file_tree = Self::collect_file_tree(Path::new(&self.project_root), "", 0);
+        self.left_panel_scroll = 0;
+    }
+
+    fn toggle_collapse_all(&mut self) {
+        let total_dirs = self
+            .file_tree
+            .iter()
+            .filter(|(_, is_dir, _)| *is_dir)
+            .count();
+
+        if self.collapsed_dirs.len() == total_dirs {
+            self.collapsed_dirs.clear();
+        } else {
+            for (_, is_dir, rel_path) in &self.file_tree {
+                if *is_dir {
+                    self.collapsed_dirs.insert(rel_path.clone());
+                }
+            }
+        }
+
         self.left_panel_scroll = 0;
     }
 
@@ -574,12 +595,31 @@ impl Workspace {
             .border_color(rgb(0x181a1f))
             .child(
                 div()
+                    .flex()
+                    .items_center()
+                    .justify_between()
                     .px(px(12.0))
                     .py(px(10.0))
-                    .text_xs()
-                    .text_color(rgb(0x8b919a))
-                    .font_weight(gpui::FontWeight::BOLD)
-                    .child("EXPLORER"),
+                    .child(
+                        div()
+                            .text_xs()
+                            .text_color(rgb(0x8b919a))
+                            .font_weight(gpui::FontWeight::BOLD)
+                            .child("EXPLORER"),
+                    )
+                    .child(
+                        div()
+                            .id("collapse-all-btn")
+                            .text_xs()
+                            .text_color(rgb(0x8b919a))
+                            .cursor_pointer()
+                            .hover(|s| s.text_color(rgb(0xc8ccd4)))
+                            .child("⊟")
+                            .on_click(cx.listener(|this, _: &ClickEvent, _window, cx| {
+                                this.toggle_collapse_all();
+                                cx.notify();
+                            })),
+                    ),
             )
             .child(entries_wrapper)
             .on_scroll_wheel(cx.listener(Self::handle_left_panel_scroll))
@@ -1204,6 +1244,10 @@ impl Render for Workspace {
                 let visible_cols = this.compute_visible_cols(window);
                 this.editor
                     .ensure_cursor_visible(visible_lines, visible_cols);
+                cx.notify();
+            }))
+            .on_action(cx.listener(|this, _: &ToggleCollapseAll, _window, cx| {
+                this.toggle_collapse_all();
                 cx.notify();
             }))
             .on_key_down(cx.listener(Self::handle_key_down))
