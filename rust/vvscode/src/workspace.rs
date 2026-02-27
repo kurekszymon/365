@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::Path;
 
 use gpui::{
@@ -68,6 +69,7 @@ pub struct Workspace {
     file_tree: Vec<(String, bool, String)>, // cached: (display_name, is_dir, rel_path)
     left_panel_scroll: usize,               // entry offset for left panel scrolling
     scrollbar_drag: Option<ScrollbarDragState>,
+    collapsed_dirs: HashSet<String>, // set of collapsed directory rel_paths
 }
 
 impl Workspace {
@@ -87,12 +89,42 @@ impl Workspace {
             file_tree,
             left_panel_scroll: 0,
             scrollbar_drag: None,
+            collapsed_dirs: HashSet::new(),
         }
     }
 
     fn refresh_file_tree(&mut self) {
         self.file_tree = Self::collect_file_tree(Path::new(&self.project_root), "", 0);
         self.left_panel_scroll = 0;
+    }
+
+    /// Return only the entries that are visible (i.e. not hidden under a collapsed directory).
+    fn visible_file_tree(&self) -> Vec<(String, bool, String)> {
+        let mut result = Vec::new();
+        let mut skip_prefix: Option<String> = None;
+
+        for (name, is_dir, rel_path) in &self.file_tree {
+            // If we are skipping children of a collapsed dir, check whether
+            // this entry is still under that prefix.
+            if let Some(ref prefix) = skip_prefix {
+                let child_prefix = format!("{}/", prefix);
+                if rel_path.starts_with(&child_prefix) {
+                    // This entry (file or dir) is a child of the collapsed dir.
+                    continue;
+                }
+                // We've left the collapsed subtree.
+                skip_prefix = None;
+            }
+
+            result.push((name.clone(), *is_dir, rel_path.clone()));
+
+            // If this is a collapsed directory, start skipping its children.
+            if *is_dir && self.collapsed_dirs.contains(rel_path) {
+                skip_prefix = Some(rel_path.clone());
+            }
+        }
+
+        result
     }
 
     fn compute_visible_panel_entries(&self, window: &Window) -> usize {
@@ -272,7 +304,8 @@ impl Workspace {
 
         if delta_y.abs() > 0.01 {
             let visible = self.compute_visible_panel_entries(window);
-            let max_offset = self.file_tree.len().saturating_sub(visible);
+            let total_visible = self.visible_file_tree().len();
+            let max_offset = total_visible.saturating_sub(visible);
             let new = (self.left_panel_scroll as f32 + delta_y)
                 .round()
                 .clamp(0.0, max_offset as f32);
@@ -315,7 +348,7 @@ impl Workspace {
             } else {
                 format!("{}/{}", prefix, d)
             };
-            result.push((format!("{}{}/", indent, d), true, String::new()));
+            result.push((format!("{}{}/", indent, d), true, rel.clone()));
             let children = Self::collect_file_tree(&dir.join(&d), &rel, depth + 1);
             result.extend(children);
         }
@@ -348,9 +381,12 @@ impl Workspace {
     }
 
     fn render_left_panel(&self, window: &Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let filtered_tree = self.visible_file_tree();
         let visible_entries = self.compute_visible_panel_entries(window);
-        let start = self.left_panel_scroll;
-        let end = (start + visible_entries).min(self.file_tree.len());
+        let start = self
+            .left_panel_scroll
+            .min(filtered_tree.len().saturating_sub(1));
+        let end = (start + visible_entries).min(filtered_tree.len());
 
         let mut entries = div()
             .flex()
@@ -359,7 +395,7 @@ impl Workspace {
             .px(px(8.0))
             .overflow_hidden();
 
-        for (name, is_dir, path) in &self.file_tree[start..end] {
+        for (name, is_dir, path) in &filtered_tree[start..end] {
             let color = if *is_dir {
                 rgb(0xc8ccd4)
             } else {
@@ -373,41 +409,75 @@ impl Workspace {
             };
 
             let entry_id = if *is_dir {
-                SharedString::from(format!("dir-{}", name.trim()))
+                SharedString::from(format!("dir-{}", path))
             } else {
                 SharedString::from(format!("file-{}", path))
             };
 
-            let mut entry = div()
-                .id(entry_id)
-                .px(px(6.0))
-                .py(px(3.0))
-                .text_sm()
-                .text_color(color)
-                .rounded(px(3.0))
-                .bg(entry_bg)
-                .hover(|s| s.bg(rgb(0x2c313a)))
-                .child(SharedString::from(name.clone()));
+            if *is_dir {
+                let trimmed = name.trim_start();
+                let indent_part = &name[..name.len() - trimmed.len()];
+                let display_name = SharedString::from(format!("{}{}", indent_part, trimmed));
 
-            if !is_dir && !path.is_empty() {
                 let path_owned = path.clone();
-                entry = entry.cursor_pointer().on_click(cx.listener(
-                    move |this, _: &ClickEvent, window, cx| {
-                        this.open_file(&path_owned);
-                        let visible_lines = this.compute_visible_lines(window);
-                        let visible_cols = this.compute_visible_cols(window);
-                        this.editor
-                            .ensure_cursor_visible(visible_lines, visible_cols);
+                let entry = div()
+                    .id(entry_id)
+                    .px(px(6.0))
+                    .py(px(3.0))
+                    .text_sm()
+                    .text_color(color)
+                    .rounded(px(3.0))
+                    .bg(entry_bg)
+                    .hover(|s| s.bg(rgb(0x2c313a)))
+                    .cursor_pointer()
+                    .child(display_name)
+                    .on_click(cx.listener(move |this, _: &ClickEvent, _window, cx| {
+                        if this.collapsed_dirs.contains(&path_owned) {
+                            this.collapsed_dirs.remove(&path_owned);
+                        } else {
+                            this.collapsed_dirs.insert(path_owned.clone());
+                        }
+                        // Clamp scroll in case collapsing reduced total entries
+                        let new_total = this.visible_file_tree().len();
+                        if this.left_panel_scroll >= new_total {
+                            this.left_panel_scroll = new_total.saturating_sub(1);
+                        }
                         cx.notify();
-                    },
-                ));
-            }
+                    }));
 
-            entries = entries.child(entry);
+                entries = entries.child(entry);
+            } else {
+                let mut entry = div()
+                    .id(entry_id)
+                    .px(px(6.0))
+                    .py(px(3.0))
+                    .text_sm()
+                    .text_color(color)
+                    .rounded(px(3.0))
+                    .bg(entry_bg)
+                    .hover(|s| s.bg(rgb(0x2c313a)))
+                    .child(SharedString::from(name.clone()));
+
+                if !path.is_empty() {
+                    let path_owned = path.clone();
+                    entry = entry.cursor_pointer().on_click(cx.listener(
+                        move |this, _: &ClickEvent, window, cx| {
+                            this.open_file(&path_owned);
+                            let visible_lines = this.compute_visible_lines(window);
+                            let visible_cols = this.compute_visible_cols(window);
+                            this.editor
+                                .ensure_cursor_visible(visible_lines, visible_cols);
+                            cx.notify();
+                        },
+                    ));
+                }
+
+                entries = entries.child(entry);
+            }
         }
 
         // ── Left panel scrollbar ─────────────────────────────────────────
-        let total_entries = self.file_tree.len();
+        let total_entries = filtered_tree.len();
         let mut entries_wrapper = div().relative().flex_1().overflow_hidden().child(entries);
 
         if total_entries > visible_entries {

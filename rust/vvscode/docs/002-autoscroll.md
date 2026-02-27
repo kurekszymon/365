@@ -10,7 +10,7 @@
 
 The editor originally rendered a fixed window of 40 lines starting from `scroll_offset`, but nothing ever updated `scroll_offset`. If you typed past line 40, the cursor moved into invisible territory — the viewport stayed pinned to the top. There was also no horizontal scrolling at all: lines longer than the visible width were clipped by `overflow_hidden`, and the cursor could disappear off the right edge.
 
-The left panel had a static file explorer with entries from current directory.
+The left panel had a static file explorer with entries from current directory. Folders were listed but not interactive — they couldn't be collapsed or expanded, so all entries were always visible regardless of directory depth.
 
 Three problems, one pass:
 
@@ -216,15 +216,18 @@ This clips text that extends beyond the right edge of the editor area.
 
 #### Architecture
 
-Two new fields on `Workspace`:
+Three new fields on `Workspace`:
 
 ```rs
 pub struct Workspace {
     // ...
-    current_file: Option<String>,  // relative path of the open file, e.g. "src/main.rs"
-    project_root: String,          // absolute path, from std::env::current_dir()
+    current_file: Option<String>,      // relative path of the open file, e.g. "src/main.rs"
+    project_root: String,              // absolute path, from std::env::current_dir()
+    collapsed_dirs: HashSet<String>,   // set of collapsed directory rel_paths
 }
 ```
+
+`collapsed_dirs` tracks which directories the user has collapsed. It stores relative paths (e.g. `"src/components"`). Directories not in the set are expanded by default. The set persists across re-renders but is not saved to disk.
 
 And a new method on `Editor`:
 
@@ -265,7 +268,7 @@ On error (file not found, permission denied), the error message is loaded into t
 
 #### Clickable file entries
 
-The left panel file entries are rendered with GPUI's `on_click` handler:
+File entries in the left panel open the file on click:
 
 ```rs
 let mut entry = div()
@@ -281,12 +284,39 @@ let mut entry = div()
     }));
 ```
 
+#### Collapsible directory entries
+
+Directory entries toggle their collapsed state on click.
+
+```rs
+let is_collapsed = self.collapsed_dirs.contains(path);
+// ...
+entry.on_click(cx.listener(move |this, _: &ClickEvent, _window, cx| {
+    if this.collapsed_dirs.contains(&path_owned) {
+        this.collapsed_dirs.remove(&path_owned);
+    } else {
+        this.collapsed_dirs.insert(path_owned.clone());
+    }
+    // Clamp scroll in case collapsing reduced total entries
+    let new_total = this.visible_file_tree().len();
+    if this.left_panel_scroll >= new_total {
+        this.left_panel_scroll = new_total.saturating_sub(1);
+    }
+    cx.notify();
+}));
+```
+
+When a directory is collapsed, all its children (files and nested directories) are hidden from the explorer. The underlying `file_tree` cache is unchanged — a `visible_file_tree()` helper filters it at render time by skipping entries whose `rel_path` starts with `collapsed_dir_path/`.
+
+Directory entries store their relative path in the third tuple element (e.g. `"src"`, `"src/components"`). Previously this was `String::new()` — it was changed to support collapse identification.
+
 Key implementation details:
 
 - **`.id()` is required.** GPUI's `on_click` needs the element to be `Stateful<Div>`, not plain `Div`. Adding `.id()` makes it stateful. Without it, the code won't compile.
-- **Every entry gets an `.id()`, not just clickable ones.** Directory entries and file entries must have the same type (`Stateful<Div>`) so they can be accumulated in the same container. Giving directories an id like `"dir-src"` and files `"file-src/main.rs"` ensures uniqueness and type consistency.
+- **Every entry gets an `.id()`.** Directory entries use `"dir-{rel_path}"` and files use `"file-{rel_path}"` to ensure uniqueness and type consistency.
 - **`cx.listener()` captures the file path by move.** Each closure owns its own `String` with the relative path. The `move` keyword is necessary because the closure outlives the loop iteration.
-- **`cx.notify()` triggers a re-render** so the editor content, title bar, and explorer highlight all update.
+- **`cx.notify()` triggers a re-render** so the editor content, title bar, explorer highlight, and collapsed state all update.
+- **Scroll clamping on collapse.** When collapsing a large directory, the total visible entry count drops. The click handler clamps `left_panel_scroll` to prevent it from pointing past the end of the filtered list.
 
 #### Current file highlighting
 
@@ -333,6 +363,7 @@ It is NOT called inside `Editor` methods. This is intentional — `Editor` is a 
 3. **Smooth scrolling.** The viewport jumps instantly. Animation would require interpolating `scroll_offset` over frames.
 4. **Scroll bar.** No visual indicator of scroll position. Would need the ratio `scroll_offset / total_lines` to render a thumb.
 5. **Horizontal scroll reset.** When switching files, `h_scroll_offset` resets to 0 (via `load_text`). But navigating within a file doesn't reset it when moving to a short line — the viewport stays scrolled right even if the line is shorter. This matches VS Code behavior.
+6. ~~**Collapsible folders.** Directory entries in the explorer are not interactive — they can't be collapsed or expanded.~~ → Done. Collapse state is stored in `collapsed_dirs: HashSet<String>` on `Workspace`. A `visible_file_tree()` helper filters the cached `file_tree` to skip children of collapsed directories.
 
 ---
 
@@ -365,7 +396,14 @@ File preview:
   project_root from std::env::current_dir()
   open_file() reads with std::fs::read_to_string, loads via Editor::load_text()
   Explorer tree built dynamically by collect_file_tree() (recursive read_dir)
-  Entries are clickable (on_click + cx.listener)
+  File entries clickable (open file), directory entries clickable (toggle collapse)
   All entries get .id() for Stateful<Div> type consistency
   Current file highlighted in explorer + shown in title bar
+
+Collapsible folders:
+  collapsed_dirs: HashSet<String> — stores rel_paths of collapsed directories
+  visible_file_tree() filters file_tree, skipping children of collapsed dirs
+  collect_file_tree stores rel_path for dirs (was String::new(), now e.g. "src")
+  Scroll + scrollbar use filtered tree length, not raw file_tree.len()
+  left_panel_scroll clamped on collapse to prevent overflow
 ```

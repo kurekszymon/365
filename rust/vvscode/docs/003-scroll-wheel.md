@@ -50,10 +50,11 @@ pub struct Workspace {
     // ... existing fields ...
     file_tree: Vec<(String, bool, String)>,  // cached: (display_name, is_dir, rel_path)
     left_panel_scroll: usize,                // entry offset for left panel scrolling
+    collapsed_dirs: HashSet<String>,         // set of collapsed directory rel_paths
 }
 ```
 
-The tree is built once in `new()` and refreshed explicitly via `refresh_file_tree()`:
+The tree is built once in `new()` and refreshed explicitly via `refresh_file_tree()`. `collapsed_dirs` starts empty (all directories expanded).
 
 ```rs
 fn refresh_file_tree(&mut self) {
@@ -61,6 +62,36 @@ fn refresh_file_tree(&mut self) {
     self.left_panel_scroll = 0;
 }
 ```
+
+`collect_file_tree` now stores the relative path for directory entries (e.g. `"src"`, `"src/components"`) in the third tuple element. Previously this was `String::new()` — the change is needed so collapsed directories can be identified by their path.
+
+A `visible_file_tree()` helper filters the cached `file_tree` at render time, skipping children of any directory whose rel_path is in `collapsed_dirs`:
+
+```rs
+fn visible_file_tree(&self) -> Vec<(String, bool, String)> {
+    let mut result = Vec::new();
+    let mut skip_prefix: Option<String> = None;
+
+    for (name, is_dir, rel_path) in &self.file_tree {
+        if let Some(ref prefix) = skip_prefix {
+            let child_prefix = format!("{}/", prefix);
+            if rel_path.starts_with(&child_prefix) {
+                continue; // hidden under a collapsed directory
+            }
+            skip_prefix = None; // left the collapsed subtree
+        }
+
+        result.push((name.clone(), *is_dir, rel_path.clone()));
+
+        if *is_dir && self.collapsed_dirs.contains(rel_path) {
+            skip_prefix = Some(rel_path.clone());
+        }
+    }
+    result
+}
+```
+
+Because `collect_file_tree` emits entries depth-first (directory, then its children, then siblings), the `skip_prefix` approach works: once a collapsed directory is encountered, all subsequent entries with `rel_path` starting with `collapsed_dir/` are skipped until an entry outside the subtree is reached.
 
 #### When the cache is rebuilt
 
@@ -114,18 +145,19 @@ Same pattern as `compute_visible_lines` — subtract chrome, divide by entry hei
 
 ```rs
 fn render_left_panel(&self, window: &Window, cx: &mut Context<Self>) -> impl IntoElement {
+    let filtered_tree = self.visible_file_tree();
     let visible_entries = self.compute_visible_panel_entries(window);
-    let start = self.left_panel_scroll;
-    let end = (start + visible_entries).min(self.file_tree.len());
+    let start = self.left_panel_scroll.min(filtered_tree.len().saturating_sub(1));
+    let end = (start + visible_entries).min(filtered_tree.len());
 
     // ...
-    for (name, is_dir, path) in &self.file_tree[start..end] {
-        // render entry
+    for (name, is_dir, path) in &filtered_tree[start..end] {
+        // files open on click as before
     }
 }
 ```
 
-This is the same virtual scrolling strategy the editor uses — slice the data to the visible range, render only that slice. A project with 10,000 files still renders at most ~30 entries per frame.
+This is the same virtual scrolling strategy the editor uses — slice the data to the visible range, render only that slice. A project with 10,000 files still renders at most ~30 entries per frame. With collapsible folders, the slice operates on the filtered tree (excluding children of collapsed directories), so the scroll range and visible window adapt dynamically.
 
 Note: `render_left_panel` now takes `window: &Window` so it can compute the visible entry count. The call site in `render()` passes it through.
 
@@ -182,7 +214,8 @@ fn handle_left_panel_scroll(&mut self, ev: &ScrollWheelEvent, window: &mut Windo
 
     if delta_y.abs() > 0.01 {
         let visible = self.compute_visible_panel_entries(window);
-        let max_offset = self.file_tree.len().saturating_sub(visible);
+        let total_visible = self.visible_file_tree().len();
+        let max_offset = total_visible.saturating_sub(visible);
         let new = (self.left_panel_scroll as f32 + delta_y)
             .round()
             .clamp(0.0, max_offset as f32);
@@ -224,9 +257,10 @@ This guard is necessary because GPUI bubbles scroll events from inner to outer e
 #### Left panel scroll clamping
 
 - Can't scroll above entry 0
-- Can't scroll past `file_tree.len() - visible_entries` (last entry at bottom of panel)
-- If the tree fits entirely in the panel, `max_offset` is 0 and scrolling is locked
+- Can't scroll past `visible_file_tree().len() - visible_entries` (last entry at bottom of panel)
+- If the filtered tree fits entirely in the panel, `max_offset` is 0 and scrolling is locked
 - Horizontal scrolling is ignored — file names are short, `overflow_hidden` clips long ones
+- When a directory is collapsed, `left_panel_scroll` is clamped to the new filtered tree length to prevent it from pointing past the end
 
 ---
 
@@ -349,10 +383,11 @@ There is no conflict between autoscroll and scroll wheel — they both write to 
 
 #### Left panel scroll offset (`left_panel_scroll`)
 
-| Source                     | Mechanism                           |
-| -------------------------- | ----------------------------------- |
-| `handle_left_panel_scroll` | Scroll gesture over left panel area |
-| `refresh_file_tree`        | Reset to 0 on tree rebuild          |
+| Source                     | Mechanism                                        |
+| -------------------------- | ------------------------------------------------ |
+| `handle_left_panel_scroll` | Scroll gesture over left panel area              |
+| `refresh_file_tree`        | Reset to 0 on tree rebuild                       |
+| Directory collapse toggle  | Clamped to filtered tree length after collapsing |
 
 ---
 
@@ -446,9 +481,10 @@ O(n_lines) per frame. Each `line_len` call is O(1) on the Rope (just checks the 
 
 #### Left panel vertical scrollbar
 
-Shown when `file_tree.len() > visible_entries`. The entries section is wrapped in a `relative()` container that also holds the scrollbar:
+Shown when `visible_file_tree().len() > visible_entries` (i.e. the filtered tree, after excluding children of collapsed directories, is taller than the panel). The entries section is wrapped in a `relative()` container that also holds the scrollbar:
 
 ```rs
+let total_entries = filtered_tree.len();
 let mut entries_wrapper = div().relative().flex_1().overflow_hidden().child(entries);
 
 if total_entries > visible_entries {
@@ -731,3 +767,5 @@ If it does, the track handler returns early. The thumb's own handler already set
 4. **File watcher for tree refresh.** The cached file tree goes stale while the panel is open. External file changes (git checkout, file creation) won't appear until the panel is toggled. A `notify`-based file watcher or manual refresh keybinding would fix this.
 5. **Right panel scrolling.** When git preview or other content lands in the right panel, it will need its own scroll offset and the same separate-handler treatment.
 6. **Cached `max_line_len`.** Currently computed from scratch every frame by iterating all lines. Should be cached and invalidated on text edits for large files.
+7. **Persistent collapse state.** `collapsed_dirs` is in-memory only — collapsing a folder is lost when the app restarts. Could be serialized to a workspace settings file.
+8. **Lazy tree expansion.** Currently `collect_file_tree` walks the entire directory tree recursively on startup. With collapsible folders, we could defer loading children until a directory is first expanded, improving startup time on large projects.
