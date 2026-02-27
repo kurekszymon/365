@@ -227,6 +227,16 @@ pub struct Workspace {
 }
 ```
 
+To better express file-tree entries the code now uses a small struct:
+
+```rs
+struct FsNode {
+    display_name: String, // what is rendered in the explorer (with indentation)
+    is_dir: bool,
+    rel_path: String,     // relative path from project root, e.g. "src" or "src/components"
+}
+```
+
 `collapsed_dirs` tracks which directories the user has collapsed. It stores relative paths (e.g. `"src/components"`). Directories not in the set are expanded by default. The set persists across re-renders but is not saved to disk.
 
 And a new method on `Editor`:
@@ -246,69 +256,88 @@ pub fn load_text(&mut self, text: &str) {
 
 #### File loading
 
+The implementation uses `PathBuf::join` to build a platform-correct path from `project_root` and the file's relative path:
+
 ```rs
 fn open_file(&mut self, relative_path: &str) {
-    let full_path = format!("{}/{}", self.project_root, relative_path);
+    let full_path = std::path::PathBuf::from(&self.project_root).join(relative_path);
+
     match std::fs::read_to_string(&full_path) {
         Ok(content) => {
             self.editor.load_text(&content);
             self.current_file = Some(relative_path.to_string());
         }
         Err(e) => {
-            self.editor.load_text(&format!("Error opening {}: {}", relative_path, e));
+            self.editor
+                .load_text(&format!("Error opening {}: {}", relative_path, e));
             self.current_file = Some(relative_path.to_string());
         }
     }
 }
 ```
 
-Uses `std::fs::read_to_string` — synchronous, blocking. Fine for now. The project's own source files are small (< 1KB). For large files, this would need async I/O.
+Using `PathBuf::from(...).join(...)` is more robust than string concatenation (`format!("{}/{}", ...)`) because it respects the platform's path separators and avoids issues when `project_root` ends with or without a trailing slash.
 
 On error (file not found, permission denied), the error message is loaded into the editor as text. The file is still marked as `current_file` so the title bar and explorer highlight update. This is a deliberate UX choice — you see what went wrong without a separate error dialog.
 
 #### Clickable file entries
 
-File entries in the left panel open the file on click:
+File entries in the left panel open the file on click. The code now renders entries from the cached `file_tree: Vec<FsNode>` and iterates over `FsNode` references:
 
 ```rs
-let mut entry = div()
-    .id(entry_id)          // required for stateful interactions
-    .cursor_pointer()      // visual affordance
-    // ...styling...
-    .on_click(cx.listener(move |this, _: &ClickEvent, window, cx| {
+let filtered_tree = self.visible_file_tree();
+for node in &filtered_tree[start..end] {
+    // color, background, id compute using node.display_name, node.is_dir, node.rel_path
+}
+```
+
+An individual file entry's click handler typically looks like:
+
+```rs
+let path_owned = node.rel_path.clone();
+entry = entry.cursor_pointer().on_click(cx.listener(
+    move |this, _: &ClickEvent, window, cx| {
         this.open_file(&path_owned);
         let visible_lines = this.compute_visible_lines(window);
         let visible_cols = this.compute_visible_cols(window);
-        this.editor.ensure_cursor_visible(visible_lines, visible_cols);
+        this.editor
+            .ensure_cursor_visible(visible_lines, visible_cols);
+        cx.notify();
+    },
+));
+```
+
+Note the use of `node.rel_path` captured into the closure with `move`, and the call to `ensure_cursor_visible` after the file is loaded.
+
+#### Collapsible directory entries
+
+Directory entries toggle their collapsed state on click. With `FsNode` the code references `node.is_dir` and `node.rel_path` directly:
+
+```rs
+let path_owned = node.rel_path.clone();
+entry = div()
+    .id(entry_id)
+    .px(px(6.0))
+    .py(px(3.0))
+    // ...
+    .on_click(cx.listener(move |this, _: &ClickEvent, _window, cx| {
+        if this.collapsed_dirs.contains(&path_owned) {
+            this.collapsed_dirs.remove(&path_owned);
+        } else {
+            this.collapsed_dirs.insert(path_owned.clone());
+        }
+        // Clamp scroll in case collapsing reduced total entries
+        let new_total = this.visible_file_tree().len();
+        if this.left_panel_scroll >= new_total {
+            this.left_panel_scroll = new_total.saturating_sub(1);
+        }
         cx.notify();
     }));
 ```
 
-#### Collapsible directory entries
-
-Directory entries toggle their collapsed state on click.
-
-```rs
-let is_collapsed = self.collapsed_dirs.contains(path);
-// ...
-entry.on_click(cx.listener(move |this, _: &ClickEvent, _window, cx| {
-    if this.collapsed_dirs.contains(&path_owned) {
-        this.collapsed_dirs.remove(&path_owned);
-    } else {
-        this.collapsed_dirs.insert(path_owned.clone());
-    }
-    // Clamp scroll in case collapsing reduced total entries
-    let new_total = this.visible_file_tree().len();
-    if this.left_panel_scroll >= new_total {
-        this.left_panel_scroll = new_total.saturating_sub(1);
-    }
-    cx.notify();
-}));
-```
-
 When a directory is collapsed, all its children (files and nested directories) are hidden from the explorer. The underlying `file_tree` cache is unchanged — a `visible_file_tree()` helper filters it at render time by skipping entries whose `rel_path` starts with `collapsed_dir_path/`.
 
-Directory entries store their relative path in the third tuple element (e.g. `"src"`, `"src/components"`). Previously this was `String::new()` — it was changed to support collapse identification.
+Previously the code used tuple indexing and positional parameters to represent entries; switching to `FsNode` makes the code clearer and less error-prone since fields are named.
 
 #### Collapse / Expand All toggle
 
@@ -317,22 +346,20 @@ A `ToggleCollapseAll` action toggles between collapsing and expanding all direct
 1. **Keyboard shortcut:** `Cmd+Shift+E` (registered as a `KeyBinding` in `main.rs`)
 2. **Header button:** A ⊟ icon in the EXPLORER header bar, right-aligned next to the title
 
+The method counts directories by inspecting `FsNode::is_dir`:
+
 ```rs
 fn toggle_collapse_all(&mut self) {
-    let dirs_in_file_tree = self
-        .file_tree
-        .iter()
-        .filter(|(_, is_dir, _)| *is_dir)
-        .count();
+    let total_dirs = self.file_tree.iter().filter(|node| node.is_dir).count();
 
-    if self.collapsed_dirs.len() != dirs_in_file_tree {
-        for (_name, is_dir, rel_path) in &self.file_tree {
-            if *is_dir {
-                self.collapsed_dirs.insert(rel_path.clone());
+    if self.collapsed_dirs.len() == total_dirs {
+        self.collapsed_dirs.clear();
+    } else {
+        for node in &self.file_tree {
+            if node.is_dir {
+                self.collapsed_dirs.insert(node.rel_path.clone());
             }
         }
-    } else {
-        self.collapsed_dirs.clear();
     }
 
     self.left_panel_scroll = 0;
@@ -392,7 +419,7 @@ Key implementation details:
 The explorer highlights the currently open file:
 
 ```rs
-let is_current = self.current_file.as_deref() == Some(path);
+let is_current = self.current_file.as_deref() == Some(&node.rel_path.as_str());
 let entry_bg = if is_current { rgb(0x2c313a) } else { rgb(0x21252b) };
 ```
 
@@ -473,7 +500,7 @@ Collapsible folders:
   collapsed_dirs: HashSet<String> — stores rel_paths of collapsed directories
   Why not expanded_dirs: default-expanded is the right UX (see full rationale above)
   visible_file_tree() filters file_tree, skipping children of collapsed dirs
-  collect_file_tree stores rel_path for dirs (was String::new(), now e.g. "src")
+  collect_file_tree now returns Vec<FsNode> and stores rel_path for dirs (e.g. "src")
   Scroll + scrollbar use filtered tree length, not raw file_tree.len()
   left_panel_scroll clamped on collapse to prevent overflow
 

@@ -48,7 +48,15 @@ Cache the tree as a field on `Workspace`:
 ```rs
 pub struct Workspace {
     // ... existing fields ...
-    file_tree: Vec<(String, bool, String)>,  // cached: (display_name, is_dir, rel_path)
+    // The cached tree is now a typed struct for clarity:
+    //
+    // struct FsNode {
+    //     display_name: String, // what is rendered in the explorer (with indentation)
+    //     is_dir: bool,
+    //     rel_path: String,     // relative path from project root, e.g. "src" or "src/components"
+    // }
+    //
+    file_tree: Vec<FsNode>,                  // cached: FsNode entries
     left_panel_scroll: usize,                // entry offset for left panel scrolling
     collapsed_dirs: HashSet<String>,         // set of collapsed directory rel_paths
 }
@@ -68,23 +76,27 @@ fn refresh_file_tree(&mut self) {
 A `visible_file_tree()` helper filters the cached `file_tree` at render time, skipping children of any directory whose rel_path is in `collapsed_dirs`:
 
 ```rs
-fn visible_file_tree(&self) -> Vec<(String, bool, String)> {
+fn visible_file_tree(&self) -> Vec<&FsNode> {
     let mut result = Vec::new();
     let mut skip_prefix: Option<String> = None;
 
-    for (name, is_dir, rel_path) in &self.file_tree {
+    for node in &self.file_tree {
         if let Some(ref prefix) = skip_prefix {
             let child_prefix = format!("{}/", prefix);
-            if rel_path.starts_with(&child_prefix) {
-                continue; // hidden under a collapsed directory
+            if node.rel_path.starts_with(&child_prefix) {
+                // This entry (file or dir) is a child of the collapsed dir.
+                continue;
             }
-            skip_prefix = None; // left the collapsed subtree
+            // We've left the collapsed subtree.
+            skip_prefix = None;
         }
 
-        result.push((name.clone(), *is_dir, rel_path.clone()));
+        // Add the node reference to the visible list.
+        result.push(node);
 
-        if *is_dir && self.collapsed_dirs.contains(rel_path) {
-            skip_prefix = Some(rel_path.clone());
+        // If this is a collapsed directory, start skipping its children.
+        if node.is_dir && self.collapsed_dirs.contains(&node.rel_path) {
+            skip_prefix = Some(node.rel_path.clone());
         }
     }
     result
@@ -99,20 +111,19 @@ Toggles between collapsing and expanding all directories:
 
 ```rs
 fn toggle_collapse_all(&mut self) {
-    let dirs_in_file_tree = self
-        .file_tree
-        .iter()
-        .filter(|(_, is_dir, _)| *is_dir)
-        .count();
+    // Count directories using the typed FsNode representation
+    let total_dirs = self.file_tree.iter().filter(|node| node.is_dir).count();
 
-    if self.collapsed_dirs.len() != dirs_in_file_tree {
-        for (_name, is_dir, rel_path) in &self.file_tree {
-            if *is_dir {
-                self.collapsed_dirs.insert(rel_path.clone());
+    if self.collapsed_dirs.len() == total_dirs {
+        // All collapsed -> expand all
+        self.collapsed_dirs.clear();
+    } else {
+        // Collapse all: insert every directory's rel_path
+        for node in &self.file_tree {
+            if node.is_dir {
+                self.collapsed_dirs.insert(node.rel_path.clone());
             }
         }
-    } else {
-        self.collapsed_dirs.clear();
     }
 
     self.left_panel_scroll = 0;
@@ -193,8 +204,9 @@ fn render_left_panel(&self, window: &Window, cx: &mut Context<Self>) -> impl Int
     let end = (start + visible_entries).min(filtered_tree.len());
 
     // ...
-    for (name, is_dir, path) in &filtered_tree[start..end] {
-        // files open on click as before
+    for node in &filtered_tree[start..end] {
+        // use `node.display_name`, `node.is_dir`, `node.rel_path`
+        // files open on click as before (capture node.rel_path.clone() into the click closure)
     }
 }
 ```
