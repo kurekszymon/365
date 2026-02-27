@@ -57,6 +57,11 @@ struct ScrollbarDragState {
     max_scroll: f32,    // maximum scroll offset (for clamping)
 }
 
+struct FsNode {
+    display_name: String,
+    is_dir: bool,
+    rel_path: String,
+}
 // ── Workspace ────────────────────────────────────────────────────────────────
 
 pub struct Workspace {
@@ -67,8 +72,8 @@ pub struct Workspace {
     focus_handle: FocusHandle,
     current_file: Option<String>,
     project_root: String,
-    file_tree: Vec<(String, bool, String)>, // cached: (display_name, is_dir, rel_path)
-    left_panel_scroll: usize,               // entry offset for left panel scrolling
+    file_tree: Vec<FsNode>,   // cached: (display_name, is_dir, rel_path)
+    left_panel_scroll: usize, // entry offset for left panel scrolling
     scrollbar_drag: Option<ScrollbarDragState>,
     collapsed_dirs: HashSet<String>, // set of collapsed directory rel_paths
 }
@@ -100,18 +105,14 @@ impl Workspace {
     }
 
     fn toggle_collapse_all(&mut self) {
-        let total_dirs = self
-            .file_tree
-            .iter()
-            .filter(|(_, is_dir, _)| *is_dir)
-            .count();
+        let total_dirs = self.file_tree.iter().filter(|node| node.is_dir).count();
 
         if self.collapsed_dirs.len() == total_dirs {
             self.collapsed_dirs.clear();
         } else {
-            for (_, is_dir, rel_path) in &self.file_tree {
-                if *is_dir {
-                    self.collapsed_dirs.insert(rel_path.clone());
+            for node in &self.file_tree {
+                if node.is_dir {
+                    self.collapsed_dirs.insert(node.rel_path.clone());
                 }
             }
         }
@@ -120,16 +121,16 @@ impl Workspace {
     }
 
     /// Return only the entries that are visible (i.e. not hidden under a collapsed directory).
-    fn visible_file_tree(&self) -> Vec<(String, bool, String)> {
+    fn visible_file_tree(&self) -> Vec<&FsNode> {
         let mut result = Vec::new();
         let mut skip_prefix: Option<String> = None;
 
-        for (name, is_dir, rel_path) in &self.file_tree {
+        for node in &self.file_tree {
             // If we are skipping children of a collapsed dir, check whether
             // this entry is still under that prefix.
             if let Some(ref prefix) = skip_prefix {
                 let child_prefix = format!("{}/", prefix);
-                if rel_path.starts_with(&child_prefix) {
+                if node.rel_path.starts_with(&child_prefix) {
                     // This entry (file or dir) is a child of the collapsed dir.
                     continue;
                 }
@@ -137,11 +138,12 @@ impl Workspace {
                 skip_prefix = None;
             }
 
-            result.push((name.clone(), *is_dir, rel_path.clone()));
+            // here
+            result.push(node);
 
             // If this is a collapsed directory, start skipping its children.
-            if *is_dir && self.collapsed_dirs.contains(rel_path) {
-                skip_prefix = Some(rel_path.clone());
+            if node.is_dir && self.collapsed_dirs.contains(&node.rel_path) {
+                skip_prefix = Some(node.rel_path.clone());
             }
         }
 
@@ -338,7 +340,7 @@ impl Workspace {
 
     /// Recursively collect directory entries into a flat list for the file explorer.
     /// Returns Vec of (display_name, is_directory, relative_path).
-    fn collect_file_tree(dir: &Path, prefix: &str, depth: usize) -> Vec<(String, bool, String)> {
+    fn collect_file_tree(dir: &Path, prefix: &str, depth: usize) -> Vec<FsNode> {
         let indent = "  ".repeat(depth);
 
         let mut dirs: Vec<_> = Vec::new();
@@ -361,7 +363,7 @@ impl Workspace {
         dirs.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
         files.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
 
-        let mut result: Vec<(String, bool, String)> = Vec::new();
+        let mut result: Vec<FsNode> = Vec::new();
 
         for d in dirs {
             let rel = if prefix.is_empty() {
@@ -369,25 +371,35 @@ impl Workspace {
             } else {
                 format!("{}/{}", prefix, d)
             };
-            result.push((format!("{}{}/", indent, d), true, rel.clone()));
+
+            result.push(FsNode {
+                display_name: format!("{}{}/", indent, d),
+                is_dir: true,
+                rel_path: rel.clone(),
+            });
             let children = Self::collect_file_tree(&dir.join(&d), &rel, depth + 1);
             result.extend(children);
         }
 
         for f in files {
-            let rel = if prefix.is_empty() {
+            let rel_path = if prefix.is_empty() {
                 f.clone()
             } else {
                 format!("{}/{}", prefix, f)
             };
-            result.push((format!("{}{}", indent, f), false, rel));
+            result.push(FsNode {
+                display_name: format!("{}{}", indent, f),
+                is_dir: false,
+                rel_path,
+            });
         }
 
         result
     }
 
     fn open_file(&mut self, relative_path: &str) {
-        let full_path = format!("{}/{}", self.project_root, relative_path);
+        let full_path = std::path::PathBuf::from(&self.project_root).join(relative_path);
+
         match std::fs::read_to_string(&full_path) {
             Ok(content) => {
                 self.editor.load_text(&content);
@@ -416,31 +428,31 @@ impl Workspace {
             .px(px(8.0))
             .overflow_hidden();
 
-        for (name, is_dir, path) in &filtered_tree[start..end] {
-            let color = if *is_dir {
+        for node in &filtered_tree[start..end] {
+            let color = if node.is_dir {
                 rgb(0xc8ccd4)
             } else {
                 rgb(0x9da5b4)
             };
-            let is_current = self.current_file.as_deref() == Some(path.as_str());
+            let is_current = self.current_file.as_deref() == Some(&node.rel_path.as_str());
             let entry_bg = if is_current {
                 rgb(0x2c313a)
             } else {
                 rgb(0x21252b)
             };
 
-            let entry_id = if *is_dir {
-                SharedString::from(format!("dir-{}", path))
+            let entry_id = if node.is_dir {
+                SharedString::from(format!("dir-{}", node.rel_path))
             } else {
-                SharedString::from(format!("file-{}", path))
+                SharedString::from(format!("file-{}", node.rel_path))
             };
 
-            if *is_dir {
-                let trimmed = name.trim_start();
-                let indent_part = &name[..name.len() - trimmed.len()];
+            if node.is_dir {
+                let trimmed = node.display_name.trim_start();
+                let indent_part = &node.display_name[..node.display_name.len() - trimmed.len()];
                 let display_name = SharedString::from(format!("{}{}", indent_part, trimmed));
 
-                let path_owned = path.clone();
+                let path_owned = node.rel_path.clone();
                 let entry = div()
                     .id(entry_id)
                     .px(px(6.0))
@@ -477,10 +489,10 @@ impl Workspace {
                     .rounded(px(3.0))
                     .bg(entry_bg)
                     .hover(|s| s.bg(rgb(0x2c313a)))
-                    .child(SharedString::from(name.clone()));
+                    .child(SharedString::from(node.display_name.clone()));
 
-                if !path.is_empty() {
-                    let path_owned = path.clone();
+                if !node.rel_path.is_empty() {
+                    let path_owned = node.rel_path.clone();
                     entry = entry.cursor_pointer().on_click(cx.listener(
                         move |this, _: &ClickEvent, window, cx| {
                             this.open_file(&path_owned);
