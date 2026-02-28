@@ -35,7 +35,8 @@ actions!(
         ToggleBottomPanel,
         ToggleRightPanel,
         SelectAll,
-        ToggleCollapseAll
+        ToggleCollapseAll,
+        SaveFile
     ]
 );
 
@@ -76,6 +77,7 @@ pub struct Workspace {
     left_panel_scroll: usize, // entry offset for left panel scrolling
     scrollbar_drag: Option<ScrollbarDragState>,
     collapsed_dirs: HashSet<String>, // set of collapsed directory rel_paths
+    dirty: bool,                     // true when buffer has unsaved changes
 }
 
 impl Workspace {
@@ -96,6 +98,7 @@ impl Workspace {
             left_panel_scroll: 0,
             scrollbar_drag: None,
             collapsed_dirs: HashSet::new(),
+            dirty: false,
         }
     }
 
@@ -237,16 +240,34 @@ impl Workspace {
             "end" => self.editor.move_end(shift),
 
             // ── Editing keys with modifiers ──────────────────────────────
-            "backspace" if cmd => self.editor.delete_to_line_start(),
-            "backspace" if alt || ctrl => self.editor.delete_word_backward(),
-            "backspace" => self.editor.backspace(),
-            "delete" => self.editor.delete(),
+            "backspace" if cmd => {
+                self.editor.delete_to_line_start();
+                self.dirty = true;
+            }
+            "backspace" if alt || ctrl => {
+                self.editor.delete_word_backward();
+                self.dirty = true;
+            }
+            "backspace" => {
+                self.editor.backspace();
+                self.dirty = true;
+            }
+            "delete" => {
+                self.editor.delete();
+                self.dirty = true;
+            }
 
             // ── Editing keys (only without cmd/ctrl/fn) ─────────────────
             _ if cmd || ctrl || func => return, // let action system handle
 
-            "enter" => self.editor.insert_newline(),
-            "tab" => self.editor.insert_tab(),
+            "enter" => {
+                self.editor.insert_newline();
+                self.dirty = true;
+            }
+            "tab" => {
+                self.editor.insert_tab();
+                self.dirty = true;
+            }
             "escape" | "shift" | "alt" | "capslock" => {}
             _ => {
                 // Use key_char if available (for proper text input), otherwise use key
@@ -254,6 +275,7 @@ impl Workspace {
                 for ch in text.chars() {
                     if !ch.is_control() {
                         self.editor.insert_char(ch);
+                        self.dirty = true;
                     }
                 }
             }
@@ -404,11 +426,29 @@ impl Workspace {
             Ok(content) => {
                 self.editor.load_text(&content);
                 self.current_file = Some(relative_path.to_string());
+                self.dirty = false;
             }
             Err(e) => {
                 self.editor
                     .load_text(&format!("Error opening {}: {}", relative_path, e));
                 self.current_file = Some(relative_path.to_string());
+                self.dirty = false;
+            }
+        }
+    }
+
+    fn save_file(&mut self) {
+        let Some(relative_path) = self.current_file.clone() else {
+            return; // nothing to save if no file is open
+        };
+        let full_path = std::path::PathBuf::from(&self.project_root).join(&relative_path);
+        let content: String = self.editor.rope.to_string();
+        match std::fs::write(&full_path, &content) {
+            Ok(_) => {
+                self.dirty = false;
+            }
+            Err(e) => {
+                eprintln!("Error saving {}: {}", relative_path, e);
             }
         }
     }
@@ -1147,9 +1187,10 @@ impl Workspace {
     }
 
     fn render_title_bar(&self) -> impl IntoElement {
+        let dirty_marker = if self.dirty { " ●" } else { "" };
         let title = match &self.current_file {
-            Some(f) => format!("vvscode — {}", f),
-            None => "vvscode — untitled".to_string(),
+            Some(f) => format!("vvscode — {}{}", f, dirty_marker),
+            None => format!("vvscode — untitled{}", dirty_marker),
         };
         div()
             .flex()
@@ -1260,6 +1301,10 @@ impl Render for Workspace {
             }))
             .on_action(cx.listener(|this, _: &ToggleCollapseAll, _window, cx| {
                 this.toggle_collapse_all();
+                cx.notify();
+            }))
+            .on_action(cx.listener(|this, _: &SaveFile, _window, cx| {
+                this.save_file();
                 cx.notify();
             }))
             .on_key_down(cx.listener(Self::handle_key_down))
