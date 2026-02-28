@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use gpui::{
     ClickEvent, Context, FocusHandle, KeyDownEvent, MouseButton, MouseDownEvent, MouseMoveEvent,
@@ -437,19 +437,41 @@ impl Workspace {
         }
     }
 
-    fn save_file(&mut self) {
-        let Some(relative_path) = self.current_file.clone() else {
-            return; // nothing to save if no file is open
-        };
-        let full_path = std::path::PathBuf::from(&self.project_root).join(&relative_path);
-        let content: String = self.editor.rope.to_string();
-        match std::fs::write(&full_path, &content) {
-            Ok(_) => {
-                self.dirty = false;
+    fn save_file(&mut self, cx: &mut Context<Self>) {
+        if let Some(relative_path) = self.current_file.clone() {
+            // Known file — write directly
+            let full_path = PathBuf::from(&self.project_root).join(&relative_path);
+            let content: String = self.editor.rope.to_string();
+            match std::fs::write(&full_path, &content) {
+                Ok(_) => self.dirty = false,
+                Err(e) => eprintln!("Error saving {}: {}", relative_path, e),
             }
-            Err(e) => {
-                eprintln!("Error saving {}: {}", relative_path, e);
-            }
+        } else {
+            // Untitled / new file — show native Save dialog
+            let directory = PathBuf::from(&self.project_root);
+            let receiver = cx.prompt_for_new_path(&directory, Some("untitled"));
+            let content: String = self.editor.rope.to_string();
+
+            cx.spawn(async move |this, cx| {
+                if let Ok(Ok(Some(path))) = receiver.await {
+                    let _ = this.update(cx, |workspace, cx| {
+                        match std::fs::write(&path, &content) {
+                            Ok(_) => {
+                                // Derive a display name from the chosen path
+                                let display = path
+                                    .file_name()
+                                    .map(|n| n.to_string_lossy().to_string())
+                                    .unwrap_or_else(|| path.to_string_lossy().to_string());
+                                workspace.current_file = Some(display);
+                                workspace.dirty = false;
+                            }
+                            Err(e) => eprintln!("Error saving {:?}: {}", path, e),
+                        }
+                        cx.notify();
+                    });
+                }
+            })
+            .detach();
         }
     }
 
@@ -1304,7 +1326,7 @@ impl Render for Workspace {
                 cx.notify();
             }))
             .on_action(cx.listener(|this, _: &SaveFile, _window, cx| {
-                this.save_file();
+                this.save_file(cx);
                 cx.notify();
             }))
             .on_key_down(cx.listener(Self::handle_key_down))
