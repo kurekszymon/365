@@ -21,6 +21,17 @@ impl Workspace {
         let ctrl = keystroke.modifiers.control;
         let func = keystroke.modifiers.function;
 
+        // ── Command palette intercept ────────────────────────────────────
+        // When the palette is open, route all key events to it first.
+        // If it consumes the event, skip normal editor handling entirely.
+        if self.command_palette.open {
+            let consumed =
+                self.handle_palette_key(key, keystroke.key_char.as_deref(), cmd, ctrl, window, cx);
+            if consumed {
+                return;
+            }
+        }
+
         match key {
             // ── Movement keys — handle ALL modifier combos ───────────────
             //

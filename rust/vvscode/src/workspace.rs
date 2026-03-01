@@ -10,6 +10,7 @@
 //! - [`render_panels`]  — left explorer, right outline, bottom terminal
 //! - [`scrollbar`]      — shared scrollbar drag types
 
+pub mod command_palette;
 pub mod file_tree;
 mod input;
 mod render_chrome;
@@ -19,6 +20,8 @@ pub mod scrollbar;
 
 use std::collections::HashSet;
 use std::path::Path;
+
+use command_palette::CommandPaletteState;
 
 use gpui::{
     Context, FocusHandle, MouseButton, MouseMoveEvent, MouseUpEvent, Window, actions, div,
@@ -57,7 +60,9 @@ actions!(
         ToggleRightPanel,
         SelectAll,
         ToggleCollapseAll,
-        SaveFile
+        SaveFile,
+        ToggleCommandPalette,
+        OpenActionPalette
     ]
 );
 
@@ -76,6 +81,7 @@ pub struct Workspace {
     pub(crate) scrollbar_drag: Option<ScrollbarDragState>,
     pub(crate) collapsed_dirs: HashSet<String>,
     pub(crate) dirty: bool,
+    pub(crate) command_palette: CommandPaletteState,
 }
 
 impl Workspace {
@@ -97,6 +103,7 @@ impl Workspace {
             scrollbar_drag: None,
             collapsed_dirs: HashSet::new(),
             dirty: false,
+            command_palette: CommandPaletteState::new(),
         }
     }
 
@@ -257,6 +264,14 @@ impl Render for Workspace {
                 this.save_file(cx);
                 cx.notify();
             }))
+            .on_action(cx.listener(|this, _: &ToggleCommandPalette, _window, cx| {
+                this.toggle_command_palette();
+                cx.notify();
+            }))
+            .on_action(cx.listener(|this, _: &OpenActionPalette, _window, cx| {
+                this.open_command_palette_in_action_mode();
+                cx.notify();
+            }))
             .on_key_down(cx.listener(Self::handle_key_down))
             .on_scroll_wheel(cx.listener(Self::handle_scroll_wheel))
             .flex()
@@ -264,7 +279,17 @@ impl Render for Workspace {
             .size_full()
             .bg(rgb(0x1e1e1e))
             .child(self.render_title_bar())
-            .child(main_content)
+            .child(
+                div()
+                    .relative()
+                    .flex()
+                    .flex_col()
+                    .flex_1()
+                    .w_full()
+                    .overflow_hidden()
+                    .child(main_content)
+                    .child(self.render_command_palette(&window, cx)),
+            )
             .child(self.render_status_bar())
     }
 }
