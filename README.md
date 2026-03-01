@@ -34,7 +34,7 @@ after adding mediasoup, all the complexity made it not worth it for me to dig in
 instead of this I went on a journey with claude opus to add some features to see how RTC handles some parts of it and how it goes with native browsers apis like MediaRecorder.
 this allowed me to understand initial overhead sfu conferencing brings, and what pros/cons are behind it.
 
-[link](./webrtc/README.md)
+[link](./typescript/webrtc/README.md)
 
 ## electron
 
@@ -49,7 +49,7 @@ key takeways:
 - [processes](https://www.electronjs.org/docs/latest/tutorial/process-model) share the same global object, but due to [context isolation](https://www.electronjs.org/docs/latest/tutorial/context-isolation) you cannot set and retrieve properties on global object.
 - opening desktop app from web is as simple as registering protocol in config (if using electron forge)
 
-[link](./electron/README.md)
+[link](./typescript/electron/README.md)
 
 ## react 19
 
@@ -72,7 +72,7 @@ I want to come back to it when I will have bit more time a day to be able to dra
 
 - got to know what's the process of using WebGPU
 - was able to render some squares based on shaders
-- future reference listed in #docs section in [read more](./webgpu/readme.md)
+- future reference listed in #docs section in [read more](./typescript/webgpu/readme.md)
 
 ## rust
 
