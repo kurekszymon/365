@@ -13,10 +13,12 @@ Created this repo so i can explore some programming concepts I wanted and learn 
 
 ### mine
 
-[git got gut](./posts/git-got-gut.md)
+- [git got gut](./posts/git-got-gut.md)
+- [fwd:enums (WIP)](./posts/fwd:enums.md)
 
-### found during some researching
+### not mine
 
+- Karpathy's description of his project, with intro to gpt https://karpathy.github.io/2026/02/12/microgpt/
 - set of aricles on memory (V8) https://v8.dev/blog/tags/memory
 - researching about js memory usage for numbers vs rust/cpp:
   https://angular.love/here-is-what-you-need-to-know-about-javascripts-number-type
@@ -24,6 +26,14 @@ Created this repo so i can explore some programming concepts I wanted and learn 
   https://hoverbear.org/blog/optional-arguments/
 - gpui rendering 120 fps for text editor
   https://zed.dev/blog/videogame#gpui-rendering
+
+## rust
+
+I wanted to try some functional-style language for some time now, I decided to give rust a try.
+I don't have a proper idea on what to build with C++ and from some digging it really seems easier to build and distribute apps with rust than it is to do with c++ (cpack is so hard for me for whatever reason?).
+
+**project goal** i want to first familiarize myself with concepts from the book and then build a code editor for my needs.
+[read more](./rust/README.md)
 
 ## webrtc
 
@@ -73,11 +83,3 @@ I want to come back to it when I will have bit more time a day to be able to dra
 - got to know what's the process of using WebGPU
 - was able to render some squares based on shaders
 - future reference listed in #docs section in [read more](./typescript/webgpu/readme.md)
-
-## rust
-
-I wanted to try some functional-style language for some time now, I decided to give rust a try.
-I don't have a proper idea on what to build with C++ and from some digging it really seems easier to build and distribute apps with rust than it is to do with c++ (cpack is so hard for me for whatever reason?).
-
-**project goal** i want to first familiarize myself with concepts from the book and then build a code editor for my needs.
-[read more](./rust/README.md)
