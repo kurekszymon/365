@@ -1,5 +1,5 @@
 */**/node_modules
-*/overview
+*/**/overview
 
 .DS_Store
 ./*/DS_Store
