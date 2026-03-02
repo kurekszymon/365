@@ -123,11 +123,11 @@ On click, the clicked item is opened directly without needing Enter.
 When the query starts with `:`, the palette switches to go-to-line mode. Instead of a filterable list, it shows a single hint line with context:
 
 - Empty filter: `Current line: 42. Type a number (1–500) to jump.`
-- Valid number: `Go to line 48. Press Enter to confirm.`
+- Valid number: `Go to line 48. Click or press Enter to confirm.`
 - Out of range: `Line 999 is beyond the end of the file (500 lines).`
 - Invalid: `Enter a valid line number.`
 
-On confirm, the cursor moves to the start of the target line (1-indexed, clamped to the file bounds), `ensure_cursor_visible` is called, and the palette closes.
+On confirm (Enter key or clicking the hint row), the cursor moves to the start of the target line (1-indexed, clamped to the file bounds), `ensure_cursor_visible` is called, and the palette closes.
 
 #### Action runner (`>` prefix)
 
@@ -159,18 +159,29 @@ This is intentionally decoupled from gpui's `actions!` macro. The macro generate
 
 The palette is rendered as an absolutely-positioned overlay inside a relative container that wraps the main content area (between the title bar and status bar). This ensures it floats above the editor and panels without disrupting the flexbox layout.
 
+A full-screen transparent **backdrop** (`div#palette-backdrop`) sits behind the palette panel. Clicking anywhere on this backdrop calls `close_command_palette` and notifies, giving the expected "click outside to dismiss" behaviour without adding a separate focus or blur mechanism. The DOM nesting is:
+
+```
+palette-wrapper          (absolute, size_full)
+├── palette-backdrop     (absolute, size_full, on_click → close)
+└── palette panel        (absolute, top/left positioned, shadow, border)
+    ├── input box
+    └── item list
+```
+
+Visual diagram:
+
 ```
 ┌─────────────────────────────────┐
 │  Title bar                      │
 ├─────────────────────────────────┤
 │  ┌─────(relative wrapper)─────┐ │
-│  │  [Left] [Editor] [Right]   │ │
-│  │  [Bottom panel]            │ │
-│  │                            │ │
-│  │  ┌──── palette ────┐      │ │  ← absolutely positioned
-│  │  │ > Toggle Left…  │      │ │
-│  │  │   Toggle Bottom…│      │ │
-│  │  └─────────────────┘      │ │
+│  │▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│ │  ← transparent backdrop (click to close)
+│  │▓▓┌──── palette ────┐▓▓▓▓▓▓│ │  ← palette panel on top
+│  │▓▓│ > Toggle Left…  │▓▓▓▓▓▓│ │
+│  │▓▓│   Toggle Bottom…│▓▓▓▓▓▓│ │
+│  │▓▓└─────────────────┘▓▓▓▓▓▓│ │
+│  │▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│ │
 │  └────────────────────────────┘ │
 ├─────────────────────────────────┤
 │  Status bar                     │
@@ -316,8 +327,8 @@ This is intentional duplication — the alternative (making gpui action structs 
 - **Keyboard shortcut hints** — VS Code shows `Cmd+B` next to "Toggle Left Panel" in the palette. We could add a `shortcut: Option<&'static str>` field to `PaletteAction`.
 - **Recently opened files** — sorting file results by recency would improve the default ordering. Requires tracking open history.
 - **`:` inside file-open mode** — VS Code lets you type `foo.rs:42` to open a file and jump to a line in one go. Our modes are mutually exclusive.
-- **Mouse interaction for go-to-line** — the go-to-line mode only responds to keyboard (Enter). There's nothing to click.
-- **Backdrop / click-outside-to-close** — clicking outside the palette doesn't close it; only Escape does. Adding a transparent backdrop with an `on_click` handler would fix this.
+- ~~**Mouse interaction for go-to-line**~~ — _done_. The hint row is now clickable and navigates to EOF when line out of range. Hover highlight and pointer cursor indicate interactivity.
+- ~~**Backdrop / click-outside-to-close**~~ — _done_. A full-screen transparent `div#palette-backdrop` sits behind the palette panel. Clicking it calls `close_command_palette`, matching the expected dismiss behaviour.
 
 ---
 

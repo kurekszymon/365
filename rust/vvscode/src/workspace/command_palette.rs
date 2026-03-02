@@ -397,7 +397,7 @@ impl Workspace {
         cx: &mut Context<Self>,
     ) -> impl IntoElement {
         if !self.command_palette.open {
-            return div();
+            return div().id("palette-backdrop-off");
         }
 
         let window_w: f32 = window.viewport_size().width.into();
@@ -627,29 +627,40 @@ impl Workspace {
                     if n == 0 {
                         "Line numbers start at 1.".to_string()
                     } else if n > max {
-                        format!("Line {} is beyond the end of the file ({} lines).", n, max)
+                        format!(
+                            "Line {} is beyond the end of the file ({} lines). Navigate to the end of file.",
+                            n, max
+                        )
                     } else {
-                        format!("Go to line {}. Press Enter to confirm.", n)
+                        format!("Go to line {}. Click or press Enter to confirm.", n)
                     }
                 } else {
                     "Enter a valid line number.".to_string()
                 };
 
-                items_container = items_container.child(
-                    div()
-                        .w_full()
-                        .h(px(ITEM_HEIGHT))
-                        .px(px(10.0))
-                        .flex()
-                        .items_center()
-                        .bg(rgb(0x252526))
-                        .child(
-                            div()
-                                .text_xs()
-                                .text_color(rgb(0x8b919a))
-                                .child(SharedString::from(hint)),
-                        ),
-                );
+                let goto_row = div()
+                    .id("palette-goto-line")
+                    .w_full()
+                    .h(px(ITEM_HEIGHT))
+                    .px(px(10.0))
+                    .flex()
+                    .items_center()
+                    .bg(rgb(0x252526))
+                    .cursor_pointer()
+                    .hover(|s| s.bg(rgb(0x062f4a)))
+                    .child(
+                        div()
+                            .text_xs()
+                            .text_color(rgb(0x8b919a))
+                            .child(SharedString::from(hint)),
+                    )
+                    .on_click(cx.listener(|this, _, window, cx| {
+                        this.clamp_palette_selection();
+                        this.palette_confirm(window, cx);
+                        cx.notify();
+                    }));
+
+                items_container = items_container.child(goto_row);
             }
         }
 
@@ -668,8 +679,20 @@ impl Workspace {
 
         let list_height = item_count as f32 * ITEM_HEIGHT;
 
+        // Full-screen transparent backdrop — clicking outside the palette closes it
+        let backdrop = div()
+            .id("palette-backdrop")
+            .absolute()
+            .top_0()
+            .left_0()
+            .size_full()
+            .on_click(cx.listener(|this, _, _window, cx| {
+                this.close_command_palette();
+                cx.notify();
+            }));
+
         // The overlay container — absolutely positioned centered at the top
-        div()
+        let palette_panel = div()
             .absolute()
             .top(px(PALETTE_TOP))
             .left(px(palette_left))
@@ -687,6 +710,15 @@ impl Workspace {
                     .h(px(list_height))
                     .overflow_hidden()
                     .child(items_container),
-            )
+            );
+
+        div()
+            .id("palette-wrapper")
+            .absolute()
+            .top_0()
+            .left_0()
+            .size_full()
+            .child(backdrop)
+            .child(palette_panel)
     }
 }
