@@ -5,8 +5,8 @@ use gpui::{
 };
 
 use super::{
-    BOTTOM_PANEL_H, GUTTER_W, LEFT_PANEL_W, RIGHT_PANEL_W, SCROLLBAR_MIN_THUMB, SCROLLBAR_SIZE,
-    STATUS_BAR_H, TEXT_PAD_LEFT, TITLE_BAR_H, Workspace,
+    BOTTOM_PANEL_H, CHAR_WIDTH, GUTTER_W, LEFT_PANEL_W, LINE_HEIGHT, RIGHT_PANEL_W,
+    SCROLLBAR_MIN_THUMB, SCROLLBAR_SIZE, STATUS_BAR_H, TEXT_PAD_LEFT, TITLE_BAR_H, Workspace,
     scrollbar::{ScrollbarDragKind, ScrollbarDragState},
 };
 
@@ -51,6 +51,11 @@ impl Workspace {
         };
         let editor_w = (window_w - left_w - right_w).max(0.0);
 
+        // Capture values for the click handler closure
+        let click_scroll_offset = self.editor.scroll_offset;
+        let click_h_scroll_offset = h_off;
+        let click_left_w = left_w;
+
         let mut editor_content = div()
             .relative()
             .flex()
@@ -61,7 +66,38 @@ impl Workspace {
             .bg(rgb(0x1e1e1e))
             .overflow_hidden()
             .font_family("Monaco")
-            .text_sm();
+            .text_sm()
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(move |this, ev: &MouseDownEvent, window, cx| {
+                    // Convert pixel position to editor (row, col)
+                    let mouse_x: f32 = ev.position.x.into();
+                    let mouse_y: f32 = ev.position.y.into();
+
+                    // Y: subtract title bar, then divide by line height, add scroll offset
+                    let y_in_editor = mouse_y - TITLE_BAR_H;
+                    if y_in_editor < 0.0 {
+                        return;
+                    }
+                    let row = (y_in_editor / LINE_HEIGHT).floor() as usize + click_scroll_offset;
+
+                    // X: subtract left panel width, gutter, and text padding, then divide by char width
+                    let x_in_text = mouse_x - click_left_w - GUTTER_W - TEXT_PAD_LEFT;
+                    let col = if x_in_text < 0.0 {
+                        0
+                    } else {
+                        (x_in_text / CHAR_WIDTH).round() as usize + click_h_scroll_offset
+                    };
+
+                    this.editor.move_to_position(row, col);
+                    this.editor.clamp();
+                    let visible_lines = this.compute_visible_lines(window);
+                    let visible_cols = this.compute_visible_cols(window);
+                    this.editor
+                        .ensure_cursor_visible(visible_lines, visible_cols);
+                    cx.notify();
+                }),
+            );
 
         for i in start..end {
             let line_num = i + 1;

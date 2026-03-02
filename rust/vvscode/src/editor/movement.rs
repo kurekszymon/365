@@ -137,4 +137,16 @@ impl Editor {
         }
         self.preferred_col = None;
     }
+
+    /// Place the cursor at the given (row, col), clamped to valid bounds.
+    /// Collapses any existing selection.
+    pub fn move_to_position(&mut self, row: usize, col: usize) {
+        let max_row = self.len_lines().saturating_sub(1);
+        let target_row = row.min(max_row);
+        let max_col = self.line_len(target_row);
+        let target_col = col.min(max_col);
+        self.cursor = self.rope.line_to_char(target_row) + target_col;
+        self.collapse_to_cursor();
+        self.preferred_col = None;
+    }
 }
