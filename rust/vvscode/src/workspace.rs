@@ -20,6 +20,7 @@ pub mod scrollbar;
 
 use std::collections::HashSet;
 use std::path::Path;
+use std::sync::Arc;
 
 use command_palette::CommandPaletteState;
 
@@ -80,7 +81,7 @@ pub struct Workspace {
     pub(crate) left_panel_scroll: usize,
     pub(crate) scrollbar_drag: Option<ScrollbarDragState>,
     pub(crate) mouse_drag_selecting: bool,
-    pub(crate) collapsed_dirs: HashSet<String>,
+    pub(crate) collapsed_dirs: HashSet<Arc<str>>,
     pub(crate) dirty: bool,
     pub(crate) command_palette: CommandPaletteState,
 }

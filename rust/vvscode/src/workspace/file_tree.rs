@@ -1,6 +1,7 @@
 //! File tree — directory scanning, open/save, and collapse/expand logic.
 
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use gpui::Context;
 
@@ -11,7 +12,7 @@ use super::Workspace;
 pub(crate) struct FsNode {
     pub display_name: String,
     pub is_dir: bool,
-    pub rel_path: String,
+    pub rel_path: Arc<str>,
 }
 
 // ── File tree helpers ────────────────────────────────────────────────────────
@@ -30,7 +31,7 @@ impl Workspace {
         } else {
             for node in &self.file_tree {
                 if node.is_dir {
-                    self.collapsed_dirs.insert(node.rel_path.clone());
+                    self.collapsed_dirs.insert(Arc::clone(&node.rel_path));
                 }
             }
         }
@@ -41,7 +42,7 @@ impl Workspace {
     /// Return only the entries that are visible (i.e. not hidden under a collapsed directory).
     pub(crate) fn visible_file_tree(&self) -> Vec<&FsNode> {
         let mut result = Vec::new();
-        let mut skip_prefix: Option<String> = None;
+        let mut skip_prefix: Option<Arc<str>> = None;
 
         for node in &self.file_tree {
             // If we are skipping children of a collapsed dir, check whether
@@ -60,7 +61,7 @@ impl Workspace {
 
             // If this is a collapsed directory, start skipping its children.
             if node.is_dir && self.collapsed_dirs.contains(&node.rel_path) {
-                skip_prefix = Some(node.rel_path.clone());
+                skip_prefix = Some(Arc::clone(&node.rel_path));
             }
         }
 
@@ -94,26 +95,28 @@ impl Workspace {
         let mut result: Vec<FsNode> = Vec::new();
 
         for d in dirs {
-            let rel = if prefix.is_empty() {
-                d.clone()
+            let display_name = format!("{}{}/", indent, d);
+            let child_path = dir.join(&d);
+            let rel: Arc<str> = if prefix.is_empty() {
+                Arc::from(d)
             } else {
-                format!("{}/{}", prefix, d)
+                Arc::from(format!("{}/{}", prefix, d))
             };
 
             result.push(FsNode {
-                display_name: format!("{}{}/", indent, d),
+                display_name,
                 is_dir: true,
-                rel_path: rel.clone(),
+                rel_path: Arc::clone(&rel),
             });
-            let children = Self::collect_file_tree(&dir.join(&d), &rel, depth + 1);
+            let children = Self::collect_file_tree(&child_path, &rel, depth + 1);
             result.extend(children);
         }
 
         for f in files {
-            let rel_path = if prefix.is_empty() {
-                f.clone()
+            let rel_path: Arc<str> = if prefix.is_empty() {
+                Arc::from(f.as_str())
             } else {
-                format!("{}/{}", prefix, f)
+                Arc::from(format!("{}/{}", prefix, f))
             };
             result.push(FsNode {
                 display_name: format!("{}{}", indent, f),

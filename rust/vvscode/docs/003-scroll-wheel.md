@@ -53,12 +53,12 @@ pub struct Workspace {
     // struct FsNode {
     //     display_name: String, // what is rendered in the explorer (with indentation)
     //     is_dir: bool,
-    //     rel_path: String,     // relative path from project root, e.g. "src" or "src/components"
+    //     rel_path: Arc<str>,     // relative path from project root, e.g. "src" or "src/components"
     // }
     //
     file_tree: Vec<FsNode>,                  // cached: FsNode entries
     left_panel_scroll: usize,                // entry offset for left panel scrolling
-    collapsed_dirs: HashSet<String>,         // set of collapsed directory rel_paths
+    collapsed_dirs: HashSet<Arc<str>>,       // set of collapsed directory rel_paths
 }
 ```
 
@@ -78,7 +78,7 @@ A `visible_file_tree()` helper filters the cached `file_tree` at render time, sk
 ```rs
 fn visible_file_tree(&self) -> Vec<&FsNode> {
     let mut result = Vec::new();
-    let mut skip_prefix: Option<String> = None;
+    let mut skip_prefix: Option<Arc<str>> = None;
 
     for node in &self.file_tree {
         if let Some(ref prefix) = skip_prefix {
@@ -96,7 +96,7 @@ fn visible_file_tree(&self) -> Vec<&FsNode> {
 
         // If this is a collapsed directory, start skipping its children.
         if node.is_dir && self.collapsed_dirs.contains(&node.rel_path) {
-            skip_prefix = Some(node.rel_path.clone());
+            skip_prefix = Some(Arc::clone(&node.rel_path));
         }
     }
     result
@@ -121,7 +121,7 @@ fn toggle_collapse_all(&mut self) {
         // Collapse all: insert every directory's rel_path
         for node in &self.file_tree {
             if node.is_dir {
-                self.collapsed_dirs.insert(node.rel_path.clone());
+                self.collapsed_dirs.insert(Arc::clone(&node.rel_path));
             }
         }
     }
@@ -130,7 +130,7 @@ fn toggle_collapse_all(&mut self) {
 }
 ```
 
-The method counts all directories in the cached `file_tree` and compares that to the size of `collapsed_dirs`. If they differ (at least one directory is still expanded), it collapses all — inserting every directory's `rel_path` into the set. If they're equal (everything is already collapsed), it expands all by clearing the set. This gives a natural toggle: press once to collapse, press again to expand. `left_panel_scroll` resets to 0 in both cases since the visible list changes dramatically.
+The method counts all directories in the cached `file_tree` and compares that to the size of `collapsed_dirs`. If they differ (at least one directory is still expanded), it collapses all — inserting every directory's `rel_path` into the set via `Arc::clone` (a cheap ref-count bump, not a deep string copy). If they're equal (everything is already collapsed), it expands all by clearing the set. This gives a natural toggle: press once to collapse, press again to expand. `left_panel_scroll` resets to 0 in both cases since the visible list changes dramatically.
 
 Available via:
 

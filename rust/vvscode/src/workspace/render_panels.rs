@@ -1,5 +1,7 @@
 //! Side-panel and bottom-panel rendering (left explorer, right outline, terminal).
 
+use std::sync::Arc;
+
 use gpui::{
     ClickEvent, Context, MouseButton, MouseDownEvent, SharedString, Window, div, prelude::*, px,
     rgb, rgba,
@@ -39,7 +41,7 @@ impl Workspace {
             } else {
                 rgb(0x9da5b4)
             };
-            let is_current = self.current_file.as_deref() == Some(&node.rel_path.as_str());
+            let is_current = self.current_file.as_deref() == Some(&*node.rel_path);
             let entry_bg = if is_current {
                 rgb(0x2c313a)
             } else {
@@ -57,7 +59,7 @@ impl Workspace {
                 let indent_part = &node.display_name[..node.display_name.len() - trimmed.len()];
                 let display_name = SharedString::from(format!("{}{}", indent_part, trimmed));
 
-                let path_owned = node.rel_path.clone();
+                let path_owned = Arc::clone(&node.rel_path);
                 let entry = div()
                     .id(entry_id)
                     .px(px(6.0))
@@ -73,7 +75,7 @@ impl Workspace {
                         if this.collapsed_dirs.contains(&path_owned) {
                             this.collapsed_dirs.remove(&path_owned);
                         } else {
-                            this.collapsed_dirs.insert(path_owned.clone());
+                            this.collapsed_dirs.insert(Arc::clone(&path_owned));
                         }
                         // Clamp scroll in case collapsing reduced total entries
                         let new_total = this.visible_file_tree().len();
@@ -97,7 +99,7 @@ impl Workspace {
                     .child(SharedString::from(node.display_name.clone()));
 
                 if !node.rel_path.is_empty() {
-                    let path_owned = node.rel_path.clone();
+                    let path_owned = Arc::clone(&node.rel_path);
                     entry = entry.cursor_pointer().on_click(cx.listener(
                         move |this, _: &ClickEvent, window, cx| {
                             this.open_file(&path_owned);

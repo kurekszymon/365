@@ -29,11 +29,11 @@ pub(crate) struct CommandPaletteState {
     pub open: bool,
     pub query: String,
     pub selected_index: usize,
-    pub file_list: Vec<String>,
+    pub file_list: Vec<Arc<str>>,
 }
 ```
 
-`file_list` is rebuilt from the file tree every time the palette opens. This is cheap (it's just cloning the `rel_path` strings from the already-collected `FsNode` list) and avoids stale entries if files were created or deleted since the last open.
+`file_list` is rebuilt from the file tree every time the palette opens. This is cheap — each entry is an `Arc::clone` of the `FsNode`'s `rel_path`, so it's a ref-count bump rather than a deep string copy. It avoids stale entries if files were created or deleted since the last open.
 
 The struct lives on `Workspace` as `pub(crate) command_palette: CommandPaletteState`.
 

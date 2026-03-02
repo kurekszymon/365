@@ -223,7 +223,7 @@ pub struct Workspace {
     // ...
     current_file: Option<String>,      // relative path of the open file, e.g. "src/main.rs"
     project_root: String,              // absolute path, from std::env::current_dir()
-    collapsed_dirs: HashSet<String>,   // set of collapsed directory rel_paths
+    collapsed_dirs: HashSet<Arc<str>>, // set of collapsed directory rel_paths
 }
 ```
 
@@ -233,11 +233,11 @@ To better express file-tree entries the code now uses a small struct:
 struct FsNode {
     display_name: String, // what is rendered in the explorer (with indentation)
     is_dir: bool,
-    rel_path: String,     // relative path from project root, e.g. "src" or "src/components"
+    rel_path: Arc<str>,     // relative path from project root, e.g. "src" or "src/components"
 }
 ```
 
-`collapsed_dirs` tracks which directories the user has collapsed. It stores relative paths (e.g. `"src/components"`). Directories not in the set are expanded by default. The set persists across re-renders but is not saved to disk.
+`collapsed_dirs` tracks which directories the user has collapsed. It stores relative paths (e.g. `"src/components"`) as `Arc<str>` so they can be cheaply cloned from `FsNode.rel_path` without deep-copying the string. Directories not in the set are expanded by default. The set persists across re-renders but is not saved to disk.
 
 And a new method on `Editor`:
 

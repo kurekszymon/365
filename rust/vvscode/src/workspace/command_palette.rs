@@ -6,6 +6,8 @@
 //! - **`:`**         — go-to-line: jump to a line number in the current buffer
 //! - **`>`**         — action runner: filter and execute registered workspace actions
 
+use std::sync::Arc;
+
 use gpui::{Context, SharedString, Window, div, prelude::*, px, rgb};
 
 use super::Workspace;
@@ -85,7 +87,7 @@ pub(crate) struct CommandPaletteState {
     pub query: String,
     pub selected_index: usize,
     /// Cached list of project-relative file paths for file-open mode.
-    pub file_list: Vec<String>,
+    pub file_list: Vec<Arc<str>>,
 }
 
 impl CommandPaletteState {
@@ -133,7 +135,7 @@ fn fuzzy_match(haystack: &str, needle: &str) -> bool {
 
 impl Workspace {
     /// Filtered file list for the file-open mode.
-    pub(crate) fn palette_filtered_files(&self) -> Vec<String> {
+    pub(crate) fn palette_filtered_files(&self) -> Vec<Arc<str>> {
         let filter = self.command_palette.filter();
         self.command_palette
             .file_list
@@ -190,7 +192,7 @@ impl Workspace {
             .file_tree
             .iter()
             .filter(|node| !node.is_dir)
-            .map(|node| node.rel_path.clone())
+            .map(|node| Arc::clone(&node.rel_path))
             .collect();
     }
 
@@ -311,8 +313,7 @@ impl Workspace {
             PaletteMode::FileOpen => {
                 let files = self.palette_filtered_files();
                 if let Some(path) = files.get(self.command_palette.selected_index) {
-                    let path = path.clone();
-                    self.open_file(&path);
+                    self.open_file(path);
                     let visible_lines = self.compute_visible_lines(window);
                     let visible_cols = self.compute_visible_cols(window);
                     self.editor
@@ -500,10 +501,10 @@ impl Workspace {
                         // Show the filename prominently, with the directory path dimmed
                         let (dir_part, file_part) = match path.rfind('/') {
                             Some(pos) => (&path[..=pos], &path[pos + 1..]),
-                            None => ("", path.as_str()),
+                            None => ("", &**path),
                         };
 
-                        let path_clone = path.clone();
+                        let path_clone = Arc::clone(path);
                         items_container = items_container.child(
                             div()
                                 .id(SharedString::from(format!(
