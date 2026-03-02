@@ -70,26 +70,43 @@ impl Workspace {
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener(move |this, ev: &MouseDownEvent, window, cx| {
-                    // Convert pixel position to editor (row, col)
                     let mouse_x: f32 = ev.position.x.into();
                     let mouse_y: f32 = ev.position.y.into();
+                    let shift = ev.modifiers.shift;
 
-                    // Y: subtract title bar, then divide by line height, add scroll offset
+                    // Y → row
                     let y_in_editor = mouse_y - TITLE_BAR_H;
                     if y_in_editor < 0.0 {
                         return;
                     }
                     let row = (y_in_editor / LINE_HEIGHT).floor() as usize + click_scroll_offset;
 
-                    // X: subtract left panel width, gutter, and text padding, then divide by char width
+                    // X → col (and detect gutter clicks)
                     let x_in_text = mouse_x - click_left_w - GUTTER_W - TEXT_PAD_LEFT;
+                    let in_gutter = x_in_text < 0.0
+                        && (mouse_x - click_left_w) >= 0.0
+                        && (mouse_x - click_left_w) < GUTTER_W;
                     let col = if x_in_text < 0.0 {
                         0
                     } else {
                         (x_in_text / CHAR_WIDTH).round() as usize + click_h_scroll_offset
                     };
 
-                    this.editor.move_to_position(row, col);
+                    if in_gutter {
+                        // ── Gutter click → select entire line ────────────
+                        this.editor.select_line(row);
+                    } else if ev.click_count == 2 {
+                        // ── Double-click → select word ───────────────────
+                        this.editor.select_word_at(row, col);
+                    } else if shift {
+                        // ── Shift-click → extend selection ───────────────
+                        this.editor.move_to_position(row, col, true);
+                    } else {
+                        // ── Plain click → place cursor ───────────────────
+                        this.editor.move_to_position(row, col, false);
+                        this.mouse_drag_selecting = true;
+                    }
+
                     this.editor.clamp();
                     let visible_lines = this.compute_visible_lines(window);
                     let visible_cols = this.compute_visible_cols(window);

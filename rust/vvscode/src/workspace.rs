@@ -79,6 +79,7 @@ pub struct Workspace {
     pub(crate) file_tree: Vec<FsNode>,
     pub(crate) left_panel_scroll: usize,
     pub(crate) scrollbar_drag: Option<ScrollbarDragState>,
+    pub(crate) mouse_drag_selecting: bool,
     pub(crate) collapsed_dirs: HashSet<String>,
     pub(crate) dirty: bool,
     pub(crate) command_palette: CommandPaletteState,
@@ -101,6 +102,7 @@ impl Workspace {
             file_tree,
             left_panel_scroll: 0,
             scrollbar_drag: None,
+            mouse_drag_selecting: false,
             collapsed_dirs: HashSet::new(),
             dirty: false,
             command_palette: CommandPaletteState::new(),
@@ -196,7 +198,8 @@ impl Render for Workspace {
         div()
             .key_context("Workspace")
             .track_focus(&self.focus_handle)
-            .on_mouse_move(cx.listener(|this, ev: &MouseMoveEvent, _window, cx| {
+            .on_mouse_move(cx.listener(|this, ev: &MouseMoveEvent, window, cx| {
+                // ── Scrollbar drag ───────────────────────────────────────
                 if let Some(drag) = this.scrollbar_drag {
                     // Safety: if button was released outside the window, clear drag
                     if ev.pressed_button != Some(MouseButton::Left) {
@@ -225,12 +228,52 @@ impl Render for Workspace {
                         }
                     }
                     cx.notify();
+                    return;
+                }
+
+                // ── Click-drag to select ─────────────────────────────────
+                if this.mouse_drag_selecting {
+                    if ev.pressed_button != Some(MouseButton::Left) {
+                        this.mouse_drag_selecting = false;
+                        return;
+                    }
+                    let mouse_x: f32 = ev.position.x.into();
+                    let mouse_y: f32 = ev.position.y.into();
+
+                    let left_w = if this.left_panel_visible {
+                        LEFT_PANEL_W
+                    } else {
+                        0.0
+                    };
+
+                    let y_in_editor = mouse_y - TITLE_BAR_H;
+                    let row = if y_in_editor < 0.0 {
+                        0
+                    } else {
+                        (y_in_editor / LINE_HEIGHT).floor() as usize + this.editor.scroll_offset
+                    };
+
+                    let x_in_text = mouse_x - left_w - GUTTER_W - TEXT_PAD_LEFT;
+                    let col = if x_in_text < 0.0 {
+                        0
+                    } else {
+                        (x_in_text / CHAR_WIDTH).round() as usize + this.editor.h_scroll_offset
+                    };
+
+                    this.editor.move_to_position(row, col, true);
+                    this.editor.clamp();
+                    let visible_lines = this.compute_visible_lines(window);
+                    let visible_cols = this.compute_visible_cols(window);
+                    this.editor
+                        .ensure_cursor_visible(visible_lines, visible_cols);
+                    cx.notify();
                 }
             }))
             .on_mouse_up(
                 MouseButton::Left,
                 cx.listener(|this, _ev: &MouseUpEvent, _window, _cx| {
                     this.scrollbar_drag = None;
+                    this.mouse_drag_selecting = false;
                 }),
             )
             .on_action(cx.listener(|this, _: &ToggleLeftPanel, _window, cx| {
