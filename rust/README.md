@@ -12,6 +12,16 @@
   - [x] command palette (`> Format document` + custom commands)
   - [x] file palette (open any file with cmd p, jump to line `:42`)
 
+## 03.03
+
+- add history of changes to support undo/redo operation (snapshot stack)
+
+## 02.03
+
+- replace String FsNode.rel_path with Arc<str> to not clone a value for each member of a file tree
+- add mouse/touch interaction - click to navigate, drag to select, select line on gutter click
+- backdrop for command palette (click outside to close)
+
 ## 01.03
 
 - split code to smaller modules
