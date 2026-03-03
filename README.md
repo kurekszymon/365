@@ -27,6 +27,10 @@ Created this repo so i can explore some programming concepts I wanted and learn 
 - gpui rendering 120 fps for text editor
   https://zed.dev/blog/videogame#gpui-rendering
 
+### papers
+
+- [What every programmer should now about memory](https://people.freebsd.org/~lstewart/articles/cpumemory.pdf)
+
 ## rust
 
 I wanted to try some functional-style language for some time now, I decided to give rust a try.
