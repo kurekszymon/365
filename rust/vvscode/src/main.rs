@@ -5,8 +5,8 @@ use gpui::{
     App, AppContext, Application, Bounds, KeyBinding, WindowBounds, WindowOptions, px, size,
 };
 use workspace::{
-    OpenActionPalette, SaveFile, SelectAll, ToggleBottomPanel, ToggleCollapseAll,
-    ToggleCommandPalette, ToggleLeftPanel, ToggleRightPanel, Workspace,
+    Copy, Cut, OpenActionPalette, Paste, Redo, SaveFile, SelectAll, ToggleBottomPanel,
+    ToggleCollapseAll, ToggleCommandPalette, ToggleLeftPanel, ToggleRightPanel, Undo, Workspace,
 };
 
 // ── Main ─────────────────────────────────────────────────────────────────────
@@ -22,6 +22,11 @@ fn main() {
             KeyBinding::new("cmd-s", SaveFile, Some("Workspace")),
             KeyBinding::new("cmd-p", ToggleCommandPalette, Some("Workspace")),
             KeyBinding::new("cmd-shift-p", OpenActionPalette, Some("Workspace")),
+            KeyBinding::new("cmd-z", Undo, Some("Workspace")),
+            KeyBinding::new("cmd-shift-z", Redo, Some("Workspace")),
+            KeyBinding::new("cmd-c", Copy, Some("Workspace")),
+            KeyBinding::new("cmd-v", Paste, Some("Workspace")),
+            KeyBinding::new("cmd-x", Cut, Some("Workspace")),
         ]);
 
         let bounds = Bounds::centered(None, size(px(1200.), px(800.0)), cx);

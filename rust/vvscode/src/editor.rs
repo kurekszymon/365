@@ -12,8 +12,10 @@ mod editing;
 mod movement;
 mod scrolling;
 mod selection;
+pub mod undo;
 
 use ropey::Rope;
+use undo::UndoHistory;
 
 // ── Editor ───────────────────────────────────────────────────────────────────
 
@@ -24,6 +26,7 @@ pub struct Editor {
     pub preferred_col: Option<usize>, // sticky column for up/down movement
     pub scroll_offset: usize,         // line offset for vertical scrolling
     pub h_scroll_offset: usize,       // column offset for horizontal scrolling
+    pub history: UndoHistory,         // undo/redo history
 }
 
 impl Editor {
@@ -35,6 +38,7 @@ impl Editor {
             preferred_col: None,
             scroll_offset: 0,
             h_scroll_offset: 0,
+            history: UndoHistory::new(),
         }
     }
 
@@ -113,6 +117,53 @@ impl Editor {
         }
     }
 
+    /// Return the currently selected text, or an empty string if no selection.
+    pub fn selected_text(&self) -> String {
+        if !self.has_selection() {
+            return String::new();
+        }
+        let start = self.selection_start();
+        let end = self.selection_end();
+        self.rope.slice(start..end).to_string()
+    }
+
+    /// Insert a string at the cursor, replacing any selection.
+    pub fn insert_text(&mut self, text: &str) {
+        self.commit_history();
+        self.delete_selection();
+        self.rope.insert(self.cursor, text);
+        self.cursor += text.chars().count();
+        self.collapse_to_cursor();
+        self.preferred_col = None;
+    }
+
+    /// Save the current state to the undo stack (call before mutations).
+    pub fn commit_history(&mut self) {
+        self.history.save(&self.rope, self.cursor, self.anchor);
+    }
+
+    /// Undo the last change.
+    pub fn undo(&mut self) {
+        if let Some(snap) = self.history.undo(&self.rope, self.cursor, self.anchor) {
+            self.rope = snap.text;
+            self.cursor = snap.cursor;
+            self.anchor = snap.anchor;
+            self.preferred_col = None;
+            self.clamp();
+        }
+    }
+
+    /// Redo the last undone change.
+    pub fn redo(&mut self) {
+        if let Some(snap) = self.history.redo(&self.rope, self.cursor, self.anchor) {
+            self.rope = snap.text;
+            self.cursor = snap.cursor;
+            self.anchor = snap.anchor;
+            self.preferred_col = None;
+            self.clamp();
+        }
+    }
+
     // ── File loading ─────────────────────────────────────────────────────
 
     /// Replace the entire buffer with the given text, resetting cursor and scroll.
@@ -123,5 +174,6 @@ impl Editor {
         self.preferred_col = None;
         self.scroll_offset = 0;
         self.h_scroll_offset = 0;
+        self.history.clear();
     }
 }

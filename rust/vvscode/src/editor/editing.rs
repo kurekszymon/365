@@ -6,6 +6,7 @@ use super::Editor;
 
 impl Editor {
     pub fn insert_char(&mut self, ch: char) {
+        self.commit_history();
         self.delete_selection();
         self.rope.insert_char(self.cursor, ch);
         self.cursor += 1;
@@ -14,6 +15,7 @@ impl Editor {
     }
 
     pub fn insert_newline(&mut self) {
+        self.commit_history();
         self.delete_selection();
         self.rope.insert_char(self.cursor, '\n');
         self.cursor += 1;
@@ -22,6 +24,7 @@ impl Editor {
     }
 
     pub fn backspace(&mut self) {
+        self.commit_history();
         if self.has_selection() {
             self.delete_selection();
         } else if self.cursor > 0 {
@@ -33,6 +36,7 @@ impl Editor {
     }
 
     pub fn delete(&mut self) {
+        self.commit_history();
         if self.has_selection() {
             self.delete_selection();
         } else if self.cursor < self.rope.len_chars() {
@@ -49,6 +53,7 @@ impl Editor {
     }
 
     pub fn delete_word_backward(&mut self) {
+        self.commit_history();
         if self.has_selection() {
             self.delete_selection();
             return;
@@ -63,6 +68,7 @@ impl Editor {
     }
 
     pub fn delete_to_line_start(&mut self) {
+        self.commit_history();
         if self.has_selection() {
             self.delete_selection();
             return;

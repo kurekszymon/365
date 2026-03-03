@@ -25,8 +25,8 @@ use std::sync::Arc;
 use command_palette::CommandPaletteState;
 
 use gpui::{
-    Context, FocusHandle, MouseButton, MouseMoveEvent, MouseUpEvent, Window, actions, div,
-    prelude::*, rgb,
+    ClipboardItem, Context, FocusHandle, MouseButton, MouseMoveEvent, MouseUpEvent, Window,
+    actions, div, prelude::*, rgb,
 };
 
 use crate::editor::Editor;
@@ -63,7 +63,12 @@ actions!(
         ToggleCollapseAll,
         SaveFile,
         ToggleCommandPalette,
-        OpenActionPalette
+        OpenActionPalette,
+        Undo,
+        Redo,
+        Copy,
+        Paste,
+        Cut
     ]
 );
 
@@ -315,6 +320,55 @@ impl Render for Workspace {
             .on_action(cx.listener(|this, _: &OpenActionPalette, _window, cx| {
                 this.open_command_palette_in_action_mode();
                 cx.notify();
+            }))
+            .on_action(cx.listener(|this, _: &Undo, window, cx| {
+                this.editor.undo();
+                let visible_lines = this.compute_visible_lines(window);
+                let visible_cols = this.compute_visible_cols(window);
+                this.editor
+                    .ensure_cursor_visible(visible_lines, visible_cols);
+                cx.notify();
+            }))
+            .on_action(cx.listener(|this, _: &Redo, window, cx| {
+                this.editor.redo();
+                let visible_lines = this.compute_visible_lines(window);
+                let visible_cols = this.compute_visible_cols(window);
+                this.editor
+                    .ensure_cursor_visible(visible_lines, visible_cols);
+                cx.notify();
+            }))
+            .on_action(cx.listener(|this, _: &Copy, _window, cx| {
+                let text = this.editor.selected_text();
+                if !text.is_empty() {
+                    cx.write_to_clipboard(ClipboardItem::new_string(text));
+                }
+            }))
+            .on_action(cx.listener(|this, _: &Cut, window, cx| {
+                let text = this.editor.selected_text();
+                if !text.is_empty() {
+                    cx.write_to_clipboard(ClipboardItem::new_string(text));
+                    this.editor.commit_history();
+                    this.editor.delete_selection();
+                    this.dirty = true;
+                    let visible_lines = this.compute_visible_lines(window);
+                    let visible_cols = this.compute_visible_cols(window);
+                    this.editor
+                        .ensure_cursor_visible(visible_lines, visible_cols);
+                    cx.notify();
+                }
+            }))
+            .on_action(cx.listener(|this, _: &Paste, window, cx| {
+                if let Some(item) = cx.read_from_clipboard() {
+                    if let Some(text) = item.text() {
+                        this.editor.insert_text(&text);
+                        this.dirty = true;
+                        let visible_lines = this.compute_visible_lines(window);
+                        let visible_cols = this.compute_visible_cols(window);
+                        this.editor
+                            .ensure_cursor_visible(visible_lines, visible_cols);
+                        cx.notify();
+                    }
+                }
             }))
             .on_key_down(cx.listener(Self::handle_key_down))
             .on_scroll_wheel(cx.listener(Self::handle_scroll_wheel))
