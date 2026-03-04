@@ -12,6 +12,12 @@
   - [x] command palette (`> Format document` + custom commands)
   - [x] file palette (open any file with cmd p, jump to line `:42`)
 
+## 04.03
+
+- terminal support with vte, portable-pty and async-channel (crates)
+- handled scroll events for terminal window
+- support for bottom panel
+
 ## 03.03
 
 - add history of changes to support undo/redo operation (snapshot stack)
