@@ -3,12 +3,12 @@
 use std::sync::Arc;
 
 use gpui::{
-    ClickEvent, Context, MouseButton, MouseDownEvent, SharedString, Window, div, prelude::*, px,
-    rgb, rgba,
+    ClickEvent, Context, FontWeight, MouseButton, MouseDownEvent, SharedString, Window, div,
+    prelude::*, px, rgb, rgba,
 };
 
 use super::{
-    BOTTOM_PANEL_H, LEFT_PANEL_W, PANEL_HEADER_H, RIGHT_PANEL_W, SCROLLBAR_MIN_THUMB,
+    BOTTOM_PANEL_H, LEFT_PANEL_W, LINE_HEIGHT, PANEL_HEADER_H, RIGHT_PANEL_W, SCROLLBAR_MIN_THUMB,
     SCROLLBAR_SIZE, STATUS_BAR_H, TITLE_BAR_H, Workspace,
     scrollbar::{ScrollbarDragKind, ScrollbarDragState},
 };
@@ -274,8 +274,123 @@ impl Workspace {
             )
     }
 
-    pub(crate) fn render_bottom_panel(&self) -> impl IntoElement {
+    pub(crate) fn render_bottom_panel(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        // ── Tab bar ──────────────────────────────────────────────────────
+        let tab_bar = div()
+            .flex()
+            .gap(px(16.0))
+            .px(px(12.0))
+            .py(px(6.0))
+            .border_b_1()
+            .border_color(rgb(0x2d2d2d))
+            .child(
+                div()
+                    .text_xs()
+                    .text_color(rgb(0xe0e0e0))
+                    .font_weight(FontWeight::BOLD)
+                    .pb(px(4.0))
+                    .border_b_2()
+                    .border_color(rgb(0x007acc))
+                    .child("TERMINAL"),
+            )
+            .child(div().text_xs().text_color(rgb(0x8b919a)).child("PROBLEMS"))
+            .child(div().text_xs().text_color(rgb(0x8b919a)).child("OUTPUT"));
+
+        // ── Terminal grid content ────────────────────────────────────────
+        let term_content = if let Some(ref term) = self.terminal {
+            let grid = term.lock_grid();
+            let rows = grid.rows;
+            let cols = grid.cols;
+            let cursor_row = grid.cursor_row;
+            let cursor_col = grid.cursor_col;
+            let cursor_visible = grid.cursor_visible;
+
+            let mut lines_container = div().flex().flex_col().overflow_hidden();
+
+            for r in 0..rows {
+                if r >= grid.lines.len() {
+                    break;
+                }
+                let line = &grid.lines[r];
+
+                // Build the row as a sequence of styled spans.
+                // We group consecutive cells with the same style into one span.
+                let mut row_div = div()
+                    .flex()
+                    .h(px(LINE_HEIGHT))
+                    .font_family("Monaco")
+                    .text_sm();
+
+                let mut span_start = 0;
+                while span_start < cols.min(line.len()) {
+                    let ref_cell = &line[span_start];
+                    let mut span_end = span_start + 1;
+
+                    // Extend span while style matches and no cursor boundary.
+                    while span_end < cols.min(line.len()) {
+                        let is_cursor_at_start =
+                            cursor_visible && r == cursor_row && span_start == cursor_col;
+                        let is_cursor_at_end =
+                            cursor_visible && r == cursor_row && span_end == cursor_col;
+                        if is_cursor_at_start || is_cursor_at_end {
+                            break;
+                        }
+                        let c = &line[span_end];
+                        if c.fg != ref_cell.fg || c.bg != ref_cell.bg || c.bold != ref_cell.bold {
+                            break;
+                        }
+                        span_end += 1;
+                    }
+
+                    // Collect characters for this span.
+                    let text: String = line[span_start..span_end].iter().map(|c| c.ch).collect();
+
+                    let is_cursor_span =
+                        cursor_visible && r == cursor_row && span_start == cursor_col;
+
+                    let mut span = div()
+                        .text_color(rgb(ref_cell.fg))
+                        .child(SharedString::from(text));
+
+                    // Background: only set if non-default or this is the cursor.
+                    if is_cursor_span {
+                        // Cursor: swap fg/bg for block cursor appearance.
+                        span = span.bg(rgb(ref_cell.fg)).text_color(rgb(ref_cell.bg));
+                    } else if ref_cell.bg != 0x1e1e1e {
+                        span = span.bg(rgb(ref_cell.bg));
+                    }
+
+                    if ref_cell.bold {
+                        span = span.font_weight(FontWeight::BOLD);
+                    }
+
+                    row_div = row_div.child(span);
+                    span_start = span_end;
+                }
+
+                // If cursor is past all content on this row, add a cursor block.
+                if cursor_visible && r == cursor_row && cursor_col >= cols.min(line.len()) {
+                    row_div =
+                        row_div.child(div().bg(rgb(0xcccccc)).text_color(rgb(0x1e1e1e)).child(" "));
+                }
+
+                lines_container = lines_container.child(row_div);
+            }
+
+            // Mark grid as rendered.
+            drop(grid);
+            term.mark_rendered();
+
+            lines_container
+        } else {
+            // No terminal spawned yet — show empty container.
+            div()
+        };
+
+        // ── Click to focus terminal ──────────────────────────────────────
         div()
+            .id("bottom-panel")
+            .track_focus(&self.terminal_focus_handle)
             .flex()
             .flex_col()
             .w_full()
@@ -283,35 +398,18 @@ impl Workspace {
             .bg(rgb(0x1e1e1e))
             .border_t_1()
             .border_color(rgb(0x181a1f))
-            .child(
-                div()
-                    .flex()
-                    .gap(px(16.0))
-                    .px(px(12.0))
-                    .py(px(6.0))
-                    .border_b_1()
-                    .border_color(rgb(0x2d2d2d))
-                    .child(
-                        div()
-                            .text_xs()
-                            .text_color(rgb(0xe0e0e0))
-                            .font_weight(gpui::FontWeight::BOLD)
-                            .pb(px(4.0))
-                            .border_b_2()
-                            .border_color(rgb(0x007acc))
-                            .child("TERMINAL"),
-                    )
-                    .child(div().text_xs().text_color(rgb(0x8b919a)).child("PROBLEMS"))
-                    .child(div().text_xs().text_color(rgb(0x8b919a)).child("OUTPUT")),
-            )
+            .on_click(cx.listener(|this, _: &ClickEvent, window, cx| {
+                this.terminal_focus_handle.focus(window);
+                cx.notify();
+            }))
+            .child(tab_bar)
             .child(
                 div()
                     .flex_1()
-                    .p(px(12.0))
-                    .text_sm()
-                    .text_color(rgb(0x4ec9b0))
-                    .font_family("Monaco")
-                    .child("$ ▊"),
+                    .px(px(8.0))
+                    .py(px(4.0))
+                    .overflow_hidden()
+                    .child(term_content),
             )
     }
 }

@@ -70,6 +70,9 @@ impl Workspace {
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener(move |this, ev: &MouseDownEvent, window, cx| {
+                    // Clicking the editor unfocuses the terminal panel.
+                    this.focus_handle.focus(window);
+
                     let mouse_x: f32 = ev.position.x.into();
                     let mouse_y: f32 = ev.position.y.into();
                     let shift = ev.modifiers.shift;

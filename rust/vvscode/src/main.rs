@@ -1,4 +1,5 @@
 mod editor;
+mod terminal;
 mod workspace;
 
 use gpui::{

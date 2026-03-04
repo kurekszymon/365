@@ -9,6 +9,7 @@
 //! - [`render_editor`]  — editor area (text, gutter, cursor, scrollbars)
 //! - [`render_panels`]  — left explorer, right outline, bottom terminal
 //! - [`scrollbar`]      — shared scrollbar drag types
+//! - [`terminal`](crate::terminal) — PTY process, VTE parser, cell grid
 
 pub mod command_palette;
 pub mod file_tree;
@@ -21,6 +22,8 @@ pub mod scrollbar;
 use std::collections::HashSet;
 use std::path::Path;
 use std::sync::Arc;
+
+use crate::terminal::Terminal;
 
 use command_palette::CommandPaletteState;
 
@@ -89,6 +92,8 @@ pub struct Workspace {
     pub(crate) collapsed_dirs: HashSet<Arc<str>>,
     pub(crate) dirty: bool,
     pub(crate) command_palette: CommandPaletteState,
+    pub(crate) terminal: Option<Terminal>,
+    pub(crate) terminal_focus_handle: FocusHandle,
 }
 
 impl Workspace {
@@ -112,6 +117,40 @@ impl Workspace {
             collapsed_dirs: HashSet::new(),
             dirty: false,
             command_palette: CommandPaletteState::new(),
+            terminal: None,
+            terminal_focus_handle: cx.focus_handle(),
+        }
+    }
+
+    /// Spawn the terminal PTY if it hasn't been created yet.
+    /// Called lazily when the bottom panel is first opened.
+    pub(crate) fn ensure_terminal(&mut self, cx: &mut Context<Self>) {
+        if self.terminal.is_some() {
+            return;
+        }
+        let cwd = self.project_root.clone();
+
+        let result = Terminal::spawn(80, 24, Some(&cwd));
+        match result {
+            Ok((t, rx)) => {
+                self.terminal = Some(t);
+
+                // Await the channel receiver: the reader thread sends ()
+                // each time PTY output arrives. We wake the UI immediately
+                // — no polling, no wasted cycles, no latency.
+                cx.spawn(async move |this, cx| {
+                    while rx.recv().await.is_ok() {
+                        let ok = this.update(cx, |_workspace, cx| {
+                            cx.notify();
+                        });
+                        if ok.is_err() {
+                            break; // entity dropped — stop the loop
+                        }
+                    }
+                })
+                .detach();
+            }
+            Err(e) => eprintln!("Failed to spawn terminal: {}", e),
         }
     }
 
@@ -174,8 +213,8 @@ impl Workspace {
 
 impl Render for Workspace {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        if !self.focus_handle.is_focused(window) {
-            let _ = self.focus_handle.focus(window);
+        if !self.focus_handle.is_focused(window) && !self.terminal_focus_handle.is_focused(window) {
+            self.focus_handle.focus(window);
         }
 
         let mut main_content = div().flex().flex_1().w_full().overflow_hidden();
@@ -191,7 +230,7 @@ impl Render for Workspace {
         center = center.child(self.render_editor(window, cx));
 
         if self.bottom_panel_visible {
-            center = center.child(self.render_bottom_panel());
+            center = center.child(self.render_bottom_panel(cx));
         }
 
         main_content = main_content.child(center);
@@ -289,8 +328,14 @@ impl Render for Workspace {
                 }
                 cx.notify();
             }))
-            .on_action(cx.listener(|this, _: &ToggleBottomPanel, _window, cx| {
+            .on_action(cx.listener(|this, _: &ToggleBottomPanel, window, cx| {
                 this.bottom_panel_visible = !this.bottom_panel_visible;
+                if this.bottom_panel_visible {
+                    this.ensure_terminal(cx);
+                    this.terminal_focus_handle.focus(window);
+                } else {
+                    this.focus_handle.focus(window);
+                }
                 cx.notify();
             }))
             .on_action(cx.listener(|this, _: &ToggleRightPanel, _window, cx| {

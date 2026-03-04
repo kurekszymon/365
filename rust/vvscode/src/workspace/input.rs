@@ -2,6 +2,8 @@
 
 use gpui::{Context, KeyDownEvent, ScrollDelta, ScrollWheelEvent, Window};
 
+use crate::terminal::key_to_bytes;
+
 use super::{CHAR_WIDTH, LEFT_PANEL_W, LINE_HEIGHT, SCROLL_SENSITIVITY, Workspace};
 
 // ── Input handling ───────────────────────────────────────────────────────────
@@ -28,6 +30,26 @@ impl Workspace {
             let consumed =
                 self.handle_palette_key(key, keystroke.key_char.as_deref(), cmd, ctrl, window, cx);
             if consumed {
+                return;
+            }
+        }
+
+        // ── Terminal intercept ───────────────────────────────────────────
+        // When the terminal panel is focused, forward keys to the PTY
+        // instead of the editor. Cmd+` toggles the panel (handled by
+        // the action system), so we don't intercept that here.
+        if self.terminal_focus_handle.is_focused(window) && self.bottom_panel_visible {
+            // Let Cmd-key combos fall through to the action system
+            // (e.g. Cmd+`, Cmd+B, Cmd+P, Cmd+S, etc.)
+            if cmd {
+                // Fall through — don't consume, let actions handle it.
+            } else if let Some(bytes) =
+                key_to_bytes(key, keystroke.key_char.as_deref(), shift, ctrl, alt, false)
+            {
+                if let Some(ref mut term) = self.terminal {
+                    term.write_all(&bytes);
+                }
+                cx.notify();
                 return;
             }
         }
