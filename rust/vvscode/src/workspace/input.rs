@@ -158,7 +158,6 @@ impl Workspace {
         if self.left_panel_visible && pointer_x < LEFT_PANEL_W {
             return;
         }
-
         let total_lines = self.editor.len_lines();
         let visible_lines = self.compute_visible_lines(window);
         let (delta_x, delta_y) = Self::scroll_delta(&ev.delta);

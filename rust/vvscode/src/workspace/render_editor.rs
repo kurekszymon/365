@@ -5,8 +5,8 @@ use gpui::{
 };
 
 use super::{
-    BOTTOM_PANEL_H, CHAR_WIDTH, GUTTER_W, LEFT_PANEL_W, LINE_HEIGHT, RIGHT_PANEL_W,
-    SCROLLBAR_MIN_THUMB, SCROLLBAR_SIZE, STATUS_BAR_H, TEXT_PAD_LEFT, TITLE_BAR_H, Workspace,
+    CHAR_WIDTH, GUTTER_W, LEFT_PANEL_W, LINE_HEIGHT, RIGHT_PANEL_W, SCROLLBAR_MIN_THUMB,
+    SCROLLBAR_SIZE, STATUS_BAR_H, TEXT_PAD_LEFT, TITLE_BAR_H, Workspace,
     scrollbar::{ScrollbarDragKind, ScrollbarDragState},
 };
 
@@ -34,7 +34,7 @@ impl Workspace {
         let window_w: f32 = window.viewport_size().width.into();
         let chrome_v = TITLE_BAR_H + STATUS_BAR_H;
         let bottom = if self.bottom_panel_visible {
-            BOTTOM_PANEL_H
+            self.bottom_panel_h
         } else {
             0.0
         };

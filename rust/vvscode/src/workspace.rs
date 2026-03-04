@@ -42,9 +42,12 @@ pub(crate) const SCROLL_SENSITIVITY: f32 = 1.0;
 
 pub(crate) const TITLE_BAR_H: f32 = 36.0;
 pub(crate) const STATUS_BAR_H: f32 = 24.0;
-pub(crate) const BOTTOM_PANEL_H: f32 = 180.0;
+pub(crate) const BOTTOM_PANEL_DEFAULT_H: f32 = 180.0;
+pub(crate) const BOTTOM_PANEL_MIN_H: f32 = 80.0;
+pub(crate) const BOTTOM_PANEL_MAX_H: f32 = 600.0;
 pub(crate) const BOTTOM_TAB_BAR_H: f32 = 30.0; // tab bar: py(6)*2 + text_xs + border
 pub(crate) const BOTTOM_CONTENT_PAD: f32 = 8.0; // content area: py(4)*2
+pub(crate) const DRAG_HANDLE_H: f32 = 4.0; // resize drag handle at top of bottom panel
 pub(crate) const LINE_HEIGHT: f32 = 22.0; // Monaco text_sm effective line height
 pub(crate) const LEFT_PANEL_W: f32 = 220.0;
 pub(crate) const RIGHT_PANEL_W: f32 = 200.0;
@@ -96,6 +99,17 @@ pub struct Workspace {
     pub(crate) command_palette: CommandPaletteState,
     pub(crate) terminal: Option<Terminal>,
     pub(crate) terminal_focus_handle: FocusHandle,
+    pub(crate) bottom_panel_h: f32,
+    pub(crate) bottom_panel_drag: Option<BottomPanelDrag>,
+}
+
+/// State tracked during a bottom-panel resize drag.
+#[derive(Clone, Copy)]
+pub(crate) struct BottomPanelDrag {
+    /// Mouse Y at drag start.
+    pub start_mouse_y: f32,
+    /// Panel height at drag start.
+    pub start_h: f32,
 }
 
 impl Workspace {
@@ -121,6 +135,8 @@ impl Workspace {
             command_palette: CommandPaletteState::new(),
             terminal: None,
             terminal_focus_handle: cx.focus_handle(),
+            bottom_panel_h: BOTTOM_PANEL_DEFAULT_H,
+            bottom_panel_drag: None,
         }
     }
 
@@ -163,7 +179,7 @@ impl Workspace {
         let window_h: f32 = window.viewport_size().height.into();
         let chrome = TITLE_BAR_H + STATUS_BAR_H;
         let bottom = if self.bottom_panel_visible {
-            BOTTOM_PANEL_H
+            self.bottom_panel_h
         } else {
             0.0
         };
@@ -175,7 +191,7 @@ impl Workspace {
         let window_h: f32 = window.viewport_size().height.into();
         let chrome = TITLE_BAR_H + STATUS_BAR_H;
         let bottom = if self.bottom_panel_visible {
-            BOTTOM_PANEL_H
+            self.bottom_panel_h
         } else {
             0.0
         };
@@ -230,7 +246,7 @@ impl Workspace {
         let content_w = (window_w - left - right - 16.0).max(0.0); // px(8) * 2 padding
         let cols = (content_w / CHAR_WIDTH).floor().max(1.0) as usize;
 
-        let content_h = (BOTTOM_PANEL_H - BOTTOM_TAB_BAR_H - BOTTOM_CONTENT_PAD).max(0.0);
+        let content_h = (self.bottom_panel_h - BOTTOM_TAB_BAR_H - BOTTOM_CONTENT_PAD).max(0.0);
         let rows = (content_h / LINE_HEIGHT).floor().max(1.0) as usize;
 
         (cols, rows)
@@ -272,7 +288,7 @@ impl Render for Workspace {
         center = center.child(self.render_editor(window, cx));
 
         if self.bottom_panel_visible {
-            center = center.child(self.render_bottom_panel(window, cx));
+            center = center.child(self.render_bottom_panel(cx));
         }
 
         main_content = main_content.child(center);
@@ -286,6 +302,24 @@ impl Render for Workspace {
             .key_context("Workspace")
             .track_focus(&self.focus_handle)
             .on_mouse_move(cx.listener(|this, ev: &MouseMoveEvent, window, cx| {
+                // ── Bottom panel resize drag ─────────────────────────────
+                if let Some(drag) = this.bottom_panel_drag {
+                    if ev.pressed_button != Some(MouseButton::Left) {
+                        this.bottom_panel_drag = None;
+                        return;
+                    }
+                    let current_y: f32 = ev.position.y.into();
+                    let delta = drag.start_mouse_y - current_y; // dragging up = bigger
+                    let new_h =
+                        (drag.start_h + delta).clamp(BOTTOM_PANEL_MIN_H, BOTTOM_PANEL_MAX_H);
+                    if (this.bottom_panel_h - new_h).abs() > 0.5 {
+                        this.bottom_panel_h = new_h;
+                        this.sync_terminal_size(window);
+                        cx.notify();
+                    }
+                    return;
+                }
+
                 // ── Scrollbar drag ───────────────────────────────────────
                 if let Some(drag) = this.scrollbar_drag {
                     // Safety: if button was released outside the window, clear drag
@@ -361,13 +395,15 @@ impl Render for Workspace {
                 cx.listener(|this, _ev: &MouseUpEvent, _window, _cx| {
                     this.scrollbar_drag = None;
                     this.mouse_drag_selecting = false;
+                    this.bottom_panel_drag = None;
                 }),
             )
-            .on_action(cx.listener(|this, _: &ToggleLeftPanel, _window, cx| {
+            .on_action(cx.listener(|this, _: &ToggleLeftPanel, window, cx| {
                 this.left_panel_visible = !this.left_panel_visible;
                 if this.left_panel_visible {
                     this.refresh_file_tree();
                 }
+                this.sync_terminal_size(window);
                 cx.notify();
             }))
             .on_action(cx.listener(|this, _: &ToggleBottomPanel, window, cx| {
@@ -380,8 +416,9 @@ impl Render for Workspace {
                 }
                 cx.notify();
             }))
-            .on_action(cx.listener(|this, _: &ToggleRightPanel, _window, cx| {
+            .on_action(cx.listener(|this, _: &ToggleRightPanel, window, cx| {
                 this.right_panel_visible = !this.right_panel_visible;
+                this.sync_terminal_size(window);
                 cx.notify();
             }))
             .on_action(cx.listener(|this, _: &SelectAll, window, cx| {

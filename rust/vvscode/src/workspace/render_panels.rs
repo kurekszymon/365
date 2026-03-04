@@ -8,8 +8,8 @@ use gpui::{
 };
 
 use super::{
-    BOTTOM_PANEL_H, LEFT_PANEL_W, LINE_HEIGHT, PANEL_HEADER_H, RIGHT_PANEL_W, SCROLLBAR_MIN_THUMB,
-    SCROLLBAR_SIZE, STATUS_BAR_H, TITLE_BAR_H, Workspace,
+    BottomPanelDrag, DRAG_HANDLE_H, LEFT_PANEL_W, LINE_HEIGHT, PANEL_HEADER_H, RIGHT_PANEL_W,
+    SCROLLBAR_MIN_THUMB, SCROLLBAR_SIZE, STATUS_BAR_H, TITLE_BAR_H, Workspace,
     scrollbar::{ScrollbarDragKind, ScrollbarDragState},
 };
 
@@ -124,7 +124,7 @@ impl Workspace {
             let window_h: f32 = window.viewport_size().height.into();
             let chrome = TITLE_BAR_H + STATUS_BAR_H;
             let bottom = if self.bottom_panel_visible {
-                BOTTOM_PANEL_H
+                self.bottom_panel_h
             } else {
                 0.0
             };
@@ -274,14 +274,7 @@ impl Workspace {
             )
     }
 
-    pub(crate) fn render_bottom_panel(
-        &mut self,
-        window: &Window,
-        cx: &mut Context<Self>,
-    ) -> impl IntoElement {
-        // Sync terminal grid dimensions to match the actual panel size.
-        self.sync_terminal_size(window);
-
+    pub(crate) fn render_bottom_panel(&self, cx: &mut Context<Self>) -> impl IntoElement {
         // ── Tab bar ──────────────────────────────────────────────────────
         let tab_bar = div()
             .flex()
@@ -397,14 +390,33 @@ impl Workspace {
             div()
         };
 
+        // ── Drag handle for resizing ─────────────────────────────────────
+        let drag_handle = div()
+            .id("bottom-panel-drag-handle")
+            .w_full()
+            .h(px(DRAG_HANDLE_H))
+            .cursor_row_resize()
+            .hover(|s: gpui::StyleRefinement| s.bg(rgb(0x007acc)))
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(|this, ev: &MouseDownEvent, _window, _cx| {
+                    let mouse_y: f32 = ev.position.y.into();
+                    this.bottom_panel_drag = Some(BottomPanelDrag {
+                        start_mouse_y: mouse_y,
+                        start_h: this.bottom_panel_h,
+                    });
+                }),
+            );
+
         // ── Click to focus terminal ──────────────────────────────────────
+        let panel_h = self.bottom_panel_h;
         div()
             .id("bottom-panel")
             .track_focus(&self.terminal_focus_handle)
             .flex()
             .flex_col()
             .w_full()
-            .h(px(BOTTOM_PANEL_H))
+            .h(px(panel_h))
             .bg(rgb(0x1e1e1e))
             .border_t_1()
             .border_color(rgb(0x181a1f))
@@ -413,6 +425,7 @@ impl Workspace {
                 cx.notify();
             }))
             .on_scroll_wheel(cx.listener(Self::handle_terminal_scroll))
+            .child(drag_handle)
             .child(tab_bar)
             .child(
                 div()

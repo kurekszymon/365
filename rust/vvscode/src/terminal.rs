@@ -193,9 +193,18 @@ impl TerminalGrid {
         for line in &mut self.lines {
             line.resize(cols, Cell::default());
         }
-        // Add or remove rows from the bottom.
+        // Add rows: pull from scrollback first, then add blank lines.
         while self.lines.len() < rows {
-            self.lines.push(vec![Cell::default(); cols]);
+            if let Some(restored) = self.scrollback.pop() {
+                // Restore a line from scrollback to the top of the screen.
+                let mut restored = restored;
+                restored.resize(cols, Cell::default());
+                self.lines.insert(0, restored);
+                // Cursor shifts down since we inserted above it.
+                self.cursor_row = (self.cursor_row + 1).min(rows.saturating_sub(1));
+            } else {
+                self.lines.push(vec![Cell::default(); cols]);
+            }
         }
         while self.lines.len() > rows {
             // Push excess top lines into scrollback.

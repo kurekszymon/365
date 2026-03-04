@@ -186,16 +186,22 @@ Translates GPUI key names into the byte sequences a terminal expects:
 
 #### `workspace.rs` — new fields and terminal lifecycle
 
-Two new fields on `Workspace`:
+New fields on `Workspace`:
 
 ```rust
 pub(crate) terminal: Option<Terminal>,
 pub(crate) terminal_focus_handle: FocusHandle,
+pub(crate) bottom_panel_h: f32,
+pub(crate) bottom_panel_drag: Option<BottomPanelDrag>,
 ```
 
 **`terminal_focus_handle`** is a GPUI `FocusHandle` attached to the bottom panel via `.track_focus()`. When it holds focus, keyboard input routes to the PTY instead of the editor. This replaces the earlier `terminal_focused: bool` approach — using GPUI's native focus system is cleaner and avoids manual bookkeeping.
 
 The workspace's own `focus_handle` and `terminal_focus_handle` are mutually exclusive: clicking the editor focuses the workspace handle, clicking the terminal panel (or toggling it open) focuses the terminal handle. The render loop only force-focuses the workspace handle if _neither_ handle is focused, so the terminal can't have focus stolen from it.
+
+**`bottom_panel_h`** stores the current height of the bottom panel in pixels. It defaults to `BOTTOM_PANEL_DEFAULT_H` (180px) and can be changed by dragging the resize handle. Clamped between `BOTTOM_PANEL_MIN_H` (80px) and `BOTTOM_PANEL_MAX_H` (600px).
+
+**`bottom_panel_drag`** tracks an active resize drag (`BottomPanelDrag { start_mouse_y, start_h }`). Set on mouse-down on the drag handle, read during `on_mouse_move` on the root div, cleared on mouse-up. The same pattern used for scrollbar drags.
 
 **`ensure_terminal(window, cx)`** is called lazily the first time the bottom panel is opened. It computes the terminal dimensions from the current window size via `compute_terminal_size()` and spawns the PTY at the correct size — no more hardcoded 80×24.
 
@@ -278,7 +284,7 @@ When the user types while scrolled up in the scrollback, `scroll_offset` is rese
 
 #### `workspace/render_panels.rs` — live grid rendering
 
-`render_bottom_panel` now takes `&mut Context<Self>` (needed for the click handler) and renders the actual terminal grid:
+`render_bottom_panel` takes `&self` and `&mut Context<Self>`. It renders the terminal grid:
 
 1. Lock the grid mutex
 2. Iterate rows 0..rows, calling `grid.visible_line(r)` to get the correct line accounting for scrollback offset
@@ -291,6 +297,16 @@ When the user types while scrolled up in the scrollback, `scroll_offset` is rese
 The span-grouping optimization prevents creating one `div()` per character. A typical 80-column line with two color changes creates ~3 spans instead of 80 individual elements.
 
 **Scrollback viewing:** The panel has an `on_scroll_wheel` handler (`handle_terminal_scroll`) that adjusts `grid.scroll_offset`. Scrolling up increases the offset (looking at older scrollback), scrolling down decreases it (toward live). The offset is clamped to `0..=scrollback.len()`. When the user types a key, the offset snaps back to 0 (live).
+
+**Resizable panel:** A 4px drag handle sits at the top of the bottom panel. It shows `cursor_row_resize` on hover and highlights with the accent color (`#007acc`). Dragging follows the standard pattern: `on_mouse_down` captures `BottomPanelDrag { start_mouse_y, start_h }`, the root div's `on_mouse_move` computes `delta = start_mouse_y - current_y` (dragging up = bigger), and `on_mouse_up` clears the drag state. The height is clamped to 80–600px.
+
+**Terminal resize is event-driven, not per-frame.** `sync_terminal_size()` is called only when something actually changes the available dimensions:
+
+- During a panel drag (in `on_mouse_move`, only when height delta > 0.5px)
+- When toggling the left or right panels (changes available width)
+- When the window itself resizes (detected by comparing `last_window_size` in `render`)
+
+This avoids locking the terminal grid mutex on every frame. The resize itself (`TerminalGrid::resize()`) preserves content correctly: when shrinking, excess top lines are pushed into scrollback and the cursor row adjusts to stay in place; when growing, lines are pulled back from scrollback (instead of adding blank lines) so previously visible content reappears.
 
 #### `workspace/render_editor.rs` — unfocus terminal on editor click
 
@@ -326,21 +342,24 @@ Focus is managed via two GPUI `FocusHandle`s — the workspace's main handle (fo
 - Arrow keys for command history
 - Bold text
 - Scrollback viewing (scroll wheel to browse history, snaps back on keystroke)
-- Dynamic terminal resize (grid dimensions computed from window size, synced every render frame)
+- Dynamic terminal resize (grid dimensions computed from window size, synced on dimension changes)
+- Resizable bottom panel (drag handle at top edge, 80–600px range)
 
 ### What doesn't work yet (future improvements)
 
-| Feature                             | Why it's missing                                                            | Difficulty |
-| ----------------------------------- | --------------------------------------------------------------------------- | ---------- |
-| PTY resize ioctl                    | Grid resizes correctly but the PTY itself doesn't get a SIGWINCH            | Medium     |
-| Mouse events in terminal            | Programs like `htop` want mouse input; we don't forward mouse events to PTY | Medium     |
-| Text selection / copy from terminal | No mouse selection in terminal area                                         | Medium     |
-| Scrollbar for terminal scrollback   | Scroll wheel works, but no visual scrollbar thumb                           | Low–Medium |
-| Multiple terminal tabs              | Only one terminal instance                                                  | Low–Medium |
-| Italic, underline, strikethrough    | `SgrState` only tracks bold; need more attributes                           | Low        |
-| Hyperlink detection (URLs)          | OSC 8 parsing                                                               | Low        |
-| Terminal bell                       | Currently ignored                                                           | Low        |
-| Window title from OSC               | Shell sets the window title via OSC 0/2; we ignore it                       | Low        |
+| Feature                             | Why it's missing                                                                                                         | Difficulty |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------- |
+| PTY resize ioctl                    | Grid resizes correctly but the PTY itself doesn't get a SIGWINCH                                                         | Medium     |
+| Mouse events in terminal            | Programs like `htop` want mouse input; we don't forward mouse events to PTY                                              | Medium     |
+| Text selection / copy from terminal | No mouse selection in terminal area; requires tracking drag start/end cell, highlighting selected cells, copy on release | Medium     |
+| Open file from terminal             | Detect file paths under cursor (or in selection); `Cmd+Click` or a keybinding opens the file in the editor               | Medium     |
+| Scrollbar for terminal scrollback   | Scroll wheel works, but no visual scrollbar thumb                                                                        | Low–Medium |
+| Multiple terminal tabs              | Only one terminal instance                                                                                               | Low–Medium |
+| Italic, underline, strikethrough    | `SgrState` only tracks bold; need more attributes                                                                        | Low        |
+| Hyperlink detection (URLs)          | OSC 8 parsing                                                                                                            | Low        |
+| Terminal bell                       | Currently ignored                                                                                                        | Low        |
+| Window title from OSC               | Shell sets the window title via OSC 0/2; we ignore it                                                                    | Low        |
+| Persist panel height                | `bottom_panel_h` resets to default on restart; could save to preferences                                                 | Low        |
 
 ### Notes for catching up
 
