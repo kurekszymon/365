@@ -141,8 +141,6 @@ pub struct TerminalGrid {
     /// Saved cursor position (for `\e[s` / `\e[u` and DECSC/DECRC).
     saved_cursor: (usize, usize),
     /// Scrollback viewport offset (0 = bottom / live, >0 = scrolled up).
-    /// Not yet wired to UI scroll — reserved for future scrollback viewing.
-    #[allow(dead_code)]
     pub scroll_offset: usize,
     /// Whether new output has arrived since last render.
     pub dirty: bool,
@@ -187,8 +185,6 @@ impl TerminalGrid {
     }
 
     /// Resize the grid. Tries to preserve content.
-    /// Not yet called from the UI — reserved for future panel-resize support.
-    #[allow(dead_code)]
     pub fn resize(&mut self, cols: usize, rows: usize) {
         if cols == self.cols && rows == self.rows {
             return;
@@ -547,6 +543,44 @@ impl TerminalGrid {
             self.cursor_col = self.alt_cursor.1.min(self.cols.saturating_sub(1));
             self.dirty = true;
         }
+    }
+
+    // ── Scrollback viewing helpers ───────────────────────────────────────
+
+    /// Maximum scroll offset (number of scrollback lines available).
+    pub fn max_scroll_offset(&self) -> usize {
+        self.scrollback.len()
+    }
+
+    /// Return the line to display at visible row `r` (0 = top of viewport).
+    ///
+    /// When `scroll_offset == 0` (live view), row `r` maps to `self.lines[r]`.
+    /// When scrolled up, the viewport shifts into the scrollback buffer:
+    ///
+    /// ```text
+    ///   scrollback:  [ sb0, sb1, sb2, sb3 ]   (len = 4)
+    ///   lines:       [ L0,  L1,  L2 ]          (rows = 3)
+    ///   combined:    [ sb0, sb1, sb2, sb3, L0, L1, L2 ]
+    ///
+    ///   scroll_offset=0  →  viewport = [L0, L1, L2]        (bottom)
+    ///   scroll_offset=2  →  viewport = [sb2, sb3, L0]
+    ///   scroll_offset=4  →  viewport = [sb0, sb1, sb2]     (top)
+    /// ```
+    pub fn visible_line(&self, r: usize) -> Option<&Vec<Cell>> {
+        let sb_len = self.scrollback.len();
+        // Index into the combined (scrollback ++ lines) buffer.
+        let combined_idx = sb_len.saturating_sub(self.scroll_offset) + r;
+        if combined_idx < sb_len {
+            Some(&self.scrollback[combined_idx])
+        } else {
+            let line_idx = combined_idx - sb_len;
+            self.lines.get(line_idx)
+        }
+    }
+
+    /// Whether the viewport is at the live bottom (not scrolled up).
+    pub fn is_at_bottom(&self) -> bool {
+        self.scroll_offset == 0
     }
 }
 
@@ -958,8 +992,6 @@ impl Terminal {
     }
 
     /// Send a resize notification to the PTY and grid.
-    /// Not yet called from the UI — reserved for future panel-resize support.
-    #[allow(dead_code)]
     pub fn resize(&mut self, cols: u16, rows: u16) {
         // Update the grid dimensions.
         if let Ok(mut g) = self.grid.lock() {

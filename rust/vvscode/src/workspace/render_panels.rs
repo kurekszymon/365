@@ -3,8 +3,8 @@
 use std::sync::Arc;
 
 use gpui::{
-    ClickEvent, Context, FontWeight, MouseButton, MouseDownEvent, SharedString, Window, div,
-    prelude::*, px, rgb, rgba,
+    ClickEvent, Context, FontWeight, MouseButton, MouseDownEvent, ScrollDelta, ScrollWheelEvent,
+    SharedString, Window, div, prelude::*, px, rgb, rgba,
 };
 
 use super::{
@@ -274,7 +274,14 @@ impl Workspace {
             )
     }
 
-    pub(crate) fn render_bottom_panel(&self, cx: &mut Context<Self>) -> impl IntoElement {
+    pub(crate) fn render_bottom_panel(
+        &mut self,
+        window: &Window,
+        cx: &mut Context<Self>,
+    ) -> impl IntoElement {
+        // Sync terminal grid dimensions to match the actual panel size.
+        self.sync_terminal_size(window);
+
         // ── Tab bar ──────────────────────────────────────────────────────
         let tab_bar = div()
             .flex()
@@ -304,17 +311,21 @@ impl Workspace {
             let cursor_row = grid.cursor_row;
             let cursor_col = grid.cursor_col;
             let cursor_visible = grid.cursor_visible;
+            let at_bottom = grid.is_at_bottom();
 
             let mut lines_container = div().flex().flex_col().overflow_hidden();
 
             for r in 0..rows {
-                if r >= grid.lines.len() {
+                let Some(line) = grid.visible_line(r) else {
                     break;
-                }
-                let line = &grid.lines[r];
+                };
 
                 // Build the row as a sequence of styled spans.
                 // We group consecutive cells with the same style into one span.
+                //
+                // Only show the cursor when viewport is at the live bottom.
+                let show_cursor = cursor_visible && at_bottom;
+
                 let mut row_div = div()
                     .flex()
                     .h(px(LINE_HEIGHT))
@@ -329,9 +340,9 @@ impl Workspace {
                     // Extend span while style matches and no cursor boundary.
                     while span_end < cols.min(line.len()) {
                         let is_cursor_at_start =
-                            cursor_visible && r == cursor_row && span_start == cursor_col;
+                            show_cursor && r == cursor_row && span_start == cursor_col;
                         let is_cursor_at_end =
-                            cursor_visible && r == cursor_row && span_end == cursor_col;
+                            show_cursor && r == cursor_row && span_end == cursor_col;
                         if is_cursor_at_start || is_cursor_at_end {
                             break;
                         }
@@ -345,8 +356,7 @@ impl Workspace {
                     // Collect characters for this span.
                     let text: String = line[span_start..span_end].iter().map(|c| c.ch).collect();
 
-                    let is_cursor_span =
-                        cursor_visible && r == cursor_row && span_start == cursor_col;
+                    let is_cursor_span = show_cursor && r == cursor_row && span_start == cursor_col;
 
                     let mut span = div()
                         .text_color(rgb(ref_cell.fg))
@@ -369,7 +379,7 @@ impl Workspace {
                 }
 
                 // If cursor is past all content on this row, add a cursor block.
-                if cursor_visible && r == cursor_row && cursor_col >= cols.min(line.len()) {
+                if show_cursor && r == cursor_row && cursor_col >= cols.min(line.len()) {
                     row_div =
                         row_div.child(div().bg(rgb(0xcccccc)).text_color(rgb(0x1e1e1e)).child(" "));
                 }
@@ -402,6 +412,7 @@ impl Workspace {
                 this.terminal_focus_handle.focus(window);
                 cx.notify();
             }))
+            .on_scroll_wheel(cx.listener(Self::handle_terminal_scroll))
             .child(tab_bar)
             .child(
                 div()
@@ -411,5 +422,41 @@ impl Workspace {
                     .overflow_hidden()
                     .child(term_content),
             )
+    }
+
+    /// Scroll-wheel handler for the terminal panel.
+    /// Scrolls through the scrollback buffer; snaps back to live on any
+    /// new PTY output (handled by the rendering path checking `is_at_bottom`).
+    pub(crate) fn handle_terminal_scroll(
+        &mut self,
+        ev: &ScrollWheelEvent,
+        _window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let Some(ref term) = self.terminal else {
+            return;
+        };
+
+        let delta_y = match &ev.delta {
+            ScrollDelta::Pixels(point) => {
+                let dy: f32 = point.y.into();
+                -dy / LINE_HEIGHT
+            }
+            ScrollDelta::Lines(point) => -point.y,
+        };
+
+        if delta_y.abs() < 0.01 {
+            return;
+        }
+
+        let mut grid = term.lock_grid();
+        let max = grid.max_scroll_offset();
+        let new = (grid.scroll_offset as f32 - delta_y)
+            .round()
+            .clamp(0.0, max as f32);
+        grid.scroll_offset = new as usize;
+        drop(grid);
+
+        cx.notify();
     }
 }

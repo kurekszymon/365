@@ -190,12 +190,14 @@ Two new fields on `Workspace`:
 
 ```rust
 pub(crate) terminal: Option<Terminal>,
-pub(crate) terminal_focused: bool,
+pub(crate) terminal_focus_handle: FocusHandle,
 ```
 
-**`terminal_focused`** tracks whether keyboard input goes to the terminal or the editor. This is the focus routing mechanism — there's no GPUI focus handle for the terminal, just this boolean.
+**`terminal_focus_handle`** is a GPUI `FocusHandle` attached to the bottom panel via `.track_focus()`. When it holds focus, keyboard input routes to the PTY instead of the editor. This replaces the earlier `terminal_focused: bool` approach — using GPUI's native focus system is cleaner and avoids manual bookkeeping.
 
-**`ensure_terminal(cx)`** is called lazily the first time the bottom panel is opened. It spawns the PTY and starts a polling loop.
+The workspace's own `focus_handle` and `terminal_focus_handle` are mutually exclusive: clicking the editor focuses the workspace handle, clicking the terminal panel (or toggling it open) focuses the terminal handle. The render loop only force-focuses the workspace handle if _neither_ handle is focused, so the terminal can't have focus stolen from it.
+
+**`ensure_terminal(window, cx)`** is called lazily the first time the bottom panel is opened. It computes the terminal dimensions from the current window size via `compute_terminal_size()` and spawns the PTY at the correct size — no more hardcoded 80×24.
 
 #### The threading / notification problem
 
@@ -255,11 +257,13 @@ let _ = tx.try_send(());  // non-blocking, drops if full
 Added a new intercept block after the command palette intercept:
 
 ```rust
-if self.terminal_focused && self.bottom_panel_visible {
+if self.terminal_focus_handle.is_focused(window) && self.bottom_panel_visible {
     if cmd {
         // Let Cmd combos fall through to the action system
     } else if let Some(bytes) = key_to_bytes(key, key_char, shift, ctrl, alt, false) {
         if let Some(ref mut term) = self.terminal {
+            // Snap back to live view when the user types.
+            term.lock_grid().scroll_offset = 0;
             term.write_all(&bytes);
         }
         cx.notify();
@@ -268,6 +272,8 @@ if self.terminal_focused && self.bottom_panel_visible {
 }
 ```
 
+When the user types while scrolled up in the scrollback, `scroll_offset` is reset to 0 so the viewport snaps back to the live bottom before the keystroke is sent to the PTY.
+
 **Important:** `Cmd+key` combos are NOT forwarded to the terminal. They fall through to the action system so `Cmd+B`, `Cmd+P`, `Cmd+S`, `Cmd+`\``etc. still work even when the terminal is focused. Only`Ctrl+key`goes to the terminal (which is correct —`Ctrl+C` should send SIGINT to the shell, not trigger a copy).
 
 #### `workspace/render_panels.rs` — live grid rendering
@@ -275,32 +281,37 @@ if self.terminal_focused && self.bottom_panel_visible {
 `render_bottom_panel` now takes `&mut Context<Self>` (needed for the click handler) and renders the actual terminal grid:
 
 1. Lock the grid mutex
-2. Iterate rows 0..rows
+2. Iterate rows 0..rows, calling `grid.visible_line(r)` to get the correct line accounting for scrollback offset
 3. For each row, group consecutive cells with the same fg/bg/bold into spans
 4. Break spans at cursor boundaries so the cursor cell gets its own span
-5. Render cursor as inverted colors (swap fg/bg)
-6. Call `term.mark_rendered()` to clear the dirty flag
+5. Only show the cursor when `grid.is_at_bottom()` (scrolled-up views hide the cursor)
+6. Render cursor as inverted colors (swap fg/bg)
+7. Call `term.mark_rendered()` to clear the dirty flag
 
 The span-grouping optimization prevents creating one `div()` per character. A typical 80-column line with two color changes creates ~3 spans instead of 80 individual elements.
+
+**Scrollback viewing:** The panel has an `on_scroll_wheel` handler (`handle_terminal_scroll`) that adjusts `grid.scroll_offset`. Scrolling up increases the offset (looking at older scrollback), scrolling down decreases it (toward live). The offset is clamped to `0..=scrollback.len()`. When the user types a key, the offset snaps back to 0 (live).
 
 #### `workspace/render_editor.rs` — unfocus terminal on editor click
 
 A single line added to the editor's `on_mouse_down` handler:
 
 ```rust
-this.terminal_focused = false;
+this.focus_handle.focus(window);
 ```
 
-Clicking the editor area returns keyboard focus to the editor.
+Clicking the editor area moves GPUI focus back to the workspace handle, which takes it away from the terminal.
 
 ### Focus routing summary
 
-| User action             | `terminal_focused` becomes | Keys go to |
+| User action             | Focus goes to              | Keys go to |
 | ----------------------- | -------------------------- | ---------- |
-| `Cmd+`\`` (open panel)  | `true`                     | Terminal   |
-| Click terminal area     | `true`                     | Terminal   |
-| Click editor area       | `false`                    | Editor     |
-| `Cmd+`\`` (close panel) | `false`                    | Editor     |
+| `Cmd+`\`` (open panel)  | `terminal_focus_handle`    | Terminal   |
+| Click terminal area     | `terminal_focus_handle`    | Terminal   |
+| Click editor area       | `focus_handle` (workspace) | Editor     |
+| `Cmd+`\`` (close panel) | `focus_handle` (workspace) | Editor     |
+
+Focus is managed via two GPUI `FocusHandle`s — the workspace's main handle (for the editor) and `terminal_focus_handle` (attached to the bottom panel via `.track_focus()`). The render loop's force-focus guard only activates when _neither_ handle is focused.
 
 ### What works
 
@@ -314,20 +325,22 @@ Clicking the editor area returns keyboard focus to the editor.
 - Tab completion (the shell handles it; we just shuttle bytes)
 - Arrow keys for command history
 - Bold text
+- Scrollback viewing (scroll wheel to browse history, snaps back on keystroke)
+- Dynamic terminal resize (grid dimensions computed from window size, synced every render frame)
 
 ### What doesn't work yet (future improvements)
 
-| Feature                             | Why it's missing                                                                 | Difficulty |
-| ----------------------------------- | -------------------------------------------------------------------------------- | ---------- |
-| Terminal resize on panel resize     | Need to send PTY resize ioctl when panel dimensions change                       | Medium     |
-| Mouse events in terminal            | Programs like `htop` want mouse input; we don't forward mouse events to PTY      | Medium     |
-| Scrollback viewing                  | `scroll_offset` exists but no scroll-wheel handling or scrollbar in the terminal | Medium     |
-| Text selection / copy from terminal | No mouse selection in terminal area                                              | Medium     |
-| Multiple terminal tabs              | Only one terminal instance                                                       | Low–Medium |
-| Italic, underline, strikethrough    | `SgrState` only tracks bold; need more attributes                                | Low        |
-| Hyperlink detection (URLs)          | OSC 8 parsing                                                                    | Low        |
-| Terminal bell                       | Currently ignored                                                                | Low        |
-| Window title from OSC               | Shell sets the window title via OSC 0/2; we ignore it                            | Low        |
+| Feature                             | Why it's missing                                                            | Difficulty |
+| ----------------------------------- | --------------------------------------------------------------------------- | ---------- |
+| PTY resize ioctl                    | Grid resizes correctly but the PTY itself doesn't get a SIGWINCH            | Medium     |
+| Mouse events in terminal            | Programs like `htop` want mouse input; we don't forward mouse events to PTY | Medium     |
+| Text selection / copy from terminal | No mouse selection in terminal area                                         | Medium     |
+| Scrollbar for terminal scrollback   | Scroll wheel works, but no visual scrollbar thumb                           | Low–Medium |
+| Multiple terminal tabs              | Only one terminal instance                                                  | Low–Medium |
+| Italic, underline, strikethrough    | `SgrState` only tracks bold; need more attributes                           | Low        |
+| Hyperlink detection (URLs)          | OSC 8 parsing                                                               | Low        |
+| Terminal bell                       | Currently ignored                                                           | Low        |
+| Window title from OSC               | Shell sets the window title via OSC 0/2; we ignore it                       | Low        |
 
 ### Notes for catching up
 
@@ -350,15 +363,3 @@ Clicking the editor area returns keyboard focus to the editor.
 - `key_to_bytes()` — where keystrokes become bytes to send to the PTY
 - `render_bottom_panel()` — where cells become GPUI elements
 - `handle_key_down()` — where the terminal/editor focus split happens
-
-### `#[allow(dead_code)]` — what it means and why it's targeted
-
-Three items have `#[allow(dead_code)]`:
-
-| Item                          | Why it exists                                  | Why it's not called yet                            |
-| ----------------------------- | ---------------------------------------------- | -------------------------------------------------- |
-| `TerminalGrid::scroll_offset` | Scrollback viewport offset for viewing history | No scroll-wheel handling in the terminal panel yet |
-| `TerminalGrid::resize()`      | Reflow grid when panel dimensions change       | Panel resize detection not wired up yet            |
-| `Terminal::resize()`          | Send PTY resize ioctl + grid resize            | Same — depends on panel resize detection           |
-
-Each one has a doc-comment explaining what it's for. The blanket `#![allow(dead_code)]` that was on the module initially was removed — it hid legitimate unused code that should have been cleaned up and made it impossible to catch actual dead code during future refactors.

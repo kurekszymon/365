@@ -43,6 +43,8 @@ pub(crate) const SCROLL_SENSITIVITY: f32 = 1.0;
 pub(crate) const TITLE_BAR_H: f32 = 36.0;
 pub(crate) const STATUS_BAR_H: f32 = 24.0;
 pub(crate) const BOTTOM_PANEL_H: f32 = 180.0;
+pub(crate) const BOTTOM_TAB_BAR_H: f32 = 30.0; // tab bar: py(6)*2 + text_xs + border
+pub(crate) const BOTTOM_CONTENT_PAD: f32 = 8.0; // content area: py(4)*2
 pub(crate) const LINE_HEIGHT: f32 = 22.0; // Monaco text_sm effective line height
 pub(crate) const LEFT_PANEL_W: f32 = 220.0;
 pub(crate) const RIGHT_PANEL_W: f32 = 200.0;
@@ -124,13 +126,14 @@ impl Workspace {
 
     /// Spawn the terminal PTY if it hasn't been created yet.
     /// Called lazily when the bottom panel is first opened.
-    pub(crate) fn ensure_terminal(&mut self, cx: &mut Context<Self>) {
+    pub(crate) fn ensure_terminal(&mut self, window: &Window, cx: &mut Context<Self>) {
         if self.terminal.is_some() {
             return;
         }
         let cwd = self.project_root.clone();
+        let (cols, rows) = self.compute_terminal_size(window);
 
-        let result = Terminal::spawn(80, 24, Some(&cwd));
+        let result = Terminal::spawn(cols as u16, rows as u16, Some(&cwd));
         match result {
             Ok((t, rx)) => {
                 self.terminal = Some(t);
@@ -207,6 +210,45 @@ impl Workspace {
         let available = (window_w - left - right - GUTTER_W - TEXT_PAD_LEFT).max(0.0);
         (available / CHAR_WIDTH).floor().max(1.0) as usize
     }
+
+    // ── Terminal geometry ─────────────────────────────────────────────────
+
+    /// Compute the terminal grid dimensions (cols, rows) from the current
+    /// window size and panel layout.
+    pub(crate) fn compute_terminal_size(&self, window: &Window) -> (usize, usize) {
+        let window_w: f32 = window.viewport_size().width.into();
+        let left = if self.left_panel_visible {
+            LEFT_PANEL_W
+        } else {
+            0.0
+        };
+        let right = if self.right_panel_visible {
+            RIGHT_PANEL_W
+        } else {
+            0.0
+        };
+        let content_w = (window_w - left - right - 16.0).max(0.0); // px(8) * 2 padding
+        let cols = (content_w / CHAR_WIDTH).floor().max(1.0) as usize;
+
+        let content_h = (BOTTOM_PANEL_H - BOTTOM_TAB_BAR_H - BOTTOM_CONTENT_PAD).max(0.0);
+        let rows = (content_h / LINE_HEIGHT).floor().max(1.0) as usize;
+
+        (cols, rows)
+    }
+
+    /// Resize the terminal grid (and PTY) if the computed size differs from
+    /// the current grid dimensions. Called from `render_bottom_panel`.
+    pub(crate) fn sync_terminal_size(&mut self, window: &Window) {
+        let (cols, rows) = self.compute_terminal_size(window);
+        if let Some(ref mut term) = self.terminal {
+            let grid = term.lock_grid();
+            let (cur_cols, cur_rows) = (grid.cols, grid.rows);
+            drop(grid);
+            if cols != cur_cols || rows != cur_rows {
+                term.resize(cols as u16, rows as u16);
+            }
+        }
+    }
 }
 
 // ── Render ───────────────────────────────────────────────────────────────────
@@ -230,7 +272,7 @@ impl Render for Workspace {
         center = center.child(self.render_editor(window, cx));
 
         if self.bottom_panel_visible {
-            center = center.child(self.render_bottom_panel(cx));
+            center = center.child(self.render_bottom_panel(window, cx));
         }
 
         main_content = main_content.child(center);
@@ -331,7 +373,7 @@ impl Render for Workspace {
             .on_action(cx.listener(|this, _: &ToggleBottomPanel, window, cx| {
                 this.bottom_panel_visible = !this.bottom_panel_visible;
                 if this.bottom_panel_visible {
-                    this.ensure_terminal(cx);
+                    this.ensure_terminal(window, cx);
                     this.terminal_focus_handle.focus(window);
                 } else {
                     this.focus_handle.focus(window);

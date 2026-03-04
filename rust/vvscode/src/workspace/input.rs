@@ -47,6 +47,8 @@ impl Workspace {
                 key_to_bytes(key, keystroke.key_char.as_deref(), shift, ctrl, alt, false)
             {
                 if let Some(ref mut term) = self.terminal {
+                    // Snap back to live view when the user types.
+                    term.lock_grid().scroll_offset = 0;
                     term.write_all(&bytes);
                 }
                 cx.notify();
