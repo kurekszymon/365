@@ -8,8 +8,6 @@ to be filled
 
 the **_enums vs string literals_** is one of those internet rabbit holes\*
 
-there is a lot of discussion\* going on over the internet over enums vs string literals and what to use and what not to use.
-
 Few years back my friend planted a seed of doubt during pair programming, that made me stop at every enum I see. Some time ago, while interviewing for a frontend role, I found myself passing that same seed along.
 I want to get this finally sorted so..
 
@@ -38,8 +36,10 @@ enum MicCheck {
 const assignment = MicCheck.One;
 ```
 
-It's all about the output produced by the compiler - enums in TypeScript are _not_ removed during compilation. They are still there at runtime, compiled down to an IIFE to create an object.
-Every usage, like `MicCheck.One` becomes a property lookup on that object at runtime.
+Because `enums` are one of the few features TypeScript has which is not just a `type-level` extension of JavaScript.
+`enums` are real objects that exist at runtime, transpiled down to an IIFE to create an object.
+
+Every usage, becomes a property lookup on that object at runtime, consider previous code snippet:
 
 ```ts
 // tsc output
@@ -52,18 +52,29 @@ var MicCheck;
 var assignment = MicCheck.One;
 ```
 
-It's not a big cost if it's a single enum, or few smaller ones, but the more enums in the code - more resources consumed at runtime.
+thanks to that, you can
+```ts
+enum E { F, G };
+// pass it to the function
+const f = (e: { F: number; }) => e.F;
+f(E);
 
-However, for the cost of runtime presence you can
+// iterate over enum (keys|values|entries)
+Object.entries(E)
 
-- iterate over the object `Object.entries(MicCheck)`
-- access it, by index like `MicCheck[0] // -> 'One'`
+// use reverse mapping like (only for numeric enums)
+E[1] // -> 'G'
 
-but what are the alternatives?
+// note that you wouldn't be able to do that for string enums like
+enum A { B = "-B", C = "C-" };
+A[1] // -> undefined (no reverse mapping)
+```
+
+but of course as it was mentioned you are left with the artifacts, so what are the alternatives?
 
 ### `const enum`
 
-it is possible to inline an enum with `const` prefix, like
+unlike a regular `enum`, a `const enum` does not exist at runtime, it is **fully erased** during compilation, so the code above be transpiled down to
 
 ```ts
 const enum Enumeration {
@@ -72,19 +83,15 @@ const enum Enumeration {
 }
 
 const assignment = Enumeration.Incomplete;
-```
 
-and unlike a regular `enum`, a `const enum` does not exist at runtime, it is **fully erased** during compilation, the code above would compile down to
-
-```ts
 var assignment = 1; /* Enumeration.Incomplete */
 ```
 
-so there is no object, no IIFE, no runtime lookup, no emitted code for the enum itself, and you get full type safety and a helpful comment left behind for readability. TypeScript still enforces the enum type, just doesn't emit it.
+so there is no object, no IIFE, no runtime lookup, no emitted code for the enum itself, and you get full type safe code and a helpful comment left behind for readability. TypeScript still enforces the enum type, just doesn't emit it.
 
-no runtime presence however makes you lose index access - `error TS2476: A const enum member can only be accessed using a string literal.` and the ability to iterate over enum values.
+no runtime presence however makes you lose indexed access - `error TS2476: A const enum member can only be accessed using a string literal.` and the ability to iterate over enum values.
 
-#### when `const enum` works
+but is it as easy to replace an `enum` with a `const enum` wherever you _don't_ need runtime benefits? well, not exactly.
 
 inlining a `const enum` requires the compiler to see the **full program** - it needs to resolve enum values at every usage site. This works when you compile your program with `tsc`, even if bundler handles the rest (`tsc` emits JS, `webpack`/`rollup` bundles it).
 
@@ -94,15 +101,19 @@ you could make use of it in
 - internal tooling / scripts / CLIs
 - any project compiled with `tsc`
 
-#### when `const enum` breaks
-
-Modern frontend toolchains (_esbuild_, _swc_, _babel_, or _isolatedModules: true_) have moved to **single-file transpilation**, what means that each `.ts` file is transform independently, without looking at other files.
+Modern frontend toolchains (_esbuild_, _swc_, _babel_) have moved to **single-file transpilation**, what means that each `.ts` file is transform independently, without looking at other files.
 A single-file transpiler sees `Enumeration.Incomplete` in one file, but it has no idea what value `Incomplete` resolved to, because the enum definition lives elsewhere.
 
-Same goes for publishing a library, however in this case you don't control your consumers' tooling, so you cannot safely assume proper handling of ambient enums.
+Set `isolatedModules` to true to make TypeScript warn you if you write certain code that can't be correctly interpreted by this single-file transpilation process [(read more in docs)](https://www.typescriptlang.org/tsconfig/#isolatedModules).
 
-TypeScript project itself avoids publishing ambient enums by using [preserveConstEnums](https://www.typescriptlang.org/tsconfig/#preserveConstEnums), emitting `const enums` them like regular enums, but inlining them in their own build. [read more about const enums pitfalls](https://www.typescriptlang.org/docs/handbook/enums.html#const-enum-pitfalls)
+If you were to publish a library with ambient enums (produced by `const enum` usage) - consumers of the library won't be able to use `isolatedModules` and those enum values at the same time. Unless you apply same rules as TypeScript project.
+
+TypeScript project itself avoids publishing ambient enums by using [preserveConstEnums](https://www.typescriptlang.org/tsconfig/#preserveConstEnums), emitting `const enums` like regular enums, but inlining them in their own build. [read more about const enums pitfalls](https://www.typescriptlang.org/docs/handbook/enums.html#const-enum-pitfalls)
+
+but you could simulate them with `string literal union`
 
 ### string literal union
+
+
 
 ### `as const` object
