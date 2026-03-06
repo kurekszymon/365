@@ -11,7 +11,7 @@ the **_enums vs string literals_** is one of those internet rabbit holes\*
 Few years back my friend planted a seed of doubt during pair programming, that made me stop at every enum I see. Some time ago, while interviewing for a frontend role, I found myself passing that same seed along.
 I want to get this finally sorted so..
 
-I came up with a fancy name of `fwd: enums` - consider this definitive research piece you can forward next time someone tells you to swap your enum for a string union in your pr.
+I came up with a fancy name of `fwd: enums` - consider this definitive research piece you can forward next time someone tells you to swap your enum for a string union in your PR.
 
 \* said rabbit holes:
 
@@ -110,10 +110,25 @@ If you were to publish a library with ambient enums (produced by `const enum` us
 
 TypeScript project itself avoids publishing ambient enums by using [preserveConstEnums](https://www.typescriptlang.org/tsconfig/#preserveConstEnums), emitting `const enums` like regular enums, but inlining them in their own build. [read more about const enums pitfalls](https://www.typescriptlang.org/docs/handbook/enums.html#const-enum-pitfalls)
 
-but you could simulate them with `string literal union`
+but you could simulate them with
 
 ### string literal union
 
+Which is the most straight forward way of defining various possibilities with TypeScript.
+Instead of definining a separate entity holding the data, you can declare a type alias
 
+```ts
+type Kind = 'string' | 'other_string';
+const f = (s: Kind) => {}
+// or inline it
+const f = (s: 'string' | 'other_string') => {}
+```
 
-### `as const` object
+Unlike `const enums` - `string literal union` works with `isolatedModules`.
+Similarly to `const enums` it has no runtime, so you cannot iterate over possible values.
+
+Honestly, I don't see many real cons - string unions give you enum-like type checks with zero runtime cost. If you don't inline them, but assign to a type, the intent can be as obvious as for the enum.
+
+If you'd actually need a runtime object that you could derive `string literal union type` from, you can mark your objects
+
+### `as const`
