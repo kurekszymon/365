@@ -72,11 +72,7 @@ impl Workspace {
                     .cursor_pointer()
                     .child(display_name)
                     .on_click(cx.listener(move |this, _: &ClickEvent, _window, cx| {
-                        if this.collapsed_dirs.contains(&path_owned) {
-                            this.collapsed_dirs.remove(&path_owned);
-                        } else {
-                            this.collapsed_dirs.insert(Arc::clone(&path_owned));
-                        }
+                        this.expand_or_collapse_dir(&path_owned);
                         // Clamp scroll in case collapsing reduced total entries
                         let new_total = this.visible_file_tree().len();
                         if this.left_panel_scroll >= new_total {

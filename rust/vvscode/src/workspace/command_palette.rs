@@ -362,9 +362,10 @@ impl Workspace {
     ) {
         match tag {
             PaletteActionTag::ToggleLeftPanel => {
-                self.left_panel_visible = !self.left_panel_visible;
-                if self.left_panel_visible {
-                    self.refresh_file_tree();
+                if !self.left_panel_visible && self.file_tree.is_empty() {
+                    self.refresh_file_tree(cx);
+                } else {
+                    self.left_panel_visible = !self.left_panel_visible;
                 }
             }
             PaletteActionTag::ToggleBottomPanel => {

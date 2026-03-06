@@ -20,7 +20,6 @@ mod render_panels;
 pub mod scrollbar;
 
 use std::collections::HashSet;
-use std::path::Path;
 use std::sync::Arc;
 
 use crate::terminal::Terminal;
@@ -95,6 +94,8 @@ pub struct Workspace {
     pub(crate) scrollbar_drag: Option<ScrollbarDragState>,
     pub(crate) mouse_drag_selecting: bool,
     pub(crate) collapsed_dirs: HashSet<Arc<str>>,
+    /// Tracks which directories have had their children lazily loaded.
+    pub(crate) loaded_dirs: HashSet<Arc<str>>,
     pub(crate) dirty: bool,
     pub(crate) command_palette: CommandPaletteState,
     pub(crate) terminal: Option<Terminal>,
@@ -117,7 +118,6 @@ impl Workspace {
         let project_root = std::env::current_dir()
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|_| ".".to_string());
-        let file_tree = Self::collect_file_tree(Path::new(&project_root), "", 0);
         Self {
             left_panel_visible: false,
             bottom_panel_visible: false,
@@ -126,11 +126,12 @@ impl Workspace {
             focus_handle: cx.focus_handle(),
             current_file: None,
             project_root,
-            file_tree,
+            file_tree: Vec::new(),
             left_panel_scroll: 0,
             scrollbar_drag: None,
             mouse_drag_selecting: false,
             collapsed_dirs: HashSet::new(),
+            loaded_dirs: HashSet::new(),
             dirty: false,
             command_palette: CommandPaletteState::new(),
             terminal: None,
@@ -399,9 +400,11 @@ impl Render for Workspace {
                 }),
             )
             .on_action(cx.listener(|this, _: &ToggleLeftPanel, window, cx| {
-                this.left_panel_visible = !this.left_panel_visible;
-                if this.left_panel_visible {
-                    this.refresh_file_tree();
+                if !this.left_panel_visible && this.file_tree.is_empty() {
+                    // First open — scan async, panel opens when scan completes.
+                    this.refresh_file_tree(cx);
+                } else {
+                    this.left_panel_visible = !this.left_panel_visible;
                 }
                 this.sync_terminal_size(window);
                 cx.notify();
