@@ -402,9 +402,9 @@ We considered flipping the flag — tracking which directories are _expanded_ ra
 | **"Collapse All"**            | Insert all dir paths into the set                             | Clear the set — simpler                                              |
 | **"Expand All"**              | Clear the set — built into the same toggle                    | Insert all dir paths into the set                                    |
 | **Memory (typical use)**      | Stores the minority (few collapsed dirs)                      | Stores the majority (most dirs expanded)                             |
-| **After `refresh_file_tree`** | New dirs are automatically visible                            | New dirs are automatically hidden                                    |
+| **After `refresh_file_tree`** | New dirs appear collapsed — must be expanded                  | New dirs are automatically hidden                                    |
 
-The default-expanded behavior is critical. When a user opens the explorer or refreshes the tree (e.g. after `ToggleLeftPanel`), they expect to see their project structure. With `expanded_dirs`, every `refresh_file_tree()` call would either need to pre-populate the set with all directory paths (defeating the purpose) or leave new directories invisible. `collapsed_dirs` gets the right default behavior for free.
+The default-collapsed behavior with lazy loading is intentional — the tree only scans directories the user actually expands. When a user opens the explorer or refreshes the tree, root-level entries are visible immediately. With `expanded_dirs`, every `refresh_file_tree()` call would either need to pre-populate the set with all directory paths (defeating the purpose) or leave new directories invisible. `collapsed_dirs` gets the right default behavior for free (all root entries visible, children loaded on demand).
 
 Key implementation details:
 

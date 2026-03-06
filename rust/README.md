@@ -12,6 +12,11 @@
   - [x] command palette (`> Format document` + custom commands)
   - [x] file palette (open any file with cmd p, jump to line `:42`)
 
+## 06.03
+- improved collecting file tree performance - now it's done asynchronously, and only to root level
+- directories are collapsed by default and scanned and added to file tree when user explicitly expands it
+- refresh file tree preserves (naively) collapsed/expanded state
+
 ## 04.03
 
 - terminal support with vte, portable-pty and async-channel (crates)

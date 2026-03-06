@@ -54,15 +54,15 @@ Why word boundary helpers live in `editing.rs` and not `movement.rs`: they're ca
 
 #### `workspace.rs` → `workspace.rs` + `workspace/*.rs`
 
-| File                         | Lines | Responsibility                                                                                                                                         |
-| ---------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `workspace.rs`               | ~160  | Struct definition, constants, actions, `new()`, viewport geometry helpers (`compute_visible_lines`, `compute_visible_cols`, etc.), `Render` trait impl |
-| `workspace/scrollbar.rs`     | ~20   | `ScrollbarDragKind` enum + `ScrollbarDragState` struct — shared types used by multiple render files                                                    |
-| `workspace/file_tree.rs`     | ~180  | `FsNode` struct, `collect_file_tree`, `refresh_file_tree`, `toggle_collapse_all`, `visible_file_tree`, `open_file`, `save_file`                        |
-| `workspace/input.rs`         | ~160  | `handle_key_down`, `scroll_delta`, `handle_scroll_wheel`, `handle_left_panel_scroll`                                                                   |
-| `workspace/render_chrome.rs` | ~75   | `render_title_bar`, `render_status_bar`                                                                                                                |
-| `workspace/render_editor.rs` | ~410  | `render_editor` — text lines, gutter, cursor overlay, selection highlight, vertical & horizontal scrollbars                                            |
-| `workspace/render_panels.rs` | ~315  | `render_left_panel`, `render_right_panel`, `render_bottom_panel`                                                                                       |
+| File                         | Lines | Responsibility                                                                                                                                                  |
+| ---------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `workspace.rs`               | ~160  | Struct definition, constants, actions, `new()`, viewport geometry helpers (`compute_visible_lines`, `compute_visible_cols`, etc.), `Render` trait impl          |
+| `workspace/scrollbar.rs`     | ~20   | `ScrollbarDragKind` enum + `ScrollbarDragState` struct — shared types used by multiple render files                                                             |
+| `workspace/file_tree.rs`     | ~230  | `FsNode` struct, `scan_single_dir`, `refresh_file_tree` (async), `expand_or_collapse_dir`, `toggle_collapse_all`, `visible_file_tree`, `open_file`, `save_file` |
+| `workspace/input.rs`         | ~160  | `handle_key_down`, `scroll_delta`, `handle_scroll_wheel`, `handle_left_panel_scroll`                                                                            |
+| `workspace/render_chrome.rs` | ~75   | `render_title_bar`, `render_status_bar`                                                                                                                         |
+| `workspace/render_editor.rs` | ~410  | `render_editor` — text lines, gutter, cursor overlay, selection highlight, vertical & horizontal scrollbars                                                     |
+| `workspace/render_panels.rs` | ~315  | `render_left_panel`, `render_right_panel`, `render_bottom_panel`                                                                                                |
 
 ---
 

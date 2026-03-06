@@ -62,16 +62,30 @@ pub struct Workspace {
 }
 ```
 
-The tree is built once in `new()` and refreshed explicitly via `refresh_file_tree()`. `collapsed_dirs` starts empty (all directories expanded).
+The tree starts empty and is scanned asynchronously via `refresh_file_tree(cx)` the first time the panel is opened. Subsequent toggles reuse the cached tree. `collapsed_dirs` starts with all root directories collapsed — children are loaded lazily on first expand.
 
 ```rs
-fn refresh_file_tree(&mut self) {
-    self.file_tree = Self::collect_file_tree(Path::new(&self.project_root), "", 0);
-    self.left_panel_scroll = 0;
+fn refresh_file_tree(&mut self, cx: &mut Context<Self>) {
+    // Snapshot which dirs were expanded before the refresh.
+    let previously_expanded: HashSet<Arc<str>> = self.loaded_dirs.iter()
+        .filter(|d| !self.collapsed_dirs.contains(*d))
+        .cloned().collect();
+    self.file_tree.clear();
+    self.loaded_dirs.clear();
+    self.collapsed_dirs.clear();
+    let root = self.project_root.clone();
+    cx.spawn(async move |this, cx| {
+        let tree = Workspace::scan_single_dir(Path::new(&root), "", 0);
+        let _ = this.update(cx, |ws, cx| {
+            ws.file_tree = tree;
+            // Default-collapse all, then re-expand previously open dirs.
+            // ...
+        });
+    }).detach();
 }
 ```
 
-`collect_file_tree` now stores the relative path for directory entries (e.g. `"src"`, `"src/components"`) in the third tuple element. Previously this was `String::new()` — the change is needed so collapsed directories can be identified by their path.
+`scan_single_dir` reads one directory level and returns sorted `FsNode` entries. `.git` is hidden; everything else is shown but starts collapsed. The expand/collapse state is preserved across refreshes — directories that were open stay open.
 
 A `visible_file_tree()` helper filters the cached `file_tree` at render time, skipping children of any directory whose rel_path is in `collapsed_dirs`:
 
@@ -153,19 +167,21 @@ We considered flipping the flag — tracking which directories are _expanded_ ra
 | `Workspace::new`            | Initial tree on startup                |
 | `ToggleLeftPanel` (opening) | Refresh when the panel becomes visible |
 
-The toggle action refreshes on open:
+The toggle action opens the panel, scanning async on first use:
 
 ```rs
-.on_action(cx.listener(|this, _: &ToggleLeftPanel, _window, cx| {
-    this.left_panel_visible = !this.left_panel_visible;
-    if this.left_panel_visible {
-        this.refresh_file_tree();
+.on_action(cx.listener(|this, _: &ToggleLeftPanel, window, cx| {
+    if !this.left_panel_visible && this.file_tree.is_empty() {
+        this.refresh_file_tree(cx); // async — panel opens when scan completes
+    } else {
+        this.left_panel_visible = !this.left_panel_visible;
     }
+    this.sync_terminal_size(window);
     cx.notify();
 }))
 ```
 
-This means the tree is stale while the panel is open — creating or deleting files externally won't show up until you toggle the panel off and on. That's acceptable for now. A file watcher or manual refresh keybinding can be added later.
+The tree is cached across toggles — closing and reopening the panel doesn't re-scan. The tree is stale while the panel is open — creating or deleting files externally won't show up until an explicit refresh. A file watcher or manual refresh keybinding can be added later.
 
 ---
 
@@ -440,7 +456,7 @@ There is no conflict between autoscroll and scroll wheel — they both write to 
 | Source                     | Mechanism                                        |
 | -------------------------- | ------------------------------------------------ |
 | `handle_left_panel_scroll` | Scroll gesture over left panel area              |
-| `refresh_file_tree`        | Reset to 0 on tree rebuild                       |
+| `refresh_file_tree`        | Reset to 0 on tree rebuild (async callback)      |
 | Directory collapse toggle  | Clamped to filtered tree length after collapsing |
 | `toggle_collapse_all`      | Reset to 0 after collapse/expand all toggle      |
 

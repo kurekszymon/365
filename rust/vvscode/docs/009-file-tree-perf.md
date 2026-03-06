@@ -34,6 +34,8 @@ Only `.git` is unconditionally hidden from the explorer (`HIDDEN_DIRS` constant)
 
 `refresh_file_tree` launches the root-level listing via `cx.spawn`. The panel doesn't open until the scan completes — no loading indicator, no flicker. Because we only read one directory level this typically finishes in < 1 ms, but moving it off the synchronous call path guarantees the UI thread is never blocked.
 
+The user's expand/collapse state is preserved across refreshes: directories that were expanded before the refresh are automatically re-expanded (and their children re-scanned). New directories default to collapsed.
+
 ---
 
 ### Cached tree across panel toggles
