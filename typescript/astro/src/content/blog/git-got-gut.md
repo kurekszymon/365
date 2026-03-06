@@ -7,21 +7,21 @@ heroImage: '../../assets/git-big-logo.png'
 
 _you need to be familiar with git_ - that's just the requirement nowadays - whether you are an experienced engineer or just getting started.
 using it doesn't need to be complicated - it was created in 3 days, after all - but sometimes can be overwhelming.
-there are countless videos, articles, tips and tricks on how to use `git` efficiently, but all those materials rarely touch on the fact that made using it easier for me mentally - _almost_ everything is reversible.
+There are countless videos, articles, tips and tricks on how to use `git` efficiently, but all those materials rarely touch on the fact that made using it easier for me mentally - _almost_ everything is reversible.
 
-if you were to follow a _proper_ route of learning `git` and after [downloading git](https://git-scm.com/install/) you'd click on [Learn->Book](https://git-scm.com/book/en/v2), and read it, you would learn how to [undo things](https://git-scm.com/book/en/v2/Git-Basics-Undoing-Things) or [how to rewrite history](https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History) or [that you shouldn't be worried to use reset](https://git-scm.com/book/en/v2/Git-Tools-Reset-Demystified) and that is super useful! I don't know anyone who did it though.
+If you were to follow a _proper_ route of learning `git` and after [downloading git](https://git-scm.com/install/) you'd click on [Learn->Book](https://git-scm.com/book/en/v2), and read it, you would learn how to [undo things](https://git-scm.com/book/en/v2/Git-Basics-Undoing-Things) or [how to rewrite history](https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History) or [that you shouldn't be worried to use reset](https://git-scm.com/book/en/v2/Git-Tools-Reset-Demystified) and that is super useful! Although I don't know anyone who did it this way.
 
-whether you are using cli or some desktop client like Sourcetree or GitHub Desktop I think being aware of reversibility of commands can be beneficial for your work with this tool.
+Whether you are using CLI or some desktop client like Sourcetree or GitHub Desktop I think being aware of reversibility of commands can be beneficial for your work with this tool.
 
 ## ⚠️ note
 
-this will be solely based on my experience and the way I like to work with git. it's not the cleanest, most perfect way of doing that, it's just super comfortable for the user (me).
+this will be solely based on my experience and the way I like to work with git. it's not the cleanest, most perfect way of doing that, it's just super comfortable for me.
 
 ## assumption
 
-like in all cases, one needs to make _some_ assumptions about the end user / consumer. while I don't expect any consumers of this article (besides those I've forcefully requested to read it - sorry guys - and GitHub does have statistics for page views, so I will be able to tell whether or not you opened a link).
+Like in all cases, one needs to make _some_ assumptions about the end user / consumer. And while I don't expect any consumers of this article (besides those I've forcefully requested to read it - sorry guys).
 
-I assume the reader knows at least basics of git.
+I will assume the reader knows at least basics of git.
 
 - pull
 - switch / checkout
@@ -78,7 +78,7 @@ Oh my lord - now there are two commits showing what an incompetent dev I am :'(.
 
 ---
 
-while I find using `revert` good for actually reverting changes that introduce bugs and problems on master/RC branch (to be explicit about the intent), using revert on your local branch is usually not the solution you're looking for.
+While I find using `revert` good for actually reverting changes that introduce bugs and problems on master/RC branch (to be explicit about the intent), using revert on your local branch is usually not the solution you're looking for.
 
 what I really needed in this case was good ol'
 
@@ -86,7 +86,7 @@ what I really needed in this case was good ol'
 
 `git reset` allows you to reverse what you did in previous commits (including staged and unstaged changes, depending on the flag you pass to it)
 
-while writing this article I looked up docs for git reset, to confirm if I was using it correctly, and I learned there are three more flags on top of what I use (five in total).
+While writing this article I looked up docs for git reset, to confirm if I was using it correctly, and I learned there are three more flags on top of what I use (five in total).
 
 I'll only focus on the three options I use (I incorporated `--mixed` after looking at the docs), skipping remaining two since I don't want to cover something I don't know.
 
@@ -118,9 +118,9 @@ result of `git reflog`
 5f99db1 HEAD@{3}: commit: mds: [WIP] git-got-gut: reset
 ```
 
-what's most interesting there for the user is the hash on the left hand side that lets you go back in time to specific HEAD change. It does allow you to "revert" something you've already force pushed to remote.
+What's most interesting there for the user is the hash on the left hand side that lets you go back in time to specific HEAD change. It does allow you to "revert" something you've already force pushed to remote.
 
-going back in time using `git reflog`:
+Going back in time using `git reflog`:
 
 ```sh
 git reset --hard 2be797d
@@ -145,7 +145,7 @@ Date:   Thu Jan 29 22:34:12 2026 +0100
 For me reflog is the last safety net - if I mess up rebases, resets, commits in order I would go back in time to place before I started to mess up.
 It's also very convenient you don't have to do _anything_ in order to get this bookkeeping and all benefits that come from this.
 
-Note: `reflog` is a LOCAL tracker of your changes - your peers or the remote does not know about this. Reflog also eventually expires, but I have never experienced a case where I would need to worry about the time of it - most commonly I reach for it when I messed up just now, or relatively not a long time ago.
+Note: `reflog` is a __LOCAL__ tracker of your changes - your peers or the remote does not know about this. Reflog also eventually expires, but I have never experienced a case where I would need to worry about the time of it - most commonly I reach for it when I messed up just now, or relatively not a long time ago.
 
 ## wrapping up
 
