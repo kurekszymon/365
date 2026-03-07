@@ -12,6 +12,9 @@
   - [x] command palette (`> Format document` + custom commands)
   - [x] file palette (open any file with cmd p, jump to line `:42`)
 
+## 07.03
+- used worse ai than opus - took way more time to implement CMD + V support in terminal than expected.
+
 ## 06.03
 - improved collecting file tree performance - now it's done asynchronously, and only to root level
 - directories are collapsed by default and scanned and added to file tree when user explicitly expands it
