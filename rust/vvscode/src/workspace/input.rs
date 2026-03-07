@@ -38,23 +38,11 @@ impl Workspace {
         // When the terminal panel is focused, forward keys to the PTY
         // instead of the editor. Cmd+` toggles the panel (handled by
         // the action system), so we don't intercept that here.
+        // Note: Cmd+V is handled by the Paste action, not here.
         if self.terminal_focus_handle.is_focused(window) && self.bottom_panel_visible {
-            // Special-case: Cmd+V should paste into the terminal.
-            if cmd {
-                if key == "v" {
-                    if let Some(item) = cx.read_from_clipboard() {
-                        if let Some(text) = item.text() {
-                            if let Some(ref mut term) = self.terminal {
-                                term.lock_grid().scroll_offset = 0;
-                                term.write_all(text.as_bytes());
-                            }
-                            cx.notify();
-                            return;
-                        }
-                    }
-                    // If clipboard empty, fall through to actions.
-                }
-            } else {
+            // Let Cmd-key combos fall through to the action system
+            // (e.g. Cmd+V, Cmd+`, Cmd+B, Cmd+P, Cmd+S, etc.)
+            if !cmd {
                 if let Some(bytes) =
                     key_to_bytes(key, keystroke.key_char.as_deref(), shift, ctrl, alt, false)
                 {

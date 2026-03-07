@@ -280,11 +280,24 @@ if self.terminal_focus_handle.is_focused(window) && self.bottom_panel_visible {
 
 When the user types while scrolled up in the scrollback, `scroll_offset` is reset to 0 so the viewport snaps back to the live bottom before the keystroke is sent to the PTY.
 
-**Important:** `Cmd+key` combos are NOT forwarded to the terminal. They fall through to the action system so `Cmd+B`, `Cmd+P`, `Cmd+S`, `Cmd+`\``etc. still work even when the terminal is focused. Only`Ctrl+key`goes to the terminal (which is correct —`Ctrl+C` should send SIGINT to the shell, not trigger a copy).
+**Important:** `Cmd+key` combos are NOT forwarded to the terminal. They fall through to the action system so `Cmd+B`, `Cmd+P`, `Cmd+S`, `Cmd+`\``etc. still work even when the terminal is focused. Only`Ctrl+key`goes to the terminal (which is correct —`Ctrl+C`should send SIGINT to the shell, not trigger a copy).
 
-Additionally: `Cmd+V` (paste) is implemented for the terminal. When the bottom panel is focused, `Cmd+V` reads the system clipboard and writes the clipboard bytes directly to the PTY so pasted text is delivered to the running program.
+Additionally: `Cmd+V` (paste) is implemented for the terminal via the `Paste` action. When the bottom panel is focused, `Cmd+V` reads the system clipboard and writes the clipboard bytes directly to the PTY so pasted text is delivered to the running program. If the clipboard is empty, nothing is sent to the PTY.
 
-Note: `Cmd+V` pastes into the terminal only when the terminal panel is focused; if the clipboard is empty, nothing is sent to the PTY.
+#### Mouse reporting
+
+The terminal supports mouse reporting modes requested by applications (e.g., `vim`, `htop`):
+
+- **CSI ?1000h** — `ButtonEventTracking`: button press/release only
+- **CSI ?1002h** — `ButtonMotionTracking`: button press/release + motion with button held
+- **CSI ?1003h** — `AnyEventTracking`: all mouse motion events
+
+Mouse events are encoded using SGR encoding (CSI `<btn;col;row M/m`) and forwarded to the PTY when:
+1. The terminal panel is focused
+2. The application has enabled one of the above modes
+3. The event type matches the mode (e.g., motion without button only sent in `AnyEventTracking`)
+
+The workspace tracks the last mouse position and button so mouse release events contain accurate coordinates, not generic (1,1) values.
 
 #### `workspace/render_panels.rs` — live grid rendering
 
@@ -351,19 +364,19 @@ Focus is managed via two GPUI `FocusHandle`s — the workspace's main handle (fo
 
 ### What doesn't work yet (future improvements)
 
-| Feature                             | Why it's missing                                                                                                                                                                                                               | Difficulty |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- |
-| PTY resize ioctl                    | Grid resizes correctly but the PTY itself doesn't get a SIGWINCH                                                                                                                                                               | Medium     |
-| Mouse events in terminal            | Implemented: the workspace forwards mouse events only when the application requests mouse reporting (CSI `?1000h` / `?1006h` / etc.). This prevents spamming the PTY on ordinary mouse motion; full selection/copy remains WIP | Medium     |
-| Text selection / copy from terminal | No mouse selection in terminal area; requires tracking drag start/end cell, highlighting selected cells, copy on release                                                                                                       | Medium     |
-| Open file from terminal             | Detect file paths under cursor (or in selection); `Cmd+Click` or a keybinding opens the file in the editor                                                                                                                     | Medium     |
-| Scrollbar for terminal scrollback   | Scroll wheel works, but no visual scrollbar thumb                                                                                                                                                                              | Low–Medium |
-| Multiple terminal tabs              | Only one terminal instance                                                                                                                                                                                                     | Low–Medium |
-| Italic, underline, strikethrough    | `SgrState` only tracks bold; need more attributes                                                                                                                                                                              | Low        |
-| Hyperlink detection (URLs)          | OSC 8 parsing                                                                                                                                                                                                                  | Low        |
-| Terminal bell                       | Currently ignored                                                                                                                                                                                                              | Low        |
-| Window title from OSC               | Shell sets the window title via OSC 0/2; we ignore it                                                                                                                                                                          | Low        |
-| Persist panel height                | `bottom_panel_h` resets to default on restart; could save to preferences                                                                                                                                                       | Low        |
+| Feature                             | Why it's missing                                                                                                                                                                                                                                                                                        | Difficulty |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| PTY resize ioctl                    | Grid resizes correctly but the PTY itself doesn't get a SIGWINCH                                                                                                                                                                                                                                        | Medium     |
+| Mouse events in terminal (DONE)     | ✅ Implemented: workspace forwards mouse events when the application requests mouse reporting (CSI ?1000h/1002h/1003h). Respects different tracking modes (button-only, button-motion, any-motion) and sends accurate coordinates on press/motion/release. Text selection/copy from terminal remains WIP | Medium     |
+| Text selection / copy from terminal | No mouse selection in terminal area; requires tracking drag start/end cell, highlighting selected cells, copy on release                                                                                                                                                                                | Medium     |
+| Open file from terminal             | Detect file paths under cursor (or in selection); `Cmd+Click` or a keybinding opens the file in the editor                                                                                                                                                                                              | Medium     |
+| Scrollbar for terminal scrollback   | Scroll wheel works, but no visual scrollbar thumb                                                                                                                                                                                                                                                       | Low–Medium |
+| Multiple terminal tabs              | Only one terminal instance                                                                                                                                                                                                                                                                              | Low–Medium |
+| Italic, underline, strikethrough    | `SgrState` only tracks bold; need more attributes                                                                                                                                                                                                                                                       | Low        |
+| Hyperlink detection (URLs)          | OSC 8 parsing                                                                                                                                                                                                                                                                                           | Low        |
+| Terminal bell                       | Currently ignored                                                                                                                                                                                                                                                                                       | Low        |
+| Window title from OSC               | Shell sets the window title via OSC 0/2; we ignore it                                                                                                                                                                                                                                                   | Low        |
+| Persist panel height                | `bottom_panel_h` resets to default on restart; could save to preferences                                                                                                                                                                                                                                | Low        |
 
 ### Notes for catching up
 

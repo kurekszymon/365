@@ -38,6 +38,21 @@ use vte::{Params, Parser, Perform};
 /// Maximum scrollback lines kept in memory.
 const MAX_SCROLLBACK: usize = 1_000;
 
+// ── Mouse Reporting ──────────────────────────────────────────────────────────
+
+/// Mouse reporting mode requested by the application via CSI escape sequences.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MouseMode {
+    /// No mouse reporting (default).
+    None,
+    /// CSI ?1000h — button press and release only.
+    ButtonEventTracking,
+    /// CSI ?1002h — button press, release, and motion with button held.
+    ButtonMotionTracking,
+    /// CSI ?1003h — all mouse motion (even without button pressed).
+    AnyEventTracking,
+}
+
 // ── Cell ─────────────────────────────────────────────────────────────────────
 
 /// One character cell in the terminal grid.
@@ -144,11 +159,9 @@ pub struct TerminalGrid {
     pub scroll_offset: usize,
     /// Whether new output has arrived since last render.
     pub dirty: bool,
-    /// Whether the application running inside the PTY has requested
-    /// mouse reporting (e.g. via CSI ?1000h / ?1002h / ?1003h / ?1006h).
-    /// When true, the workspace should forward mouse events to the PTY.
-    pub mouse_reporting: bool,
-    // (mouse reporting is tracked here; workspace forwards events when terminal focused)
+    /// Mouse reporting mode requested by the application (via CSI escape sequences).
+    /// When not None, the workspace should forward appropriate mouse events to the PTY.
+    pub mouse_mode: MouseMode,
     /// Alternate screen buffer (used by programs like vim, less).
     alt_lines: Option<Vec<Vec<Cell>>>,
     alt_cursor: (usize, usize),
@@ -179,7 +192,7 @@ impl TerminalGrid {
             saved_cursor: (0, 0),
             scroll_offset: 0,
             dirty: true,
-            mouse_reporting: false,
+            mouse_mode: MouseMode::None,
             alt_lines: None,
             alt_cursor: (0, 0),
             scroll_top: 0,
@@ -824,9 +837,13 @@ impl Perform for TerminalGrid {
                         7 => self.auto_wrap = true,
                         // Show cursor
                         25 => self.cursor_visible = true,
-                        // Mouse reporting requested by the application
-                        // Common mouse reporting private modes: 1000, 1002, 1003, 1006, 1005
-                        1000 | 1002 | 1003 | 1006 | 1005 => self.mouse_reporting = true,
+                        // Mouse reporting modes requested by the application
+                        1000 => self.mouse_mode = MouseMode::ButtonEventTracking,
+                        1002 => self.mouse_mode = MouseMode::ButtonMotionTracking,
+                        1003 => self.mouse_mode = MouseMode::AnyEventTracking,
+                        // 1006 (SGR encoding) and 1005 (UTF-8 encoding) don't change the mode,
+                        // only the encoding format; we always use SGR encoding.
+                        1006 | 1005 => {}
                         // Alt screen buffer
                         1049 | 47 | 1047 => self.enter_alt_screen(),
                         _ => {}
@@ -841,7 +858,7 @@ impl Perform for TerminalGrid {
                         7 => self.auto_wrap = false,
                         25 => self.cursor_visible = false,
                         // Mouse reporting disable requested by the application
-                        1000 | 1002 | 1003 | 1006 | 1005 => self.mouse_reporting = false,
+                        1000 | 1002 | 1003 | 1006 | 1005 => self.mouse_mode = MouseMode::None,
                         1049 | 47 | 1047 => self.leave_alt_screen(),
                         _ => {}
                     }

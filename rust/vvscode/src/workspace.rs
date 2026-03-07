@@ -102,6 +102,10 @@ pub struct Workspace {
     pub(crate) terminal_focus_handle: FocusHandle,
     pub(crate) bottom_panel_h: f32,
     pub(crate) bottom_panel_drag: Option<BottomPanelDrag>,
+    /// Last mouse position (in terminal grid coords: col, row). Used for mouse release events.
+    pub(crate) last_terminal_mouse: Option<(usize, usize)>,
+    /// Last pressed mouse button. Used to send accurate release events.
+    pub(crate) last_terminal_button: Option<MouseButton>,
 }
 
 /// State tracked during a bottom-panel resize drag.
@@ -138,6 +142,8 @@ impl Workspace {
             terminal_focus_handle: cx.focus_handle(),
             bottom_panel_h: BOTTOM_PANEL_DEFAULT_H,
             bottom_panel_drag: None,
+            last_terminal_mouse: None,
+            last_terminal_button: None,
         }
     }
 
@@ -308,16 +314,25 @@ impl Render for Workspace {
                 // terminal grid using `CHAR_WIDTH`/`LINE_HEIGHT` heuristics.
                 if this.terminal_focus_handle.is_focused(window) && this.bottom_panel_visible {
                     if let Some(ref mut term) = this.terminal {
-                        // Read grid size and mouse-reporting flag then drop the lock
-                        let (cols, rows, mouse_reporting) = {
+                        // Read grid size and mouse mode then drop the lock
+                        let (cols, rows, mouse_mode) = {
                             let grid = term.lock_grid();
-                            (grid.cols, grid.rows, grid.mouse_reporting)
+                            (grid.cols, grid.rows, grid.mouse_mode)
                         };
-                        // Only forward mouse motion if the application requested
-                        // mouse reporting (CSI ?1000h / ?1006h / etc.). This avoids
-                        // spamming the PTY with motion events when no program
-                        // expects them.
-                        if mouse_reporting {
+
+                        // Determine if we should forward this motion event based on mouse mode:
+                        // - ButtonEventTracking: only button press/release (no motion)
+                        // - ButtonMotionTracking: motion with button held
+                        // - AnyEventTracking: all motion events
+                        use crate::terminal::MouseMode;
+                        let should_forward = match mouse_mode {
+                            MouseMode::None => false,
+                            MouseMode::ButtonEventTracking => false, // no motion events
+                            MouseMode::ButtonMotionTracking => ev.pressed_button.is_some(),
+                            MouseMode::AnyEventTracking => true,
+                        };
+
+                        if should_forward {
                             let window_h: f32 = window.viewport_size().height.into();
                             let left_w = if this.left_panel_visible {
                                 LEFT_PANEL_W
@@ -334,6 +349,12 @@ impl Render for Workspace {
                             let row = (y_in_term / LINE_HEIGHT).floor() as usize + 1; // 1-based
                             let col = col.clamp(1, cols);
                             let row = row.clamp(1, rows);
+
+                            // Track last mouse position for release events
+                            this.last_terminal_mouse = Some((col, row));
+                            if ev.pressed_button.is_some() {
+                                this.last_terminal_button = ev.pressed_button;
+                            }
 
                             // Button encoding: 0=left,1=middle,2=right. If no button, use 3.
                             let base = match ev.pressed_button {
@@ -446,22 +467,61 @@ impl Render for Workspace {
             }))
             .on_mouse_up(
                 MouseButton::Left,
-                cx.listener(|this, _ev: &MouseUpEvent, _window, _cx| {
+                cx.listener(|this, ev: &MouseUpEvent, window, _cx| {
                     this.scrollbar_drag = None;
                     this.mouse_drag_selecting = false;
                     this.bottom_panel_drag = None;
-                    // If terminal requested mouse reporting, send a release
-                    // event for the left button.
-                    if let Some(ref mut term) = this.terminal {
-                        // Only send a release if the application requested
-                        // mouse reporting.
-                        let mouse_reporting = term.lock_grid().mouse_reporting;
-                        if mouse_reporting {
-                            // We don't have the mouse coordinates here; send a generic
-                            // release at (1,1) — most programs will update state on any release.
-                            let bytes =
-                                crate::terminal::encode_sgr_mouse(3u8, 1usize, 1usize, true);
-                            term.write_all(&bytes);
+
+                    // If terminal requested mouse reporting, send a release event
+                    // with the actual mouse coordinates and button.
+                    if this.terminal_focus_handle.is_focused(window) && this.bottom_panel_visible {
+                        if let Some(ref mut term) = this.terminal {
+                            let mouse_mode = term.lock_grid().mouse_mode;
+                            use crate::terminal::MouseMode;
+
+                            // Only send release events for modes that track button events
+                            if mouse_mode != MouseMode::None {
+                                // Use tracked mouse position and button, or compute from event
+                                let (col, row) = if let Some((c, r)) = this.last_terminal_mouse {
+                                    (c, r)
+                                } else {
+                                    // Fallback: compute from current event position
+                                    let window_h: f32 = window.viewport_size().height.into();
+                                    let left_w = if this.left_panel_visible {
+                                        LEFT_PANEL_W
+                                    } else {
+                                        0.0
+                                    };
+                                    let term_top =
+                                        window_h - this.bottom_panel_h + BOTTOM_TAB_BAR_H;
+                                    let mouse_x: f32 = ev.position.x.into();
+                                    let mouse_y: f32 = ev.position.y.into();
+                                    let x_in_term = (mouse_x - left_w).max(0.0);
+                                    let y_in_term = (mouse_y - term_top).max(0.0);
+                                    let grid = term.lock_grid();
+                                    let col = ((x_in_term / CHAR_WIDTH).floor() as usize + 1)
+                                        .clamp(1, grid.cols);
+                                    let row = ((y_in_term / LINE_HEIGHT).floor() as usize + 1)
+                                        .clamp(1, grid.rows);
+                                    (col, row)
+                                };
+
+                                // Button code for release: 0=left, 1=middle, 2=right
+                                let btn_code = match this.last_terminal_button {
+                                    Some(MouseButton::Left) => 0u8,
+                                    Some(MouseButton::Middle) => 1u8,
+                                    Some(MouseButton::Right) => 2u8,
+                                    _ => 0u8, // default to left if unknown
+                                };
+
+                                let bytes =
+                                    crate::terminal::encode_sgr_mouse(btn_code, col, row, true);
+                                term.write_all(&bytes);
+
+                                // Clear tracked state
+                                this.last_terminal_mouse = None;
+                                this.last_terminal_button = None;
+                            }
                         }
                     }
                 }),

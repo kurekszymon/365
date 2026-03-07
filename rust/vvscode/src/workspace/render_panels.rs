@@ -8,8 +8,9 @@ use gpui::{
 };
 
 use super::{
-    BottomPanelDrag, DRAG_HANDLE_H, LEFT_PANEL_W, LINE_HEIGHT, PANEL_HEADER_H, RIGHT_PANEL_W,
-    SCROLLBAR_MIN_THUMB, SCROLLBAR_SIZE, STATUS_BAR_H, TITLE_BAR_H, Workspace,
+    BOTTOM_TAB_BAR_H, BottomPanelDrag, CHAR_WIDTH, DRAG_HANDLE_H, LEFT_PANEL_W, LINE_HEIGHT,
+    PANEL_HEADER_H, RIGHT_PANEL_W, SCROLLBAR_MIN_THUMB, SCROLLBAR_SIZE, STATUS_BAR_H, TITLE_BAR_H,
+    Workspace,
     scrollbar::{ScrollbarDragKind, ScrollbarDragState},
 };
 
@@ -302,7 +303,45 @@ impl Workspace {
             let cursor_visible = grid.cursor_visible;
             let at_bottom = grid.is_at_bottom();
 
-            let mut lines_container = div().flex().flex_col().overflow_hidden();
+            let mut lines_container = div().flex().flex_col().overflow_hidden().on_mouse_down(
+                MouseButton::Left,
+                cx.listener(|this, ev: &MouseDownEvent, window, _cx| {
+                    // Track button press for mouse reporting
+                    if this.terminal_focus_handle.is_focused(window) {
+                        if let Some(ref mut term) = this.terminal {
+                            let mouse_mode = term.lock_grid().mouse_mode;
+                            use crate::terminal::MouseMode;
+
+                            // Send press event if mode requires button events
+                            if mouse_mode != MouseMode::None {
+                                let window_h: f32 = window.viewport_size().height.into();
+                                let left_w = if this.left_panel_visible {
+                                    LEFT_PANEL_W
+                                } else {
+                                    0.0
+                                };
+                                let term_top = window_h - this.bottom_panel_h + BOTTOM_TAB_BAR_H;
+                                let mouse_x: f32 = ev.position.x.into();
+                                let mouse_y: f32 = ev.position.y.into();
+                                let x_in_term = (mouse_x - left_w).max(0.0);
+                                let y_in_term = (mouse_y - term_top).max(0.0);
+                                let grid = term.lock_grid();
+                                let col = ((x_in_term / CHAR_WIDTH).floor() as usize + 1)
+                                    .clamp(1, grid.cols);
+                                let row = ((y_in_term / LINE_HEIGHT).floor() as usize + 1)
+                                    .clamp(1, grid.rows);
+                                drop(grid);
+
+                                this.last_terminal_mouse = Some((col, row));
+                                this.last_terminal_button = Some(MouseButton::Left);
+
+                                let bytes = crate::terminal::encode_sgr_mouse(0u8, col, row, false);
+                                term.write_all(&bytes);
+                            }
+                        }
+                    }
+                }),
+            );
 
             for r in 0..rows {
                 let Some(line) = grid.visible_line(r) else {
