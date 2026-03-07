@@ -80,10 +80,7 @@ impl Workspace {
                 // Re-expand directories that were open before the refresh.
                 // This triggers lazy-load scanning for each, rebuilding
                 // their children in the flat list.
-                let to_expand: Vec<Arc<str>> = previously_expanded
-                    .iter()
-                    .cloned()
-                    .collect();
+                let to_expand: Vec<Arc<str>> = previously_expanded.iter().cloned().collect();
                 for dir in to_expand {
                     ws.expand_or_collapse_dir(&dir);
                 }
@@ -120,9 +117,7 @@ impl Workspace {
                 }
 
                 // Splice right after the directory entry in the flat list.
-                if let Some(idx) =
-                    self.file_tree.iter().position(|n| n.rel_path == *rel_path)
-                {
+                if let Some(idx) = self.file_tree.iter().position(|n| n.rel_path == *rel_path) {
                     self.file_tree.splice(idx + 1..idx + 1, children);
                 }
 

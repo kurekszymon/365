@@ -303,6 +303,59 @@ impl Render for Workspace {
             .key_context("Workspace")
             .track_focus(&self.focus_handle)
             .on_mouse_move(cx.listener(|this, ev: &MouseMoveEvent, window, cx| {
+                // Forward mouse motion to terminal (SGR) when terminal has
+                // requested mouse reporting. Coordinates are mapped to the
+                // terminal grid using `CHAR_WIDTH`/`LINE_HEIGHT` heuristics.
+                if this.terminal_focus_handle.is_focused(window) && this.bottom_panel_visible {
+                    if let Some(ref mut term) = this.terminal {
+                        // Read grid size and mouse-reporting flag then drop the lock
+                        let (cols, rows, mouse_reporting) = {
+                            let grid = term.lock_grid();
+                            (grid.cols, grid.rows, grid.mouse_reporting)
+                        };
+                        // Only forward mouse motion if the application requested
+                        // mouse reporting (CSI ?1000h / ?1006h / etc.). This avoids
+                        // spamming the PTY with motion events when no program
+                        // expects them.
+                        if mouse_reporting {
+                            let window_h: f32 = window.viewport_size().height.into();
+                            let left_w = if this.left_panel_visible {
+                                LEFT_PANEL_W
+                            } else {
+                                0.0
+                            };
+                            // Terminal content top in window coords
+                            let term_top = window_h - this.bottom_panel_h + BOTTOM_TAB_BAR_H;
+                            let mouse_x: f32 = ev.position.x.into();
+                            let mouse_y: f32 = ev.position.y.into();
+                            let x_in_term = (mouse_x - left_w).max(0.0);
+                            let y_in_term = (mouse_y - term_top).max(0.0);
+                            let col = (x_in_term / CHAR_WIDTH).floor() as usize + 1; // 1-based
+                            let row = (y_in_term / LINE_HEIGHT).floor() as usize + 1; // 1-based
+                            let col = col.clamp(1, cols);
+                            let row = row.clamp(1, rows);
+
+                            // Button encoding: 0=left,1=middle,2=right. If no button, use 3.
+                            let base = match ev.pressed_button {
+                                Some(MouseButton::Left) => 0u8,
+                                Some(MouseButton::Middle) => 1u8,
+                                Some(MouseButton::Right) => 2u8,
+                                _ => 3u8,
+                            };
+                            // For motion events, set motion bit by adding 32 when a
+                            // button is held; otherwise leave as-is.
+                            let btn_code = if ev.pressed_button.is_some() {
+                                base.wrapping_add(32)
+                            } else {
+                                base
+                            };
+
+                            let bytes =
+                                crate::terminal::encode_sgr_mouse(btn_code, col, row, false);
+                            term.write_all(&bytes);
+                        }
+                    }
+                }
                 // ── Bottom panel resize drag ─────────────────────────────
                 if let Some(drag) = this.bottom_panel_drag {
                     if ev.pressed_button != Some(MouseButton::Left) {
@@ -397,6 +450,20 @@ impl Render for Workspace {
                     this.scrollbar_drag = None;
                     this.mouse_drag_selecting = false;
                     this.bottom_panel_drag = None;
+                    // If terminal requested mouse reporting, send a release
+                    // event for the left button.
+                    if let Some(ref mut term) = this.terminal {
+                        // Only send a release if the application requested
+                        // mouse reporting.
+                        let mouse_reporting = term.lock_grid().mouse_reporting;
+                        if mouse_reporting {
+                            // We don't have the mouse coordinates here; send a generic
+                            // release at (1,1) — most programs will update state on any release.
+                            let bytes =
+                                crate::terminal::encode_sgr_mouse(3u8, 1usize, 1usize, true);
+                            term.write_all(&bytes);
+                        }
+                    }
                 }),
             )
             .on_action(cx.listener(|this, _: &ToggleLeftPanel, window, cx| {
@@ -485,6 +552,21 @@ impl Render for Workspace {
                 }
             }))
             .on_action(cx.listener(|this, _: &Paste, window, cx| {
+                // If terminal is focused, paste into PTY; otherwise paste into editor.
+                if this.terminal_focus_handle.is_focused(window) && this.bottom_panel_visible {
+                    if let Some(item) = cx.read_from_clipboard() {
+                        if let Some(text) = item.text() {
+                            if let Some(ref mut term) = this.terminal {
+                                term.lock_grid().scroll_offset = 0;
+                                term.write_all(text.as_bytes());
+                            }
+                        }
+                    }
+                    cx.notify();
+                    return;
+                }
+
+                // Default editor paste behavior
                 if let Some(item) = cx.read_from_clipboard() {
                     if let Some(text) = item.text() {
                         this.editor.insert_text(&text);

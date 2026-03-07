@@ -39,20 +39,33 @@ impl Workspace {
         // instead of the editor. Cmd+` toggles the panel (handled by
         // the action system), so we don't intercept that here.
         if self.terminal_focus_handle.is_focused(window) && self.bottom_panel_visible {
-            // Let Cmd-key combos fall through to the action system
-            // (e.g. Cmd+`, Cmd+B, Cmd+P, Cmd+S, etc.)
+            // Special-case: Cmd+V should paste into the terminal.
             if cmd {
-                // Fall through — don't consume, let actions handle it.
-            } else if let Some(bytes) =
-                key_to_bytes(key, keystroke.key_char.as_deref(), shift, ctrl, alt, false)
-            {
-                if let Some(ref mut term) = self.terminal {
-                    // Snap back to live view when the user types.
-                    term.lock_grid().scroll_offset = 0;
-                    term.write_all(&bytes);
+                if key == "v" {
+                    if let Some(item) = cx.read_from_clipboard() {
+                        if let Some(text) = item.text() {
+                            if let Some(ref mut term) = self.terminal {
+                                term.lock_grid().scroll_offset = 0;
+                                term.write_all(text.as_bytes());
+                            }
+                            cx.notify();
+                            return;
+                        }
+                    }
+                    // If clipboard empty, fall through to actions.
                 }
-                cx.notify();
-                return;
+            } else {
+                if let Some(bytes) =
+                    key_to_bytes(key, keystroke.key_char.as_deref(), shift, ctrl, alt, false)
+                {
+                    if let Some(ref mut term) = self.terminal {
+                        // Snap back to live view when the user types.
+                        term.lock_grid().scroll_offset = 0;
+                        term.write_all(&bytes);
+                    }
+                    cx.notify();
+                    return;
+                }
             }
         }
 

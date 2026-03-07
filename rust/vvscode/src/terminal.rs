@@ -144,6 +144,11 @@ pub struct TerminalGrid {
     pub scroll_offset: usize,
     /// Whether new output has arrived since last render.
     pub dirty: bool,
+    /// Whether the application running inside the PTY has requested
+    /// mouse reporting (e.g. via CSI ?1000h / ?1002h / ?1003h / ?1006h).
+    /// When true, the workspace should forward mouse events to the PTY.
+    pub mouse_reporting: bool,
+    // (mouse reporting is tracked here; workspace forwards events when terminal focused)
     /// Alternate screen buffer (used by programs like vim, less).
     alt_lines: Option<Vec<Vec<Cell>>>,
     alt_cursor: (usize, usize),
@@ -174,6 +179,7 @@ impl TerminalGrid {
             saved_cursor: (0, 0),
             scroll_offset: 0,
             dirty: true,
+            mouse_reporting: false,
             alt_lines: None,
             alt_cursor: (0, 0),
             scroll_top: 0,
@@ -807,7 +813,9 @@ impl Perform for TerminalGrid {
             // Private modes — DEC set/reset
             'h' if private => {
                 for sub in params.iter() {
-                    match sub[0] {
+                    // Params are slices of numeric values; take first value if present.
+                    let n = sub.first().copied().unwrap_or(0) as usize;
+                    match n {
                         // DECCKM — cursor key mode (we note it but don't change behavior yet)
                         1 => {}
                         // Origin mode
@@ -816,6 +824,9 @@ impl Perform for TerminalGrid {
                         7 => self.auto_wrap = true,
                         // Show cursor
                         25 => self.cursor_visible = true,
+                        // Mouse reporting requested by the application
+                        // Common mouse reporting private modes: 1000, 1002, 1003, 1006, 1005
+                        1000 | 1002 | 1003 | 1006 | 1005 => self.mouse_reporting = true,
                         // Alt screen buffer
                         1049 | 47 | 1047 => self.enter_alt_screen(),
                         _ => {}
@@ -824,10 +835,13 @@ impl Perform for TerminalGrid {
             }
             'l' if private => {
                 for sub in params.iter() {
-                    match sub[0] {
+                    let n = sub.first().copied().unwrap_or(0) as usize;
+                    match n {
                         6 => self.origin_mode = false,
                         7 => self.auto_wrap = false,
                         25 => self.cursor_visible = false,
+                        // Mouse reporting disable requested by the application
+                        1000 | 1002 | 1003 | 1006 | 1005 => self.mouse_reporting = false,
                         1049 | 47 | 1047 => self.leave_alt_screen(),
                         _ => {}
                     }
@@ -1129,4 +1143,14 @@ pub fn key_to_bytes(
             }
         }
     }
+}
+
+/// Encode an SGR mouse event.
+///
+/// `button` is the numeric button code (0=left,1=middle,2=right,3=release).
+/// `x`/`y` are 1-based coordinates. `release` selects 'm' (release) vs 'M' (press/motion).
+pub fn encode_sgr_mouse(button: u8, x: usize, y: usize, release: bool) -> Vec<u8> {
+    let op = if release { 'm' } else { 'M' };
+    let s = format!("\x1b[<{};{};{}{}", button, x, y, op);
+    s.into_bytes()
 }
