@@ -2,7 +2,7 @@
 title: 'git got gut'
 description: 'Overview on the git workflow from reversibility perspective'
 pubDate: 'Feb 01, 2026'
-heroImage: '../../assets/git-big-logo.png'
+heroImage: '../../assets/gitgotgut.svg'
 ---
 
 _you need to be familiar with git_ - that's just the requirement nowadays - whether you are an experienced engineer or just getting started.

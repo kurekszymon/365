@@ -1,17 +1,9 @@
 ---
-title: 'fwd: enums'
+title: 'fwd: enums (🚧)'
 description: 'Are enums worth it'
 pubDate: 'Mar 07, 2026'
-heroImage: '../../assets/work-in-progress.jpg'
+heroImage: '../../assets/fwdenums.svg'
 ---
-
-# fwd: enums (WIP)
-
-## tl;dr
-
-to be filled
-
-## preface
 
 the **_enums vs string literals_** is one of those internet rabbit holes\*
 
@@ -20,11 +12,6 @@ I want to get this finally sorted so..
 
 I came up with a fancy name of `fwd: enums` - consider this definitive research piece you can forward next time someone tells you to swap your enum for a string union in your PR.
 
-\* said rabbit holes:
-
-- https://www.reddit.com/r/typescript/comments/1e3yyaj/use_string_literal_instead_of_enums/
-- https://devsparks.goooseman.dev/hacks/20240715-use-string-literals-not-enums/
-- https://www.reddit.com/r/typescript/comments/w9vf2m/question_are_you_using_enums_in_typescript_why_or/
 
 ## the contenders
 
@@ -139,3 +126,9 @@ Honestly, I don't see many real cons - string unions give you enum-like type che
 If you'd actually need a runtime object that you could derive `string literal union type` from, you can mark your objects
 
 ### `as const`
+
+\* said rabbit holes:
+
+- https://www.reddit.com/r/typescript/comments/1e3yyaj/use_string_literal_instead_of_enums/
+- https://devsparks.goooseman.dev/hacks/20240715-use-string-literals-not-enums/
+- https://www.reddit.com/r/typescript/comments/w9vf2m/question_are_you_using_enums_in_typescript_why_or/

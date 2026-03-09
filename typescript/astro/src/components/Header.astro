@@ -1,13 +1,16 @@
 ---
-import { SITE_TITLE } from '../consts';
-import HeaderLink from './HeaderLink.astro';
+import { SITE_TITLE } from "../consts";
+import HeaderLink from "./HeaderLink.astro";
+
+const pathname = Astro.url.pathname.split("/").filter(Boolean).at(-1);
 ---
 
 <header>
 	<nav>
-		<h2><a href="/">{SITE_TITLE}{Astro.url.pathname}</a></h2>
+		<h2>
+			<a href="/">{`${SITE_TITLE}/${pathname}`}</a>
+		</h2>
 		<div class="internal-links">
-			<HeaderLink href="/">home</HeaderLink>
 			<HeaderLink href="/blog">blog</HeaderLink>
 			<HeaderLink href="/about">about</HeaderLink>
 		</div>
