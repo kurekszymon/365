@@ -7,13 +7,14 @@ import Layout from "../layouts/BlogPost.astro";
 	title="About Me"
 	description="one commit at a time"
 	pubDate={new Date("Mar 08 2026")}
-	heroImage={GithubImage}
+	heroImage={{ ...GithubImage, width: 240, height: 240 }}
 >
+	<p>Hey I'm Szymon Kurek - Senior Software Engineer @ AgileEngine.</p>
 	<p>
-		hey I'm Szymon Kurek - Senior Software Engineer @ AgileEngine. I'm a big fan
-		of programming in general - I created my first web page (html + css) as a
-		_presentation_ for https://my-fantasy.net/ and reignated the love writing
-		LUA in my first tech job.
+		I'm a big fan of programming in general - I created my first web page (html
+		+ css) as a <i>presentation</i> for <a href="https://my-fantasy.net"
+			>my-fantasy.net</a
+		> and reignated the love writing LUA in my first tech job.
 	</p>
 	<p>
 		Currently I'm trying to do one activity related to programming every day -
