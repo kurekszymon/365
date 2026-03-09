@@ -83,16 +83,62 @@
 
         async function submitQuery() {
             const sql = document.getElementById('sqlInput').value;
+            const t0 = performance.now();
             const res = await fetch('sql-playground.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ sql })
             });
+            const t1 = performance.now(); // After network+backend
             const data = await res.json();
+            const t2 = performance.now(); // After JSON parse
             if (data.error) {
                 document.getElementById('result').innerHTML = `<div class="error">${data.error}</div>`;
             } else {
-                document.getElementById('result').innerHTML = renderTable(data.result);
+                const container = document.getElementById('result');
+                // Measure parse time
+                const parseTime = (t2 - t1) / 1000;
+
+                // Prepare table HTML but don't insert yet
+                const tableHtml = renderTable(data.result);
+
+                // Build initial timing display with placeholders for render/total
+                let timingHtml = '<div id="timings" style="margin-bottom:0.5em">';
+                if (typeof data.timing_sql !== 'undefined') {
+                    timingHtml += `<div><b>Backend SQL time:</b> ${data.timing_sql.toFixed(4)} s</div>`;
+                }
+                if (typeof data.timing_fetch !== 'undefined') {
+                    timingHtml += `<div><b>Backend fetchAll time:</b> ${data.timing_fetch.toFixed(4)} s</div>`;
+                }
+                if (typeof data.timing_json !== 'undefined') {
+                    timingHtml += `<div><b>Backend JSON encode time:</b> ${data.timing_json.toFixed(4)} s</div>`;
+                }
+                if (typeof data.timing_backend_total !== 'undefined') {
+                    timingHtml += `<div><b>Backend total time:</b> ${data.timing_backend_total.toFixed(4)} s</div>`;
+                }
+                timingHtml += `<div><b>Network+Backend (fetch):</b> ${((t1 - t0) / 1000).toFixed(4)} s</div>`;
+                timingHtml += `<div><b>JSON parse time (client):</b> ${parseTime.toFixed(4)} s</div>`;
+                timingHtml += `<div id="frontend-render"><b>Frontend render (paint):</b> calculating...</div>`;
+                timingHtml += `<div id="total-submit-paint"><b>Total (submit to paint):</b> calculating...</div>`;
+                timingHtml += '</div>';
+
+                // Insert timings immediately and a table placeholder
+                container.innerHTML = timingHtml + '<div id="table-holder"><i>Rendering table...</i></div>';
+
+                // Now render table into holder and measure paint
+                const tableHolder = document.getElementById('table-holder');
+                const renderStart = performance.now();
+                tableHolder.innerHTML = tableHtml;
+                // Wait for two rAFs to ensure the browser painted the content
+                await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+                const renderEnd = performance.now();
+                const renderTime = (renderEnd - renderStart) / 1000;
+
+                // Update timing fields in-place to avoid reflowing the large table twice
+                const renderEl = document.getElementById('frontend-render');
+                const totalEl = document.getElementById('total-submit-paint');
+                if (renderEl) renderEl.innerHTML = `<b>Frontend render (paint):</b> ${renderTime.toFixed(4)} s`;
+                if (totalEl) totalEl.innerHTML = `<b>Total (submit to paint):</b> ${((renderEnd - t0) / 1000).toFixed(4)} s`;
             }
         }
 

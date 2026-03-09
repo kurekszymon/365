@@ -22,15 +22,22 @@ function seedTable($db, $table, $insertSql, $countSql)
   }
 }
 
-// Seed users (100 users)
-$userInserts = [];
-for ($i = 1; $i <= 100; $i++) {
-  $name = "User$i";
-  $email = strtolower($name) . "@example.com";
-  $date = date('Y-m-d', strtotime("2026-03-08 +$i days"));
-  $userInserts[] = "('$name', '$email', '$date')";
+// Seed users (100,000 users)
+$userCount = $db->query('SELECT COUNT(*) FROM users')->fetchColumn();
+if ($userCount == 0) {
+  $batchSize = 1000;
+  for ($batch = 0; $batch < 100000 / $batchSize; $batch++) {
+    $userInserts = [];
+    for ($i = 1; $i <= $batchSize; $i++) {
+      $userNum = $batch * $batchSize + $i;
+      $name = "User$userNum";
+      $email = strtolower($name) . "@example.com";
+      $date = date('Y-m-d', strtotime("2026-03-08 +$userNum days"));
+      $userInserts[] = "('$name', '$email', '$date')";
+    }
+    $db->exec("INSERT INTO users (name, email, created_at) VALUES " . implode(",", $userInserts));
+  }
 }
-seedTable($db, 'users', "INSERT INTO users (name, email, created_at) VALUES " . implode(",", $userInserts), 'SELECT COUNT(*) FROM users');
 
 // Seed products (20 products)
 $productInserts = [];
@@ -63,9 +70,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $sql = trim($data['sql'] ?? '');
   if (stripos($sql, 'select') === 0) {
     try {
+      $t0 = microtime(true);
       $stmt = $db->query($sql);
+      $t1 = microtime(true);
       $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-      echo json_encode(['result' => $result]);
+      $t2 = microtime(true);
+      $json = json_encode(['result' => $result]);
+      $t3 = microtime(true);
+      // Send all metrics
+      echo json_encode([
+        'result' => $result,
+        'timing_sql' => $t1 - $t0,
+        'timing_fetch' => $t2 - $t1,
+        'timing_json' => $t3 - $t2,
+        'timing_backend_total' => $t3 - $t0
+      ]);
     } catch (Exception $e) {
       echo json_encode(['error' => $e->getMessage()]);
     }
