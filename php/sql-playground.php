@@ -22,13 +22,16 @@ function seedTable($db, $table, $insertSql, $countSql)
   }
 }
 
-// Seed users (100,000 users)
+// Seed users (10,000,000 users)
 $userCount = $db->query('SELECT COUNT(*) FROM users')->fetchColumn();
 if ($userCount == 0) {
-  $batchSize = 1000;
-  for ($batch = 0; $batch < 100000 / $batchSize; $batch++) {
+  $totalUsers = 10000000;
+  $batchSize = 5000; // insert in batches to avoid huge single queries
+  $batches = (int)ceil($totalUsers / $batchSize);
+  for ($batch = 0; $batch < $batches; $batch++) {
+    $currentBatchSize = min($batchSize, $totalUsers - $batch * $batchSize);
     $userInserts = [];
-    for ($i = 1; $i <= $batchSize; $i++) {
+    for ($i = 1; $i <= $currentBatchSize; $i++) {
       $userNum = $batch * $batchSize + $i;
       $name = "User$userNum";
       $email = strtolower($name) . "@example.com";
@@ -70,21 +73,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $sql = trim($data['sql'] ?? '');
   if (stripos($sql, 'select') === 0) {
     try {
+      $maxReturn = 10000;
+      // Execute the user's SQL as-is (do not modify it)
       $t0 = microtime(true);
       $stmt = $db->query($sql);
       $t1 = microtime(true);
-      $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+      // Stream-fetch up to $maxReturn rows into the result array
+      $result = [];
+      $count = 0;
+      while (($row = $stmt->fetch(PDO::FETCH_ASSOC)) !== false) {
+        $result[] = $row;
+        $count++;
+        if ($count >= $maxReturn) {
+          // try to fetch one more row to detect if there are additional rows
+          $more = $stmt->fetch(PDO::FETCH_ASSOC);
+          $truncated = ($more !== false);
+          break;
+        }
+      }
+      if (!isset($truncated)) {
+        $truncated = false;
+      }
       $t2 = microtime(true);
-      $json = json_encode(['result' => $result]);
-      $t3 = microtime(true);
-      // Send all metrics
-      echo json_encode([
+      // JSON encode after timings
+      $t_before_json = microtime(true);
+      $payload = [
         'result' => $result,
-        'timing_sql' => $t1 - $t0,
+        'truncated' => $truncated,
+        'max_returned' => $truncated ? $maxReturn : $count,
+        // timings: prepare (query call), fetch (row reads), and total SQL time including fetch
+        'timing_query_prepare' => $t1 - $t0,
         'timing_fetch' => $t2 - $t1,
-        'timing_json' => $t3 - $t2,
-        'timing_backend_total' => $t3 - $t0
-      ]);
+        'timing_sql_total' => $t2 - $t0,
+      ];
+      $t_after_payload = microtime(true);
+      $payload['timing_json'] = 0; // will be set after actual json_encode to be precise
+      $payload['timing_backend_total'] = 0;
+      $json = json_encode($payload);
+      $t_after_json = microtime(true);
+      // now set accurate json and total timings
+      $payload['timing_json'] = $t_after_json - $t_after_payload;
+      $payload['timing_backend_total'] = $t_after_json - $t0;
+      echo json_encode($payload);
     } catch (Exception $e) {
       echo json_encode(['error' => $e->getMessage()]);
     }

@@ -101,20 +101,30 @@
 
                 // Prepare table HTML but don't insert yet
                 const tableHtml = renderTable(data.result);
+                const returnedCount = Array.isArray(data.result) ? data.result.length : 0;
 
                 // Build initial timing display with placeholders for render/total
                 let timingHtml = '<div id="timings" style="margin-bottom:0.5em">';
-                if (typeof data.timing_sql !== 'undefined') {
+                if (typeof data.timing_sql_total !== 'undefined') {
+                    timingHtml += `<div><b>Backend SQL total (prepare+fetch):</b> ${data.timing_sql_total.toFixed(4)} s</div>`;
+                } else if (typeof data.timing_sql !== 'undefined') {
                     timingHtml += `<div><b>Backend SQL time:</b> ${data.timing_sql.toFixed(4)} s</div>`;
                 }
+                if (typeof data.timing_query_prepare !== 'undefined') {
+                    timingHtml += `<div><b>Backend query prepare:</b> ${data.timing_query_prepare.toFixed(4)} s</div>`;
+                }
                 if (typeof data.timing_fetch !== 'undefined') {
-                    timingHtml += `<div><b>Backend fetchAll time:</b> ${data.timing_fetch.toFixed(4)} s</div>`;
+                    timingHtml += `<div><b>Backend fetch/read time:</b> ${data.timing_fetch.toFixed(4)} s</div>`;
                 }
                 if (typeof data.timing_json !== 'undefined') {
                     timingHtml += `<div><b>Backend JSON encode time:</b> ${data.timing_json.toFixed(4)} s</div>`;
                 }
                 if (typeof data.timing_backend_total !== 'undefined') {
                     timingHtml += `<div><b>Backend total time:</b> ${data.timing_backend_total.toFixed(4)} s</div>`;
+                }
+                timingHtml += `<div><b>Rows returned:</b> ${returnedCount}</div>`;
+                if (data.truncated) {
+                    timingHtml += `<div style="color:orange"><b>Note:</b> Results were limited on the server to ${data.max_returned} rows.</div>`;
                 }
                 timingHtml += `<div><b>Network+Backend (fetch):</b> ${((t1 - t0) / 1000).toFixed(4)} s</div>`;
                 timingHtml += `<div><b>JSON parse time (client):</b> ${parseTime.toFixed(4)} s</div>`;
