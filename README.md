@@ -3,11 +3,16 @@
 Created this repo so i can explore some programming concepts I wanted and learn document my progress over time. Aiming for a concept per month, unless something gets super interesting.
 
 - [365](#365)
+  - [articles](#articles)
+    - [mine](#mine)
+    - [not mine](#not-mine)
+    - [papers](#papers)
+  - [rust](#rust)
   - [webrtc](#webrtc)
   - [electron](#electron)
   - [react 19](#react-19)
   - [webgpu](#webgpu)
-  - [rust](#rust)
+  - [php](#php)
 
 ## articles
 
@@ -87,3 +92,7 @@ I want to come back to it when I will have bit more time a day to be able to dra
 - got to know what's the process of using WebGPU
 - was able to render some squares based on shaders
 - future reference listed in #docs section in [read more](./typescript/webgpu/readme.md)
+
+## php
+
+**project goals** get more familiar with sql, measure performance, try to optimize queries, check what's php all about (ssr)
