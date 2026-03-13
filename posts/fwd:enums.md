@@ -2,7 +2,7 @@
 
 ## tl;dr
 
-to be filled
+don't need runtime? → **string literal union**. need runtime iteration? → **`as const`** object. skip `const enum` in modern frontend toolchains. regular `enum` only if the codebase already commits to them.
 
 ## preface
 
@@ -132,3 +132,63 @@ Honestly, I don't see many real cons - string unions give you enum-like type che
 If you'd actually need a runtime object that you could derive `string literal union type` from, you can mark your objects
 
 ### `as const`
+
+this is where things get interesting. `as const` is a type assertion that tells TypeScript to infer the **narrowest possible type** for a value - making everything `readonly` and literal all the way down.
+
+```ts
+const Direction = {
+  Up: 'UP',
+  Down: 'DOWN',
+  Left: 'LEFT',
+  Right: 'RIGHT',
+} as const;
+
+// derive the union type from the object
+type Direction = (typeof Direction)[keyof typeof Direction];
+// -> 'UP' | 'DOWN' | 'LEFT' | 'RIGHT'
+```
+
+what does this buy you? quite a lot actually:
+
+- you get a **runtime object** you can pass around, iterate over, use in lookups
+- you get a **derived union type** that works exactly like a string literal union
+- it plays nicely with `isolatedModules` - no cross-file resolution needed
+- no IIFE, no reverse mapping weirdness - it's just a plain frozen object
+
+```ts
+// iterate over values
+Object.values(Direction); // ['UP', 'DOWN', 'LEFT', 'RIGHT']
+
+// use as a type
+const move = (dir: Direction) => {};
+move(Direction.Up);    // ✓
+move('UP');            // ✓
+move('DIAGONAL');      // ✗ type error
+
+// you can also do arrays
+const Roles = ['admin', 'user', 'guest'] as const;
+type Role = (typeof Roles)[number];
+// -> 'admin' | 'user' | 'guest'
+
+// and now you can check membership at runtime
+Roles.includes(someInput as Role);
+```
+
+the `typeof X[keyof typeof X]` pattern looks noisy the first time you see it, but it becomes second nature fast. and unlike `enum`, there is no new syntax to learn - it's just JavaScript objects with a type assertion on top.
+
+the tradeoff? you lose the named namespace feel of `Direction.Up` being exclusively tied to the `Direction` enum type. with `as const`, `Direction.Up` and the raw string `'UP'` are interchangeable - TypeScript won't complain about either. depending on your perspective that's a feature (flexibility) or a bug (less nominal typing).
+
+## tl;dr
+
+|                      | runtime object | iteratable | `isolatedModules` | type safety | zero emit |
+| -------------------- | -------------- | ---------- | ----------------- | ----------- | --------- |
+| `enum`               | ✓              | ✓          | ✓                 | ✓           | ✗         |
+| `const enum`         | ✗              | ✗          | ✗*                | ✓           | ✓         |
+| string literal union | ✗              | ✗          | ✓                 | ✓           | ✓         |
+| `as const` object    | ✓              | ✓          | ✓                 | ✓           | ~✓**      |
+
+\* works with `tsc`, breaks with single-file transpilers unless you jump through hoops
+
+\** emits a plain object literal - minimal, predictable, no IIFE magic
+
+if you don't need runtime iteration - **string literal union**. if you do - **`as const`**. reach for `enum` only when you genuinely need reverse mapping or are in a codebase that already commits to them. avoid `const enum` in anything that touches a modern bundler.
