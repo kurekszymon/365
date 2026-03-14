@@ -1,0 +1,1 @@
+asked opus to generate me a roadmap for java + spring, etc. here's what it came up with. started from `roadmap.md` and then asked it to generate seperate doc on specific topics.
