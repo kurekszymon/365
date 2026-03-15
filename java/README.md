@@ -1,5 +1,13 @@
 # java
 
+# 15.03 — Keycloak 26 + OAuth2 resource server
+- added Keycloak 26 to `docker-compose.yml` — runs on port 8180 (`start-dev` mode, shares Postgres)
+- admin console at `http://localhost:8180` (admin/admin) — create a `fckjvm` realm + client
+- `spring-boot-starter-security` + `spring-boot-starter-oauth2-resource-server` — API validates JWTs from Keycloak
+- `SecurityConfig` — stateless, CSRF disabled. `/hello`, `/swagger-ui/**`, `/v3/api-docs/**` are public; `/api/**` requires a valid JWT
+- `UserSyncService` — on authenticated request, syncs Keycloak `sub` claim → `User.externalId`, creates user if new
+- tests mock auth state instead of running infra: `@WithMockUser` for controller slice, auto-config exclusions + `@MockitoBean` for context test
+
 # 14.03 — Redis + docker-compose
 - added `spring-boot-starter-data-redis` — gives `RedisTemplate` and `@Cacheable` support
 - `docker-compose.yml` — spins up Postgres 17 + Redis 8 (`docker compose up -d`)

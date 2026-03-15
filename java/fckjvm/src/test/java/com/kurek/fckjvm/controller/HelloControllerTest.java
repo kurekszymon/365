@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -12,9 +14,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.kurek.fckjvm.service.HelloService;
 
-// Sliced test — only loads the web layer, not the full app.
-// HelloService is mocked so we test ONLY the controller's behavior.
+// @WebMvcTest = web layer only, HelloService mocked.
+// OAuth2 auto-config excluded — can't wire in a @WebMvcTest slice.
 @WebMvcTest(HelloController.class)
+@WithMockUser
+@TestPropertySource(properties
+        = "spring.autoconfigure.exclude=org.springframework.boot.security.oauth2.server.resource.autoconfigure.servlet.OAuth2ResourceServerAutoConfiguration"
+)
 class HelloControllerTest {
 
     @Autowired
