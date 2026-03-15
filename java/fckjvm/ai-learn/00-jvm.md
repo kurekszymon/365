@@ -36,6 +36,151 @@ Rule of thumb: set `-Xms` = `-Xmx` in production to avoid heap resizing.
 
 For most Spring Boot apps, **G1 (default) is fine**. Switch to ZGC if you see GC pause spikes.
 
+### When GC runs
+
+GC triggers automatically — you don't call it. It runs when the JVM decides it needs memory.
+
+```java
+@RestController
+public class DemoController {
+
+    @GetMapping("/gc-demo")
+    public String demo() {
+        // --- Young generation GC (Minor GC) ---
+        // These strings are created in the Young Gen (Eden space).
+        // They become garbage immediately after the method returns
+        // because nothing holds a reference to them.
+        for (int i = 0; i < 100_000; i++) {
+            String temp = "item-" + i;  // allocates, then immediately unreachable
+        }
+        // At some point here (or before), Minor GC fires — collects Eden,
+        // promotes surviving objects to Survivor space. Usually < 10ms.
+
+        return "done";
+    }
+
+    // --- Old generation GC (Major/Full GC) ---
+    // Objects that survive several Minor GCs get promoted to Old Gen.
+    // This cache lives as long as the bean lives (singleton = app lifetime).
+    private final Map<String, byte[]> longLivedCache = new ConcurrentHashMap<>();
+
+    @GetMapping("/gc-demo/cache")
+    public String fillCache(@RequestParam String key) {
+        // 1MB chunks added on each request — stays in Old Gen
+        longLivedCache.put(key, new byte[1024 * 1024]);
+        // When Old Gen fills up → Major GC fires.
+        // G1 tries to do this concurrently; older collectors (Serial, Parallel)
+        // stop the world for seconds.
+        return "cached " + longLivedCache.size() + " entries";
+    }
+}
+```
+
+What's actually happening in memory:
+
+```
+Eden (Young Gen)
+  → object allocated here first
+  → Minor GC: unreachable objects deleted, survivors → Survivor space
+  → after N minor GCs: survivors → Old Gen (promoted)
+
+Old Gen
+  → long-lived objects (caches, static fields, singletons)
+  → Major GC fires when Old Gen fills up — more expensive
+
+Metaspace
+  → class definitions live here (your @Entity, @Service etc.)
+  → grows as Spring loads more classes at startup
+  → GC rarely touches this
+```
+
+Practical triggers:
+- **Minor GC**: Eden space full (happens constantly in a busy app — usually harmless)
+- **Major/Full GC**: Old Gen near capacity, or you call `System.gc()` (don't)
+- **OOM**: heap completely full → `java.lang.OutOfMemoryError: Java heap space`
+
+You can force GC to observe it (never do this in production):
+
+```java
+// allocate a lot
+List<byte[]> chunks = new ArrayList<>();
+for (int i = 0; i < 100; i++) {
+    chunks.add(new byte[1024 * 1024]);  // 100MB total
+}
+chunks = null;  // all 100 chunks now unreachable
+
+System.gc();  // hint to JVM (not guaranteed) — watch GC log for the collection
+```
+
+### Reading GC logs
+
+Enable with `-Xlog:gc*:file=gc.log:time` and you'll see lines like:
+
+```
+[2.431s] GC(3) Pause Young (Normal) 24M->8M(256M) 4.231ms
+         │     │             │       │    │  │      └── pause time (stop-the-world)
+         │     │             │       │    │  └── total heap size
+         │     │             │       │    └── heap after GC
+         │     │             │       └── heap before GC
+         │     │             └── reason
+         │     └── GC type (Young = Minor, Mixed/Full = Major)
+         └── time since JVM start
+
+[14.012s] GC(12) Pause Full (System.gc()) 180M->45M(256M) 312.445ms
+                              └── someone called System.gc() — 312ms pause, bad
+```
+
+What to watch for:
+- **Young GC < 10ms** — totally normal, ignore
+- **Full GC > 100ms** — investigate. Probably heap too small or a leak
+- **Frequent Full GCs** — heap is undersized or there's a memory leak
+- **Heap after GC growing over time** (8M → 12M → 18M → 25M...) — classic leak signal
+
+### Common memory leaks in Spring apps
+
+```java
+// LEAK 1: unbounded cache with no eviction
+@Service
+public class BadService {
+    private final Map<String, Object> cache = new HashMap<>();  // grows forever
+
+    public Object get(String key) {
+        return cache.computeIfAbsent(key, k -> expensiveComputation(k));
+        // fix: use @Cacheable with TTL, or Caffeine with maximumSize
+    }
+}
+
+// LEAK 2: event listeners that hold references
+@Component
+public class LeakyListener {
+    private final List<Event> history = new ArrayList<>();  // unbounded
+
+    @EventListener
+    public void onEvent(SomeEvent event) {
+        history.add(event);  // never cleared
+        // fix: use a bounded collection, or persist to DB and clear
+    }
+}
+
+// LEAK 3: ThreadLocal not cleaned up (especially with thread pools)
+private static final ThreadLocal<UserContext> ctx = new ThreadLocal<>();
+
+public void handle(Request req) {
+    ctx.set(new UserContext(req.getUser()));
+    try {
+        // ... do work
+    } finally {
+        ctx.remove();  // MUST remove — thread gets reused in the pool
+    }
+}
+```
+
+The practical debugging path:
+1. Watch GC logs — heap-after-GC trending up?
+2. Take a heap dump: `jcmd <pid> GC.heap_dump /tmp/dump.hprof`
+3. Open in Eclipse MAT or VisualVM — shows what objects hold all the memory
+4. Find the dominator tree — the object retaining the most memory is your leak
+
 ### Monitoring
 
 ```bash
