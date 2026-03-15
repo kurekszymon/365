@@ -41,37 +41,34 @@ For most Spring Boot apps, **G1 (default) is fine**. Switch to ZGC if you see GC
 GC triggers automatically — you don't call it. It runs when the JVM decides it needs memory.
 
 ```java
-@RestController
-public class DemoController {
+public class GcDemo {
 
-    @GetMapping("/gc-demo")
-    public String demo() {
+    public static void main(String[] args) {
         // --- Young generation GC (Minor GC) ---
         // These strings are created in the Young Gen (Eden space).
-        // They become garbage immediately after the method returns
+        // They become garbage immediately after the loop
         // because nothing holds a reference to them.
         for (int i = 0; i < 100_000; i++) {
             String temp = "item-" + i;  // allocates, then immediately unreachable
         }
         // At some point here (or before), Minor GC fires — collects Eden,
         // promotes surviving objects to Survivor space. Usually < 10ms.
-
-        return "done";
     }
+}
 
-    // --- Old generation GC (Major/Full GC) ---
-    // Objects that survive several Minor GCs get promoted to Old Gen.
-    // This cache lives as long as the bean lives (singleton = app lifetime).
+// --- Old generation GC (Major/Full GC) ---
+// Objects that survive several Minor GCs get promoted to Old Gen.
+public class CacheDemo {
+    // This cache lives as long as the object lives — ends up in Old Gen.
     private final Map<String, byte[]> longLivedCache = new ConcurrentHashMap<>();
 
-    @GetMapping("/gc-demo/cache")
-    public String fillCache(@RequestParam String key) {
-        // 1MB chunks added on each request — stays in Old Gen
+    public void fillCache(String key) {
+        // 1MB chunks added on each call — stays in Old Gen
         longLivedCache.put(key, new byte[1024 * 1024]);
         // When Old Gen fills up → Major GC fires.
         // G1 tries to do this concurrently; older collectors (Serial, Parallel)
         // stop the world for seconds.
-        return "cached " + longLivedCache.size() + " entries";
+        System.out.println("cached " + longLivedCache.size() + " entries");
     }
 }
 ```
@@ -89,8 +86,8 @@ Old Gen
   → Major GC fires when Old Gen fills up — more expensive
 
 Metaspace
-  → class definitions live here (your @Entity, @Service etc.)
-  → grows as Spring loads more classes at startup
+  → class definitions live here (loaded classes, annotation metadata)
+  → grows as the app loads more classes at startup
   → GC rarely touches this
 ```
 
@@ -136,37 +133,34 @@ What to watch for:
 - **Frequent Full GCs** — heap is undersized or there's a memory leak
 - **Heap after GC growing over time** (8M → 12M → 18M → 25M...) — classic leak signal
 
-### Common memory leaks in Spring apps
+### Common memory leaks in Java apps
 
 ```java
 // LEAK 1: unbounded cache with no eviction
-@Service
-public class BadService {
+public class BadCache {
     private final Map<String, Object> cache = new HashMap<>();  // grows forever
 
     public Object get(String key) {
         return cache.computeIfAbsent(key, k -> expensiveComputation(k));
-        // fix: use @Cacheable with TTL, or Caffeine with maximumSize
+        // fix: use Caffeine with maximumSize, or a cache library with TTL
     }
 }
 
-// LEAK 2: event listeners that hold references
-@Component
-public class LeakyListener {
-    private final List<Event> history = new ArrayList<>();  // unbounded
+// LEAK 2: collections that grow without bound
+public class LeakyHistory {
+    private final List<String> history = new ArrayList<>();  // unbounded
 
-    @EventListener
-    public void onEvent(SomeEvent event) {
+    public void record(String event) {
         history.add(event);  // never cleared
-        // fix: use a bounded collection, or persist to DB and clear
+        // fix: use a bounded collection (e.g. LinkedList with size check), or persist to DB
     }
 }
 
 // LEAK 3: ThreadLocal not cleaned up (especially with thread pools)
-private static final ThreadLocal<UserContext> ctx = new ThreadLocal<>();
+private static final ThreadLocal<Map<String, String>> ctx = new ThreadLocal<>();
 
-public void handle(Request req) {
-    ctx.set(new UserContext(req.getUser()));
+public void handle(String userId) {
+    ctx.set(Map.of("userId", userId));
     try {
         // ... do work
     } finally {
@@ -301,10 +295,10 @@ jar tf build/libs/fckjvm-0.0.1-SNAPSHOT.jar | head -30
 
 ### Platform threads (traditional)
 
-1 Java thread = 1 OS thread. Heavy (~1MB stack each). Spring Boot default: Tomcat creates a thread pool (default 200 threads) → each request gets a thread → if all 200 are busy, requests queue.
+1 Java thread = 1 OS thread. Heavy (~1MB stack each). Web servers create a thread pool (e.g. Tomcat's default: 200 threads) → each request gets a thread → if all 200 are busy, requests queue.
 
 ```
-Request → Tomcat thread pool (200 threads) → controller → service → DB call (thread blocks)
+Request → thread pool (200 threads) → handler → service → DB call (thread blocks)
 ```
 
 Problem: if you have slow I/O (DB, HTTP calls), threads sit idle waiting. 200 threads = 200 concurrent requests max.
@@ -313,25 +307,34 @@ Problem: if you have slow I/O (DB, HTTP calls), threads sit idle waiting. 200 th
 
 Lightweight threads managed by the JVM. Millions possible. When a virtual thread blocks on I/O, the JVM parks it and reuses the carrier (OS) thread.
 
-```properties
-# enable in Spring Boot — that's it
-spring.threads.virtual.enabled=true
+```java
+// create virtual threads directly
+Thread.startVirtualThread(() -> {
+    // this runs on a virtual thread
+    var result = slowHttpCall();  // blocks, but carrier thread is freed
+});
+
+// or use the executor
+try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+    executor.submit(() -> slowDbQuery());
+    executor.submit(() -> slowHttpCall());
+}
 ```
 
 ```
-Request → virtual thread → controller → service → DB call (virtual thread parks, OS thread freed)
-                                                          → DB responds → virtual thread resumes
+Request → virtual thread → handler → service → DB call (virtual thread parks, OS thread freed)
+                                                        → DB responds → virtual thread resumes
 ```
 
-Same blocking code, massively better concurrency. No reactive/async needed.
+Same blocking code, massively better concurrency. No reactive/async needed. Spring Boot can use virtual threads for all request handling — covered in Phase 5.
 
 ### When to use which
 
 | Scenario                   | Use                                                |
 | -------------------------- | -------------------------------------------------- |
-| Default Spring Boot app    | Virtual threads (just enable the flag)             |
+| Default web app (Java 21+) | Virtual threads (enable in your framework)         |
 | CPU-bound computation      | Platform threads (virtual threads don't help here) |
-| Need reactive backpressure | WebFlux                                            |
+| Need reactive backpressure | Reactive stack (e.g. WebFlux)                      |
 | Legacy Java < 21           | Platform threads                                   |
 
 ### Thread debugging
@@ -346,7 +349,7 @@ Thread.getAllStackTraces().forEach((thread, stack) -> {
 });
 ```
 
-In Spring Boot actuator:
+In web frameworks with actuator endpoints (e.g. Spring Boot):
 
 ```properties
 management.endpoints.web.exposure.include=threaddump

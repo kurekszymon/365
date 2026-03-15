@@ -47,63 +47,71 @@ public record UserDto(String email, String name) {
 
 ```java
 // returning multiple values
-public record SearchResult(List<User> users, long totalCount) {}
+public record PageResult<T>(List<T> items, long totalCount) {}
 
 // use it
-SearchResult result = userService.search("alice");
-result.users();      // List<User>
+PageResult<String> result = search("alice");
+result.items();       // List<String>
 result.totalCount();  // long
 ```
 
 ## Optionals
 
-`Optional<T>` is Java's way of saying "this might not have a value". Spring Data repos return `Optional` from `findBy*` methods.
+`Optional<T>` is Java's way of saying "this might not have a value". Any method that might not return a result should return `Optional<T>` instead of null.
 
 ```java
 // BAD — null checks everywhere
-User user = userRepository.findByEmail(email);
-if (user != null) {
-    return user.getDisplayName();
+String value = map.get("key");
+if (value != null) {
+    return value.toUpperCase();
 }
-return "Unknown";
+return "UNKNOWN";
 
 // GOOD — Optional
-Optional<User> user = userRepository.findByEmail(email);
-return user.map(User::getDisplayName).orElse("Unknown");
+Optional<String> value = Optional.ofNullable(map.get("key"));
+return value.map(String::toUpperCase).orElse("UNKNOWN");
+```
+
+Creating Optionals:
+
+```java
+Optional<String> present = Optional.of("hello");          // must be non-null
+Optional<String> maybe   = Optional.ofNullable(getValue()); // null-safe
+Optional<String> empty   = Optional.empty();
 ```
 
 Common operations:
 
 ```java
-Optional<User> opt = userRepository.findByEmail("alice@test.com");
+Optional<String> opt = Optional.of("hello");
 
 // get value or throw
-User user = opt.orElseThrow();                                    // NoSuchElementException
-User user = opt.orElseThrow(() -> new UserNotFoundException(email)); // custom exception
+String val = opt.orElseThrow();                                        // NoSuchElementException
+String val = opt.orElseThrow(() -> new IllegalStateException("missing")); // custom exception
 
 // get value or default
-User user = opt.orElse(defaultUser);
+String val = opt.orElse("fallback");
 
-// get value or compute default
-User user = opt.orElseGet(() -> createDefaultUser());
+// get value or compute default (lazy)
+String val = opt.orElseGet(() -> computeDefault());
 
 // transform if present
-Optional<String> name = opt.map(User::getDisplayName);
+Optional<Integer> len = opt.map(String::length);
 
 // chain optionals
-Optional<String> city = opt.map(User::getAddress).map(Address::getCity);
+Optional<String> city = getUser().map(User::getAddress).map(Address::getCity);
 
 // do something if present
-opt.ifPresent(u -> log.info("Found user: {}", u.getEmail()));
+opt.ifPresent(v -> System.out.println("Got: " + v));
 
 // do something if present, else do something else
 opt.ifPresentOrElse(
-    u -> log.info("Found: {}", u.getEmail()),
-    () -> log.warn("User not found")
+    v -> System.out.println("Found: " + v),
+    () -> System.out.println("Not found")
 );
 
 // filter
-Optional<User> admin = opt.filter(u -> u.getRole().equals("ADMIN"));
+Optional<String> long_ = opt.filter(s -> s.length() > 3);
 ```
 
 Rules:
@@ -146,30 +154,34 @@ int totalLength = names.stream()
 With objects:
 
 ```java
-List<User> users = userRepository.findAll();
+List<Person> people = List.of(
+    new Person("Alice", 30, "NYC"),
+    new Person("Bob", 25, "LA"),
+    new Person("Charlie", 35, "NYC")
+);
 
-// get emails of active users
-List<String> emails = users.stream()
-    .filter(u -> u.getLastLoginAt() != null)
-    .map(User::getEmail)
+// get names of people over 28
+List<String> names = people.stream()
+    .filter(p -> p.age() > 28)
+    .map(Person::name)
     .toList();
 
-// group by display name
-Map<String, List<User>> byName = users.stream()
-    .collect(Collectors.groupingBy(User::getDisplayName));
+// group by city
+Map<String, List<Person>> byCity = people.stream()
+    .collect(Collectors.groupingBy(Person::city));
 
-// to map (key=email, value=user)
-Map<String, User> byEmail = users.stream()
-    .collect(Collectors.toMap(User::getEmail, u -> u));
+// to map (key=name, value=person)
+Map<String, Person> byName = people.stream()
+    .collect(Collectors.toMap(Person::name, p -> p));
 
 // joining strings
-String csv = users.stream()
-    .map(User::getEmail)
-    .collect(Collectors.joining(", "));   // "a@b.com, c@d.com"
+String csv = people.stream()
+    .map(Person::name)
+    .collect(Collectors.joining(", "));   // "Alice, Bob, Charlie"
 
 // flatMap — flatten nested collections
-List<Order> allOrders = users.stream()
-    .flatMap(u -> u.getOrders().stream()) // Stream<Order>
+List<String> allHobbies = people.stream()
+    .flatMap(p -> p.hobbies().stream())   // Stream<String>
     .toList();
 ```
 
@@ -181,12 +193,12 @@ Method references — shorthand for lambdas:
 .map(String::toUpperCase)
 
 // instance method reference
-.map(u -> u.getEmail())
-.map(User::getEmail)
+.map(p -> p.name())
+.map(Person::name)
 
 // constructor reference
-.map(s -> new UserDto(s))
-.map(UserDto::new)
+.map(s -> new StringBuilder(s))
+.map(StringBuilder::new)
 ```
 
 ## Sealed classes & pattern matching
@@ -239,7 +251,7 @@ if (obj instanceof String s) {
 
 ## Generics
 
-Type parameters. You'll encounter them everywhere in Spring (`JpaRepository<User, UUID>`, `Optional<T>`, `ResponseEntity<T>`).
+Type parameters. You'll encounter them everywhere: `List<T>`, `Optional<T>`, `Map<K,V>`, framework APIs.
 
 ```java
 // generic class
@@ -287,92 +299,87 @@ The rule: **PECS** — Producer Extends, Consumer Super.
 - Reading from it? `? extends T`
 - Writing to it? `? super T`
 
-Spring examples you'll see:
+Real-world generic patterns:
 
 ```java
-// Spring Data
-public interface JpaRepository<T, ID> { ... }
-// T = entity type, ID = primary key type
+// generic method — infer T from arguments
+public <T> List<T> repeat(T item, int count) {
+    return Collections.nCopies(count, item);
+}
+List<String> xs = repeat("hello", 3);  // T inferred as String
 
-// ResponseEntity
-ResponseEntity<UserDto> response = ResponseEntity.ok(new UserDto("a@b.com", "Alice"));
-ResponseEntity<List<UserDto>> listResponse = ResponseEntity.ok(users);
-ResponseEntity<Void> noContent = ResponseEntity.noContent().build();
+// multiple bounds
+public <T extends Comparable<T> & Serializable> T clamp(T val, T min, T max) {
+    if (val.compareTo(min) < 0) return min;
+    if (val.compareTo(max) > 0) return max;
+    return val;
+}
 ```
+
+You'll encounter generics everywhere in frameworks: `List<T>`, `Map<K,V>`, `Optional<T>`, `CompletableFuture<T>`. Understanding them makes library APIs readable.
 
 ## Annotations & reflection
 
-Annotations are metadata. Spring reads them at startup via reflection to configure your app.
+Annotations are metadata you attach to code. The language provides the mechanism; frameworks like Spring use it heavily.
+
+### Defining annotations
 
 ```java
-// defining an annotation
-@Target(ElementType.TYPE)           // can be placed on classes
-@Retention(RetentionPolicy.RUNTIME) // available at runtime (Spring needs this)
-public @interface MyService {
-    String value() default "";
+@Target(ElementType.TYPE)           // where it can go: TYPE, METHOD, FIELD, PARAMETER...
+@Retention(RetentionPolicy.RUNTIME) // when it's available: SOURCE, CLASS, or RUNTIME
+public @interface Cacheable {
+    String value() default "";       // annotation element (accessed as .value())
+    int ttlSeconds() default 60;
 }
 
 // using it
-@MyService("userService")
+@Cacheable(value = "users", ttlSeconds = 300)
 public class UserService { ... }
 ```
 
-What Spring does at startup:
-1. Component scan — finds all classes with `@Component`, `@Service`, `@Controller`, `@Repository`, `@Configuration`
-2. Reads annotations via reflection: `class.isAnnotationPresent(Service.class)`
-3. Creates instances (beans) and puts them in the **Application Context** (the DI container)
-4. Resolves dependencies — looks at constructor params, finds matching beans, injects them
+`@Retention` levels:
+- `SOURCE` — discarded by compiler (e.g. `@Override`, `@SuppressWarnings`)
+- `CLASS` — in bytecode but not available at runtime (default)
+- `RUNTIME` — available via reflection (required for frameworks to read them)
+
+`@Target` options: `TYPE`, `METHOD`, `FIELD`, `PARAMETER`, `CONSTRUCTOR`, `LOCAL_VARIABLE`, `ANNOTATION_TYPE`
+
+### Reading annotations with reflection
 
 ```java
-// Spring sees this:
-@RestController
-public class HelloController {
-    private final HelloService helloService;
-
-    public HelloController(HelloService helloService) {
-        this.helloService = helloService;  // Spring injects the bean
-    }
+// check if a class has an annotation
+if (UserService.class.isAnnotationPresent(Cacheable.class)) {
+    Cacheable c = UserService.class.getAnnotation(Cacheable.class);
+    System.out.println(c.value());       // "users"
+    System.out.println(c.ttlSeconds());  // 300
 }
 
-// Spring internally does (simplified):
-HelloService helloService = new HelloService();           // create bean
-HelloController controller = new HelloController(helloService); // inject
-applicationContext.register(controller);                  // store in context
+// inspect methods
+for (Method method : UserService.class.getDeclaredMethods()) {
+    if (method.isAnnotationPresent(Deprecated.class)) {
+        System.out.println(method.getName() + " is deprecated");
+    }
+}
 ```
 
-The annotation hierarchy:
+### Reflection basics
 
-```
-@Component                      ← base "this is a bean" marker
-├── @Service                    ← semantic: business logic
-├── @Repository                 ← semantic: data access (adds exception translation)
-├── @Controller / @RestController  ← semantic: HTTP endpoint
-└── @Configuration              ← semantic: contains @Bean definitions
-```
-
-They're all `@Component` under the hood — the different names are for clarity and occasional framework behavior (like `@Repository`'s exception translation).
-
-`@Bean` — manual bean registration in `@Configuration` classes:
+Reflection lets you inspect and manipulate classes, methods, and fields at runtime:
 
 ```java
-@Configuration
-public class AppConfig {
+Class<?> clazz = Class.forName("com.example.UserService");
 
-    @Bean  // Spring calls this method once, stores the result as a bean
-    public RestClient restClient() {
-        return RestClient.builder()
-            .baseUrl("https://api.example.com")
-            .build();
-    }
-}
+// create instance
+Object instance = clazz.getDeclaredConstructor().newInstance();
 
-// now you can inject RestClient anywhere
-@Service
-public class ExternalApiService {
-    private final RestClient restClient;
+// call method by name
+Method method = clazz.getMethod("getById", UUID.class);
+Object result = method.invoke(instance, someId);
 
-    public ExternalApiService(RestClient restClient) {
-        this.restClient = restClient;  // the bean from AppConfig
-    }
-}
+// access private field
+Field field = clazz.getDeclaredField("cache");
+field.setAccessible(true);  // bypass private
+Object value = field.get(instance);
 ```
+
+Reflection is slow and bypasses compile-time safety. You almost never write reflection code yourself — but understanding it explains *how* frameworks work. Spring reads `@Service`, `@Controller`, etc. via reflection at startup to discover and wire your beans. This mechanism is covered in Phase 2.

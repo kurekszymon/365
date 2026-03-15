@@ -7,17 +7,19 @@ For an experienced dev (you know programming, you're learning the Java ecosystem
 - [x] Controllers, Services, DI (constructor injection)
 - [x] Unit tests (JUnit 5) + slice tests (@WebMvcTest + MockMvc)
 - [ ] **Java records** — immutable data carriers, perfect for DTOs: `record UserDto(String email, String name) {}`
-- [ ] **Optionals** — `Optional<T>` instead of null. `orElseThrow()`, `map()`, `ifPresent()`. Spring repos return these.
+- [ ] **Optionals** — `Optional<T>` instead of null. `orElseThrow()`, `map()`, `ifPresent()`.
 - [ ] **Streams API** — `list.stream().filter().map().collect()`. Functional pipelines over collections.
 - [ ] **Sealed classes / pattern matching** — `switch` on types, exhaustive matching (Java 21+)
-- [ ] **Generics** — `<T>`, bounded types (`<T extends Comparable<T>>`), wildcards. Shows up everywhere in Spring.
-- [ ] **Annotations & reflection** — understand *why* `@Service`, `@Entity` etc. work (Spring reads them via reflection at startup)
+- [ ] **Generics** — `<T>`, bounded types (`<T extends Comparable<T>>`), wildcards, PECS.
+- [ ] **Annotations & reflection** — understand Java annotations (`@Target`, `@Retention`), reflection API, *how* frameworks read metadata at runtime
+- [ ] **Concurrency** — `synchronized`, `ExecutorService`, `CompletableFuture`, `ConcurrentHashMap`, thread safety patterns
 
 ## Phase 2 — Spring Boot core (current focus)
 - [x] REST controllers + service layer
 - [x] JPA / Hibernate + Postgres
 - [x] Redis integration
 - [x] OpenAPI / Swagger (SpringDoc)
+- [ ] **How Spring uses annotations & DI** — component scan, `@Component` hierarchy, `@Bean`, the Application Context, Spring's use of generics (`JpaRepository<T, ID>`, `ResponseEntity<T>`)
 - [ ] **Bean validation** — `@Valid` + `jakarta.validation` (`@NotBlank`, `@Email`, `@Size`) on DTOs
 - [ ] **Exception handling** — `@ControllerAdvice` + `@ExceptionHandler` for centralized error responses
 - [ ] **Profiles** — `application-dev.properties`, `application-prod.properties`, `@Profile`

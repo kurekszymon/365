@@ -2,6 +2,82 @@
 
 The framework fundamentals. You have controllers/services/repos already — this covers the remaining core features.
 
+## How Spring uses annotations & DI
+
+Java annotations are just metadata (covered in Phase 1). Spring reads them via reflection at startup to wire your app together. This is the mechanism behind everything in this phase.
+
+What Spring does at startup:
+1. **Component scan** — finds all classes with `@Component`, `@Service`, `@Controller`, `@Repository`, `@Configuration`
+2. Reads annotations via reflection: `class.isAnnotationPresent(Service.class)`
+3. Creates instances (beans) and puts them in the **Application Context** (the DI container)
+4. Resolves dependencies — looks at constructor params, finds matching beans, injects them
+
+```java
+// Spring sees this:
+@RestController
+public class HelloController {
+    private final HelloService helloService;
+
+    public HelloController(HelloService helloService) {
+        this.helloService = helloService;  // Spring injects the bean
+    }
+}
+
+// Spring internally does (simplified):
+HelloService helloService = new HelloService();           // create bean
+HelloController controller = new HelloController(helloService); // inject
+applicationContext.register(controller);                  // store in context
+```
+
+The annotation hierarchy:
+
+```
+@Component                      ← base "this is a bean" marker
+├── @Service                    ← semantic: business logic
+├── @Repository                 ← semantic: data access (adds exception translation)
+├── @Controller / @RestController  ← semantic: HTTP endpoint
+└── @Configuration              ← semantic: contains @Bean definitions
+```
+
+They're all `@Component` under the hood — the different names are for clarity and occasional framework behavior (like `@Repository`'s exception translation).
+
+`@Bean` — manual bean registration in `@Configuration` classes:
+
+```java
+@Configuration
+public class AppConfig {
+
+    @Bean  // Spring calls this method once, stores the result as a bean
+    public RestClient restClient() {
+        return RestClient.builder()
+            .baseUrl("https://api.example.com")
+            .build();
+    }
+}
+
+// now you can inject RestClient anywhere
+@Service
+public class ExternalApiService {
+    private final RestClient restClient;
+
+    public ExternalApiService(RestClient restClient) {
+        this.restClient = restClient;  // the bean from AppConfig
+    }
+}
+```
+
+Spring also uses generics heavily in its APIs:
+
+```java
+// Spring Data — T = entity type, ID = primary key type
+public interface JpaRepository<T, ID> { ... }
+
+// ResponseEntity — typed HTTP responses
+ResponseEntity<UserDto> response = ResponseEntity.ok(new UserDto("a@b.com", "Alice"));
+ResponseEntity<List<UserDto>> listResponse = ResponseEntity.ok(users);
+ResponseEntity<Void> noContent = ResponseEntity.noContent().build();
+```
+
 ## Bean validation
 
 Validate incoming data declaratively instead of manual `if` checks.
