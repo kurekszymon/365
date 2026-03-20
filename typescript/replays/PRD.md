@@ -297,8 +297,8 @@ Use `navigator.sendBeacon` for the unload flush (it survives page close).
 
 ### Phase 1 — Backend Foundation (Week 1)
 
-- [ ] Replace schema.prisma with the new schema above
-- [ ] Run `prisma migrate dev`
+- [x] Replace schema.prisma with the new schema above
+- [x] Run `prisma migrate dev`
 - [ ] Implement API key validation Fastify plugin
 - [ ] `POST /api/ingest/sessions` — create session
 - [ ] `POST /api/ingest/sessions/:id/chunks` — store chunks
