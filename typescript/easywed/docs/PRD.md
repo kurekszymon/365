@@ -97,11 +97,17 @@ Two views, togglable:
 - Named tables (e.g. "Table 1", "Family", "Friends").
 - Drag guests from a sidebar onto seats.
 - Zoom and pan support.
-- Printable layout.
+- Printable layout via browser print dialog (Ctrl+P / Save as PDF) — no external library needed, handles all languages correctly.
 
 **List View**
 - Compact table showing: Table name → assigned guests.
 - Quick reassignment via dropdown.
+
+**Export & Restore**
+- **Print / PDF**: browser print dialog renders a clean print-only layout (works with all languages/Unicode). Organizer can save as PDF or print physically.
+- **Export JSON**: downloads a `.easywed.json` file containing the full planner state (tables, guests, assignments, positions). Can be emailed, backed up, or version-controlled.
+- **Import JSON**: upload a previously exported file to restore the full state — useful for resuming work across devices or sharing with a co-organizer.
+- State also auto-persists to `localStorage` on every change.
 
 **Guest "Find Your Seat" View** (organizer opt-in per wedding):
 - A separate shareable link / QR for guests.
