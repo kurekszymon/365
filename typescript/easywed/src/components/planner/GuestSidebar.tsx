@@ -39,7 +39,7 @@ export function GuestSidebar({
       <div className="flex items-center justify-between border-b px-3 py-2.5">
         <span className="text-sm font-semibold">
           Guests{" "}
-          <span className="text-muted-foreground font-normal">
+          <span className="font-normal text-muted-foreground">
             ({guests.length})
           </span>
         </span>
@@ -51,7 +51,7 @@ export function GuestSidebar({
       <div className="flex-1 overflow-y-auto">
         {unassigned.length > 0 && (
           <>
-            <p className="px-3 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="px-3 pt-2.5 pb-1 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
               Unassigned ({unassigned.length})
             </p>
             {unassigned.map((g) => (
@@ -77,7 +77,7 @@ export function GuestSidebar({
 
         {assigned.length > 0 && (
           <>
-            <p className="px-3 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="px-3 pt-1 pb-1 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
               Seated ({assigned.length})
             </p>
             {assigned.map((g) => (
@@ -112,7 +112,7 @@ export function GuestSidebar({
       </div>
 
       {selectedGuestId && (
-        <div className="border-t bg-primary/5 px-3 py-2 text-[11px] text-primary font-medium">
+        <div className="border-t bg-primary/5 px-3 py-2 text-[11px] font-medium text-primary">
           Tap a table to seat ·{" "}
           <button
             className="underline underline-offset-2"
@@ -155,7 +155,7 @@ function GuestRow({
       className={cn(
         "group relative flex cursor-pointer items-start gap-1 px-2 py-1.5 hover:bg-muted/60",
         isSelected && "bg-primary/10 hover:bg-primary/15",
-        isDragging && "opacity-40",
+        isDragging && "opacity-40"
       )}
     >
       {/* Drag handle — only this triggers DnD */}
@@ -171,8 +171,8 @@ function GuestRow({
       {/* Main content — click to select */}
       <div className="min-w-0 flex-1" onClick={onSelect}>
         <div className="flex items-center justify-between gap-1">
-          <span className="text-xs font-medium truncate">{guest.name}</span>
-          <div className="hidden group-hover:flex items-center gap-0.5 shrink-0">
+          <span className="truncate text-xs font-medium">{guest.name}</span>
+          <div className="hidden shrink-0 items-center gap-0.5 group-hover:flex">
             <button
               className="rounded p-0.5 hover:bg-muted"
               onClick={(e) => {
@@ -208,7 +208,7 @@ function GuestRow({
           <span
             className={cn(
               "inline-block w-fit rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-              DIETARY_COLORS[guest.dietary],
+              DIETARY_COLORS[guest.dietary]
             )}
           >
             {DIETARY_LABELS[guest.dietary]}
@@ -220,7 +220,7 @@ function GuestRow({
           </span>
         )}
         {guest.note && (
-          <span className="block text-[10px] text-muted-foreground italic truncate">
+          <span className="block truncate text-[10px] text-muted-foreground italic">
             {guest.note}
           </span>
         )}

@@ -3,7 +3,6 @@ import type { PlannerGuest, PlannerTable } from "@/lib/planner/types"
 import { DIETARY_COLORS, DIETARY_LABELS } from "@/lib/planner/types"
 import { cn } from "@/lib/utils"
 
-
 interface Props {
   tables: PlannerTable[]
   guests: PlannerGuest[]
@@ -32,32 +31,35 @@ export function PlannerListView({
           const tableGuests = guests.filter((g) => g.tableId === table.id)
           const isFull = tableGuests.length >= table.capacity
           return (
-            <div key={table.id} className="rounded-xl border bg-white shadow-sm">
+            <div
+              key={table.id}
+              className="rounded-xl border bg-white shadow-sm"
+            >
               <div className="flex items-center justify-between gap-2 border-b px-4 py-2.5">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-semibold truncate">{table.name}</span>
-                  <span className="text-xs text-muted-foreground capitalize shrink-0">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="truncate font-semibold">{table.name}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground capitalize">
                     {table.shape}
                   </span>
                   <span
                     className={cn(
-                      "text-xs font-medium tabular-nums shrink-0",
-                      isFull ? "text-destructive" : "text-muted-foreground",
+                      "shrink-0 text-xs font-medium tabular-nums",
+                      isFull ? "text-destructive" : "text-muted-foreground"
                     )}
                   >
                     {tableGuests.length}/{table.capacity}
                   </span>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex shrink-0 items-center gap-1">
                   <button
-                    className="rounded p-1 hover:bg-muted text-muted-foreground hover:text-foreground"
+                    className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
                     onClick={() => onEditTable(table)}
                     aria-label="Edit table"
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
                   <button
-                    className="rounded p-1 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                    className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     onClick={() => onDeleteTable(table.id)}
                     aria-label="Delete table"
                   >
@@ -77,37 +79,37 @@ export function PlannerListView({
                       key={g.id}
                       className="group flex items-center gap-2 px-4 py-2"
                     >
-                      <span className="w-5 text-xs text-muted-foreground tabular-nums shrink-0">
+                      <span className="w-5 shrink-0 text-xs text-muted-foreground tabular-nums">
                         {i + 1}.
                       </span>
-                      <span className="flex-1 text-sm truncate">{g.name}</span>
+                      <span className="flex-1 truncate text-sm">{g.name}</span>
                       {g.dietary !== "none" && (
                         <span
                           className={cn(
-                            "rounded-full px-1.5 py-0.5 text-[10px] font-medium shrink-0",
-                            DIETARY_COLORS[g.dietary],
+                            "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                            DIETARY_COLORS[g.dietary]
                           )}
                         >
                           {DIETARY_LABELS[g.dietary]}
                         </span>
                       )}
-                      <div className="hidden group-hover:flex items-center gap-1">
+                      <div className="hidden items-center gap-1 group-hover:flex">
                         <button
-                          className="rounded p-0.5 hover:bg-muted text-muted-foreground"
+                          className="rounded p-0.5 text-muted-foreground hover:bg-muted"
                           onClick={() => onEditGuest(g)}
                           aria-label="Edit guest"
                         >
                           <Pencil className="h-3 w-3" />
                         </button>
                         <button
-                          className="rounded p-0.5 hover:bg-muted text-muted-foreground"
+                          className="rounded p-0.5 text-muted-foreground hover:bg-muted"
                           onClick={() => onUnassignGuest(g.id)}
                           aria-label="Unassign guest"
                         >
                           <X className="h-3 w-3" />
                         </button>
                         <button
-                          className="rounded p-0.5 hover:bg-destructive/10 text-destructive"
+                          className="rounded p-0.5 text-destructive hover:bg-destructive/10"
                           onClick={() => onDeleteGuest(g.id)}
                           aria-label="Delete guest"
                         >
@@ -136,26 +138,26 @@ export function PlannerListView({
                   key={g.id}
                   className="group flex items-center gap-2 px-4 py-2"
                 >
-                  <span className="flex-1 text-sm truncate">{g.name}</span>
+                  <span className="flex-1 truncate text-sm">{g.name}</span>
                   {g.dietary !== "none" && (
                     <span
                       className={cn(
-                        "rounded-full px-1.5 py-0.5 text-[10px] font-medium shrink-0",
-                        DIETARY_COLORS[g.dietary],
+                        "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                        DIETARY_COLORS[g.dietary]
                       )}
                     >
                       {DIETARY_LABELS[g.dietary]}
                     </span>
                   )}
-                  <div className="hidden group-hover:flex items-center gap-1">
+                  <div className="hidden items-center gap-1 group-hover:flex">
                     <button
-                      className="rounded p-0.5 hover:bg-muted text-muted-foreground"
+                      className="rounded p-0.5 text-muted-foreground hover:bg-muted"
                       onClick={() => onEditGuest(g)}
                     >
                       <Pencil className="h-3 w-3" />
                     </button>
                     <button
-                      className="rounded p-0.5 hover:bg-destructive/10 text-destructive"
+                      className="rounded p-0.5 text-destructive hover:bg-destructive/10"
                       onClick={() => onDeleteGuest(g.id)}
                     >
                       <Trash2 className="h-3 w-3" />

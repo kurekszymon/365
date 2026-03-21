@@ -1,4 +1,4 @@
-export type TableShape = "round" | "rectangular";
+export type TableShape = "round" | "rectangular"
 
 export type Dietary =
   | "none"
@@ -6,30 +6,30 @@ export type Dietary =
   | "vegan"
   | "gluten-free"
   | "halal"
-  | "kosher";
+  | "kosher"
 
 export interface PlannerTable {
-  id: string;
-  name: string;
-  shape: TableShape;
-  capacity: number;
-  x: number;
-  y: number;
+  id: string
+  name: string
+  shape: TableShape
+  capacity: number
+  x: number
+  y: number
 }
 
 export interface PlannerGuest {
-  id: string;
-  name: string;
-  dietary: Dietary;
-  tableId: string | null;
-  note?: string;
+  id: string
+  name: string
+  dietary: Dietary
+  tableId: string | null
+  note?: string
 }
 
 export interface PlannerState {
-  version: 1;
-  weddingName: string;
-  tables: PlannerTable[];
-  guests: PlannerGuest[];
+  version: 1
+  weddingName: string
+  tables: PlannerTable[]
+  guests: PlannerGuest[]
 }
 
 export const EMPTY_STATE: PlannerState = {
@@ -37,7 +37,7 @@ export const EMPTY_STATE: PlannerState = {
   weddingName: "My Wedding",
   tables: [],
   guests: [],
-};
+}
 
 export const DIETARY_LABELS: Record<Dietary, string> = {
   // TODO: use translation keys
@@ -47,7 +47,7 @@ export const DIETARY_LABELS: Record<Dietary, string> = {
   "gluten-free": "Gluten-free",
   halal: "Halal",
   kosher: "Kosher",
-};
+}
 
 export const DIETARY_COLORS: Record<Dietary, string> = {
   none: "bg-muted text-muted-foreground",
@@ -56,4 +56,4 @@ export const DIETARY_COLORS: Record<Dietary, string> = {
   "gluten-free": "bg-yellow-100 text-yellow-800",
   halal: "bg-blue-100 text-blue-800",
   kosher: "bg-purple-100 text-purple-800",
-};
+}

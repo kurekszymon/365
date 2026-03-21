@@ -48,7 +48,11 @@ export function PlannerToolbar({
     if (!file) return
     importFromJSON(file)
       .then(onImport)
-      .catch(() => alert("Could not import file. Make sure it's a valid .easywed.json file."))
+      .catch(() =>
+        alert(
+          "Could not import file. Make sure it's a valid .easywed.json file."
+        )
+      )
     e.target.value = ""
   }
 
@@ -61,15 +65,15 @@ export function PlannerToolbar({
   return (
     <div className="flex items-center justify-between gap-2 border-b bg-background px-3 py-2 print:hidden">
       {/* Left: wedding name + stats */}
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex min-w-0 items-center gap-3">
         <button
-          className="text-sm font-semibold truncate hover:underline underline-offset-2 max-w-[140px] sm:max-w-none"
+          className="max-w-[140px] truncate text-sm font-semibold underline-offset-2 hover:underline sm:max-w-none"
           onClick={onEditName}
           title="Click to rename"
         >
           {weddingName}
         </button>
-        <span className="hidden sm:block text-xs text-muted-foreground tabular-nums">
+        <span className="hidden text-xs text-muted-foreground tabular-nums sm:block">
           {state.tables.length} tables · {assigned}/{state.guests.length} seated
         </span>
       </div>
@@ -100,7 +104,9 @@ export function PlannerToolbar({
           size="icon-sm"
           variant={view === "canvas" ? "secondary" : "ghost"}
           onClick={onToggleView}
-          title={view === "canvas" ? "Switch to list view" : "Switch to canvas view"}
+          title={
+            view === "canvas" ? "Switch to list view" : "Switch to canvas view"
+          }
         >
           {view === "canvas" ? (
             <LayoutList className="h-4 w-4" />
@@ -121,7 +127,10 @@ export function PlannerToolbar({
               <Printer className="h-3.5 w-3.5" />
               Print / Save PDF
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => exportAsJSON(state)} className="gap-2">
+            <DropdownMenuItem
+              onClick={() => exportAsJSON(state)}
+              className="gap-2"
+            >
               <FileJson className="h-3.5 w-3.5" />
               Export JSON
             </DropdownMenuItem>

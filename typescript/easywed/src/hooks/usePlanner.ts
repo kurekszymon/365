@@ -11,7 +11,7 @@ import { loadFromLocalStorage, saveToLocalStorage } from "@/lib/planner/storage"
 
 export function usePlanner() {
   const [state, setState] = useState<PlannerState>(
-    () => loadFromLocalStorage() ?? EMPTY_STATE,
+    () => loadFromLocalStorage() ?? EMPTY_STATE
   )
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export function usePlanner() {
       ...s,
       tables: s.tables.filter((t) => t.id !== id),
       guests: s.guests.map((g) =>
-        g.tableId === id ? { ...g, tableId: null } : g,
+        g.tableId === id ? { ...g, tableId: null } : g
       ),
     }))
   }

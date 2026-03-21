@@ -13,7 +13,7 @@ export function PlannerPrintView({ state }: Props) {
   const unassigned = state.guests.filter((g) => g.tableId === null)
 
   return (
-    <div className="hidden print:block p-8 font-sans text-black">
+    <div className="hidden p-8 font-sans text-black print:block">
       {/* Header */}
       <div className="mb-6 border-b pb-4 text-center">
         <h1 className="text-2xl font-bold">{state.weddingName}</h1>
@@ -29,24 +29,27 @@ export function PlannerPrintView({ state }: Props) {
       {/* Tables grid */}
       <div className="grid grid-cols-2 gap-6">
         {state.tables.map((table) => {
-          const tableGuests = state.guests.filter(
-            (g) => g.tableId === table.id,
-          )
+          const tableGuests = state.guests.filter((g) => g.tableId === table.id)
           return (
             <div key={table.id} className="break-inside-avoid">
-              <h2 className="font-semibold text-sm border-b pb-1 mb-1.5 flex justify-between">
+              <h2 className="mb-1.5 flex justify-between border-b pb-1 text-sm font-semibold">
                 <span>{table.name}</span>
-                <span className="text-gray-500 font-normal">
+                <span className="font-normal text-gray-500">
                   {table.shape} · {tableGuests.length}/{table.capacity}
                 </span>
               </h2>
               {tableGuests.length === 0 ? (
-                <p className="text-xs text-gray-400 italic">No guests assigned</p>
+                <p className="text-xs text-gray-400 italic">
+                  No guests assigned
+                </p>
               ) : (
                 <ol className="space-y-0.5">
                   {tableGuests.map((g, i) => (
-                    <li key={g.id} className="flex items-baseline gap-1 text-xs">
-                      <span className="text-gray-400 w-4 tabular-nums shrink-0">
+                    <li
+                      key={g.id}
+                      className="flex items-baseline gap-1 text-xs"
+                    >
+                      <span className="w-4 shrink-0 text-gray-400 tabular-nums">
                         {i + 1}.
                       </span>
                       <span>{g.name}</span>
@@ -67,7 +70,7 @@ export function PlannerPrintView({ state }: Props) {
       {/* Unassigned */}
       {unassigned.length > 0 && (
         <div className="mt-6 border-t pt-4">
-          <h2 className="font-semibold text-sm mb-1.5">
+          <h2 className="mb-1.5 text-sm font-semibold">
             Unassigned Guests ({unassigned.length})
           </h2>
           <ul className="columns-2 space-y-0.5">
@@ -75,7 +78,7 @@ export function PlannerPrintView({ state }: Props) {
               <li key={g.id} className="text-xs">
                 · {g.name}
                 {g.dietary !== "none" && (
-                  <span className="text-gray-400 ml-1">
+                  <span className="ml-1 text-gray-400">
                     ({DIETARY_LABELS[g.dietary]})
                   </span>
                 )}

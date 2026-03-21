@@ -67,7 +67,7 @@ export function TablePlanner() {
   const [view, setView] = useState<"canvas" | "list">("canvas")
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null)
   const [activeDragGuest, setActiveDragGuest] = useState<PlannerGuest | null>(
-    null,
+    null
   )
 
   // Dialog states
@@ -80,7 +80,7 @@ export function TablePlanner() {
 
   // PointerSensor covers both mouse and touch (Pointer Events API).
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   )
 
   function handleAssignGuest(tableId: string, guestId?: string) {
@@ -183,14 +183,14 @@ export function TablePlanner() {
             {activeDragGuest && (
               <div
                 className={cn(
-                  "flex items-center gap-1.5 rounded-full border bg-white px-3 py-1.5 shadow-xl text-xs font-medium",
-                  "ring-2 ring-primary/30",
+                  "flex items-center gap-1.5 rounded-full border bg-white px-3 py-1.5 text-xs font-medium shadow-xl",
+                  "ring-2 ring-primary/30"
                 )}
               >
                 <span
                   className={cn(
-                    "h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0",
-                    DIETARY_COLORS[activeDragGuest.dietary],
+                    "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold",
+                    DIETARY_COLORS[activeDragGuest.dietary]
                   )}
                 >
                   {activeDragGuest.name[0]?.toUpperCase()}
@@ -258,10 +258,7 @@ export function TablePlanner() {
             autoFocus
           />
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setRenamingWedding(false)}
-            >
+            <Button variant="outline" onClick={() => setRenamingWedding(false)}>
               Cancel
             </Button>
             <Button onClick={handleRename} disabled={!renameValue.trim()}>

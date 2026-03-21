@@ -99,7 +99,7 @@ export function PlannerTableCard({
 
   const actionBar = showActions && !selectedGuestId && (
     <div
-      className="absolute -top-8 left-1/2 -translate-x-1/2 flex gap-1 rounded-lg border bg-white px-1.5 py-1 shadow-lg z-10"
+      className="absolute -top-8 left-1/2 z-10 flex -translate-x-1/2 gap-1 rounded-lg border bg-white px-1.5 py-1 shadow-lg"
       onPointerDown={(e) => e.stopPropagation()}
     >
       <button
@@ -114,7 +114,7 @@ export function PlannerTableCard({
         <Pencil className="h-3.5 w-3.5" />
       </button>
       <button
-        className="rounded p-1 hover:bg-destructive/10 text-destructive"
+        className="rounded p-1 text-destructive hover:bg-destructive/10"
         onClick={(e) => {
           e.stopPropagation()
           setShowActions(false)
@@ -132,15 +132,15 @@ export function PlannerTableCard({
       <div
         ref={setDropRef}
         className={cn(
-          "absolute select-none touch-none",
-          "w-40 h-40 rounded-full",
-          "bg-white shadow-md border-2 transition-[border-color,box-shadow]",
+          "absolute touch-none select-none",
+          "h-40 w-40 rounded-full",
+          "border-2 bg-white shadow-md transition-[border-color,box-shadow]",
           "flex flex-col items-center justify-center",
           "cursor-grab active:cursor-grabbing",
-          dropHighlight && "border-primary ring-4 ring-primary/20 shadow-lg",
+          dropHighlight && "border-primary shadow-lg ring-4 ring-primary/20",
           dropBlocked && "border-destructive ring-4 ring-destructive/20",
-          canAcceptGuest && !isOver && "border-primary/50 cursor-pointer",
-          !dropHighlight && !dropBlocked && !canAcceptGuest && "border-border",
+          canAcceptGuest && !isOver && "cursor-pointer border-primary/50",
+          !dropHighlight && !dropBlocked && !canAcceptGuest && "border-border"
         )}
         style={{ transform: `translate(${table.x}px, ${table.y}px)` }}
         {...commonWrapperProps}
@@ -148,15 +148,15 @@ export function PlannerTableCard({
         {actionBar}
 
         {/* Table name */}
-        <span className="text-xs font-semibold text-center leading-tight px-6 line-clamp-2 w-full text-center">
+        <span className="line-clamp-2 w-full px-6 text-center text-xs leading-tight font-semibold">
           {table.name}
         </span>
 
         {/* Capacity */}
         <span
           className={cn(
-            "text-[11px] tabular-nums mt-0.5",
-            isFull ? "text-destructive font-medium" : "text-muted-foreground",
+            "mt-0.5 text-[11px] tabular-nums",
+            isFull ? "font-medium text-destructive" : "text-muted-foreground"
           )}
         >
           {guests.length}/{table.capacity}
@@ -164,13 +164,13 @@ export function PlannerTableCard({
 
         {/* Guest initials */}
         {guests.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-0.5 mt-1.5 max-w-[88px]">
+          <div className="mt-1.5 flex max-w-[88px] flex-wrap justify-center gap-0.5">
             {guests.slice(0, 6).map((g) => (
               <span
                 key={g.id}
                 className={cn(
-                  "w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold",
-                  DIETARY_COLORS[g.dietary],
+                  "flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold",
+                  DIETARY_COLORS[g.dietary]
                 )}
                 title={g.name}
               >
@@ -178,7 +178,7 @@ export function PlannerTableCard({
               </span>
             ))}
             {guests.length > 6 && (
-              <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[9px] text-muted-foreground">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[9px] text-muted-foreground">
                 +{guests.length - 6}
               </span>
             )}
@@ -186,7 +186,7 @@ export function PlannerTableCard({
         )}
 
         {canAcceptGuest && (
-          <span className="absolute -bottom-6 text-[10px] font-medium text-primary whitespace-nowrap">
+          <span className="absolute -bottom-6 text-[10px] font-medium whitespace-nowrap text-primary">
             drop or tap to seat
           </span>
         )}
@@ -199,28 +199,27 @@ export function PlannerTableCard({
     <div
       ref={setDropRef}
       className={cn(
-        "absolute select-none touch-none",
-        "w-[184px] min-h-[80px] rounded-xl",
-        "bg-white shadow-md border transition-[border-color,box-shadow]",
+        "absolute touch-none select-none",
+        "min-h-[80px] w-[184px] rounded-xl",
+        "border bg-white shadow-md transition-[border-color,box-shadow]",
         "cursor-grab active:cursor-grabbing",
-        dropHighlight && "border-primary ring-4 ring-primary/20 shadow-lg",
+        dropHighlight && "border-primary shadow-lg ring-4 ring-primary/20",
         dropBlocked && "border-destructive ring-4 ring-destructive/20",
-        canAcceptGuest && !isOver && "border-primary/50 cursor-pointer",
-        !dropHighlight && !dropBlocked && !canAcceptGuest && "border-border",
+        canAcceptGuest && !isOver && "cursor-pointer border-primary/50",
+        !dropHighlight && !dropBlocked && !canAcceptGuest && "border-border"
       )}
       style={{ transform: `translate(${table.x}px, ${table.y}px)` }}
-
       {...commonWrapperProps}
     >
       {actionBar}
 
       {/* Header */}
       <div className="flex items-center justify-between gap-1 px-3 pt-2.5 pb-1">
-        <span className="text-xs font-semibold truncate">{table.name}</span>
+        <span className="truncate text-xs font-semibold">{table.name}</span>
         <span
           className={cn(
-            "text-[10px] font-medium shrink-0 tabular-nums",
-            isFull ? "text-destructive" : "text-muted-foreground",
+            "shrink-0 text-[10px] font-medium tabular-nums",
+            isFull ? "text-destructive" : "text-muted-foreground"
           )}
         >
           {guests.length}/{table.capacity}
@@ -235,7 +234,7 @@ export function PlannerTableCard({
               key={g.id}
               className={cn(
                 "flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                DIETARY_COLORS[g.dietary],
+                DIETARY_COLORS[g.dietary]
               )}
             >
               {g.name.split(" ")[0]}

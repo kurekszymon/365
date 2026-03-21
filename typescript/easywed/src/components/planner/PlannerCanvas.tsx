@@ -53,7 +53,7 @@ export function PlannerCanvas({
         startPanY: pan.y,
       }
     },
-    [pan],
+    [pan]
   )
 
   const onCanvasPointerMove = useCallback(
@@ -66,7 +66,7 @@ export function PlannerCanvas({
         y: panState.current.startPanY + dy,
       })
     },
-    [],
+    []
   )
 
   const onCanvasPointerUp = useCallback(() => {
@@ -81,7 +81,7 @@ export function PlannerCanvas({
   return (
     <div
       ref={containerRef}
-      className="relative flex-1 overflow-hidden bg-[radial-gradient(circle,_hsl(var(--border))_1px,_transparent_1px)] bg-[length:24px_24px] cursor-grab active:cursor-grabbing"
+      className="relative flex-1 cursor-grab overflow-hidden bg-[radial-gradient(circle,_hsl(var(--border))_1px,_transparent_1px)] bg-[length:24px_24px] active:cursor-grabbing"
       onPointerDown={onCanvasPointerDown}
       onPointerMove={onCanvasPointerMove}
       onPointerUp={onCanvasPointerUp}
@@ -91,7 +91,9 @@ export function PlannerCanvas({
       <div
         ref={canvasRef}
         className="absolute inset-0 origin-top-left"
-        style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }}
+        style={{
+          transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
+        }}
       >
         {tables.map((table) => (
           <div key={table.id} data-table>
@@ -121,7 +123,7 @@ export function PlannerCanvas({
       )}
 
       {/* Zoom indicator */}
-      <div className="absolute bottom-3 right-3 rounded-md border bg-background/80 px-2 py-1 text-[10px] tabular-nums text-muted-foreground backdrop-blur-sm">
+      <div className="absolute right-3 bottom-3 rounded-md border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground tabular-nums backdrop-blur-sm">
         {Math.round(scale * 100)}%
       </div>
     </div>

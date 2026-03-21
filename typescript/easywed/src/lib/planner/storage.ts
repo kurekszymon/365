@@ -28,7 +28,7 @@ export function exportAsJSON(state: PlannerState): void {
   const a = document.createElement("a")
   a.href = url
   a.download = `${state.weddingName.replace(/\s+/g, "_")}_seating.easywed.json`
-  // TODO: modify file? 
+  // TODO: modify file?
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
