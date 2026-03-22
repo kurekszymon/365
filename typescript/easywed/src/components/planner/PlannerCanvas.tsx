@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from "react"
+import { useRef, useState, useCallback, useEffect } from "react"
 import { PlusCircle } from "lucide-react"
 import type { PlannerGuest, PlannerTable } from "@/lib/planner/types"
 import { PlannerTableCard } from "./PlannerTable"
@@ -73,9 +73,15 @@ export function PlannerCanvas({
     panState.current = null
   }, [])
 
-  const onWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    setScale((s) => Math.min(2, Math.max(0.4, s - e.deltaY * 0.001)))
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const handler = (e: WheelEvent) => {
+      e.preventDefault()
+      setScale((s) => Math.min(2, Math.max(0.4, s - e.deltaY * 0.001)))
+    }
+    el.addEventListener("wheel", handler, { passive: false })
+    return () => el.removeEventListener("wheel", handler)
   }, [])
 
   return (
@@ -85,7 +91,6 @@ export function PlannerCanvas({
       onPointerDown={onCanvasPointerDown}
       onPointerMove={onCanvasPointerMove}
       onPointerUp={onCanvasPointerUp}
-      onWheel={onWheel}
     >
       {/* Inner canvas that gets transformed */}
       <div
