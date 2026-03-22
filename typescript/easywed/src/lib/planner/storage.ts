@@ -14,7 +14,14 @@ export function loadFromLocalStorage(): PlannerState | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
-    return JSON.parse(raw) as PlannerState
+    const parsed = JSON.parse(raw)
+    if (
+      parsed.version !== 1 ||
+      !Array.isArray(parsed.tables) ||
+      !Array.isArray(parsed.guests)
+    )
+      return null
+    return parsed as PlannerState
   } catch {
     return null
   }
@@ -28,7 +35,6 @@ export function exportAsJSON(state: PlannerState): void {
   const a = document.createElement("a")
   a.href = url
   a.download = `${state.weddingName.replace(/\s+/g, "_")}_seating.easywed.json`
-  // TODO: modify file?
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
@@ -41,7 +47,11 @@ export function importFromJSON(file: File): Promise<PlannerState> {
     reader.onload = (e) => {
       try {
         const parsed = JSON.parse(e.target?.result as string)
-        if (parsed.version !== 1 || !Array.isArray(parsed.tables) || !Array.isArray(parsed.guests)) {
+        if (
+          parsed.version !== 1 ||
+          !Array.isArray(parsed.tables) ||
+          !Array.isArray(parsed.guests)
+        ) {
           reject(new Error("Invalid EasyWed file format"))
           return
         }

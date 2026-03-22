@@ -171,7 +171,9 @@ export function TablePlanner() {
                 guests={state.guests}
                 onEditTable={(t) => setEditingTable(t)}
                 onDeleteTable={deleteTable}
-                onUnassignGuest={(id) => assignGuest(id, null)}
+                onAssignGuest={(guestId, tableId) =>
+                  assignGuest(guestId, tableId)
+                }
                 onEditGuest={(g) => setEditingGuest(g)}
                 onDeleteGuest={deleteGuest}
               />
@@ -190,7 +192,7 @@ export function TablePlanner() {
                 <span
                   className={cn(
                     "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold",
-                    DIETARY_COLORS[activeDragGuest.dietary]
+                    DIETARY_COLORS[activeDragGuest.dietary[0] ?? "empty"]
                   )}
                 >
                   {activeDragGuest.name[0]?.toUpperCase()}

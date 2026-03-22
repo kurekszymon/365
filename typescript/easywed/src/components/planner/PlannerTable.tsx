@@ -170,7 +170,7 @@ export function PlannerTableCard({
                 key={g.id}
                 className={cn(
                   "flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold",
-                  DIETARY_COLORS[g.dietary]
+                  DIETARY_COLORS[g.dietary[0] ?? "empty"]
                 )}
                 title={g.name}
               >
@@ -234,7 +234,7 @@ export function PlannerTableCard({
               key={g.id}
               className={cn(
                 "flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                DIETARY_COLORS[g.dietary]
+                DIETARY_COLORS[g.dietary[0] ?? "empty"]
               )}
             >
               {g.name.split(" ")[0]}

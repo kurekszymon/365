@@ -1,6 +1,14 @@
-import { Pencil, Trash2, X } from "lucide-react"
+import { useState } from "react"
+import { Pencil, Trash2 } from "lucide-react"
 import type { PlannerGuest, PlannerTable } from "@/lib/planner/types"
 import { DIETARY_COLORS, DIETARY_LABELS } from "@/lib/planner/types"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
 interface Props {
@@ -8,9 +16,188 @@ interface Props {
   guests: PlannerGuest[]
   onEditTable: (table: PlannerTable) => void
   onDeleteTable: (id: string) => void
-  onUnassignGuest: (guestId: string) => void
+  onAssignGuest: (guestId: string, tableId: string | null) => void
   onEditGuest: (guest: PlannerGuest) => void
   onDeleteGuest: (id: string) => void
+}
+
+function DietaryBadges({ dietary }: { dietary: PlannerGuest["dietary"] }) {
+  if (dietary.length === 0) return null
+  return (
+    <div className="flex flex-wrap gap-1">
+      {dietary.map((d) => (
+        <span
+          key={d}
+          className={cn(
+            "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+            DIETARY_COLORS[d]
+          )}
+        >
+          {DIETARY_LABELS[d]}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+interface SeatedGuestRowProps {
+  g: PlannerGuest
+  index: number
+  tables: PlannerTable[]
+  guests: PlannerGuest[]
+  onAssignGuest: (guestId: string, tableId: string | null) => void
+  onEditGuest: (guest: PlannerGuest) => void
+  onDeleteGuest: (id: string) => void
+}
+
+function SeatedGuestRow({
+  g,
+  index,
+  tables,
+  guests,
+  onAssignGuest,
+  onEditGuest,
+  onDeleteGuest,
+}: SeatedGuestRowProps) {
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+
+  return (
+    <li className="group flex items-center gap-2 px-4 py-2">
+      <span className="w-5 shrink-0 text-xs text-muted-foreground tabular-nums">
+        {index + 1}.
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="truncate text-sm">{g.name}</span>
+        <DietaryBadges dietary={g.dietary} />
+      </div>
+      <Select
+        value={g.tableId ?? ""}
+        onValueChange={(val) =>
+          onAssignGuest(g.id, val === "unassign" ? null : val)
+        }
+        onOpenChange={setDropdownOpen}
+      >
+        <SelectTrigger className="h-7 w-32 shrink-0 text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {tables.map((t) => {
+            const seatedCount = guests.filter(
+              (x) => x.tableId === t.id
+            ).length
+            const full = seatedCount >= t.capacity && t.id !== g.tableId
+            return (
+              <SelectItem key={t.id} value={t.id} disabled={full}>
+                {t.name}
+                {full ? " (full)" : ""}
+              </SelectItem>
+            )
+          })}
+          <SelectItem value="unassign" className="text-muted-foreground">
+            Unassign
+          </SelectItem>
+        </SelectContent>
+      </Select>
+      <div
+        className={cn(
+          "flex items-center gap-1 transition-opacity",
+          dropdownOpen
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100"
+        )}
+      >
+        <button
+          className="rounded p-0.5 text-muted-foreground hover:bg-muted"
+          onClick={() => onEditGuest(g)}
+          aria-label="Edit guest"
+        >
+          <Pencil className="h-3 w-3" />
+        </button>
+        <button
+          className="rounded p-0.5 text-destructive hover:bg-destructive/10"
+          onClick={() => onDeleteGuest(g.id)}
+          aria-label="Delete guest"
+        >
+          <Trash2 className="h-3 w-3" />
+        </button>
+      </div>
+    </li>
+  )
+}
+
+interface UnassignedGuestRowProps {
+  g: PlannerGuest
+  tables: PlannerTable[]
+  guests: PlannerGuest[]
+  onAssignGuest: (guestId: string, tableId: string | null) => void
+  onEditGuest: (guest: PlannerGuest) => void
+  onDeleteGuest: (id: string) => void
+}
+
+function UnassignedGuestRow({
+  g,
+  tables,
+  guests,
+  onAssignGuest,
+  onEditGuest,
+  onDeleteGuest,
+}: UnassignedGuestRowProps) {
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+
+  return (
+    <li className="group flex items-center gap-2 px-4 py-2">
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="truncate text-sm">{g.name}</span>
+        <DietaryBadges dietary={g.dietary} />
+      </div>
+      <Select
+        value=""
+        onValueChange={(val) => onAssignGuest(g.id, val)}
+        onOpenChange={setDropdownOpen}
+      >
+        <SelectTrigger className="h-7 w-32 shrink-0 text-xs text-muted-foreground">
+          <SelectValue placeholder="Assign…" />
+        </SelectTrigger>
+        <SelectContent>
+          {tables.map((t) => {
+            const seatedCount = guests.filter(
+              (x) => x.tableId === t.id
+            ).length
+            const full = seatedCount >= t.capacity
+            return (
+              <SelectItem key={t.id} value={t.id} disabled={full}>
+                {t.name}
+                {full ? " (full)" : ""}
+              </SelectItem>
+            )
+          })}
+        </SelectContent>
+      </Select>
+      <div
+        className={cn(
+          "flex items-center gap-1 transition-opacity",
+          dropdownOpen
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100"
+        )}
+      >
+        <button
+          className="rounded p-0.5 text-muted-foreground hover:bg-muted"
+          onClick={() => onEditGuest(g)}
+          aria-label="Edit guest"
+        >
+          <Pencil className="h-3 w-3" />
+        </button>
+        <button
+          className="rounded p-0.5 text-destructive hover:bg-destructive/10"
+          onClick={() => onDeleteGuest(g.id)}
+          aria-label="Delete guest"
+        >
+          <Trash2 className="h-3 w-3" />
+        </button>
+      </div>
+    </li>
+  )
 }
 
 export function PlannerListView({
@@ -18,7 +205,7 @@ export function PlannerListView({
   guests,
   onEditTable,
   onDeleteTable,
-  onUnassignGuest,
+  onAssignGuest,
   onEditGuest,
   onDeleteGuest,
 }: Props) {
@@ -31,10 +218,7 @@ export function PlannerListView({
           const tableGuests = guests.filter((g) => g.tableId === table.id)
           const isFull = tableGuests.length >= table.capacity
           return (
-            <div
-              key={table.id}
-              className="rounded-xl border bg-white shadow-sm"
-            >
+            <div key={table.id} className="rounded-xl border bg-white shadow-sm">
               <div className="flex items-center justify-between gap-2 border-b px-4 py-2.5">
                 <div className="flex min-w-0 items-center gap-2">
                   <span className="truncate font-semibold">{table.name}</span>
@@ -75,48 +259,16 @@ export function PlannerListView({
               ) : (
                 <ul className="divide-y">
                   {tableGuests.map((g, i) => (
-                    <li
+                    <SeatedGuestRow
                       key={g.id}
-                      className="group flex items-center gap-2 px-4 py-2"
-                    >
-                      <span className="w-5 shrink-0 text-xs text-muted-foreground tabular-nums">
-                        {i + 1}.
-                      </span>
-                      <span className="flex-1 truncate text-sm">{g.name}</span>
-                      {g.dietary !== "none" && (
-                        <span
-                          className={cn(
-                            "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                            DIETARY_COLORS[g.dietary]
-                          )}
-                        >
-                          {DIETARY_LABELS[g.dietary]}
-                        </span>
-                      )}
-                      <div className="hidden items-center gap-1 group-hover:flex">
-                        <button
-                          className="rounded p-0.5 text-muted-foreground hover:bg-muted"
-                          onClick={() => onEditGuest(g)}
-                          aria-label="Edit guest"
-                        >
-                          <Pencil className="h-3 w-3" />
-                        </button>
-                        <button
-                          className="rounded p-0.5 text-muted-foreground hover:bg-muted"
-                          onClick={() => onUnassignGuest(g.id)}
-                          aria-label="Unassign guest"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                        <button
-                          className="rounded p-0.5 text-destructive hover:bg-destructive/10"
-                          onClick={() => onDeleteGuest(g.id)}
-                          aria-label="Delete guest"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      </div>
-                    </li>
+                      g={g}
+                      index={i}
+                      tables={tables}
+                      guests={guests}
+                      onAssignGuest={onAssignGuest}
+                      onEditGuest={onEditGuest}
+                      onDeleteGuest={onDeleteGuest}
+                    />
                   ))}
                 </ul>
               )}
@@ -134,36 +286,15 @@ export function PlannerListView({
             </div>
             <ul className="divide-y">
               {unassigned.map((g) => (
-                <li
+                <UnassignedGuestRow
                   key={g.id}
-                  className="group flex items-center gap-2 px-4 py-2"
-                >
-                  <span className="flex-1 truncate text-sm">{g.name}</span>
-                  {g.dietary !== "none" && (
-                    <span
-                      className={cn(
-                        "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                        DIETARY_COLORS[g.dietary]
-                      )}
-                    >
-                      {DIETARY_LABELS[g.dietary]}
-                    </span>
-                  )}
-                  <div className="hidden items-center gap-1 group-hover:flex">
-                    <button
-                      className="rounded p-0.5 text-muted-foreground hover:bg-muted"
-                      onClick={() => onEditGuest(g)}
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </button>
-                    <button
-                      className="rounded p-0.5 text-destructive hover:bg-destructive/10"
-                      onClick={() => onDeleteGuest(g.id)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </div>
-                </li>
+                  g={g}
+                  tables={tables}
+                  guests={guests}
+                  onAssignGuest={onAssignGuest}
+                  onEditGuest={onEditGuest}
+                  onDeleteGuest={onDeleteGuest}
+                />
               ))}
             </ul>
           </div>

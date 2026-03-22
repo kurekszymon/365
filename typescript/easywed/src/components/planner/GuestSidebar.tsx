@@ -204,15 +204,20 @@ function GuestRow({
             </button>
           </div>
         </div>
-        {guest.dietary !== "none" && (
-          <span
-            className={cn(
-              "inline-block w-fit rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-              DIETARY_COLORS[guest.dietary]
-            )}
-          >
-            {DIETARY_LABELS[guest.dietary]}
-          </span>
+        {guest.dietary.length > 0 && (
+          <div className="mt-0.5 flex flex-wrap gap-1">
+            {guest.dietary.map((d) => (
+              <span
+                key={d}
+                className={cn(
+                  "inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                  DIETARY_COLORS[d]
+                )}
+              >
+                {DIETARY_LABELS[d]}
+              </span>
+            ))}
+          </div>
         )}
         {tableName && (
           <span className="block text-[10px] text-muted-foreground">

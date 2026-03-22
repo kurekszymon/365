@@ -4,7 +4,20 @@ import { TanStackDevtools } from "@tanstack/react-devtools"
 
 import appCss from "../styles.css?url"
 
+function NotFound() {
+  return (
+    <div className="flex h-svh flex-col items-center justify-center gap-2 text-center">
+      <p className="text-2xl font-semibold">404</p>
+      <p className="text-muted-foreground">Page not found</p>
+      <a href="/" className="text-sm text-primary underline underline-offset-4">
+        Go home
+      </a>
+    </div>
+  )
+}
+
 export const Route = createRootRoute({
+  notFoundComponent: NotFound,
   head: () => ({
     meta: [
       {

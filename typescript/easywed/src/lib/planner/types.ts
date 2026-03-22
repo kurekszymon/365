@@ -1,7 +1,6 @@
 export type TableShape = "round" | "rectangular"
 
 export type Dietary =
-  | "none"
   | "vegetarian"
   | "vegan"
   | "gluten-free"
@@ -20,7 +19,7 @@ export interface PlannerTable {
 export interface PlannerGuest {
   id: string
   name: string
-  dietary: Dietary
+  dietary: Dietary[]
   tableId: string | null
   note?: string
 }
@@ -41,7 +40,6 @@ export const EMPTY_STATE: PlannerState = {
 
 export const DIETARY_LABELS: Record<Dietary, string> = {
   // TODO: use translation keys
-  none: "No restrictions",
   vegetarian: "Vegetarian",
   vegan: "Vegan",
   "gluten-free": "Gluten-free",
@@ -49,11 +47,11 @@ export const DIETARY_LABELS: Record<Dietary, string> = {
   kosher: "Kosher",
 }
 
-export const DIETARY_COLORS: Record<Dietary, string> = {
-  none: "bg-muted text-muted-foreground",
+export const DIETARY_COLORS: Record<Dietary | "empty", string> = {
   vegetarian: "bg-green-100 text-green-800",
   vegan: "bg-emerald-100 text-emerald-800",
   "gluten-free": "bg-yellow-100 text-yellow-800",
   halal: "bg-blue-100 text-blue-800",
   kosher: "bg-purple-100 text-purple-800",
+  empty: "bg-muted text-muted-foreground",
 }

@@ -5,9 +5,33 @@ Update this file after every significant session.
 
 ---
 
+## 2026-03-22 — DnD fixes, dietary multi-select, list view improvements
+
+### Fixed
+
+- **Scroll wheel zoom not working** — React attaches `onWheel` listeners as passive, so `e.preventDefault()` was silently ignored and the page still scrolled. Replaced with a `useEffect` that attaches the handler via `addEventListener('wheel', ..., { passive: false })`.
+- **Import validation missing guests array check** — `importFromJSON` now validates `parsed.guests` is an array in addition to `parsed.tables`.
+- **List view action buttons causing layout shift** — edit/delete buttons used `hidden group-hover:flex` which removed them from layout entirely. Changed to `opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto` so space is always reserved and the row doesn't shift when the dropdown opens or hover is lost.
+
+### Changed
+
+- **`dietary` changed from `Dietary` (single) to `Dietary[]` (array)** — a guest can now have multiple restrictions (e.g. vegan + gluten-free). Removed `"none"` from the union; empty array = no restrictions.
+- **List view guest rows** now show all dietary badges (one per restriction) inline under the guest name, matching sidebar behaviour.
+- **Canvas table initials** color uses the first restriction in the array; muted if none — no abstraction needed, inlined at point of use.
+
+### Added
+
+- **List view: reassignment dropdown** (PRD §4.5) — each seated guest row has a `<Select>` showing all tables, pre-selected to the current one (full tables disabled). Unassigned guests get an "Assign…" picker. Selecting "Unassign" from the dropdown unassigns the guest.
+- **`AddGuestDialog`: toggle-pill multi-select** for dietary restrictions — each option is a toggleable pill styled with its restriction colour; inactive pills are outlined. Replaces the single `<Select>`.
+
+---
+
 ## 2026-03-21 — Project bootstrap, Table Planner, DnD + round tables
 
 ### What was done
+
+- **DnD drop detection broken when tables not at origin** — dnd-kit caches droppable rects from the element's layout position, ignoring `transform: translate(x, y)` on table cards. Replaced built-in collision detection with a custom `liveRectCollision` function that calls `node.getBoundingClientRect()` live on every pointer-move frame, correctly accounting for all ancestor transforms (canvas pan + scale + table position).
+- **Entire guest row is now draggable** (not just the grip handle icon). Click still works as assign-by-click via the `PointerSensor`'s `distance: 8` activation constraint — short movements are treated as clicks, longer ones as drags.
 - Initialized project with TanStack Start + React 19 + TypeScript
 - Added shadcn/ui (radix-nova style) + Tailwind CSS v4
 - Wrote and agreed on PRD (`docs/PRD.md`)
@@ -16,6 +40,7 @@ Update this file after every significant session.
 - Fixed round tables to render as true circles with guest initials inside
 
 ### What's in the planner
+
 - **Canvas view** — pannable (drag empty space) + zoomable (scroll wheel), tables draggable via pointer events. Works on touch/mobile.
 - **List view** — compact per-table guest list, toggle in toolbar.
 - **Guest sidebar** — add/edit/delete guests with dietary tags. Drag grip handle to DnD onto a table, or click guest → click table to seat.
@@ -30,6 +55,7 @@ Update this file after every significant session.
 - **Auto-save** — every state change is persisted to `localStorage`.
 
 ### Key files
+
 ```
 src/lib/planner/types.ts          — PlannerState, PlannerTable, PlannerGuest, dietary enums
 src/lib/planner/storage.ts        — localStorage, JSON export/import
@@ -39,6 +65,7 @@ src/routes/planner/index.tsx      — route: /planner/
 ```
 
 ### Decisions made
+
 - **PDF via browser print**, not jsPDF — simpler, no deps, correct Unicode for Polish names.
 - **JSON as restore format** (`.easywed.json`) — version field (`version: 1`) included for future migrations.
 - **No backend yet** — planner works fully offline with localStorage. Designed to sync to Supabase later with minimal changes (state shape matches planned DB schema).
@@ -51,6 +78,7 @@ src/routes/planner/index.tsx      — route: /planner/
 - **shadcn components added**: `dialog`, `input`, `label`, `select`, `badge`, `dropdown-menu`, `separator`.
 
 ### Known issues / TODO before next session
+
 - [ ] No confirmation dialog before deleting a table/guest with data
 - [ ] Route: `/planner/` has trailing slash (TanStack Router file convention) — consider adding redirect from `/planner`
 
@@ -59,18 +87,21 @@ src/routes/planner/index.tsx      — route: /planner/
 ## Up Next
 
 ### Short term (next session)
+
 - [ ] Auth — Supabase email/password + magic link
 - [ ] Wedding creation flow — name, date, venue
 - [ ] Persist planner state to Supabase (replace localStorage with DB)
 - [ ] Multiple weddings per account
 
 ### Medium term
+
 - [ ] Guest invitations — email via Resend, QR code generation
 - [ ] RSVP flow — token-based, no account required
 - [ ] Guest list dashboard with RSVP status
 - [ ] Anonymization mode
 
 ### Long term / post-MVP
+
 - [ ] Photo bucket (AWS S3 + CloudFront)
 - [ ] Photo album curation + sharing
 - [ ] Stripe payments (Per Wedding plan)

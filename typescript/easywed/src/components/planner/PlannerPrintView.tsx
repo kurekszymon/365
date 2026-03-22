@@ -1,5 +1,5 @@
 import type { PlannerState } from "@/lib/planner/types"
-import { DIETARY_LABELS } from "@/lib/planner/types"
+import { DIETARY_LABELS, type Dietary } from "@/lib/planner/types"
 
 interface Props {
   state: PlannerState
@@ -53,9 +53,9 @@ export function PlannerPrintView({ state }: Props) {
                         {i + 1}.
                       </span>
                       <span>{g.name}</span>
-                      {g.dietary !== "none" && (
+                      {g.dietary.length > 0 && (
                         <span className="text-gray-400">
-                          ({DIETARY_LABELS[g.dietary]})
+                          ({g.dietary.map((d: Dietary) => DIETARY_LABELS[d]).join(", ")})
                         </span>
                       )}
                     </li>
@@ -77,9 +77,9 @@ export function PlannerPrintView({ state }: Props) {
             {unassigned.map((g) => (
               <li key={g.id} className="text-xs">
                 · {g.name}
-                {g.dietary !== "none" && (
+                {g.dietary.length > 0 && (
                   <span className="ml-1 text-gray-400">
-                    ({DIETARY_LABELS[g.dietary]})
+                    ({g.dietary.map((d: Dietary) => DIETARY_LABELS[d]).join(", ")})
                   </span>
                 )}
               </li>
