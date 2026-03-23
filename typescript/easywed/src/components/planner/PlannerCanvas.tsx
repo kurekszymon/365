@@ -53,7 +53,7 @@ export function PlannerCanvas({
   }, [pan, scale])
 
   // Expose pan + scale + snap to child via data attributes so PlannerTableCard can read them
-  const snapGridPx = hall ? hall.pixelsPerMeter : 0
+  const snapGridPx = hall ? hall.pixelsPerMeter / 4 : 0
   if (canvasRef.current) {
     canvasRef.current.dataset.scale = String(scale)
     canvasRef.current.dataset.panx = String(pan.x)
