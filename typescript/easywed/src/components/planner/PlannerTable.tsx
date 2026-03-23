@@ -15,7 +15,68 @@ interface Props {
   onUnassign: (guestId: string) => void
   onAssign: (tableId: string) => void
   canvasRef: React.RefObject<HTMLDivElement | null>
+  chairSizePx: number
 }
+
+// ---------------------------------------------------------------------------
+// Chair position calculators
+// ---------------------------------------------------------------------------
+
+function getChairPositionsRound(
+  capacity: number,
+  diameter: number,
+  chairSize: number
+): { cx: number; cy: number }[] {
+  const radius = diameter / 2 + chairSize / 2 + 4 // 4px gap
+  const positions: { cx: number; cy: number }[] = []
+  for (let i = 0; i < capacity; i++) {
+    const angle = (2 * Math.PI * i) / capacity - Math.PI / 2
+    positions.push({
+      cx: diameter / 2 + radius * Math.cos(angle),
+      cy: diameter / 2 + radius * Math.sin(angle),
+    })
+  }
+  return positions
+}
+
+function getChairPositionsRect(
+  capacity: number,
+  w: number,
+  h: number,
+  chairSize: number
+): { cx: number; cy: number }[] {
+  const gap = chairSize / 2 + 4
+  const positions: { cx: number; cy: number }[] = []
+  // Distribute chairs around perimeter: top, right, bottom, left
+  const perimeter = 2 * (w + h)
+  for (let i = 0; i < capacity; i++) {
+    const t = ((i + 0.5) / capacity) * perimeter
+    let cx: number, cy: number
+    if (t < w) {
+      // top edge
+      cx = t
+      cy = -gap
+    } else if (t < w + h) {
+      // right edge
+      cx = w + gap
+      cy = t - w
+    } else if (t < 2 * w + h) {
+      // bottom edge
+      cx = w - (t - w - h)
+      cy = h + gap
+    } else {
+      // left edge
+      cx = -gap
+      cy = h - (t - 2 * w - h)
+    }
+    positions.push({ cx, cy })
+  }
+  return positions
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export function PlannerTableCard({
   table,
@@ -27,6 +88,7 @@ export function PlannerTableCard({
   onUnassign,
   onAssign,
   canvasRef,
+  chairSizePx,
 }: Props) {
   const { setNodeRef: setDropRef, isOver } = useDroppable({ id: table.id })
 
@@ -47,11 +109,13 @@ export function PlannerTableCard({
   const dropHighlight = isOver && !isFull
   const dropBlocked = isOver && isFull
 
+  const w = table.widthPx
+  const h = table.heightPx
+
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     if ((e.target as HTMLElement).closest("button")) return
     e.stopPropagation()
     ;(e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId)
-    // Capture scale once at drag start — no getBoundingClientRect() needed.
     const scale = parseFloat(canvasRef.current?.dataset.scale ?? "1")
     dragState.current = {
       startMouseX: e.clientX,
@@ -73,9 +137,15 @@ export function PlannerTableCard({
       dragState.current.moved = true
     }
     if (dragState.current.moved) {
-      const newX = startTableX + dx / scale
-      const newY = startTableY + dy / scale
-      onMove(table.id, Math.max(0, newX), Math.max(0, newY))
+      let newX = startTableX + dx / scale
+      let newY = startTableY + dy / scale
+      // Snap to grid if configured
+      const snap = parseFloat(canvasRef.current?.dataset.snap ?? "0")
+      if (snap > 0) {
+        newX = Math.round(newX / snap) * snap
+        newY = Math.round(newY / snap) * snap
+      }
+      onMove(table.id, newX, newY)
     }
   }
 
@@ -127,13 +197,56 @@ export function PlannerTableCard({
     </div>
   )
 
+  // Chair positions
+  const chairs = isRound
+    ? getChairPositionsRound(table.capacity, w, chairSizePx)
+    : getChairPositionsRect(table.capacity, w, h, chairSizePx)
+
+  // Compute the bounding box expansion for chairs so the outer wrapper is large enough
+  const chairR = chairSizePx / 2
+  const expandTop = Math.max(0, ...chairs.map((c) => -(c.cy - chairR)))
+  const expandLeft = Math.max(0, ...chairs.map((c) => -(c.cx - chairR)))
+  const expandRight = Math.max(0, ...chairs.map((c) => c.cx + chairR - w))
+  const expandBottom = Math.max(0, ...chairs.map((c) => c.cy + chairR - h))
+
+  const totalW = expandLeft + w + expandRight
+  const totalH = expandTop + h + expandBottom
+
+  // Chair SVG layer
+  const chairLayer = (
+    <svg
+      className="pointer-events-none absolute"
+      style={{
+        left: -expandLeft,
+        top: -expandTop,
+        width: totalW,
+        height: totalH,
+      }}
+    >
+      {chairs.map((c, i) => {
+        const seated = i < guests.length
+        return (
+          <circle
+            key={i}
+            cx={c.cx + expandLeft}
+            cy={c.cy + expandTop}
+            r={chairR}
+            fill={seated ? "hsl(var(--primary) / 0.15)" : "hsl(var(--muted))"}
+            stroke={seated ? "hsl(var(--primary))" : "hsl(var(--border))"}
+            strokeWidth={1.5}
+          />
+        )
+      })}
+    </svg>
+  )
+
   if (isRound) {
     return (
       <div
         ref={setDropRef}
         className={cn(
           "absolute touch-none select-none",
-          "h-40 w-40 rounded-full",
+          "rounded-full",
           "border-2 bg-white shadow-md transition-[border-color,box-shadow]",
           "flex flex-col items-center justify-center",
           "cursor-grab active:cursor-grabbing",
@@ -142,9 +255,14 @@ export function PlannerTableCard({
           canAcceptGuest && !isOver && "cursor-pointer border-primary/50",
           !dropHighlight && !dropBlocked && !canAcceptGuest && "border-border"
         )}
-        style={{ transform: `translate(${table.x}px, ${table.y}px)` }}
+        style={{
+          width: w,
+          height: h,
+          transform: `translate(${table.x}px, ${table.y}px)`,
+        }}
         {...commonWrapperProps}
       >
+        {chairLayer}
         {actionBar}
 
         {/* Table name */}
@@ -200,7 +318,7 @@ export function PlannerTableCard({
       ref={setDropRef}
       className={cn(
         "absolute touch-none select-none",
-        "min-h-[80px] w-[184px] rounded-xl",
+        "rounded-xl",
         "border bg-white shadow-md transition-[border-color,box-shadow]",
         "cursor-grab active:cursor-grabbing",
         dropHighlight && "border-primary shadow-lg ring-4 ring-primary/20",
@@ -208,9 +326,14 @@ export function PlannerTableCard({
         canAcceptGuest && !isOver && "cursor-pointer border-primary/50",
         !dropHighlight && !dropBlocked && !canAcceptGuest && "border-border"
       )}
-      style={{ transform: `translate(${table.x}px, ${table.y}px)` }}
+      style={{
+        width: w,
+        minHeight: h,
+        transform: `translate(${table.x}px, ${table.y}px)`,
+      }}
       {...commonWrapperProps}
     >
+      {chairLayer}
       {actionBar}
 
       {/* Header */}

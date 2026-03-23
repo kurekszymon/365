@@ -8,6 +8,7 @@ import {
   Upload,
   FileJson,
   Printer,
+  Landmark,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -25,6 +26,7 @@ interface Props {
   onToggleView: () => void
   onAddTable: () => void
   onAddGuest: () => void
+  onConfigureHall: () => void
   state: PlannerState
   onImport: (state: PlannerState) => void
   weddingName: string
@@ -36,6 +38,7 @@ export function PlannerToolbar({
   onToggleView,
   onAddTable,
   onAddGuest,
+  onConfigureHall,
   state,
   onImport,
   weddingName,
@@ -80,6 +83,16 @@ export function PlannerToolbar({
 
       {/* Right: actions */}
       <div className="flex items-center gap-1.5">
+        <Button
+          size="sm"
+          variant={state.hall ? "secondary" : "outline"}
+          onClick={onConfigureHall}
+          className="gap-1.5"
+          title="Configure wedding hall"
+        >
+          <Landmark className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Hall</span>
+        </Button>
         <Button
           size="sm"
           variant="outline"

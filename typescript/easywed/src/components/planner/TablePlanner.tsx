@@ -38,6 +38,7 @@ import { PlannerListView } from "./PlannerListView"
 import { GuestSidebar } from "./GuestSidebar"
 import { AddTableDialog } from "./AddTableDialog"
 import { AddGuestDialog } from "./AddGuestDialog"
+import { HallSetupDialog } from "./HallSetupDialog"
 import { PlannerPrintView } from "./PlannerPrintView"
 import {
   Dialog,
@@ -62,6 +63,8 @@ export function TablePlanner() {
     assignGuest,
     updateWeddingName,
     importState,
+    updateHall,
+    updateChairSize,
   } = usePlanner()
 
   const [view, setView] = useState<"canvas" | "list">("canvas")
@@ -77,6 +80,7 @@ export function TablePlanner() {
   const [editingGuest, setEditingGuest] = useState<PlannerGuest | null>(null)
   const [renamingWedding, setRenamingWedding] = useState(false)
   const [renameValue, setRenameValue] = useState(state.weddingName)
+  const [hallSetupOpen, setHallSetupOpen] = useState(false)
 
   // PointerSensor covers both mouse and touch (Pointer Events API).
   const sensors = useSensors(
@@ -114,6 +118,8 @@ export function TablePlanner() {
     setRenamingWedding(false)
   }
 
+  const ppm = state.hall?.pixelsPerMeter
+
   return (
     <>
       <PlannerPrintView state={state} />
@@ -132,6 +138,7 @@ export function TablePlanner() {
             }
             onAddTable={() => setAddTableOpen(true)}
             onAddGuest={() => setAddGuestOpen(true)}
+            onConfigureHall={() => setHallSetupOpen(true)}
             state={state}
             onImport={importState}
             weddingName={state.weddingName}
@@ -153,6 +160,8 @@ export function TablePlanner() {
                   onDeleteTable={deleteTable}
                   onUnassignGuest={(id) => assignGuest(id, null)}
                   onAssignGuest={handleAssignGuest}
+                  hall={state.hall}
+                  chairSizePx={state.chairSizePx}
                 />
                 <GuestSidebar
                   guests={state.guests}
@@ -209,6 +218,7 @@ export function TablePlanner() {
         open={addTableOpen}
         onClose={() => setAddTableOpen(false)}
         onSave={addTable}
+        pixelsPerMeter={ppm}
       />
 
       {/* Edit Table */}
@@ -217,6 +227,7 @@ export function TablePlanner() {
           open={!!editingTable}
           onClose={() => setEditingTable(null)}
           initial={editingTable}
+          pixelsPerMeter={ppm}
           onSave={(updates) => {
             updateTable(editingTable.id, updates)
             setEditingTable(null)
@@ -243,6 +254,19 @@ export function TablePlanner() {
           }}
         />
       )}
+
+      {/* Hall setup */}
+      <HallSetupDialog
+        open={hallSetupOpen}
+        onClose={() => setHallSetupOpen(false)}
+        onSave={(hall, chairSizePx) => {
+          updateHall(hall)
+          updateChairSize(chairSizePx)
+        }}
+        onRemoveHall={() => updateHall(null)}
+        initial={state.hall}
+        chairSizePx={state.chairSizePx}
+      />
 
       {/* Rename wedding */}
       <Dialog

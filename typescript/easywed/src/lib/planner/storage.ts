@@ -1,6 +1,38 @@
 import type { PlannerState } from "./types"
 
 const STORAGE_KEY = "easywed_planner"
+const VIEWPORT_KEY = "easywed_planner_viewport"
+
+export interface Viewport {
+  panX: number
+  panY: number
+  scale: number
+}
+
+export function saveViewport(viewport: Viewport): void {
+  try {
+    localStorage.setItem(VIEWPORT_KEY, JSON.stringify(viewport))
+  } catch {
+    // fail silently
+  }
+}
+
+export function loadViewport(): Viewport | null {
+  try {
+    const raw = localStorage.getItem(VIEWPORT_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (
+      typeof parsed.panX !== "number" ||
+      typeof parsed.panY !== "number" ||
+      typeof parsed.scale !== "number"
+    )
+      return null
+    return parsed as Viewport
+  } catch {
+    return null
+  }
+}
 
 export function saveToLocalStorage(state: PlannerState): void {
   try {

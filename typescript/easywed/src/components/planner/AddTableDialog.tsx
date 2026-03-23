@@ -17,26 +17,83 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import type { PlannerTable, TableShape } from "@/lib/planner/types"
+import {
+  DEFAULT_PIXELS_PER_METER,
+  DEFAULT_TABLE_ROUND_PX,
+  DEFAULT_TABLE_RECT_W_PX,
+  DEFAULT_TABLE_RECT_H_PX,
+} from "@/lib/planner/types"
 
 interface Props {
   open: boolean
   onClose: () => void
-  onSave: (table: { name: string; shape: TableShape; capacity: number }) => void
+  onSave: (table: {
+    name: string
+    shape: TableShape
+    capacity: number
+    widthPx: number
+    heightPx: number
+  }) => void
   initial?: Partial<PlannerTable>
+  pixelsPerMeter?: number
 }
 
-export function AddTableDialog({ open, onClose, onSave, initial }: Props) {
+export function AddTableDialog({
+  open,
+  onClose,
+  onSave,
+  initial,
+  pixelsPerMeter = DEFAULT_PIXELS_PER_METER,
+}: Props) {
   const [name, setName] = useState(initial?.name ?? "")
   const [shape, setShape] = useState<TableShape>(initial?.shape ?? "round")
   const [capacity, setCapacity] = useState(String(initial?.capacity ?? 8))
 
+  // Size in meters — derived from initial pixel size or defaults
+  const defaultW =
+    initial?.widthPx ??
+    (shape === "round" ? DEFAULT_TABLE_ROUND_PX : DEFAULT_TABLE_RECT_W_PX)
+  const defaultH =
+    initial?.heightPx ??
+    (shape === "round" ? DEFAULT_TABLE_ROUND_PX : DEFAULT_TABLE_RECT_H_PX)
+
+  const [widthM, setWidthM] = useState(
+    +(defaultW / pixelsPerMeter).toFixed(1)
+  )
+  const [heightM, setHeightM] = useState(
+    +(defaultH / pixelsPerMeter).toFixed(1)
+  )
+
+  function handleShapeChange(newShape: TableShape) {
+    setShape(newShape)
+    if (newShape === "round") {
+      const d = +(DEFAULT_TABLE_ROUND_PX / pixelsPerMeter).toFixed(1)
+      setWidthM(d)
+      setHeightM(d)
+    } else {
+      setWidthM(+(DEFAULT_TABLE_RECT_W_PX / pixelsPerMeter).toFixed(1))
+      setHeightM(+(DEFAULT_TABLE_RECT_H_PX / pixelsPerMeter).toFixed(1))
+    }
+  }
+
   function handleSave() {
     const cap = parseInt(capacity, 10)
     if (!name.trim() || isNaN(cap) || cap < 1) return
-    onSave({ name: name.trim(), shape, capacity: cap })
+    const wPx = Math.round(widthM * pixelsPerMeter)
+    const hPx = shape === "round" ? wPx : Math.round(heightM * pixelsPerMeter)
+    onSave({
+      name: name.trim(),
+      shape,
+      capacity: cap,
+      widthPx: wPx,
+      heightPx: hPx,
+    })
     setName("")
     setShape("round")
     setCapacity("8")
+    const d = +(DEFAULT_TABLE_ROUND_PX / pixelsPerMeter).toFixed(1)
+    setWidthM(d)
+    setHeightM(d)
     onClose()
   }
 
@@ -63,7 +120,7 @@ export function AddTableDialog({ open, onClose, onSave, initial }: Props) {
               <Label>Shape</Label>
               <Select
                 value={shape}
-                onValueChange={(v) => setShape(v as TableShape)}
+                onValueChange={(v) => handleShapeChange(v as TableShape)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -85,6 +142,80 @@ export function AddTableDialog({ open, onClose, onSave, initial }: Props) {
                 onChange={(e) => setCapacity(e.target.value)}
               />
             </div>
+          </div>
+
+          {/* Table size */}
+          <div className="grid gap-1.5">
+            <Label>
+              Size{" "}
+              <span className="text-muted-foreground font-normal">(meters)</span>
+            </Label>
+            {shape === "round" ? (
+              <div className="grid grid-cols-1 gap-3">
+                <div className="grid gap-1">
+                  <Label
+                    htmlFor="table-diameter"
+                    className="text-[10px] text-muted-foreground"
+                  >
+                    Diameter
+                  </Label>
+                  <Input
+                    id="table-diameter"
+                    type="number"
+                    min={0.5}
+                    max={10}
+                    step={0.1}
+                    value={widthM}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value) || 0.5
+                      setWidthM(v)
+                      setHeightM(v)
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-1">
+                  <Label
+                    htmlFor="table-w"
+                    className="text-[10px] text-muted-foreground"
+                  >
+                    Width
+                  </Label>
+                  <Input
+                    id="table-w"
+                    type="number"
+                    min={0.5}
+                    max={10}
+                    step={0.1}
+                    value={widthM}
+                    onChange={(e) =>
+                      setWidthM(parseFloat(e.target.value) || 0.5)
+                    }
+                  />
+                </div>
+                <div className="grid gap-1">
+                  <Label
+                    htmlFor="table-h"
+                    className="text-[10px] text-muted-foreground"
+                  >
+                    Height
+                  </Label>
+                  <Input
+                    id="table-h"
+                    type="number"
+                    min={0.5}
+                    max={10}
+                    step={0.1}
+                    value={heightM}
+                    onChange={(e) =>
+                      setHeightM(parseFloat(e.target.value) || 0.5)
+                    }
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <DialogFooter>

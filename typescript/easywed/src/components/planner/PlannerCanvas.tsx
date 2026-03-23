@@ -1,7 +1,9 @@
 import { useRef, useState, useCallback, useEffect } from "react"
 import { PlusCircle } from "lucide-react"
-import type { PlannerGuest, PlannerTable } from "@/lib/planner/types"
+import type { HallConfig, PlannerGuest, PlannerTable } from "@/lib/planner/types"
+import { loadViewport, saveViewport } from "@/lib/planner/storage"
 import { PlannerTableCard } from "./PlannerTable"
+import { HallOverlay } from "./HallOverlay"
 
 interface Props {
   tables: PlannerTable[]
@@ -12,6 +14,8 @@ interface Props {
   onDeleteTable: (id: string) => void
   onUnassignGuest: (guestId: string) => void
   onAssignGuest: (tableId: string) => void
+  hall: HallConfig | null
+  chairSizePx: number
 }
 
 export function PlannerCanvas({
@@ -23,11 +27,19 @@ export function PlannerCanvas({
   onDeleteTable,
   onUnassignGuest,
   onAssignGuest,
+  hall,
+  chairSizePx,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
-  const [pan, setPan] = useState({ x: 0, y: 0 })
-  const [scale, setScale] = useState(1)
+  const [pan, setPan] = useState(() => {
+    const v = loadViewport()
+    return v ? { x: v.panX, y: v.panY } : { x: 0, y: 0 }
+  })
+  const [scale, setScale] = useState(() => {
+    const v = loadViewport()
+    return v ? v.scale : 1
+  })
   const panState = useRef<{
     startX: number
     startY: number
@@ -35,11 +47,18 @@ export function PlannerCanvas({
     startPanY: number
   } | null>(null)
 
-  // Expose pan + scale to child via data attributes so PlannerTableCard can read them
+  // Persist viewport to localStorage on change
+  useEffect(() => {
+    saveViewport({ panX: pan.x, panY: pan.y, scale })
+  }, [pan, scale])
+
+  // Expose pan + scale + snap to child via data attributes so PlannerTableCard can read them
+  const snapGridPx = hall ? hall.pixelsPerMeter : 0
   if (canvasRef.current) {
     canvasRef.current.dataset.scale = String(scale)
     canvasRef.current.dataset.panx = String(pan.x)
     canvasRef.current.dataset.pany = String(pan.y)
+    canvasRef.current.dataset.snap = String(snapGridPx)
   }
 
   const onCanvasPointerDown = useCallback(
@@ -78,7 +97,19 @@ export function PlannerCanvas({
     if (!el) return
     const handler = (e: WheelEvent) => {
       e.preventDefault()
-      setScale((s) => Math.min(2, Math.max(0.4, s - e.deltaY * 0.001)))
+      const rect = el.getBoundingClientRect()
+      // Cursor position relative to the container
+      const cx = e.clientX - rect.left
+      const cy = e.clientY - rect.top
+      setScale((prevScale) => {
+        const newScale = Math.min(2, Math.max(0.4, prevScale - e.deltaY * 0.001))
+        // Adjust pan so the canvas point under the cursor stays fixed
+        setPan((prevPan) => ({
+          x: cx - ((cx - prevPan.x) / prevScale) * newScale,
+          y: cy - ((cy - prevPan.y) / prevScale) * newScale,
+        }))
+        return newScale
+      })
     }
     el.addEventListener("wheel", handler, { passive: false })
     return () => el.removeEventListener("wheel", handler)
@@ -100,6 +131,9 @@ export function PlannerCanvas({
           transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
         }}
       >
+        {/* Hall overlay */}
+        {hall && <HallOverlay hall={hall} />}
+
         {tables.map((table) => (
           <div key={table.id} data-table>
             <PlannerTableCard
@@ -112,13 +146,14 @@ export function PlannerCanvas({
               onUnassign={onUnassignGuest}
               onAssign={onAssignGuest}
               canvasRef={canvasRef}
+              chairSizePx={chairSizePx}
             />
           </div>
         ))}
       </div>
 
       {/* Empty state */}
-      {tables.length === 0 && (
+      {tables.length === 0 && !hall && (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 text-muted-foreground">
           <PlusCircle className="h-10 w-10 opacity-30" />
           <p className="text-sm">
