@@ -5,6 +5,26 @@ Update this file after every significant session.
 
 ---
 
+## 2026-03-24 — Table drag: smooth wall sliding, out-of-bounds release, crash fix
+
+### Fixed
+
+- **Table keeps dragging after mouse released outside browser** — pointer capture keeps events coming while the cursor is inside the browser, but if the primary button is released _outside the window_ no `pointerup` is delivered. When the cursor re-enters, the table would continue following the mouse indefinitely. Fix: check `!e.buttons` at the top of both `onPointerMove` handlers — `e.buttons` is 0 when no buttons are held, which is falsy, so `!e.buttons` is a simple one-liner. When detected, drag/pan state is cleared immediately.
+
+- **Snap and constraint fighting at walls** — snap was applied _before_ the polygon constraint in `onPointerMove`. Near a wall, snap would round to a grid point inside the wall, the constraint would push it back, snap would round it back — oscillation. Fix: snap moved to run _after_ constraint inside `resolvePosition`. The table now slides cleanly along walls at whatever sub-grid position the constraint allows, only snapping when the snapped position is also valid.
+
+- **Binary search using stale anchor** — the binary search "good" position was always `table.x/y` (the drag-start position from React state). After sliding along a wall, the anchor drifted far from the current position, making the search slow to converge and producing jumpy corrections. Fix: `dragState` now tracks `lastX/lastY` (last constrained position) which is used as the anchor, keeping the search tight and stable.
+
+### Changed
+
+- **`resolvePosition` moved to `PlannerTableCard`** — constraint + snap logic now runs synchronously in the component before any React state update. This also lets the result be applied directly to the DOM element (`el.style.transform`) for zero-latency visual feedback, before React's re-render confirms it.
+- **`onPointerCancel` added** to both the canvas (pan) and table card (drag) — clears state when the pointer capture is forcibly released by the system (e.g. touch interrupted, browser loses focus).
+- **`canvasRef.dataset.snap` removed** — snap value is now computed from `hall.pixelsPerMeter / 4` directly inside `resolvePosition`. Only `dataset.scale` (viewport scale for dx/dy conversion) is still read via data attribute.
+
+---
+
+---
+
 ## 2026-03-24 — Canvas UX: table copy/paste, duplicate, zoom fix, double-click edit
 
 ### Added

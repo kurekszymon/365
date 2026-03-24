@@ -57,13 +57,9 @@ export function PlannerCanvas({
     saveViewport({ panX: viewport.x, panY: viewport.y, scale: viewport.scale })
   }, [viewport])
 
-  // Expose viewport + snap to PlannerTableCard via data attributes
-  const snapGridPx = hall ? hall.pixelsPerMeter / 4 : 0
+  // Expose viewport scale to PlannerTableCard via data attribute (used for drag dx/dy conversion)
   if (canvasRef.current) {
     canvasRef.current.dataset.scale = String(viewport.scale)
-    canvasRef.current.dataset.panx = String(viewport.x)
-    canvasRef.current.dataset.pany = String(viewport.y)
-    canvasRef.current.dataset.snap = String(snapGridPx)
   }
 
   const onCanvasPointerDown = useCallback(
@@ -83,18 +79,31 @@ export function PlannerCanvas({
   const onCanvasPointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (!panState.current) return
+      // If the primary button was released outside the browser window we never
+      // received a pointerup — detect it here and cancel the pan.
+      if (!e.buttons) {
+        panState.current = null
+        return
+      }
       const dx = e.clientX - panState.current.startX
       const dy = e.clientY - panState.current.startY
+      // Capture values into locals before entering the updater — panState.current
+      // could be nulled by a concurrent pointerup before the updater runs.
+      const { startPanX, startPanY } = panState.current
       setViewport((prev) => ({
         ...prev,
-        x: panState.current!.startPanX + dx,
-        y: panState.current!.startPanY + dy,
+        x: startPanX + dx,
+        y: startPanY + dy,
       }))
     },
     []
   )
 
   const onCanvasPointerUp = useCallback(() => {
+    panState.current = null
+  }, [])
+
+  const onCanvasPointerCancel = useCallback(() => {
     panState.current = null
   }, [])
 
@@ -127,6 +136,7 @@ export function PlannerCanvas({
       onPointerDown={onCanvasPointerDown}
       onPointerMove={onCanvasPointerMove}
       onPointerUp={onCanvasPointerUp}
+      onPointerCancel={onCanvasPointerCancel}
       onMouseMove={(e) => {
         const rect = e.currentTarget.getBoundingClientRect()
         onCursorMove(
@@ -163,6 +173,7 @@ export function PlannerCanvas({
               onAssign={onAssignGuest}
               canvasRef={canvasRef}
               chairSizePx={chairSizePx}
+              hall={hall}
             />
           </div>
         ))}
