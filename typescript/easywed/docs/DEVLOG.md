@@ -5,7 +5,30 @@ Update this file after every significant session.
 
 ---
 
-## 2026-03-24 — Fix meter ↔ pixel math across hall, tables, and chairs
+## 2026-03-24 — Canvas UX: table copy/paste, duplicate, zoom fix, double-click edit
+
+### Added
+
+- **Cmd+C / Cmd+V — copy & paste table** — Cmd+C copies the selected table (without guests) into clipboard state. Cmd+V pastes it centered under the current cursor position. Paste is cursor-aware: canvas tracks mouse position in canvas-space coordinates via an `onCursorMove` callback and a `cursorCanvasPos` ref in `TablePlanner`.
+- **Cmd+D / Duplicate button — duplicate table** — Cmd+D immediately duplicates the selected table with a `" copy"` name suffix and a 20 px offset. A "Duplicate" button (Copy icon, `⌘D` tooltip) appears in the toolbar whenever a table is selected.
+- **Double-click to edit** — double-clicking a table opens the Edit Table dialog directly.
+- **Table selection lifted to `TablePlanner`** — `selectedTableId` is now owned by `TablePlanner` and passed down as a prop, enabling toolbar and keyboard shortcuts to act on the selection without extra state syncing.
+
+### Fixed
+
+- **Zoom-to-cursor broken** — root cause was nested `setState` calls: `setPan` was called inside `setScale`'s updater function (a side effect in a pure updater, double-executed in StrictMode). Fixed by merging `pan` and `scale` into a single atomic `viewport: { x, y, scale }` state updated in one `setViewport` call.
+- **Canvas deselect using DOM traversal** — `onClick` on the canvas container previously called `e.target.closest("[data-table]")` to decide whether to deselect. Simplified: `[data-table]` wrapper divs call `e.stopPropagation()` so table clicks never reach the container; the container's `onClick={() => onSelectTable(null)}` fires only for genuinely empty-canvas clicks.
+
+### Changed
+
+- **`PlannerCanvas`** — combined `pan` + `scale` into `viewport` state; added `onCursorMove` prop; removed `closest` DOM traversal.
+- **`PlannerTable`** — removed internal `showActions` state; uses `isSelected` prop; added `onDoubleClick` handler using native event.
+- **`PlannerToolbar`** — added `selectedTable` + `onDuplicateTable` props; renders Duplicate button with `outline` variant (not `secondary`, which looked pressed).
+- **`TablePlanner`** — owns `selectedTableId`, `copiedTable`, `cursorCanvasPos` ref; wires Cmd+C/Cmd+V/Cmd+D keyboard shortcuts.
+
+---
+
+## 2026-03-24 — Fix meter ↔ pixel math across hall, tables, doors and chairs,
 
 ### Fixed
 
@@ -14,22 +37,15 @@ Update this file after every significant session.
 - **Tables created before first hall not rescaled** — `updateHall` only rescaled when `s.hall?.pixelsPerMeter` existed, so tables created with no hall (implicit ppm = 80) kept their pixel sizes when a hall with a different ppm was added. Now falls back to `DEFAULT_PIXELS_PER_METER` when no hall exists. Note: if a hall is removed and re-added, the effective ppm is lost — the fallback may be inaccurate in that edge case.
 - **Chair size display shifted when changing ppm** — the Hall Setup dialog stored chair size in pixels, so changing the scale slider caused the meter input to visually shrink/grow even though the physical chair size hadn't changed. Now stores chair diameter in meters internally and converts to pixels on save (`Math.round(chairSizeM * ppm)`), so the input stays stable when ppm changes.
 - **L/U-shape dimension labels only showed bounding box** — `HallOverlay` displayed overall width × height, which is correct but doesn't communicate arm dimensions for non-rectangular presets. Added secondary labels (smaller, lighter) showing arm width and arm height for L-shape (along the bottom-left and top-right edges) and U-shape (arm width above the left arm, notch depth inside the cutout).
+- **Hall preview doors invisible** — `HallPreview` was using `hsl(var(...))` CSS custom property syntax in SVG `fill`/`stroke` attributes, which is not supported outside stylesheets (same class of bug previously fixed in `HallOverlay`). Replaced with explicit hex colors (`#334155` for walls, `#b45309` for door gaps, `#f8fafc` for floor fill).
+- **Door width calculation used hardcoded ppm** — door gap width in the preview was computed with a magic `80` instead of the actual `pixelsPerMeter` value, causing incorrect gap sizes when scale differed from the default. Now uses `d.widthM * ppm * s` (actual ppm scaled to preview).
+- **Preview rendered doors as overlaid lines, not wall gaps** — rewrote `HallPreview` to use the same wall-segmentation approach as `HallOverlay`: each wall is split into solid segments with dashed amber gaps where doors sit, rather than drawing a separate line on top of a solid wall. `ppm` is now passed as a prop.
 
 ### Changed
 
 - **`usePlanner.updateHall`** — uses `DEFAULT_PIXELS_PER_METER` as fallback `oldPpm`; no longer rescales `chairSizePx` (handled by dialog).
 - **`HallSetupDialog`** — `inferPresetDims` extracts exact vertex-based dimensions; `chairSize` state replaced with `chairSizeM` (meters); removed `mToPx` helper (no longer needed).
 - **`HallOverlay`** — destructures `preset` from hall config; renders arm dimension labels for L/U shapes.
-
----
-
-## 2026-03-24 — Hall preview door rendering fix
-
-### Fixed
-
-- **Hall preview doors invisible** — `HallPreview` was using `hsl(var(...))` CSS custom property syntax in SVG `fill`/`stroke` attributes, which is not supported outside stylesheets (same class of bug previously fixed in `HallOverlay`). Replaced with explicit hex colors (`#334155` for walls, `#b45309` for door gaps, `#f8fafc` for floor fill).
-- **Door width calculation used hardcoded ppm** — door gap width in the preview was computed with a magic `80` instead of the actual `pixelsPerMeter` value, causing incorrect gap sizes when scale differed from the default. Now uses `d.widthM * ppm * s` (actual ppm scaled to preview).
-- **Preview rendered doors as overlaid lines, not wall gaps** — rewrote `HallPreview` to use the same wall-segmentation approach as `HallOverlay`: each wall is split into solid segments with dashed amber gaps where doors sit, rather than drawing a separate line on top of a solid wall. `ppm` is now passed as a prop.
 
 ---
 

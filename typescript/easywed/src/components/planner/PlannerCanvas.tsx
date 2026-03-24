@@ -9,11 +9,14 @@ interface Props {
   tables: PlannerTable[]
   guests: PlannerGuest[]
   selectedGuestId: string | null
+  selectedTableId: string | null
   onMoveTable: (id: string, x: number, y: number) => void
   onEditTable: (table: PlannerTable) => void
   onDeleteTable: (id: string) => void
   onUnassignGuest: (guestId: string) => void
   onAssignGuest: (tableId: string) => void
+  onSelectTable: (id: string | null) => void
+  onCursorMove: (canvasX: number, canvasY: number) => void
   hall: HallConfig | null
   chairSizePx: number
 }
@@ -22,24 +25,27 @@ export function PlannerCanvas({
   tables,
   guests,
   selectedGuestId,
+  selectedTableId,
   onMoveTable,
   onEditTable,
   onDeleteTable,
   onUnassignGuest,
   onAssignGuest,
+  onSelectTable,
+  onCursorMove,
   hall,
   chairSizePx,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
-  const [pan, setPan] = useState(() => {
+
+  // Pan and scale as a single atomic state — keeps them in sync and avoids
+  // the nested-setState anti-pattern that broke zoom-to-cursor.
+  const [viewport, setViewport] = useState(() => {
     const v = loadViewport()
-    return v ? { x: v.panX, y: v.panY } : { x: 0, y: 0 }
+    return v ? { x: v.panX, y: v.panY, scale: v.scale } : { x: 0, y: 0, scale: 1 }
   })
-  const [scale, setScale] = useState(() => {
-    const v = loadViewport()
-    return v ? v.scale : 1
-  })
+
   const panState = useRef<{
     startX: number
     startY: number
@@ -47,17 +53,16 @@ export function PlannerCanvas({
     startPanY: number
   } | null>(null)
 
-  // Persist viewport to localStorage on change
   useEffect(() => {
-    saveViewport({ panX: pan.x, panY: pan.y, scale })
-  }, [pan, scale])
+    saveViewport({ panX: viewport.x, panY: viewport.y, scale: viewport.scale })
+  }, [viewport])
 
-  // Expose pan + scale + snap to child via data attributes so PlannerTableCard can read them
+  // Expose viewport + snap to PlannerTableCard via data attributes
   const snapGridPx = hall ? hall.pixelsPerMeter / 4 : 0
   if (canvasRef.current) {
-    canvasRef.current.dataset.scale = String(scale)
-    canvasRef.current.dataset.panx = String(pan.x)
-    canvasRef.current.dataset.pany = String(pan.y)
+    canvasRef.current.dataset.scale = String(viewport.scale)
+    canvasRef.current.dataset.panx = String(viewport.x)
+    canvasRef.current.dataset.pany = String(viewport.y)
     canvasRef.current.dataset.snap = String(snapGridPx)
   }
 
@@ -68,11 +73,11 @@ export function PlannerCanvas({
       panState.current = {
         startX: e.clientX,
         startY: e.clientY,
-        startPanX: pan.x,
-        startPanY: pan.y,
+        startPanX: viewport.x,
+        startPanY: viewport.y,
       }
     },
-    [pan]
+    [viewport.x, viewport.y]
   )
 
   const onCanvasPointerMove = useCallback(
@@ -80,10 +85,11 @@ export function PlannerCanvas({
       if (!panState.current) return
       const dx = e.clientX - panState.current.startX
       const dy = e.clientY - panState.current.startY
-      setPan({
-        x: panState.current.startPanX + dx,
-        y: panState.current.startPanY + dy,
-      })
+      setViewport((prev) => ({
+        ...prev,
+        x: panState.current!.startPanX + dx,
+        y: panState.current!.startPanY + dy,
+      }))
     },
     []
   )
@@ -92,23 +98,22 @@ export function PlannerCanvas({
     panState.current = null
   }, [])
 
+  // Zoom to cursor — single atomic viewport update avoids nested setState
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
     const handler = (e: WheelEvent) => {
       e.preventDefault()
       const rect = el.getBoundingClientRect()
-      // Cursor position relative to the container
       const cx = e.clientX - rect.left
       const cy = e.clientY - rect.top
-      setScale((prevScale) => {
-        const newScale = Math.min(2, Math.max(0.4, prevScale - e.deltaY * 0.001))
-        // Adjust pan so the canvas point under the cursor stays fixed
-        setPan((prevPan) => ({
-          x: cx - ((cx - prevPan.x) / prevScale) * newScale,
-          y: cy - ((cy - prevPan.y) / prevScale) * newScale,
-        }))
-        return newScale
+      setViewport((prev) => {
+        const newScale = Math.min(2, Math.max(0.4, prev.scale - e.deltaY * 0.001))
+        return {
+          scale: newScale,
+          x: cx - ((cx - prev.x) / prev.scale) * newScale,
+          y: cy - ((cy - prev.y) / prev.scale) * newScale,
+        }
       })
     }
     el.addEventListener("wheel", handler, { passive: false })
@@ -122,24 +127,35 @@ export function PlannerCanvas({
       onPointerDown={onCanvasPointerDown}
       onPointerMove={onCanvasPointerMove}
       onPointerUp={onCanvasPointerUp}
+      onMouseMove={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect()
+        onCursorMove(
+          (e.clientX - rect.left - viewport.x) / viewport.scale,
+          (e.clientY - rect.top - viewport.y) / viewport.scale,
+        )
+      }}
+      // Deselect when clicking empty canvas. Table clicks stop propagation
+      // on their [data-table] wrapper so they never reach here.
+      onClick={() => onSelectTable(null)}
     >
       {/* Inner canvas that gets transformed */}
       <div
         ref={canvasRef}
         className="absolute inset-0 origin-top-left"
         style={{
-          transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
+          transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.scale})`,
         }}
       >
-        {/* Hall overlay */}
         {hall && <HallOverlay hall={hall} />}
 
         {tables.map((table) => (
-          <div key={table.id} data-table>
+          <div key={table.id} data-table onClick={(e) => e.stopPropagation()}>
             <PlannerTableCard
               table={table}
               guests={guests.filter((g) => g.tableId === table.id)}
               selectedGuestId={selectedGuestId}
+              isSelected={selectedTableId === table.id}
+              onSelect={onSelectTable}
               onMove={onMoveTable}
               onEdit={onEditTable}
               onDelete={onDeleteTable}
@@ -152,7 +168,6 @@ export function PlannerCanvas({
         ))}
       </div>
 
-      {/* Empty state */}
       {tables.length === 0 && !hall && (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 text-muted-foreground">
           <PlusCircle className="h-10 w-10 opacity-30" />
@@ -162,9 +177,8 @@ export function PlannerCanvas({
         </div>
       )}
 
-      {/* Zoom indicator */}
       <div className="absolute right-3 bottom-3 rounded-md border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground tabular-nums backdrop-blur-sm">
-        {Math.round(scale * 100)}%
+        {Math.round(viewport.scale * 100)}%
       </div>
     </div>
   )

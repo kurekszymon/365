@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useRef } from "react"
 import { useDroppable } from "@dnd-kit/core"
 import { X, Pencil, Trash2 } from "lucide-react"
 import type { PlannerGuest, PlannerTable } from "@/lib/planner/types"
@@ -9,6 +9,8 @@ interface Props {
   table: PlannerTable
   guests: PlannerGuest[]
   selectedGuestId: string | null
+  isSelected: boolean
+  onSelect: (id: string | null) => void
   onMove: (id: string, x: number, y: number) => void
   onEdit: (table: PlannerTable) => void
   onDelete: (id: string) => void
@@ -82,6 +84,8 @@ export function PlannerTableCard({
   table,
   guests,
   selectedGuestId,
+  isSelected,
+  onSelect,
   onMove,
   onEdit,
   onDelete,
@@ -101,7 +105,6 @@ export function PlannerTableCard({
     moved: boolean
   } | null>(null)
 
-  const [showActions, setShowActions] = useState(false)
 
   const isRound = table.shape === "round"
   const isFull = guests.length >= table.capacity
@@ -155,19 +158,26 @@ export function PlannerTableCard({
       if (selectedGuestId && canAcceptGuest) {
         onAssign(table.id)
       } else {
-        setShowActions((v) => !v)
+        onSelect(isSelected ? null : table.id)
       }
     }
     dragState.current = null
+  }
+
+  function onDoubleClick(e: React.MouseEvent) {
+    e.stopPropagation()
+    onSelect(null)
+    onEdit(table)
   }
 
   const commonWrapperProps = {
     onPointerDown,
     onPointerMove,
     onPointerUp,
+    onDoubleClick,
   }
 
-  const actionBar = showActions && !selectedGuestId && (
+  const actionBar = isSelected && !selectedGuestId && (
     <div
       className="absolute -top-8 left-1/2 z-10 flex -translate-x-1/2 gap-1 rounded-lg border bg-white px-1.5 py-1 shadow-lg"
       onPointerDown={(e) => e.stopPropagation()}
@@ -176,7 +186,7 @@ export function PlannerTableCard({
         className="rounded p-1 hover:bg-muted"
         onClick={(e) => {
           e.stopPropagation()
-          setShowActions(false)
+          onSelect(null)
           onEdit(table)
         }}
         aria-label="Edit table"
@@ -187,7 +197,7 @@ export function PlannerTableCard({
         className="rounded p-1 text-destructive hover:bg-destructive/10"
         onClick={(e) => {
           e.stopPropagation()
-          setShowActions(false)
+          onSelect(null)
           onDelete(table.id)
         }}
         aria-label="Delete table"

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   DndContext,
   DragOverlay,
@@ -69,6 +69,9 @@ export function TablePlanner() {
 
   const [view, setView] = useState<"canvas" | "list">("canvas")
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null)
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null)
+  const [copiedTable, setCopiedTable] = useState<PlannerTable | null>(null)
+  const cursorCanvasPos = useRef({ x: 200, y: 200 })
   const [activeDragGuest, setActiveDragGuest] = useState<PlannerGuest | null>(
     null
   )
@@ -81,6 +84,53 @@ export function TablePlanner() {
   const [renamingWedding, setRenamingWedding] = useState(false)
   const [renameValue, setRenameValue] = useState(state.weddingName)
   const [hallSetupOpen, setHallSetupOpen] = useState(false)
+
+  function duplicateTable(table: PlannerTable) {
+    addTable({
+      // explicitly copy
+      capacity: table.capacity,
+      shape: table.shape,
+      heightPx: table.heightPx,
+      widthPx: table.widthPx,
+
+      name: `${table.name} copy`,
+      x: table.x + 20,
+      y: table.y + 20,
+    })
+  }
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement).tagName
+      if (tag === "INPUT" || tag === "TEXTAREA") return
+      if (e.metaKey || e.ctrlKey) {
+        if (e.key === "c" && selectedTableId) {
+          const table = state.tables.find((t) => t.id === selectedTableId)
+          if (table) setCopiedTable(table)
+        } else if (e.key === "v" && copiedTable) {
+          e.preventDefault()
+          const { x, y } = cursorCanvasPos.current
+          addTable({
+            name: `${copiedTable.name} copy`,
+            shape: copiedTable.shape,
+            capacity: copiedTable.capacity,
+            widthPx: copiedTable.widthPx,
+            heightPx: copiedTable.heightPx,
+            x: x - copiedTable.widthPx / 2,
+            y: y - copiedTable.heightPx / 2,
+          })
+        } else if (e.key === "d" && selectedTableId) {
+          e.preventDefault()
+          const table = state.tables.find((t) => t.id === selectedTableId)
+          if (table) duplicateTable(table)
+        }
+      }
+      if (e.key === "Escape") setSelectedTableId(null)
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [selectedTableId, copiedTable, state.tables, addTable])
 
   // PointerSensor covers both mouse and touch (Pointer Events API).
   const sensors = useSensors(
@@ -139,6 +189,8 @@ export function TablePlanner() {
             onAddTable={() => setAddTableOpen(true)}
             onAddGuest={() => setAddGuestOpen(true)}
             onConfigureHall={() => setHallSetupOpen(true)}
+            selectedTable={state.tables.find((t) => t.id === selectedTableId)}
+            onDuplicateTable={(table) => duplicateTable(table)}
             state={state}
             onImport={importState}
             weddingName={state.weddingName}
@@ -155,11 +207,16 @@ export function TablePlanner() {
                   tables={state.tables}
                   guests={state.guests}
                   selectedGuestId={selectedGuestId}
+                  selectedTableId={selectedTableId}
                   onMoveTable={(id, x, y) => updateTable(id, { x, y })}
                   onEditTable={(t) => setEditingTable(t)}
                   onDeleteTable={deleteTable}
                   onUnassignGuest={(id) => assignGuest(id, null)}
                   onAssignGuest={handleAssignGuest}
+                  onSelectTable={setSelectedTableId}
+                  onCursorMove={(x, y) => {
+                    cursorCanvasPos.current = { x, y }
+                  }}
                   hall={state.hall}
                   chairSizePx={state.chairSizePx}
                 />

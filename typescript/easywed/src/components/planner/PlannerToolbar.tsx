@@ -9,6 +9,7 @@ import {
   FileJson,
   Printer,
   Landmark,
+  Copy,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -18,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { PlannerState } from "@/lib/planner/types"
+import type { PlannerState, PlannerTable } from "@/lib/planner/types"
 import { exportAsJSON, importFromJSON } from "@/lib/planner/storage"
 
 interface Props {
@@ -27,6 +28,8 @@ interface Props {
   onAddTable: () => void
   onAddGuest: () => void
   onConfigureHall: () => void
+  selectedTable?: PlannerTable
+  onDuplicateTable: (table: PlannerTable) => void
   state: PlannerState
   onImport: (state: PlannerState) => void
   weddingName: string
@@ -39,6 +42,8 @@ export function PlannerToolbar({
   onAddTable,
   onAddGuest,
   onConfigureHall,
+  selectedTable,
+  onDuplicateTable,
   state,
   onImport,
   weddingName,
@@ -111,6 +116,19 @@ export function PlannerToolbar({
           <UserPlus className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Guest</span>
         </Button>
+
+        {selectedTable && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onDuplicateTable(selectedTable)}
+            className="gap-1.5"
+            title="Duplicate table (⌘D)"
+          >
+            <Copy className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Duplicate</span>
+          </Button>
+        )}
 
         {/* View toggle */}
         <Button
