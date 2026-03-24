@@ -11,7 +11,7 @@ interface Props {
  * wall strokes, door gaps, a meter grid, and dimension labels.
  */
 export function HallOverlay({ hall }: Props) {
-  const { points, doors, pixelsPerMeter } = hall
+  const { points, doors, pixelsPerMeter, preset } = hall
   if (points.length < 3) return null
 
   const bounds = getPolygonBounds(points)
@@ -200,6 +200,72 @@ export function HallOverlay({ hall }: Props) {
       >
         {heightM} m
       </text>
+
+      {/* L-shape arm dimension labels */}
+      {preset === "l-shape" && points.length >= 6 && (
+        <>
+          <text
+            x={(points[5].x + points[4].x) / 2}
+            y={bounds.maxY + 32}
+            textAnchor="middle"
+            fontSize={10}
+            fill="#94a3b8"
+            fontFamily="system-ui, sans-serif"
+          >
+            {((points[3].x - points[0].x) / pixelsPerMeter).toFixed(1)} m
+          </text>
+          <text
+            x={bounds.maxX + 32}
+            y={(points[1].y + points[2].y) / 2}
+            textAnchor="start"
+            fontSize={10}
+            fill="#94a3b8"
+            fontFamily="system-ui, sans-serif"
+            transform={`rotate(90, ${bounds.maxX + 32}, ${(points[1].y + points[2].y) / 2})`}
+          >
+            {((points[2].y - points[0].y) / pixelsPerMeter).toFixed(1)} m
+          </text>
+        </>
+      )}
+
+      {/* U-shape arm dimension labels */}
+      {preset === "u-shape" && points.length >= 8 && (
+        <>
+          {/* Left arm width — inside the left arm */}
+          <text
+            x={(points[0].x + points[1].x) / 2}
+            y={points[0].y + 16}
+            textAnchor="middle"
+            fontSize={10}
+            fill="#94a3b8"
+            fontFamily="system-ui, sans-serif"
+          >
+            {((points[1].x - points[0].x) / pixelsPerMeter).toFixed(1)} m
+          </text>
+          {/* Right arm width — inside the right arm */}
+          <text
+            x={(points[4].x + points[5].x) / 2}
+            y={points[4].y + 16}
+            textAnchor="middle"
+            fontSize={10}
+            fill="#94a3b8"
+            fontFamily="system-ui, sans-serif"
+          >
+            {((points[5].x - points[4].x) / pixelsPerMeter).toFixed(1)} m
+          </text>
+          {/* Notch depth — inside the notch cutout */}
+          <text
+            x={(points[2].x + points[3].x) / 2}
+            y={(points[1].y + points[2].y) / 2 + 4}
+            textAnchor="middle"
+            fontSize={10}
+            fill="#94a3b8"
+            fontFamily="system-ui, sans-serif"
+          >
+            {((points[2].y - points[0].y) / pixelsPerMeter).toFixed(1)} m
+          </text>
+        </>
+      )}
     </svg>
   )
 }

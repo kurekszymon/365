@@ -11,7 +11,8 @@ import {
   DEFAULT_TABLE_ROUND_PX,
   DEFAULT_TABLE_RECT_W_PX,
   DEFAULT_TABLE_RECT_H_PX,
-  isPointInPolygon,
+  DEFAULT_PIXELS_PER_METER,
+  isRectInPolygon,
   getPolygonBounds,
 } from "@/lib/planner/types"
 import { loadFromLocalStorage, saveToLocalStorage } from "@/lib/planner/storage"
@@ -31,10 +32,14 @@ export function usePlanner() {
 
   function updateHall(hall: HallConfig | null) {
     setState((s) => {
-      // When ppm changes, rescale existing tables proportionally
-      const oldPpm = s.hall?.pixelsPerMeter
+      // When ppm changes, rescale existing tables proportionally.
+      // Fallback to DEFAULT_PIXELS_PER_METER when no hall exists yet so
+      // tables created before the first hall are rescaled correctly.
+      // Note: if a hall is removed and re-added the effective ppm is lost,
+      // so the fallback may be inaccurate in that edge case.
+      const oldPpm = s.hall?.pixelsPerMeter ?? DEFAULT_PIXELS_PER_METER
       const newPpm = hall?.pixelsPerMeter
-      if (oldPpm && newPpm && oldPpm !== newPpm) {
+      if (newPpm && oldPpm !== newPpm) {
         const ratio = newPpm / oldPpm
         return {
           ...s,
@@ -46,7 +51,6 @@ export function usePlanner() {
             widthPx: Math.round(t.widthPx * ratio),
             heightPx: Math.round(t.heightPx * ratio),
           })),
-          chairSizePx: Math.round(s.chairSizePx * ratio),
         }
       }
       return { ...s, hall }
@@ -128,10 +132,7 @@ export function usePlanner() {
           const h = updated.heightPx
 
           const fitsInHall = (x: number, y: number) =>
-            isPointInPolygon(x - co, y - co, poly) &&
-            isPointInPolygon(x + w + co, y - co, poly) &&
-            isPointInPolygon(x + w + co, y + h + co, poly) &&
-            isPointInPolygon(x - co, y + h + co, poly)
+            isRectInPolygon(x - co, y - co, w + 2 * co, h + 2 * co, poly)
 
           // 1) Clamp to polygon bounding box — smooth sliding along outer walls
           const bounds = getPolygonBounds(poly)

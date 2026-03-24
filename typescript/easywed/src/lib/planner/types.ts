@@ -217,7 +217,27 @@ export function isPointInPolygon(
   return inside
 }
 
-/** Check if a rectangle (table bounding box) is fully inside the polygon. */
+/** Check if two finite line segments intersect. */
+function segmentsIntersect(
+  ax: number, ay: number, bx: number, by: number,
+  cx: number, cy: number, dx: number, dy: number,
+): boolean {
+  const d1x = bx - ax, d1y = by - ay
+  const d2x = dx - cx, d2y = dy - cy
+  const cross = d1x * d2y - d1y * d2x
+  if (Math.abs(cross) < 1e-10) return false // parallel / collinear
+  const t = ((cx - ax) * d2y - (cy - ay) * d2x) / cross
+  const u = ((cx - ax) * d1y - (cy - ay) * d1x) / cross
+  return t >= 0 && t <= 1 && u >= 0 && u <= 1
+}
+
+/**
+ * Check if a rectangle is fully inside the polygon.
+ * Checks all 4 corners (point-in-polygon) AND that no edge of the rectangle
+ * crosses any polygon edge. The edge check is required for concave halls
+ * (U-shape, L-shape) where a wide table can have all corners inside the
+ * polygon while its body crosses through a notch or cutout.
+ */
 export function isRectInPolygon(
   x: number,
   y: number,
@@ -225,12 +245,28 @@ export function isRectInPolygon(
   h: number,
   polygon: HallPoint[]
 ): boolean {
-  return (
-    isPointInPolygon(x, y, polygon) &&
-    isPointInPolygon(x + w, y, polygon) &&
-    isPointInPolygon(x + w, y + h, polygon) &&
-    isPointInPolygon(x, y + h, polygon)
-  )
+  if (
+    !isPointInPolygon(x, y, polygon) ||
+    !isPointInPolygon(x + w, y, polygon) ||
+    !isPointInPolygon(x + w, y + h, polygon) ||
+    !isPointInPolygon(x, y + h, polygon)
+  ) return false
+
+  // For concave polygons: ensure no rect edge crosses a polygon edge
+  const rectEdges: [number, number, number, number][] = [
+    [x,     y,     x + w, y    ],
+    [x + w, y,     x + w, y + h],
+    [x + w, y + h, x,     y + h],
+    [x,     y + h, x,     y    ],
+  ]
+  for (const [ax, ay, bx, by] of rectEdges) {
+    for (let i = 0; i < polygon.length; i++) {
+      const c = polygon[i]
+      const d = polygon[(i + 1) % polygon.length]
+      if (segmentsIntersect(ax, ay, bx, by, c.x, c.y, d.x, d.y)) return false
+    }
+  }
+  return true
 }
 
 /** Get polygon bounding box. Returns null for empty arrays. */

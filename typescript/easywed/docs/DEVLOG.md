@@ -5,6 +5,24 @@ Update this file after every significant session.
 
 ---
 
+## 2026-03-24 — Fix meter ↔ pixel math across hall, tables, and chairs
+
+### Fixed
+
+- **`updateHall` chair rescaling was dead code** — `TablePlanner` called `updateHall(hall)` then `updateChairSize(chairSizePx)` sequentially; the second call always overwrote whatever the first computed. Removed `chairSizePx` from the `updateHall` rescaling block since the dialog now owns the correct pixel value.
+- **L/U-shape arm dimensions lost on re-edit** — `inferPresetDims` guessed arm sizes as fixed fractions of the bounding box (50% for L, 25%/50% for U). Re-opening the dialog and clicking Save without changes silently changed the polygon. Now extracts exact arm dimensions from the polygon vertices (e.g., L-shape `armWidth` = `points[3].x − points[0].x`).
+- **Tables created before first hall not rescaled** — `updateHall` only rescaled when `s.hall?.pixelsPerMeter` existed, so tables created with no hall (implicit ppm = 80) kept their pixel sizes when a hall with a different ppm was added. Now falls back to `DEFAULT_PIXELS_PER_METER` when no hall exists. Note: if a hall is removed and re-added, the effective ppm is lost — the fallback may be inaccurate in that edge case.
+- **Chair size display shifted when changing ppm** — the Hall Setup dialog stored chair size in pixels, so changing the scale slider caused the meter input to visually shrink/grow even though the physical chair size hadn't changed. Now stores chair diameter in meters internally and converts to pixels on save (`Math.round(chairSizeM * ppm)`), so the input stays stable when ppm changes.
+- **L/U-shape dimension labels only showed bounding box** — `HallOverlay` displayed overall width × height, which is correct but doesn't communicate arm dimensions for non-rectangular presets. Added secondary labels (smaller, lighter) showing arm width and arm height for L-shape (along the bottom-left and top-right edges) and U-shape (arm width above the left arm, notch depth inside the cutout).
+
+### Changed
+
+- **`usePlanner.updateHall`** — uses `DEFAULT_PIXELS_PER_METER` as fallback `oldPpm`; no longer rescales `chairSizePx` (handled by dialog).
+- **`HallSetupDialog`** — `inferPresetDims` extracts exact vertex-based dimensions; `chairSize` state replaced with `chairSizeM` (meters); removed `mToPx` helper (no longer needed).
+- **`HallOverlay`** — destructures `preset` from hall config; renders arm dimension labels for L/U shapes.
+
+---
+
 ## 2026-03-24 — Hall preview door rendering fix
 
 ### Fixed

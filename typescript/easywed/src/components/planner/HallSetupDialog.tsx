@@ -47,25 +47,40 @@ function pxToM(px: number, ppm: number) {
   return +(px / ppm).toFixed(1)
 }
 
-function mToPx(m: number, ppm: number) {
-  return m * ppm
-}
 
 function inferPresetDims(
   points: HallPoint[],
   ppm: number,
   preset: HallPreset
 ): Record<string, number> {
+  // Extract exact dimensions from polygon vertices instead of guessing,
+  // so arm dimensions survive a re-edit round-trip.
+  if (preset === "rectangle" && points.length >= 4) {
+    return {
+      width: pxToM(points[1].x - points[0].x, ppm),
+      height: pxToM(points[3].y - points[0].y, ppm),
+    }
+  }
+  if (preset === "l-shape" && points.length >= 6) {
+    return {
+      width: pxToM(points[1].x - points[0].x, ppm),
+      height: pxToM(points[5].y - points[0].y, ppm),
+      armWidth: pxToM(points[3].x - points[0].x, ppm),
+      armHeight: pxToM(points[2].y - points[0].y, ppm),
+    }
+  }
+  if (preset === "u-shape" && points.length >= 8) {
+    return {
+      width: pxToM(points[5].x - points[0].x, ppm),
+      height: pxToM(points[7].y - points[0].y, ppm),
+      armWidth: pxToM(points[1].x - points[0].x, ppm),
+      armHeight: pxToM(points[2].y - points[0].y, ppm),
+    }
+  }
+  // Fallback for custom or unknown
   const b = getPolygonBounds(points)
   if (!b) return { width: 20, height: 15, armWidth: 10, armHeight: 7 }
-  const wM = pxToM(b.width, ppm)
-  const hM = pxToM(b.height, ppm)
-  if (preset === "rectangle") return { width: wM, height: hM }
-  if (preset === "l-shape")
-    return { width: wM, height: hM, armWidth: +(wM / 2).toFixed(1), armHeight: +(hM / 2).toFixed(1) }
-  if (preset === "u-shape")
-    return { width: wM, height: hM, armWidth: +(wM * 0.25).toFixed(1), armHeight: +(hM * 0.5).toFixed(1) }
-  return { width: wM, height: hM }
+  return { width: pxToM(b.width, ppm), height: pxToM(b.height, ppm) }
 }
 
 // ---- component --------------------------------------------------------------
@@ -80,7 +95,9 @@ export function HallSetupDialog({
 }: Props) {
   const [preset, setPreset] = useState<HallPreset>(initial?.preset ?? "rectangle")
   const [ppm, setPpm] = useState(initial?.pixelsPerMeter ?? DEFAULT_PIXELS_PER_METER)
-  const [chairSize, setChairSize] = useState(initialChairSize)
+  const [chairSizeM, setChairSizeM] = useState(
+    pxToM(initialChairSize, initial?.pixelsPerMeter ?? DEFAULT_PIXELS_PER_METER)
+  )
 
   // Preset dimension inputs (meters)
   const defaults = initial
@@ -117,7 +134,7 @@ export function HallSetupDialog({
       setArmWidth(d.armWidth ?? 10)
       setArmHeight(d.armHeight ?? 7)
       setDoors(initial.doors)
-      setChairSize(initialChairSize)
+      setChairSizeM(pxToM(initialChairSize, initial.pixelsPerMeter))
       if (initial.preset === "custom") {
         setCustomPointsM(
           initial.points.map((p) => ({
@@ -137,7 +154,7 @@ export function HallSetupDialog({
       setArmHeight(7)
       setDoors([])
       setCustomPointsM([])
-      setChairSize(DEFAULT_CHAIR_SIZE_PX)
+      setChairSizeM(pxToM(DEFAULT_CHAIR_SIZE_PX, DEFAULT_PIXELS_PER_METER))
     }
   }, [open, initial, initialChairSize])
 
@@ -162,7 +179,7 @@ export function HallSetupDialog({
         pixelsPerMeter: ppm,
         preset,
       },
-      chairSize
+      Math.round(chairSizeM * ppm)
     )
     onClose()
   }
@@ -421,13 +438,13 @@ export function HallSetupDialog({
                 min={0.1}
                 max={2}
                 step={0.05}
-                value={pxToM(chairSize, ppm)}
+                value={chairSizeM}
                 onChange={(e) =>
-                  setChairSize(mToPx(parseFloat(e.target.value) || 0.4, ppm))
+                  setChairSizeM(parseFloat(e.target.value) || 0.3)
                 }
               />
               <p className="text-[10px] text-muted-foreground">
-                {Math.round(chairSize)} px
+                {Math.round(chairSizeM * ppm)} px
               </p>
             </div>
           </div>
