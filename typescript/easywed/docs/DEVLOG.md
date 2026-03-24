@@ -5,6 +5,16 @@ Update this file after every significant session.
 
 ---
 
+## 2026-03-24 — Hall preview door rendering fix
+
+### Fixed
+
+- **Hall preview doors invisible** — `HallPreview` was using `hsl(var(...))` CSS custom property syntax in SVG `fill`/`stroke` attributes, which is not supported outside stylesheets (same class of bug previously fixed in `HallOverlay`). Replaced with explicit hex colors (`#334155` for walls, `#b45309` for door gaps, `#f8fafc` for floor fill).
+- **Door width calculation used hardcoded ppm** — door gap width in the preview was computed with a magic `80` instead of the actual `pixelsPerMeter` value, causing incorrect gap sizes when scale differed from the default. Now uses `d.widthM * ppm * s` (actual ppm scaled to preview).
+- **Preview rendered doors as overlaid lines, not wall gaps** — rewrote `HallPreview` to use the same wall-segmentation approach as `HallOverlay`: each wall is split into solid segments with dashed amber gaps where doors sit, rather than drawing a separate line on top of a solid wall. `ppm` is now passed as a prop.
+
+---
+
 ## 2026-03-23 — Wedding hall builder, configurable table & chair sizes, UX polish
 
 ### Added
@@ -24,17 +34,22 @@ Update this file after every significant session.
 - **HallSetupDialog** — full configuration dialog with preset shape picker (pill-style toggle buttons), dimension inputs per preset, custom polygon editor with clickable vertex grid, door list management, scale (px/m) and chair size controls, and live SVG preview.
 - **HallOverlay** — SVG component rendered behind tables on the canvas, scales with pan/zoom.
 
+### Fixed
+
+- **Table clipping for all hall shapes** — the old constraint only checked the table's center against the polygon, allowing edges and chairs to escape. Now checks all 4 corners of the table's expanded footprint (including chair overflow) against the actual polygon. Uses bounding-box clamping for smooth wall sliding on outer edges, plus per-axis binary search (10 iterations, sub-pixel precision) for concave cut-outs (L/U shapes), so tables hug walls tightly on all sides.
+- **Zoom to cursor** — mouse wheel zoom now keeps the point under the cursor fixed instead of zooming toward the top-left corner.
+- **Snap grid too coarse** — snap was at 1 m (80 px), causing visible jumps. Reduced to 1/4 m (20 px) for smooth movement while staying aligned.
+
 ### Changed
 
 - **`PlannerTable` type** — added `widthPx` and `heightPx` fields. Round tables default to 160×160 px, rectangular to 184×80 px (matching previous hard-coded CSS).
 - **`PlannerState` type** — added `hall: HallConfig | null` and `chairSizePx: number` fields. Version stays at 1 (app not deployed yet).
 - **`PlannerTableCard`** — renders at dynamic `width`/`height` from table data instead of fixed CSS classes. Renders chair SVG layer around each table.
-- **`PlannerToolbar`** — added "Hall" button (Landmark icon), highlighted when a hall is configured.
-- **`usePlanner` hook** — added `updateHall`, `addDoor`, `removeDoor`, `updateChairSize` actions. `updateTable` now validates position against hall polygon.
-- **Table clipping on top/left hall edges** — tables could escape the hall boundary on the top and left sides. Root cause: the old constraint only checked if the table's _center_ was inside the hall polygon, and a separate `Math.max(0, ...)` clamp stopped at x/y=0 instead of the hall boundary (which starts at `HALL_PADDING=40`). Fix: `updateTable` now clamps the table's full bounding box to the hall polygon bounds (`getPolygonBounds`) before checking center-in-polygon, ensuring no edge escapes on any side.
-- **`PlannerToolbar`** — removed `snapToGrid` / `onToggleSnap` props and the Grid3x3 toggle button.
-- **`PlannerCanvas`** — removed `snapToGrid` prop; snap is now automatic when `hall` exists. Added `loadViewport`/`saveViewport` integration.
+- **`PlannerToolbar`** — added "Hall" button (Landmark icon), highlighted when a hall is configured. Removed snap toggle (now automatic).
+- **`usePlanner` hook** — added `updateHall`, `addDoor`, `removeDoor`, `updateChairSize` actions. `updateTable` constrains tables inside hall polygon with chair-aware bounding.
+- **`PlannerCanvas`** — snap is automatic at 1/4 m when hall exists. Viewport (pan/scale) persisted to localStorage. Zoom targets cursor position.
 - **`PlannerTable`** — removed `Math.max(0, ...)` position clamp (now handled by `updateTable`).
+- **`storage.ts`** — added `Viewport` type, `saveViewport`, `loadViewport` helpers.
 - **`usePlanner.updateTable`** — added bounding-box clamping via `getPolygonBounds` before the center-in-polygon check.
 - **`storage.ts`** — added `Viewport` type, `saveViewport`, `loadViewport` helpers.
 

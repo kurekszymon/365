@@ -283,7 +283,7 @@ export function HallSetupDialog({
           {previewPoints.length >= 3 && bounds && (
             <div className="grid gap-1.5">
               <Label>Preview</Label>
-              <HallPreview points={previewPoints} bounds={bounds} doors={doors} />
+              <HallPreview points={previewPoints} bounds={bounds} doors={doors} ppm={ppm} />
             </div>
           )}
 
@@ -463,10 +463,12 @@ function HallPreview({
   points,
   bounds,
   doors,
+  ppm,
 }: {
   points: HallPoint[]
   bounds: NonNullable<ReturnType<typeof getPolygonBounds>>
   doors: HallDoor[]
+  ppm: number
 }) {
   const padding = 16
   const maxW = 380
@@ -485,51 +487,75 @@ function HallPreview({
 
   const polyStr = scaled.map((p) => `${p.x},${p.y}`).join(" ")
 
-  // Door segments
-  const doorLines = doors.map((door) => {
-    const i = door.wallIndex % points.length
-    const j = (i + 1) % points.length
-    const ax = scaled[i].x,
-      ay = scaled[i].y
-    const bx = scaled[j].x,
-      by = scaled[j].y
-    const wallLen = Math.sqrt((bx - ax) ** 2 + (by - ay) ** 2)
-    // Door center at position along wall, width proportional
-    const doorHalfPx = ((door.widthM * s * 80) / 2) // rough
-    const cx = ax + (bx - ax) * door.position
-    const cy = ay + (by - ay) * door.position
-    const dx = (bx - ax) / wallLen
-    const dy = (by - ay) / wallLen
-    return {
-      x1: cx - dx * Math.min(doorHalfPx, wallLen / 2),
-      y1: cy - dy * Math.min(doorHalfPx, wallLen / 2),
-      x2: cx + dx * Math.min(doorHalfPx, wallLen / 2),
-      y2: cy + dy * Math.min(doorHalfPx, wallLen / 2),
+  // Build wall segments with door gaps (mirrors HallOverlay approach)
+  const wallSegments: React.ReactNode[] = []
+  for (let i = 0; i < scaled.length; i++) {
+    const a = scaled[i]
+    const b = scaled[(i + 1) % scaled.length]
+    const wallDoors = doors.filter((d) => d.wallIndex === i)
+
+    if (wallDoors.length === 0) {
+      wallSegments.push(
+        <line
+          key={`wall-${i}`}
+          x1={a.x} y1={a.y} x2={b.x} y2={b.y}
+          stroke="#334155" strokeWidth={2} strokeLinecap="round"
+        />
+      )
+    } else {
+      const wallLen = Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)
+      const dx = (b.x - a.x) / wallLen
+      const dy = (b.y - a.y) / wallLen
+
+      const doorRanges = wallDoors
+        .map((d) => {
+          const halfW = (d.widthM * ppm * s) / 2 / wallLen
+          return [Math.max(0, d.position - halfW), Math.min(1, d.position + halfW)] as [number, number]
+        })
+        .sort((a, b) => a[0] - b[0])
+
+      let cursor = 0
+      doorRanges.forEach(([ds, de], idx) => {
+        if (cursor < ds) {
+          wallSegments.push(
+            <line
+              key={`wall-${i}-seg-${idx}`}
+              x1={a.x + dx * cursor * wallLen} y1={a.y + dy * cursor * wallLen}
+              x2={a.x + dx * ds * wallLen} y2={a.y + dy * ds * wallLen}
+              stroke="#334155" strokeWidth={2} strokeLinecap="round"
+            />
+          )
+        }
+        // Door opening — dashed amber line
+        wallSegments.push(
+          <line
+            key={`door-${i}-${idx}`}
+            x1={a.x + dx * ds * wallLen} y1={a.y + dy * ds * wallLen}
+            x2={a.x + dx * de * wallLen} y2={a.y + dy * de * wallLen}
+            stroke="#b45309" strokeWidth={2} strokeLinecap="round" strokeDasharray="4 3"
+          />
+        )
+        cursor = de
+      })
+
+      if (cursor < 1) {
+        wallSegments.push(
+          <line
+            key={`wall-${i}-tail`}
+            x1={a.x + dx * cursor * wallLen} y1={a.y + dy * cursor * wallLen}
+            x2={b.x} y2={b.y}
+            stroke="#334155" strokeWidth={2} strokeLinecap="round"
+          />
+        )
+      }
     }
-  })
+  }
 
   return (
     <div className="flex justify-center rounded-lg border bg-muted/30 p-2">
       <svg width={svgW} height={svgH}>
-        <polygon
-          points={polyStr}
-          fill="hsl(var(--background))"
-          stroke="hsl(var(--foreground))"
-          strokeWidth={2}
-        />
-        {/* Door indicators */}
-        {doorLines.map((d, i) => (
-          <line
-            key={i}
-            x1={d.x1}
-            y1={d.y1}
-            x2={d.x2}
-            y2={d.y2}
-            stroke="hsl(var(--primary))"
-            strokeWidth={4}
-            strokeLinecap="round"
-          />
-        ))}
+        <polygon points={polyStr} fill="#f8fafc" stroke="none" />
+        {wallSegments}
       </svg>
     </div>
   )
