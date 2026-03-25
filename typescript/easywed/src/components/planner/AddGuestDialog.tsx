@@ -29,7 +29,9 @@ export function AddGuestDialog({ open, onClose, onSave, initial }: Props) {
 
   function toggleDietary(option: Dietary) {
     setDietary((prev) =>
-      prev.includes(option) ? prev.filter((d) => d !== option) : [...prev, option]
+      prev.includes(option)
+        ? prev.filter((d) => d !== option)
+        : [...prev, option]
     )
   }
 

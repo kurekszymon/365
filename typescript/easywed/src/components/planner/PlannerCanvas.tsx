@@ -1,6 +1,10 @@
 import { useRef, useState, useCallback, useEffect, useMemo } from "react"
 import { PlusCircle } from "lucide-react"
-import type { HallConfig, PlannerGuest, PlannerTable } from "@/lib/planner/types"
+import type {
+  HallConfig,
+  PlannerGuest,
+  PlannerTable,
+} from "@/lib/planner/types"
 import { isPointInPolygon } from "@/lib/planner/types"
 import { loadViewport, saveViewport } from "@/lib/planner/storage"
 import { PlannerTableCard } from "./PlannerTable"
@@ -48,7 +52,9 @@ export function PlannerCanvas({
   // the nested-setState anti-pattern that broke zoom-to-cursor.
   const [viewport, setViewport] = useState(() => {
     const v = loadViewport()
-    return v ? { x: v.panX, y: v.panY, scale: v.scale } : { x: 0, y: 0, scale: 1 }
+    return v
+      ? { x: v.panX, y: v.panY, scale: v.scale }
+      : { x: 0, y: 0, scale: 1 }
   })
 
   const panState = useRef<{
@@ -134,7 +140,10 @@ export function PlannerCanvas({
       const cx = e.clientX - rect.left
       const cy = e.clientY - rect.top
       setViewport((prev) => {
-        const newScale = Math.min(2, Math.max(0.4, prev.scale - e.deltaY * 0.001))
+        const newScale = Math.min(
+          2,
+          Math.max(0.4, prev.scale - e.deltaY * 0.001)
+        )
         return {
           scale: newScale,
           x: cx - ((cx - prev.x) / prev.scale) * newScale,
@@ -158,7 +167,7 @@ export function PlannerCanvas({
         const rect = e.currentTarget.getBoundingClientRect()
         onCursorMove(
           (e.clientX - rect.left - viewport.x) / viewport.scale,
-          (e.clientY - rect.top - viewport.y) / viewport.scale,
+          (e.clientY - rect.top - viewport.y) / viewport.scale
         )
       }}
       // Table clicks stop propagation on their [data-table] wrapper so they

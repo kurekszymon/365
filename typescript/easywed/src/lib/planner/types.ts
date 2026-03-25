@@ -219,11 +219,19 @@ export function isPointInPolygon(
 
 /** Check if two finite line segments intersect. */
 function segmentsIntersect(
-  ax: number, ay: number, bx: number, by: number,
-  cx: number, cy: number, dx: number, dy: number,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  cx: number,
+  cy: number,
+  dx: number,
+  dy: number
 ): boolean {
-  const d1x = bx - ax, d1y = by - ay
-  const d2x = dx - cx, d2y = dy - cy
+  const d1x = bx - ax,
+    d1y = by - ay
+  const d2x = dx - cx,
+    d2y = dy - cy
   const cross = d1x * d2y - d1y * d2x
   if (Math.abs(cross) < 1e-10) return false // parallel / collinear
   const t = ((cx - ax) * d2y - (cy - ay) * d2x) / cross
@@ -250,14 +258,15 @@ export function isRectInPolygon(
     !isPointInPolygon(x + w, y, polygon) ||
     !isPointInPolygon(x + w, y + h, polygon) ||
     !isPointInPolygon(x, y + h, polygon)
-  ) return false
+  )
+    return false
 
   // For concave polygons: ensure no rect edge crosses a polygon edge
   const rectEdges: [number, number, number, number][] = [
-    [x,     y,     x + w, y    ],
-    [x + w, y,     x + w, y + h],
-    [x + w, y + h, x,     y + h],
-    [x,     y + h, x,     y    ],
+    [x, y, x + w, y],
+    [x + w, y, x + w, y + h],
+    [x + w, y + h, x, y + h],
+    [x, y + h, x, y],
   ]
   for (const [ax, ay, bx, by] of rectEdges) {
     for (let i = 0; i < polygon.length; i++) {

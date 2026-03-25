@@ -214,7 +214,11 @@ export function usePlanner() {
   // Guests
   // -------------------------------------------------------------------------
 
-  function addGuest(guest: { name: string; dietary: Dietary[]; note?: string }) {
+  function addGuest(guest: {
+    name: string
+    dietary: Dietary[]
+    note?: string
+  }) {
     setState((s) => ({
       ...s,
       guests: [

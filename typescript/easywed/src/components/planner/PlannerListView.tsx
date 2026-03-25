@@ -82,9 +82,7 @@ function SeatedGuestRow({
         </SelectTrigger>
         <SelectContent>
           {tables.map((t) => {
-            const seatedCount = guests.filter(
-              (x) => x.tableId === t.id
-            ).length
+            const seatedCount = guests.filter((x) => x.tableId === t.id).length
             const full = seatedCount >= t.capacity && t.id !== g.tableId
             return (
               <SelectItem key={t.id} value={t.id} disabled={full}>
@@ -160,9 +158,7 @@ function UnassignedGuestRow({
         </SelectTrigger>
         <SelectContent>
           {tables.map((t) => {
-            const seatedCount = guests.filter(
-              (x) => x.tableId === t.id
-            ).length
+            const seatedCount = guests.filter((x) => x.tableId === t.id).length
             const full = seatedCount >= t.capacity
             return (
               <SelectItem key={t.id} value={t.id} disabled={full}>
@@ -218,7 +214,10 @@ export function PlannerListView({
           const tableGuests = guests.filter((g) => g.tableId === table.id)
           const isFull = tableGuests.length >= table.capacity
           return (
-            <div key={table.id} className="rounded-xl border bg-white shadow-sm">
+            <div
+              key={table.id}
+              className="rounded-xl border bg-white shadow-sm"
+            >
               <div className="flex items-center justify-between gap-2 border-b px-4 py-2.5">
                 <div className="flex min-w-0 items-center gap-2">
                   <span className="truncate font-semibold">{table.name}</span>

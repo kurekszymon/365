@@ -41,7 +41,7 @@ export function GuestPanel({
   }
 
   return (
-    <aside className="absolute left-0 top-0 z-50 flex h-full w-64 shrink-0 flex-col border-r bg-background shadow-xl">
+    <aside className="absolute top-0 left-0 z-50 flex h-full w-64 shrink-0 flex-col border-r bg-background shadow-xl">
       <div className="flex items-center justify-between border-b px-3 py-2.5">
         <span className="text-sm font-semibold">
           Guests{" "}

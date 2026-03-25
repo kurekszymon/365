@@ -55,7 +55,11 @@ export function PlannerPrintView({ state }: Props) {
                       <span>{g.name}</span>
                       {g.dietary.length > 0 && (
                         <span className="text-gray-400">
-                          ({g.dietary.map((d: Dietary) => DIETARY_LABELS[d]).join(", ")})
+                          (
+                          {g.dietary
+                            .map((d: Dietary) => DIETARY_LABELS[d])
+                            .join(", ")}
+                          )
                         </span>
                       )}
                     </li>
@@ -79,7 +83,11 @@ export function PlannerPrintView({ state }: Props) {
                 · {g.name}
                 {g.dietary.length > 0 && (
                   <span className="ml-1 text-gray-400">
-                    ({g.dietary.map((d: Dietary) => DIETARY_LABELS[d]).join(", ")})
+                    (
+                    {g.dietary
+                      .map((d: Dietary) => DIETARY_LABELS[d])
+                      .join(", ")}
+                    )
                   </span>
                 )}
               </li>

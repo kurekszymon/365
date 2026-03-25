@@ -47,7 +47,6 @@ function pxToM(px: number, ppm: number) {
   return +(px / ppm).toFixed(1)
 }
 
-
 function inferPresetDims(
   points: HallPoint[],
   ppm: number,
@@ -93,8 +92,12 @@ export function HallSetupDialog({
   initial,
   chairSizePx: initialChairSize,
 }: Props) {
-  const [preset, setPreset] = useState<HallPreset>(initial?.preset ?? "rectangle")
-  const [ppm, setPpm] = useState(initial?.pixelsPerMeter ?? DEFAULT_PIXELS_PER_METER)
+  const [preset, setPreset] = useState<HallPreset>(
+    initial?.preset ?? "rectangle"
+  )
+  const [ppm, setPpm] = useState(
+    initial?.pixelsPerMeter ?? DEFAULT_PIXELS_PER_METER
+  )
   const [chairSizeM, setChairSizeM] = useState(
     pxToM(initialChairSize, initial?.pixelsPerMeter ?? DEFAULT_PIXELS_PER_METER)
   )
@@ -128,7 +131,11 @@ export function HallSetupDialog({
     if (initial) {
       setPreset(initial.preset)
       setPpm(initial.pixelsPerMeter)
-      const d = inferPresetDims(initial.points, initial.pixelsPerMeter, initial.preset)
+      const d = inferPresetDims(
+        initial.points,
+        initial.pixelsPerMeter,
+        initial.preset
+      )
       setWidth(d.width)
       setHeight(d.height)
       setArmWidth(d.armWidth ?? 10)
@@ -191,11 +198,12 @@ export function HallSetupDialog({
 
   // -- preview ----------------------------------------------------------------
   const previewPoints = getPolygon()
-  const bounds = previewPoints.length >= 3 ? getPolygonBounds(previewPoints) : null
+  const bounds =
+    previewPoints.length >= 3 ? getPolygonBounds(previewPoints) : null
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Configure wedding hall</DialogTitle>
         </DialogHeader>
@@ -300,7 +308,12 @@ export function HallSetupDialog({
           {previewPoints.length >= 3 && bounds && (
             <div className="grid gap-1.5">
               <Label>Preview</Label>
-              <HallPreview points={previewPoints} bounds={bounds} doors={doors} ppm={ppm} />
+              <HallPreview
+                points={previewPoints}
+                bounds={bounds}
+                doors={doors}
+                ppm={ppm}
+              />
             </div>
           )}
 
@@ -352,7 +365,13 @@ export function HallSetupDialog({
                       setDoors((ds) =>
                         ds.map((d, di) =>
                           di === i
-                            ? { ...d, wallIndex: Math.max(0, Math.min(previewPoints.length - 1, wi)) }
+                            ? {
+                                ...d,
+                                wallIndex: Math.max(
+                                  0,
+                                  Math.min(previewPoints.length - 1, wi)
+                                ),
+                              }
                             : d
                         )
                       )
@@ -405,7 +424,9 @@ export function HallSetupDialog({
                   size="icon-sm"
                   variant="ghost"
                   className="shrink-0 text-destructive"
-                  onClick={() => setDoors((ds) => ds.filter((_, di) => di !== i))}
+                  onClick={() =>
+                    setDoors((ds) => ds.filter((_, di) => di !== i))
+                  }
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
@@ -424,7 +445,9 @@ export function HallSetupDialog({
                 max={200}
                 step={10}
                 value={ppm}
-                onChange={(e) => setPpm(parseInt(e.target.value) || DEFAULT_PIXELS_PER_METER)}
+                onChange={(e) =>
+                  setPpm(parseInt(e.target.value) || DEFAULT_PIXELS_PER_METER)
+                }
               />
               <p className="text-[10px] text-muted-foreground">
                 1 m = {ppm} px on canvas
@@ -515,8 +538,13 @@ function HallPreview({
       wallSegments.push(
         <line
           key={`wall-${i}`}
-          x1={a.x} y1={a.y} x2={b.x} y2={b.y}
-          stroke="#334155" strokeWidth={2} strokeLinecap="round"
+          x1={a.x}
+          y1={a.y}
+          x2={b.x}
+          y2={b.y}
+          stroke="#334155"
+          strokeWidth={2}
+          strokeLinecap="round"
         />
       )
     } else {
@@ -527,7 +555,10 @@ function HallPreview({
       const doorRanges = wallDoors
         .map((d) => {
           const halfW = (d.widthM * ppm * s) / 2 / wallLen
-          return [Math.max(0, d.position - halfW), Math.min(1, d.position + halfW)] as [number, number]
+          return [
+            Math.max(0, d.position - halfW),
+            Math.min(1, d.position + halfW),
+          ] as [number, number]
         })
         .sort((a, b) => a[0] - b[0])
 
@@ -537,9 +568,13 @@ function HallPreview({
           wallSegments.push(
             <line
               key={`wall-${i}-seg-${idx}`}
-              x1={a.x + dx * cursor * wallLen} y1={a.y + dy * cursor * wallLen}
-              x2={a.x + dx * ds * wallLen} y2={a.y + dy * ds * wallLen}
-              stroke="#334155" strokeWidth={2} strokeLinecap="round"
+              x1={a.x + dx * cursor * wallLen}
+              y1={a.y + dy * cursor * wallLen}
+              x2={a.x + dx * ds * wallLen}
+              y2={a.y + dy * ds * wallLen}
+              stroke="#334155"
+              strokeWidth={2}
+              strokeLinecap="round"
             />
           )
         }
@@ -547,9 +582,14 @@ function HallPreview({
         wallSegments.push(
           <line
             key={`door-${i}-${idx}`}
-            x1={a.x + dx * ds * wallLen} y1={a.y + dy * ds * wallLen}
-            x2={a.x + dx * de * wallLen} y2={a.y + dy * de * wallLen}
-            stroke="#b45309" strokeWidth={2} strokeLinecap="round" strokeDasharray="4 3"
+            x1={a.x + dx * ds * wallLen}
+            y1={a.y + dy * ds * wallLen}
+            x2={a.x + dx * de * wallLen}
+            y2={a.y + dy * de * wallLen}
+            stroke="#b45309"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeDasharray="4 3"
           />
         )
         cursor = de
@@ -559,9 +599,13 @@ function HallPreview({
         wallSegments.push(
           <line
             key={`wall-${i}-tail`}
-            x1={a.x + dx * cursor * wallLen} y1={a.y + dy * cursor * wallLen}
-            x2={b.x} y2={b.y}
-            stroke="#334155" strokeWidth={2} strokeLinecap="round"
+            x1={a.x + dx * cursor * wallLen}
+            y1={a.y + dy * cursor * wallLen}
+            x2={b.x}
+            y2={b.y}
+            stroke="#334155"
+            strokeWidth={2}
+            strokeLinecap="round"
           />
         )
       }
@@ -601,8 +645,8 @@ function CustomPolygonEditor({
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       const rect = e.currentTarget.getBoundingClientRect()
-      const x = +(((e.clientX - rect.left) / scale)).toFixed(1)
-      const y = +(((e.clientY - rect.top) / scale)).toFixed(1)
+      const x = +((e.clientX - rect.left) / scale).toFixed(1)
+      const y = +((e.clientY - rect.top) / scale).toFixed(1)
       onChange([...pointsM, { x, y }])
     },
     [pointsM, onChange, scale]
@@ -612,7 +656,9 @@ function CustomPolygonEditor({
     onChange(pointsM.filter((_, idx) => idx !== i))
   }
 
-  const svgPoints = pointsM.map((p) => `${p.x * scale},${p.y * scale}`).join(" ")
+  const svgPoints = pointsM
+    .map((p) => `${p.x * scale},${p.y * scale}`)
+    .join(" ")
 
   return (
     <div className="grid gap-1.5">
@@ -635,11 +681,7 @@ function CustomPolygonEditor({
         onClick={handleClick}
       >
         {/* Grid lines */}
-        <svg
-          width={canvasPx}
-          height={canvasPx}
-          className="absolute inset-0"
-        >
+        <svg width={canvasPx} height={canvasPx} className="absolute inset-0">
           {/* meter grid */}
           {Array.from({ length: Math.ceil(gridM) }, (_, i) => (
             <line

@@ -1,8 +1,16 @@
 import { memo, useRef } from "react"
 import { useDroppable } from "@dnd-kit/core"
 import { X } from "lucide-react"
-import type { HallConfig, PlannerGuest, PlannerTable } from "@/lib/planner/types"
-import { DIETARY_COLORS, getPolygonBounds, isRectInPolygon } from "@/lib/planner/types"
+import type {
+  HallConfig,
+  PlannerGuest,
+  PlannerTable,
+} from "@/lib/planner/types"
+import {
+  DIETARY_COLORS,
+  getPolygonBounds,
+  isRectInPolygon,
+} from "@/lib/planner/types"
 import { cn } from "@/lib/utils"
 
 interface Props {
@@ -120,7 +128,6 @@ export const PlannerTableCard = memo(function TableCard({
     lastY: number
   } | null>(null)
 
-
   const isRound = table.shape === "round"
   const isFull = guests.length >= table.capacity
   const canAcceptGuest = selectedGuestId !== null && !isFull
@@ -157,7 +164,7 @@ export const PlannerTableCard = memo(function TableCard({
     desiredX: number,
     desiredY: number,
     prevX: number,
-    prevY: number,
+    prevY: number
   ) {
     if (!hall) return { x: desiredX, y: desiredY }
 
@@ -230,8 +237,15 @@ export const PlannerTableCard = memo(function TableCard({
       dragState.current = null
       return
     }
-    const { startMouseX, startMouseY, startTableX, startTableY, scale, lastX, lastY } =
-      dragState.current
+    const {
+      startMouseX,
+      startMouseY,
+      startTableX,
+      startTableY,
+      scale,
+      lastX,
+      lastY,
+    } = dragState.current
     const dx = e.clientX - startMouseX
     const dy = e.clientY - startMouseY
     if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
@@ -242,7 +256,7 @@ export const PlannerTableCard = memo(function TableCard({
         startTableX + dx / scale,
         startTableY + dy / scale,
         lastX,
-        lastY,
+        lastY
       )
       dragState.current.lastX = x
       dragState.current.lastY = y

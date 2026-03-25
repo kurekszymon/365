@@ -57,9 +57,7 @@ export function AddTableDialog({
     initial?.heightPx ??
     (shape === "round" ? DEFAULT_TABLE_ROUND_PX : DEFAULT_TABLE_RECT_H_PX)
 
-  const [widthM, setWidthM] = useState(
-    +(defaultW / pixelsPerMeter).toFixed(1)
-  )
+  const [widthM, setWidthM] = useState(+(defaultW / pixelsPerMeter).toFixed(1))
   const [heightM, setHeightM] = useState(
     +(defaultH / pixelsPerMeter).toFixed(1)
   )
@@ -148,7 +146,9 @@ export function AddTableDialog({
           <div className="grid gap-1.5">
             <Label>
               Size{" "}
-              <span className="text-muted-foreground font-normal">(meters)</span>
+              <span className="font-normal text-muted-foreground">
+                (meters)
+              </span>
             </Label>
             {shape === "round" ? (
               <div className="grid grid-cols-1 gap-3">
