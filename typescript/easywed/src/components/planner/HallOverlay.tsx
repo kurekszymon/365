@@ -3,6 +3,7 @@ import { getPolygonBounds } from "@/lib/planner/types"
 
 interface Props {
   hall: HallConfig
+  isSelected?: boolean
 }
 
 /**
@@ -10,7 +11,7 @@ interface Props {
  * Shows the hall as a bordered region with a subtle floor fill,
  * wall strokes, door gaps, a meter grid, and dimension labels.
  */
-export function HallOverlay({ hall }: Props) {
+export function HallOverlay({ hall, isSelected }: Props) {
   const { points, doors, pixelsPerMeter, preset } = hall
   if (points.length < 3) return null
 
@@ -177,6 +178,18 @@ export function HallOverlay({ hall }: Props) {
 
       {/* Walls + doors */}
       {wallSegments}
+
+      {/* Selection ring — rendered above walls so it's fully visible */}
+      {isSelected && (
+        <polygon
+          points={polyStr}
+          fill="none"
+          stroke="#2563eb"
+          strokeWidth={3}
+          strokeDasharray="10 5"
+          opacity={0.6}
+        />
+      )}
 
       {/* Dimension labels */}
       <text

@@ -1,6 +1,6 @@
-import { useRef } from "react"
+import { memo, useRef } from "react"
 import { useDroppable } from "@dnd-kit/core"
-import { X, Pencil, Trash2 } from "lucide-react"
+import { X } from "lucide-react"
 import type { HallConfig, PlannerGuest, PlannerTable } from "@/lib/planner/types"
 import { DIETARY_COLORS, getPolygonBounds, isRectInPolygon } from "@/lib/planner/types"
 import { cn } from "@/lib/utils"
@@ -92,7 +92,7 @@ function getChairPositionsRect(
 // Component
 // ---------------------------------------------------------------------------
 
-export function PlannerTableCard({
+export const PlannerTableCard = memo(function TableCard({
   table,
   guests,
   selectedGuestId,
@@ -283,36 +283,6 @@ export function PlannerTableCard({
     onDoubleClick,
   }
 
-  const actionBar = isSelected && !selectedGuestId && (
-    <div
-      className="absolute -top-8 left-1/2 z-10 flex -translate-x-1/2 gap-1 rounded-lg border bg-white px-1.5 py-1 shadow-lg"
-      onPointerDown={(e) => e.stopPropagation()}
-    >
-      <button
-        className="rounded p-1 hover:bg-muted"
-        onClick={(e) => {
-          e.stopPropagation()
-          onSelect(null)
-          onEdit(table)
-        }}
-        aria-label="Edit table"
-      >
-        <Pencil className="h-3.5 w-3.5" />
-      </button>
-      <button
-        className="rounded p-1 text-destructive hover:bg-destructive/10"
-        onClick={(e) => {
-          e.stopPropagation()
-          onSelect(null)
-          onDelete(table.id)
-        }}
-        aria-label="Delete table"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </button>
-    </div>
-  )
-
   // Chair positions
   const chairs = isRound
     ? getChairPositionsRound(table.capacity, w, chairSizePx)
@@ -379,7 +349,6 @@ export function PlannerTableCard({
         {...commonWrapperProps}
       >
         {chairLayer}
-        {actionBar}
 
         {/* Table name */}
         <span className="line-clamp-2 w-full px-6 text-center text-xs leading-tight font-semibold">
@@ -450,7 +419,6 @@ export function PlannerTableCard({
       {...commonWrapperProps}
     >
       {chairLayer}
-      {actionBar}
 
       {/* Header */}
       <div className="flex items-center justify-between gap-1 px-3 pt-2.5 pb-1">
@@ -505,4 +473,4 @@ export function PlannerTableCard({
       )}
     </div>
   )
-}
+})

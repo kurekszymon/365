@@ -5,6 +5,55 @@ Update this file after every significant session.
 
 ---
 
+## 2026-03-25 — UI refactor: GuestPanel overlay, PropertiesPanel right sidebar, split Guests button
+
+### Changed
+
+- **`PlannerTableCard` wrapped in `React.memo`** — skips re-render for table cards whose props haven't changed. On each drag frame only the actively dragged card re-renders.
+- **`PlannerCanvas`: guests pre-grouped via `useMemo`** — guests are bucketed into a `Record<tableId, PlannerGuest[]>` map once per `guests` state change. Each card receives a stable array reference (`guestsByTable[table.id] ?? []`) that only changes when guest assignments actually change, not on every drag event.
+- **GuestSidebar → GuestPanel (floating overlay)** — the guest list is no longer a permanent right-side panel. It now lives in `GuestPanel.tsx`, an absolutely-positioned overlay (z-50, shadow-xl, `w-64`, anchored to the left of the canvas area). It opens when the user clicks the main Guests button in the toolbar and closes via its own X button. All GuestSidebar functionality preserved: drag-to-assign from panel to canvas tables still works through dnd-kit pointer events.
+
+- **Split Guests button in toolbar** — the single "Guest" button is replaced by an adjacent button pair with a shared border. The left/main part (`Users` icon + `Guests (N)` label) opens the GuestPanel; the small right part (`+` icon) goes directly to Add Guest dialog. Guest count is shown in the label when > 0. Removed `selectedTable`/`onDuplicateTable` props from `PlannerToolbar` (duplication moved to PropertiesPanel).
+
+- **PropertiesPanel (new right sidebar)** — `GuestSidebar`'s slot is now occupied by a context-sensitive `PropertiesPanel.tsx`. Three states:
+  - **Nothing selected** → hint text
+  - **Hall clicked** → read-only summary (preset, dimensions, doors, scale) + "Edit Hall" button
+  - **Table selected** → inline editor: name (blur-save), shape toggle (round/rect with default size reset), capacity (blur-save), size in meters (W×H or diameter, blur-save); plus Duplicate and Delete action buttons
+
+- **Hall click-to-select** — clicking inside the hall polygon on the canvas now selects the hall (shows properties panel), clicking outside the hall or a table deselects it. The `HallOverlay` receives `isSelected` and renders a dashed blue ring (`#2563eb`, rendered above walls) when active. `PlannerCanvas` uses `isPointInPolygon` to classify canvas clicks.
+
+- **Pan-vs-click disambiguation** — added `didPan` ref to `PlannerCanvas`. Resets on `pointerdown`, set to `true` in `pointerMove` when displacement exceeds 4px. The `onClick` handler early-returns if `didPan` is true, preventing accidental hall selection during pan gestures.
+
+- **Selection state machine** — `TablePlanner` now owns `hallSelected: boolean` alongside `selectedTableId`. Selecting a table clears hall selection; selecting hall clears table; Escape clears both. `handleSelectTable(null)` always clears hall too, so clicking empty canvas (outside hall) resets everything correctly.
+
+### Fixed
+
+- **Duplicate tables (and tables in general) dragging slower as table count grows** — every `onMove` call triggered `setState`, which caused `PlannerCanvas` to re-render and re-evaluate all `PlannerTableCard` instances. Two root causes:
+  1. `PlannerTableCard` was not wrapped in `React.memo`, so React always called its render function regardless of whether props changed.
+  2. `guests` was computed inline as `guests.filter((g) => g.tableId === table.id)` on every render of `PlannerCanvas`, producing a new array reference each time — defeating any memoization.
+- **`hsl(var(--primary))` in SVG stroke** — the selection ring originally used a CSS custom property in an SVG attribute (same class of bug previously fixed in `HallPreview`). Changed to hardcoded `#2563eb`.
+
+- **Selection ring rendered below walls** — initially inserted the ring polygon between the floor fill and grid/walls, causing walls to draw on top. Moved after `wallSegments` so the ring is always fully visible.
+
+- **Stale `selectedTableId` after delete** — `PropertiesPanel`'s Delete action now calls both `deleteTable(id)` and `handleSelectTable(null)`, cleaning up the selection immediately instead of relying on the graceful fallback.
+
+- **`TableProperties` state diverging from external edits** — `name` and `capacity` local state in `TableProperties` now sync from props via `useEffect([table.name])` / `useEffect([table.capacity])`. Handles the case where the same table is edited via `AddTableDialog` while the properties panel is open.
+
+### New files
+
+```
+src/components/planner/GuestPanel.tsx       — floating guest list overlay
+src/components/planner/PropertiesPanel.tsx  — context-sensitive right sidebar
+```
+
+### Decisions made
+
+- **GuestPanel as floating overlay, not a drawer/sheet** — keeps the canvas always full-width. Panel overlays ~256px of the left canvas edge, which is acceptable since users typically work in the center of the floor plan. dnd-kit drag-to-assign works through the overlay since pointer events are forwarded.
+- **PropertiesPanel always visible (not collapsible)** — simplifies layout; empty state gives users a clear affordance that clicking a table or hall reveals properties.
+- **Inline table editing over dialog-first** — blur-save pattern avoids modal interruption for small tweaks. `AddTableDialog` still accessible via the table card's Edit button for cases where users prefer it.
+
+---
+
 ## 2026-03-24 — Table drag: smooth wall sliding, out-of-bounds release, crash fix
 
 ### Fixed

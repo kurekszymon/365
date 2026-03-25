@@ -1,6 +1,7 @@
-import { useRef, useState, useCallback, useEffect } from "react"
+import { useRef, useState, useCallback, useEffect, useMemo } from "react"
 import { PlusCircle } from "lucide-react"
 import type { HallConfig, PlannerGuest, PlannerTable } from "@/lib/planner/types"
+import { isPointInPolygon } from "@/lib/planner/types"
 import { loadViewport, saveViewport } from "@/lib/planner/storage"
 import { PlannerTableCard } from "./PlannerTable"
 import { HallOverlay } from "./HallOverlay"
@@ -16,8 +17,10 @@ interface Props {
   onUnassignGuest: (guestId: string) => void
   onAssignGuest: (tableId: string) => void
   onSelectTable: (id: string | null) => void
+  onSelectHall: () => void
   onCursorMove: (canvasX: number, canvasY: number) => void
   hall: HallConfig | null
+  hallSelected: boolean
   chairSizePx: number
 }
 
@@ -32,8 +35,10 @@ export function PlannerCanvas({
   onUnassignGuest,
   onAssignGuest,
   onSelectTable,
+  onSelectHall,
   onCursorMove,
   hall,
+  hallSelected,
   chairSizePx,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -52,10 +57,20 @@ export function PlannerCanvas({
     startPanX: number
     startPanY: number
   } | null>(null)
+  // Tracks whether the pointer moved enough to count as a pan (not a click).
+  const didPan = useRef(false)
 
   useEffect(() => {
     saveViewport({ panX: viewport.x, panY: viewport.y, scale: viewport.scale })
   }, [viewport])
+
+  const guestsByTable = useMemo(() => {
+    const map: Record<string, PlannerGuest[]> = {}
+    for (const g of guests) {
+      if (g.tableId) (map[g.tableId] ??= []).push(g)
+    }
+    return map
+  }, [guests])
 
   // Expose viewport scale to PlannerTableCard via data attribute (used for drag dx/dy conversion)
   if (canvasRef.current) {
@@ -65,6 +80,7 @@ export function PlannerCanvas({
   const onCanvasPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if ((e.target as HTMLElement).closest("[data-table]")) return
+      didPan.current = false
       ;(e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId)
       panState.current = {
         startX: e.clientX,
@@ -87,6 +103,7 @@ export function PlannerCanvas({
       }
       const dx = e.clientX - panState.current.startX
       const dy = e.clientY - panState.current.startY
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) didPan.current = true
       // Capture values into locals before entering the updater — panState.current
       // could be nulled by a concurrent pointerup before the updater runs.
       const { startPanX, startPanY } = panState.current
@@ -144,9 +161,19 @@ export function PlannerCanvas({
           (e.clientY - rect.top - viewport.y) / viewport.scale,
         )
       }}
-      // Deselect when clicking empty canvas. Table clicks stop propagation
-      // on their [data-table] wrapper so they never reach here.
-      onClick={() => onSelectTable(null)}
+      // Table clicks stop propagation on their [data-table] wrapper so they
+      // never reach here. Skip if pointer moved (pan gesture, not a click).
+      onClick={(e) => {
+        if (didPan.current) return
+        const rect = e.currentTarget.getBoundingClientRect()
+        const cx = (e.clientX - rect.left - viewport.x) / viewport.scale
+        const cy = (e.clientY - rect.top - viewport.y) / viewport.scale
+        if (hall && isPointInPolygon(cx, cy, hall.points)) {
+          onSelectHall()
+        } else {
+          onSelectTable(null)
+        }
+      }}
     >
       {/* Inner canvas that gets transformed */}
       <div
@@ -156,13 +183,13 @@ export function PlannerCanvas({
           transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.scale})`,
         }}
       >
-        {hall && <HallOverlay hall={hall} />}
+        {hall && <HallOverlay hall={hall} isSelected={hallSelected} />}
 
         {tables.map((table) => (
           <div key={table.id} data-table onClick={(e) => e.stopPropagation()}>
             <PlannerTableCard
               table={table}
-              guests={guests.filter((g) => g.tableId === table.id)}
+              guests={guestsByTable[table.id] ?? []}
               selectedGuestId={selectedGuestId}
               isSelected={selectedTableId === table.id}
               onSelect={onSelectTable}

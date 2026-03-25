@@ -35,7 +35,8 @@ import { DIETARY_COLORS } from "@/lib/planner/types"
 import { PlannerToolbar } from "./PlannerToolbar"
 import { PlannerCanvas } from "./PlannerCanvas"
 import { PlannerListView } from "./PlannerListView"
-import { GuestSidebar } from "./GuestSidebar"
+import { GuestPanel } from "./GuestPanel"
+import { PropertiesPanel } from "./PropertiesPanel"
 import { AddTableDialog } from "./AddTableDialog"
 import { AddGuestDialog } from "./AddGuestDialog"
 import { HallSetupDialog } from "./HallSetupDialog"
@@ -70,6 +71,8 @@ export function TablePlanner() {
   const [view, setView] = useState<"canvas" | "list">("canvas")
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null)
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null)
+  const [hallSelected, setHallSelected] = useState(false)
+  const [guestPanelOpen, setGuestPanelOpen] = useState(false)
   const [copiedTable, setCopiedTable] = useState<PlannerTable | null>(null)
   const cursorCanvasPos = useRef({ x: 200, y: 200 })
   const [activeDragGuest, setActiveDragGuest] = useState<PlannerGuest | null>(
@@ -84,6 +87,16 @@ export function TablePlanner() {
   const [renamingWedding, setRenamingWedding] = useState(false)
   const [renameValue, setRenameValue] = useState(state.weddingName)
   const [hallSetupOpen, setHallSetupOpen] = useState(false)
+
+  function handleSelectTable(id: string | null) {
+    setSelectedTableId(id)
+    setHallSelected(false)
+  }
+
+  function handleSelectHall() {
+    setHallSelected(true)
+    setSelectedTableId(null)
+  }
 
   function duplicateTable(table: PlannerTable) {
     addTable({
@@ -126,7 +139,10 @@ export function TablePlanner() {
           if (table) duplicateTable(table)
         }
       }
-      if (e.key === "Escape") setSelectedTableId(null)
+      if (e.key === "Escape") {
+        setSelectedTableId(null)
+        setHallSelected(false)
+      }
     }
     document.addEventListener("keydown", handleKeyDown)
     return () => document.removeEventListener("keydown", handleKeyDown)
@@ -188,9 +204,8 @@ export function TablePlanner() {
             }
             onAddTable={() => setAddTableOpen(true)}
             onAddGuest={() => setAddGuestOpen(true)}
+            onOpenGuestPanel={() => setGuestPanelOpen(!guestPanelOpen)}
             onConfigureHall={() => setHallSetupOpen(true)}
-            selectedTable={state.tables.find((t) => t.id === selectedTableId)}
-            onDuplicateTable={(table) => duplicateTable(table)}
             state={state}
             onImport={importState}
             weddingName={state.weddingName}
@@ -203,32 +218,52 @@ export function TablePlanner() {
           <div className="flex flex-1 overflow-hidden">
             {view === "canvas" ? (
               <>
-                <PlannerCanvas
-                  tables={state.tables}
-                  guests={state.guests}
-                  selectedGuestId={selectedGuestId}
+                {/* Canvas area — relative so GuestPanel can be absolutely positioned */}
+                <div className="relative flex flex-1 overflow-hidden">
+                  <GuestPanel
+                    open={guestPanelOpen}
+                    guests={state.guests}
+                    tables={state.tables}
+                    selectedGuestId={selectedGuestId}
+                    onSelectGuest={setSelectedGuestId}
+                    onAddGuest={() => setAddGuestOpen(true)}
+                    onEditGuest={(g) => setEditingGuest(g)}
+                    onDeleteGuest={deleteGuest}
+                    onUnassign={(id) => assignGuest(id, null)}
+                    onClose={() => setGuestPanelOpen(false)}
+                  />
+                  <PlannerCanvas
+                    tables={state.tables}
+                    guests={state.guests}
+                    selectedGuestId={selectedGuestId}
+                    selectedTableId={selectedTableId}
+                    onMoveTable={(id, x, y) => updateTable(id, { x, y })}
+                    onEditTable={(t) => setEditingTable(t)}
+                    onDeleteTable={deleteTable}
+                    onUnassignGuest={(id) => assignGuest(id, null)}
+                    onAssignGuest={handleAssignGuest}
+                    onSelectTable={handleSelectTable}
+                    onSelectHall={handleSelectHall}
+                    onCursorMove={(x, y) => {
+                      cursorCanvasPos.current = { x, y }
+                    }}
+                    hall={state.hall}
+                    hallSelected={hallSelected}
+                    chairSizePx={state.chairSizePx}
+                  />
+                </div>
+                <PropertiesPanel
                   selectedTableId={selectedTableId}
-                  onMoveTable={(id, x, y) => updateTable(id, { x, y })}
-                  onEditTable={(t) => setEditingTable(t)}
-                  onDeleteTable={deleteTable}
-                  onUnassignGuest={(id) => assignGuest(id, null)}
-                  onAssignGuest={handleAssignGuest}
-                  onSelectTable={setSelectedTableId}
-                  onCursorMove={(x, y) => {
-                    cursorCanvasPos.current = { x, y }
-                  }}
-                  hall={state.hall}
-                  chairSizePx={state.chairSizePx}
-                />
-                <GuestSidebar
-                  guests={state.guests}
                   tables={state.tables}
-                  selectedGuestId={selectedGuestId}
-                  onSelectGuest={setSelectedGuestId}
-                  onAddGuest={() => setAddGuestOpen(true)}
-                  onEditGuest={(g) => setEditingGuest(g)}
-                  onDeleteGuest={deleteGuest}
-                  onUnassign={(id) => assignGuest(id, null)}
+                  hallSelected={hallSelected}
+                  hall={state.hall}
+                  onUpdateTable={updateTable}
+                  onDeleteTable={(id) => {
+                    deleteTable(id)
+                    handleSelectTable(null)
+                  }}
+                  onDuplicateTable={duplicateTable}
+                  onEditHall={() => setHallSetupOpen(true)}
                 />
               </>
             ) : (

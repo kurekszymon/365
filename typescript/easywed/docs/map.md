@@ -47,6 +47,23 @@ src/
 └── styles.css                 # Tailwind entry + CSS theme vars
 ```
 
+Key planner components:
+```
+planner/
+├── TablePlanner.tsx       # Orchestrator — state, dialogs, layout
+├── PlannerToolbar.tsx     # Top bar — split Guests button, view toggle, export
+├── PlannerCanvas.tsx      # Interactive floor plan (pan/zoom/drag)
+├── PlannerTable.tsx       # Individual table card with chair rendering
+├── HallOverlay.tsx        # SVG hall polygon, walls, doors, grid, labels
+├── GuestPanel.tsx         # Floating overlay panel — guest list + drag-to-assign
+├── PropertiesPanel.tsx    # Context-sensitive right sidebar (table/hall editor)
+├── HallSetupDialog.tsx    # Hall configuration dialog
+├── AddTableDialog.tsx     # Create/edit table dialog
+├── AddGuestDialog.tsx     # Create/edit guest dialog
+├── PlannerListView.tsx    # Alternative tabular view
+└── PlannerPrintView.tsx   # Hidden print layout
+```
+
 ---
 
 ## Feature Modules
@@ -63,9 +80,9 @@ src/
 ---
 
 ### 2. Table Management
-**Where:** `AddTableDialog.tsx`, `PlannerTable.tsx`, `usePlanner.ts`
+**Where:** `AddTableDialog.tsx`, `PlannerTable.tsx`, `PropertiesPanel.tsx`, `usePlanner.ts`
 
-**What:** Create/edit tables with name, shape (round or rectangular), capacity, and dimensions in meters. Tables are draggable on the canvas.
+**What:** Create/edit tables with name, shape (round or rectangular), capacity, and dimensions in meters. Tables are draggable on the canvas. When a table is selected, the `PropertiesPanel` (right sidebar) offers inline editing of all properties plus Duplicate and Delete actions.
 
 **Why:** Each table is the atomic unit of the seating plan. Position is stored as canvas pixels. Shape affects how chairs are drawn around it.
 
@@ -74,11 +91,11 @@ src/
 ---
 
 ### 3. Guest Management
-**Where:** `AddGuestDialog.tsx`, `GuestSidebar.tsx`, `usePlanner.ts`
+**Where:** `AddGuestDialog.tsx`, `GuestPanel.tsx`, `usePlanner.ts`
 
-**What:** Add guests with name, optional notes, and one or more dietary restrictions (vegetarian, vegan, gluten-free, halal, kosher). Guests can be assigned to a table.
+**What:** Add guests with name, optional notes, and one or more dietary restrictions (vegetarian, vegan, gluten-free, halal, kosher). Guests can be assigned to a table. The guest list lives in `GuestPanel`, a floating overlay opened from the toolbar. The toolbar has a split button: the main part opens the panel, the small `+` opens the Add Guest dialog directly.
 
-**Why:** Assignment links `PlannerGuest.tableId` to a `PlannerTable.id`. Unassigned guests appear in the sidebar; assigned guests appear on the table in the canvas.
+**Why:** Assignment links `PlannerGuest.tableId` to a `PlannerTable.id`. Unassigned guests appear at the top of the panel, seated guests below. Guests can be dragged from the panel onto canvas tables.
 
 **Key types:** `PlannerGuest { id, name, dietary, tableId, note? }`
 
@@ -91,7 +108,10 @@ src/
 - Pan via click-drag on empty space
 - Zoom via mouse wheel
 - Dragging tables (grid-snapped, collision-checked)
-- Dropping guests from sidebar onto tables (via @dnd-kit)
+- Dropping guests from `GuestPanel` onto tables (via @dnd-kit)
+- Clicking hall → selects hall, showing hall properties in `PropertiesPanel`
+- Clicking table → selects table, showing table editor in `PropertiesPanel`
+- Clicking empty canvas → clears selection
 
 **Why:** The canvas is the core UX — it's how couples visualize the physical room layout. Tables snap to a grid (pixelsPerMeter / 4) so everything aligns neatly.
 
@@ -99,6 +119,7 @@ src/
 - `isRectInPolygon()` — ensures tables stay inside the hall
 - Binary-search wall-sliding — smooth resistance when dragging toward walls
 - `liveRectCollision` — custom dnd-kit collision that reads live DOM rects (handles CSS transforms from pan/zoom)
+- `didPan` ref — distinguishes clicks from pan gestures to avoid spurious hall/deselect events
 
 ---
 
@@ -168,16 +189,18 @@ PlannerState {
 ```
 usePlanner (state + mutations)
     │
-    ├── PlannerToolbar      ← view toggle, import/export, add buttons
+    ├── PlannerToolbar      ← view toggle, import/export, split Guests button
     ├── HallSetupDialog     ← updateHall()
     ├── AddTableDialog      ← addTable() / updateTable()
     ├── AddGuestDialog      ← addGuest() / updateGuest()
     │
-    ├── PlannerCanvas       ← tables[], hall, drag handlers
-    │   ├── HallOverlay     ← hall.points, hall.doors (SVG)
-    │   └── PlannerTable    ← table, guests[], onMove()
+    ├── [canvas view]
+    │   ├── GuestPanel          ← guests[], drag source, floating overlay
+    │   ├── PlannerCanvas       ← tables[], hall, hallSelected, drag handlers
+    │   │   ├── HallOverlay     ← hall.points, hall.doors (SVG), isSelected
+    │   │   └── PlannerTable    ← table, guests[], onMove()
+    │   └── PropertiesPanel     ← selectedTableId | hallSelected → inline editor
     │
-    ├── GuestSidebar        ← guests[], drag source
     ├── PlannerListView     ← tables[], guests[], assignGuest()
     └── PlannerPrintView    ← tables[], guests[] (print only)
 ```

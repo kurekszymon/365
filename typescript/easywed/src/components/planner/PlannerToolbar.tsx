@@ -3,13 +3,13 @@ import {
   LayoutList,
   Map,
   PlusCircle,
-  UserPlus,
+  Users,
+  Plus,
   Download,
   Upload,
   FileJson,
   Printer,
   Landmark,
-  Copy,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { PlannerState, PlannerTable } from "@/lib/planner/types"
+import type { PlannerState } from "@/lib/planner/types"
 import { exportAsJSON, importFromJSON } from "@/lib/planner/storage"
 
 interface Props {
@@ -27,9 +27,8 @@ interface Props {
   onToggleView: () => void
   onAddTable: () => void
   onAddGuest: () => void
+  onOpenGuestPanel: () => void
   onConfigureHall: () => void
-  selectedTable?: PlannerTable
-  onDuplicateTable: (table: PlannerTable) => void
   state: PlannerState
   onImport: (state: PlannerState) => void
   weddingName: string
@@ -41,9 +40,8 @@ export function PlannerToolbar({
   onToggleView,
   onAddTable,
   onAddGuest,
+  onOpenGuestPanel,
   onConfigureHall,
-  selectedTable,
-  onDuplicateTable,
   state,
   onImport,
   weddingName,
@@ -107,28 +105,31 @@ export function PlannerToolbar({
           <PlusCircle className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Table</span>
         </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={onAddGuest}
-          className="gap-1.5"
-        >
-          <UserPlus className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Guest</span>
-        </Button>
-
-        {selectedTable && (
+        {/* Guests split button: left opens panel, right adds guest directly */}
+        <div className="flex items-center">
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onDuplicateTable(selectedTable)}
-            className="gap-1.5"
-            title="Duplicate table (⌘D)"
+            onClick={onOpenGuestPanel}
+            className="gap-1.5 rounded-r-none border-r-0"
+            title="Open guests panel"
           >
-            <Copy className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Duplicate</span>
+            <Users className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">
+              Guests
+              {state.guests.length > 0 && ` (${state.guests.length})`}
+            </span>
           </Button>
-        )}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onAddGuest}
+            className="rounded-l-none px-2"
+            title="Add guest"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </Button>
+        </div>
 
         {/* View toggle */}
         <Button
