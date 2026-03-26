@@ -12,6 +12,7 @@
   "tables.count_one": "{{count}} stół",
   "tables.count_few": "{{count}} stoły",
   "tables.count_many": "{{count}} stołów",
+  "tables.empty_state": "Nie dodano jeszcze stołów - kliknij, żeby dodać",
 
   "guests.seated_ratio": "{{seated_count}}/{{count}} gości przy stołach",
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} gość przy stole"

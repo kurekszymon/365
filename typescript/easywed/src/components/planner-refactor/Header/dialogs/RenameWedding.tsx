@@ -1,6 +1,7 @@
 import { useShallow } from "zustand/react/shallow"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+
 import {
   Dialog,
   DialogContent,
@@ -8,9 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { useDialogStore } from "@/stores/dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+
+import { useDialogStore } from "@/stores/dialog"
 import { useGlobalStore } from "@/stores/global"
 
 export const RenameWeddingDialog = () => {
