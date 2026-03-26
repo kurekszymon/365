@@ -1,0 +1,18 @@
+{
+  "common.save": "Zapisz",
+  "common.cancel": "Anuluj",
+
+  "errors.404": "404",
+  "errors.not_found": "Nie znaleziono strony",
+  "errors.go_home": "Wróć do strony głównej",
+
+  "wedding.rename": "Zmień nazwę wesela",
+
+  "tables.count": "{{count}} stołów",
+  "tables.count_one": "{{count}} stół",
+  "tables.count_few": "{{count}} stoły",
+  "tables.count_many": "{{count}} stołów",
+
+  "guests.seated_ratio": "{{seated_count}}/{{count}} gości przy stołach",
+  "guests.seated_ratio_one": "{{seated_count}}/{{count}} gość przy stole"
+}

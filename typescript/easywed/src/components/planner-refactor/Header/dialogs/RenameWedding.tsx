@@ -1,5 +1,6 @@
 import { useShallow } from "zustand/react/shallow"
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import {
   Dialog,
   DialogContent,
@@ -13,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { useGlobalStore } from "@/stores/global"
 
 export const RenameWeddingDialog = () => {
+  const { t } = useTranslation()
   const { name, setName } = useGlobalStore(
     useShallow((state) => ({
       name: state.name,
@@ -31,13 +33,13 @@ export const RenameWeddingDialog = () => {
   )
 
   const handleClose = () => {
-    setLocalName(name)
     dialog.close()
+    setLocalName(name)
   }
 
   const handleSave = () => {
-    setName(localName)
     dialog.close()
+    setName(localName)
   }
 
   return (
@@ -50,7 +52,7 @@ export const RenameWeddingDialog = () => {
       {/* aria-describedby={undefined} to suppres radix warnings */}
       <DialogContent className="sm:max-w-sm" aria-describedby={undefined}>
         <DialogHeader>
-          <DialogTitle>Rename wedding</DialogTitle>
+          <DialogTitle>{t("wedding.rename")}</DialogTitle>
         </DialogHeader>
         <Input
           value={localName}
@@ -59,10 +61,13 @@ export const RenameWeddingDialog = () => {
         />
         <DialogFooter>
           <Button variant="outline" onClick={handleClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
-          <Button onClick={handleSave} disabled={!localName.trim()}>
-            Save
+          <Button
+            onClick={handleSave}
+            disabled={!localName.trim() || localName === name}
+          >
+            {t("common.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

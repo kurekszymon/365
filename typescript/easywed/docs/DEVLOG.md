@@ -9,3 +9,4 @@ I want to keep it simple for as long as possible as well as ofcourse try some ne
 
 - Set up a `planner-refactor` route to build a planner with less code and more maintainability.
 - Set up zustand and small stores for `global` values, `planner` tied to Planner route and a `dialog` store to centralize dialog controls (like I mentioned in the comment in dialog store - I don't know particular caveats of using dialogs like this, so wanted to pick up my poison of this taste)
+- Set up i18next for English and Polish language. Translate strings in refactoring part.

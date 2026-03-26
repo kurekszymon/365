@@ -1,16 +1,21 @@
+import "@/i18n"
+
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router"
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 import { TanStackDevtools } from "@tanstack/react-devtools"
 
+import { useTranslation } from "react-i18next"
 import appCss from "../styles.css?url"
 
 function NotFound() {
+  const { t } = useTranslation()
+
   return (
     <div className="flex h-svh flex-col items-center justify-center gap-2 text-center">
-      <p className="text-2xl font-semibold">404</p>
-      <p className="text-muted-foreground">Page not found</p>
+      <p className="text-2xl font-semibold">{t("errors.404")}</p>
+      <p className="text-muted-foreground">{t("errors.not_found")}</p>
       <a href="/" className="text-sm text-primary underline underline-offset-4">
-        Go home
+        {t("errors.go_home")}
       </a>
     </div>
   )

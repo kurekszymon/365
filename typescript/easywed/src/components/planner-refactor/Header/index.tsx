@@ -1,9 +1,12 @@
+import { useTranslation } from "react-i18next"
 import { RenameWeddingDialog } from "./dialogs/RenameWedding"
 import { usePlannerStore } from "@/stores/planner"
 import { useGlobalStore } from "@/stores/global"
 import { useDialogStore } from "@/stores/dialog"
 
 export const Header = () => {
+  const { t } = useTranslation()
+
   const openDialog = useDialogStore((state) => state.open)
 
   const name = useGlobalStore((state) => state.name)
@@ -23,13 +26,16 @@ export const Header = () => {
             onClick={() => {
               openDialog("RenameWedding")
             }}
-            title="Click to rename"
+            title={t("wedding.rename")}
           >
             {name}
           </button>
           <span className="hidden text-xs text-muted-foreground tabular-nums sm:block">
-            {tables.length} tables · {assignedGuestsCount}/{guests.length}
-            guests seated
+            {t("tables.count", { count: tables.length })} ·{" "}
+            {t("guests.seated_ratio", {
+              count: guests.length,
+              seated_count: assignedGuestsCount,
+            })}
           </span>
         </div>
 

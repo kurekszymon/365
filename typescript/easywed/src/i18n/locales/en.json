@@ -1,0 +1,18 @@
+{
+  "common.save": "Save",
+  "common.cancel": "Cancel",
+
+  "errors.404": "404",
+  "errors.not_found": "Page not found",
+  "errors.go_home": "Go Home",
+
+  "wedding.rename": "Rename wedding",
+
+  "tables.count": "{{count}} tables",
+  "tables.count_one": "{{count}} table",
+  "tables.count_few": "{{count}} tables",
+  "tables.count_many": "{{count}} tables",
+
+  "guests.seated_ratio": "{{seated_count}}/{{count}} guests seated",
+  "guests.seated_ratio_one": "{{seated_count}}/{{count}} guest seated"
+}
