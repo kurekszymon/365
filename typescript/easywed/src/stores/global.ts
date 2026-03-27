@@ -11,14 +11,14 @@ interface Viewport {
 }
 
 type State = {
-  name: string
-  date: Date
+  name?: string
+  date?: Date
   viewport: Viewport
 }
 
 type Action = {
-  setName: (name: string) => void
-  setDate: (date: Date) => void
+  setName: (name?: string) => void
+  setDate: (date?: Date) => void
 
   setPan: (pan: Pan) => void
   setScale: (scale: number) => void
@@ -26,8 +26,8 @@ type Action = {
 }
 
 export const useGlobalStore = create<State & Action>((set) => ({
-  name: "My perfect wedding",
-  date: new Date(),
+  name: undefined,
+  date: undefined,
   viewport: {
     scale: 1,
     pan: {

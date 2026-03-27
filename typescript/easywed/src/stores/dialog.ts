@@ -2,7 +2,8 @@
 
 import { create } from "zustand"
 
-type Dialog = "RenameWedding" | "AddGuest"
+type DialogWedding = "Wedding.Rename" | "Wedding.Create"
+type Dialog = DialogWedding | "AddGuest"
 
 type State = {
   opened: Dialog | null

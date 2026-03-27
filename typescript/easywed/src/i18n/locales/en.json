@@ -1,12 +1,19 @@
 {
   "common.save": "Save",
   "common.cancel": "Cancel",
+  "common.name": "Name",
+  "common.date": "Date",
+  "common.pick_date": "Pick a date",
 
   "errors.404": "404",
   "errors.not_found": "Page not found",
   "errors.go_home": "Go Home",
 
   "wedding.rename": "Rename wedding",
+  "wedding.defaults.name": "Our big day",
+  "wedding.create.title": "Let's plan your big day",
+  "wedding.create.title_placeholder": "Alex & Jamie",
+  "wedding.create.date_info": "You can always fill it up later",
 
   "tables.count": "{{count}} tables",
   "tables.count_one": "{{count}} table",

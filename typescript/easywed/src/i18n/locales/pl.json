@@ -1,12 +1,19 @@
 {
   "common.save": "Zapisz",
   "common.cancel": "Anuluj",
+  "common.name": "Nazwa",
+  "common.date": "Data",
+  "common.pick_date": "Wybierz datę",
 
   "errors.404": "404",
   "errors.not_found": "Nie znaleziono strony",
   "errors.go_home": "Wróć do strony głównej",
 
   "wedding.rename": "Zmień nazwę wesela",
+  "wedding.defaults.name": "Nasz wielki dzień",
+  "wedding.create.title": "Zaplanujmy wasz wielki dzień",
+  "wedding.create.title_placeholder": "Ślub Kasi i Tomka",
+  "wedding.create.date_info": "Zawsze możecie wypełnić to pole później",
 
   "tables.count": "{{count}} stołów",
   "tables.count_one": "{{count}} stół",

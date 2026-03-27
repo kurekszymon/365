@@ -36,7 +36,7 @@ export const Canvas = () => {
   }
 
   return (
-    <div className="relative">
+    <div className="relative h-full w-full">
       <div className="absolute" />
       <ScalePill />
     </div>
