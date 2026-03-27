@@ -8,49 +8,49 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as PlannerIndexRouteImport } from './routes/planner/index'
-import { Route as PlannerRefactorIndexRouteImport } from './routes/planner-refactor/index'
+import { Route as rootRouteImport } from "./routes/__root"
+import { Route as IndexRouteImport } from "./routes/index"
+import { Route as PlannerIndexRouteImport } from "./routes/planner/index"
+import { Route as PlannerRefactorIndexRouteImport } from "./routes/planner-refactor/index"
 
 const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlannerIndexRoute = PlannerIndexRouteImport.update({
-  id: '/planner/',
-  path: '/planner/',
+  id: "/planner/",
+  path: "/planner/",
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlannerRefactorIndexRoute = PlannerRefactorIndexRouteImport.update({
-  id: '/planner-refactor/',
-  path: '/planner-refactor/',
+  id: "/planner-refactor/",
+  path: "/planner-refactor/",
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/planner-refactor/': typeof PlannerRefactorIndexRoute
-  '/planner/': typeof PlannerIndexRoute
+  "/": typeof IndexRoute
+  "/planner-refactor/": typeof PlannerRefactorIndexRoute
+  "/planner/": typeof PlannerIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/planner-refactor': typeof PlannerRefactorIndexRoute
-  '/planner': typeof PlannerIndexRoute
+  "/": typeof IndexRoute
+  "/planner-refactor": typeof PlannerRefactorIndexRoute
+  "/planner": typeof PlannerIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/planner-refactor/': typeof PlannerRefactorIndexRoute
-  '/planner/': typeof PlannerIndexRoute
+  "/": typeof IndexRoute
+  "/planner-refactor/": typeof PlannerRefactorIndexRoute
+  "/planner/": typeof PlannerIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/planner-refactor/' | '/planner/'
+  fullPaths: "/" | "/planner-refactor/" | "/planner/"
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/planner-refactor' | '/planner'
-  id: '__root__' | '/' | '/planner-refactor/' | '/planner/'
+  to: "/" | "/planner-refactor" | "/planner"
+  id: "__root__" | "/" | "/planner-refactor/" | "/planner/"
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -59,26 +59,26 @@ export interface RootRouteChildren {
   PlannerIndexRoute: typeof PlannerIndexRoute
 }
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
+    "/": {
+      id: "/"
+      path: "/"
+      fullPath: "/"
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/planner/': {
-      id: '/planner/'
-      path: '/planner'
-      fullPath: '/planner/'
+    "/planner/": {
+      id: "/planner/"
+      path: "/planner"
+      fullPath: "/planner/"
       preLoaderRoute: typeof PlannerIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/planner-refactor/': {
-      id: '/planner-refactor/'
-      path: '/planner-refactor'
-      fullPath: '/planner-refactor/'
+    "/planner-refactor/": {
+      id: "/planner-refactor/"
+      path: "/planner-refactor"
+      fullPath: "/planner-refactor/"
       preLoaderRoute: typeof PlannerRefactorIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -94,9 +94,9 @@ export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
+import type { getRouter } from "./router.tsx"
+import type { createStart } from "@tanstack/react-start"
+declare module "@tanstack/react-start" {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>

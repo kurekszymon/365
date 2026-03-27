@@ -1,19 +1,21 @@
 import { useEffect, useState } from "react"
+import type {
+  Dietary,
+  HallConfig,
+  HallDoor,
+  PlannerGuest,
+  PlannerState,
+  PlannerTable,
+  TableShape,
+} from "@/lib/planner/types"
 import {
-  EMPTY_STATE,
-  type Dietary,
-  type HallConfig,
-  type HallDoor,
-  type PlannerGuest,
-  type PlannerState,
-  type PlannerTable,
-  type TableShape,
-  DEFAULT_TABLE_ROUND_PX,
-  DEFAULT_TABLE_RECT_W_PX,
-  DEFAULT_TABLE_RECT_H_PX,
   DEFAULT_PIXELS_PER_METER,
-  isRectInPolygon,
+  DEFAULT_TABLE_RECT_H_PX,
+  DEFAULT_TABLE_RECT_W_PX,
+  DEFAULT_TABLE_ROUND_PX,
+  EMPTY_STATE,
   getPolygonBounds,
+  isRectInPolygon,
 } from "@/lib/planner/types"
 import { loadFromLocalStorage, saveToLocalStorage } from "@/lib/planner/storage"
 
@@ -216,7 +218,7 @@ export function usePlanner() {
 
   function addGuest(guest: {
     name: string
-    dietary: Dietary[]
+    dietary: Array<Dietary>
     note?: string
   }) {
     setState((s) => ({
