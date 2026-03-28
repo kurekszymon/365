@@ -1,5 +1,18 @@
 # EasyWed — Development Log
 
+### 28.03.2026 - WIP
+
+- Split Header to smaller components, further split needed, it would be preferable to keep these separated component in the same file so it doesn't clutter the filesystem for jumping between files, but then it would clutter `Header.tsx` - need to think what's the best option here.
+- Added `button-group` and `textarea` from shadcn, extended `datepicker` with custom translation keys for prompt and hid label based on the props.
+- Setup `store/reminders` - need to create proper route for it
+- Setup preview reminders from planner, can extract this component to reuse it across diferent part of application.
+
+### consider
+
+- when to fix mobile view, it needs to be done at some point.
+- fix TODOs left in `Nav.header.tsx` as well as in other parts of code.
+- didn't finish with code split and reminders work due to lack of time
+
 ## 27.03.2026
 
 I noticed that some vulnerabilities are reported when run `bun audit`, although not all are immediately fixable,

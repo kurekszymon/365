@@ -1,9 +1,11 @@
 {
   "common.save": "Zapisz",
+  "common.create": "Stwórz",
   "common.cancel": "Anuluj",
   "common.name": "Nazwa",
   "common.date": "Data",
   "common.pick_date": "Wybierz datę",
+  "common.recent": "Ostatnie:",
 
   "errors.404": "404",
   "errors.not_found": "Nie znaleziono strony",
@@ -22,5 +24,11 @@
   "tables.empty_state": "Nie dodano jeszcze stołów - kliknij, żeby dodać",
 
   "guests.seated_ratio": "{{seated_count}}/{{count}} gości przy stołach",
-  "guests.seated_ratio_one": "{{seated_count}}/{{count}} gość przy stole"
+  "guests.seated_ratio_one": "{{seated_count}}/{{count}} gość przy stole",
+
+  "reminders.title": "Przypomnienia",
+  "reminders.navigate": "Przejdź do przypomnień",
+  "reminders.create.title": "Utwórzcie przypomnienie",
+  "reminders.create.content_placeholder": "o czym myślicie",
+  "reminders.create.date_prompt": "żeby Wam przypomnieć w dniu"
 }
