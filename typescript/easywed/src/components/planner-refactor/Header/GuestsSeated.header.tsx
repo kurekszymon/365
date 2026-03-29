@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next"
-import { usePlannerStore } from "@/stores/planner"
+import { usePlannerStore } from "@/stores/planner.store"
 
 export const GuestsSeated = () => {
   const { t } = useTranslation()

@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
 import { ScalePill } from "./ScalePill"
 
-import { usePlannerStore } from "@/stores/planner"
+import { usePlannerStore } from "@/stores/planner.store"
 
 export const Canvas = () => {
   const { t } = useTranslation()

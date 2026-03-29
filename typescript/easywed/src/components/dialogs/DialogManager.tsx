@@ -1,5 +1,5 @@
 import { WeddingCreateDialog, WeddingRenameDialog } from "./weddings"
-import { useDialogStore } from "@/stores/dialog"
+import { useDialogStore } from "@/stores/dialog.store"
 
 export const DialogManager = () => {
   const opened = useDialogStore((state) => state.opened)

@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
-import { useDialogStore } from "@/stores/dialog"
-import { useGlobalStore } from "@/stores/global"
+import { useDialogStore } from "@/stores/dialog.store"
+import { useGlobalStore } from "@/stores/global.store"
 
 export const WeddingName = () => {
   const { t } = useTranslation()

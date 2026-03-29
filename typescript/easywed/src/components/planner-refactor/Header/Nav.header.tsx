@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Field, FieldGroup } from "@/components/ui/field"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { DatePicker } from "@/components/ui/datepicker"
-import { useRemindersStore } from "@/stores/reminders"
+import { useRemindersStore } from "@/stores/reminders.store"
 import { Textarea } from "@/components/ui/textarea"
 
 // TODO:  write useDatePicker

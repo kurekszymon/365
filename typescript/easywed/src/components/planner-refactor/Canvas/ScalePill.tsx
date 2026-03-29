@@ -1,4 +1,4 @@
-import { useGlobalStore } from "@/stores/global"
+import { useGlobalStore } from "@/stores/global.store"
 
 export const ScalePill = () => {
   const viewport = useGlobalStore((state) => state.viewport)

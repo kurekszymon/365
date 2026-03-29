@@ -2,8 +2,8 @@ import { useEffect } from "react"
 import { DialogManager } from "../dialogs/DialogManager"
 import { Canvas } from "./Canvas"
 import { Header } from "./Header"
-import { useDialogStore } from "@/stores/dialog"
-import { useGlobalStore } from "@/stores/global"
+import { useDialogStore } from "@/stores/dialog.store"
+import { useGlobalStore } from "@/stores/global.store"
 
 const Planner = () => {
   const name = useGlobalStore((state) => state.name)

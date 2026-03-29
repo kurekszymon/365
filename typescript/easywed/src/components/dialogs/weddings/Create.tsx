@@ -1,5 +1,5 @@
 import { useShallow } from "zustand/react/shallow"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import {
@@ -12,8 +12,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
-import { useDialogStore } from "@/stores/dialog"
-import { useGlobalStore } from "@/stores/global"
+import { useDialogStore } from "@/stores/dialog.store"
+import { useGlobalStore } from "@/stores/global.store"
 import { DatePicker } from "@/components/ui/datepicker"
 import { Field, FieldLabel } from "@/components/ui/field"
 
