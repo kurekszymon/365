@@ -1,13 +1,20 @@
 # EasyWed — Development Log
 
-### 29.03.2026
+### 30.03
+
+- styled `RemindersPreview` little bit better
+- used omitted translation for DatePicker placeholder
+- extender reminder model to include `status`, `updatedAt` and `uuid`
+- automatically close `CreateReminder` popover
+
+### 29.03
 
 - tweaks around dev setup with eslint (added react hooks plugin) and file structure renaming (stores/dialog.ts => stores/dialog.store.ts) as well as deflattening the structure little bit to reexport as default base components for routes (is there a name for it?), as in - `planner/index.tsx` => `planner/Planner.tsx`, `planner/index.tsx`
 - created `Reminders` route and added a link from `reminders preview`
 - made header component composable to ensure similarity between 'apps'
 - extracted RemindersPreview to own component (WIP)
 
-### 28.03.2026 - WIP
+### 28.03 - WIP
 
 - Split Header to smaller components, further split needed, it would be preferable to keep these separated component in the same file so it doesn't clutter the filesystem for jumping between files, but then it would clutter `Header.tsx` - need to think what's the best option here.
 - Added `button-group` and `textarea` from shadcn, extended `datepicker` with custom translation keys for prompt and hid label based on the props.
@@ -20,7 +27,7 @@
 - fix TODOs left in `Nav.header.tsx` as well as in other parts of code.
 - didn't finish with code split and reminders work due to lack of time
 
-## 27.03.2026
+## 27.03
 
 I noticed that some vulnerabilities are reported when run `bun audit`, although not all are immediately fixable,
 i.e. [h3 version pinned by tanstack router](https://github.com/TanStack/router/issues/7043).
@@ -35,7 +42,7 @@ i.e. [h3 version pinned by tanstack router](https://github.com/TanStack/router/i
 
 - add precommit hooks for formatting and linting
 
-## 26.03.2026
+## 26.03
 
 After building a prototype I am happy with, I started to clean up the code to the point I feel good about maintaining it.
 
