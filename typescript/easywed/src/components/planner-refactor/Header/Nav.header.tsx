@@ -2,6 +2,7 @@ import { ExternalLinkIcon, ListIcon, PlusIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useState } from "react"
 import { useShallow } from "zustand/react/shallow"
+import { Link } from "@tanstack/react-router"
 import {
   Popover,
   PopoverContent,
@@ -83,7 +84,7 @@ export function PopoverForm() {
         <PopoverContent className="w-64" align="start">
           {renderReminders()}
           <Button variant={"link"}>
-            <span>{t("reminders.navigate")}</span>
+            <Link to="/reminders">{t("reminders.navigate")}</Link>
             <ExternalLinkIcon />
           </Button>
         </PopoverContent>

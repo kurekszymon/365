@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from "./routes/__root"
 import { Route as IndexRouteImport } from "./routes/index"
+import { Route as RemindersIndexRouteImport } from "./routes/reminders/index"
 import { Route as PlannerIndexRouteImport } from "./routes/planner/index"
 import { Route as PlannerRefactorIndexRouteImport } from "./routes/planner-refactor/index"
 
 const IndexRoute = IndexRouteImport.update({
   id: "/",
   path: "/",
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RemindersIndexRoute = RemindersIndexRouteImport.update({
+  id: "/reminders/",
+  path: "/reminders/",
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlannerIndexRoute = PlannerIndexRouteImport.update({
@@ -33,30 +39,34 @@ export interface FileRoutesByFullPath {
   "/": typeof IndexRoute
   "/planner-refactor/": typeof PlannerRefactorIndexRoute
   "/planner/": typeof PlannerIndexRoute
+  "/reminders/": typeof RemindersIndexRoute
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute
   "/planner-refactor": typeof PlannerRefactorIndexRoute
   "/planner": typeof PlannerIndexRoute
+  "/reminders": typeof RemindersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   "/": typeof IndexRoute
   "/planner-refactor/": typeof PlannerRefactorIndexRoute
   "/planner/": typeof PlannerIndexRoute
+  "/reminders/": typeof RemindersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: "/" | "/planner-refactor/" | "/planner/"
+  fullPaths: "/" | "/planner-refactor/" | "/planner/" | "/reminders/"
   fileRoutesByTo: FileRoutesByTo
-  to: "/" | "/planner-refactor" | "/planner"
-  id: "__root__" | "/" | "/planner-refactor/" | "/planner/"
+  to: "/" | "/planner-refactor" | "/planner" | "/reminders"
+  id: "__root__" | "/" | "/planner-refactor/" | "/planner/" | "/reminders/"
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PlannerRefactorIndexRoute: typeof PlannerRefactorIndexRoute
   PlannerIndexRoute: typeof PlannerIndexRoute
+  RemindersIndexRoute: typeof RemindersIndexRoute
 }
 
 declare module "@tanstack/react-router" {
@@ -66,6 +76,13 @@ declare module "@tanstack/react-router" {
       path: "/"
       fullPath: "/"
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    "/reminders/": {
+      id: "/reminders/"
+      path: "/reminders"
+      fullPath: "/reminders/"
+      preLoaderRoute: typeof RemindersIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     "/planner/": {
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PlannerRefactorIndexRoute: PlannerRefactorIndexRoute,
   PlannerIndexRoute: PlannerIndexRoute,
+  RemindersIndexRoute: RemindersIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
