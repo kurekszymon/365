@@ -1,20 +1,29 @@
-import { GuestsSeated } from "./GuestsSeated.header"
-import { Nav } from "./Nav.header"
 import { WeddingName } from "./WeddingName.header"
+import type { PropsWithChildren } from "react"
 
 // header should probably be similar / same between pages, need to rethink that.
 // TODO: handle mobile header view, something like hamburger with separator
-export const Header = () => {
+export const Header = (props: PropsWithChildren) => {
   return (
     <div className="flex items-center justify-between gap-2 border-b bg-background px-3 py-2 print:hidden">
-      <div className="flex min-w-0 items-center gap-3">
-        <WeddingName />
-        <GuestsSeated />
-        <Nav />
-      </div>
-
       {/* Right: actions */}
-      <div></div>
+      {props.children}
     </div>
   )
 }
+
+const Nav = (props: PropsWithChildren) => {
+  return <div className="flex min-w-0 items-center gap-3">{props.children}</div>
+}
+
+const Title = (props: PropsWithChildren) => {
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <WeddingName />
+      {props.children}
+    </div>
+  )
+}
+
+Header.Nav = Nav
+Header.Title = Title

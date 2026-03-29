@@ -1,5 +1,12 @@
 # EasyWed — Development Log
 
+### 29.03.2026
+
+- tweaks around dev setup with eslint (added react hooks plugin) and file structure renaming (stores/dialog.ts => stores/dialog.store.ts) as well as deflattening the structure little bit to reexport as default base components for routes (is there a name for it?), as in - `planner/index.tsx` => `planner/Planner.tsx`, `planner/index.tsx`
+- created `Reminders` route and added a link from `reminders preview`
+- made header component composable to ensure similarity between 'apps'
+- extracted RemindersPreview to own component (WIP)
+
 ### 28.03.2026 - WIP
 
 - Split Header to smaller components, further split needed, it would be preferable to keep these separated component in the same file so it doesn't clutter the filesystem for jumping between files, but then it would clutter `Header.tsx` - need to think what's the best option here.
