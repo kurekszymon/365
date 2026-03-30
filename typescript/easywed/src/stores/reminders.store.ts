@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import { v4 as uuid } from "uuid"
 
-interface Reminder {
+export interface Reminder {
   uuid: string
   text: string
   createdAt: Date

@@ -6,6 +6,7 @@
 - used omitted translation for DatePicker placeholder
 - extender reminder model to include `status`, `updatedAt` and `uuid`
 - automatically close `CreateReminder` popover
+- split `RemindersPreview` to smaller, self-contained components
 
 ### 29.03
 
