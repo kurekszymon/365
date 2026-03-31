@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import { Canvas } from "./Canvas"
 import { Header } from "./Header"
 import { GuestsSeated } from "./Header/GuestsSeated.header"
+import { Button } from "@/components/ui/button"
 import { RemindersPreview } from "@/components/reminders/preview/RemindersPreview"
 import { DialogManager } from "@/components/dialogs/DialogManager"
 import { useDialogStore } from "@/stores/dialog.store"
@@ -29,6 +30,14 @@ export const Planner = () => {
               <RemindersPreview />
             </Header.Nav>
           </Header.Title>
+          <Button
+            variant="outline"
+            onClick={() => {
+              openDialog("Hall.Configure")
+            }}
+          >
+            Configure Hall
+          </Button>
         </Header>
         <Canvas />
       </div>

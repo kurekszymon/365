@@ -1,5 +1,10 @@
 # EasyWed — Development Log
 
+### 31.03
+
+- added new `Hall.Configure` dialog
+- added preview component to visualize hall dimensions (canvas, only limited to rectangle now)
+
 ### 30.03
 
 - styled `RemindersPreview` little bit better

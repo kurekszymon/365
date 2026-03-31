@@ -1,3 +1,4 @@
+import { HallConfigureDialog } from "./planner"
 import { WeddingCreateDialog, WeddingRenameDialog } from "./weddings"
 import { useDialogStore } from "@/stores/dialog.store"
 
@@ -9,7 +10,8 @@ export const DialogManager = () => {
       return <WeddingCreateDialog />
     case "Wedding.Rename":
       return <WeddingRenameDialog />
-
+    case "Hall.Configure":
+      return <HallConfigureDialog />
     default:
       return <></>
   }
