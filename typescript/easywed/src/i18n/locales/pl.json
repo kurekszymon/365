@@ -6,6 +6,10 @@
   "common.date": "Data",
   "common.pick_date": "Wybierz datę",
   "common.recent": "Ostatnie:",
+  "common.preview": "Podgląd",
+  "common.width": "Szerokość",
+  "common.height": "Wysokość",
+  "common.not_supported": "Jeszcze nieobsługiwane",
 
   "errors.404": "404",
   "errors.not_found": "Nie znaleziono strony",
@@ -25,6 +29,14 @@
 
   "guests.seated_ratio": "{{seated_count}}/{{count}} gości przy stołach",
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} gość przy stole",
+
+  "hall.configure": "Skonfiguruj salę weselną",
+  "hall.configure_short": "Skonfiguruj salę",
+  "hall.shape": "Kształt sali",
+  "hall.preset.rectangle": "Prostokąt",
+  "hall.preset.l-shape": "Kształt L",
+  "hall.preset.u-shape": "Kształt U",
+  "hall.preset.custom": "Niestandardowy",
 
   "reminders.title": "Przypomnienia",
   "reminders.navigate": "Przejdź do przypomnień",

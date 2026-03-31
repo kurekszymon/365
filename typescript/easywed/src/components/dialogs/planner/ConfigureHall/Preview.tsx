@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react"
+import { useTranslation } from "react-i18next"
 import { CANVAS_HEIGHT, CANVAS_WIDTH, drawRectangle } from "./canvas"
-import type { HallPreset } from "./Dialog"
+import type { HallPreset } from "@/stores/planner.store"
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 
 export const HallPreview = ({
@@ -12,6 +13,7 @@ export const HallPreview = ({
   width: number
   height: number
 }) => {
+  const { t } = useTranslation()
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -26,14 +28,14 @@ export const HallPreview = ({
   if (preset !== "rectangle") {
     return (
       <div className="flex h-[240px] w-full items-center justify-center rounded-md border text-muted-foreground">
-        Not supported yet
+        {t("common.not_supported")}
       </div>
     )
   }
 
   return (
     <Field>
-      <FieldLabel>Preview</FieldLabel>
+      <FieldLabel>{t("common.preview")}</FieldLabel>
       <FieldContent>
         <canvas
           ref={canvasRef}

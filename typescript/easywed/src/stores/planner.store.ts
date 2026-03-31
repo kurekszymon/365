@@ -9,6 +9,8 @@ export interface Table {
   capacity: number
 }
 
+export type HallPreset = "rectangle" | "l-shape" | "u-shape" | "custom"
+
 export type Dietary =
   | "vegetarian"
   | "vegan"
@@ -27,19 +29,46 @@ export interface Guest {
 type State = {
   tables: Array<Table>
   guests: Array<Guest>
+  hall: {
+    dimensions: {
+      width: number
+      height: number
+    }
+    preset: HallPreset
+  }
 }
 
 type Action = {
   updateTables: (table: Table) => void
   updateGuests: (guest: Guest) => void
+  updateHallPreset: (preset: HallPreset) => void
+  updateHallWidth: (width: number) => void
+  updateHallHeight: (height: number) => void
 }
 
 export const usePlannerStore = create<State & Action>((set) => ({
   tables: [],
   guests: [],
+  hall: {
+    dimensions: {
+      width: 20,
+      height: 12,
+    },
+    preset: "rectangle",
+  },
 
   updateTables: (table) =>
     set((state) => ({ tables: [...state.tables, table] })),
   updateGuests: (guest) =>
     set((state) => ({ guests: [...state.guests, guest] })),
+  updateHallPreset: (preset) =>
+    set((state) => ({ hall: { ...state.hall, preset } })),
+  updateHallWidth: (width) =>
+    set((state) => ({
+      hall: { ...state.hall, dimensions: { ...state.hall.dimensions, width } },
+    })),
+  updateHallHeight: (height) =>
+    set((state) => ({
+      hall: { ...state.hall, dimensions: { ...state.hall.dimensions, height } },
+    })),
 }))

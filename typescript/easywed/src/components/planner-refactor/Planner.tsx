@@ -1,4 +1,5 @@
 import { useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { Canvas } from "./Canvas"
 import { Header } from "./Header"
 import { GuestsSeated } from "./Header/GuestsSeated.header"
@@ -11,6 +12,7 @@ import { useGlobalStore } from "@/stores/global.store"
 export const Planner = () => {
   const name = useGlobalStore((state) => state.name)
   const openDialog = useDialogStore((state) => state.open)
+  const { t } = useTranslation()
 
   useEffect(() => {
     if (!name) {
@@ -36,7 +38,7 @@ export const Planner = () => {
               openDialog("Hall.Configure")
             }}
           >
-            Configure Hall
+            {t("hall.configure_short")}
           </Button>
         </Header>
         <Canvas />

@@ -4,6 +4,8 @@
 
 - added new `Hall.Configure` dialog
 - added preview component to visualize hall dimensions (canvas, only limited to rectangle now)
+- hook up preview component to `planner.store.ts`
+- added and used translation strings for both English and Polish
 
 ### 30.03
 

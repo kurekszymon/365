@@ -6,6 +6,10 @@
   "common.date": "Date",
   "common.pick_date": "Pick a date",
   "common.recent": "Recent:",
+  "common.preview": "Preview",
+  "common.width": "Width",
+  "common.height": "Height",
+  "common.not_supported": "Not supported yet",
 
   "errors.404": "404",
   "errors.not_found": "Page not found",
@@ -25,6 +29,14 @@
 
   "guests.seated_ratio": "{{seated_count}}/{{count}} guests seated",
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} guest seated",
+
+  "hall.configure": "Configure wedding hall",
+  "hall.configure_short": "Configure hall",
+  "hall.shape": "Hall shape",
+  "hall.preset.rectangle": "Rectangle",
+  "hall.preset.l-shape": "L-shape",
+  "hall.preset.u-shape": "U-shape",
+  "hall.preset.custom": "Custom",
 
   "reminders.title": "Reminders",
   "reminders.navigate": "Navigate to Reminders",
