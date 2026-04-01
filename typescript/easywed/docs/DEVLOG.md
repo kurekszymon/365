@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 01.04
+
+- added Guest.Add Dialog
+
 ### 31.03
 
 - added new `Hall.Configure` dialog

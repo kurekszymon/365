@@ -40,6 +40,14 @@ export const Planner = () => {
           >
             {t("hall.configure_short")}
           </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              openDialog("Guest.Add")
+            }}
+          >
+            {t("guests.add")}
+          </Button>
         </Header>
         <Canvas />
       </div>

@@ -27,6 +27,7 @@
   "tables.count_many": "{{count}} tables",
   "tables.empty_state": "No tables yet — add one now!",
 
+  "guests.add": "Add a guest",
   "guests.seated_ratio": "{{seated_count}}/{{count}} guests seated",
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} guest seated",
 

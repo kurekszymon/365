@@ -2,9 +2,10 @@
 
 import { create } from "zustand"
 
+type DialogGuest = "Guest.Add"
 type DialogHall = "Hall.Configure"
 type DialogWedding = "Wedding.Rename" | "Wedding.Create"
-type Dialog = DialogWedding | DialogHall
+type Dialog = DialogWedding | DialogHall | DialogGuest
 
 type State = {
   opened: Dialog | null
