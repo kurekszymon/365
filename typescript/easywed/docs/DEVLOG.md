@@ -3,6 +3,8 @@
 ### 02.04
 
 - improved Guest.Add dialog, add polish translation, save guests to zustand
+- improved styles for smaller screens (show only icons, without text <md)
+- Added <ButtonGroup> for Guests in `Planner` component.
 
 ### 01.04
 

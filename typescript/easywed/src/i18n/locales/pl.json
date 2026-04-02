@@ -27,6 +27,7 @@
   "tables.count_many": "{{count}} stołów",
   "tables.empty_state": "Nie dodano jeszcze stołów - kliknij, żeby dodać",
 
+  "guests": "Goście",
   "guests.add": "Dodaj gościa",
   "guests.add.name": "Imię",
   "guests.add.name_placeholder": "Jan Kowalski",
@@ -37,7 +38,7 @@
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} gość przy stole",
 
   "hall.configure": "Skonfiguruj salę weselną",
-  "hall.configure_short": "Skonfiguruj salę",
+  "hall.configure_short": "Skonfiguruj Salę",
   "hall.shape": "Kształt sali",
   "hall.preset.rectangle": "Prostokąt",
   "hall.preset.l-shape": "Kształt L",

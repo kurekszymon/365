@@ -16,7 +16,7 @@ export const ListRemindersPopover = () => {
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline">
-          {t("reminders.title")}
+          <span className="hidden md:inline">{t("reminders.title")}</span>
           <ListIcon />
         </Button>
       </PopoverTrigger>

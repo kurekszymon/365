@@ -27,6 +27,7 @@
   "tables.count_many": "{{count}} tables",
   "tables.empty_state": "No tables yet — add one now!",
 
+  "guests": "Guests",
   "guests.add": "Add a guest",
   "guests.add.name": "Name",
   "guests.add.name_placeholder": "John Doe",
@@ -37,7 +38,7 @@
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} guest seated",
 
   "hall.configure": "Configure wedding hall",
-  "hall.configure_short": "Configure hall",
+  "hall.configure_short": "Configure Hall",
   "hall.shape": "Hall shape",
   "hall.preset.rectangle": "Rectangle",
   "hall.preset.l-shape": "L-shape",
