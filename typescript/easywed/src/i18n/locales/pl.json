@@ -27,6 +27,12 @@
   "tables.count_many": "{{count}} stołów",
   "tables.empty_state": "Nie dodano jeszcze stołów - kliknij, żeby dodać",
 
+  "guests.add": "Dodaj gościa",
+  "guests.add.name": "Imię",
+  "guests.add.name_placeholder": "Jan Kowalski",
+  "guests.add.dietary_preferences": "Preferencje żywieniowe",
+  "guests.add.note": "Notatka",
+  "guests.add.note_placeholder": "np. uczulony na orzechy, lubi ostre jedzenie, itp.",
   "guests.seated_ratio": "{{seated_count}}/{{count}} gości przy stołach",
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} gość przy stole",
 

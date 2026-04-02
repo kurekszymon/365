@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 02.04
+
+- improved Guest.Add dialog, add polish translation, save guests to zustand
+
 ### 01.04
 
 - added Guest.Add Dialog

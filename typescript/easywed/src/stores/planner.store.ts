@@ -39,8 +39,8 @@ type State = {
 }
 
 type Action = {
-  updateTables: (table: Table) => void
-  updateGuests: (guest: Guest) => void
+  updateTables: (table: Omit<Table, "id">) => void
+  addGuest: (guest: Omit<Guest, "id">) => void
   updateHallPreset: (preset: HallPreset) => void
   updateHallWidth: (width: number) => void
   updateHallHeight: (height: number) => void
@@ -58,9 +58,13 @@ export const usePlannerStore = create<State & Action>((set) => ({
   },
 
   updateTables: (table) =>
-    set((state) => ({ tables: [...state.tables, table] })),
-  updateGuests: (guest) =>
-    set((state) => ({ guests: [...state.guests, guest] })),
+    set((state) => ({
+      tables: [...state.tables, { ...table, id: crypto.randomUUID() }],
+    })),
+  addGuest: (guest) =>
+    set((state) => ({
+      guests: [...state.guests, { ...guest, id: crypto.randomUUID() }],
+    })),
   updateHallPreset: (preset) =>
     set((state) => ({ hall: { ...state.hall, preset } })),
   updateHallWidth: (width) =>

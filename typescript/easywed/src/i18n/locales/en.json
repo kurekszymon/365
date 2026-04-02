@@ -28,6 +28,11 @@
   "tables.empty_state": "No tables yet — add one now!",
 
   "guests.add": "Add a guest",
+  "guests.add.name": "Name",
+  "guests.add.name_placeholder": "John Doe",
+  "guests.add.dietary_preferences": "Dietary Preferences",
+  "guests.add.note": "Note",
+  "guests.add.note_placeholder": "e.g. allergic to nuts, loves spicy food, etc.",
   "guests.seated_ratio": "{{seated_count}}/{{count}} guests seated",
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} guest seated",
 
