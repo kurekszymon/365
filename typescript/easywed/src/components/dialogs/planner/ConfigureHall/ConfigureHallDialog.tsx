@@ -1,5 +1,6 @@
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
+import { useState } from "react"
 import { HallPreview } from "./Preview"
 import { DimensionsRectangle } from "./DimensionsRectangle"
 import type { HallPreset } from "@/stores/planner.store"
@@ -31,11 +32,17 @@ export const HallConfigureDialog = () => {
     useShallow((state) => ({
       preset: state.hall.preset,
       dimensions: state.hall.dimensions,
-      updatePreset: state.updateHallPreset,
-      updateWidth: state.updateHallWidth,
-      updateHeight: state.updateHallHeight,
+      update: state.updateHall,
     }))
   )
+
+  const [localHall, setLocalHall] = useState({
+    preset: hall.preset,
+    dimensions: {
+      width: hall.dimensions.width,
+      height: hall.dimensions.height,
+    },
+  })
 
   return (
     <Dialog
@@ -59,8 +66,8 @@ export const HallConfigureDialog = () => {
               <Button
                 key={value}
                 className="rounded-full"
-                variant={hall.preset === value ? "default" : "outline"}
-                onClick={() => hall.updatePreset(value)}
+                variant={localHall.preset === value ? "default" : "outline"}
+                onClick={() => setLocalHall({ ...localHall, preset: value })}
               >
                 {t(`hall.preset.${value}`)}
               </Button>
@@ -68,20 +75,53 @@ export const HallConfigureDialog = () => {
           </FieldContent>
         </Field>
 
-        {hall.preset === "rectangle" && (
+        {localHall.preset === "rectangle" && (
           <DimensionsRectangle
-            width={hall.dimensions.width}
-            height={hall.dimensions.height}
-            setWidth={hall.updateWidth}
-            setHeight={hall.updateHeight}
+            width={localHall.dimensions.width}
+            height={localHall.dimensions.height}
+            setWidth={(width) =>
+              setLocalHall({
+                ...localHall,
+                dimensions: { ...localHall.dimensions, width },
+              })
+            }
+            setHeight={(height) =>
+              setLocalHall({
+                ...localHall,
+                dimensions: { ...localHall.dimensions, height },
+              })
+            }
           />
         )}
 
         <HallPreview
-          preset={hall.preset}
-          width={hall.dimensions.width}
-          height={hall.dimensions.height}
+          preset={localHall.preset}
+          width={localHall.dimensions.width}
+          height={localHall.dimensions.height}
         />
+
+        <div className="mt-4 flex justify-end gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              dialog.close()
+              setLocalHall({
+                preset: hall.preset,
+                dimensions: hall.dimensions,
+              })
+            }}
+          >
+            {t("common.cancel")}
+          </Button>
+          <Button
+            onClick={() => {
+              hall.update(localHall.preset, localHall.dimensions)
+              dialog.close()
+            }}
+          >
+            {t("common.save")}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   )

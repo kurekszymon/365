@@ -1,11 +1,16 @@
 # EasyWed — Development Log
 
+### 03.04 
+
+- store hall locally in ConfigureHallDialog and propagate to store on save
+- place icons on the left for button with icons
+- rename Dialog files to navigate around the code easier (amended commit to check if gpg key is working)
+
 ### 02.04
 
 - improved Guest.Add dialog, add polish translation, save guests to zustand
 - improved styles for smaller screens (show only icons, without text <md)
 - Added <ButtonGroup> for Guests in `Planner` component.
-- rename Dialog files to navigate around the code easier
 
 ### 01.04
 
