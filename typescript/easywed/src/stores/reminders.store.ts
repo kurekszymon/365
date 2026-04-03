@@ -1,5 +1,4 @@
 import { create } from "zustand"
-import { v4 as uuid } from "uuid"
 
 export interface Reminder {
   uuid: string
@@ -36,7 +35,7 @@ export const useRemindersStore = create<State & Action>((set) => ({
         reminders: [
           ...state.reminders,
           {
-            uuid: uuid(),
+            uuid: crypto.randomUUID(),
             text,
             due,
             createdAt: date,

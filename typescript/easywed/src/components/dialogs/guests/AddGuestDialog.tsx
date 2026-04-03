@@ -45,7 +45,7 @@ export const AddGuestDialog = () => {
       }}
       aria-describedby={undefined}
     >
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="sm:max-w-sm" aria-describedby={undefined}>
         <DialogTitle>{t("guests.add")}</DialogTitle>
         <Field>
           <FieldLabel>{t("guests.add.name")}</FieldLabel>
