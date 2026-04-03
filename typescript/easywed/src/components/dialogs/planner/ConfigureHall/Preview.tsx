@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
-import { CANVAS_HEIGHT, CANVAS_WIDTH, drawRectangle } from "./canvas"
+import { CANVAS_HEIGHT, CANVAS_WIDTH, drawRectangle } from "./canvas-utils"
 import type { HallPreset } from "@/stores/planner.store"
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 

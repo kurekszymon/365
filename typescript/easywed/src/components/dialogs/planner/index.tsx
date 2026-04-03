@@ -1,1 +1,1 @@
-export { HallConfigureDialog } from "./ConfigureHall/Dialog"
+export { HallConfigureDialog } from "./ConfigureHall/ConfigureHallDialog"

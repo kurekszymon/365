@@ -5,6 +5,7 @@
 - improved Guest.Add dialog, add polish translation, save guests to zustand
 - improved styles for smaller screens (show only icons, without text <md)
 - Added <ButtonGroup> for Guests in `Planner` component.
+- rename Dialog files to navigate around the code easier
 
 ### 01.04
 

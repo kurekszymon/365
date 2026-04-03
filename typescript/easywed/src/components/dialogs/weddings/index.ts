@@ -1,2 +1,2 @@
-export { WeddingCreateDialog } from "./Create"
-export { WeddingRenameDialog } from "./Rename"
+export { WeddingCreateDialog } from "./CreateWeddingDialog"
+export { WeddingRenameDialog } from "./RenameWeddingDialog"
