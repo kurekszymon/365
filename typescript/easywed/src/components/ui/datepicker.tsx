@@ -9,6 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { useState } from "react"
 
 interface IProps {
   date?: Date
@@ -26,12 +27,19 @@ export function DatePicker({
   placeholderTlKey = "common.pick_date",
 }: IProps) {
   const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+
+  const handleSelect = (selectedDate: Date | undefined) => {
+    setDate(selectedDate)
+    setOpen(false)
+  }
+
   return (
     <Field className="w-full">
       {showFieldLabel && (
         <FieldLabel htmlFor="date-picker-button">{t("common.date")}</FieldLabel>
       )}
-      <Popover>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -45,7 +53,7 @@ export function DatePicker({
           <Calendar
             mode="single"
             selected={date}
-            onSelect={setDate}
+            onSelect={handleSelect}
             defaultMonth={date}
           />
         </PopoverContent>
