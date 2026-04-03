@@ -41,10 +41,10 @@ export const Planner = () => {
                 openDialog("Hall.Configure")
               }}
             >
+              <LandmarkIcon />
               <span className="hidden md:inline">
                 {t("hall.configure_short")}
               </span>
-              <LandmarkIcon />
             </Button>
             <ButtonGroup>
               <Button
