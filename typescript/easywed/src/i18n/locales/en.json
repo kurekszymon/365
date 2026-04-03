@@ -25,7 +25,6 @@
   "tables.count_one": "{{count}} table",
   "tables.count_few": "{{count}} tables",
   "tables.count_many": "{{count}} tables",
-  "tables.empty_state": "No tables yet — add one now!",
 
   "guests": "Guests",
   "guests.add": "Add a guest",
@@ -39,6 +38,7 @@
 
   "hall.configure": "Configure wedding hall",
   "hall.configure_short": "Configure Hall",
+  "hall.empty_state": "Click to start by configuring the hall",
   "hall.shape": "Hall shape",
   "hall.preset.rectangle": "Rectangle",
   "hall.preset.l-shape": "L-shape",

@@ -1,7 +1,9 @@
 # EasyWed — Development Log
 
-### 03.04 
+### 03.04
 
+- improvement for calendar to close on chosen date
+- add empty state for planner
 - store hall locally in ConfigureHallDialog and propagate to store on save
 - place icons on the left for button with icons
 - rename Dialog files to navigate around the code easier (amended commit to check if gpg key is working)

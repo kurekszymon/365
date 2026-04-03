@@ -34,7 +34,7 @@ type State = {
       width: number
       height: number
     }
-    preset: HallPreset
+    preset?: HallPreset | undefined
   }
 }
 
@@ -52,10 +52,12 @@ export const usePlannerStore = create<State & Action>((set) => ({
   guests: [],
   hall: {
     dimensions: {
+      // maybe on update dimensions i can set css variable to define the scale of the canvas,
+      // so i can work with real sizes in px and then just convert them to fit the canvas?
       width: 20,
       height: 12,
     },
-    preset: "rectangle",
+    preset: undefined,
   },
 
   updateTables: (table) =>

@@ -37,7 +37,7 @@ export const HallConfigureDialog = () => {
   )
 
   const [localHall, setLocalHall] = useState({
-    preset: hall.preset,
+    preset: hall.preset || "rectangle",
     dimensions: {
       width: hall.dimensions.width,
       height: hall.dimensions.height,
@@ -106,7 +106,7 @@ export const HallConfigureDialog = () => {
             onClick={() => {
               dialog.close()
               setLocalHall({
-                preset: hall.preset,
+                preset: hall.preset || "rectangle",
                 dimensions: hall.dimensions,
               })
             }}
