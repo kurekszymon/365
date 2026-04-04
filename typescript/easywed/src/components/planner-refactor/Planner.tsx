@@ -26,7 +26,7 @@ export const Planner = () => {
     <>
       <DialogManager />
 
-      <div className="h-screen w-screen">
+      <div className="flex h-screen w-screen flex-col">
         <Header>
           <Header.Title>
             <Header.Nav>

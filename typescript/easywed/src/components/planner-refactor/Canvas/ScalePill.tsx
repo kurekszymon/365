@@ -9,7 +9,7 @@ export const ScalePill = ({ scale }: ScalePillProps) => {
   const currentScale = scale ?? viewport.scale
 
   return (
-    <div className="absolute right-3 bottom-3 rounded-md border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground tabular-nums backdrop-blur-sm">
+    <div className="absolute top-3 right-3 z-20 rounded-md border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground tabular-nums backdrop-blur-sm">
       {Math.round(currentScale * 100)}%
     </div>
   )

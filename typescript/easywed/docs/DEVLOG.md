@@ -1,5 +1,16 @@
 # EasyWed — Development Log
 
+### 04.04
+
+- added planner component with DnD Context.
+- tables are now movable inside the wedding hall, cannot go out of bounds
+- all calculations are limited to rectangle hall shape (for now, for initial implementation)
+- added seperate components for `DimensionLabel` (show size of the rectangle side), `DraggableTable` as well as utils and consts for Canvas Component
+- seperate hook for `useElementSize`
+- mocked tables for testing (follow up with create table dialog)
+- hall is now centered and rendered as a preview, it is zoomable (0.2-4x) and it is possible to pan around the preview. Zoom and pan is reset when hall dimensions changes
+- everything is stored in meters and recalculated for canvas (to verify)
+
 ### 03.04
 
 - improvement for calendar to close on chosen date
@@ -46,6 +57,7 @@
 - Added `button-group` and `textarea` from shadcn, extended `datepicker` with custom translation keys for prompt and hid label based on the props.
 - Setup `store/reminders` - need to create proper route for it
 - Setup preview reminders from planner, can extract this component to reuse it across diferent part of application.
+- removed redundant comments from `Header.tsx`
 
 ### consider
 

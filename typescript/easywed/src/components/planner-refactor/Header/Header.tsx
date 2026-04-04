@@ -1,12 +1,9 @@
 import { WeddingName } from "./WeddingName.header"
 import type { PropsWithChildren } from "react"
 
-// header should probably be similar / same between pages, need to rethink that.
-// TODO: handle mobile header view, something like hamburger with separator
 export const Header = (props: PropsWithChildren) => {
   return (
     <div className="flex items-center justify-between gap-2 border-b bg-background px-3 py-2 print:hidden">
-      {/* Right: actions */}
       {props.children}
     </div>
   )
