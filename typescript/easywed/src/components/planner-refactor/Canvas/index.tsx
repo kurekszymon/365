@@ -20,16 +20,23 @@ export const Canvas = () => {
   const { t } = useTranslation()
   const { setNodeRef: setDropRef } = useDroppable({ id: "hall-identifier" })
 
-  const { hall, tables, updateTablePosition, stepZoom, setPan } =
-    usePlannerStore(
-      useShallow((state) => ({
-        hall: state.hall,
-        tables: state.tables,
-        updateTablePosition: state.updateTablePosition,
-        stepZoom: state.stepHallZoom,
-        setPan: state.setHallPan,
-      }))
-    )
+  const {
+    hall,
+    tables,
+    updateTablePosition,
+    resetZoomAndPan,
+    stepZoom,
+    setPan,
+  } = usePlannerStore(
+    useShallow((state) => ({
+      hall: state.hall,
+      tables: state.tables,
+      updateTablePosition: state.updateTablePosition,
+      resetZoomAndPan: state.resetHallZoomAndPan,
+      stepZoom: state.stepHallZoom,
+      setPan: state.setHallPan,
+    }))
+  )
 
   const dialog = useDialogStore(
     useShallow((state) => ({
@@ -160,7 +167,7 @@ export const Canvas = () => {
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
     >
-      <ScalePill scale={hall.zoom} />
+      <ScalePill reset={resetZoomAndPan} scale={hall.zoom} />
 
       <DimensionLabel
         orientation="horizontal"

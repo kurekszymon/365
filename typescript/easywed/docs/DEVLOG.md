@@ -10,6 +10,7 @@
 - mocked tables for testing (follow up with create table dialog)
 - hall is now centered and rendered as a preview, it is zoomable (0.2-4x) and it is possible to pan around the preview. Zoom and pan is reset when hall dimensions changes
 - everything is stored in meters and recalculated for canvas (to verify)
+- reset zoom and pan on scale pill click
 
 ### 03.04
 

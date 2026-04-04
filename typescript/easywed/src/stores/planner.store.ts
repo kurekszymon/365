@@ -63,6 +63,7 @@ type Action = {
     preset: HallPreset,
     dimensions: { width: number; height: number }
   ) => void
+  resetHallZoomAndPan: () => void
   stepHallZoom: (direction: 1 | -1) => void
   setHallPan: (pan: { x: number; y: number }) => void
   updateTablePosition: (id: string, x: number, y: number) => void
@@ -130,6 +131,10 @@ export const usePlannerStore = create<State & Action>((set) => ({
     set({
       hall: { preset, dimensions, zoom: 1, pan: { x: 0, y: 0 } },
     }),
+  resetHallZoomAndPan: () =>
+    set((state) => ({
+      hall: { ...state.hall, zoom: 1, pan: { x: 0, y: 0 } },
+    })),
   stepHallZoom: (direction) =>
     // ref: https://gamedev.net/forums/topic/666225-equation-for-zooming/
     // Math.exp is the inverse of Math.log, so it's converting to log-space, applying the zoom delta, then converting back.
