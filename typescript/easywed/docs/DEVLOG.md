@@ -9,6 +9,11 @@
 
 ---
 
+- removed old ai-generated planner with refactored one, missing features
+  - export/import planner
+  - print
+  - list view
+
 consider:
 
 - adding a toolbox to planner view - little popup with
