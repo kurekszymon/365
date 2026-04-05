@@ -1,23 +1,21 @@
 import { useDraggable } from "@dnd-kit/core"
 import { useMemo } from "react"
-import { PlusCircleIcon } from "lucide-react"
 import { CSS } from "@dnd-kit/utilities"
 import { clamp } from "./utils"
-import { HALL_PADDING_M, PIXELS_PER_METER } from "./consts"
 import type { Table } from "@/stores/planner.store"
 
 type DraggableTableProps = {
   table: Table
   hallWidth: number
   hallHeight: number
-  scale: number
+  ppm: number
 }
 
 export const DraggableTable = ({
   table,
   hallWidth,
   hallHeight,
-  scale,
+  ppm,
 }: DraggableTableProps) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: table.id,
@@ -25,15 +23,13 @@ export const DraggableTable = ({
 
   const { size, shape, position } = table
 
-  const ppm = PIXELS_PER_METER * scale
-
   const clampedTransform = useMemo(() => {
     if (!transform) return null
 
-    const minX = (HALL_PADDING_M - position.x) * ppm
-    const maxX = (hallWidth - size.width - HALL_PADDING_M - position.x) * ppm
-    const minY = (HALL_PADDING_M - position.y) * ppm
-    const maxY = (hallHeight - size.height - HALL_PADDING_M - position.y) * ppm
+    const minX = -position.x * ppm
+    const maxX = (hallWidth - size.width - position.x) * ppm
+    const minY = -position.y * ppm
+    const maxY = (hallHeight - size.height - position.y) * ppm
 
     return {
       ...transform,
@@ -41,12 +37,6 @@ export const DraggableTable = ({
       y: clamp(transform.y, minY, maxY),
     }
   }, [hallHeight, hallWidth, size, position, ppm, transform])
-
-  const iconSize = clamp(
-    Math.min(size.width, size.height) * ppm * 0.35,
-    12,
-    20
-  )
 
   return (
     <button
@@ -68,7 +58,7 @@ export const DraggableTable = ({
       {...listeners}
       {...attributes}
     >
-      <PlusCircleIcon style={{ width: iconSize, height: iconSize }} />
+      {table.capacity}
     </button>
   )
 }

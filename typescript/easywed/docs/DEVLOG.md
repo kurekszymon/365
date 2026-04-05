@@ -1,5 +1,22 @@
 # EasyWed — Development Log
 
+### 05.04
+
+- removed hall padding so the tables can be now matched with walls
+- display `table.capacity` instead of plus icon on tables (change colors when full?)
+- created seperate file for Canvas component, only reexport in barrel
+
+---
+
+consider:
+
+- adding a toolbox to planner view - little popup with
+  - edit hall
+  - add table
+  - add obstacle (dj booth, photobooth, etc.)
+
+---
+
 ### 04.04
 
 - added planner component with DnD Context.
@@ -60,11 +77,9 @@
 - Setup preview reminders from planner, can extract this component to reuse it across diferent part of application.
 - removed redundant comments from `Header.tsx`
 
-### consider
-
-- when to fix mobile view, it needs to be done at some point.
-- fix TODOs left in `Nav.header.tsx` as well as in other parts of code.
-- didn't finish with code split and reminders work due to lack of time
+- ~~when to fix mobile view, it needs to be done at some point~~
+- ~~fix TODOs left in `Nav.header.tsx` as well as in other parts of code~~
+- ~~didn't finish with code split and reminders work due to lack of time~~
 
 ## 27.03
 

@@ -1,4 +1,3 @@
-import { HALL_PADDING_M } from "./consts"
 import type { Position, Size } from "@/stores/planner.store"
 
 export const clamp = (value: number, min: number, max: number) => {
@@ -12,7 +11,7 @@ export const clampToHall = (
   hallHeight: number
 ): Position => {
   return {
-    x: clamp(pos.x, HALL_PADDING_M, hallWidth - tableSize.width - HALL_PADDING_M),
-    y: clamp(pos.y, HALL_PADDING_M, hallHeight - tableSize.height - HALL_PADDING_M),
+    x: clamp(pos.x, 0, hallWidth - tableSize.width),
+    y: clamp(pos.y, 0, hallHeight - tableSize.height),
   }
 }
