@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { TablePlanner } from "@/components/planner/TablePlanner"
+import Planner from "@/components/planner-refactor"
 
 export const Route = createFileRoute("/planner/")({
-  component: TablePlanner,
+  component: Planner,
 })

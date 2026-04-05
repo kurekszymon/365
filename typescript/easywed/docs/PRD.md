@@ -1,4 +1,4 @@
-# EasyWed — Product Requirements Document
+# EasyWed — Product Requirements Document (AI Generated Content for reference)
 
 **Version:** 0.1
 **Date:** 2026-03-21
@@ -28,17 +28,17 @@ The product is built with a privacy-first mindset — guest data can be fully an
 
 | Permission              | Organizer | Co-organizer | Guest              |
 | ----------------------- | --------- | ------------ | ------------------ |
-| Create/delete wedding   | ✅         | ❌            | ❌                  |
-| Edit wedding details    | ✅         | ✅            | ❌                  |
-| Invite guests           | ✅         | ✅            | ❌                  |
-| Manage RSVPs            | ✅         | ✅            | Own only           |
-| Table planner (edit)    | ✅         | ✅            | ❌                  |
-| Table planner (view)    | ✅         | ✅            | If allowed         |
-| Toggle anonymization    | ✅         | ✅            | ❌                  |
-| Opt-in to anonymization | ❌         | ❌            | If allowed by org. |
-| Upload photos           | ✅         | ✅            | Within time window |
-| Curate photo album      | ✅         | ✅            | ❌                  |
-| View photo album        | ✅         | ✅            | If allowed         |
+| Create/delete wedding   | ✅        | ❌           | ❌                 |
+| Edit wedding details    | ✅        | ✅           | ❌                 |
+| Invite guests           | ✅        | ✅           | ❌                 |
+| Manage RSVPs            | ✅        | ✅           | Own only           |
+| Table planner (edit)    | ✅        | ✅           | ❌                 |
+| Table planner (view)    | ✅        | ✅           | If allowed         |
+| Toggle anonymization    | ✅        | ✅           | ❌                 |
+| Opt-in to anonymization | ❌        | ❌           | If allowed by org. |
+| Upload photos           | ✅        | ✅           | Within time window |
+| Curate photo album      | ✅        | ✅           | ❌                 |
+| View photo album        | ✅        | ✅           | If allowed         |
 
 ---
 
@@ -54,6 +54,7 @@ The product is built with a privacy-first mindset — guest data can be fully an
 ### 4.2 Invitations
 
 Organizer can invite guests via:
+
 - **Email** — built-in sending via [Resend](https://resend.com). Organizer writes a custom invitation message (with default template). Email contains a unique signed token link.
 - **Phone number** — sends an SMS (provider TBD, e.g. Twilio) with a short link.
 - **QR code** — generates a QR that encodes the signed token link. Can be printed or shared digitally.
@@ -64,12 +65,14 @@ Organizer can resend invitations and revoke access.
 ### 4.3 RSVP
 
 Guest opens the link — no account required. They fill out:
+
 1. **Name** (pre-filled if organizer added it)
 2. **Dietary restrictions** (text field + common tags: vegetarian, vegan, gluten-free, halal, kosher, none)
 3. **Venue map acknowledgment** — a map (Google Maps embed or Mapbox) shows the venue location. Guest can tap to open navigation. Their location is never captured.
 4. **RSVP status**: Attending / Not attending / Maybe
 
 Additional optional fields (organizer can enable/disable per wedding):
+
 - +1 / number of accompanying guests
 - Song request
 - Message to the couple
@@ -79,6 +82,7 @@ Guests can update or cancel RSVP at any time via their original link. Organizers
 ### 4.4 Guest List
 
 Organizer dashboard shows a table of guests with:
+
 - Name (or anonymized ID)
 - RSVP status (Attending / Declined / Pending / Maybe)
 - Dietary restrictions
@@ -92,6 +96,7 @@ Filterable and sortable. Exportable to CSV (non-anonymized only, with explicit o
 Two views, togglable:
 
 **Visual View**
+
 - Drag-and-drop canvas.
 - Organizer adds tables: round or rectangular, with configurable capacity.
 - Named tables (e.g. "Table 1", "Family", "Friends").
@@ -100,16 +105,19 @@ Two views, togglable:
 - Printable layout via browser print dialog (Ctrl+P / Save as PDF) — no external library needed, handles all languages correctly.
 
 **List View**
+
 - Compact table showing: Table name → assigned guests.
 - Quick reassignment via dropdown.
 
 **Export & Restore**
+
 - **Print / PDF**: browser print dialog renders a clean print-only layout (works with all languages/Unicode). Organizer can save as PDF or print physically.
 - **Export JSON**: downloads a `.easywed.json` file containing the full planner state (tables, guests, assignments, positions). Can be emailed, backed up, or version-controlled.
 - **Import JSON**: upload a previously exported file to restore the full state — useful for resuming work across devices or sharing with a co-organizer.
 - State also auto-persists to `localStorage` on every change.
 
 **Guest "Find Your Seat" View** (organizer opt-in per wedding):
+
 - A separate shareable link / QR for guests.
 - Guest types their name (or scans a code) and sees their table assignment.
 - If anonymization is on, guests see their nickname only.
@@ -119,6 +127,7 @@ Two views, togglable:
 Designed for organizers who want to minimize personal data stored on the server (e.g. GDPR minimization or personal preference).
 
 **How it works:**
+
 - Organizer enables anonymization per wedding.
 - The server replaces guest names with sequential IDs (`G001`, `G002`, ...).
 - The real name → ID mapping is stored **only in the organizer's browser** (localStorage) and **never sent to the server**.
@@ -128,6 +137,7 @@ Designed for organizers who want to minimize personal data stored on the server 
 - If the organizer loses their local mapping, it cannot be recovered — a clear warning is shown before enabling.
 
 **What the server stores in anonymized mode:**
+
 - Guest IDs (G001, G002, ...)
 - Dietary restrictions (linked to ID, not name)
 - RSVP status
@@ -141,17 +151,20 @@ Guests can upload photos taken during the wedding.
 **Upload window:** From event start time until **event end time + 24 hours**. Configurable by organizer.
 
 **Limits:**
+
 - Default: **30 photos per guest** per event.
 - Organizer can increase this per event (paid add-on if over the plan limit).
 - File types: JPEG, PNG, HEIC, WebP. Max 20 MB per photo.
 
 **Storage:**
+
 - AWS S3 (EU region — `eu-central-1` for GDPR compliance).
 - S3 lifecycle policy: auto-delete all event photos **30 days after the event date**.
 - Organizers are warned 7 days before deletion and can download the full album.
 - Photos are served via CloudFront CDN.
 
 **GDPR:**
+
 - Each photo is linked to the uploader's guest token.
 - Guests can request deletion of their photos (right to erasure) — available in their RSVP view.
 - Organizer can delete any photo.
@@ -235,6 +248,7 @@ subscriptions
 | **Planner Yearly**  | ~€399/yr      | Wedding planners      |
 
 ### Free Tier Includes
+
 - Table planner (visual + list) for 1 wedding
 - Up to 20 tables, unlimited seats
 - No guest invitations
@@ -243,6 +257,7 @@ subscriptions
 - No email sending
 
 ### Per Wedding Includes
+
 - Everything in Free
 - Up to 150 guests
 - Invitations (email + QR)
@@ -253,17 +268,20 @@ subscriptions
 - "Find Your Seat" guest view
 
 ### Planner Plans Include
+
 - Everything in Per Wedding
 - Unlimited weddings (active simultaneously: up to 10 monthly / unlimited yearly)
 - Up to 300 guests per wedding
 - Priority email support
 
 ### Add-ons (all plans except Free)
+
 - Extra photo storage: +100 photos/guest block — €5 per wedding
 - Extended photo retention: +30 days — €10 per wedding
 - SMS invitations: €0.10/SMS (passed through at cost)
 
 ### Payments
+
 - Stripe Checkout + Stripe Billing for subscriptions.
 - Webhook-driven access control via Supabase.
 
@@ -274,6 +292,7 @@ subscriptions
 **Goal:** Shippable product in ~8 weeks.
 
 ### In MVP
+
 - [x] Auth (email/password + magic link via Supabase)
 - [x] Create wedding, invite co-organizer
 - [x] Add guests manually + invite via email + QR code
@@ -288,6 +307,7 @@ subscriptions
 - [x] Free tier enforcement
 
 ### Deferred Post-MVP
+
 - [ ] SMS invitations (Twilio)
 - [ ] Planner subscription plan
 - [ ] "Find Your Seat" guest QR at venue
@@ -305,6 +325,7 @@ subscriptions
 **Mobile-first:** All flows must be fully usable on a 390px wide screen (iPhone 14 baseline). Desktop is secondary but supported.
 
 **GDPR:**
+
 - Data stored in EU (Supabase EU region + AWS eu-central-1).
 - Guest right to erasure: guests can delete their RSVP data and photos via their token link.
 - Organizer right to erasure: full event data deletion available.
@@ -313,11 +334,13 @@ subscriptions
 - Anonymization mode explicitly designed to reduce PII on server.
 
 **Performance:**
+
 - First Contentful Paint < 1.5s on mobile (4G).
 - Photo uploads use direct-to-S3 presigned URLs — no proxying through server.
 - Lazy load photo grid.
 
 **Security:**
+
 - Invitation tokens are signed JWTs (short-lived, scoped to wedding + guest).
 - Row Level Security (RLS) enforced in Supabase for all tables.
 - Organizer-level operations require active subscription check server-side.
