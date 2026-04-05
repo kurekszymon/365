@@ -200,9 +200,11 @@ export const Canvas = () => {
             top: hallTop,
             width: scaledWidth,
             height: scaledHeight,
-            backgroundImage:
-              "radial-gradient(circle, rgb(209 213 219 / 0.4) 1px, transparent 1px)",
-            backgroundSize: `${5 * scale}px ${5 * scale}px`,
+            backgroundImage: `radial-gradient(circle, rgb(156 163 175 / ${hall.zoom}) 1px, transparent 1px)`,
+            // can be adjusted if we want a different grid spacing or something, but it seems to work well for now
+            backgroundSize: `${ppm}px ${ppm}px`, // ppm is (scaled) pixels per meter, so this creates a grid with 1m spacing -
+            // let user decide if they want to start the grid offset at half a meter or not - maybe add a toggle for it in the future
+            // backgroundPosition: `${ppm / 2}px ${ppm / 2}px`,
           }}
         >
           {canvasTables.map((ct) => (

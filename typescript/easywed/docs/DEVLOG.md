@@ -5,6 +5,7 @@
 - removed hall padding so the tables can be now matched with walls
 - display `table.capacity` instead of plus icon on tables (change colors when full?)
 - created seperate file for Canvas component, only reexport in barrel
+- added 1m x 1m grid for planner, so it's possible to arrange tables with specified positions. (allow for moving the grid left/right? - commented out part responsible for that)
 
 ---
 

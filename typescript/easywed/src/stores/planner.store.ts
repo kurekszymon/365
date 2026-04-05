@@ -78,8 +78,8 @@ export const usePlannerStore = create<State & Action>((set) => ({
       capacity: 8,
       size: { width: 2, height: 1 },
       position: {
-        x: 1.25,
-        y: 1.25,
+        x: 1,
+        y: 1,
       },
     },
     {
@@ -88,8 +88,8 @@ export const usePlannerStore = create<State & Action>((set) => ({
       shape: "round",
       capacity: 10,
       size: {
-        width: 1.5,
-        height: 1.5,
+        width: 1,
+        height: 1,
       },
       position: {
         x: 7.5,
