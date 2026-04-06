@@ -17,8 +17,16 @@ export const HallPreview = ({
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
-    const ctx = canvasRef.current?.getContext("2d")
+    if (!canvasRef.current) return
+
+    const ctx = canvasRef.current.getContext("2d")
     if (!ctx) return
+
+    // https://stackoverflow.com/questions/15661339/how-do-i-fix-blurry-text-in-my-html5-canvas
+    const ratio = window.devicePixelRatio || 1
+    canvasRef.current.width = CANVAS_WIDTH * ratio
+    canvasRef.current.height = CANVAS_HEIGHT * ratio
+    ctx.scale(ratio, ratio)
 
     if (preset === "rectangle") {
       drawRectangle(ctx, width, height)

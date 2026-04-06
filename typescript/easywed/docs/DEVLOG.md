@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 06.04
+
+- made text on canvas preview less blurry ([ref](https://stackoverflow.com/questions/15661339/how-do-i-fix-blurry-text-in-my-html5-canvas)), will make a 365/util out of it
+
 ### 05.04
 
 - removed hall padding so the tables can be now matched with walls
