@@ -57,7 +57,10 @@ type State = {
 }
 
 type Action = {
-  updateTables: (table: Omit<Table, "id" | "position">) => void
+  addTable: (
+    table: Omit<Table, "id" | "position">,
+    guestIds?: Array<string>
+  ) => void
   addGuest: (guest: Omit<Guest, "id">) => void
   updateHall: (
     preset: HallPreset,
@@ -70,33 +73,7 @@ type Action = {
 }
 
 export const usePlannerStore = create<State & Action>((set) => ({
-  tables: [
-    {
-      id: "demo-rect",
-      name: "Table 1",
-      shape: "rectangular",
-      capacity: 8,
-      size: { width: 2, height: 1 },
-      position: {
-        x: 1,
-        y: 1,
-      },
-    },
-    {
-      id: "demo-round",
-      name: "Table 2",
-      shape: "round",
-      capacity: 10,
-      size: {
-        width: 1,
-        height: 1,
-      },
-      position: {
-        x: 7.5,
-        y: 5.0,
-      },
-    },
-  ],
+  tables: [],
   guests: [],
   hall: {
     dimensions: {
@@ -108,21 +85,36 @@ export const usePlannerStore = create<State & Action>((set) => ({
     pan: { x: 0, y: 0 },
   },
 
-  updateTables: (table) =>
-    set((state) => ({
-      tables: [
-        ...state.tables,
-        {
-          ...table,
-          id: crypto.randomUUID(),
-          position: {
-            // TODO: handle default position better - maybe center of the hall or something?
-            x: 0,
-            y: 0,
+  addTable: (table, guestIds = []) =>
+    set((state) => {
+      const tableId = crypto.randomUUID()
+
+      return {
+        tables: [
+          ...state.tables,
+          {
+            ...table,
+            id: tableId,
+            position: {
+              // TODO: handle default position better - maybe center of the hall or something?
+              x: 0,
+              y: 0,
+            },
           },
-        },
-      ],
-    })),
+        ],
+        guests:
+          guestIds.length === 0
+            ? state.guests
+            : state.guests.map((guest) =>
+                guestIds.includes(guest.id)
+                  ? {
+                      ...guest,
+                      tableId,
+                    }
+                  : guest
+              ),
+      }
+    }),
   addGuest: (guest) =>
     set((state) => ({
       guests: [...state.guests, { ...guest, id: crypto.randomUUID() }],

@@ -1,5 +1,15 @@
 # EasyWed — Development Log
 
+### 07.04
+
+- added Tables.Add dialog
+- added tooltip from shadcn
+  - problematic part i found is that it needs `asChild` prop to work properly, need to do some research as to why. because of that (platform limitation), disabled button doesn't emit hover events so need to manually check the constraints.
+- added guest assignment picker
+- assign guests to table with capacity aware assignment
+- added EN/PL translations for new flow.
+- make user first configure hall before adding tables (improve the flow, appear tables button group as disabled)
+
 ### 06.04
 
 - made text on canvas preview less blurry ([ref](https://stackoverflow.com/questions/15661339/how-do-i-fix-blurry-text-in-my-html5-canvas)), will make a 365/util out of it

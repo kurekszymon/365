@@ -5,7 +5,8 @@ import { create } from "zustand"
 type Guests = "Guest.Add"
 type Halls = "Hall.Configure"
 type Weddings = "Wedding.Rename" | "Wedding.Create"
-type Dialog = Weddings | Halls | Guests
+type Tables = "Table.Add"
+type Dialog = Weddings | Halls | Guests | Tables
 
 type State = {
   opened: Dialog | null
