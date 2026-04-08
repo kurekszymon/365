@@ -1,5 +1,10 @@
 # EasyWed — Development Log
 
+### 08.04
+
+- remove presets other than rectangle from `ConfigureHallDialog
+- match `Preview` style with `Planner`, render tables (verify and simpify the code)
+
 ### 07.04
 
 - added Tables.Add dialog

@@ -1,8 +1,10 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { CANVAS_HEIGHT, CANVAS_WIDTH, drawRectangle } from "./canvas-utils"
-import type { HallPreset } from "@/stores/planner.store"
-import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
+import type { HallPreset, TableShape } from "@/stores/planner.store"
+import { Field, FieldContent, FieldTitle } from "@/components/ui/field"
+import { ButtonGroup } from "@/components/ui/button-group"
+import { Button } from "@/components/ui/button"
 
 export const HallPreview = ({
   preset,
@@ -15,6 +17,7 @@ export const HallPreview = ({
 }) => {
   const { t } = useTranslation()
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [tableShape, setTableShape] = useState<TableShape>("rectangular")
 
   useEffect(() => {
     if (!canvasRef.current) return
@@ -26,12 +29,13 @@ export const HallPreview = ({
     const ratio = window.devicePixelRatio || 1
     canvasRef.current.width = CANVAS_WIDTH * ratio
     canvasRef.current.height = CANVAS_HEIGHT * ratio
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
     ctx.scale(ratio, ratio)
 
     if (preset === "rectangle") {
-      drawRectangle(ctx, width, height)
+      drawRectangle(ctx, width, height, tableShape)
     }
-  }, [preset, width, height])
+  }, [preset, width, height, tableShape])
 
   if (preset !== "rectangle") {
     return (
@@ -43,7 +47,27 @@ export const HallPreview = ({
 
   return (
     <Field>
-      <FieldLabel>{t("common.preview")}</FieldLabel>
+      <div className="flex items-center justify-between gap-2">
+        <FieldTitle>{t("common.preview")}</FieldTitle>
+        <ButtonGroup>
+          <Button
+            type="button"
+            size="xs"
+            variant={tableShape === "rectangular" ? "default" : "outline"}
+            onClick={() => setTableShape("rectangular")}
+          >
+            {t("tables.add.shape.rectangular")}
+          </Button>
+          <Button
+            type="button"
+            size="xs"
+            variant={tableShape === "round" ? "default" : "outline"}
+            onClick={() => setTableShape("round")}
+          >
+            {t("tables.add.shape.round")}
+          </Button>
+        </ButtonGroup>
+      </div>
       <FieldContent>
         <canvas
           ref={canvasRef}

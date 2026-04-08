@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next"
 import { useState } from "react"
 import { HallPreview } from "./Preview"
 import { DimensionsRectangle } from "./DimensionsRectangle"
-import type { HallPreset } from "@/stores/planner.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import {
   Dialog,
@@ -12,10 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useDialogStore } from "@/stores/dialog.store"
-import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 import { Button } from "@/components/ui/button"
-
-const PRESETS: Array<HallPreset> = ["rectangle", "l-shape", "u-shape", "custom"]
 
 export const HallConfigureDialog = () => {
   const { t } = useTranslation()
@@ -58,22 +54,6 @@ export const HallConfigureDialog = () => {
         <DialogHeader>
           <DialogTitle>{t("hall.configure")}</DialogTitle>
         </DialogHeader>
-
-        <Field>
-          <FieldLabel>{t("hall.shape")}</FieldLabel>
-          <FieldContent className="flex-row gap-1.5">
-            {PRESETS.map((value) => (
-              <Button
-                key={value}
-                className="rounded-full"
-                variant={localHall.preset === value ? "default" : "outline"}
-                onClick={() => setLocalHall({ ...localHall, preset: value })}
-              >
-                {t(`hall.preset.${value}`)}
-              </Button>
-            ))}
-          </FieldContent>
-        </Field>
 
         {localHall.preset === "rectangle" && (
           <DimensionsRectangle
