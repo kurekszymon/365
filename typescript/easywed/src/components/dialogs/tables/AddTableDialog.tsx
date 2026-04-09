@@ -33,6 +33,7 @@ export const AddTableDialog = () => {
   const dialog = useDialogStore(
     useShallow((state) => ({
       opened: state.opened,
+      meta: state.meta,
       close: state.close,
     }))
   )
@@ -109,7 +110,8 @@ export const AddTableDialog = () => {
         capacity: capacity,
         size: getSizeForShape(form.shape, width, height),
       },
-      assignedGuestIdsWithinCapacity
+      assignedGuestIdsWithinCapacity,
+      dialog.meta.spawnPosition
     )
 
     handleClose()

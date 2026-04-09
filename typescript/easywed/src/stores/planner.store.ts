@@ -59,7 +59,8 @@ type State = {
 type Action = {
   addTable: (
     table: Omit<Table, "id" | "position">,
-    guestIds?: Array<string>
+    guestIds?: Array<string>,
+    position?: Position
   ) => void
   addGuest: (guest: Omit<Guest, "id">) => void
   updateHall: (
@@ -85,7 +86,7 @@ export const usePlannerStore = create<State & Action>((set) => ({
     pan: { x: 0, y: 0 },
   },
 
-  addTable: (table, guestIds = []) =>
+  addTable: (table, guestIds = [], position) =>
     set((state) => {
       const tableId = crypto.randomUUID()
 
@@ -95,11 +96,7 @@ export const usePlannerStore = create<State & Action>((set) => ({
           {
             ...table,
             id: tableId,
-            position: {
-              // TODO: handle default position better - maybe center of the hall or something?
-              x: 0,
-              y: 0,
-            },
+            position: position ?? { x: 0, y: 0 },
           },
         ],
         guests:

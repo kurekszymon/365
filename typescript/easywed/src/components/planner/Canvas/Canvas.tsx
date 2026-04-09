@@ -6,6 +6,7 @@ import { useShallow } from "zustand/react/shallow"
 import { clampToHall } from "./utils"
 import { ScalePill } from "./ScalePill"
 import { DimensionLabel } from "./DimensionLabel"
+import { CanvasContextMenu } from "./CanvasContextMenu"
 
 import { CanvasEmptyState } from "./CanvasEmptyState"
 import { PIXELS_PER_METER, VIEWPORT_MARGIN } from "./consts"
@@ -53,6 +54,10 @@ export const Canvas = () => {
 
   const [isPanning, setIsPanning] = useState(false)
   const panOffsetRef = useRef<Position | null>(null)
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const longPressTouchRef = useRef<{ clientX: number; clientY: number } | null>(
+    null
+  )
 
   const hallWidth = Math.round(hall.dimensions.width * PIXELS_PER_METER)
   const hallHeight = Math.round(hall.dimensions.height * PIXELS_PER_METER)
@@ -117,6 +122,54 @@ export const Canvas = () => {
     setIsPanning(false)
   }
 
+  function viewportToHall(clientX: number, clientY: number): Position {
+    return {
+      x: Math.max(0, (clientX - hallLeft) / ppm),
+      y: Math.max(0, (clientY - hallTop) / ppm),
+    }
+  }
+
+  function handleAddTable(hallPosition: Position) {
+    dialog.open("Table.Add", { spawnPosition: hallPosition })
+  }
+
+  function handleTouchStart(e: React.TouchEvent) {
+    if ((e.target as HTMLElement).closest("button, [data-no-pan]")) return
+    const touch = e.touches[0]
+    longPressTouchRef.current = {
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+    }
+    longPressTimerRef.current = setTimeout(() => {
+      if (!longPressTouchRef.current) return
+      const t = longPressTouchRef.current
+      e.currentTarget.dispatchEvent(
+        new MouseEvent("contextmenu", {
+          bubbles: true,
+          clientX: t.clientX,
+          clientY: t.clientY,
+          button: 2,
+        })
+      )
+    }, 500)
+  }
+
+  function handleTouchEnd() {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+    longPressTouchRef.current = null
+  }
+
+  function handleTouchMove() {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+    longPressTouchRef.current = null
+  }
+
   function handleDragEnd(e: DragEndEvent) {
     const id = String(e.active.id)
     const table = canvasTables.find((ct) => ct.id === id)
@@ -164,60 +217,68 @@ export const Canvas = () => {
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="relative min-h-0 flex-1 overflow-hidden bg-gradient-to-br from-slate-100 via-zinc-50 to-emerald-50/70"
-      style={{ cursor: isPanning ? "grabbing" : "grab" }}
-      onMouseUp={endPan}
-      onMouseLeave={endPan}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
+    <CanvasContextMenu
+      onAddTable={handleAddTable}
+      viewportToHall={viewportToHall}
     >
-      <ScalePill reset={resetZoomAndPan} scale={hall.zoom} />
+      <div
+        ref={containerRef}
+        className="relative min-h-0 flex-1 overflow-hidden bg-gradient-to-br from-slate-100 via-zinc-50 to-emerald-50/70"
+        style={{ cursor: isPanning ? "grabbing" : "grab" }}
+        onMouseUp={endPan}
+        onMouseLeave={endPan}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={handleTouchMove}
+      >
+        <ScalePill reset={resetZoomAndPan} scale={hall.zoom} />
 
-      <DimensionLabel
-        orientation="horizontal"
-        value={hall.dimensions.width}
-        left={hallLeft}
-        top={hallTop - 28}
-        span={scaledWidth}
-      />
+        <DimensionLabel
+          orientation="horizontal"
+          value={hall.dimensions.width}
+          left={hallLeft}
+          top={hallTop - 28}
+          span={scaledWidth}
+        />
 
-      <DimensionLabel
-        orientation="vertical"
-        value={hall.dimensions.height}
-        left={hallLeft - 52}
-        top={hallTop}
-        span={scaledHeight}
-      />
+        <DimensionLabel
+          orientation="vertical"
+          value={hall.dimensions.height}
+          left={hallLeft - 52}
+          top={hallTop}
+          span={scaledHeight}
+        />
 
-      <DndContext onDragEnd={handleDragEnd}>
-        <div
-          ref={setDropRef}
-          className="absolute z-10 bg-white shadow-md ring-2 ring-emerald-400"
-          style={{
-            left: hallLeft,
-            top: hallTop,
-            width: scaledWidth,
-            height: scaledHeight,
-            backgroundImage: `radial-gradient(circle, rgb(156 163 175 / ${hall.zoom}) 1px, transparent 1px)`,
-            // can be adjusted if we want a different grid spacing or something, but it seems to work well for now
-            backgroundSize: `${ppm}px ${ppm}px`, // ppm is (scaled) pixels per meter, so this creates a grid with 1m spacing -
-            // let user decide if they want to start the grid offset at half a meter or not - maybe add a toggle for it in the future
-            // backgroundPosition: `${ppm / 2}px ${ppm / 2}px`,
-          }}
-        >
-          {canvasTables.map((ct) => (
-            <DraggableTable
-              key={ct.id}
-              table={ct}
-              hallWidth={hall.dimensions.width}
-              hallHeight={hall.dimensions.height}
-              ppm={ppm}
-            />
-          ))}
-        </div>
-      </DndContext>
-    </div>
+        <DndContext onDragEnd={handleDragEnd}>
+          <div
+            ref={setDropRef}
+            className="absolute z-10 bg-white shadow-md ring-2 ring-emerald-400"
+            style={{
+              left: hallLeft,
+              top: hallTop,
+              width: scaledWidth,
+              height: scaledHeight,
+              backgroundImage: `radial-gradient(circle, rgb(156 163 175 / ${hall.zoom}) 1px, transparent 1px)`,
+              // can be adjusted if we want a different grid spacing or something, but it seems to work well for now
+              backgroundSize: `${ppm}px ${ppm}px`, // ppm is (scaled) pixels per meter, so this creates a grid with 1m spacing -
+              // let user decide if they want to start the grid offset at half a meter or not - maybe add a toggle for it in the future
+              // backgroundPosition: `${ppm / 2}px ${ppm / 2}px`,
+            }}
+          >
+            {canvasTables.map((ct) => (
+              <DraggableTable
+                key={ct.id}
+                table={ct}
+                hallWidth={hall.dimensions.width}
+                hallHeight={hall.dimensions.height}
+                ppm={ppm}
+              />
+            ))}
+          </div>
+        </DndContext>
+      </div>
+    </CanvasContextMenu>
   )
 }
