@@ -2,11 +2,11 @@
 
 ### 09.04
 
-- right-click (or long-press on mobile) on the hall canvas now shows a context menu with "Add Table" option
-  - uses Radix `ContextMenu` (already installed via `@radix-ui/react-context-menu`)
-  - long-press detected via 500ms touch timer; cancels on move or release; fires synthetic `contextmenu` event to reuse same menu
-  - click position is converted from viewport → hall coordinates and passed as `spawnPosition` through `dialog.store` meta
-  - `addTable` in `planner.store` now accepts an optional `position` — table spawns at the clicked point instead of `{0,0}`
+- right-click (or long-press on mobile) on the hall canvas shows a context menu with two actions:
+  - "Add Table" — disabled when clicking outside hall bounds; table spawns at the clicked position
+  - "Configure Hall" — always available regardless of click position
+  - long-press detected via 500ms touch timer; cancels on move or release; fires synthetic `contextmenu` event to reuse the same menu on mobile
+  - click position converted from viewport → hall coordinates, passed as `spawnPosition` through `dialog.store` meta into `addTable()`
 
 ### 08.04
 

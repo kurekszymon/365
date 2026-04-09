@@ -129,6 +129,15 @@ export const Canvas = () => {
     }
   }
 
+  function isInHallBounds(clientX: number, clientY: number): boolean {
+    return (
+      clientX >= hallLeft &&
+      clientX <= hallLeft + scaledWidth &&
+      clientY >= hallTop &&
+      clientY <= hallTop + scaledHeight
+    )
+  }
+
   function handleAddTable(hallPosition: Position) {
     dialog.open("Table.Add", { spawnPosition: hallPosition })
   }
@@ -219,7 +228,9 @@ export const Canvas = () => {
   return (
     <CanvasContextMenu
       onAddTable={handleAddTable}
+      onConfigureHall={() => dialog.open("Hall.Configure")}
       viewportToHall={viewportToHall}
+      isInHallBounds={isInHallBounds}
     >
       <div
         ref={containerRef}
