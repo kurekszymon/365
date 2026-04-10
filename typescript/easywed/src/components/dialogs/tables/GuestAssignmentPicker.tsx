@@ -76,14 +76,14 @@ export const GuestAssignmentPicker = ({
 
   return (
     <Field>
-      <FieldLabel>{t("tables.add.guests")}</FieldLabel>
+      <FieldLabel>{t("tables.guests")}</FieldLabel>
       <FieldContent>
         <Popover>
           <PopoverTrigger asChild>
             <Input
               readOnly
               value={selectedGuestsValue}
-              placeholder={t("tables.add.guests_pick")}
+              placeholder={t("tables.guests_pick")}
               className="w-full cursor-pointer rounded-md border"
             />
           </PopoverTrigger>
@@ -94,25 +94,25 @@ export const GuestAssignmentPicker = ({
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t("tables.add.guests_search_placeholder")}
+              placeholder={t("tables.guests_search_placeholder")}
               className="w-full rounded-md border"
             />
 
             {hasReachedCapacity && (
               <p className="text-xs text-amber-700">
-                {t("tables.add.guests_capacity_reached")}
+                {t("tables.guests_capacity_reached")}
               </p>
             )}
 
             {!hasGuests && (
               <p className="text-xs text-muted-foreground">
-                {t("tables.add.guests_none")}
+                {t("tables.guests_none")}
               </p>
             )}
 
             {hasGuests && !hasFilteredGuests && (
               <p className="text-xs text-muted-foreground">
-                {t("tables.add.guests_no_match")}
+                {t("tables.guests_no_match")}
               </p>
             )}
 
@@ -149,7 +149,7 @@ export const GuestAssignmentPicker = ({
           </PopoverContent>
         </Popover>
         <p className="text-xs text-muted-foreground">
-          {t("tables.add.guests_selected_of_capacity", {
+          {t("tables.guests_selected_of_capacity", {
             count: assignedGuestIdsWithinCapacity.length,
             capacity,
           })}

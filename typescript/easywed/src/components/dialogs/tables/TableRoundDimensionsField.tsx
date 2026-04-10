@@ -17,7 +17,7 @@ export const RoundTable = ({
 
   return (
     <Field>
-      <FieldLabel>{t("tables.add.diameter")}</FieldLabel>
+      <FieldLabel>{t("tables.diameter")}</FieldLabel>
       <FieldContent>
         <Input
           type="number"
@@ -29,7 +29,7 @@ export const RoundTable = ({
         />
         {isOutOfBounds && (
           <p className="min-h-4 text-xs text-destructive" aria-live="polite">
-            {t("tables.add.dimensions_oob")}
+            {t("tables.dimensions_oob")}
           </p>
         )}
       </FieldContent>

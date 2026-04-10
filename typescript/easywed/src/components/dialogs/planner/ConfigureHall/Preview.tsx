@@ -56,7 +56,7 @@ export const HallPreview = ({
             variant={tableShape === "rectangular" ? "default" : "outline"}
             onClick={() => setTableShape("rectangular")}
           >
-            {t("tables.add.shape.rectangular")}
+            {t("tables.shape.rectangular")}
           </Button>
           <Button
             type="button"
@@ -64,7 +64,7 @@ export const HallPreview = ({
             variant={tableShape === "round" ? "default" : "outline"}
             onClick={() => setTableShape("round")}
           >
-            {t("tables.add.shape.round")}
+            {t("tables.shape.round")}
           </Button>
         </ButtonGroup>
       </div>

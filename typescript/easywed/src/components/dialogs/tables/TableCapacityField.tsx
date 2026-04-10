@@ -11,7 +11,7 @@ export const TableCapacityField = ({ value, onChange }: IProps) => {
   const { t } = useTranslation()
   return (
     <Field>
-      <FieldLabel>{t("tables.add.capacity")}</FieldLabel>
+      <FieldLabel>{t("tables.capacity")}</FieldLabel>
       <FieldContent>
         <Input
           type="number"

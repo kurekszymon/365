@@ -18,7 +18,7 @@ export const TableShapeField = ({ value, onChange }: IProps) => {
   const { t } = useTranslation()
   return (
     <Field>
-      <FieldLabel>{t("tables.add.shape")}</FieldLabel>
+      <FieldLabel>{t("tables.shape")}</FieldLabel>
       <FieldContent>
         <Select
           value={value}
@@ -29,9 +29,9 @@ export const TableShapeField = ({ value, onChange }: IProps) => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="rectangular">
-              {t("tables.add.shape.rectangular")}
+              {t("tables.shape.rectangular")}
             </SelectItem>
-            <SelectItem value="round">{t("tables.add.shape.round")}</SelectItem>
+            <SelectItem value="round">{t("tables.shape.round")}</SelectItem>
           </SelectContent>
         </Select>
       </FieldContent>

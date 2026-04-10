@@ -17,7 +17,7 @@ export const TableNameField = ({ value, onChange }: IProps) => {
           type="text"
           value={value}
           className="w-full rounded-md border"
-          placeholder={t("tables.add.name_placeholder")}
+          placeholder={t("tables.name_placeholder")}
           onChange={(e) => onChange(e.target.value)}
         />
       </FieldContent>

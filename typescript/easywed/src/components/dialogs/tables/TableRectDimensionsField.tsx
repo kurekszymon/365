@@ -36,7 +36,7 @@ export const RectangularTable = ({
           />
           {isWidthOutOfBounds && (
             <p className="min-h-4 text-xs text-destructive" aria-live="polite">
-              {t("tables.add.dimensions_oob")}
+              {t("tables.dimensions_oob")}
             </p>
           )}
         </FieldContent>
@@ -55,7 +55,7 @@ export const RectangularTable = ({
           />
           {isHeightOutOfBounds && (
             <p className="min-h-4 text-xs text-destructive" aria-live="polite">
-              {t("tables.add.dimensions_oob")}
+              {t("tables.dimensions_oob")}
             </p>
           )}
         </FieldContent>
