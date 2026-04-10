@@ -10,7 +10,7 @@ type Tables = "Table.Add" | "Table.Edit"
 type Dialog = Weddings | Halls | Guests | Tables
 
 type DialogMeta = {
-  spawnPosition?: Position
+  position?: Position
   tableId?: string
 }
 

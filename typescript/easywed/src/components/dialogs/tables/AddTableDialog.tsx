@@ -25,7 +25,7 @@ export const AddTableDialog = () => {
     mode: "add",
     onClose: dialog.close,
     onSubmit: (tableDraft, assignedGuestIds) => {
-      planner.addTable(tableDraft, assignedGuestIds, dialog.meta.spawnPosition)
+      planner.addTable(tableDraft, assignedGuestIds, dialog.meta.position)
     },
   })
 }

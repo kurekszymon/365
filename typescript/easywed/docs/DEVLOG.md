@@ -7,6 +7,9 @@
 - use `data-canvas-element-kind` and `data-canvas-element-id` to distinguish what was clicked on the canvas
 - added `EditTableDialog` dialog, that uses same base as `AddTableDialog` utilizing `useTableForm` hook - maybe renmae to `useTableDialog` will see.
 - changed number input fields to use `number` instead of `string`
+- simplified `tables` transation keys
+- renamed dialog.meta's spawnPosition to `position`
+- split `Canvas.tsx` to smaller bits and pieces (`useCanvasPan`, `useCanvasZom`, `useHallGeometry`, `useLongPress`), use PointerHandler instead of Mouse + Touch for Canvas.
 
 ### 09.04
 

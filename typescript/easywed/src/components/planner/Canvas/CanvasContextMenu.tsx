@@ -14,7 +14,7 @@ import type { Position } from "@/stores/planner.store"
 import { findCapturedElement, type CapturedElement } from "./utils"
 
 interface Props {
-  onAddTable: (hallPosition: Position) => void
+  onAddTable: (position: Position) => void
   onEditTable: (tableId: string) => void
   onConfigureHall: () => void
   viewportToHall: (x: number, y: number) => Position
