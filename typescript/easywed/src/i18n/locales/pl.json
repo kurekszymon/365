@@ -27,6 +27,7 @@
   "tables.count_many": "{{count}} stołów",
   "tables": "Stoły",
   "tables.add": "Dodaj stół",
+  "tables.edit": "Edytuj stół",
   "tables.add.name_placeholder": "Stół rodzinny",
   "tables.add.shape": "Kształt stołu",
   "tables.add.shape.rectangular": "Prostokątny",

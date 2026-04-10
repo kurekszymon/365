@@ -15,3 +15,37 @@ export const clampToHall = (
     y: clamp(pos.y, 0, hallHeight - tableSize.height),
   }
 }
+
+type CapturedElementKind = "table" | "hall"
+
+export type CapturedElement = {
+  kind: CapturedElementKind
+  id: string | null
+}
+
+export const findCapturedElement = (
+  target: EventTarget | null
+): CapturedElement | null => {
+  if (!(target instanceof HTMLElement)) {
+    return null
+  }
+
+  const elementNode = target.closest<HTMLElement>("[data-canvas-element-kind]")
+
+  if (!elementNode) {
+    return null
+  }
+
+  const kind = elementNode.getAttribute(
+    "data-canvas-element-kind"
+  ) as CapturedElementKind | null
+
+  if (!kind) {
+    return null
+  }
+
+  return {
+    kind,
+    id: elementNode.getAttribute("data-canvas-element-id"),
+  }
+}

@@ -1,4 +1,4 @@
-import { TableIcon, Settings2Icon } from "lucide-react"
+import { TableIcon, Settings2Icon, PencilIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useRef, useState } from "react"
 import type { PropsWithChildren } from "react"
@@ -11,13 +11,12 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
 import type { Position } from "@/stores/planner.store"
+import { findCapturedElement, type CapturedElement } from "./utils"
 
 interface Props {
   onAddTable: (hallPosition: Position) => void
   onConfigureHall: () => void
-  /** Convert a viewport point (clientX, clientY) to hall-space coordinates */
   viewportToHall: (x: number, y: number) => Position
-  /** Return true if the viewport point is inside the hall rectangle */
   isInHallBounds: (x: number, y: number) => boolean
 }
 
@@ -30,6 +29,8 @@ export const CanvasContextMenu = ({
 }: PropsWithChildren<Props>) => {
   const { t } = useTranslation()
   const capturedPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
+  const [capturedElement, setCapturedElement] =
+    useState<CapturedElement | null>(null)
   const [inHall, setInHall] = useState(false)
 
   return (
@@ -39,13 +40,18 @@ export const CanvasContextMenu = ({
           setInHall(
             isInHallBounds(capturedPosRef.current.x, capturedPosRef.current.y)
           )
+          return
         }
+
+        setCapturedElement(null)
       }}
     >
       <ContextMenuTrigger
         asChild
         onContextMenu={(e) => {
           capturedPosRef.current = { x: e.clientX, y: e.clientY }
+          setInHall(isInHallBounds(e.clientX, e.clientY))
+          setCapturedElement(findCapturedElement(e.target))
         }}
       >
         {children}
@@ -59,6 +65,22 @@ export const CanvasContextMenu = ({
         )}
         onContextMenu={(e) => e.preventDefault()}
       >
+        {capturedElement?.kind === "table" && (
+          <ContextMenuItem
+            className={cn(
+              "relative flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none",
+              "focus:bg-accent focus:text-accent-foreground",
+              "data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+            )}
+            onSelect={() => {
+              console.log("hello", capturedElement)
+            }}
+          >
+            <PencilIcon className="size-4" />
+            {t("tables.edit")}
+          </ContextMenuItem>
+        )}
+
         <ContextMenuItem
           className={cn(
             "relative flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none",

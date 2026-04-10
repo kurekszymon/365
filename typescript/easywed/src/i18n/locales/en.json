@@ -27,6 +27,7 @@
   "tables.count_many": "{{count}} tables",
   "tables": "Tables",
   "tables.add": "Add a table",
+  "tables.edit": "Edit table",
   "tables.add.name_placeholder": "Family table",
   "tables.add.shape": "Table shape",
   "tables.add.shape.rectangular": "Rectangular",

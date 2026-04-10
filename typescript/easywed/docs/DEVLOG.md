@@ -1,5 +1,11 @@
 # EasyWed — Development Log
 
+### 10.04
+
+- clean up after ai - use shadcn's context menu instead of radix
+- add option to edit a table on Table's context menu
+- use `data-canvas-element-kind` and `data-canvas-element-id` to distinguish what was clicked on the canvas
+
 ### 09.04
 
 - right-click (or long-press on mobile) on the hall canvas shows a context menu with two actions:
