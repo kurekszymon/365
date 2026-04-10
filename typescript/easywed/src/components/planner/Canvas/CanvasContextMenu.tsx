@@ -15,6 +15,7 @@ import { findCapturedElement, type CapturedElement } from "./utils"
 
 interface Props {
   onAddTable: (hallPosition: Position) => void
+  onEditTable: (tableId: string) => void
   onConfigureHall: () => void
   viewportToHall: (x: number, y: number) => Position
   isInHallBounds: (x: number, y: number) => boolean
@@ -23,6 +24,7 @@ interface Props {
 export const CanvasContextMenu = ({
   children,
   onAddTable,
+  onEditTable,
   onConfigureHall,
   viewportToHall,
   isInHallBounds,
@@ -73,7 +75,11 @@ export const CanvasContextMenu = ({
               "data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
             )}
             onSelect={() => {
-              console.log("hello", capturedElement)
+              if (!capturedElement.id) {
+                return
+              }
+
+              onEditTable(capturedElement.id)
             }}
           >
             <PencilIcon className="size-4" />

@@ -142,6 +142,10 @@ export const Canvas = () => {
     dialog.open("Table.Add", { spawnPosition: hallPosition })
   }
 
+  function handleEditTable(tableId: string) {
+    dialog.open("Table.Edit", { tableId })
+  }
+
   function handleTouchStart(e: React.TouchEvent) {
     if ((e.target as HTMLElement).closest("button, [data-no-pan]")) return
     const touch = e.touches[0]
@@ -228,6 +232,7 @@ export const Canvas = () => {
   return (
     <CanvasContextMenu
       onAddTable={handleAddTable}
+      onEditTable={handleEditTable}
       onConfigureHall={() => dialog.open("Hall.Configure")}
       viewportToHall={viewportToHall}
       isInHallBounds={isInHallBounds}

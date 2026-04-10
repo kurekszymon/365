@@ -3,8 +3,8 @@ import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 
 interface IProps {
-  value: string
-  onChange: (value: string) => void
+  value: number
+  onChange: (value: number) => void
 }
 
 export const TableCapacityField = ({ value, onChange }: IProps) => {
@@ -19,7 +19,7 @@ export const TableCapacityField = ({ value, onChange }: IProps) => {
           step={1}
           className="w-full rounded-md border"
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => onChange(Number(e.target.value))}
         />
       </FieldContent>
     </Field>

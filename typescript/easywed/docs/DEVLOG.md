@@ -5,6 +5,8 @@
 - clean up after ai - use shadcn's context menu instead of radix
 - add option to edit a table on Table's context menu
 - use `data-canvas-element-kind` and `data-canvas-element-id` to distinguish what was clicked on the canvas
+- added `EditTableDialog` dialog, that uses same base as `AddTableDialog` utilizing `useTableForm` hook - maybe renmae to `useTableDialog` will see.
+- changed number input fields to use `number` instead of `string`
 
 ### 09.04
 

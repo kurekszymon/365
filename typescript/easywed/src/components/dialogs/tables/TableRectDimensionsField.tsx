@@ -3,12 +3,12 @@ import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 
 type RectangularTableProps = {
-  width: string
-  height: string
+  width: number
+  height: number
   isWidthOutOfBounds: boolean
   isHeightOutOfBounds: boolean
-  onWidthChange: (value: string) => void
-  onHeightChange: (value: string) => void
+  onWidthChange: (value: number) => void
+  onHeightChange: (value: number) => void
 }
 
 export const RectangularTable = ({
@@ -32,7 +32,7 @@ export const RectangularTable = ({
             step={0.1}
             className="w-full rounded-md border"
             value={width}
-            onChange={(e) => onWidthChange(e.target.value)}
+            onChange={(e) => onWidthChange(Number(e.target.value))}
           />
           {isWidthOutOfBounds && (
             <p className="min-h-4 text-xs text-destructive" aria-live="polite">
@@ -51,7 +51,7 @@ export const RectangularTable = ({
             step={0.1}
             className="w-full rounded-md border"
             value={height}
-            onChange={(e) => onHeightChange(e.target.value)}
+            onChange={(e) => onHeightChange(Number(e.target.value))}
           />
           {isHeightOutOfBounds && (
             <p className="min-h-4 text-xs text-destructive" aria-live="polite">

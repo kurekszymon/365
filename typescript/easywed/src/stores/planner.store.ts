@@ -62,6 +62,11 @@ type Action = {
     guestIds?: Array<string>,
     position?: Position
   ) => void
+  updateTable: (
+    id: string,
+    table: Omit<Table, "id" | "position">,
+    guestIds?: Array<string>
+  ) => void
   addGuest: (guest: Omit<Guest, "id">) => void
   updateHall: (
     preset: HallPreset,
@@ -112,6 +117,29 @@ export const usePlannerStore = create<State & Action>((set) => ({
               ),
       }
     }),
+  updateTable: (id, table, guestIds = []) =>
+    set((state) => ({
+      tables: state.tables.map((t) =>
+        t.id === id ? { ...t, ...table, position: t.position } : t
+      ),
+      guests: state.guests.map((guest) => {
+        if (guestIds.includes(guest.id)) {
+          return {
+            ...guest,
+            tableId: id,
+          }
+        }
+
+        if (guest.tableId === id) {
+          return {
+            ...guest,
+            tableId: null,
+          }
+        }
+
+        return guest
+      }),
+    })),
   addGuest: (guest) =>
     set((state) => ({
       guests: [...state.guests, { ...guest, id: crypto.randomUUID() }],

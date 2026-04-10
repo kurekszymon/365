@@ -6,11 +6,12 @@ import type { Position } from "./planner.store"
 type Guests = "Guest.Add"
 type Halls = "Hall.Configure"
 type Weddings = "Wedding.Rename" | "Wedding.Create"
-type Tables = "Table.Add"
+type Tables = "Table.Add" | "Table.Edit"
 type Dialog = Weddings | Halls | Guests | Tables
 
 type DialogMeta = {
   spawnPosition?: Position
+  tableId?: string
 }
 
 type State = {

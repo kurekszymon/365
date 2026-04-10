@@ -3,9 +3,9 @@ import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 
 type RoundTableProps = {
-  diameter: string
+  diameter: number
   isOutOfBounds: boolean
-  onDiameterChange: (value: string) => void
+  onDiameterChange: (value: number) => void
 }
 
 export const RoundTable = ({
@@ -25,7 +25,7 @@ export const RoundTable = ({
           step={0.1}
           className="w-full rounded-md border"
           value={diameter}
-          onChange={(e) => onDiameterChange(e.target.value)}
+          onChange={(e) => onDiameterChange(Number(e.target.value))}
         />
         {isOutOfBounds && (
           <p className="min-h-4 text-xs text-destructive" aria-live="polite">

@@ -1,6 +1,6 @@
 import { AddGuestDialog } from "./guests"
 import { HallConfigureDialog } from "./planner"
-import { AddTableDialog } from "./tables"
+import { AddTableDialog, EditTableDialog } from "./tables"
 import { WeddingCreateDialog, WeddingRenameDialog } from "./weddings"
 import { useDialogStore } from "@/stores/dialog.store"
 
@@ -18,6 +18,8 @@ export const DialogManager = () => {
       return <AddGuestDialog />
     case "Table.Add":
       return <AddTableDialog />
+    case "Table.Edit":
+      return <EditTableDialog />
     default:
       return <></>
   }
