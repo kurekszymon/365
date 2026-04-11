@@ -73,5 +73,11 @@
 
   "canvas.grid.off": "Wyłączone",
   "canvas.grid.dots": "Kropki",
-  "canvas.grid.grid": "Siatka"
+  "canvas.grid.grid": "Siatka",
+  "canvas.grid.tooltip": "Styl siatki",
+
+  "canvas.snap.off": "Wyłączone",
+  "canvas.snap.step": "{{step}}m",
+  "canvas.snap.tooltip": "Stoły wyrównują się do tej odległości po upuszczeniu",
+  "canvas.scale.tooltip": "Kliknij, aby zresetować zoom"
 }

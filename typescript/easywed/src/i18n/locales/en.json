@@ -73,5 +73,11 @@
 
   "canvas.grid.off": "Off",
   "canvas.grid.dots": "Dots",
-  "canvas.grid.grid": "Grid"
+  "canvas.grid.grid": "Grid",
+  "canvas.grid.tooltip": "Grid style",
+
+  "canvas.snap.off": "Off",
+  "canvas.snap.step": "{{step}}m",
+  "canvas.snap.tooltip": "Tables snap to this distance when dropped",
+  "canvas.scale.tooltip": "Click to reset zoom"
 }

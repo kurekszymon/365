@@ -7,6 +7,7 @@ import { usePlannerStore } from "@/stores/planner.store"
 import type { DragEndEvent } from "@dnd-kit/core"
 
 export type GridStyle = "dots" | "grid" | "off"
+export type SnapStep = 0.1 | 0.25 | 0.5 | 1 | "off"
 
 function gridBackground(style: GridStyle, zoom: number): React.CSSProperties {
   const color = `rgb(156 163 175 / ${zoom})`
@@ -17,8 +18,20 @@ function gridBackground(style: GridStyle, zoom: number): React.CSSProperties {
   if (style === "grid")
     return {
       backgroundImage: `linear-gradient(${color} 1px, transparent 1px), linear-gradient(90deg, ${color} 1px, transparent 1px)`,
+      backgroundPosition: "-0.5px -0.5px",
     }
   return {}
+}
+
+function snap(value: number, step: number) {
+  return Math.round(value / step) * step
+}
+
+function snapPositionToGrid(position: { x: number; y: number }, step: number) {
+  return {
+    x: snap(position.x, step),
+    y: snap(position.y, step),
+  }
 }
 
 interface HallSurfaceProps {
@@ -29,6 +42,7 @@ interface HallSurfaceProps {
   ppm: number
   zoom: number
   gridStyle: GridStyle
+  snapStep: SnapStep
 }
 
 export const HallSurface = ({
@@ -39,6 +53,7 @@ export const HallSurface = ({
   ppm,
   zoom,
   gridStyle,
+  snapStep,
 }: HallSurfaceProps) => {
   const { setNodeRef: setDropRef } = useDroppable({ id: "hall-identifier" })
 
@@ -70,11 +85,16 @@ export const HallSurface = ({
 
     if (!table) return
 
+    const rawNext = {
+      x: table.position.x + e.delta.x / ppm,
+      y: table.position.y + e.delta.y / ppm,
+    }
+
+    const snappedNext =
+      snapStep === "off" ? rawNext : snapPositionToGrid(rawNext, snapStep)
+
     const next = clampToHall(
-      {
-        x: table.position.x + e.delta.x / ppm,
-        y: table.position.y + e.delta.y / ppm,
-      },
+      snappedNext,
       table.size,
       hallDimensions.width,
       hallDimensions.height

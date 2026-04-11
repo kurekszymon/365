@@ -7,7 +7,12 @@ import { DimensionLabel } from "./DimensionLabel"
 import { CanvasContextMenu } from "./CanvasContextMenu"
 import { CanvasEmptyState } from "./CanvasEmptyState"
 import { HallSurface } from "./HallSurface"
-import type { GridStyle } from "./HallSurface"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import type { GridStyle, SnapStep } from "./HallSurface"
 // TODO hooks dir?
 import { useHallGeometry } from "./useHallGeometry"
 import { useCanvasZoom } from "./useCanvasZoom"
@@ -29,9 +34,12 @@ const NEXT_GRID_STYLE: Record<GridStyle, GridStyle> = {
   off: "grid",
 }
 
+const SNAP_STEPS: SnapStep[] = ["off", 0.1, 0.25, 0.5, 1]
+
 export const Canvas = () => {
   const { t } = useTranslation()
   const [gridStyle, setGridStyle] = useState<GridStyle>("grid")
+  const [snapStep, setSnapStep] = useState<SnapStep>(1)
 
   const { hall, resetZoomAndPan, stepZoom, setPan } = usePlannerStore(
     useShallow((state) => ({
@@ -113,16 +121,64 @@ export const Canvas = () => {
           onPointerUp()
         }}
       >
-        <ScalePill reset={resetZoomAndPan} scale={hall.zoom} />
-
         <div
           data-no-pan
-          onClick={() => setGridStyle((s) => NEXT_GRID_STYLE[s])}
-          className="absolute top-3 right-16 z-20 flex items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-sm"
+          className="absolute top-3 right-3 z-20 flex items-center gap-2"
         >
-          {/* todo: create an icon button? */}
-          {GRID_ICON[gridStyle]}
-          {t(`canvas.grid.${gridStyle}`)}
+          <Tooltip>
+            {/* TODO extract to a seperate component */}
+            <TooltipTrigger asChild>
+              <div className="flex items-center rounded-md border bg-background/80 text-[10px] text-muted-foreground backdrop-blur-sm">
+                <button
+                  type="button"
+                  className="cursor-pointer px-1.5 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={SNAP_STEPS.indexOf(snapStep) === 0}
+                  onClick={() =>
+                    setSnapStep((s) => SNAP_STEPS[SNAP_STEPS.indexOf(s) - 1])
+                  }
+                >
+                  −
+                </button>
+                <span className="w-[2rem] text-center">
+                  {snapStep === "off"
+                    ? t("canvas.snap.off")
+                    : t("canvas.snap.step", { step: snapStep })}
+                </span>
+                <button
+                  type="button"
+                  className="cursor-pointer px-1.5 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={
+                    SNAP_STEPS.indexOf(snapStep) === SNAP_STEPS.length - 1
+                  }
+                  onClick={() =>
+                    setSnapStep((s) => SNAP_STEPS[SNAP_STEPS.indexOf(s) + 1])
+                  }
+                >
+                  +
+                </button>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {t("canvas.snap.tooltip")}
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                onClick={() => setGridStyle((s) => NEXT_GRID_STYLE[s])}
+                className="flex cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-sm"
+              >
+                {GRID_ICON[gridStyle]}
+                {t(`canvas.grid.${gridStyle}`)}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {t("canvas.grid.tooltip")}
+            </TooltipContent>
+          </Tooltip>
+
+          <ScalePill reset={resetZoomAndPan} scale={hall.zoom} />
         </div>
 
         <DimensionLabel
@@ -149,6 +205,7 @@ export const Canvas = () => {
           ppm={ppm}
           zoom={hall.zoom}
           gridStyle={gridStyle}
+          snapStep={snapStep}
         />
       </div>
     </CanvasContextMenu>
