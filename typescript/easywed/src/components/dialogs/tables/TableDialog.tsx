@@ -4,7 +4,6 @@ import { TableCapacityField } from "./TableCapacityField"
 import { TableNameField } from "./TableNameField"
 import { TableShapeField } from "./TableShapeField"
 import type { TableShape } from "@/stores/planner.store"
-import type { JSX } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 
@@ -15,7 +14,7 @@ interface TableDialogProps {
   shape: TableShape
   capacity: number
   assignedGuestIds: Array<string>
-  shapeFields: JSX.Element
+  shapeFields: React.ReactNode
   canSubmit: boolean
   onOpenChange: (open: boolean) => void
   onNameChange: (value: string) => void

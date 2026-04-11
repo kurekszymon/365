@@ -69,5 +69,9 @@
   "reminders.navigate": "Przejdź do przypomnień",
   "reminders.create.title": "Utwórzcie przypomnienie",
   "reminders.create.content_placeholder": "o czym myślicie",
-  "reminders.create.date_prompt": "żeby Wam przypomnieć w dniu"
+  "reminders.create.date_prompt": "żeby Wam przypomnieć w dniu",
+
+  "canvas.grid.off": "Wyłączone",
+  "canvas.grid.dots": "Kropki",
+  "canvas.grid.grid": "Siatka"
 }

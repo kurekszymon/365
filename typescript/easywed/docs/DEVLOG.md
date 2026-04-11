@@ -1,5 +1,11 @@
 # EasyWed — Development Log
 
+### 11.04
+
+- added option to change background between dots / grid or completely disabled.
+- replaced named type imports from 'react' with i.e. React.ReactNode
+- added tl keys for grid/off/dots
+
 ### 10.04
 
 - clean up after ai - use shadcn's context menu instead of radix

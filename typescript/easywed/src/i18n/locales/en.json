@@ -69,5 +69,9 @@
   "reminders.navigate": "Navigate to Reminders",
   "reminders.create.title": "Create a reminder",
   "reminders.create.content_placeholder": "for what are you thinking",
-  "reminders.create.date_prompt": "to be reminded on"
+  "reminders.create.date_prompt": "to be reminded on",
+
+  "canvas.grid.off": "Off",
+  "canvas.grid.dots": "Dots",
+  "canvas.grid.grid": "Grid"
 }

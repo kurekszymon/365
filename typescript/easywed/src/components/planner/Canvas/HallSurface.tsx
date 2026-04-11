@@ -6,13 +6,29 @@ import { clampToHall } from "./utils"
 import { usePlannerStore } from "@/stores/planner.store"
 import type { DragEndEvent } from "@dnd-kit/core"
 
-type HallSurfaceProps = {
+export type GridStyle = "dots" | "grid" | "off"
+
+function gridBackground(style: GridStyle, zoom: number): React.CSSProperties {
+  const color = `rgb(156 163 175 / ${zoom})`
+  if (style === "dots")
+    return {
+      backgroundImage: `radial-gradient(circle, ${color} 1px, transparent 1px)`,
+    }
+  if (style === "grid")
+    return {
+      backgroundImage: `linear-gradient(${color} 1px, transparent 1px), linear-gradient(90deg, ${color} 1px, transparent 1px)`,
+    }
+  return {}
+}
+
+interface HallSurfaceProps {
   left: number
   top: number
   width: number
   height: number
   ppm: number
   zoom: number
+  gridStyle: GridStyle
 }
 
 export const HallSurface = ({
@@ -22,6 +38,7 @@ export const HallSurface = ({
   height,
   ppm,
   zoom,
+  gridStyle,
 }: HallSurfaceProps) => {
   const { setNodeRef: setDropRef } = useDroppable({ id: "hall-identifier" })
 
@@ -76,11 +93,10 @@ export const HallSurface = ({
           top,
           width,
           height,
-          backgroundImage: `radial-gradient(circle, rgb(156 163 175 / ${zoom}) 1px, transparent 1px)`,
-          // can be adjusted if we want a different grid spacing or something, but it seems to work well for now
           backgroundSize: `${ppm}px ${ppm}px`, // ppm is (scaled) pixels per meter, so this creates a grid with 1m spacing -
           // let user decide if they want to start the grid offset at half a meter or not - maybe add a toggle for it in the future
           // backgroundPosition: `${ppm / 2}px ${ppm / 2}px`,
+          ...gridBackground(gridStyle, zoom),
         }}
       >
         {canvasTables.map((ct) => (

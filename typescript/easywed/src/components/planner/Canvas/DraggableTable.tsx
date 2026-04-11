@@ -39,6 +39,7 @@ export const DraggableTable = ({
   }, [hallHeight, hallWidth, size, position, ppm, transform])
 
   return (
+    // TODO: use Button?
     <button
       ref={setNodeRef}
       type="button"
