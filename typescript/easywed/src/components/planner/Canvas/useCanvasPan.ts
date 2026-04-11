@@ -8,7 +8,12 @@ export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
 
   function onPointerDown(e: React.PointerEvent) {
     if (e.button !== 0 || !e.isPrimary) return
-    if ((e.target as HTMLElement).closest("button, [data-no-pan]")) return
+    if (
+      (e.target as HTMLElement).closest(
+        "[data-no-pan], [data-canvas-element-kind]"
+      )
+    )
+      return
 
     offsetRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y }
     setIsPanning(true)

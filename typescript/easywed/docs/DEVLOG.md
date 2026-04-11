@@ -9,6 +9,7 @@
 - fixed `grid position` in HallSurface to center drawn grid size
 - added snap step controls
 - align hall configure button in header to other layout elements (should i hide tables when there is no hall?)
+- used div instead of buttons for `DraggableTable` component
 
 ### 10.04
 

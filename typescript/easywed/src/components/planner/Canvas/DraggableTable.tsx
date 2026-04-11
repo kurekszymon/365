@@ -39,10 +39,8 @@ export const DraggableTable = ({
   }, [hallHeight, hallWidth, size, position, ppm, transform])
 
   return (
-    // TODO: use Button?
-    <button
+    <div
       ref={setNodeRef}
-      type="button"
       data-canvas-element-kind="table"
       data-canvas-element-id={table.id}
       className={`absolute z-10 flex cursor-grab touch-none items-center justify-center border border-emerald-300 bg-emerald-100 text-emerald-800 shadow-sm active:cursor-grabbing ${
@@ -62,6 +60,6 @@ export const DraggableTable = ({
       {...attributes}
     >
       {table.capacity}
-    </button>
+    </div>
   )
 }
