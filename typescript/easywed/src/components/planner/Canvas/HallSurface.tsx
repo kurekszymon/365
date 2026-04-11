@@ -8,6 +8,19 @@ import type { DragEndEvent } from "@dnd-kit/core"
 
 export type GridStyle = "dots" | "grid" | "off"
 export type SnapStep = 0.1 | 0.25 | 0.5 | 1 | "off"
+export type GridSpacing = 1 | 2 | 5 | 10 | 25 | 50 | "auto"
+
+const NICE_INTERVALS: Array<Exclude<GridSpacing, "auto">> = [
+  1, 2, 5, 10, 25, 50,
+]
+
+function calcGridSpacing(
+  width: number,
+  height: number
+): Exclude<GridSpacing, "auto"> {
+  const raw = Math.max(width, height) / 6
+  return NICE_INTERVALS.find((n) => n >= raw) ?? 50
+}
 
 function gridBackground(style: GridStyle, zoom: number): React.CSSProperties {
   const color = `rgb(156 163 175 / ${zoom})`
@@ -43,6 +56,7 @@ interface HallSurfaceProps {
   zoom: number
   gridStyle: GridStyle
   snapStep: SnapStep
+  gridSpacing?: GridSpacing
 }
 
 export const HallSurface = ({
@@ -54,7 +68,12 @@ export const HallSurface = ({
   zoom,
   gridStyle,
   snapStep,
+  gridSpacing = 1,
 }: HallSurfaceProps) => {
+  const resolvedGridSpacing =
+    gridSpacing === "auto"
+      ? calcGridSpacing(width / ppm, height / ppm)
+      : gridSpacing
   const { setNodeRef: setDropRef } = useDroppable({ id: "hall-identifier" })
 
   const { tables, hallDimensions, updateTablePosition } = usePlannerStore(
@@ -113,9 +132,7 @@ export const HallSurface = ({
           top,
           width,
           height,
-          backgroundSize: `${ppm}px ${ppm}px`, // ppm is (scaled) pixels per meter, so this creates a grid with 1m spacing -
-          // let user decide if they want to start the grid offset at half a meter or not - maybe add a toggle for it in the future
-          // backgroundPosition: `${ppm / 2}px ${ppm / 2}px`,
+          backgroundSize: `${ppm * resolvedGridSpacing}px ${ppm * resolvedGridSpacing}px`,
           ...gridBackground(gridStyle, zoom),
         }}
       >

@@ -1,45 +1,65 @@
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { CANVAS_HEIGHT, CANVAS_WIDTH, drawRectangle } from "./canvas-utils"
-import type { HallPreset, TableShape } from "@/stores/planner.store"
+import type { HallPreset } from "@/stores/planner.store"
+import type { GridSpacing } from "@/components/planner/Canvas/HallSurface"
 import { Field, FieldContent, FieldTitle } from "@/components/ui/field"
-import { ButtonGroup } from "@/components/ui/button-group"
-import { Button } from "@/components/ui/button"
+import { HallSurface } from "@/components/planner/Canvas/HallSurface"
+
+const PADDING = 24
 
 export const HallPreview = ({
   preset,
   width,
   height,
+  gridSpacing = 1,
 }: {
   preset: HallPreset
   width: number
   height: number
+  gridSpacing?: GridSpacing
 }) => {
   const { t } = useTranslation()
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [tableShape, setTableShape] = useState<TableShape>("rectangular")
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
+
+  const safeWidth = Math.max(1, width)
+  const safeHeight = Math.max(1, height)
+  const aspectRatio = safeWidth / safeHeight
+
+  const availableWidth = containerSize.width - PADDING * 2
+  const availableHeight = containerSize.height - PADDING * 2
+
+  let hallW = availableWidth
+  let hallH = availableWidth / aspectRatio
+
+  if (hallH > availableHeight) {
+    hallH = availableHeight
+    hallW = availableHeight * aspectRatio
+  }
+
+  const ppm = hallW / safeWidth
+  const left = (containerSize.width - hallW) / 2
+  const top = (containerSize.height - hallH) / 2
 
   useEffect(() => {
-    if (!canvasRef.current) return
-
-    const ctx = canvasRef.current.getContext("2d")
-    if (!ctx) return
-
-    // https://stackoverflow.com/questions/15661339/how-do-i-fix-blurry-text-in-my-html5-canvas
-    const ratio = window.devicePixelRatio || 1
-    canvasRef.current.width = CANVAS_WIDTH * ratio
-    canvasRef.current.height = CANVAS_HEIGHT * ratio
-    ctx.setTransform(1, 0, 0, 1, 0, 0)
-    ctx.scale(ratio, ratio)
-
-    if (preset === "rectangle") {
-      drawRectangle(ctx, width, height, tableShape)
-    }
-  }, [preset, width, height, tableShape])
+    const el = containerRef.current
+    if (!el) return
+    const observer = new ResizeObserver(([entry]) => {
+      setContainerSize({
+        width: entry.contentRect.width,
+        height: entry.contentRect.height,
+      })
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   if (preset !== "rectangle") {
     return (
-      <div className="flex h-[240px] w-full items-center justify-center rounded-md border text-muted-foreground">
+      <div
+        ref={containerRef}
+        className="flex h-80 w-full items-center justify-center rounded-md border text-muted-foreground"
+      >
         {t("common.not_supported")}
       </div>
     )
@@ -47,34 +67,26 @@ export const HallPreview = ({
 
   return (
     <Field>
-      <div className="flex items-center justify-between gap-2">
-        <FieldTitle>{t("common.preview")}</FieldTitle>
-        <ButtonGroup>
-          <Button
-            type="button"
-            size="xs"
-            variant={tableShape === "rectangular" ? "default" : "outline"}
-            onClick={() => setTableShape("rectangular")}
-          >
-            {t("tables.shape.rectangular")}
-          </Button>
-          <Button
-            type="button"
-            size="xs"
-            variant={tableShape === "round" ? "default" : "outline"}
-            onClick={() => setTableShape("round")}
-          >
-            {t("tables.shape.round")}
-          </Button>
-        </ButtonGroup>
-      </div>
+      <FieldTitle>{t("common.preview")}</FieldTitle>
       <FieldContent>
-        <canvas
-          ref={canvasRef}
-          width={CANVAS_WIDTH}
-          height={CANVAS_HEIGHT}
-          className="w-full rounded-md border"
-        />
+        <div
+          ref={containerRef}
+          className="relative h-80 w-full overflow-hidden rounded-md border"
+        >
+          {containerSize.width > 0 && (
+            <HallSurface
+              left={left}
+              top={top}
+              width={hallW}
+              height={hallH}
+              ppm={ppm}
+              zoom={1}
+              gridStyle="dots"
+              snapStep="off"
+              gridSpacing={gridSpacing}
+            />
+          )}
+        </div>
       </FieldContent>
     </Field>
   )

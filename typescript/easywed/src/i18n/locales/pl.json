@@ -10,6 +10,8 @@
   "common.width": "Szerokość",
   "common.height": "Wysokość",
   "common.not_supported": "Jeszcze nieobsługiwane",
+  "common.auto": "Auto",
+  "common.meters": "{{count}} m",
 
   "errors.404": "404",
   "errors.not_found": "Nie znaleziono strony",
@@ -76,9 +78,9 @@
   "canvas.grid.dots": "Kropki",
   "canvas.grid.grid": "Siatka",
   "canvas.grid.tooltip": "Styl siatki",
+  "canvas.grid.spacing": "Odstęp siatki",
 
   "canvas.snap.off": "Wyłączone",
-  "canvas.snap.step": "{{step}}m",
   "canvas.snap.tooltip": "Stoły wyrównują się do tej odległości po upuszczeniu",
   "canvas.scale.tooltip": "Kliknij, aby zresetować zoom"
 }

@@ -1,5 +1,14 @@
 # EasyWed — Development Log
 
+### 12.04
+
+- replaced canvas-based hall preview in `ConfigureHall` with a real `HallSurface` render — deleted `canvas-utils.ts` entirely
+- added `GridSpacing` type to `HallSurface`, alongside `GridStyle` and `SnapStep`
+- nice derives meters from `width / ppm` and picks the nearest interval
+- `gridSpacing` stored in `planner.store` on `hall` object (default `1m`), passed through `updateHall`; canvas reads it from store
+- added grid spacing picker to `ConfigureHall` dialog — options `1m … 50m` + `auto` at the end (best for large halls)
+- to think about - should grid be configurable from canvas or hall - probably from canvas?
+
 ### 11.04
 
 - added option to change background between dots / grid or completely disabled.

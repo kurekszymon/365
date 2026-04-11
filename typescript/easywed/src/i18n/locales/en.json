@@ -10,6 +10,8 @@
   "common.width": "Width",
   "common.height": "Height",
   "common.not_supported": "Not supported yet",
+  "common.auto": "Auto",
+  "common.meters": "{{count}} m",
 
   "errors.404": "404",
   "errors.not_found": "Page not found",
@@ -76,9 +78,9 @@
   "canvas.grid.dots": "Dots",
   "canvas.grid.grid": "Grid",
   "canvas.grid.tooltip": "Grid style",
+  "canvas.grid.spacing": "Grid spacing",
 
   "canvas.snap.off": "Off",
-  "canvas.snap.step": "{{step}}m",
   "canvas.snap.tooltip": "Tables snap to this distance when dropped",
   "canvas.scale.tooltip": "Click to reset zoom"
 }

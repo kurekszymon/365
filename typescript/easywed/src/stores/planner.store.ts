@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import type { GridSpacing } from "@/components/planner/Canvas/HallSurface"
 
 const ZOOM_MIN = 0.2
 const ZOOM_MAX = 4
@@ -52,6 +53,7 @@ type State = {
     }
     zoom: number
     pan: { x: number; y: number }
+    gridSpacing: GridSpacing
     preset?: HallPreset | undefined
   }
 }
@@ -70,7 +72,8 @@ type Action = {
   addGuest: (guest: Omit<Guest, "id">) => void
   updateHall: (
     preset: HallPreset,
-    dimensions: { width: number; height: number }
+    dimensions: { width: number; height: number },
+    gridSpacing?: GridSpacing
   ) => void
   resetHallZoomAndPan: () => void
   stepHallZoom: (direction: 1 | -1) => void
@@ -89,6 +92,7 @@ export const usePlannerStore = create<State & Action>((set) => ({
     preset: undefined,
     zoom: 1,
     pan: { x: 0, y: 0 },
+    gridSpacing: 1,
   },
 
   addTable: (table, guestIds = [], position) =>
@@ -144,10 +148,17 @@ export const usePlannerStore = create<State & Action>((set) => ({
     set((state) => ({
       guests: [...state.guests, { ...guest, id: crypto.randomUUID() }],
     })),
-  updateHall: (preset, dimensions) =>
-    set({
-      hall: { preset, dimensions, zoom: 1, pan: { x: 0, y: 0 } },
-    }),
+  updateHall: (preset, dimensions, gridSpacing = 1) =>
+    set((state) => ({
+      hall: {
+        ...state.hall,
+        preset,
+        dimensions,
+        gridSpacing,
+        zoom: 1,
+        pan: { x: 0, y: 0 },
+      },
+    })),
   resetHallZoomAndPan: () =>
     set((state) => ({
       hall: { ...state.hall, zoom: 1, pan: { x: 0, y: 0 } },

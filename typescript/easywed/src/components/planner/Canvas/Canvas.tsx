@@ -142,7 +142,7 @@ export const Canvas = () => {
                 <span className="w-[2rem] text-center">
                   {snapStep === "off"
                     ? t("canvas.snap.off")
-                    : t("canvas.snap.step", { step: snapStep })}
+                    : t("common.meters", { count: snapStep })}
                 </span>
                 <button
                   type="button"
@@ -206,6 +206,7 @@ export const Canvas = () => {
           zoom={hall.zoom}
           gridStyle={gridStyle}
           snapStep={snapStep}
+          gridSpacing={hall.gridSpacing}
         />
       </div>
     </CanvasContextMenu>

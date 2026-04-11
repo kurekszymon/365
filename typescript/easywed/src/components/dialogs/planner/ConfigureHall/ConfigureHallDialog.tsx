@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { useState } from "react"
 import { HallPreview } from "./Preview"
 import { DimensionsRectangle } from "./DimensionsRectangle"
+import type { GridSpacing } from "@/components/planner/Canvas/HallSurface"
 import { usePlannerStore } from "@/stores/planner.store"
 import {
   Dialog,
@@ -12,6 +13,10 @@ import {
 } from "@/components/ui/dialog"
 import { useDialogStore } from "@/stores/dialog.store"
 import { Button } from "@/components/ui/button"
+import { ButtonGroup } from "@/components/ui/button-group"
+import { Field, FieldTitle } from "@/components/ui/field"
+
+const GRID_SPACING_OPTIONS: Array<GridSpacing> = [1, 2, 5, 10, 25, 50, "auto"]
 
 export const HallConfigureDialog = () => {
   const { t } = useTranslation()
@@ -28,6 +33,7 @@ export const HallConfigureDialog = () => {
     useShallow((state) => ({
       preset: state.hall.preset,
       dimensions: state.hall.dimensions,
+      gridSpacing: state.hall.gridSpacing,
       update: state.updateHall,
     }))
   )
@@ -38,6 +44,7 @@ export const HallConfigureDialog = () => {
       width: hall.dimensions.width,
       height: hall.dimensions.height,
     },
+    gridSpacing: hall.gridSpacing,
   })
 
   return (
@@ -74,10 +81,36 @@ export const HallConfigureDialog = () => {
           />
         )}
 
+        <Field>
+          <div className="flex items-center justify-between gap-2">
+            <FieldTitle>{t("canvas.grid.spacing")}</FieldTitle>
+            <ButtonGroup>
+              {GRID_SPACING_OPTIONS.map((option) => (
+                <Button
+                  key={option}
+                  type="button"
+                  size="xs"
+                  variant={
+                    localHall.gridSpacing === option ? "default" : "outline"
+                  }
+                  onClick={() =>
+                    setLocalHall({ ...localHall, gridSpacing: option })
+                  }
+                >
+                  {option === "auto"
+                    ? t("common.auto")
+                    : t("common.meters", { count: option })}
+                </Button>
+              ))}
+            </ButtonGroup>
+          </div>
+        </Field>
+
         <HallPreview
           preset={localHall.preset}
           width={localHall.dimensions.width}
           height={localHall.dimensions.height}
+          gridSpacing={localHall.gridSpacing}
         />
 
         <div className="mt-4 flex justify-end gap-2">
@@ -88,6 +121,7 @@ export const HallConfigureDialog = () => {
               setLocalHall({
                 preset: hall.preset || "rectangle",
                 dimensions: hall.dimensions,
+                gridSpacing: hall.gridSpacing,
               })
             }}
           >
@@ -95,7 +129,11 @@ export const HallConfigureDialog = () => {
           </Button>
           <Button
             onClick={() => {
-              hall.update(localHall.preset, localHall.dimensions)
+              hall.update(
+                localHall.preset,
+                localHall.dimensions,
+                localHall.gridSpacing
+              )
               dialog.close()
             }}
           >
