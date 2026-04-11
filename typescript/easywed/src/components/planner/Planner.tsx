@@ -44,15 +44,22 @@ export const Planner = () => {
             </Header.Nav>
           </Header.Title>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => openDialog("Hall.Configure")}
-            >
-              <LandmarkIcon />
-              <span className="hidden md:inline">
-                {t("hall.configure_short")}
-              </span>
-            </Button>
+            <ButtonGroup>
+              <Button
+                variant="outline"
+                onClick={() => openDialog("Hall.Configure")}
+              >
+                <LandmarkIcon />
+
+                <span className="hidden md:inline">{t("hall")}</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => openDialog("Hall.Configure")}
+              >
+                <PlusIcon />
+              </Button>
+            </ButtonGroup>
             <ButtonGroup>
               <Button
                 variant="outline"

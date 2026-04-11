@@ -56,6 +56,7 @@
   "guests.seated_ratio": "{{seated_count}}/{{count}} guests seated",
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} guest seated",
 
+  "hall": "Hall",
   "hall.configure": "Configure wedding hall",
   "hall.configure_short": "Configure Hall",
   "hall.empty_state": "Click to start by configuring the hall",

@@ -5,6 +5,10 @@
 - added option to change background between dots / grid or completely disabled.
 - replaced named type imports from 'react' with i.e. React.ReactNode
 - added tl keys for grid/off/dots
+- added possibility to snap tables to grid
+- fixed `grid position` in HallSurface to center drawn grid size
+- added snap step controls
+- align hall configure button in header to other layout elements (should i hide tables when there is no hall?)
 
 ### 10.04
 

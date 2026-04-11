@@ -56,6 +56,7 @@
   "guests.seated_ratio": "{{seated_count}}/{{count}} gości przy stołach",
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} gość przy stole",
 
+  "hall": "Sala",
   "hall.configure": "Skonfiguruj salę weselną",
   "hall.configure_short": "Skonfiguruj Salę",
   "hall.empty_state": "Kliknij, aby zacząć od skonfigurowania sali",
