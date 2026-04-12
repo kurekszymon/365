@@ -1,6 +1,8 @@
 import { useMemo } from "react"
-import { PIXELS_PER_METER, VIEWPORT_MARGIN } from "./consts"
 import type { Position } from "@/stores/planner.store"
+
+const PIXELS_PER_METER = 40
+const VIEWPORT_MARGIN = 48
 
 type HallDimensions = { width: number; height: number }
 
