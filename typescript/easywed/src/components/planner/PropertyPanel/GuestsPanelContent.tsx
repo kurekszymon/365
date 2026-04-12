@@ -2,12 +2,10 @@ import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
 import {
-  DndContext,
   DragOverlay,
   useDroppable,
   useDraggable,
-  type DragEndEvent,
-  type DragStartEvent,
+  useDndMonitor,
 } from "@dnd-kit/core"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useDialogStore } from "@/stores/dialog.store"
@@ -21,7 +19,7 @@ const UNASSIGNED_ID = "__unassigned__"
 
 const DraggableGuest = ({ guest }: { guest: Guest }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({ id: guest.id })
+    useDraggable({ id: guest.id, data: { type: "guest" } })
 
   return (
     <div
@@ -52,16 +50,18 @@ const DraggableGuest = ({ guest }: { guest: Guest }) => {
 
 const TableSection = ({
   droppableId,
+  droppableData,
   label,
   guests,
   isOver,
 }: {
   droppableId: string
+  droppableData: Record<string, unknown>
   label: string
   guests: Array<Guest>
   isOver: boolean
 }) => {
-  const { setNodeRef } = useDroppable({ id: droppableId })
+  const { setNodeRef } = useDroppable({ id: droppableId, data: droppableData })
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -96,11 +96,10 @@ const TableSection = ({
 export const GuestsPanelContent = () => {
   const { t } = useTranslation()
 
-  const { guests, tables, assignGuestToTable } = usePlannerStore(
+  const { guests, tables } = usePlannerStore(
     useShallow((state) => ({
       guests: state.guests,
       tables: state.tables,
-      assignGuestToTable: state.assignGuestToTable,
     }))
   )
 
@@ -114,6 +113,26 @@ export const GuestsPanelContent = () => {
     [guests, activeGuestId]
   )
 
+  // Monitor the shared DndContext (from PlannerDndProvider) for local visual state
+  useDndMonitor({
+    onDragStart: ({ active }) => {
+      if (active.data.current?.type === "guest") {
+        setActiveGuestId(String(active.id))
+      }
+    },
+    onDragOver: ({ over }) => {
+      setOverId(over ? String(over.id) : null)
+    },
+    onDragEnd: () => {
+      setActiveGuestId(null)
+      setOverId(null)
+    },
+    onDragCancel: () => {
+      setActiveGuestId(null)
+      setOverId(null)
+    },
+  })
+
   const guestsByTable = useMemo(() => {
     const map = new Map<string | null, Array<Guest>>()
     map.set(null, [])
@@ -124,23 +143,6 @@ export const GuestsPanelContent = () => {
     }
     return map
   }, [guests, tables])
-
-  const handleDragStart = ({ active }: DragStartEvent) => {
-    setActiveGuestId(String(active.id))
-  }
-
-  const handleDragOver = ({ over }: { over: { id: string | number } | null }) => {
-    setOverId(over ? String(over.id) : null)
-  }
-
-  const handleDragEnd = ({ active, over }: DragEndEvent) => {
-    setActiveGuestId(null)
-    setOverId(null)
-    if (!over) return
-    const targetTableId =
-      String(over.id) === UNASSIGNED_ID ? null : String(over.id)
-    assignGuestToTable(String(active.id), targetTableId)
-  }
 
   if (guests.length === 0) {
     return (
@@ -164,22 +166,23 @@ export const GuestsPanelContent = () => {
     ]
 
   return (
-    <DndContext
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-    >
+    <>
       <div className="flex flex-col gap-4">
         <Button variant="outline" onClick={() => openDialog("Guest.Add")}>
           {t("guests.add")}
         </Button>
         {sections.map((section) => {
           const droppableId = section.id ?? UNASSIGNED_ID
+          const droppableData =
+            section.id === null
+              ? { type: "unassigned" }
+              : { type: "table", tableId: section.id }
           const sectionGuests = guestsByTable.get(section.id) ?? []
           return (
             <TableSection
               key={droppableId}
               droppableId={droppableId}
+              droppableData={droppableData}
               label={section.label}
               guests={sectionGuests}
               isOver={overId === droppableId}
@@ -188,6 +191,7 @@ export const GuestsPanelContent = () => {
         })}
       </div>
 
+      {/* DragOverlay renders at pointer position (portal to body), guest name follows cursor */}
       <DragOverlay>
         {activeGuest && (
           <div className="flex cursor-grabbing items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm shadow-lg">
@@ -195,6 +199,6 @@ export const GuestsPanelContent = () => {
           </div>
         )}
       </DragOverlay>
-    </DndContext>
+    </>
   )
 }

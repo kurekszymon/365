@@ -1,7 +1,8 @@
-import { useDraggable } from "@dnd-kit/core"
-import { useMemo } from "react"
+import { useDraggable, useDroppable, useDndMonitor } from "@dnd-kit/core"
+import { useMemo, useState } from "react"
 import { CSS } from "@dnd-kit/utilities"
 import { clamp } from "./utils"
+import { cn } from "@/lib/utils"
 import type { Table } from "@/stores/planner.store"
 
 type DraggableTableProps = {
@@ -21,8 +22,24 @@ export const DraggableTable = ({
   onSelect,
   isSelected,
 }: DraggableTableProps) => {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+  const { attributes, listeners, setNodeRef: setDragRef, transform } = useDraggable({
     id: table.id,
+    data: { type: "table-drag" },
+  })
+
+  // Droppable target for guests dragged from the panel onto this table
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: `table-drop-${table.id}`,
+    data: { type: "table", tableId: table.id },
+  })
+
+  // Only show the drop highlight when a guest is being dragged (not when moving tables)
+  const [isDraggingGuest, setIsDraggingGuest] = useState(false)
+  useDndMonitor({
+    onDragStart: ({ active }) =>
+      setIsDraggingGuest(active.data.current?.type === "guest"),
+    onDragEnd: () => setIsDraggingGuest(false),
+    onDragCancel: () => setIsDraggingGuest(false),
   })
 
   const { size, shape, position } = table
@@ -42,14 +59,23 @@ export const DraggableTable = ({
     }
   }, [hallHeight, hallWidth, size, position, ppm, transform])
 
+  // Merge both refs (draggable + droppable) onto the same element
+  const setRef = (el: HTMLDivElement | null) => {
+    setDragRef(el)
+    setDropRef(el)
+  }
+
   return (
     <div
-      ref={setNodeRef}
+      ref={setRef}
       data-canvas-element-kind="table"
       data-canvas-element-id={table.id}
-      className={`absolute z-10 flex cursor-grab touch-none items-center justify-center border border-emerald-300 bg-emerald-100 text-emerald-800 shadow-sm active:cursor-grabbing ${
-        shape === "round" ? "rounded-full" : "rounded-lg"
-      } ${isSelected ? "ring-2 ring-emerald-600 ring-offset-2" : ""}`}
+      className={cn(
+        "absolute z-10 flex cursor-grab touch-none items-center justify-center border border-emerald-300 bg-emerald-100 text-emerald-800 shadow-sm active:cursor-grabbing",
+        shape === "round" ? "rounded-full" : "rounded-lg",
+        isSelected && "ring-2 ring-emerald-600 ring-offset-2",
+        isDraggingGuest && isOver && "ring-2 ring-blue-500 ring-offset-2 bg-blue-50 border-blue-300"
+      )}
       style={{
         left: position.x * ppm,
         top: position.y * ppm,

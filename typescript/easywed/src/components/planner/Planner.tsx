@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { LandmarkIcon, PlusIcon, UsersIcon, UtensilsIcon } from "lucide-react"
 import { Canvas } from "./Canvas"
 import { Header } from "./Header"
+import { PlannerDndProvider } from "./PlannerDndProvider"
 import { GuestsSeated } from "./Header/GuestsSeated.header"
 import { PropertyPanel } from "./PropertyPanel"
 import { ButtonGroup } from "@/components/ui/button-group"
@@ -135,10 +136,12 @@ export const Planner = () => {
             </ButtonGroup>
           </div>
         </Header>
-        <div className="flex min-h-0 flex-1 overflow-hidden">
-          <Canvas />
-          <PropertyPanel />
-        </div>
+        <PlannerDndProvider>
+          <div className="flex min-h-0 flex-1 overflow-hidden">
+            <Canvas />
+            <PropertyPanel />
+          </div>
+        </PlannerDndProvider>
       </div>
     </>
   )
