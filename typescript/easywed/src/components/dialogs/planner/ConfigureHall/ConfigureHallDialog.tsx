@@ -1,9 +1,11 @@
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import { useState } from "react"
+import { InfoIcon } from "lucide-react"
 import { HallPreview } from "./Preview"
 import { DimensionsRectangle } from "./DimensionsRectangle"
 import type { GridSpacing } from "@/components/planner/Canvas/HallSurface"
+import { NICE_INTERVALS } from "@/components/planner/Canvas/HallSurface"
 import { usePlannerStore } from "@/stores/planner.store"
 import {
   Dialog,
@@ -15,8 +17,24 @@ import { useDialogStore } from "@/stores/dialog.store"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Field, FieldTitle } from "@/components/ui/field"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
-const GRID_SPACING_OPTIONS: Array<GridSpacing> = [1, 2, 5, 10, 25, 50, "auto"]
+function validSpacings(width: number, height: number): Array<GridSpacing> {
+  return [...NICE_INTERVALS.filter((n) => n < Math.max(width, height)), "auto"]
+}
+
+function clampGridSpacing(
+  spacing: GridSpacing,
+  width: number,
+  height: number
+): GridSpacing {
+  const valid = validSpacings(width, height)
+  return valid.includes(spacing) ? spacing : 1
+}
 
 export const HallConfigureDialog = () => {
   const { t } = useTranslation()
@@ -70,12 +88,22 @@ export const HallConfigureDialog = () => {
               setLocalHall({
                 ...localHall,
                 dimensions: { ...localHall.dimensions, width },
+                gridSpacing: clampGridSpacing(
+                  localHall.gridSpacing,
+                  width,
+                  localHall.dimensions.height
+                ),
               })
             }
             setHeight={(height) =>
               setLocalHall({
                 ...localHall,
                 dimensions: { ...localHall.dimensions, height },
+                gridSpacing: clampGridSpacing(
+                  localHall.gridSpacing,
+                  localHall.dimensions.width,
+                  height
+                ),
               })
             }
           />
@@ -83,9 +111,22 @@ export const HallConfigureDialog = () => {
 
         <Field>
           <div className="flex items-center justify-between gap-2">
-            <FieldTitle>{t("canvas.grid.spacing")}</FieldTitle>
+            <div className="flex items-center gap-1.5">
+              <FieldTitle>{t("canvas.grid.spacing")}</FieldTitle>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <InfoIcon className="size-3.5 cursor-default text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  {t("canvas.grid.spacing_tooltip")}
+                </TooltipContent>
+              </Tooltip>
+            </div>
             <ButtonGroup>
-              {GRID_SPACING_OPTIONS.map((option) => (
+              {validSpacings(
+                localHall.dimensions.width,
+                localHall.dimensions.height
+              ).map((option) => (
                 <Button
                   key={option}
                   type="button"

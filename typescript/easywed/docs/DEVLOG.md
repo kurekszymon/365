@@ -6,8 +6,10 @@
 - added `GridSpacing` type to `HallSurface`, alongside `GridStyle` and `SnapStep`
 - nice derives meters from `width / ppm` and picks the nearest interval
 - `gridSpacing` stored in `planner.store` on `hall` object (default `1m`), passed through `updateHall`; canvas reads it from store
-- added grid spacing picker to `ConfigureHall` dialog — options `1m … 50m` + `auto` at the end (best for large halls)
+- added grid spacing picker to `ConfigureHall` dialog — options `1m … 50m` + `auto` at the end (best for large halls), filter down options fitting the hall
 - to think about - should grid be configurable from canvas or hall - probably from canvas?
+- removed `Canvas/consts` file and moved it contents into `useHallGeometry` hook as it was only used there
+- add disabled state for `Tables` trigger in Header
 
 ### 11.04
 

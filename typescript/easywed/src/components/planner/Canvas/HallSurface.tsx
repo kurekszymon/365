@@ -10,7 +10,7 @@ export type GridStyle = "dots" | "grid" | "off"
 export type SnapStep = 0.1 | 0.25 | 0.5 | 1 | "off"
 export type GridSpacing = 1 | 2 | 5 | 10 | 25 | 50 | "auto"
 
-const NICE_INTERVALS: Array<Exclude<GridSpacing, "auto">> = [
+export const NICE_INTERVALS: Array<Exclude<GridSpacing, "auto">> = [
   1, 2, 5, 10, 25, 50,
 ]
 

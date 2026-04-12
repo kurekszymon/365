@@ -60,6 +60,43 @@ export const Planner = () => {
                 <PlusIcon />
               </Button>
             </ButtonGroup>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <ButtonGroup>
+                  <Button
+                    variant="outline"
+                    disabled={!preset}
+                    onClick={() => {
+                      if (!preset) {
+                        return
+                      }
+                      openDialog("Table.Add")
+                    }}
+                    title={
+                      preset ? t("tables") : t("tables.configure_hall_first")
+                    }
+                  >
+                    <UtensilsIcon />
+                    <span className="hidden md:inline">{t("tables")}</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    disabled={!preset}
+                    onClick={() => {
+                      if (!preset) {
+                        return
+                      }
+                      openDialog("Table.Add")
+                    }}
+                  >
+                    <PlusIcon />
+                  </Button>
+                </ButtonGroup>
+              </TooltipTrigger>
+              <TooltipContent>
+                {preset ? t("tables.add") : t("tables.configure_hall_first")}
+              </TooltipContent>
+            </Tooltip>
             <ButtonGroup>
               <Button
                 variant="outline"
@@ -78,48 +115,6 @@ export const Planner = () => {
               >
                 <PlusIcon />
               </Button>
-            </ButtonGroup>
-            <ButtonGroup>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      if (!preset) {
-                        return
-                      }
-                      openDialog("Table.Add")
-                    }}
-                    title={
-                      preset ? t("tables") : t("tables.configure_hall_first")
-                    }
-                  >
-                    <UtensilsIcon />
-                    <span className="hidden md:inline">{t("tables")}</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {preset ? t("tables.add") : t("tables.configure_hall_first")}
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      if (!preset) {
-                        return
-                      }
-                      openDialog("Table.Add")
-                    }}
-                  >
-                    <PlusIcon />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {preset ? t("tables.add") : t("tables.configure_hall_first")}
-                </TooltipContent>
-              </Tooltip>
             </ButtonGroup>
           </div>
         </Header>

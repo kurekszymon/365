@@ -79,6 +79,7 @@
   "canvas.grid.grid": "Siatka",
   "canvas.grid.tooltip": "Styl siatki",
   "canvas.grid.spacing": "Odstęp siatki",
+  "canvas.grid.spacing_tooltip": "Określa odległość między liniami siatki w sali",
 
   "canvas.snap.off": "Wyłączone",
   "canvas.snap.tooltip": "Stoły wyrównują się do tej odległości po upuszczeniu",

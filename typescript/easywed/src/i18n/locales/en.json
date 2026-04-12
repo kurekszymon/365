@@ -79,6 +79,7 @@
   "canvas.grid.grid": "Grid",
   "canvas.grid.tooltip": "Grid style",
   "canvas.grid.spacing": "Grid spacing",
+  "canvas.grid.spacing_tooltip": "Controls how far apart grid lines are drawn in the hall",
 
   "canvas.snap.off": "Off",
   "canvas.snap.tooltip": "Tables snap to this distance when dropped",
