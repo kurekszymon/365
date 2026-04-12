@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { DotIcon, Grid3x3Icon, Grid2x2XIcon } from "lucide-react"
 import { ScalePill } from "./ScalePill"
@@ -7,6 +7,7 @@ import { DimensionLabel } from "./DimensionLabel"
 import { CanvasContextMenu } from "./CanvasContextMenu"
 import { CanvasEmptyState } from "./CanvasEmptyState"
 import { HallSurface } from "./HallSurface"
+import { findCapturedElement } from "./utils"
 import {
   Tooltip,
   TooltipContent,
@@ -19,7 +20,7 @@ import { useCanvasZoom } from "./useCanvasZoom"
 import { useCanvasPan } from "./useCanvasPan"
 import { useLongPress } from "./useLongPress"
 import { usePlannerStore } from "@/stores/planner.store"
-import { useDialogStore } from "@/stores/dialog.store"
+import { usePanelStore } from "@/stores/panel.store"
 import { useElementSize } from "@/hooks/useElementSize"
 
 const GRID_ICON: Record<GridStyle, React.ReactNode> = {
@@ -50,7 +51,18 @@ export const Canvas = () => {
     }))
   )
 
-  const dialog = useDialogStore(useShallow((state) => ({ open: state.open })))
+  const panel = usePanelStore(
+    useShallow((state) => ({
+      selectedTableId: state.selectedTableId,
+      openHall: state.openHall,
+      openTableAdd: state.openTableAdd,
+      openTableEdit: state.openTableEdit,
+      close: state.close,
+    }))
+  )
+
+  // Track pointer movement to distinguish pan from click
+  const pointerMovedRef = useRef(false)
 
   const {
     width: containerWidth,
@@ -86,7 +98,7 @@ export const Canvas = () => {
   if (!hall.preset) {
     return (
       <CanvasEmptyState
-        onClick={() => dialog.open("Hall.Configure")}
+        onClick={() => panel.openHall()}
         message={t("hall.empty_state")}
       />
     )
@@ -94,9 +106,9 @@ export const Canvas = () => {
 
   return (
     <CanvasContextMenu
-      onAddTable={(position) => dialog.open("Table.Add", { position })}
-      onEditTable={(tableId) => dialog.open("Table.Edit", { tableId })}
-      onConfigureHall={() => dialog.open("Hall.Configure")}
+      onAddTable={(position) => panel.openTableAdd(position)}
+      onEditTable={(tableId) => panel.openTableEdit(tableId)}
+      onConfigureHall={() => panel.openHall()}
       viewportToHall={viewportToHall}
       isInHallBounds={isInHallBounds}
     >
@@ -105,10 +117,12 @@ export const Canvas = () => {
         className="relative min-h-0 flex-1 overflow-hidden bg-gradient-to-br from-slate-100 via-zinc-50 to-emerald-50/70"
         style={{ cursor: isPanning ? "grabbing" : "grab" }}
         onPointerDown={(e) => {
+          pointerMovedRef.current = false
           longPress.start(e)
           onPointerDown(e)
         }}
         onPointerMove={(e) => {
+          if (isPanning) pointerMovedRef.current = true
           longPress.cancel()
           onPointerMove(e)
         }}
@@ -119,6 +133,16 @@ export const Canvas = () => {
         onPointerCancel={() => {
           longPress.cancel()
           onPointerUp()
+        }}
+        onClick={(e) => {
+          if (pointerMovedRef.current) return
+          const captured = findCapturedElement(e.target)
+          if (captured?.kind === "table") return // handled by DraggableTable
+          if (captured?.kind === "hall") {
+            panel.openHall()
+            return
+          }
+          panel.close()
         }}
       >
         <div
@@ -139,7 +163,7 @@ export const Canvas = () => {
                 >
                   −
                 </button>
-                <span className="w-[2rem] text-center">
+                <span className="w-[2.5rem] text-center">
                   {snapStep === "off"
                     ? t("canvas.snap.off")
                     : t("common.meters", { count: snapStep })}
@@ -207,6 +231,8 @@ export const Canvas = () => {
           gridStyle={gridStyle}
           snapStep={snapStep}
           gridSpacing={hall.gridSpacing}
+          onTableClick={(tableId) => panel.openTableEdit(tableId)}
+          selectedTableId={panel.selectedTableId}
         />
       </div>
     </CanvasContextMenu>

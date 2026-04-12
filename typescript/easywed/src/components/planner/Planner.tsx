@@ -1,9 +1,11 @@
 import { useEffect } from "react"
+import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import { LandmarkIcon, PlusIcon, UsersIcon, UtensilsIcon } from "lucide-react"
 import { Canvas } from "./Canvas"
 import { Header } from "./Header"
 import { GuestsSeated } from "./Header/GuestsSeated.header"
+import { PropertyPanel } from "./PropertyPanel"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Button } from "@/components/ui/button"
 import { RemindersPreview } from "@/components/reminders/preview/RemindersPreview"
@@ -11,6 +13,7 @@ import { DialogManager } from "@/components/dialogs/DialogManager"
 import { useDialogStore } from "@/stores/dialog.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { usePlannerStore } from "@/stores/planner.store"
+import { usePanelStore } from "@/stores/panel.store"
 import {
   Tooltip,
   TooltipContent,
@@ -23,7 +26,23 @@ export const Planner = () => {
   const name = useGlobalStore((state) => state.name)
   const openDialog = useDialogStore((state) => state.open)
 
-  const preset = usePlannerStore((state) => state.hall.preset)
+  const { preset, updateHall } = usePlannerStore(
+    useShallow((state) => ({
+      preset: state.hall.preset,
+      updateHall: state.updateHall,
+    }))
+  )
+
+  const panel = usePanelStore(
+    useShallow((state) => ({
+      selectedTableId: state.selectedTableId,
+      openHall: state.openHall,
+      openTableAdd: state.openTableAdd,
+      openTableEdit: state.openTableEdit,
+      openTablesPlaceholder: state.openTablesPlaceholder,
+      openGuests: state.openGuests,
+    }))
+  )
 
   useEffect(() => {
     if (!name) {
@@ -47,7 +66,12 @@ export const Planner = () => {
             <ButtonGroup>
               <Button
                 variant="outline"
-                onClick={() => openDialog("Hall.Configure")}
+                onClick={() => {
+                  if (!preset) {
+                    updateHall("rectangle", { width: 20, height: 12 }, 1)
+                  }
+                  panel.openHall()
+                }}
               >
                 <LandmarkIcon />
 
@@ -55,7 +79,10 @@ export const Planner = () => {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => openDialog("Hall.Configure")}
+                onClick={() => {
+                  updateHall("rectangle", { width: 20, height: 12 }, 1)
+                  panel.openHall()
+                }}
               >
                 <PlusIcon />
               </Button>
@@ -67,10 +94,12 @@ export const Planner = () => {
                     variant="outline"
                     disabled={!preset}
                     onClick={() => {
-                      if (!preset) {
-                        return
+                      if (!preset) return
+                      if (panel.selectedTableId) {
+                        panel.openTableEdit(panel.selectedTableId)
+                      } else {
+                        panel.openTablesPlaceholder()
                       }
-                      openDialog("Table.Add")
                     }}
                     title={
                       preset ? t("tables") : t("tables.configure_hall_first")
@@ -83,10 +112,8 @@ export const Planner = () => {
                     variant="outline"
                     disabled={!preset}
                     onClick={() => {
-                      if (!preset) {
-                        return
-                      }
-                      openDialog("Table.Add")
+                      if (!preset) return
+                      panel.openTableAdd()
                     }}
                   >
                     <PlusIcon />
@@ -98,27 +125,20 @@ export const Planner = () => {
               </TooltipContent>
             </Tooltip>
             <ButtonGroup>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  openDialog("Guest.Add")
-                }}
-              >
+              <Button variant="outline" onClick={() => panel.openGuests()}>
                 <UsersIcon />
                 <span className="hidden md:inline">{t("guests")}</span>
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  openDialog("Guest.Add")
-                }}
-              >
+              <Button variant="outline" onClick={() => openDialog("Guest.Add")}>
                 <PlusIcon />
               </Button>
             </ButtonGroup>
           </div>
         </Header>
-        <Canvas />
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          <Canvas />
+          <PropertyPanel />
+        </div>
       </div>
     </>
   )

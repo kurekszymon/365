@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input"
 interface IProps {
   value: string
   onChange: (value: string) => void
+  onBlur?: () => void
 }
 
-export const TableNameField = ({ value, onChange }: IProps) => {
+export const TableNameField = ({ value, onChange, onBlur }: IProps) => {
   const { t } = useTranslation()
   return (
     <Field>
@@ -19,6 +20,7 @@ export const TableNameField = ({ value, onChange }: IProps) => {
           className="w-full rounded-md border"
           placeholder={t("tables.name_placeholder")}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
         />
       </FieldContent>
     </Field>

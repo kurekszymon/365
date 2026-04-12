@@ -1,4 +1,10 @@
-import { DndContext, useDroppable } from "@dnd-kit/core"
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+} from "@dnd-kit/core"
 import { useMemo } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { DraggableTable } from "./DraggableTable"
@@ -57,6 +63,8 @@ interface HallSurfaceProps {
   gridStyle: GridStyle
   snapStep: SnapStep
   gridSpacing?: GridSpacing
+  onTableClick?: (tableId: string) => void
+  selectedTableId?: string | null
 }
 
 export const HallSurface = ({
@@ -69,11 +77,20 @@ export const HallSurface = ({
   gridStyle,
   snapStep,
   gridSpacing = 1,
+  onTableClick,
+  selectedTableId,
 }: HallSurfaceProps) => {
   const resolvedGridSpacing =
     gridSpacing === "auto"
       ? calcGridSpacing(width / ppm, height / ppm)
       : gridSpacing
+  // Without a distance constraint, PointerSensor activates on pointerdown and
+  // prevents the native click event from firing — so table selection never triggers.
+  // 8px of movement must occur before a drag starts, leaving short taps as clicks.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  )
+
   const { setNodeRef: setDropRef } = useDroppable({ id: "hall-identifier" })
 
   const { tables, hallDimensions, updateTablePosition } = usePlannerStore(
@@ -123,9 +140,10 @@ export const HallSurface = ({
   }
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <div
         ref={setDropRef}
+        data-canvas-element-kind="hall"
         className="absolute z-10 bg-white shadow-md ring-2 ring-emerald-400"
         style={{
           left,
@@ -143,6 +161,8 @@ export const HallSurface = ({
             hallWidth={hallDimensions.width}
             hallHeight={hallDimensions.height}
             ppm={ppm}
+            onSelect={onTableClick}
+            isSelected={selectedTableId === ct.id}
           />
         ))}
       </div>

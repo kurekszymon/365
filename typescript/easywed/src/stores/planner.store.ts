@@ -75,6 +75,12 @@ type Action = {
     dimensions: { width: number; height: number },
     gridSpacing?: GridSpacing
   ) => void
+  updateHallProperties: (
+    preset: HallPreset,
+    dimensions: { width: number; height: number },
+    gridSpacing?: GridSpacing
+  ) => void
+  assignGuestToTable: (guestId: string, tableId: string | null) => void
   resetHallZoomAndPan: () => void
   stepHallZoom: (direction: 1 | -1) => void
   setHallPan: (pan: { x: number; y: number }) => void
@@ -158,6 +164,21 @@ export const usePlannerStore = create<State & Action>((set) => ({
         zoom: 1,
         pan: { x: 0, y: 0 },
       },
+    })),
+  updateHallProperties: (preset, dimensions, gridSpacing = 1) =>
+    set((state) => ({
+      hall: {
+        ...state.hall,
+        preset,
+        dimensions,
+        gridSpacing,
+      },
+    })),
+  assignGuestToTable: (guestId, tableId) =>
+    set((state) => ({
+      guests: state.guests.map((g) =>
+        g.id === guestId ? { ...g, tableId } : g
+      ),
     })),
   resetHallZoomAndPan: () =>
     set((state) => ({
