@@ -101,7 +101,9 @@ export const Planner = () => {
               <Button
                 variant="outline"
                 onClick={() => {
-                  updateHall("rectangle", { width: 20, height: 12 }, 1)
+                  if (!preset) {
+                    updateHall("rectangle", { width: 20, height: 12 }, 1)
+                  }
                   panel.openHall()
                 }}
               >

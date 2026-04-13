@@ -63,7 +63,7 @@ type Action = {
     table: Omit<Table, "id" | "position">,
     guestIds?: Array<string>,
     position?: Position
-  ) => void
+  ) => string
   updateTable: (
     id: string,
     table: Omit<Table, "id" | "position">,
@@ -101,32 +101,26 @@ export const usePlannerStore = create<State & Action>((set) => ({
     gridSpacing: 1,
   },
 
-  addTable: (table, guestIds = [], position) =>
-    set((state) => {
-      const tableId = crypto.randomUUID()
-
-      return {
-        tables: [
-          ...state.tables,
-          {
-            ...table,
-            id: tableId,
-            position: position ?? { x: 0, y: 0 },
-          },
-        ],
-        guests:
-          guestIds.length === 0
-            ? state.guests
-            : state.guests.map((guest) =>
-                guestIds.includes(guest.id)
-                  ? {
-                      ...guest,
-                      tableId,
-                    }
-                  : guest
-              ),
-      }
-    }),
+  addTable: (table, guestIds = [], position) => {
+    const tableId = crypto.randomUUID()
+    set((state) => ({
+      tables: [
+        ...state.tables,
+        {
+          ...table,
+          id: tableId,
+          position: position ?? { x: 0, y: 0 },
+        },
+      ],
+      guests:
+        guestIds.length === 0
+          ? state.guests
+          : state.guests.map((guest) =>
+              guestIds.includes(guest.id) ? { ...guest, tableId } : guest
+            ),
+    }))
+    return tableId
+  },
   updateTable: (id, table, guestIds = []) =>
     set((state) => ({
       tables: state.tables.map((t) =>

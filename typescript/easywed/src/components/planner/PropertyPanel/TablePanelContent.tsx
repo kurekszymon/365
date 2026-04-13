@@ -39,9 +39,8 @@ function getAssignedGuestIds(tableId: string): Array<string> {
 export const TablePanelContent = (props: Props) => {
   const { t } = useTranslation()
 
-  const { tables, hallDimensions, addTable, updateTable } = usePlannerStore(
+  const { hallDimensions, addTable, updateTable } = usePlannerStore(
     useShallow((state) => ({
-      tables: state.tables,
       hallDimensions: state.hall.dimensions,
       addTable: state.addTable,
       updateTable: state.updateTable,
@@ -52,7 +51,9 @@ export const TablePanelContent = (props: Props) => {
 
   const [form, setForm] = useState(() => {
     if (props.mode === "edit") {
-      const table = tables.find((t) => t.id === props.tableId)
+      const table = usePlannerStore
+        .getState()
+        .tables.find((t) => t.id === props.tableId)
       if (table) {
         return {
           name: table.name,
@@ -71,7 +72,9 @@ export const TablePanelContent = (props: Props) => {
   const tableId = props.mode === "edit" ? props.tableId : null
   useEffect(() => {
     if (!tableId) return
-    const table = tables.find((t) => t.id === tableId)
+    const table = usePlannerStore
+      .getState()
+      .tables.find((t) => t.id === tableId)
     if (!table) return
     setForm({
       name: table.name,
@@ -81,7 +84,7 @@ export const TablePanelContent = (props: Props) => {
       height: table.size.height,
       assignedGuestIds: getAssignedGuestIds(tableId),
     })
-  }, [tableId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tableId])
 
   const { width: hallMaxWidth, height: hallMaxHeight } = hallDimensions
   const isWidthOutOfBounds = form.width > hallMaxWidth
@@ -121,7 +124,7 @@ export const TablePanelContent = (props: Props) => {
 
   const handleAddSubmit = () => {
     if (!canSubmit) return
-    addTable(
+    const newId = addTable(
       {
         name: form.name.trim(),
         shape: form.shape,
@@ -131,11 +134,7 @@ export const TablePanelContent = (props: Props) => {
       assignedWithinCapacity,
       props.mode === "add" ? props.position : undefined
     )
-    // Switch to edit mode for the newly added table
-    setTimeout(() => {
-      const newTable = usePlannerStore.getState().tables.at(-1)
-      if (newTable) openTableEdit(newTable.id)
-    }, 0)
+    openTableEdit(newId)
   }
 
   const shapeFields =

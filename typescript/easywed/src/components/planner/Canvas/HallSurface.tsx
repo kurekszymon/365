@@ -1,10 +1,9 @@
 import { useDroppable, useDndMonitor } from "@dnd-kit/core"
-import { useCallback, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { DraggableTable } from "./DraggableTable"
 import { clampToHall } from "./utils"
 import { usePlannerStore } from "@/stores/planner.store"
-import type { DragEndEvent } from "@dnd-kit/core"
 
 export type GridStyle = "dots" | "grid" | "off"
 export type SnapStep = 0.1 | 0.25 | 0.5 | 1 | "off"
@@ -107,40 +106,30 @@ export const HallSurface = ({
     [tables, hallDimensions]
   )
 
-  const handleDragEnd = useCallback(
-    (e: DragEndEvent) => {
-      if (e.active.data.current?.type !== "table-drag") return
-
-      const id = String(e.active.id)
-      const table = canvasTables.find((ct) => ct.id === id)
-      if (!table) return
-
-      const rawNext = {
-        x: table.position.x + e.delta.x / ppm,
-        y: table.position.y + e.delta.y / ppm,
-      }
-
-      const snappedNext =
-        snapStep === "off" ? rawNext : snapPositionToGrid(rawNext, snapStep)
-
-      const next = clampToHall(
-        snappedNext,
-        table.size,
-        hallDimensions.width,
-        hallDimensions.height
-      )
-
-      updateTablePosition(id, next.x, next.y)
-    },
-    [canvasTables, ppm, snapStep, hallDimensions, updateTablePosition]
-  )
-
   const [isDraggingGuest, setIsDraggingGuest] = useState(false)
   useDndMonitor({
     onDragStart: ({ active }) =>
       setIsDraggingGuest(active.data.current?.type === "guest"),
     onDragEnd: (e) => {
-      handleDragEnd(e)
+      if (e.active.data.current?.type === "table-drag") {
+        const id = String(e.active.id)
+        const table = canvasTables.find((ct) => ct.id === id)
+        if (table) {
+          const rawNext = {
+            x: table.position.x + e.delta.x / ppm,
+            y: table.position.y + e.delta.y / ppm,
+          }
+          const snappedNext =
+            snapStep === "off" ? rawNext : snapPositionToGrid(rawNext, snapStep)
+          const next = clampToHall(
+            snappedNext,
+            table.size,
+            hallDimensions.width,
+            hallDimensions.height
+          )
+          updateTablePosition(id, next.x, next.y)
+        }
+      }
       setIsDraggingGuest(false)
     },
     onDragCancel: () => setIsDraggingGuest(false),
