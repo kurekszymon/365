@@ -189,7 +189,6 @@ export const GuestsPanelContent = () => {
         })}
       </div>
 
-      {/* DragOverlay renders at pointer position (portal to body), guest name follows cursor */}
       <DragOverlay>
         {activeGuest && (
           <div className="flex cursor-grabbing items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm shadow-lg">

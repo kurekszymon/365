@@ -65,7 +65,6 @@ export const WeddingCreateDialog = () => {
         if (!open) handleClose()
       }}
     >
-      {/* aria-describedby={undefined} to suppres radix warnings */}
       <DialogContent className="sm:max-w-sm" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>{t("wedding.create.title")}</DialogTitle>

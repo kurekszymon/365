@@ -140,10 +140,7 @@ export const TablePanelContent = (props: Props) => {
 
   return (
     <div className="flex flex-col gap-4">
-      <TableNameField
-        value={form.name}
-        onChange={(name) => update({ name })}
-      />
+      <TableNameField value={form.name} onChange={(name) => update({ name })} />
 
       <TableShapeField
         value={form.shape}
