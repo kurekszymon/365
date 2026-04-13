@@ -68,10 +68,7 @@ export const PropertyPanel = () => {
                 <p className="text-sm text-muted-foreground">
                   {t("tables.select_to_edit")}
                 </p>
-                <Button
-                  variant="outline"
-                  onClick={() => openTableAdd()}
-                >
+                <Button variant="outline" onClick={() => openTableAdd()}>
                   {t("tables.add")}
                 </Button>
               </div>

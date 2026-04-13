@@ -2,9 +2,10 @@ import { useEffect } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import { LandmarkIcon, PlusIcon, UsersIcon, UtensilsIcon } from "lucide-react"
+import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
+import type { DragEndEvent } from "@dnd-kit/core"
 import { Canvas } from "./Canvas"
 import { Header } from "./Header"
-import { PlannerDndProvider } from "./PlannerDndProvider"
 import { GuestsSeated } from "./Header/GuestsSeated.header"
 import { PropertyPanel } from "./PropertyPanel"
 import { ButtonGroup } from "@/components/ui/button-group"
@@ -26,6 +27,26 @@ export const Planner = () => {
 
   const name = useGlobalStore((state) => state.name)
   const openDialog = useDialogStore((state) => state.open)
+  const assignGuestToTable = usePlannerStore(
+    (state) => state.assignGuestToTable
+  )
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  )
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    if (e.active.data.current?.type !== "guest") return
+    const overType = e.over?.data.current?.type
+    if (overType === "table") {
+      assignGuestToTable(
+        String(e.active.id),
+        e.over!.data.current!.tableId as string
+      )
+    } else if (overType === "unassigned") {
+      assignGuestToTable(String(e.active.id), null)
+    }
+  }
 
   const { preset, updateHall } = usePlannerStore(
     useShallow((state) => ({
@@ -136,12 +157,12 @@ export const Planner = () => {
             </ButtonGroup>
           </div>
         </Header>
-        <PlannerDndProvider>
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
           <div className="flex min-h-0 flex-1 overflow-hidden">
             <Canvas />
             <PropertyPanel />
           </div>
-        </PlannerDndProvider>
+        </DndContext>
       </div>
     </>
   )

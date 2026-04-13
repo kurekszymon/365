@@ -1,10 +1,9 @@
-import { useDroppable } from "@dnd-kit/core"
-import { useCallback, useEffect, useMemo } from "react"
+import { useDroppable, useDndMonitor } from "@dnd-kit/core"
+import { useCallback, useMemo, useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { DraggableTable } from "./DraggableTable"
 import { clampToHall } from "./utils"
 import { usePlannerStore } from "@/stores/planner.store"
-import { useRegisterTableDragHandler } from "@/components/planner/PlannerDndProvider"
 import type { DragEndEvent } from "@dnd-kit/core"
 
 export type GridStyle = "dots" | "grid" | "off"
@@ -108,12 +107,10 @@ export const HallSurface = ({
     [tables, hallDimensions]
   )
 
-  // Register with the shared DndContext so it can call back here on table drags.
-  // Kept local because handleDragEnd needs ppm and snapStep which live here.
-  const registerTableDragHandler = useRegisterTableDragHandler()
-
   const handleDragEnd = useCallback(
     (e: DragEndEvent) => {
+      if (e.active.data.current?.type !== "table-drag") return
+
       const id = String(e.active.id)
       const table = canvasTables.find((ct) => ct.id === id)
       if (!table) return
@@ -138,9 +135,16 @@ export const HallSurface = ({
     [canvasTables, ppm, snapStep, hallDimensions, updateTablePosition]
   )
 
-  useEffect(() => {
-    registerTableDragHandler(handleDragEnd)
-  }, [registerTableDragHandler, handleDragEnd])
+  const [isDraggingGuest, setIsDraggingGuest] = useState(false)
+  useDndMonitor({
+    onDragStart: ({ active }) =>
+      setIsDraggingGuest(active.data.current?.type === "guest"),
+    onDragEnd: (e) => {
+      handleDragEnd(e)
+      setIsDraggingGuest(false)
+    },
+    onDragCancel: () => setIsDraggingGuest(false),
+  })
 
   return (
     <div
@@ -165,6 +169,7 @@ export const HallSurface = ({
           ppm={ppm}
           onSelect={onTableClick}
           isSelected={selectedTableId === ct.id}
+          isDraggingGuest={isDraggingGuest}
         />
       ))}
     </div>

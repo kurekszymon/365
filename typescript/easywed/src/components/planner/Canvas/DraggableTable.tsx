@@ -1,5 +1,5 @@
-import { useDraggable, useDroppable, useDndMonitor } from "@dnd-kit/core"
-import { useMemo, useState } from "react"
+import { useDraggable, useDroppable } from "@dnd-kit/core"
+import { useMemo } from "react"
 import { CSS } from "@dnd-kit/utilities"
 import { clamp } from "./utils"
 import { cn } from "@/lib/utils"
@@ -12,6 +12,7 @@ type DraggableTableProps = {
   ppm: number
   onSelect?: (tableId: string) => void
   isSelected?: boolean
+  isDraggingGuest?: boolean
 }
 
 export const DraggableTable = ({
@@ -21,8 +22,14 @@ export const DraggableTable = ({
   ppm,
   onSelect,
   isSelected,
+  isDraggingGuest,
 }: DraggableTableProps) => {
-  const { attributes, listeners, setNodeRef: setDragRef, transform } = useDraggable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDragRef,
+    transform,
+  } = useDraggable({
     id: table.id,
     data: { type: "table-drag" },
   })
@@ -31,15 +38,6 @@ export const DraggableTable = ({
   const { setNodeRef: setDropRef, isOver } = useDroppable({
     id: `table-drop-${table.id}`,
     data: { type: "table", tableId: table.id },
-  })
-
-  // Only show the drop highlight when a guest is being dragged (not when moving tables)
-  const [isDraggingGuest, setIsDraggingGuest] = useState(false)
-  useDndMonitor({
-    onDragStart: ({ active }) =>
-      setIsDraggingGuest(active.data.current?.type === "guest"),
-    onDragEnd: () => setIsDraggingGuest(false),
-    onDragCancel: () => setIsDraggingGuest(false),
   })
 
   const { size, shape, position } = table
@@ -74,7 +72,9 @@ export const DraggableTable = ({
         "absolute z-10 flex cursor-grab touch-none items-center justify-center border border-emerald-300 bg-emerald-100 text-emerald-800 shadow-sm active:cursor-grabbing",
         shape === "round" ? "rounded-full" : "rounded-lg",
         isSelected && "ring-2 ring-emerald-600 ring-offset-2",
-        isDraggingGuest && isOver && "ring-2 ring-blue-500 ring-offset-2 bg-blue-50 border-blue-300"
+        isDraggingGuest &&
+          isOver &&
+          "border-blue-300 bg-blue-50 ring-2 ring-blue-500 ring-offset-2"
       )}
       style={{
         left: position.x * ppm,

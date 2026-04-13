@@ -7,6 +7,7 @@ import {
   useDraggable,
   useDndMonitor,
 } from "@dnd-kit/core"
+import { CSS } from "@dnd-kit/utilities"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useDialogStore } from "@/stores/dialog.store"
 import type { Guest, Table } from "@/stores/planner.store"
@@ -31,8 +32,8 @@ const DraggableGuest = ({ guest }: { guest: Guest }) => {
         isDragging && "opacity-40"
       )}
       style={
-        transform
-          ? { transform: `translate(${transform.x}px, ${transform.y}px)` }
+        !isDragging && transform
+          ? { transform: CSS.Translate.toString(transform) }
           : undefined
       }
     >
@@ -155,15 +156,14 @@ export const GuestsPanelContent = () => {
     )
   }
 
-  const sections: Array<{ id: string | null; label: string; table?: Table }> =
-    [
-      { id: null, label: t("guests.unassigned") },
-      ...tables.map((table) => ({
-        id: table.id,
-        label: `${table.name} (${t("tables.capacity_count", { count: table.capacity })})`,
-        table,
-      })),
-    ]
+  const sections: Array<{ id: string | null; label: string; table?: Table }> = [
+    { id: null, label: t("guests.unassigned") },
+    ...tables.map((table) => ({
+      id: table.id,
+      label: `${table.name} (${t("tables.capacity_count", { count: table.capacity })})`,
+      table,
+    })),
+  ]
 
   return (
     <>
