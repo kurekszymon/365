@@ -26,15 +26,10 @@ type Props =
   | { mode: "add"; position?: Position }
   | { mode: "edit"; tableId: string }
 
-function getAssignedGuestIds(tableId: string): Array<string> {
-  return usePlannerStore
-    .getState()
-    .guests.filter((g) => g.tableId === tableId)
-    .map((g) => g.id)
-}
-
 export const TablePanelContent = (props: Props) => {
   const { t } = useTranslation()
+
+  const tableId = props.mode === "edit" && props.tableId
 
   const { hallDimensions, addTable, updateTable } = usePlannerStore(
     useShallow((state) => ({
@@ -44,44 +39,35 @@ export const TablePanelContent = (props: Props) => {
     }))
   )
 
+  const editedTable = usePlannerStore((state) =>
+    state.tables.find((t) => t.id === tableId)
+  )
+
+  const editedAssignedGuestIds = usePlannerStore(
+    useShallow((state) =>
+      state.guests.filter((g) => g.tableId === tableId).map((g) => g.id)
+    )
+  )
+
   const openTableEdit = usePanelStore((state) => state.openTableEdit)
 
-  const [form, setForm] = useState(() => {
-    if (props.mode === "edit") {
-      const table = usePlannerStore
-        .getState()
-        .tables.find((t) => t.id === props.tableId)
-      if (table) {
-        return {
-          name: table.name,
-          shape: table.shape,
-          capacity: table.capacity,
-          width: table.size.width,
-          height: table.size.height,
-          assignedGuestIds: getAssignedGuestIds(props.tableId),
-        }
-      }
-    }
-    return INITIAL_FORM
-  })
-
-  // Re-sync when switching to a different table
-  const tableId = props.mode === "edit" ? props.tableId : null
+  const [form, setForm] = useState(INITIAL_FORM)
   useEffect(() => {
-    if (!tableId) return
-    const table = usePlannerStore
-      .getState()
-      .tables.find((t) => t.id === tableId)
-    if (!table) return
-    setForm({
-      name: table.name,
-      shape: table.shape,
-      capacity: table.capacity,
-      width: table.size.width,
-      height: table.size.height,
-      assignedGuestIds: getAssignedGuestIds(tableId),
-    })
-  }, [tableId])
+    if (props.mode === "edit" && editedTable) {
+      setForm({
+        name: editedTable.name,
+        shape: editedTable.shape,
+        capacity: editedTable.capacity,
+        width: editedTable.size.width,
+        height: editedTable.size.height,
+        assignedGuestIds: editedAssignedGuestIds,
+      })
+      return
+    }
+    if (props.mode === "add") {
+      setForm(INITIAL_FORM)
+    }
+  }, [props.mode, tableId, editedTable, editedAssignedGuestIds])
 
   const { width: hallMaxWidth, height: hallMaxHeight } = hallDimensions
   const isWidthOutOfBounds = form.width > hallMaxWidth
@@ -138,7 +124,7 @@ export const TablePanelContent = (props: Props) => {
     form.shape === "round" ? (
       <RoundTable
         diameter={form.width}
-        isOutOfBounds={isWidthOutOfBounds || isHeightOutOfBounds}
+        isOutOfBounds={isWidthOutOfBounds}
         onDiameterChange={(width) => update({ width })}
       />
     ) : (

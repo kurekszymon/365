@@ -153,11 +153,21 @@ export const usePlannerStore = create<State & Action>((set) => ({
       },
     })),
   assignGuestToTable: (guestId, tableId) =>
-    set((state) => ({
-      guests: state.guests.map((g) =>
-        g.id === guestId ? { ...g, tableId } : g
-      ),
-    })),
+    set((state) => {
+      if (tableId !== null) {
+        const table = state.tables.find((t) => t.id === tableId)
+        if (!table) return state
+        const assignedCount = state.guests.filter(
+          (g) => g.tableId === tableId && g.id !== guestId
+        ).length
+        if (assignedCount >= table.capacity) return state
+      }
+      return {
+        guests: state.guests.map((g) =>
+          g.id === guestId ? { ...g, tableId } : g
+        ),
+      }
+    }),
   resetHallZoomAndPan: () =>
     set((state) => ({
       hall: { ...state.hall, zoom: 1, pan: { x: 0, y: 0 } },
