@@ -25,5 +25,16 @@ Deleted dead code: ConfigureHallDialog, AddTableDialog, EditTableDialog, useTabl
 
 - Hall + — calls updateHall("rectangle", { width: 20, height: 12 }, 1) then opens the hall panel so you can see and adjust what was just created
 - Tables placeholder — now has an "Add Table" button that transitions directly to table.add view
-- Guests panel — "Add Guest" button appears both in the empty state and at the top of the populated list, opening the existing Guest.Add dialog  
+- Guests panel — "Add Guest" button appears both in the empty state and at the top of the populated list, opening the existing Guest.Add dialog
 
+⏺ Clean. Here's what changed and why:
+
+Planner.tsx — owns the shared DndContext above both canvas and panel so both sides participate in the same interaction flow. onDragEnd handles only guest drops: assigns or unassigns based on the drop target type.
+
+HallSurface — removed its own DndContext. Uses useDndMonitor to handle table-drag position updates (keeping ppm/snapStep local) and to track isDraggingGuest for table hover feedback. Hall droppable tagged
+{ type: "hall" } so guest drops on the background are no-ops.
+
+DraggableTable — tagged as { type: "table-drag" } for dragging. Also a droppable ({ type: "table", tableId }) for guest drops. isDraggingGuest is passed down from HallSurface so the blue ring only appears
+during guest drags, not table moves.
+
+GuestsPanelContent — removed its own DndContext. Uses useDndMonitor (gated to type === "guest") to track activeGuestId/overId for panel-side visuals. DragOverlay portals to document.body regardless.

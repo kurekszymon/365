@@ -1,5 +1,15 @@
 # EasyWed — Development Log
 
+### 13.04
+
+- guests panel now supports drag-and-drop assignment: drag a guest row onto a canvas table or between panel sections to assign/unassign
+- `DraggableTable` is now also a droppable — shows blue ring when a guest hovers over it
+- lifted `DndContext` to `Planner.tsx` so canvas and panel share one drag context; removed `PlannerDndProvider`
+- `isDraggingGuest` tracked once in `HallSurface` via `useDndMonitor`, passed down to tables — avoids one monitor per table instance
+- fixed: panel section highlights were firing during table drags — gated `onDragOver` to `type === "guest"`
+- fixed: `DragOverlay` ghost was also moving because transform was applied to the source element — suppressed transform on source when dragging
+- fixed: `setRef` in `DraggableTable` was a new function every render causing unnecessary detach/reattach — stabilised with `useCallback`
+
 ### 12.04
 
 - replaced canvas-based hall preview in `ConfigureHall` with a real `HallSurface` render — deleted `canvas-utils.ts` entirely

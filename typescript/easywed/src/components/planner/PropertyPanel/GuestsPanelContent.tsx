@@ -2,16 +2,15 @@ import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
 import {
-  DndContext,
   DragOverlay,
   useDroppable,
   useDraggable,
-  type DragEndEvent,
-  type DragStartEvent,
+  useDndMonitor,
 } from "@dnd-kit/core"
+import { CSS } from "@dnd-kit/utilities"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useDialogStore } from "@/stores/dialog.store"
-import type { Guest, Table } from "@/stores/planner.store"
+import type { Guest } from "@/stores/planner.store"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -21,7 +20,7 @@ const UNASSIGNED_ID = "__unassigned__"
 
 const DraggableGuest = ({ guest }: { guest: Guest }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({ id: guest.id })
+    useDraggable({ id: guest.id, data: { type: "guest" } })
 
   return (
     <div
@@ -33,8 +32,8 @@ const DraggableGuest = ({ guest }: { guest: Guest }) => {
         isDragging && "opacity-40"
       )}
       style={
-        transform
-          ? { transform: `translate(${transform.x}px, ${transform.y}px)` }
+        !isDragging && transform
+          ? { transform: CSS.Translate.toString(transform) }
           : undefined
       }
     >
@@ -52,16 +51,18 @@ const DraggableGuest = ({ guest }: { guest: Guest }) => {
 
 const TableSection = ({
   droppableId,
+  droppableData,
   label,
   guests,
   isOver,
 }: {
   droppableId: string
+  droppableData: Record<string, unknown>
   label: string
   guests: Array<Guest>
   isOver: boolean
 }) => {
-  const { setNodeRef } = useDroppable({ id: droppableId })
+  const { setNodeRef } = useDroppable({ id: droppableId, data: droppableData })
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -96,11 +97,10 @@ const TableSection = ({
 export const GuestsPanelContent = () => {
   const { t } = useTranslation()
 
-  const { guests, tables, assignGuestToTable } = usePlannerStore(
+  const { guests, tables } = usePlannerStore(
     useShallow((state) => ({
       guests: state.guests,
       tables: state.tables,
-      assignGuestToTable: state.assignGuestToTable,
     }))
   )
 
@@ -114,6 +114,32 @@ export const GuestsPanelContent = () => {
     [guests, activeGuestId]
   )
 
+  // Monitor the shared DndContext created in Planner.tsx for local visual state
+  useDndMonitor({
+    onDragStart: ({ active }) => {
+      if (active.data.current?.type === "guest") {
+        setActiveGuestId(String(active.id))
+      }
+    },
+    onDragOver: ({ active, over }) => {
+      if (active.data.current?.type === "guest") {
+        setOverId(over ? String(over.id) : null)
+      }
+    },
+    onDragEnd: ({ active }) => {
+      if (active.data.current?.type === "guest") {
+        setActiveGuestId(null)
+        setOverId(null)
+      }
+    },
+    onDragCancel: ({ active }) => {
+      if (active.data.current?.type === "guest") {
+        setActiveGuestId(null)
+        setOverId(null)
+      }
+    },
+  })
+
   const guestsByTable = useMemo(() => {
     const map = new Map<string | null, Array<Guest>>()
     map.set(null, [])
@@ -124,23 +150,6 @@ export const GuestsPanelContent = () => {
     }
     return map
   }, [guests, tables])
-
-  const handleDragStart = ({ active }: DragStartEvent) => {
-    setActiveGuestId(String(active.id))
-  }
-
-  const handleDragOver = ({ over }: { over: { id: string | number } | null }) => {
-    setOverId(over ? String(over.id) : null)
-  }
-
-  const handleDragEnd = ({ active, over }: DragEndEvent) => {
-    setActiveGuestId(null)
-    setOverId(null)
-    if (!over) return
-    const targetTableId =
-      String(over.id) === UNASSIGNED_ID ? null : String(over.id)
-    assignGuestToTable(String(active.id), targetTableId)
-  }
 
   if (guests.length === 0) {
     return (
@@ -153,33 +162,32 @@ export const GuestsPanelContent = () => {
     )
   }
 
-  const sections: Array<{ id: string | null; label: string; table?: Table }> =
-    [
-      { id: null, label: t("guests.unassigned") },
-      ...tables.map((table) => ({
-        id: table.id,
-        label: `${table.name} (${t("tables.capacity_count", { count: table.capacity })})`,
-        table,
-      })),
-    ]
+  const sections: Array<{ id: string | null; label: string }> = [
+    { id: null, label: t("guests.unassigned") },
+    ...tables.map((table) => ({
+      id: table.id,
+      label: `${table.name} (${t("tables.capacity_count", { count: table.capacity })})`,
+    })),
+  ]
 
   return (
-    <DndContext
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-    >
+    <>
       <div className="flex flex-col gap-4">
         <Button variant="outline" onClick={() => openDialog("Guest.Add")}>
           {t("guests.add")}
         </Button>
         {sections.map((section) => {
           const droppableId = section.id ?? UNASSIGNED_ID
+          const droppableData =
+            section.id === null
+              ? { type: "unassigned" }
+              : { type: "table", tableId: section.id }
           const sectionGuests = guestsByTable.get(section.id) ?? []
           return (
             <TableSection
               key={droppableId}
               droppableId={droppableId}
+              droppableData={droppableData}
               label={section.label}
               guests={sectionGuests}
               isOver={overId === droppableId}
@@ -188,6 +196,7 @@ export const GuestsPanelContent = () => {
         })}
       </div>
 
+      {/* DragOverlay renders at pointer position (portal to body), guest name follows cursor */}
       <DragOverlay>
         {activeGuest && (
           <div className="flex cursor-grabbing items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm shadow-lg">
@@ -195,6 +204,6 @@ export const GuestsPanelContent = () => {
           </div>
         )}
       </DragOverlay>
-    </DndContext>
+    </>
   )
 }
