@@ -14,8 +14,6 @@ import type { Guest } from "@/stores/planner.store"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-const UNASSIGNED_ID = "__unassigned__"
-
 const DraggableGuest = ({ guest }: { guest: Guest }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({ id: guest.id, data: { type: "guest" } })
@@ -170,7 +168,10 @@ export const GuestsPanelContent = () => {
           {t("guests.add")}
         </Button>
         {sections.map((section) => {
-          const droppableId = section.id ?? UNASSIGNED_ID
+          const droppableId =
+            section.id !== null
+              ? `guest-drop-table-${section.id}`
+              : "guest-drop-unassigned"
           const droppableData =
             section.id === null
               ? { type: "unassigned" }

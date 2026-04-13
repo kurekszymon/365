@@ -72,6 +72,7 @@ export const TablePanelContent = (props: Props) => {
   const { width: hallMaxWidth, height: hallMaxHeight } = hallDimensions
   const isWidthOutOfBounds = form.width > hallMaxWidth
   const isHeightOutOfBounds = form.height > hallMaxHeight
+  const isRoundOutOfBounds = isWidthOutOfBounds || isHeightOutOfBounds
 
   const assignedWithinCapacity = form.assignedGuestIds.slice(0, form.capacity)
 
@@ -124,7 +125,7 @@ export const TablePanelContent = (props: Props) => {
     form.shape === "round" ? (
       <RoundTable
         diameter={form.width}
-        isOutOfBounds={isWidthOutOfBounds}
+        isOutOfBounds={isRoundOutOfBounds}
         onDiameterChange={(width) => update({ width })}
       />
     ) : (

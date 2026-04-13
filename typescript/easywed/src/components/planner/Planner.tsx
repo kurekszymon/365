@@ -16,6 +16,7 @@ import { useDialogStore } from "@/stores/dialog.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore, selectSelectedTableId } from "@/stores/panel.store"
+import { useOpenHall } from "@/hooks/useOpenHall"
 import {
   Tooltip,
   TooltipContent,
@@ -49,19 +50,13 @@ export const Planner = () => {
     }
   }
 
-  const { hall, preset, updateHall, resetZoomAndPan } = usePlannerStore(
-    useShallow((state) => ({
-      hall: state.hall,
-      preset: state.hall.preset,
-      updateHall: state.updateHall,
-      resetZoomAndPan: state.resetHallZoomAndPan,
-    }))
-  )
+  const preset = usePlannerStore((state) => state.hall.preset)
+
+  const openHall = useOpenHall()
 
   const selectedTableId = usePanelStore(selectSelectedTableId)
   const panel = usePanelStore(
     useShallow((state) => ({
-      openHall: state.openHall,
       openTableAdd: state.openTableAdd,
       openTableEdit: state.openTableEdit,
       openTablesPlaceholder: state.openTablesPlaceholder,
@@ -91,17 +86,7 @@ export const Planner = () => {
             <ButtonGroup>
               <Button
                 variant="outline"
-                onClick={() => {
-                  if (!preset) {
-                    updateHall(
-                      hall.preset ?? "rectangle",
-                      hall.dimensions,
-                      hall.gridSpacing
-                    )
-                    resetZoomAndPan()
-                  }
-                  panel.openHall()
-                }}
+                onClick={openHall}
               >
                 <LandmarkIcon />
 
@@ -109,17 +94,7 @@ export const Planner = () => {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => {
-                  if (!preset) {
-                    updateHall(
-                      hall.preset ?? "rectangle",
-                      hall.dimensions,
-                      hall.gridSpacing
-                    )
-                    resetZoomAndPan()
-                  }
-                  panel.openHall()
-                }}
+                onClick={openHall}
               >
                 <PlusIcon />
               </Button>

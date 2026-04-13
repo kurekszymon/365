@@ -22,6 +22,7 @@ import { useLongPress } from "./useLongPress"
 import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore, selectSelectedTableId } from "@/stores/panel.store"
 import { useElementSize } from "@/hooks/useElementSize"
+import { useOpenHall } from "@/hooks/useOpenHall"
 
 const GRID_ICON: Record<GridStyle, React.ReactNode> = {
   dots: <DotIcon className="size-3.5" />,
@@ -42,17 +43,16 @@ export const Canvas = () => {
   const [gridStyle, setGridStyle] = useState<GridStyle>("grid")
   const [snapStep, setSnapStep] = useState<SnapStep>(1)
 
-  const { hall, preset, resetZoomAndPan, updateHall, stepZoom, setPan } =
-    usePlannerStore(
-      useShallow((state) => ({
-        hall: state.hall,
-        preset: state.hall.preset,
-        updateHall: state.updateHall,
-        resetZoomAndPan: state.resetHallZoomAndPan,
-        stepZoom: state.stepHallZoom,
-        setPan: state.setHallPan,
-      }))
-    )
+  const { hall, stepZoom, setPan, resetZoomAndPan } = usePlannerStore(
+    useShallow((state) => ({
+      hall: state.hall,
+      stepZoom: state.stepHallZoom,
+      setPan: state.setHallPan,
+      resetZoomAndPan: state.resetHallZoomAndPan,
+    }))
+  )
+
+  const openHall = useOpenHall()
 
   const selectedTableId = usePanelStore(selectSelectedTableId)
   const panel = usePanelStore(
@@ -99,20 +99,7 @@ export const Canvas = () => {
 
   if (!hall.preset) {
     return (
-      <CanvasEmptyState
-        message={t("hall.empty_state")}
-        onClick={() => {
-          if (!preset) {
-            updateHall(
-              hall.preset ?? "rectangle",
-              hall.dimensions,
-              hall.gridSpacing
-            )
-            resetZoomAndPan()
-          }
-          panel.openHall()
-        }}
-      />
+      <CanvasEmptyState message={t("hall.empty_state")} onClick={openHall} />
     )
   }
 
