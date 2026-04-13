@@ -142,8 +142,7 @@ export const TablePanelContent = (props: Props) => {
     <div className="flex flex-col gap-4">
       <TableNameField
         value={form.name}
-        onChange={(name) => setForm((f) => ({ ...f, name }))}
-        onBlur={props.mode === "edit" ? () => applyEdit(form) : undefined}
+        onChange={(name) => update({ name })}
       />
 
       <TableShapeField

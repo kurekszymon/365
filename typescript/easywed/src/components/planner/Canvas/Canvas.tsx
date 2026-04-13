@@ -148,6 +148,7 @@ export const Canvas = () => {
         }}
         onClick={(e) => {
           if (pointerMovedRef.current) return
+          if ((e.target as Element).closest("[data-no-pan]")) return
           const captured = findCapturedElement(e.target)
           if (captured?.kind === "table") return // handled by DraggableTable
           if (captured?.kind === "hall") {
