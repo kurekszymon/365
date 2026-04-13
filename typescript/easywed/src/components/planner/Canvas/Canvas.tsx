@@ -20,7 +20,7 @@ import { useCanvasZoom } from "./useCanvasZoom"
 import { useCanvasPan } from "./useCanvasPan"
 import { useLongPress } from "./useLongPress"
 import { usePlannerStore } from "@/stores/planner.store"
-import { usePanelStore } from "@/stores/panel.store"
+import { usePanelStore, selectSelectedTableId } from "@/stores/panel.store"
 import { useElementSize } from "@/hooks/useElementSize"
 
 const GRID_ICON: Record<GridStyle, React.ReactNode> = {
@@ -51,9 +51,9 @@ export const Canvas = () => {
     }))
   )
 
+  const selectedTableId = usePanelStore(selectSelectedTableId)
   const panel = usePanelStore(
     useShallow((state) => ({
-      selectedTableId: state.selectedTableId,
       openHall: state.openHall,
       openTableAdd: state.openTableAdd,
       openTableEdit: state.openTableEdit,
@@ -232,7 +232,7 @@ export const Canvas = () => {
           snapStep={snapStep}
           gridSpacing={hall.gridSpacing}
           onTableClick={(tableId) => panel.openTableEdit(tableId)}
-          selectedTableId={panel.selectedTableId}
+          selectedTableId={selectedTableId}
         />
       </div>
     </CanvasContextMenu>

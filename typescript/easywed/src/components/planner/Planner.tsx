@@ -15,7 +15,7 @@ import { DialogManager } from "@/components/dialogs/DialogManager"
 import { useDialogStore } from "@/stores/dialog.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { usePlannerStore } from "@/stores/planner.store"
-import { usePanelStore } from "@/stores/panel.store"
+import { usePanelStore, selectSelectedTableId } from "@/stores/panel.store"
 import {
   Tooltip,
   TooltipContent,
@@ -47,16 +47,17 @@ export const Planner = () => {
     }
   }
 
-  const { preset, updateHall } = usePlannerStore(
+  const { preset, updateHall, resetZoomAndPan } = usePlannerStore(
     useShallow((state) => ({
       preset: state.hall.preset,
       updateHall: state.updateHall,
+      resetZoomAndPan: state.resetHallZoomAndPan,
     }))
   )
 
+  const selectedTableId = usePanelStore(selectSelectedTableId)
   const panel = usePanelStore(
     useShallow((state) => ({
-      selectedTableId: state.selectedTableId,
       openHall: state.openHall,
       openTableAdd: state.openTableAdd,
       openTableEdit: state.openTableEdit,
@@ -90,6 +91,7 @@ export const Planner = () => {
                 onClick={() => {
                   if (!preset) {
                     updateHall("rectangle", { width: 20, height: 12 }, 1)
+                    resetZoomAndPan()
                   }
                   panel.openHall()
                 }}
@@ -103,6 +105,7 @@ export const Planner = () => {
                 onClick={() => {
                   if (!preset) {
                     updateHall("rectangle", { width: 20, height: 12 }, 1)
+                    resetZoomAndPan()
                   }
                   panel.openHall()
                 }}
@@ -118,8 +121,8 @@ export const Planner = () => {
                     disabled={!preset}
                     onClick={() => {
                       if (!preset) return
-                      if (panel.selectedTableId) {
-                        panel.openTableEdit(panel.selectedTableId)
+                      if (selectedTableId) {
+                        panel.openTableEdit(selectedTableId)
                       } else {
                         panel.openTablesPlaceholder()
                       }

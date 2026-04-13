@@ -10,7 +10,6 @@ export type PanelView =
 
 type State = {
   view: PanelView | null
-  selectedTableId: string | null
 }
 
 type Action = {
@@ -24,14 +23,14 @@ type Action = {
 
 export const usePanelStore = create<State & Action>((set) => ({
   view: null,
-  selectedTableId: null,
 
   openHall: () => set({ view: { kind: "hall" } }),
-  openTableAdd: (position) =>
-    set({ view: { kind: "table.add", position }, selectedTableId: null }),
-  openTableEdit: (tableId) =>
-    set({ view: { kind: "table.edit", tableId }, selectedTableId: tableId }),
+  openTableAdd: (position) => set({ view: { kind: "table.add", position } }),
+  openTableEdit: (tableId) => set({ view: { kind: "table.edit", tableId } }),
   openTablesPlaceholder: () => set({ view: { kind: "tables.placeholder" } }),
   openGuests: () => set({ view: { kind: "guests" } }),
-  close: () => set({ view: null, selectedTableId: null }),
+  close: () => set({ view: null }),
 }))
+
+export const selectSelectedTableId = (state: State): string | null =>
+  state.view?.kind === "table.edit" ? state.view.tableId : null

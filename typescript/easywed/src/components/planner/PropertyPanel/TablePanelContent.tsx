@@ -1,16 +1,13 @@
 import { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
-import { TableNameField } from "@/components/dialogs/tables/TableNameField"
-import { TableShapeField } from "@/components/dialogs/tables/TableShapeField"
-import { TableCapacityField } from "@/components/dialogs/tables/TableCapacityField"
-import { RectangularTable } from "@/components/dialogs/tables/TableRectDimensionsField"
-import { RoundTable } from "@/components/dialogs/tables/TableRoundDimensionsField"
-import { GuestAssignmentPicker } from "@/components/dialogs/tables/GuestAssignmentPicker"
-import {
-  isDimensionsValidForShape,
-  getSizeForShape,
-} from "@/components/dialogs/tables/utils"
+import { TableNameField } from "./fields/TableNameField"
+import { TableShapeField } from "./fields/TableShapeField"
+import { TableCapacityField } from "./fields/TableCapacityField"
+import { RectangularTable } from "./fields/TableRectDimensionsField"
+import { RoundTable } from "./fields/TableRoundDimensionsField"
+import { GuestAssignmentPicker } from "./fields/GuestAssignmentPicker"
+import { isDimensionsValidForShape, getSizeForShape } from "./fields/utils"
 import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { Button } from "@/components/ui/button"

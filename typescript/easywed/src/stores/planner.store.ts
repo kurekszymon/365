@@ -75,11 +75,6 @@ type Action = {
     dimensions: { width: number; height: number },
     gridSpacing?: GridSpacing
   ) => void
-  updateHallProperties: (
-    preset: HallPreset,
-    dimensions: { width: number; height: number },
-    gridSpacing?: GridSpacing
-  ) => void
   assignGuestToTable: (guestId: string, tableId: string | null) => void
   resetHallZoomAndPan: () => void
   stepHallZoom: (direction: 1 | -1) => void
@@ -149,17 +144,6 @@ export const usePlannerStore = create<State & Action>((set) => ({
       guests: [...state.guests, { ...guest, id: crypto.randomUUID() }],
     })),
   updateHall: (preset, dimensions, gridSpacing = 1) =>
-    set((state) => ({
-      hall: {
-        ...state.hall,
-        preset,
-        dimensions,
-        gridSpacing,
-        zoom: 1,
-        pan: { x: 0, y: 0 },
-      },
-    })),
-  updateHallProperties: (preset, dimensions, gridSpacing = 1) =>
     set((state) => ({
       hall: {
         ...state.hall,

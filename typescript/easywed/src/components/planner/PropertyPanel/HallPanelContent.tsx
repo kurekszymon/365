@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
 import { InfoIcon } from "lucide-react"
-import { DimensionsRectangle } from "@/components/dialogs/planner/ConfigureHall/DimensionsRectangle"
+import { DimensionsRectangle } from "./fields/DimensionsRectangle"
 import type { GridSpacing } from "@/components/planner/Canvas/HallSurface"
 import { NICE_INTERVALS } from "@/components/planner/Canvas/HallSurface"
 import { usePlannerStore } from "@/stores/planner.store"
@@ -31,57 +30,35 @@ function clampGridSpacing(
 export const HallPanelContent = () => {
   const { t } = useTranslation()
 
-  const hall = usePlannerStore(
+  const { preset, dimensions, gridSpacing, updateHall } = usePlannerStore(
     useShallow((state) => ({
       preset: state.hall.preset ?? "rectangle",
       dimensions: state.hall.dimensions,
       gridSpacing: state.hall.gridSpacing,
-      updateHallProperties: state.updateHallProperties,
+      updateHall: state.updateHall,
     }))
   )
 
-  const [local, setLocal] = useState({
-    width: hall.dimensions.width,
-    height: hall.dimensions.height,
-    gridSpacing: hall.gridSpacing,
-  })
-
-  // Sync local state when store changes from outside
-  useEffect(() => {
-    setLocal({
-      width: hall.dimensions.width,
-      height: hall.dimensions.height,
-      gridSpacing: hall.gridSpacing,
-    })
-  }, [hall.dimensions.width, hall.dimensions.height, hall.gridSpacing])
-
-  const apply = (width: number, height: number, gridSpacing: GridSpacing) => {
-    hall.updateHallProperties(hall.preset, { width, height }, gridSpacing)
-  }
-
   const setWidth = (width: number) => {
-    const newSpacing = clampGridSpacing(local.gridSpacing, width, local.height)
-    setLocal((l) => ({ ...l, width, gridSpacing: newSpacing }))
-    apply(width, local.height, newSpacing)
+    const spacing = clampGridSpacing(gridSpacing, width, dimensions.height)
+    updateHall(preset, { width, height: dimensions.height }, spacing)
   }
 
   const setHeight = (height: number) => {
-    const newSpacing = clampGridSpacing(local.gridSpacing, local.width, height)
-    setLocal((l) => ({ ...l, height, gridSpacing: newSpacing }))
-    apply(local.width, height, newSpacing)
+    const spacing = clampGridSpacing(gridSpacing, dimensions.width, height)
+    updateHall(preset, { width: dimensions.width, height }, spacing)
   }
 
-  const setGridSpacing = (gridSpacing: GridSpacing) => {
-    setLocal((l) => ({ ...l, gridSpacing }))
-    apply(local.width, local.height, gridSpacing)
+  const setGridSpacing = (spacing: GridSpacing) => {
+    updateHall(preset, dimensions, spacing)
   }
 
   return (
     <div className="flex flex-col gap-4">
-      {hall.preset === "rectangle" && (
+      {preset === "rectangle" && (
         <DimensionsRectangle
-          width={local.width}
-          height={local.height}
+          width={dimensions.width}
+          height={dimensions.height}
           setWidth={setWidth}
           setHeight={setHeight}
         />
@@ -100,13 +77,13 @@ export const HallPanelContent = () => {
           </Tooltip>
         </div>
         <ButtonGroup className="w-full">
-          {validSpacings(local.width, local.height).map((option) => (
+          {validSpacings(dimensions.width, dimensions.height).map((option) => (
             <Button
               key={option}
               type="button"
               size="xs"
               className="flex-1"
-              variant={local.gridSpacing === option ? "default" : "outline"}
+              variant={gridSpacing === option ? "default" : "outline"}
               onClick={() => setGridSpacing(option)}
             >
               {option === "auto"
