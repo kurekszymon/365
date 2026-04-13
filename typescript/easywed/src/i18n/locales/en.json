@@ -50,6 +50,7 @@
   "tables.configure_hall_first": "Configure the hall first",
   "tables.select_to_edit": "Select a table on the canvas to edit it, or click + to add a new one.",
   "tables.capacity_count": "{{count}} seats",
+  "tables.capacity_count_one": "{{count}} seat",
 
   "guests": "Guests",
   "guests.add": "Add a guest",

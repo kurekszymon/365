@@ -50,6 +50,9 @@
   "tables.configure_hall_first": "Najpierw skonfiguruj salę",
   "tables.select_to_edit": "Wybierz stół na planie, aby go edytować, lub kliknij +, aby dodać nowy.",
   "tables.capacity_count": "{{count}} miejsc",
+  "tables.capacity_count_one": "{{count}} miejsce",
+  "tables.capacity_count_few": "{{count}} miejsca",
+  "tables.capacity_count_many": "{{count}} miejsc",
 
   "guests": "Goście",
   "guests.add": "Dodaj gościa",
