@@ -21,7 +21,7 @@ export const useOpenHall = () => {
 
   return useCallback(() => {
     if (!hall.preset) {
-      updateHall(hall.preset ?? "rectangle", hall.dimensions, hall.gridSpacing)
+      updateHall("rectangle", hall.dimensions, hall.gridSpacing)
       resetZoomAndPan()
     }
     openHall()

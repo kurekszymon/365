@@ -84,18 +84,12 @@ export const Planner = () => {
           </Header.Title>
           <div className="flex items-center gap-2">
             <ButtonGroup>
-              <Button
-                variant="outline"
-                onClick={openHall}
-              >
+              <Button variant="outline" onClick={openHall}>
                 <LandmarkIcon />
 
                 <span className="hidden md:inline">{t("hall")}</span>
               </Button>
-              <Button
-                variant="outline"
-                onClick={openHall}
-              >
+              <Button variant="outline" onClick={openHall}>
                 <PlusIcon />
               </Button>
             </ButtonGroup>
