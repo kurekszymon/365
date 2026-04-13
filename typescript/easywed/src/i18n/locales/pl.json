@@ -11,6 +11,7 @@
   "common.height": "Wysokość",
   "common.not_supported": "Jeszcze nieobsługiwane",
   "common.auto": "Auto",
+  "common.close": "Zamknij",
   "common.meters": "{{count}} m",
 
   "errors.404": "404",
@@ -47,6 +48,11 @@
   "tables.guests_capacity_exceeded": "Wybrani goście przekraczają pojemność stołu",
   "tables.guests_none": "Brak gości do przypisania",
   "tables.configure_hall_first": "Najpierw skonfiguruj salę",
+  "tables.select_to_edit": "Wybierz stół na planie, aby go edytować, lub kliknij +, aby dodać nowy.",
+  "tables.capacity_count": "{{count}} miejsc",
+  "tables.capacity_count_one": "{{count}} miejsce",
+  "tables.capacity_count_few": "{{count}} miejsca",
+  "tables.capacity_count_many": "{{count}} miejsc",
 
   "guests": "Goście",
   "guests.add": "Dodaj gościa",
@@ -55,6 +61,8 @@
   "guests.add.dietary_preferences": "Preferencje żywieniowe",
   "guests.add.note": "Notatka",
   "guests.add.note_placeholder": "np. uczulony na orzechy, lubi ostre jedzenie, itp.",
+  "guests.none": "Brak gości.",
+  "guests.unassigned": "Nieprzypisani",
   "guests.seated_ratio": "{{seated_count}}/{{count}} gości przy stołach",
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} gość przy stole",
 

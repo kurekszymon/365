@@ -48,7 +48,6 @@ export const GuestAssignmentPicker = ({
   const guestsListRef = useRef<HTMLDivElement>(null)
 
   const handleGuestListWheel = (e: WheelEvent<HTMLDivElement>) => {
-    // Explicit wheel handling prevents underlying canvas from hijacking trackpad scroll.
     e.preventDefault()
     e.stopPropagation()
 

@@ -11,6 +11,7 @@
   "common.height": "Height",
   "common.not_supported": "Not supported yet",
   "common.auto": "Auto",
+  "common.close": "Close",
   "common.meters": "{{count}} m",
 
   "errors.404": "404",
@@ -47,6 +48,9 @@
   "tables.guests_capacity_exceeded": "Selected guests exceed table capacity",
   "tables.guests_none": "No guests to assign yet",
   "tables.configure_hall_first": "Configure the hall first",
+  "tables.select_to_edit": "Select a table on the canvas to edit it, or click + to add a new one.",
+  "tables.capacity_count": "{{count}} seats",
+  "tables.capacity_count_one": "{{count}} seat",
 
   "guests": "Guests",
   "guests.add": "Add a guest",
@@ -55,6 +59,8 @@
   "guests.add.dietary_preferences": "Dietary Preferences",
   "guests.add.note": "Note",
   "guests.add.note_placeholder": "e.g. allergic to nuts, loves spicy food, etc.",
+  "guests.none": "No guests added yet.",
+  "guests.unassigned": "Unassigned",
   "guests.seated_ratio": "{{seated_count}}/{{count}} guests seated",
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} guest seated",
 

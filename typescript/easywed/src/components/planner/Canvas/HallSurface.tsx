@@ -1,10 +1,9 @@
-import { DndContext, useDroppable } from "@dnd-kit/core"
-import { useMemo } from "react"
+import { useDroppable, useDndMonitor } from "@dnd-kit/core"
+import { useMemo, useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { DraggableTable } from "./DraggableTable"
 import { clampToHall } from "./utils"
 import { usePlannerStore } from "@/stores/planner.store"
-import type { DragEndEvent } from "@dnd-kit/core"
 
 export type GridStyle = "dots" | "grid" | "off"
 export type SnapStep = 0.1 | 0.25 | 0.5 | 1 | "off"
@@ -57,6 +56,8 @@ interface HallSurfaceProps {
   gridStyle: GridStyle
   snapStep: SnapStep
   gridSpacing?: GridSpacing
+  onTableClick?: (tableId: string) => void
+  selectedTableId?: string | null
 }
 
 export const HallSurface = ({
@@ -69,12 +70,19 @@ export const HallSurface = ({
   gridStyle,
   snapStep,
   gridSpacing = 1,
+  onTableClick,
+  selectedTableId,
 }: HallSurfaceProps) => {
   const resolvedGridSpacing =
     gridSpacing === "auto"
       ? calcGridSpacing(width / ppm, height / ppm)
       : gridSpacing
-  const { setNodeRef: setDropRef } = useDroppable({ id: "hall-identifier" })
+
+  const { setNodeRef: setDropRef } = useDroppable({
+    // droppable data { type: "hall" } so the shared onDragEnd in Planner.tsx ignores guest drops on the background
+    id: "hall-identifier",
+    data: { type: "hall" },
+  })
 
   const { tables, hallDimensions, updateTablePosition } = usePlannerStore(
     useShallow((state) => ({
@@ -98,54 +106,61 @@ export const HallSurface = ({
     [tables, hallDimensions]
   )
 
-  function handleDragEnd(e: DragEndEvent) {
-    const id = String(e.active.id)
-    const table = canvasTables.find((ct) => ct.id === id)
-
-    if (!table) return
-
-    const rawNext = {
-      x: table.position.x + e.delta.x / ppm,
-      y: table.position.y + e.delta.y / ppm,
-    }
-
-    const snappedNext =
-      snapStep === "off" ? rawNext : snapPositionToGrid(rawNext, snapStep)
-
-    const next = clampToHall(
-      snappedNext,
-      table.size,
-      hallDimensions.width,
-      hallDimensions.height
-    )
-
-    updateTablePosition(id, next.x, next.y)
-  }
+  const [isDraggingGuest, setIsDraggingGuest] = useState(false)
+  useDndMonitor({
+    onDragStart: ({ active }) =>
+      setIsDraggingGuest(active.data.current?.type === "guest"),
+    onDragEnd: (e) => {
+      if (e.active.data.current?.type === "table-drag") {
+        const id = String(e.active.id)
+        const table = canvasTables.find((ct) => ct.id === id)
+        if (table) {
+          const rawNext = {
+            x: table.position.x + e.delta.x / ppm,
+            y: table.position.y + e.delta.y / ppm,
+          }
+          const snappedNext =
+            snapStep === "off" ? rawNext : snapPositionToGrid(rawNext, snapStep)
+          const next = clampToHall(
+            snappedNext,
+            table.size,
+            hallDimensions.width,
+            hallDimensions.height
+          )
+          updateTablePosition(id, next.x, next.y)
+        }
+      }
+      setIsDraggingGuest(false)
+    },
+    onDragCancel: () => setIsDraggingGuest(false),
+  })
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
-      <div
-        ref={setDropRef}
-        className="absolute z-10 bg-white shadow-md ring-2 ring-emerald-400"
-        style={{
-          left,
-          top,
-          width,
-          height,
-          backgroundSize: `${ppm * resolvedGridSpacing}px ${ppm * resolvedGridSpacing}px`,
-          ...gridBackground(gridStyle, zoom),
-        }}
-      >
-        {canvasTables.map((ct) => (
-          <DraggableTable
-            key={ct.id}
-            table={ct}
-            hallWidth={hallDimensions.width}
-            hallHeight={hallDimensions.height}
-            ppm={ppm}
-          />
-        ))}
-      </div>
-    </DndContext>
+    <div
+      ref={setDropRef}
+      data-canvas-element-kind="hall"
+      className="absolute z-10 bg-white shadow-md ring-2 ring-emerald-400"
+      style={{
+        left,
+        top,
+        width,
+        height,
+        backgroundSize: `${ppm * resolvedGridSpacing}px ${ppm * resolvedGridSpacing}px`,
+        ...gridBackground(gridStyle, zoom),
+      }}
+    >
+      {canvasTables.map((ct) => (
+        <DraggableTable
+          key={ct.id}
+          table={ct}
+          hallWidth={hallDimensions.width}
+          hallHeight={hallDimensions.height}
+          ppm={ppm}
+          onSelect={onTableClick}
+          isSelected={selectedTableId === ct.id}
+          isDraggingGuest={isDraggingGuest}
+        />
+      ))}
+    </div>
   )
 }

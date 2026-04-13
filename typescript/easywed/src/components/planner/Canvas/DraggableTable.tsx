@@ -1,7 +1,8 @@
-import { useDraggable } from "@dnd-kit/core"
-import { useMemo } from "react"
+import { useDraggable, useDroppable } from "@dnd-kit/core"
+import { useCallback, useMemo } from "react"
 import { CSS } from "@dnd-kit/utilities"
 import { clamp } from "./utils"
+import { cn } from "@/lib/utils"
 import type { Table } from "@/stores/planner.store"
 
 type DraggableTableProps = {
@@ -9,6 +10,9 @@ type DraggableTableProps = {
   hallWidth: number
   hallHeight: number
   ppm: number
+  onSelect?: (tableId: string) => void
+  isSelected?: boolean
+  isDraggingGuest?: boolean
 }
 
 export const DraggableTable = ({
@@ -16,9 +20,23 @@ export const DraggableTable = ({
   hallWidth,
   hallHeight,
   ppm,
+  onSelect,
+  isSelected,
+  isDraggingGuest,
 }: DraggableTableProps) => {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDragRef,
+    transform,
+  } = useDraggable({
     id: table.id,
+    data: { type: "table-drag" },
+  })
+
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: `table-drop-${table.id}`,
+    data: { type: "table", tableId: table.id },
   })
 
   const { size, shape, position } = table
@@ -38,14 +56,27 @@ export const DraggableTable = ({
     }
   }, [hallHeight, hallWidth, size, position, ppm, transform])
 
+  const setRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      setDragRef(el)
+      setDropRef(el)
+    },
+    [setDragRef, setDropRef]
+  )
+
   return (
     <div
-      ref={setNodeRef}
+      ref={setRef}
       data-canvas-element-kind="table"
       data-canvas-element-id={table.id}
-      className={`absolute z-10 flex cursor-grab touch-none items-center justify-center border border-emerald-300 bg-emerald-100 text-emerald-800 shadow-sm active:cursor-grabbing ${
-        shape === "round" ? "rounded-full" : "rounded-lg"
-      }`}
+      className={cn(
+        "absolute z-10 flex cursor-grab touch-none items-center justify-center border border-emerald-300 bg-emerald-100 text-emerald-800 shadow-sm active:cursor-grabbing",
+        shape === "round" ? "rounded-full" : "rounded-lg",
+        isSelected && "ring-2 ring-emerald-600 ring-offset-2",
+        isDraggingGuest &&
+          isOver &&
+          "border-blue-300 bg-blue-50 ring-2 ring-blue-500 ring-offset-2"
+      )}
       style={{
         left: position.x * ppm,
         top: position.y * ppm,
@@ -56,6 +87,7 @@ export const DraggableTable = ({
           : undefined,
       }}
       aria-label={table.name}
+      onClick={() => onSelect?.(table.id)}
       {...listeners}
       {...attributes}
     >

@@ -1,5 +1,27 @@
 # EasyWed — Development Log
 
+### 13.04
+
+**Property panel (replaced dialogs)**
+
+- replaced `ConfigureHallDialog`, `AddTableDialog`, `EditTableDialog` with a slide-in `PropertyPanel` on the right side of the canvas
+- panel state managed by `panel.store` (view discriminated union); `selectedTableId` derived via selector instead of stored separately
+- hall panel applies changes immediately to the store (no local state / save-cancel flow)
+- table panel works in add/edit modes; edit mode auto-applies on every field change
+- guests panel groups guests by table assignment with droppable sections
+- moved table field components (`TableNameField`, `TableShapeField`, etc.) from `dialogs/tables/` to `PropertyPanel/fields/`
+- deleted dead code: `ConfigureHallDialog`, `AddTableDialog`, `EditTableDialog`, `TableDialog`, `useTableForm`, `Preview.tsx`, empty barrel files
+- merged `updateHall`/`updateHallProperties` into single `updateHall` store action (callers reset zoom/pan explicitly)
+
+**Guest drag-and-drop**
+
+- lifted `DndContext` to `Planner.tsx` so canvas and panel share one drag context
+- `DraggableTable` is now also a droppable — shows blue ring when a guest hovers over it
+- `isDraggingGuest` tracked once in `HallSurface` via `useDndMonitor`, passed down to tables
+- fixed: panel section highlights firing during table drags — gated `onDragOver` to `type === "guest"`
+- fixed: `DragOverlay` ghost moving because transform applied to source — suppressed on source when dragging
+- fixed: `setRef` in `DraggableTable` unstable reference — stabilised with `useCallback`
+
 ### 12.04
 
 - replaced canvas-based hall preview in `ConfigureHall` with a real `HallSurface` render — deleted `canvas-utils.ts` entirely

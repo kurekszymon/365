@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 
 type DimensionLabelProps = {
@@ -18,6 +19,7 @@ const HorizontalDimensionLabel = ({
   left,
   top,
 }: BaseDimensionLabelProps) => {
+  const { t } = useTranslation()
   return (
     <div
       className={cn(
@@ -29,8 +31,7 @@ const HorizontalDimensionLabel = ({
       <span className="h-px w-3" />
       <span className="h-px flex-1" />
       <span className="px-2 text-xs font-medium text-emerald-700 tabular-nums">
-        {/* TODO use TFunction */}
-        {value.toFixed(1)} m
+        {t("common.meters", { count: value })}
       </span>
       <span className="h-px flex-1" />
       <span className="h-px w-3" />
@@ -45,6 +46,7 @@ const VerticalDimensionLabel = ({
   left,
   top,
 }: BaseDimensionLabelProps) => {
+  const { t } = useTranslation()
   return (
     <div
       className={cn(
@@ -56,8 +58,7 @@ const VerticalDimensionLabel = ({
       <span className="h-3 w-px" />
       <span className="w-px flex-1" />
       <span className="-rotate-90 px-2 text-xs font-medium whitespace-nowrap text-emerald-700 tabular-nums">
-        {/* TODO use TFunction */}
-        {value.toFixed(1)} m
+        {t("common.meters", { count: value })}
       </span>
       <span className="w-px flex-1" />
       <span className="h-3 w-px" />
