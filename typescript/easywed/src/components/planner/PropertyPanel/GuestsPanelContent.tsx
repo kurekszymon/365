@@ -114,23 +114,29 @@ export const GuestsPanelContent = () => {
     [guests, activeGuestId]
   )
 
-  // Monitor the shared DndContext (from PlannerDndProvider) for local visual state
+  // Monitor the shared DndContext created in Planner.tsx for local visual state
   useDndMonitor({
     onDragStart: ({ active }) => {
       if (active.data.current?.type === "guest") {
         setActiveGuestId(String(active.id))
       }
     },
-    onDragOver: ({ over }) => {
-      setOverId(over ? String(over.id) : null)
+    onDragOver: ({ active, over }) => {
+      if (active.data.current?.type === "guest") {
+        setOverId(over ? String(over.id) : null)
+      }
     },
-    onDragEnd: () => {
-      setActiveGuestId(null)
-      setOverId(null)
+    onDragEnd: ({ active }) => {
+      if (active.data.current?.type === "guest") {
+        setActiveGuestId(null)
+        setOverId(null)
+      }
     },
-    onDragCancel: () => {
-      setActiveGuestId(null)
-      setOverId(null)
+    onDragCancel: ({ active }) => {
+      if (active.data.current?.type === "guest") {
+        setActiveGuestId(null)
+        setOverId(null)
+      }
     },
   })
 

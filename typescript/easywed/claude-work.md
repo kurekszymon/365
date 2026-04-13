@@ -29,14 +29,12 @@ Deleted dead code: ConfigureHallDialog, AddTableDialog, EditTableDialog, useTabl
 
 ⏺ Clean. Here's what changed and why:
 
-PlannerDndProvider — single shared DndContext above both canvas and panel. Routes onDragEnd by active.data.current.type: "table-drag" calls back into HallSurface, "guest" reads over.data.current to assign
-the guest to a table or unassign it.
+Planner.tsx — owns the shared DndContext above both canvas and panel so both sides participate in the same interaction flow. onDragEnd handles only guest drops: assigns or unassigns based on the drop target type.
 
-HallSurface — removed its own DndContext. Registers its position-update handler via useRegisterTableDragHandler so ppm/snapStep stay local. Hall droppable now tagged { type: "hall" } so guest drops on the
-background are ignored.
+HallSurface — removed its own DndContext. Uses useDndMonitor to handle table-drag position updates (keeping ppm/snapStep local) and to track isDraggingGuest for table hover feedback. Hall droppable tagged
+{ type: "hall" } so guest drops on the background are no-ops.
 
-DraggableTable — tagged as { type: "table-drag" } for dragging. Also a droppable ({ type: "table", tableId }) for guest drops. Uses useDndMonitor to only show the blue hover ring when a guest (not a table)
-is being dragged over it.
+DraggableTable — tagged as { type: "table-drag" } for dragging. Also a droppable ({ type: "table", tableId }) for guest drops. isDraggingGuest is passed down from HallSurface so the blue ring only appears
+during guest drags, not table moves.
 
-GuestsPanelContent — removed its own DndContext. Uses useDndMonitor to track activeGuestId/overId for panel-side visuals. The DragOverlay still lives here but works because it portals to document.body
-regardless.
+GuestsPanelContent — removed its own DndContext. Uses useDndMonitor (gated to type === "guest") to track activeGuestId/overId for panel-side visuals. DragOverlay portals to document.body regardless.

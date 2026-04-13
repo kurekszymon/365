@@ -1,5 +1,5 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core"
-import { useMemo } from "react"
+import { useCallback, useMemo } from "react"
 import { CSS } from "@dnd-kit/utilities"
 import { clamp } from "./utils"
 import { cn } from "@/lib/utils"
@@ -58,10 +58,10 @@ export const DraggableTable = ({
   }, [hallHeight, hallWidth, size, position, ppm, transform])
 
   // Merge both refs (draggable + droppable) onto the same element
-  const setRef = (el: HTMLDivElement | null) => {
+  const setRef = useCallback((el: HTMLDivElement | null) => {
     setDragRef(el)
     setDropRef(el)
-  }
+  }, [setDragRef, setDropRef])
 
   return (
     <div
