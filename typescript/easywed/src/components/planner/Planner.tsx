@@ -38,17 +38,20 @@ export const Planner = () => {
   const handleDragEnd = (e: DragEndEvent) => {
     if (e.active.data.current?.type !== "guest") return
     const overData = e.over?.data.current
+
     if (overData?.type === "table") {
       const { tableId } = overData
       if (typeof tableId !== "string") return
+
       assignGuestToTable(String(e.active.id), tableId)
     } else if (overData?.type === "unassigned") {
       assignGuestToTable(String(e.active.id), null)
     }
   }
 
-  const { preset, updateHall, resetZoomAndPan } = usePlannerStore(
+  const { hall, preset, updateHall, resetZoomAndPan } = usePlannerStore(
     useShallow((state) => ({
+      hall: state.hall,
       preset: state.hall.preset,
       updateHall: state.updateHall,
       resetZoomAndPan: state.resetHallZoomAndPan,
@@ -90,7 +93,11 @@ export const Planner = () => {
                 variant="outline"
                 onClick={() => {
                   if (!preset) {
-                    updateHall("rectangle", { width: 20, height: 12 }, 1)
+                    updateHall(
+                      hall.preset ?? "rectangle",
+                      hall.dimensions,
+                      hall.gridSpacing
+                    )
                     resetZoomAndPan()
                   }
                   panel.openHall()
@@ -104,7 +111,11 @@ export const Planner = () => {
                 variant="outline"
                 onClick={() => {
                   if (!preset) {
-                    updateHall("rectangle", { width: 20, height: 12 }, 1)
+                    updateHall(
+                      hall.preset ?? "rectangle",
+                      hall.dimensions,
+                      hall.gridSpacing
+                    )
                     resetZoomAndPan()
                   }
                   panel.openHall()

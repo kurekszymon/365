@@ -34,7 +34,6 @@ export const DraggableTable = ({
     data: { type: "table-drag" },
   })
 
-  // Droppable target for guests dragged from the panel onto this table
   const { setNodeRef: setDropRef, isOver } = useDroppable({
     id: `table-drop-${table.id}`,
     data: { type: "table", tableId: table.id },
@@ -57,7 +56,6 @@ export const DraggableTable = ({
     }
   }, [hallHeight, hallWidth, size, position, ppm, transform])
 
-  // Merge both refs (draggable + droppable) onto the same element
   const setRef = useCallback(
     (el: HTMLDivElement | null) => {
       setDragRef(el)

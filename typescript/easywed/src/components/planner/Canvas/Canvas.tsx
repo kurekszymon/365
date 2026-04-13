@@ -42,14 +42,17 @@ export const Canvas = () => {
   const [gridStyle, setGridStyle] = useState<GridStyle>("grid")
   const [snapStep, setSnapStep] = useState<SnapStep>(1)
 
-  const { hall, resetZoomAndPan, stepZoom, setPan } = usePlannerStore(
-    useShallow((state) => ({
-      hall: state.hall,
-      resetZoomAndPan: state.resetHallZoomAndPan,
-      stepZoom: state.stepHallZoom,
-      setPan: state.setHallPan,
-    }))
-  )
+  const { hall, preset, resetZoomAndPan, updateHall, stepZoom, setPan } =
+    usePlannerStore(
+      useShallow((state) => ({
+        hall: state.hall,
+        preset: state.hall.preset,
+        updateHall: state.updateHall,
+        resetZoomAndPan: state.resetHallZoomAndPan,
+        stepZoom: state.stepHallZoom,
+        setPan: state.setHallPan,
+      }))
+    )
 
   const selectedTableId = usePanelStore(selectSelectedTableId)
   const panel = usePanelStore(
@@ -61,7 +64,6 @@ export const Canvas = () => {
     }))
   )
 
-  // Track pointer movement to distinguish pan from click
   const pointerMovedRef = useRef(false)
 
   const {
@@ -98,8 +100,18 @@ export const Canvas = () => {
   if (!hall.preset) {
     return (
       <CanvasEmptyState
-        onClick={() => panel.openHall()}
         message={t("hall.empty_state")}
+        onClick={() => {
+          if (!preset) {
+            updateHall(
+              hall.preset ?? "rectangle",
+              hall.dimensions,
+              hall.gridSpacing
+            )
+            resetZoomAndPan()
+          }
+          panel.openHall()
+        }}
       />
     )
   }

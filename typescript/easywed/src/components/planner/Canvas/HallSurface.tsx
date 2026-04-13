@@ -78,8 +78,8 @@ export const HallSurface = ({
       ? calcGridSpacing(width / ppm, height / ppm)
       : gridSpacing
 
-  // droppable data { type: "hall" } so the shared onDragEnd in Planner.tsx ignores guest drops on the background
   const { setNodeRef: setDropRef } = useDroppable({
+    // droppable data { type: "hall" } so the shared onDragEnd in Planner.tsx ignores guest drops on the background
     id: "hall-identifier",
     data: { type: "hall" },
   })

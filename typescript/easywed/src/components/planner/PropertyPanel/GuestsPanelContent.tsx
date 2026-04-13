@@ -16,8 +16,6 @@ import { cn } from "@/lib/utils"
 
 const UNASSIGNED_ID = "__unassigned__"
 
-// — Draggable guest row —
-
 const DraggableGuest = ({ guest }: { guest: Guest }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({ id: guest.id, data: { type: "guest" } })
@@ -46,8 +44,6 @@ const DraggableGuest = ({ guest }: { guest: Guest }) => {
     </div>
   )
 }
-
-// — Droppable table section —
 
 const TableSection = ({
   droppableId,
@@ -92,8 +88,6 @@ const TableSection = ({
   )
 }
 
-// — Main component —
-
 export const GuestsPanelContent = () => {
   const { t } = useTranslation()
 
@@ -114,7 +108,6 @@ export const GuestsPanelContent = () => {
     [guests, activeGuestId]
   )
 
-  // Monitor the shared DndContext created in Planner.tsx for local visual state
   useDndMonitor({
     onDragStart: ({ active }) => {
       if (active.data.current?.type === "guest") {

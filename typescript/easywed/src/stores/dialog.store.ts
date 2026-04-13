@@ -6,22 +6,18 @@ type Guests = "Guest.Add"
 type Weddings = "Wedding.Rename" | "Wedding.Create"
 type Dialog = Weddings | Guests
 
-type DialogMeta = Record<string, never>
-
 type State = {
   opened: Dialog | null
-  meta: DialogMeta
 }
 
 type Action = {
-  open: (dialog: Dialog, meta?: DialogMeta) => void
+  open: (dialog: Dialog) => void
   close: () => void
 }
 
 export const useDialogStore = create<State & Action>((set) => ({
   opened: null,
-  meta: {},
 
-  open: (dialog, meta = {}) => set({ opened: dialog, meta }),
-  close: () => set({ opened: null, meta: {} }),
+  open: (dialog) => set({ opened: dialog }),
+  close: () => set({ opened: null }),
 }))
