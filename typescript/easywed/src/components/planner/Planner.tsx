@@ -37,13 +37,12 @@ export const Planner = () => {
 
   const handleDragEnd = (e: DragEndEvent) => {
     if (e.active.data.current?.type !== "guest") return
-    const overType = e.over?.data.current?.type
-    if (overType === "table") {
-      assignGuestToTable(
-        String(e.active.id),
-        e.over!.data.current!.tableId as string
-      )
-    } else if (overType === "unassigned") {
+    const overData = e.over?.data.current
+    if (overData?.type === "table") {
+      const { tableId } = overData
+      if (typeof tableId !== "string") return
+      assignGuestToTable(String(e.active.id), tableId)
+    } else if (overData?.type === "unassigned") {
       assignGuestToTable(String(e.active.id), null)
     }
   }

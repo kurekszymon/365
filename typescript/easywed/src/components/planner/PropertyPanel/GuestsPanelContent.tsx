@@ -10,7 +10,7 @@ import {
 import { CSS } from "@dnd-kit/utilities"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useDialogStore } from "@/stores/dialog.store"
-import type { Guest, Table } from "@/stores/planner.store"
+import type { Guest } from "@/stores/planner.store"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -162,12 +162,11 @@ export const GuestsPanelContent = () => {
     )
   }
 
-  const sections: Array<{ id: string | null; label: string; table?: Table }> = [
+  const sections: Array<{ id: string | null; label: string }> = [
     { id: null, label: t("guests.unassigned") },
     ...tables.map((table) => ({
       id: table.id,
       label: `${table.name} (${t("tables.capacity_count", { count: table.capacity })})`,
-      table,
     })),
   ]
 

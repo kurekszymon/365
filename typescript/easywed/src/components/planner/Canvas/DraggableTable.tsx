@@ -58,10 +58,13 @@ export const DraggableTable = ({
   }, [hallHeight, hallWidth, size, position, ppm, transform])
 
   // Merge both refs (draggable + droppable) onto the same element
-  const setRef = useCallback((el: HTMLDivElement | null) => {
-    setDragRef(el)
-    setDropRef(el)
-  }, [setDragRef, setDropRef])
+  const setRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      setDragRef(el)
+      setDropRef(el)
+    },
+    [setDragRef, setDropRef]
+  )
 
   return (
     <div
