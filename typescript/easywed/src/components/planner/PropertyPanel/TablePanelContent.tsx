@@ -76,13 +76,16 @@ export const TablePanelContent = (props: Props) => {
 
   const assignedWithinCapacity = form.assignedGuestIds.slice(0, form.capacity)
 
-  const isValid = (f: typeof form) =>
-    !!f.name.trim() &&
-    isDimensionsValidForShape(f.shape, f.width, f.height) &&
-    (f.shape === "round"
-      ? f.width <= hallMaxWidth && f.width <= hallMaxHeight
-      : f.width <= hallMaxWidth && f.height <= hallMaxHeight) &&
-    f.capacity > 0
+  const isValid = (f: typeof form) => {
+    if (!isDimensionsValidForShape(f.shape, f.width, f.height)) return false
+    if (f.shape === "round") {
+      if (f.width > hallMaxWidth || f.width > hallMaxHeight) return false
+    } else {
+      if (f.width > hallMaxWidth || f.height > hallMaxHeight) return false
+    }
+    if (f.capacity <= 0) return false
+    return true
+  }
 
   const canSubmit = isValid(form)
 

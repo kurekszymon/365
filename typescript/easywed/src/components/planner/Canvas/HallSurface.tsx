@@ -84,13 +84,27 @@ export const HallSurface = ({
     data: { type: "hall" },
   })
 
-  const { tables, hallDimensions, updateTablePosition } = usePlannerStore(
-    useShallow((state) => ({
-      tables: state.tables,
-      hallDimensions: state.hall.dimensions,
-      updateTablePosition: state.updateTablePosition,
-    }))
-  )
+  const { tables, guests, hallDimensions, updateTablePosition } =
+    usePlannerStore(
+      useShallow((state) => ({
+        tables: state.tables,
+        guests: state.guests,
+        hallDimensions: state.hall.dimensions,
+        updateTablePosition: state.updateTablePosition,
+      }))
+    )
+
+  const assignedGuestsByTableId = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const table of tables) {
+      counts.set(table.id, 0)
+    }
+    for (const guest of guests) {
+      if (!guest.tableId) continue
+      counts.set(guest.tableId, (counts.get(guest.tableId) ?? 0) + 1)
+    }
+    return counts
+  }, [tables, guests])
 
   const canvasTables = useMemo(
     () =>
@@ -153,6 +167,7 @@ export const HallSurface = ({
         <DraggableTable
           key={ct.id}
           table={ct}
+          guestsAssigned={assignedGuestsByTableId.get(ct.id) ?? 0}
           hallWidth={hallDimensions.width}
           hallHeight={hallDimensions.height}
           ppm={ppm}

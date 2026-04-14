@@ -157,7 +157,9 @@ export const GuestsPanelContent = () => {
     { id: null, label: t("guests.unassigned") },
     ...tables.map((table) => ({
       id: table.id,
-      label: `${table.name} (${t("tables.capacity_count", { count: table.capacity })})`,
+      label:
+        table.name.trim() ||
+        `${(guestsByTable.get(table.id) ?? []).length} / ${table.capacity}`,
     })),
   ]
 

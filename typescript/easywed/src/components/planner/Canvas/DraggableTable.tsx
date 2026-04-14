@@ -7,6 +7,7 @@ import type { Table } from "@/stores/planner.store"
 
 type DraggableTableProps = {
   table: Table
+  guestsAssigned: number
   hallWidth: number
   hallHeight: number
   ppm: number
@@ -17,6 +18,7 @@ type DraggableTableProps = {
 
 export const DraggableTable = ({
   table,
+  guestsAssigned,
   hallWidth,
   hallHeight,
   ppm,
@@ -40,6 +42,8 @@ export const DraggableTable = ({
   })
 
   const { size, shape, position } = table
+  const tableLabel =
+    table.name.trim() || `${guestsAssigned} / ${table.capacity}`
 
   const clampedTransform = useMemo(() => {
     if (!transform) return null
@@ -86,12 +90,14 @@ export const DraggableTable = ({
           ? CSS.Translate.toString(clampedTransform)
           : undefined,
       }}
-      aria-label={table.name}
+      aria-label={tableLabel}
       onClick={() => onSelect?.(table.id)}
       {...listeners}
       {...attributes}
     >
-      {table.capacity}
+      <span className="max-w-full truncate px-1 text-xs font-medium">
+        {tableLabel}
+      </span>
     </div>
   )
 }

@@ -55,10 +55,10 @@ export const Canvas = () => {
   const openHall = useOpenHall()
 
   const selectedTableId = usePanelStore(selectSelectedTableId)
+  const addTable = usePlannerStore((state) => state.addTable)
   const panel = usePanelStore(
     useShallow((state) => ({
       openHall: state.openHall,
-      openTableAdd: state.openTableAdd,
       openTableEdit: state.openTableEdit,
       close: state.close,
     }))
@@ -105,7 +105,19 @@ export const Canvas = () => {
 
   return (
     <CanvasContextMenu
-      onAddTable={(position) => panel.openTableAdd(position)}
+      onAddTable={(position) => {
+        const tableId = addTable(
+          {
+            name: "",
+            shape: "rectangular",
+            capacity: 8,
+            size: { width: 2, height: 1 },
+          },
+          [],
+          position
+        )
+        panel.openTableEdit(tableId)
+      }}
       onEditTable={(tableId) => panel.openTableEdit(tableId)}
       onConfigureHall={() => panel.openHall()}
       viewportToHall={viewportToHall}
