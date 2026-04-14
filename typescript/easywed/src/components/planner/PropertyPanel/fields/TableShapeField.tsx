@@ -1,13 +1,8 @@
 import { useTranslation } from "react-i18next"
 import type { TableShape } from "@/stores/planner.store"
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
+import { ButtonGroup } from "@/components/ui/button-group"
 
 interface IProps {
   value: TableShape
@@ -20,20 +15,26 @@ export const TableShapeField = ({ value, onChange }: IProps) => {
     <Field>
       <FieldLabel>{t("tables.shape")}</FieldLabel>
       <FieldContent>
-        <Select
-          value={value}
-          onValueChange={(val) => onChange(val as TableShape)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="rectangular">
-              {t("tables.shape.rectangular")}
-            </SelectItem>
-            <SelectItem value="round">{t("tables.shape.round")}</SelectItem>
-          </SelectContent>
-        </Select>
+        <ButtonGroup className="w-full">
+          <Button
+            type="button"
+            size="xs"
+            className="flex-1"
+            variant={value === "rectangular" ? "default" : "outline"}
+            onClick={() => onChange("rectangular")}
+          >
+            {t("tables.shape.rectangular")}
+          </Button>
+          <Button
+            type="button"
+            size="xs"
+            className="flex-1"
+            variant={value === "round" ? "default" : "outline"}
+            onClick={() => onChange("round")}
+          >
+            {t("tables.shape.round")}
+          </Button>
+        </ButtonGroup>
       </FieldContent>
     </Field>
   )

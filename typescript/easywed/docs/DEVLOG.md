@@ -1,5 +1,14 @@
 # EasyWed — Development Log
 
+### 14.04
+
+- replaced table shape select in panel with a two-option `ButtonGroup` (rectangular / round) for quicker toggling
+- changed canvas context menu "Add Table" to optimistic flow: creates a table immediately at click position and opens table edit view right away
+- default table created from context menu uses: empty `name`, `rectangular` shape, `8` capacity, and `2x1` size
+- made table name optional in table form validation (empty name is now valid)
+- added fallback table label when name is empty: `guestsAssigned / capacity` (used on canvas table chip + aria-label)
+- applied the same unnamed-table fallback in guests panel section labels for consistency
+
 ### 13.04
 
 **Property panel (replaced dialogs)**
