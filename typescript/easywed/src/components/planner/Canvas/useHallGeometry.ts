@@ -7,6 +7,7 @@ const VIEWPORT_MARGIN = 48
 type HallDimensions = { width: number; height: number }
 
 export function useHallGeometry(
+  containerEl: HTMLElement | null,
   containerWidth: number,
   containerHeight: number,
   dimensions: HallDimensions,
@@ -31,19 +32,29 @@ export function useHallGeometry(
   const hallTop = (containerHeight - scaledHeight) / 2 + pan.y
   const ppm = PIXELS_PER_METER * scale
 
-  function viewportToHall(clientX: number, clientY: number): Position {
+  function toContainerCoords(clientX: number, clientY: number) {
+    const rect = containerEl?.getBoundingClientRect()
     return {
-      x: Math.max(0, (clientX - hallLeft) / ppm),
-      y: Math.max(0, (clientY - hallTop) / ppm),
+      x: clientX - (rect?.left ?? 0),
+      y: clientY - (rect?.top ?? 0),
+    }
+  }
+
+  function viewportToHall(clientX: number, clientY: number): Position {
+    const { x, y } = toContainerCoords(clientX, clientY)
+    return {
+      x: Math.max(0, (x - hallLeft) / ppm),
+      y: Math.max(0, (y - hallTop) / ppm),
     }
   }
 
   function isInHallBounds(clientX: number, clientY: number): boolean {
+    const { x, y } = toContainerCoords(clientX, clientY)
     return (
-      clientX >= hallLeft &&
-      clientX <= hallLeft + scaledWidth &&
-      clientY >= hallTop &&
-      clientY <= hallTop + scaledHeight
+      x >= hallLeft &&
+      x <= hallLeft + scaledWidth &&
+      y >= hallTop &&
+      y <= hallTop + scaledHeight
     )
   }
 

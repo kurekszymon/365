@@ -86,6 +86,7 @@ export const Canvas = () => {
     viewportToHall,
     isInHallBounds,
   } = useHallGeometry(
+    containerEl,
     containerWidth,
     containerHeight,
     hall.dimensions,

@@ -27,14 +27,13 @@ export const CanvasContextMenu = ({
 }: PropsWithChildren<Props>) => {
   const capturedPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const [inHall, setInHall] = useState(false)
+  // hack to render at correct position
+  const [contentKey, setContentKey] = useState(0)
 
   return (
     <ContextMenu
       onOpenChange={(open) => {
-        if (!open) return
-        setInHall(
-          isInHallBounds(capturedPosRef.current.x, capturedPosRef.current.y)
-        )
+        if (open) setContentKey((k) => k + 1)
       }}
     >
       <ContextMenuTrigger
@@ -48,6 +47,7 @@ export const CanvasContextMenu = ({
       </ContextMenuTrigger>
 
       <ContextMenuContent
+        key={contentKey}
         className={cn(
           "z-50 min-w-40 overflow-hidden rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10",
           "duration-100 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
