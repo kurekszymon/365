@@ -112,10 +112,10 @@ export const HallPanelContent = () => {
             type="button"
             size="xs"
             className="flex-1"
-            variant={gridStyle === "off" ? "default" : "outline"}
-            onClick={() => setGridStyle("off")}
+            variant={gridStyle === "grid" ? "default" : "outline"}
+            onClick={() => setGridStyle("grid")}
           >
-            {t("canvas.grid.off")}
+            {t("canvas.grid.grid")}
           </Button>
           <Button
             type="button"
@@ -130,10 +130,10 @@ export const HallPanelContent = () => {
             type="button"
             size="xs"
             className="flex-1"
-            variant={gridStyle === "grid" ? "default" : "outline"}
-            onClick={() => setGridStyle("grid")}
+            variant={gridStyle === "off" ? "default" : "outline"}
+            onClick={() => setGridStyle("off")}
           >
-            {t("canvas.grid.grid")}
+            {t("canvas.grid.off")}
           </Button>
         </ButtonGroup>
       </Field>

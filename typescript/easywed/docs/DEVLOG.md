@@ -2,6 +2,7 @@
 
 ### 15.04
 
+- match grid style buttongroup order with NEXT_GRID_STYLE in Canvas
 - move SnapStep/GridStyle/GridSpacing to `planner.store.ts` instead of local variables. all modifications from hall / canvas are going through the store now.
 - add grid style controls to property panel
 - centralized canvas click + context-menu routing in `Canvas.tsx` via `findCapturedElement` / `captured.kind`:
