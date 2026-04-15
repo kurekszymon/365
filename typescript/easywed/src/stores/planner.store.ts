@@ -1,8 +1,11 @@
 import { create } from "zustand"
-import type { GridSpacing } from "@/components/planner/Canvas/HallSurface"
 
 const ZOOM_MIN = 0.2
 const ZOOM_MAX = 4
+
+export type GridStyle = "dots" | "grid" | "off"
+export type GridSpacing = 1 | 2 | 5 | 10 | 25 | 50 | "auto"
+export type SnapStep = 0.1 | 0.25 | 0.5 | 1 | "off"
 
 export type TableShape = "round" | "rectangular"
 
@@ -54,6 +57,8 @@ type State = {
     zoom: number
     pan: { x: number; y: number }
     gridSpacing: GridSpacing
+    gridStyle: GridStyle
+    snapStep: SnapStep
     preset?: HallPreset | undefined
   }
 }
@@ -73,12 +78,14 @@ type Action = {
   updateHall: (
     preset: HallPreset,
     dimensions: { width: number; height: number },
-    gridSpacing?: GridSpacing
+    gridSpacing?: GridSpacing,
+    gridStyle?: GridStyle
   ) => void
   assignGuestToTable: (guestId: string, tableId: string | null) => void
   resetHallZoomAndPan: () => void
   stepHallZoom: (direction: 1 | -1) => void
   setHallPan: (pan: { x: number; y: number }) => void
+  setSnapStep: (step: SnapStep) => void
   updateTablePosition: (id: string, x: number, y: number) => void
 }
 
@@ -94,6 +101,8 @@ export const usePlannerStore = create<State & Action>((set) => ({
     zoom: 1,
     pan: { x: 0, y: 0 },
     gridSpacing: 1,
+    gridStyle: "grid",
+    snapStep: 1,
   },
 
   addTable: (table, guestIds = [], position) => {
@@ -143,13 +152,19 @@ export const usePlannerStore = create<State & Action>((set) => ({
     set((state) => ({
       guests: [...state.guests, { ...guest, id: crypto.randomUUID() }],
     })),
-  updateHall: (preset, dimensions, gridSpacing = 1) =>
+  updateHall: (
+    preset,
+    dimensions,
+    gridSpacing = 1,
+    gridStyle: GridStyle = "grid"
+  ) =>
     set((state) => ({
       hall: {
         ...state.hall,
         preset,
         dimensions,
         gridSpacing,
+        gridStyle,
       },
     })),
   assignGuestToTable: (guestId, tableId) =>
@@ -191,6 +206,10 @@ export const usePlannerStore = create<State & Action>((set) => ({
   setHallPan: (pan) =>
     set((state) => ({
       hall: { ...state.hall, pan },
+    })),
+  setSnapStep: (step) =>
+    set((state) => ({
+      hall: { ...state.hall, snapStep: step },
     })),
   updateTablePosition: (id, x, y) =>
     set((state) => ({

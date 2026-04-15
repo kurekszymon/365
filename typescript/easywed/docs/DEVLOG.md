@@ -1,5 +1,10 @@
 # EasyWed — Development Log
 
+### 15.04
+
+- move SnapStep/GridStyle/GridSpacing to `planner.store.ts` instead of local variables. all modifications from hall / canvas are going through the store now.
+- add grid style controls to property panel
+
 ### 14.04
 
 - replaced table shape select in panel with a two-option `ButtonGroup` (rectangular / round) for quicker toggling

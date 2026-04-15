@@ -85,7 +85,7 @@
   "canvas.grid.off": "Wyłączone",
   "canvas.grid.dots": "Kropki",
   "canvas.grid.grid": "Siatka",
-  "canvas.grid.tooltip": "Styl siatki",
+  "canvas.grid.style": "Styl siatki",
   "canvas.grid.spacing": "Odstęp siatki",
   "canvas.grid.spacing_tooltip": "Określa odległość między liniami siatki w sali",
 

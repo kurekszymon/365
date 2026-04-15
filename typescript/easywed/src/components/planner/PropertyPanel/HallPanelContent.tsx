@@ -2,9 +2,13 @@ import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
 import { InfoIcon } from "lucide-react"
 import { DimensionsRectangle } from "./fields/DimensionsRectangle"
-import type { GridSpacing } from "@/components/planner/Canvas/HallSurface"
+
 import { NICE_INTERVALS } from "@/components/planner/Canvas/HallSurface"
-import { usePlannerStore } from "@/stores/planner.store"
+import {
+  usePlannerStore,
+  type GridSpacing,
+  type GridStyle,
+} from "@/stores/planner.store"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Field, FieldTitle } from "@/components/ui/field"
@@ -30,27 +34,33 @@ function clampGridSpacing(
 export const HallPanelContent = () => {
   const { t } = useTranslation()
 
-  const { preset, dimensions, gridSpacing, updateHall } = usePlannerStore(
-    useShallow((state) => ({
-      preset: state.hall.preset ?? "rectangle",
-      dimensions: state.hall.dimensions,
-      gridSpacing: state.hall.gridSpacing,
-      updateHall: state.updateHall,
-    }))
-  )
+  const { preset, dimensions, gridSpacing, gridStyle, updateHall } =
+    usePlannerStore(
+      useShallow((state) => ({
+        preset: state.hall.preset ?? "rectangle",
+        dimensions: state.hall.dimensions,
+        gridSpacing: state.hall.gridSpacing,
+        gridStyle: state.hall.gridStyle,
+        updateHall: state.updateHall,
+      }))
+    )
 
   const setWidth = (width: number) => {
     const spacing = clampGridSpacing(gridSpacing, width, dimensions.height)
-    updateHall(preset, { width, height: dimensions.height }, spacing)
+    updateHall(preset, { width, height: dimensions.height }, spacing, gridStyle)
   }
 
   const setHeight = (height: number) => {
     const spacing = clampGridSpacing(gridSpacing, dimensions.width, height)
-    updateHall(preset, { width: dimensions.width, height }, spacing)
+    updateHall(preset, { width: dimensions.width, height }, spacing, gridStyle)
   }
 
   const setGridSpacing = (spacing: GridSpacing) => {
-    updateHall(preset, dimensions, spacing)
+    updateHall(preset, dimensions, spacing, gridStyle)
+  }
+
+  const setGridStyle = (style: GridStyle) => {
+    updateHall(preset, dimensions, gridSpacing, style)
   }
 
   return (
@@ -91,6 +101,40 @@ export const HallPanelContent = () => {
                 : t("common.meters", { count: option })}
             </Button>
           ))}
+        </ButtonGroup>
+      </Field>
+      <Field>
+        <div className="flex items-center gap-1.5">
+          <FieldTitle>{t("canvas.grid.style")}</FieldTitle>
+        </div>
+        <ButtonGroup className="w-full">
+          <Button
+            type="button"
+            size="xs"
+            className="flex-1"
+            variant={gridStyle === "off" ? "default" : "outline"}
+            onClick={() => setGridStyle("off")}
+          >
+            {t("canvas.grid.off")}
+          </Button>
+          <Button
+            type="button"
+            size="xs"
+            className="flex-1"
+            variant={gridStyle === "dots" ? "default" : "outline"}
+            onClick={() => setGridStyle("dots")}
+          >
+            {t("canvas.grid.dots")}
+          </Button>
+          <Button
+            type="button"
+            size="xs"
+            className="flex-1"
+            variant={gridStyle === "grid" ? "default" : "outline"}
+            onClick={() => setGridStyle("grid")}
+          >
+            {t("canvas.grid.grid")}
+          </Button>
         </ButtonGroup>
       </Field>
     </div>

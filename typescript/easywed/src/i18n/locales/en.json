@@ -83,7 +83,7 @@
   "canvas.grid.off": "Off",
   "canvas.grid.dots": "Dots",
   "canvas.grid.grid": "Grid",
-  "canvas.grid.tooltip": "Grid style",
+  "canvas.grid.style": "Grid style",
   "canvas.grid.spacing": "Grid spacing",
   "canvas.grid.spacing_tooltip": "Controls how far apart grid lines are drawn in the hall",
 
