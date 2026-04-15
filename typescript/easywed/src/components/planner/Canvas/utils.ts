@@ -16,12 +16,9 @@ export const clampToHall = (
   }
 }
 
-type CapturedElementKind = "table" | "hall"
-
-export type CapturedElement = {
-  kind: CapturedElementKind
-  id: string | null
-}
+export type CapturedElement =
+  | { kind: "table"; id: string }
+  | { kind: "hall" }
 
 export const findCapturedElement = (
   target: EventTarget | null
@@ -36,16 +33,17 @@ export const findCapturedElement = (
     return null
   }
 
-  const kind = elementNode.getAttribute(
-    "data-canvas-element-kind"
-  ) as CapturedElementKind | null
+  const kind = elementNode.getAttribute("data-canvas-element-kind")
 
-  if (!kind) {
-    return null
+  if (kind === "hall") {
+    return { kind: "hall" }
   }
 
-  return {
-    kind,
-    id: elementNode.getAttribute("data-canvas-element-id"),
+  if (kind === "table") {
+    const id = elementNode.getAttribute("data-canvas-element-id")
+    if (!id) return null
+    return { kind: "table", id }
   }
+
+  return null
 }

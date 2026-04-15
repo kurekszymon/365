@@ -1,10 +1,11 @@
 import { useTranslation } from "react-i18next"
 import { useRef } from "react"
 import { useShallow } from "zustand/react/shallow"
-import { DotIcon, Grid3x3Icon, Grid2x2XIcon } from "lucide-react"
+import { DotIcon, Grid3x3Icon, Grid2x2XIcon, TableIcon } from "lucide-react"
 import { ScalePill } from "./ScalePill"
 import { DimensionLabel } from "./DimensionLabel"
 import { CanvasContextMenu } from "./CanvasContextMenu"
+import { CanvasContextMenuItem } from "./CanvasContextMenuItem"
 import { CanvasEmptyState } from "./CanvasEmptyState"
 import { HallSurface } from "./HallSurface"
 import { findCapturedElement } from "./utils"
@@ -23,7 +24,7 @@ import {
   type GridStyle,
   type SnapStep,
 } from "@/stores/planner.store"
-import { usePanelStore, selectSelectedTableId } from "@/stores/panel.store"
+import { usePanelStore } from "@/stores/panel.store"
 import { useElementSize } from "@/hooks/useElementSize"
 import { useOpenHall } from "@/hooks/useOpenHall"
 
@@ -58,7 +59,6 @@ export const Canvas = () => {
 
   const openHall = useOpenHall()
 
-  const selectedTableId = usePanelStore(selectSelectedTableId)
   const addTable = usePlannerStore((state) => state.addTable)
   const panel = usePanelStore(
     useShallow((state) => ({
@@ -124,23 +124,29 @@ export const Canvas = () => {
 
   return (
     <CanvasContextMenu
-      onAddTable={(position) => {
-        const tableId = addTable(
-          {
-            name: "",
-            shape: "rectangular",
-            capacity: 8,
-            size: { width: 2, height: 1 },
-          },
-          [],
-          position
-        )
-        panel.openTableEdit(tableId)
-      }}
-      onEditTable={(tableId) => panel.openTableEdit(tableId)}
-      onConfigureHall={() => panel.openHall()}
       viewportToHall={viewportToHall}
       isInHallBounds={isInHallBounds}
+      renderItems={({ position, inHall }) => (
+        <CanvasContextMenuItem
+          disabled={!inHall}
+          onSelect={() => {
+            const tableId = addTable(
+              {
+                name: "",
+                shape: "rectangular",
+                capacity: 8,
+                size: { width: 2, height: 1 },
+              },
+              [],
+              position
+            )
+            panel.openTableEdit(tableId)
+          }}
+        >
+          <TableIcon className="size-4" />
+          {t("tables.add")}
+        </CanvasContextMenuItem>
+      )}
     >
       <div
         ref={containerRef}
@@ -168,7 +174,10 @@ export const Canvas = () => {
           if (pointerMovedRef.current) return
           if ((e.target as Element).closest("[data-no-pan]")) return
           const captured = findCapturedElement(e.target)
-          if (captured?.kind === "table") return // handled by DraggableTable
+          if (captured?.kind === "table") {
+            panel.openTableEdit(captured.id)
+            return
+          }
           if (captured?.kind === "hall") {
             panel.openHall()
             return
@@ -266,8 +275,6 @@ export const Canvas = () => {
           gridStyle={hall.gridStyle}
           snapStep={hall.snapStep}
           gridSpacing={hall.gridSpacing}
-          onTableClick={(tableId) => panel.openTableEdit(tableId)}
-          selectedTableId={selectedTableId}
         />
       </div>
     </CanvasContextMenu>

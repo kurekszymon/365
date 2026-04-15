@@ -57,8 +57,6 @@ interface HallSurfaceProps {
   gridStyle: GridStyle
   snapStep: SnapStep
   gridSpacing?: GridSpacing
-  onTableClick?: (tableId: string) => void
-  selectedTableId?: string | null
 }
 
 export const HallSurface = ({
@@ -71,8 +69,6 @@ export const HallSurface = ({
   gridStyle,
   snapStep,
   gridSpacing = 1,
-  onTableClick,
-  selectedTableId,
 }: HallSurfaceProps) => {
   const resolvedGridSpacing =
     gridSpacing === "auto"
@@ -172,8 +168,6 @@ export const HallSurface = ({
           hallWidth={hallDimensions.width}
           hallHeight={hallDimensions.height}
           ppm={ppm}
-          onSelect={onTableClick}
-          isSelected={selectedTableId === ct.id}
           isDraggingGuest={isDraggingGuest}
         />
       ))}

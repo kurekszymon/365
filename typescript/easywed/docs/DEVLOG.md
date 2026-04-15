@@ -4,6 +4,14 @@
 
 - move SnapStep/GridStyle/GridSpacing to `planner.store.ts` instead of local variables. all modifications from hall / canvas are going through the store now.
 - add grid style controls to property panel
+- centralized canvas click + context-menu routing in `Canvas.tsx` via `findCapturedElement` / `captured.kind`:
+  - `CanvasContextMenu` refactored from per-action props (`onAddTable`, `onEditTable`, `onConfigureHall`) into a `renderItems({ position, inHall })` render prop — the component is now just a trigger + content shell, Canvas owns all action logic
+  - `DraggableTable` dropped `onSelect` / `isSelected` props; reads its own selection state from `panel.store` and selection clicks are handled by the outer canvas `onClick` via `captured.kind === "table"`
+  - `HallSurface` dropped `onTableClick` / `selectedTableId` pass-through
+  - tightened `CapturedElement` into a discriminated union (`{ kind: "table"; id: string } | { kind: "hall" }`) so `captured.id` is narrowed by `kind` — dropped `captured.id!` / null guards
+  - narrowed `DraggableTable` selection selector to a boolean (`(s) => selectSelectedTableId(s) === table.id`) so only the newly-/previously-selected tables re-render on selection change
+  - extracted `CanvasContextMenuItem` (shared menu-item className + variants) into its own file
+  - stripped "Edit table" and "Configure hall" items from the canvas context menu — both are reachable via the property panel on left-click, so the menu is now just "Add Table". `CanvasContextMenu` no longer tracks `capturedElement`.
 
 ### 14.04
 

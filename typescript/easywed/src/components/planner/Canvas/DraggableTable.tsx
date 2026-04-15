@@ -4,6 +4,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { clamp } from "./utils"
 import { cn } from "@/lib/utils"
 import type { Table } from "@/stores/planner.store"
+import { usePanelStore, selectSelectedTableId } from "@/stores/panel.store"
 
 type DraggableTableProps = {
   table: Table
@@ -11,8 +12,6 @@ type DraggableTableProps = {
   hallWidth: number
   hallHeight: number
   ppm: number
-  onSelect?: (tableId: string) => void
-  isSelected?: boolean
   isDraggingGuest?: boolean
 }
 
@@ -22,10 +21,11 @@ export const DraggableTable = ({
   hallWidth,
   hallHeight,
   ppm,
-  onSelect,
-  isSelected,
   isDraggingGuest,
 }: DraggableTableProps) => {
+  const isSelected = usePanelStore(
+    (state) => selectSelectedTableId(state) === table.id
+  )
   const {
     attributes,
     listeners,
@@ -91,7 +91,6 @@ export const DraggableTable = ({
           : undefined,
       }}
       aria-label={tableLabel}
-      onClick={() => onSelect?.(table.id)}
       {...listeners}
       {...attributes}
     >
