@@ -1,6 +1,13 @@
 import { Link, createFileRoute } from "@tanstack/react-router"
+// import { supabase } from "../lib/supabase"
 
-export const Route = createFileRoute("/")({ component: Home })
+export const Route = createFileRoute("/")({
+  // loader: async () => {
+  //   const { data: todos } = await supabase.from("todos").select()
+  //   return {  }
+  // },
+  component: Home,
+})
 
 function Home() {
   return (
