@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 16.04
+
+- added duplicate and delete table from the canvas - should probably populate it to property panel
+
 ### 15.04
 
 - match grid style buttongroup order with NEXT_GRID_STYLE in Canvas

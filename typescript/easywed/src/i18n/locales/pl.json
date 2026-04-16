@@ -31,6 +31,8 @@
   "tables": "Stoły",
   "tables.add": "Dodaj stół",
   "tables.edit": "Edytuj stół",
+  "tables.duplicate": "Duplikuj stół",
+  "tables.delete": "Usuń stół",
   "tables.name_placeholder": "Stół rodzinny",
   "tables.shape": "Kształt stołu",
   "tables.shape.rectangular": "Prostokątny",

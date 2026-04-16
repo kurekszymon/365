@@ -31,6 +31,8 @@
   "tables": "Tables",
   "tables.add": "Add a table",
   "tables.edit": "Edit table",
+  "tables.duplicate": "Duplicate table",
+  "tables.delete": "Delete table",
   "tables.name_placeholder": "Family table",
   "tables.shape": "Table shape",
   "tables.shape.rectangular": "Rectangular",

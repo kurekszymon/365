@@ -74,6 +74,8 @@ type Action = {
     table: Omit<Table, "id" | "position">,
     guestIds?: Array<string>
   ) => void
+  duplicateTable: (id: string) => string | null
+  deleteTable: (id: string) => void
   addGuest: (guest: Omit<Guest, "id">) => void
   updateHall: (
     preset: HallPreset,
@@ -89,7 +91,7 @@ type Action = {
   updateTablePosition: (id: string, x: number, y: number) => void
 }
 
-export const usePlannerStore = create<State & Action>((set) => ({
+export const usePlannerStore = create<State & Action>((set, get) => ({
   tables: [],
   guests: [],
   hall: {
@@ -147,6 +149,32 @@ export const usePlannerStore = create<State & Action>((set) => ({
 
         return guest
       }),
+    })),
+  duplicateTable: (id) => {
+    const original = get().tables.find((t) => t.id === id)
+    if (!original) return null
+    const newId = crypto.randomUUID()
+    set((state) => ({
+      tables: [
+        ...state.tables,
+        {
+          ...original,
+          id: newId,
+          position: {
+            x: original.position.x + 0.5,
+            y: original.position.y + 0.5,
+          },
+        },
+      ],
+    }))
+    return newId
+  },
+  deleteTable: (id) =>
+    set((state) => ({
+      tables: state.tables.filter((t) => t.id !== id),
+      guests: state.guests.map((g) =>
+        g.tableId === id ? { ...g, tableId: null } : g
+      ),
     })),
   addGuest: (guest) =>
     set((state) => ({

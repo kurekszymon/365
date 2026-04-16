@@ -1,10 +1,14 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core"
 import { useCallback, useMemo } from "react"
 import { CSS } from "@dnd-kit/utilities"
+import { CopyIcon, Trash2Icon } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { clamp } from "./utils"
 import { cn } from "@/lib/utils"
-import type { Table } from "@/stores/planner.store"
+
+import { usePlannerStore, type Table } from "@/stores/planner.store"
 import { usePanelStore, selectSelectedTableId } from "@/stores/panel.store"
+import { CanvasActionButton } from "./CanvasActionButton"
 
 type DraggableTableProps = {
   table: Table
@@ -23,9 +27,16 @@ export const DraggableTable = ({
   ppm,
   isDraggingGuest,
 }: DraggableTableProps) => {
+  const { t } = useTranslation()
   const isSelected = usePanelStore(
     (state) => selectSelectedTableId(state) === table.id
   )
+
+  const openTableEdit = usePanelStore((state) => state.openTableEdit)
+  const closePanel = usePanelStore((state) => state.close)
+  const duplicateTable = usePlannerStore((state) => state.duplicateTable)
+  const deleteTable = usePlannerStore((state) => state.deleteTable)
+
   const {
     attributes,
     listeners,
@@ -42,8 +53,11 @@ export const DraggableTable = ({
   })
 
   const { size, shape, position } = table
-  const tableLabel =
-    table.name.trim() || `${guestsAssigned} / ${table.capacity}`
+  const hasName = table.name.trim().length > 0
+  const guestCountLabel = `${guestsAssigned} / ${table.capacity}`
+  const ariaLabel = hasName
+    ? `${table.name} — ${guestCountLabel}`
+    : guestCountLabel
 
   const clampedTransform = useMemo(() => {
     if (!transform) return null
@@ -90,13 +104,47 @@ export const DraggableTable = ({
           ? CSS.Translate.toString(clampedTransform)
           : undefined,
       }}
-      aria-label={tableLabel}
+      aria-label={ariaLabel}
       {...listeners}
       {...attributes}
     >
-      <span className="max-w-full truncate px-1 text-xs font-medium">
-        {tableLabel}
-      </span>
+      <div className="flex max-w-full flex-col items-center justify-center px-1 leading-tight">
+        {hasName && (
+          <span className="max-w-full truncate text-xs font-medium">
+            {table.name}
+          </span>
+        )}
+        <span className="max-w-full truncate text-[10px] text-emerald-700">
+          {guestCountLabel}
+        </span>
+      </div>
+
+      {isSelected && (
+        <div
+          className="absolute -top-8 right-0 flex gap-1"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <CanvasActionButton
+            icon={<CopyIcon className="size-3.5" />}
+            label={t("tables.duplicate")}
+            onClick={(e) => {
+              e.stopPropagation()
+              const newId = duplicateTable(table.id)
+              if (newId) openTableEdit(newId)
+            }}
+          />
+          <CanvasActionButton
+            icon={<Trash2Icon className="size-3.5" />}
+            label={t("tables.delete")}
+            variant="danger"
+            onClick={(e) => {
+              e.stopPropagation()
+              deleteTable(table.id)
+              closePanel()
+            }}
+          />
+        </div>
+      )}
     </div>
   )
 }
