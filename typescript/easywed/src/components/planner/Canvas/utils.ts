@@ -16,9 +16,7 @@ export const clampToHall = (
   }
 }
 
-export type CapturedElement =
-  | { kind: "table"; id: string }
-  | { kind: "hall" }
+export type CapturedElement = { kind: "table"; id: string } | { kind: "hall" }
 
 export const findCapturedElement = (
   target: EventTarget | null

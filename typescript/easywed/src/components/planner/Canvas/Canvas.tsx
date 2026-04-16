@@ -64,7 +64,7 @@ export const Canvas = () => {
     useShallow((state) => ({
       openHall: state.openHall,
       openTableEdit: state.openTableEdit,
-      close: state.close,
+      deselect: state.deselect,
     }))
   )
 
@@ -183,7 +183,7 @@ export const Canvas = () => {
             panel.openHall()
             return
           }
-          panel.close()
+          panel.deselect()
         }}
       >
         <div

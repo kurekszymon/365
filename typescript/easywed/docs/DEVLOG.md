@@ -3,6 +3,7 @@
 ### 16.04
 
 - added duplicate and delete table from the canvas - should probably populate it to property panel
+- don't close property panel on table delete or click outside the hall
 
 ### 15.04
 

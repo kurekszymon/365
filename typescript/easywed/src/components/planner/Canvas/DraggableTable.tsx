@@ -33,7 +33,7 @@ export const DraggableTable = ({
   )
 
   const openTableEdit = usePanelStore((state) => state.openTableEdit)
-  const closePanel = usePanelStore((state) => state.close)
+  const deselectPanel = usePanelStore((state) => state.deselect)
   const duplicateTable = usePlannerStore((state) => state.duplicateTable)
   const deleteTable = usePlannerStore((state) => state.deleteTable)
 
@@ -140,7 +140,7 @@ export const DraggableTable = ({
             onClick={(e) => {
               e.stopPropagation()
               deleteTable(table.id)
-              closePanel()
+              deselectPanel()
             }}
           />
         </div>

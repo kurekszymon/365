@@ -19,6 +19,7 @@ type Action = {
   openTablesPlaceholder: () => void
   openGuests: () => void
   close: () => void
+  deselect: () => void
 }
 
 export const usePanelStore = create<State & Action>((set) => ({
@@ -30,6 +31,20 @@ export const usePanelStore = create<State & Action>((set) => ({
   openTablesPlaceholder: () => set({ view: { kind: "tables.placeholder" } }),
   openGuests: () => set({ view: { kind: "guests" } }),
   close: () => set({ view: null }),
+  deselect: () =>
+    set((state) => {
+      if (!state.view) return state
+      switch (state.view.kind) {
+        case "hall":
+          return { view: null }
+        case "table.add":
+        case "table.edit":
+          return { view: { kind: "tables.placeholder" } }
+        case "tables.placeholder":
+        case "guests":
+          return state
+      }
+    }),
 }))
 
 export const selectSelectedTableId = (state: State): string | null =>
