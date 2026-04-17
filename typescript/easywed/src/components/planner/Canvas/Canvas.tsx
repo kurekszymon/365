@@ -8,7 +8,7 @@ import { CanvasContextMenu } from "./CanvasContextMenu"
 import { CanvasContextMenuItem } from "./CanvasContextMenuItem"
 import { CanvasEmptyState } from "./CanvasEmptyState"
 import { HallSurface } from "./HallSurface"
-import { findCapturedElement } from "./utils"
+import { findCapturedElement, snapPositionToGrid } from "./utils"
 import {
   Tooltip,
   TooltipContent,
@@ -128,7 +128,9 @@ export const Canvas = () => {
                 size: { width: 2, height: 1 },
               },
               [],
-              position
+              snapStep === "off"
+                ? position
+                : snapPositionToGrid(position, snapStep)
             )
             panel.openTableEdit(tableId)
           }}
@@ -163,6 +165,7 @@ export const Canvas = () => {
         onClick={(e) => {
           if (pointerMovedRef.current) return
           if ((e.target as Element).closest("[data-no-pan]")) return
+
           const captured = findCapturedElement(e.target)
           if (captured?.kind === "table") {
             panel.openTableEdit(captured.id)

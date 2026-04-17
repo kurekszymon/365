@@ -1,5 +1,19 @@
 import type { Position, Size } from "@/stores/planner.store"
 
+const snap = (value: number, step: number) => {
+  return Math.round(value / step) * step
+}
+
+export const snapPositionToGrid = (
+  position: { x: number; y: number },
+  step: number
+) => {
+  return {
+    x: snap(position.x, step),
+    y: snap(position.y, step),
+  }
+}
+
 export const clamp = (value: number, min: number, max: number) => {
   return Math.max(min, Math.min(max, value))
 }

@@ -2,7 +2,7 @@ import { useDroppable, useDndMonitor } from "@dnd-kit/core"
 import { useMemo, useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { DraggableTable } from "./DraggableTable"
-import { clampToHall } from "./utils"
+import { clampToHall, snapPositionToGrid } from "./utils"
 import { usePlannerStore } from "@/stores/planner.store"
 import {
   type GridSpacing,
@@ -34,17 +34,6 @@ function gridBackground(style: GridStyle, zoom: number): React.CSSProperties {
       backgroundPosition: "-0.5px -0.5px",
     }
   return {}
-}
-
-function snap(value: number, step: number) {
-  return Math.round(value / step) * step
-}
-
-function snapPositionToGrid(position: { x: number; y: number }, step: number) {
-  return {
-    x: snap(position.x, step),
-    y: snap(position.y, step),
-  }
 }
 
 interface HallSurfaceProps {
@@ -121,23 +110,28 @@ export const HallSurface = ({
   useDndMonitor({
     onDragStart: ({ active }) =>
       setIsDraggingGuest(active.data.current?.type === "guest"),
+
     onDragEnd: (e) => {
       if (e.active.data.current?.type === "table-drag") {
         const id = String(e.active.id)
         const table = canvasTables.find((ct) => ct.id === id)
+
         if (table) {
           const rawNext = {
             x: table.position.x + e.delta.x / ppm,
             y: table.position.y + e.delta.y / ppm,
           }
+
           const snappedNext =
             snapStep === "off" ? rawNext : snapPositionToGrid(rawNext, snapStep)
+
           const next = clampToHall(
             snappedNext,
             table.size,
             hallDimensions.width,
             hallDimensions.height
           )
+
           updateTablePosition(id, next.x, next.y)
         }
       }
