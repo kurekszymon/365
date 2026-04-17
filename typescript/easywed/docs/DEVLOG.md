@@ -3,6 +3,7 @@
 - setup login/signup with email on `feat/add-db` branch
 - decouple view store from the hall (zoom pan, grid style, grid size, etc)
 - table now correctly snaps to grid when added from context menu
+- migrate supabase after decoupling view store from the hall
 
 ### 16.04
 
