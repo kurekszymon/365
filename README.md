@@ -43,7 +43,9 @@ I don't have a proper idea on what to build with C++ and from some digging it re
 **project goal** i want to first familiarize myself with concepts from the book and then build a code editor for my needs.
 [read more](./rust/README.md)
 
-## webrtc
+## typescript 
+
+### webrtc
 
 **Project goal**: Create an "offline/local RTC connection", so that end user wouldn't require connecting to the public internet at any times (if possible).
 
@@ -54,7 +56,7 @@ this allowed me to understand initial overhead sfu conferencing brings, and what
 
 [link](./typescript/webrtc/README.md)
 
-## electron
+### electron
 
 **project goal**: run existing wasm application inside electron; add a possibility to open desktop application from within the app (open in desktop).
 
@@ -69,20 +71,15 @@ key takeways:
 
 [link](./typescript/electron/README.md)
 
-## react 19
+### easywed
 
-playground for everything react, trying to build _consciously_ with AI, trying out some concepts and tech like
+wedding planner TBD
 
-- tanstack router
+- tanstack start
 - zustand
-- broadcast channel
-- local storage
-- canvas drawing
-- vite
+- supabase
 
-ultimatelly I will try to circle back around this code to be able to run it from `electron` folder and combine it with `cpp` webassembly.
-
-## webgpu
+### webgpu
 
 **project goal** I did not set any specific project goal here, maybe that's the issue. I tried to go over basic tutorial to get some understanding of what webgpu is and how to work with that, but it's _extremely_ hard, at least for me to understand the math behind it.
 
