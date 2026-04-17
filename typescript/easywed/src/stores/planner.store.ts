@@ -1,12 +1,5 @@
 import { create } from "zustand"
 
-const ZOOM_MIN = 0.2
-const ZOOM_MAX = 4
-
-export type GridStyle = "dots" | "grid" | "off"
-export type GridSpacing = 1 | 2 | 5 | 10 | 25 | 50 | "auto"
-export type SnapStep = 0.1 | 0.25 | 0.5 | 1 | "off"
-
 export type TableShape = "round" | "rectangular"
 
 export interface Position {
@@ -54,11 +47,6 @@ type State = {
       width: number
       height: number
     }
-    zoom: number
-    pan: { x: number; y: number }
-    gridSpacing: GridSpacing
-    gridStyle: GridStyle
-    snapStep: SnapStep
     preset?: HallPreset | undefined
   }
 }
@@ -79,15 +67,9 @@ type Action = {
   addGuest: (guest: Omit<Guest, "id">) => void
   updateHall: (
     preset: HallPreset,
-    dimensions: { width: number; height: number },
-    gridSpacing?: GridSpacing,
-    gridStyle?: GridStyle
+    dimensions: { width: number; height: number }
   ) => void
   assignGuestToTable: (guestId: string, tableId: string | null) => void
-  resetHallZoomAndPan: () => void
-  stepHallZoom: (direction: 1 | -1) => void
-  setHallPan: (pan: { x: number; y: number }) => void
-  setSnapStep: (step: SnapStep) => void
   updateTablePosition: (id: string, x: number, y: number) => void
 }
 
@@ -100,11 +82,6 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
       height: 12,
     },
     preset: undefined,
-    zoom: 1,
-    pan: { x: 0, y: 0 },
-    gridSpacing: 1,
-    gridStyle: "grid",
-    snapStep: 1,
   },
 
   addTable: (table, guestIds = [], position) => {
@@ -180,19 +157,12 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
     set((state) => ({
       guests: [...state.guests, { ...guest, id: crypto.randomUUID() }],
     })),
-  updateHall: (
-    preset,
-    dimensions,
-    gridSpacing = 1,
-    gridStyle: GridStyle = "grid"
-  ) =>
+  updateHall: (preset, dimensions) =>
     set((state) => ({
       hall: {
         ...state.hall,
         preset,
         dimensions,
-        gridSpacing,
-        gridStyle,
       },
     })),
   assignGuestToTable: (guestId, tableId) =>
@@ -211,34 +181,6 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
         ),
       }
     }),
-  resetHallZoomAndPan: () =>
-    set((state) => ({
-      hall: { ...state.hall, zoom: 1, pan: { x: 0, y: 0 } },
-    })),
-  stepHallZoom: (direction) =>
-    // ref: https://gamedev.net/forums/topic/666225-equation-for-zooming/
-    // Math.exp is the inverse of Math.log, so it's converting to log-space, applying the zoom delta, then converting back.
-    // modify the direction (+ or -) to control zoom in vs zoom out
-    set((state) => ({
-      hall: {
-        ...state.hall,
-        zoom: Math.max(
-          ZOOM_MIN,
-          Math.min(
-            ZOOM_MAX,
-            Math.exp(Math.log(state.hall.zoom) + direction * 0.08)
-          )
-        ),
-      },
-    })),
-  setHallPan: (pan) =>
-    set((state) => ({
-      hall: { ...state.hall, pan },
-    })),
-  setSnapStep: (step) =>
-    set((state) => ({
-      hall: { ...state.hall, snapStep: step },
-    })),
   updateTablePosition: (id, x, y) =>
     set((state) => ({
       tables: state.tables.map((t) =>

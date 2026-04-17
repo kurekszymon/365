@@ -4,11 +4,8 @@ import { InfoIcon } from "lucide-react"
 import { DimensionsRectangle } from "./fields/DimensionsRectangle"
 
 import { NICE_INTERVALS } from "@/components/planner/Canvas/HallSurface"
-import {
-  usePlannerStore,
-  type GridSpacing,
-  type GridStyle,
-} from "@/stores/planner.store"
+import { usePlannerStore } from "@/stores/planner.store"
+import { useViewStore, type GridSpacing } from "@/stores/view.store"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Field, FieldTitle } from "@/components/ui/field"
@@ -34,33 +31,29 @@ function clampGridSpacing(
 export const HallPanelContent = () => {
   const { t } = useTranslation()
 
-  const { preset, dimensions, gridSpacing, gridStyle, updateHall } =
-    usePlannerStore(
-      useShallow((state) => ({
-        preset: state.hall.preset ?? "rectangle",
-        dimensions: state.hall.dimensions,
-        gridSpacing: state.hall.gridSpacing,
-        gridStyle: state.hall.gridStyle,
-        updateHall: state.updateHall,
-      }))
-    )
+  const { preset, dimensions, updateHall } = usePlannerStore(
+    useShallow((state) => ({
+      preset: state.hall.preset ?? "rectangle",
+      dimensions: state.hall.dimensions,
+      updateHall: state.updateHall,
+    }))
+  )
+
+  const gridSpacing = useViewStore((state) => state.gridSpacing)
+  const gridStyle = useViewStore((state) => state.gridStyle)
+  const setGridSpacing = useViewStore((state) => state.setGridSpacing)
+  const setGridStyle = useViewStore((state) => state.setGridStyle)
 
   const setWidth = (width: number) => {
     const spacing = clampGridSpacing(gridSpacing, width, dimensions.height)
-    updateHall(preset, { width, height: dimensions.height }, spacing, gridStyle)
+    updateHall(preset, { width, height: dimensions.height })
+    if (spacing !== gridSpacing) setGridSpacing(spacing)
   }
 
   const setHeight = (height: number) => {
     const spacing = clampGridSpacing(gridSpacing, dimensions.width, height)
-    updateHall(preset, { width: dimensions.width, height }, spacing, gridStyle)
-  }
-
-  const setGridSpacing = (spacing: GridSpacing) => {
-    updateHall(preset, dimensions, spacing, gridStyle)
-  }
-
-  const setGridStyle = (style: GridStyle) => {
-    updateHall(preset, dimensions, gridSpacing, style)
+    updateHall(preset, { width: dimensions.width, height })
+    if (spacing !== gridSpacing) setGridSpacing(spacing)
   }
 
   return (

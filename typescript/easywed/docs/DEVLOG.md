@@ -1,7 +1,11 @@
 # EasyWed — Development Log
 
+- setup login/signup with email on `feat/add-db` branch
+- decouple view store from the hall (zoom pan, grid style, grid size, etc)
+
 ### 16.04
 
+- start creating supabase connection on `feat/add-db` branch
 - added duplicate and delete table from the canvas - should probably populate it to property panel
 - don't close property panel on table delete or click outside the hall
 

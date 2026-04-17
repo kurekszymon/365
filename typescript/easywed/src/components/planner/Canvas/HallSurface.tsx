@@ -3,12 +3,12 @@ import { useMemo, useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { DraggableTable } from "./DraggableTable"
 import { clampToHall } from "./utils"
+import { usePlannerStore } from "@/stores/planner.store"
 import {
-  usePlannerStore,
   type GridSpacing,
   type GridStyle,
   type SnapStep,
-} from "@/stores/planner.store"
+} from "@/stores/view.store"
 
 export const NICE_INTERVALS: Array<Exclude<GridSpacing, "auto">> = [
   1, 2, 5, 10, 25, 50,
