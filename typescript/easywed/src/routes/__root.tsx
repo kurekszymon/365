@@ -7,6 +7,7 @@ import { TanStackDevtools } from "@tanstack/react-devtools"
 import { useTranslation } from "react-i18next"
 import appCss from "../styles.css?url"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { AuthGate } from "@/components/auth/AuthGate"
 
 function NotFound() {
   const { t } = useTranslation()
@@ -54,7 +55,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <TooltipProvider>{children}</TooltipProvider>
+        <TooltipProvider>
+          <AuthGate>{children}</AuthGate>
+        </TooltipProvider>
         <TanStackDevtools
           config={{
             position: "bottom-right",

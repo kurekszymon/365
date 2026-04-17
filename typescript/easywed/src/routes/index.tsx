@@ -1,15 +1,13 @@
 import { Link, createFileRoute } from "@tanstack/react-router"
-// import { supabase } from "../lib/supabase"
+import { useTranslation } from "react-i18next"
+import { supabase } from "@/lib/supabase"
 
 export const Route = createFileRoute("/")({
-  // loader: async () => {
-  //   const { data: todos } = await supabase.from("todos").select()
-  //   return {  }
-  // },
   component: Home,
 })
 
 function Home() {
+  const { t } = useTranslation()
   return (
     <div className="flex min-h-svh items-center justify-center p-6">
       <div className="flex flex-col items-center gap-4 text-center">
@@ -23,6 +21,13 @@ function Home() {
         >
           Open Table Planner
         </Link>
+        <button
+          type="button"
+          onClick={() => supabase.auth.signOut()}
+          className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+        >
+          {t("auth.sign_out")}
+        </button>
       </div>
     </div>
   )

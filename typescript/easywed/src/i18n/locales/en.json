@@ -18,6 +18,14 @@
   "errors.not_found": "Page not found",
   "errors.go_home": "Go Home",
 
+  "auth.subtitle": "Sign in to continue planning",
+  "auth.email": "Email",
+  "auth.password": "Password",
+  "auth.sign_in": "Sign in",
+  "auth.sign_up": "Create account",
+  "auth.sign_out": "Sign out",
+  "auth.signing_you_in": "Signing you in...",
+
   "wedding.rename": "Rename wedding",
   "wedding.defaults.name": "Our big day",
   "wedding.create.title": "Let's plan your big day",
