@@ -35,9 +35,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     const isPublic = PUBLIC_PATHS.includes(pathname)
 
     if (!session && !isPublic) {
-      navigate({ to: "/login" })
+      navigate({ to: "/login", replace: true })
     } else if (session && pathname === "/login") {
-      navigate({ to: "/" })
+      navigate({ to: "/", replace: true })
     }
   }, [isReady, session, pathname, navigate])
 
