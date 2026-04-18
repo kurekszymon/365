@@ -11,33 +11,42 @@ import { useGlobalStore } from "@/stores/global.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useRemindersStore } from "@/stores/reminders.store"
 
-export const loadWedding = async (id: string) => {
+export const loadWedding = async (id: string, signal: AbortSignal) => {
   const [weddingRes, hallRes, tablesRes, guestsRes, remindersRes] =
     await Promise.all([
-      supabase.from("weddings").select("id, name, date").eq("id", id).single(),
+      supabase
+        .from("weddings")
+        .select("id, name, date")
+        .eq("id", id)
+        .abortSignal(signal)
+        .single(),
 
       supabase
         .from("halls")
         .select("preset, width, height")
         .eq("wedding_id", id)
+        .abortSignal(signal)
         .maybeSingle(),
 
       supabase
         .from("tables")
         .select("id, name, shape, capacity, width, height, pos_x, pos_y")
         .eq("wedding_id", id)
-        .is("deleted_at", null),
+        .is("deleted_at", null)
+        .abortSignal(signal),
 
       supabase
         .from("guests")
         .select("id, name, dietary, note, table_id")
         .eq("wedding_id", id)
-        .is("deleted_at", null),
+        .is("deleted_at", null)
+        .abortSignal(signal),
 
       supabase
         .from("reminders")
         .select("id, text, due, status, created_at, updated_at")
-        .eq("wedding_id", id),
+        .eq("wedding_id", id)
+        .abortSignal(signal),
     ])
 
   if (weddingRes.error) throw weddingRes.error

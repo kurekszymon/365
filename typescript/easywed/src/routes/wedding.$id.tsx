@@ -19,25 +19,23 @@ function WeddingPage() {
   } | null>(null)
 
   useEffect(() => {
-    let cancelled = false
+    const ctrl = new AbortController()
 
-    loadWedding(id)
+    loadWedding(id, ctrl.signal)
       .then(() => {
-        if (cancelled) return
+        if (ctrl.signal.aborted) return
         setResolvedId(id)
         setErrorState(null)
       })
       .catch((e: unknown) => {
-        if (cancelled) return
+        if (ctrl.signal.aborted) return
         setErrorState({
           id,
           message: e instanceof Error ? e.message : String(e),
         })
       })
 
-    return () => {
-      cancelled = true
-    }
+    return () => ctrl.abort()
   }, [id])
 
   const error = errorState?.id === id ? errorState.message : null
