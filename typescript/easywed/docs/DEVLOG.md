@@ -4,6 +4,9 @@
 
 - create and save wedding to db, reuse existing Wedding.Create dialog and navigate to `/wedding/$id`
 - migration to support owners querying for their weddings
+- hydrate zustand stores on wedding load
+- generate supabase types, adjust eslint files
+- todo: fix eslint, as i forgot to unignore it after migration from ai gen
 
 ### 17.04
 
