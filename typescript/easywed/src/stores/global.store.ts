@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import { updateWedding } from "@/lib/sync/mutations"
 
 interface Pan {
   x: number
@@ -11,6 +12,7 @@ interface Viewport {
 }
 
 type State = {
+  weddingId?: string
   name?: string
   date?: Date
   viewport: Viewport
@@ -26,6 +28,7 @@ type Action = {
 }
 
 export const useGlobalStore = create<State & Action>((set) => ({
+  weddingId: undefined,
   name: undefined,
   date: undefined,
   viewport: {
@@ -36,8 +39,16 @@ export const useGlobalStore = create<State & Action>((set) => ({
     },
   },
 
-  setName: (name) => set({ name }),
-  setDate: (date) => set({ date }),
+  setName: (name) => {
+    set({ name })
+    void updateWedding({ name: name ?? "" })
+  },
+  setDate: (date) => {
+    set({ date })
+    void updateWedding({
+      date: date ? date.toISOString().slice(0, 10) : null,
+    })
+  },
 
   setPan: (pan) => set((state) => ({ viewport: { ...state.viewport, pan } })),
   setScale: (scale) =>

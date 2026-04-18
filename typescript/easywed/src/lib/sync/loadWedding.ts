@@ -47,6 +47,7 @@ export const loadWedding = async (id: string) => {
   if (remindersRes.error) throw remindersRes.error
 
   useGlobalStore.setState({
+    weddingId: id,
     name: weddingRes.data.name || undefined,
     date: weddingRes.data.date ? new Date(weddingRes.data.date) : undefined,
   })
