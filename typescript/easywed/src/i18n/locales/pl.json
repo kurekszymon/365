@@ -32,6 +32,10 @@
   "wedding.create.title_placeholder": "Ślub Kasi i Tomka",
   "wedding.create.date_info": "Zawsze możecie wypełnić to pole później",
 
+  "weddings.subtitle": "Wybierz wesele do zaplanowania lub utwórz nowe.",
+  "weddings.empty": "Brak wesel. Utwórz pierwsze powyżej.",
+  "weddings.loading": "Wczytywanie twoich wesel...",
+
   "tables.count": "{{count}} stołów",
   "tables.count_one": "{{count}} stół",
   "tables.count_few": "{{count}} stoły",

@@ -1,6 +1,6 @@
-import { useShallow } from "zustand/react/shallow"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { useNavigate } from "@tanstack/react-router"
 
 import {
   Dialog,
@@ -11,91 +11,96 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-
-import { useDialogStore } from "@/stores/dialog.store"
-import { useGlobalStore } from "@/stores/global.store"
 import { DatePicker } from "@/components/ui/datepicker"
 import { Field, FieldLabel } from "@/components/ui/field"
 
+import { useDialogStore } from "@/stores/dialog.store"
+import { useAuthStore } from "@/stores/auth.store"
+import { supabase } from "@/lib/supabase"
+
 export const WeddingCreateDialog = () => {
   const { t } = useTranslation()
-  const { name, setName, date, setDate } = useGlobalStore(
-    useShallow((state) => ({
-      name: state.name,
-      date: state.date,
-      setName: state.setName,
-      setDate: state.setDate,
-    }))
-  )
+  const navigate = useNavigate()
+  const opened = useDialogStore((s) => s.opened)
+  const close = useDialogStore((s) => s.close)
+  const session = useAuthStore((s) => s.session)
 
-  const [localName, setLocalName] = useState(name)
-  const [localDate, setLocalDate] = useState(date)
+  const [name, setName] = useState("")
+  const [date, setDate] = useState<Date | undefined>()
+  const [submitting, setSubmitting] = useState(false)
 
-  const dialog = useDialogStore(
-    useShallow((state) => ({
-      open: state.open,
-      close: state.close,
-      opened: state.opened,
-    }))
-  )
-
-  const handleClose = () => {
-    dialog.close()
-
-    if (name) {
-      setLocalName(name)
-      setLocalDate(date)
-      return
-    }
-
-    setName(t("wedding.defaults.name"))
-    setLocalName(t("wedding.defaults.name"))
+  const reset = () => {
+    setName("")
+    setDate(undefined)
   }
 
-  const handleSave = () => {
-    dialog.close()
-    setName(localName)
-    setDate(localDate)
+  const handleSave = async () => {
+    if (!name.trim() || !session || submitting) return
+    setSubmitting(true)
+    const { data, error } = await supabase
+      .from("weddings")
+      .insert({
+        owner_id: session.user.id,
+        name: name.trim(),
+        date: date ? date.toISOString().slice(0, 10) : null,
+      })
+      .select("id")
+      .single()
+
+    setSubmitting(false)
+    if (error) {
+      console.error(error)
+      return
+    }
+    close()
+    reset()
+    navigate({ to: "/wedding/$id", params: { id: data.id } })
   }
 
   return (
     <Dialog
-      open={dialog.opened === "Wedding.Create"}
-      onOpenChange={(open) => {
-        if (!open) handleClose()
+      open={opened === "Wedding.Create"}
+      onOpenChange={(next) => {
+        if (!next) {
+          close()
+          reset()
+        }
       }}
     >
       <DialogContent className="sm:max-w-sm" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>{t("wedding.create.title")}</DialogTitle>
         </DialogHeader>
-        <Field className={`mx-auto w-44 w-full`}>
+        <Field className="w-full">
           <FieldLabel htmlFor="wedding-name-input">
             {t("common.name")}
           </FieldLabel>
           <Input
             id="wedding-name-input"
             placeholder={t("wedding.create.title_placeholder")}
-            value={localName}
-            onChange={(e) => setLocalName(e.target.value)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             autoFocus
             required
           />
         </Field>
         <DatePicker
-          date={localDate}
-          setDate={setLocalDate}
+          date={date}
+          setDate={setDate}
           info={t("wedding.create.date_info")}
         />
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              close()
+              reset()
+            }}
+          >
             {t("common.cancel")}
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={!localName?.trim() || localName === name}
-          >
-            {t("common.save")}
+          <Button onClick={handleSave} disabled={!name.trim() || submitting}>
+            {t("common.create")}
           </Button>
         </DialogFooter>
       </DialogContent>

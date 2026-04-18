@@ -1,4 +1,3 @@
-import { useEffect } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import { LandmarkIcon, PlusIcon, UsersIcon, UtensilsIcon } from "lucide-react"
@@ -13,7 +12,6 @@ import { Button } from "@/components/ui/button"
 import { RemindersPreview } from "@/components/reminders/preview/RemindersPreview"
 import { DialogManager } from "@/components/dialogs/DialogManager"
 import { useDialogStore } from "@/stores/dialog.store"
-import { useGlobalStore } from "@/stores/global.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore, selectSelectedTableId } from "@/stores/panel.store"
 import { useOpenHall } from "@/hooks/useOpenHall"
@@ -26,7 +24,6 @@ import {
 export const Planner = () => {
   const { t } = useTranslation()
 
-  const name = useGlobalStore((state) => state.name)
   const openDialog = useDialogStore((state) => state.open)
   const assignGuestToTable = usePlannerStore(
     (state) => state.assignGuestToTable
@@ -63,12 +60,6 @@ export const Planner = () => {
       openGuests: state.openGuests,
     }))
   )
-
-  useEffect(() => {
-    if (!name) {
-      openDialog("Wedding.Create")
-    }
-  }, [openDialog, name])
 
   return (
     <>

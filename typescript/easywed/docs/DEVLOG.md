@@ -1,5 +1,12 @@
 # EasyWed — Development Log
 
+### 18.04
+
+- create and save wedding to db, reuse existing Wedding.Create dialog and navigate to `/wedding/$id`
+- migration to support owners querying for their weddings
+
+### 17.04
+
 - setup login/signup with email on `feat/add-db` branch
 - decouple view store from the hall (zoom pan, grid style, grid size, etc)
 - table now correctly snaps to grid when added from context menu
