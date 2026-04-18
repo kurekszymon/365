@@ -8,9 +8,12 @@ import type { Reminder } from "@/stores/reminders.store"
 import { supabase } from "@/lib/supabase"
 import { useGlobalStore } from "@/stores/global.store"
 
-const getWeddingId = () => {
+const getWeddingId = (): string | null => {
   const id = useGlobalStore.getState().weddingId
-  if (!id) throw new Error("[sync] no wedding loaded")
+  if (!id) {
+    console.warn("[sync] no wedding loaded; skipping mutation")
+    return null
+  }
   return id
 }
 
@@ -35,9 +38,12 @@ export const upsertHall = async (
   width: number,
   height: number
 ) => {
+  const weddingId = getWeddingId()
+  if (!weddingId) return
+
   const { error } = await supabase.from("halls").upsert(
     {
-      wedding_id: getWeddingId(),
+      wedding_id: weddingId,
       preset,
       width,
       height,
@@ -47,10 +53,13 @@ export const upsertHall = async (
   if (error) log("upsertHall", error)
 }
 
-export const insertTable = async (table: Table) => {
+export const insertTable = async (table: Table): Promise<boolean> => {
+  const weddingId = getWeddingId()
+  if (!weddingId) return false
+
   const { error } = await supabase.from("tables").insert({
     id: table.id,
-    wedding_id: getWeddingId(),
+    wedding_id: weddingId,
     name: table.name,
     shape: table.shape,
     capacity: table.capacity,
@@ -59,7 +68,11 @@ export const insertTable = async (table: Table) => {
     pos_x: table.position.x,
     pos_y: table.position.y,
   })
-  if (error) log("insertTable", error)
+  if (error) {
+    log("insertTable", error)
+    return false
+  }
+  return true
 }
 
 export const updateTableRow = async (
@@ -71,9 +84,13 @@ export const updateTableRow = async (
     width?: number
     height?: number
   }
-) => {
+): Promise<boolean> => {
   const { error } = await supabase.from("tables").update(fields).eq("id", id)
-  if (error) log("updateTableRow", error)
+  if (error) {
+    log("updateTableRow", error)
+    return false
+  }
+  return true
 }
 
 export const updateTablePos = async (id: string, x: number, y: number) => {
@@ -99,9 +116,12 @@ export const softDeleteTable = async (id: string) => {
 }
 
 export const insertGuest = async (guest: Guest) => {
+  const weddingId = getWeddingId()
+  if (!weddingId) return
+
   const { error } = await supabase.from("guests").insert({
     id: guest.id,
-    wedding_id: getWeddingId(),
+    wedding_id: weddingId,
     name: guest.name,
     dietary: guest.dietary,
     note: guest.note ?? null,
@@ -141,9 +161,12 @@ export const reassignTableGuests = async (
 }
 
 export const insertReminder = async (reminder: Reminder) => {
+  const weddingId = getWeddingId()
+  if (!weddingId) return
+
   const { error } = await supabase.from("reminders").insert({
     id: reminder.uuid,
-    wedding_id: getWeddingId(),
+    wedding_id: weddingId,
     text: reminder.text,
     due: reminder.due ? reminder.due.toISOString() : null,
     status: reminder.status,

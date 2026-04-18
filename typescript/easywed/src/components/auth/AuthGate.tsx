@@ -14,10 +14,11 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation()
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setReady(true)
-    })
+    supabase.auth
+      .getSession()
+      .then(({ data }) => setSession(data.session))
+      .catch((err: unknown) => console.error("[auth] getSession failed", err))
+      .finally(() => setReady(true))
 
     const {
       data: { subscription },

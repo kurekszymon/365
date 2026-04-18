@@ -12,25 +12,36 @@ function WeddingPage() {
   const { id } = Route.useParams()
   const { t } = useTranslation()
 
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [resolvedId, setResolvedId] = useState<string | null>(null)
+  const [errorState, setErrorState] = useState<{
+    id: string
+    message: string
+  } | null>(null)
 
   useEffect(() => {
     let cancelled = false
+
     loadWedding(id)
       .then(() => {
-        if (!cancelled) setLoading(false)
+        if (cancelled) return
+        setResolvedId(id)
+        setErrorState(null)
       })
       .catch((e: unknown) => {
         if (cancelled) return
-        setError(e instanceof Error ? e.message : String(e))
-        setLoading(false)
+        setErrorState({
+          id,
+          message: e instanceof Error ? e.message : String(e),
+        })
       })
 
     return () => {
       cancelled = true
     }
   }, [id])
+
+  const error = errorState?.id === id ? errorState.message : null
+  const loading = !error && resolvedId !== id
 
   if (loading) {
     return (

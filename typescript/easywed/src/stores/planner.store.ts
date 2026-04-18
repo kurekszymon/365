@@ -110,8 +110,8 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
               guestIds.includes(guest.id) ? { ...guest, tableId } : guest
             ),
     }))
-    void insertTable(newTable).then(() => {
-      if (guestIds.length > 0) void reassignTableGuests(tableId, guestIds)
+    void insertTable(newTable).then((ok) => {
+      if (ok && guestIds.length > 0) void reassignTableGuests(tableId, guestIds)
     })
     return tableId
   },
@@ -136,7 +136,9 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
       capacity: table.capacity,
       width: table.size.width,
       height: table.size.height,
-    }).then(() => reassignTableGuests(id, guestIds))
+    }).then((ok) => {
+      if (ok) void reassignTableGuests(id, guestIds)
+    })
   },
   duplicateTable: (id) => {
     const original = get().tables.find((t) => t.id === id)
@@ -175,21 +177,18 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
     void upsertHall(preset, dimensions.width, dimensions.height)
   },
   assignGuestToTable: (guestId, tableId) => {
-    set((state) => {
-      if (tableId !== null) {
-        const table = state.tables.find((t) => t.id === tableId)
-        if (!table) return state
-        const assignedCount = state.guests.filter(
-          (g) => g.tableId === tableId && g.id !== guestId
-        ).length
-        if (assignedCount >= table.capacity) return state
-      }
-      return {
-        guests: state.guests.map((g) =>
-          g.id === guestId ? { ...g, tableId } : g
-        ),
-      }
-    })
+    const state = get()
+    if (tableId !== null) {
+      const table = state.tables.find((t) => t.id === tableId)
+      if (!table) return
+      const assignedCount = state.guests.filter(
+        (g) => g.tableId === tableId && g.id !== guestId
+      ).length
+      if (assignedCount >= table.capacity) return
+    }
+    set((s) => ({
+      guests: s.guests.map((g) => (g.id === guestId ? { ...g, tableId } : g)),
+    }))
     void updateGuestTable(guestId, tableId)
   },
   updateTablePosition: (id, x, y) => {
