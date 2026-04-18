@@ -1,7 +1,26 @@
 # EasyWed — Development Log
 
+### 18.04
+
+- create and save wedding to db, reuse existing Wedding.Create dialog and navigate to `/wedding/$id`
+- migration to support owners querying for their weddings
+- hydrate zustand stores on wedding load
+- generate supabase types, adjust eslint files
+- ~~todo: fix eslint, as i forgot to unignore it after migration from ai gen~~
+- todo: current db updates are fire-and-forget. think how to handle it (function calls marked with `void` in `*.store.ts`)
+- persist state to db with `src/lib/sync/mutations.ts`
+- wrap up `feat/add-db` branch with working db connection. some improvements are needed to reduce roundtrips to db. as mentioned beforehand - need to think how to handle ui/db updates, to cancel db updates when local change fails, etc.
+
+### 17.04
+
+- setup login/signup with email on `feat/add-db` branch
+- decouple view store from the hall (zoom pan, grid style, grid size, etc)
+- table now correctly snaps to grid when added from context menu
+- migrate supabase after decoupling view store from the hall
+
 ### 16.04
 
+- start creating supabase connection on `feat/add-db` branch
 - added duplicate and delete table from the canvas - should probably populate it to property panel
 - don't close property panel on table delete or click outside the hall
 

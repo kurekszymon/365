@@ -1,6 +1,6 @@
 import { useCallback } from "react"
-import { useShallow } from "zustand/react/shallow"
 import { usePlannerStore } from "@/stores/planner.store"
+import { useViewStore } from "@/stores/view.store"
 import { usePanelStore } from "@/stores/panel.store"
 
 /**
@@ -10,18 +10,14 @@ import { usePanelStore } from "@/stores/panel.store"
  * stay in sync automatically.
  */
 export const useOpenHall = () => {
-  const { hall, updateHall, resetZoomAndPan } = usePlannerStore(
-    useShallow((state) => ({
-      hall: state.hall,
-      updateHall: state.updateHall,
-      resetZoomAndPan: state.resetHallZoomAndPan,
-    }))
-  )
+  const hall = usePlannerStore((state) => state.hall)
+  const updateHall = usePlannerStore((state) => state.updateHall)
+  const resetZoomAndPan = useViewStore((state) => state.resetZoomAndPan)
   const openHall = usePanelStore((state) => state.openHall)
 
   return useCallback(() => {
     if (!hall.preset) {
-      updateHall("rectangle", hall.dimensions, hall.gridSpacing)
+      updateHall("rectangle", hall.dimensions)
       resetZoomAndPan()
     }
     openHall()

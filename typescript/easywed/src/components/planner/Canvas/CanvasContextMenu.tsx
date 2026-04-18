@@ -1,12 +1,12 @@
-import { useRef, useState } from "react"
+import { useState } from "react"
 import type { PropsWithChildren, ReactNode } from "react"
+import type { Position } from "@/stores/planner.store"
 import { cn } from "@/lib/utils"
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
-import type { Position } from "@/stores/planner.store"
 
 type RenderItemsArgs = {
   position: Position
@@ -25,7 +25,10 @@ export const CanvasContextMenu = ({
   isInHallBounds,
   renderItems,
 }: PropsWithChildren<Props>) => {
-  const capturedPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
+  const [capturedPos, setCapturedPos] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  })
   const [inHall, setInHall] = useState(false)
   // hack to render at correct position
   const [contentKey, setContentKey] = useState(0)
@@ -39,7 +42,7 @@ export const CanvasContextMenu = ({
       <ContextMenuTrigger
         asChild
         onContextMenu={(e) => {
-          capturedPosRef.current = { x: e.clientX, y: e.clientY }
+          setCapturedPos({ x: e.clientX, y: e.clientY })
           setInHall(isInHallBounds(e.clientX, e.clientY))
         }}
       >
@@ -56,10 +59,7 @@ export const CanvasContextMenu = ({
         onContextMenu={(e) => e.preventDefault()}
       >
         {renderItems({
-          position: viewportToHall(
-            capturedPosRef.current.x,
-            capturedPosRef.current.y
-          ),
+          position: viewportToHall(capturedPos.x, capturedPos.y),
           inHall,
         })}
       </ContextMenuContent>

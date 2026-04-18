@@ -9,10 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RemindersIndexRouteImport } from './routes/reminders/index'
-import { Route as PlannerIndexRouteImport } from './routes/planner/index'
+import { Route as WeddingIdRouteImport } from './routes/wedding.$id'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -23,44 +30,70 @@ const RemindersIndexRoute = RemindersIndexRouteImport.update({
   path: '/reminders/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PlannerIndexRoute = PlannerIndexRouteImport.update({
-  id: '/planner/',
-  path: '/planner/',
+const WeddingIdRoute = WeddingIdRouteImport.update({
+  id: '/wedding/$id',
+  path: '/wedding/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/planner/': typeof PlannerIndexRoute
+  '/login': typeof LoginRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/wedding/$id': typeof WeddingIdRoute
   '/reminders/': typeof RemindersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/planner': typeof PlannerIndexRoute
+  '/login': typeof LoginRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/wedding/$id': typeof WeddingIdRoute
   '/reminders': typeof RemindersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/planner/': typeof PlannerIndexRoute
+  '/login': typeof LoginRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/wedding/$id': typeof WeddingIdRoute
   '/reminders/': typeof RemindersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/planner/' | '/reminders/'
+  fullPaths: '/' | '/login' | '/auth/callback' | '/wedding/$id' | '/reminders/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/planner' | '/reminders'
-  id: '__root__' | '/' | '/planner/' | '/reminders/'
+  to: '/' | '/login' | '/auth/callback' | '/wedding/$id' | '/reminders'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/auth/callback'
+    | '/wedding/$id'
+    | '/reminders/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  PlannerIndexRoute: typeof PlannerIndexRoute
+  LoginRoute: typeof LoginRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
+  WeddingIdRoute: typeof WeddingIdRoute
   RemindersIndexRoute: typeof RemindersIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -75,11 +108,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RemindersIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/planner/': {
-      id: '/planner/'
-      path: '/planner'
-      fullPath: '/planner/'
-      preLoaderRoute: typeof PlannerIndexRouteImport
+    '/wedding/$id': {
+      id: '/wedding/$id'
+      path: '/wedding/$id'
+      fullPath: '/wedding/$id'
+      preLoaderRoute: typeof WeddingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -87,7 +127,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  PlannerIndexRoute: PlannerIndexRoute,
+  LoginRoute: LoginRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
+  WeddingIdRoute: WeddingIdRoute,
   RemindersIndexRoute: RemindersIndexRoute,
 }
 export const routeTree = rootRouteImport

@@ -18,11 +18,24 @@
   "errors.not_found": "Nie znaleziono strony",
   "errors.go_home": "Wróć do strony głównej",
 
+  "auth.subtitle": "Zaloguj się, żeby kontynuować planowanie",
+  "auth.email": "Email",
+  "auth.password": "Hasło",
+  "auth.sign_in": "Zaloguj się",
+  "auth.sign_up": "Załóż konto",
+  "auth.sign_out": "Wyloguj się",
+  "auth.signing_you_in": "Logujemy cię...",
+
   "wedding.rename": "Zmień nazwę wesela",
+  "wedding.loading": "Wczytywanie wesela...",
   "wedding.defaults.name": "Nasz wielki dzień",
   "wedding.create.title": "Zaplanujmy wasz wielki dzień",
   "wedding.create.title_placeholder": "Ślub Kasi i Tomka",
   "wedding.create.date_info": "Zawsze możecie wypełnić to pole później",
+
+  "weddings.subtitle": "Wybierz wesele do zaplanowania lub utwórz nowe.",
+  "weddings.empty": "Brak wesel. Utwórz pierwsze powyżej.",
+  "weddings.loading": "Wczytywanie twoich wesel...",
 
   "tables.count": "{{count}} stołów",
   "tables.count_one": "{{count}} stół",

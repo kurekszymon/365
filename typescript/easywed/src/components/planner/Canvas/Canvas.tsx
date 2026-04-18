@@ -1,29 +1,27 @@
 import { useTranslation } from "react-i18next"
 import { useRef } from "react"
 import { useShallow } from "zustand/react/shallow"
-import { DotIcon, Grid3x3Icon, Grid2x2XIcon, TableIcon } from "lucide-react"
+import { DotIcon, Grid2x2XIcon, Grid3x3Icon, TableIcon } from "lucide-react"
 import { ScalePill } from "./ScalePill"
 import { DimensionLabel } from "./DimensionLabel"
 import { CanvasContextMenu } from "./CanvasContextMenu"
 import { CanvasContextMenuItem } from "./CanvasContextMenuItem"
 import { CanvasEmptyState } from "./CanvasEmptyState"
 import { HallSurface } from "./HallSurface"
-import { findCapturedElement } from "./utils"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { findCapturedElement, snapPositionToGrid } from "./utils"
 // TODO hooks dir?
 import { useHallGeometry } from "./useHallGeometry"
 import { useCanvasZoom } from "./useCanvasZoom"
 import { useCanvasPan } from "./useCanvasPan"
 import { useLongPress } from "./useLongPress"
+import type { GridStyle, SnapStep } from "@/stores/view.store"
 import {
-  usePlannerStore,
-  type GridStyle,
-  type SnapStep,
-} from "@/stores/planner.store"
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { usePlannerStore } from "@/stores/planner.store"
+import { useViewStore } from "@/stores/view.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { useElementSize } from "@/hooks/useElementSize"
 import { useOpenHall } from "@/hooks/useOpenHall"
@@ -40,22 +38,23 @@ const NEXT_GRID_STYLE: Record<GridStyle, GridStyle> = {
   off: "grid",
 }
 
-const SNAP_STEPS: SnapStep[] = ["off", 0.1, 0.25, 0.5, 1]
+const SNAP_STEPS: Array<SnapStep> = ["off", 0.1, 0.25, 0.5, 1]
 
 export const Canvas = () => {
   const { t } = useTranslation()
 
-  const { hall, updateHall, stepZoom, setPan, resetZoomAndPan, setSnapStep } =
-    usePlannerStore(
-      useShallow((state) => ({
-        hall: state.hall,
-        updateHall: state.updateHall,
-        stepZoom: state.stepHallZoom,
-        setPan: state.setHallPan,
-        resetZoomAndPan: state.resetHallZoomAndPan,
-        setSnapStep: state.setSnapStep,
-      }))
-    )
+  const hall = usePlannerStore((state) => state.hall)
+
+  const zoom = useViewStore((state) => state.zoom)
+  const pan = useViewStore((state) => state.pan)
+  const snapStep = useViewStore((state) => state.snapStep)
+  const gridStyle = useViewStore((state) => state.gridStyle)
+  const gridSpacing = useViewStore((state) => state.gridSpacing)
+  const stepZoom = useViewStore((state) => state.stepZoom)
+  const setPan = useViewStore((state) => state.setPan)
+  const resetZoomAndPan = useViewStore((state) => state.resetZoomAndPan)
+  const setSnapStep = useViewStore((state) => state.setSnapStep)
+  const setGridStyle = useViewStore((state) => state.setGridStyle)
 
   const openHall = useOpenHall()
 
@@ -90,32 +89,19 @@ export const Canvas = () => {
     containerWidth,
     containerHeight,
     hall.dimensions,
-    hall.zoom,
-    hall.pan
+    zoom,
+    pan
   )
 
   useCanvasZoom(containerEl, stepZoom)
 
   const { isPanning, onPointerDown, onPointerMove, onPointerUp } = useCanvasPan(
-    hall.pan,
+    pan,
     setPan
   )
   const longPress = useLongPress()
 
-  const setGridStyle = () => {
-    if (!hall.preset) {
-      // shouldn't happen, guard regardless
-      console.warn("Tried to change grid style without a hall preset")
-      return
-    }
-
-    updateHall(
-      hall.preset,
-      hall.dimensions,
-      hall.gridSpacing,
-      NEXT_GRID_STYLE[hall.gridStyle]
-    )
-  }
+  const cycleGridStyle = () => setGridStyle(NEXT_GRID_STYLE[gridStyle])
 
   if (!hall.preset) {
     return (
@@ -139,7 +125,9 @@ export const Canvas = () => {
                 size: { width: 2, height: 1 },
               },
               [],
-              position
+              snapStep === "off"
+                ? position
+                : snapPositionToGrid(position, snapStep)
             )
             panel.openTableEdit(tableId)
           }}
@@ -174,6 +162,7 @@ export const Canvas = () => {
         onClick={(e) => {
           if (pointerMovedRef.current) return
           if ((e.target as Element).closest("[data-no-pan]")) return
+
           const captured = findCapturedElement(e.target)
           if (captured?.kind === "table") {
             panel.openTableEdit(captured.id)
@@ -197,30 +186,26 @@ export const Canvas = () => {
                 <button
                   type="button"
                   className="cursor-pointer px-1.5 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-                  disabled={SNAP_STEPS.indexOf(hall.snapStep) === 0}
+                  disabled={SNAP_STEPS.indexOf(snapStep) === 0}
                   onClick={() =>
-                    setSnapStep(
-                      SNAP_STEPS[SNAP_STEPS.indexOf(hall.snapStep) - 1]
-                    )
+                    setSnapStep(SNAP_STEPS[SNAP_STEPS.indexOf(snapStep) - 1])
                   }
                 >
                   −
                 </button>
                 <span className="w-[2.5rem] text-center">
-                  {hall.snapStep === "off"
+                  {snapStep === "off"
                     ? t("canvas.snap.off")
-                    : t("common.meters", { count: hall.snapStep })}
+                    : t("common.meters", { count: snapStep })}
                 </span>
                 <button
                   type="button"
                   className="cursor-pointer px-1.5 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                   disabled={
-                    SNAP_STEPS.indexOf(hall.snapStep) === SNAP_STEPS.length - 1
+                    SNAP_STEPS.indexOf(snapStep) === SNAP_STEPS.length - 1
                   }
                   onClick={() =>
-                    setSnapStep(
-                      SNAP_STEPS[SNAP_STEPS.indexOf(hall.snapStep) + 1]
-                    )
+                    setSnapStep(SNAP_STEPS[SNAP_STEPS.indexOf(snapStep) + 1])
                   }
                 >
                   +
@@ -235,11 +220,11 @@ export const Canvas = () => {
           <Tooltip>
             <TooltipTrigger asChild>
               <div
-                onClick={setGridStyle}
+                onClick={cycleGridStyle}
                 className="flex w-[3.5rem] cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-sm"
               >
-                {GRID_ICON[hall.gridStyle]}
-                {t(`canvas.grid.${hall.gridStyle}`)}
+                {GRID_ICON[gridStyle]}
+                {t(`canvas.grid.${gridStyle}`)}
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
@@ -247,7 +232,7 @@ export const Canvas = () => {
             </TooltipContent>
           </Tooltip>
 
-          <ScalePill reset={resetZoomAndPan} scale={hall.zoom} />
+          <ScalePill reset={resetZoomAndPan} scale={zoom} />
         </div>
 
         <DimensionLabel
@@ -272,10 +257,10 @@ export const Canvas = () => {
           width={scaledWidth}
           height={scaledHeight}
           ppm={ppm}
-          zoom={hall.zoom}
-          gridStyle={hall.gridStyle}
-          snapStep={hall.snapStep}
-          gridSpacing={hall.gridSpacing}
+          zoom={zoom}
+          gridStyle={gridStyle}
+          snapStep={snapStep}
+          gridSpacing={gridSpacing}
         />
       </div>
     </CanvasContextMenu>

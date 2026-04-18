@@ -1,21 +1,19 @@
-import { useEffect } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import { LandmarkIcon, PlusIcon, UsersIcon, UtensilsIcon } from "lucide-react"
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
-import type { DragEndEvent } from "@dnd-kit/core"
 import { Canvas } from "./Canvas"
 import { Header } from "./Header"
 import { GuestsSeated } from "./Header/GuestsSeated.header"
 import { PropertyPanel } from "./PropertyPanel"
+import type { DragEndEvent } from "@dnd-kit/core"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Button } from "@/components/ui/button"
 import { RemindersPreview } from "@/components/reminders/preview/RemindersPreview"
 import { DialogManager } from "@/components/dialogs/DialogManager"
 import { useDialogStore } from "@/stores/dialog.store"
-import { useGlobalStore } from "@/stores/global.store"
 import { usePlannerStore } from "@/stores/planner.store"
-import { usePanelStore, selectSelectedTableId } from "@/stores/panel.store"
+import { selectSelectedTableId, usePanelStore } from "@/stores/panel.store"
 import { useOpenHall } from "@/hooks/useOpenHall"
 import {
   Tooltip,
@@ -26,7 +24,6 @@ import {
 export const Planner = () => {
   const { t } = useTranslation()
 
-  const name = useGlobalStore((state) => state.name)
   const openDialog = useDialogStore((state) => state.open)
   const assignGuestToTable = usePlannerStore(
     (state) => state.assignGuestToTable
@@ -63,12 +60,6 @@ export const Planner = () => {
       openGuests: state.openGuests,
     }))
   )
-
-  useEffect(() => {
-    if (!name) {
-      openDialog("Wedding.Create")
-    }
-  }, [openDialog, name])
 
   return (
     <>

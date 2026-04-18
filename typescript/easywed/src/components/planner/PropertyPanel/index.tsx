@@ -58,10 +58,18 @@ export const PropertyPanel = () => {
           <div className="flex-1 overflow-y-auto p-4">
             {view.kind === "hall" && <HallPanelContent />}
             {view.kind === "table.add" && (
-              <TablePanelContent mode="add" position={view.position} />
+              <TablePanelContent
+                key="table.add"
+                mode="add"
+                position={view.position}
+              />
             )}
             {view.kind === "table.edit" && (
-              <TablePanelContent mode="edit" tableId={view.tableId} />
+              <TablePanelContent
+                key={`table.edit.${view.tableId}`}
+                mode="edit"
+                tableId={view.tableId}
+              />
             )}
             {view.kind === "tables.placeholder" && (
               <div className="flex flex-col gap-3">
