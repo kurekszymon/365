@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
 import { TableNameField } from "./fields/TableNameField"
@@ -7,11 +7,11 @@ import { TableCapacityField } from "./fields/TableCapacityField"
 import { RectangularTable } from "./fields/TableRectDimensionsField"
 import { RoundTable } from "./fields/TableRoundDimensionsField"
 import { GuestAssignmentPicker } from "./fields/GuestAssignmentPicker"
-import { isDimensionsValidForShape, getSizeForShape } from "./fields/utils"
+import { getSizeForShape, isDimensionsValidForShape } from "./fields/utils"
+import type { Position, TableShape } from "@/stores/planner.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { Button } from "@/components/ui/button"
-import type { TableShape, Position } from "@/stores/planner.store"
 
 const INITIAL_FORM = {
   name: "",
@@ -40,7 +40,7 @@ export const TablePanelContent = (props: Props) => {
   )
 
   const editedTable = usePlannerStore((state) =>
-    state.tables.find((t) => t.id === tableId)
+    state.tables.find((table) => table.id === tableId)
   )
 
   const editedAssignedGuestIds = usePlannerStore(
@@ -51,23 +51,19 @@ export const TablePanelContent = (props: Props) => {
 
   const openTableEdit = usePanelStore((state) => state.openTableEdit)
 
-  const [form, setForm] = useState(INITIAL_FORM)
-  useEffect(() => {
+  const [form, setForm] = useState(() => {
     if (props.mode === "edit" && editedTable) {
-      setForm({
+      return {
         name: editedTable.name,
         shape: editedTable.shape,
         capacity: editedTable.capacity,
         width: editedTable.size.width,
         height: editedTable.size.height,
         assignedGuestIds: editedAssignedGuestIds,
-      })
-      return
+      }
     }
-    if (props.mode === "add") {
-      setForm(INITIAL_FORM)
-    }
-  }, [props.mode, tableId, editedTable, editedAssignedGuestIds])
+    return INITIAL_FORM
+  })
 
   const { width: hallMaxWidth, height: hallMaxHeight } = hallDimensions
   const isWidthOutOfBounds = form.width > hallMaxWidth

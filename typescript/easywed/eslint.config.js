@@ -8,10 +8,6 @@ export default [
   reactHooks.configs.flat["recommended-latest"],
   { rules: { "no-unused-vars": "warn" } },
   {
-    ignores: [
-      "src/components/ui",
-      "src/components/planner",
-      "src/lib/supabase.types.ts",
-    ],
+    ignores: ["src/components/ui", "src/lib/supabase.types.ts"],
   },
 ]

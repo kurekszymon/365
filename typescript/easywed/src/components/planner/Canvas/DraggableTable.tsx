@@ -4,11 +4,12 @@ import { CSS } from "@dnd-kit/utilities"
 import { CopyIcon, Trash2Icon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { clamp } from "./utils"
+import { CanvasActionButton } from "./CanvasActionButton"
+import type { Table } from "@/stores/planner.store"
 import { cn } from "@/lib/utils"
 
-import { usePlannerStore, type Table } from "@/stores/planner.store"
-import { usePanelStore, selectSelectedTableId } from "@/stores/panel.store"
-import { CanvasActionButton } from "./CanvasActionButton"
+import { usePlannerStore } from "@/stores/planner.store"
+import { selectSelectedTableId, usePanelStore } from "@/stores/panel.store"
 
 type DraggableTableProps = {
   table: Table

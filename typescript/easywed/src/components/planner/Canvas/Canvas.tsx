@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { useRef } from "react"
 import { useShallow } from "zustand/react/shallow"
-import { DotIcon, Grid3x3Icon, Grid2x2XIcon, TableIcon } from "lucide-react"
+import { DotIcon, Grid2x2XIcon, Grid3x3Icon, TableIcon } from "lucide-react"
 import { ScalePill } from "./ScalePill"
 import { DimensionLabel } from "./DimensionLabel"
 import { CanvasContextMenu } from "./CanvasContextMenu"
@@ -9,22 +9,19 @@ import { CanvasContextMenuItem } from "./CanvasContextMenuItem"
 import { CanvasEmptyState } from "./CanvasEmptyState"
 import { HallSurface } from "./HallSurface"
 import { findCapturedElement, snapPositionToGrid } from "./utils"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 // TODO hooks dir?
 import { useHallGeometry } from "./useHallGeometry"
 import { useCanvasZoom } from "./useCanvasZoom"
 import { useCanvasPan } from "./useCanvasPan"
 import { useLongPress } from "./useLongPress"
-import { usePlannerStore } from "@/stores/planner.store"
+import type { GridStyle, SnapStep } from "@/stores/view.store"
 import {
-  useViewStore,
-  type GridStyle,
-  type SnapStep,
-} from "@/stores/view.store"
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { usePlannerStore } from "@/stores/planner.store"
+import { useViewStore } from "@/stores/view.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { useElementSize } from "@/hooks/useElementSize"
 import { useOpenHall } from "@/hooks/useOpenHall"
@@ -41,7 +38,7 @@ const NEXT_GRID_STYLE: Record<GridStyle, GridStyle> = {
   off: "grid",
 }
 
-const SNAP_STEPS: SnapStep[] = ["off", 0.1, 0.25, 0.5, 1]
+const SNAP_STEPS: Array<SnapStep> = ["off", 0.1, 0.25, 0.5, 1]
 
 export const Canvas = () => {
   const { t } = useTranslation()

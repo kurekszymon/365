@@ -1,14 +1,10 @@
-import { useDroppable, useDndMonitor } from "@dnd-kit/core"
+import { useDndMonitor, useDroppable } from "@dnd-kit/core"
 import { useMemo, useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { DraggableTable } from "./DraggableTable"
 import { clampToHall, snapPositionToGrid } from "./utils"
+import type { GridSpacing, GridStyle, SnapStep } from "@/stores/view.store"
 import { usePlannerStore } from "@/stores/planner.store"
-import {
-  type GridSpacing,
-  type GridStyle,
-  type SnapStep,
-} from "@/stores/view.store"
 
 export const NICE_INTERVALS: Array<Exclude<GridSpacing, "auto">> = [
   1, 2, 5, 10, 25, 50,
