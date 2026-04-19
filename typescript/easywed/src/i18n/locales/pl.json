@@ -28,6 +28,7 @@
 
   "wedding.rename": "Zmień nazwę wesela",
   "wedding.loading": "Wczytywanie wesela...",
+  "wedding.load_failed": "Nie udało się wczytać wesela. Spróbuj ponownie.",
   "wedding.defaults.name": "Nasz wielki dzień",
   "wedding.create.title": "Zaplanujmy wasz wielki dzień",
   "wedding.create.title_placeholder": "Ślub Kasi i Tomka",

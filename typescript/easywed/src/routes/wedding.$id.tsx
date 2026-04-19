@@ -29,14 +29,15 @@ function WeddingPage() {
       })
       .catch((e: unknown) => {
         if (ctrl.signal.aborted) return
+        console.error("[wedding] loadWedding failed", e)
         setErrorState({
           id,
-          message: e instanceof Error ? e.message : String(e),
+          message: t("wedding.load_failed"),
         })
       })
 
     return () => ctrl.abort()
-  }, [id])
+  }, [id, t])
 
   const error = errorState?.id === id ? errorState.message : null
   const loading = !error && resolvedId !== id

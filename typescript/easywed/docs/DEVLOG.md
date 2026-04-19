@@ -1,5 +1,11 @@
 # EasyWed — Development Log
 
+### 19.04
+
+- show user friendly error on failed wedding fetch, only log error response
+- dialog is now internationalized
+- added tl key for failed wedding load
+
 ### 18.04
 
 - create and save wedding to db, reuse existing Wedding.Create dialog and navigate to `/wedding/$id`
