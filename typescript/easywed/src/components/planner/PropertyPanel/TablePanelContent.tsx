@@ -155,6 +155,7 @@ export const TablePanelContent = (props: Props) => {
       />
 
       <GuestAssignmentPicker
+        tableId={props.mode === "edit" ? props.tableId : null}
         capacity={form.capacity}
         assignedGuestIds={assignedWithinCapacity}
         onAssignedGuestIdsChange={(assignedGuestIds) =>

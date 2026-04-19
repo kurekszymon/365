@@ -69,6 +69,11 @@
   "tables.capacity_count_one": "{{count}} miejsce",
   "tables.capacity_count_few": "{{count}} miejsca",
   "tables.capacity_count_many": "{{count}} miejsc",
+  "tables.seated_elsewhere.unknown": "Gość jest już przypisany do innego stołu.",
+  "tables.seated_elsewhere.named": "Gość jest już przypisany do stołu \"{{name}}\".",
+  "tables.seated_elsewhere.with_preview": "Gość jest już przypisany do stołu z gośćmi: {{preview}}.",
+  "tables.seated_elsewhere.with_preview_extra": "Gość jest już przypisany do stołu z gośćmi: {{preview}} +{{extra}}.",
+  "tables.seated_elsewhere.hint": "Przypisanie do tego stołu usunie przypisanie do poprzedniego.",
 
   "guests": "Goście",
   "guests.add": "Dodaj gościa",

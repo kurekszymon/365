@@ -5,6 +5,8 @@
 - show user friendly error on failed wedding fetch, only log error response
 - dialog is now internationalized
 - added tl key for failed wedding load
+- add tooltip informing user that assigning already assigned user will have consequences (lol)
+- show user if guest is already assigned at another table.
 
 ### 18.04
 

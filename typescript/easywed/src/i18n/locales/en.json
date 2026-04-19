@@ -67,6 +67,11 @@
   "tables.select_to_edit": "Select a table on the canvas to edit it, or click + to add a new one.",
   "tables.capacity_count": "{{count}} seats",
   "tables.capacity_count_one": "{{count}} seat",
+  "tables.seated_elsewhere.unknown": "Guest is already seated at another table.",
+  "tables.seated_elsewhere.named": "Guest is already seated at table \"{{name}}\".",
+  "tables.seated_elsewhere.with_preview": "Guest is already seated at table with guests {{preview}}.",
+  "tables.seated_elsewhere.with_preview_extra": "Guest is already seated at table with guests {{preview}} +{{extra}}.",
+  "tables.seated_elsewhere.hint": "Assigning to this table will unassign from the original one.",
 
   "guests": "Guests",
   "guests.add": "Add a guest",

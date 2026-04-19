@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
-import { useShallow } from "zustand/react/shallow"
-import { useRef, useState } from "react"
+import { InfoIcon } from "lucide-react"
+import { useMemo, useRef, useState } from "react"
 import type { WheelEvent } from "react"
 import { usePlannerStore } from "@/stores/planner.store"
 import {
@@ -11,14 +11,22 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { cn } from "@/lib/utils"
 
 type GuestAssignmentPickerProps = {
+  tableId: string | null
   capacity: number
   assignedGuestIds: Array<string>
   onAssignedGuestIdsChange: (ids: Array<string>) => void
 }
 
 export const GuestAssignmentPicker = ({
+  tableId,
   capacity,
   assignedGuestIds,
   onAssignedGuestIdsChange,
@@ -26,22 +34,48 @@ export const GuestAssignmentPicker = ({
   const { t } = useTranslation()
   const [searchQuery, setSearchQuery] = useState("")
 
-  const planner = usePlannerStore(
-    useShallow((state) => ({
-      guests: state.guests,
-    }))
+  const guests = usePlannerStore((state) => state.guests)
+  const tables = usePlannerStore((state) => state.tables)
+
+  const tableById = useMemo(
+    () => new Map(tables.map((table) => [table.id, table])),
+    [tables]
+  )
+
+  const guestNamesByTableId = useMemo(
+    () =>
+      guests.reduce<Partial<Record<string, Array<string>>>>((acc, guest) => {
+        if (!guest.tableId) return acc
+
+        const guestName = guest.name.trim()
+        if (!guestName) return acc
+
+        const namesAtTable = (acc[guest.tableId] ??= [])
+        namesAtTable.push(guestName)
+        return acc
+      }, {}),
+    [guests]
   )
 
   const assignedGuestIdsWithinCapacity = assignedGuestIds.slice(0, capacity)
-  const selectedGuestNames = planner.guests
+  const selectedGuestNames = guests
     .filter((guest) => assignedGuestIdsWithinCapacity.includes(guest.id))
     .map((guest) => guest.name)
 
   const normalizedSearchQuery = searchQuery.trim().toLowerCase()
-  const filteredGuests = planner.guests.filter((guest) =>
-    guest.name.toLowerCase().includes(normalizedSearchQuery)
-  )
-  const hasGuests = planner.guests.length > 0
+  const filteredGuests = guests
+    .filter((guest) => guest.name.toLowerCase().includes(normalizedSearchQuery))
+    .sort((a, b) => {
+      const aIsSeatedElsewhere = a.tableId != null && a.tableId !== tableId
+      const bIsSeatedElsewhere = b.tableId != null && b.tableId !== tableId
+
+      if (aIsSeatedElsewhere !== bIsSeatedElsewhere) {
+        return aIsSeatedElsewhere ? 1 : -1
+      }
+
+      return a.name.localeCompare(b.name)
+    })
+  const hasGuests = guests.length > 0
   const hasFilteredGuests = filteredGuests.length > 0
   const hasReachedCapacity = assignedGuestIdsWithinCapacity.length >= capacity
   const selectedGuestsValue = selectedGuestNames.join(", ")
@@ -73,18 +107,43 @@ export const GuestAssignmentPicker = ({
     onAssignedGuestIdsChange([...assignedGuestIdsWithinCapacity, guestId])
   }
 
+  const getSeatedElsewhereMessage = (sourceTableId: string) => {
+    const sourceTable = tableById.get(sourceTableId)
+    if (!sourceTable) return t("tables.seated_elsewhere.unknown")
+
+    const tableName = sourceTable.name.trim()
+    if (tableName)
+      return t("tables.seated_elsewhere.named", { name: tableName })
+
+    const guestsAtTable = guestNamesByTableId[sourceTableId] ?? []
+    if (guestsAtTable.length === 0) return t("tables.seated_elsewhere.unknown")
+
+    const preview = guestsAtTable.slice(0, 3).join(", ")
+    const extra = guestsAtTable.length - 3
+    return extra > 0
+      ? t("tables.seated_elsewhere.with_preview_extra", { preview, extra })
+      : t("tables.seated_elsewhere.with_preview", { preview })
+  }
+
   return (
     <Field>
       <FieldLabel>{t("tables.guests")}</FieldLabel>
       <FieldContent>
         <Popover>
           <PopoverTrigger asChild>
-            <Input
-              readOnly
-              value={selectedGuestsValue}
-              placeholder={t("tables.guests_pick")}
-              className="w-full cursor-pointer rounded-md border"
-            />
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full cursor-pointer justify-start rounded-md border px-2.5 font-normal"
+            >
+              {selectedGuestsValue ? (
+                selectedGuestsValue
+              ) : (
+                <span className="text-muted-foreground">
+                  {t("tables.guests_pick")}
+                </span>
+              )}
+            </Button>
           </PopoverTrigger>
           <PopoverContent
             className="max-h-80 w-(--radix-popover-trigger-width) overflow-hidden"
@@ -125,7 +184,10 @@ export const GuestAssignmentPicker = ({
                   const isSelected = assignedGuestIdsWithinCapacity.includes(
                     guest.id
                   )
-                  const isDisabled = hasReachedCapacity && !isSelected
+                  const seatedElsewhereAt =
+                    guest.tableId && guest.tableId !== tableId
+                      ? guest.tableId
+                      : null
 
                   return (
                     <Button
@@ -133,13 +195,38 @@ export const GuestAssignmentPicker = ({
                       type="button"
                       size="sm"
                       variant={isSelected ? "default" : "outline"}
-                      className="w-full justify-start"
-                      disabled={isDisabled}
+                      className={cn(
+                        "w-full justify-between",
+                        seatedElsewhereAt &&
+                          "border-amber-300/80 bg-amber-50/70 text-amber-900 hover:bg-amber-100/70 dark:border-amber-700/70 dark:bg-amber-950/20 dark:text-amber-200"
+                      )}
                       onClick={() => {
                         toggleGuest(guest.id)
                       }}
                     >
-                      {guest.name}
+                      <span className="truncate">{guest.name}</span>
+                      {seatedElsewhereAt && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex shrink-0 items-center">
+                              <InfoIcon
+                                className="size-3.5 shrink-0 text-amber-700 dark:text-amber-300"
+                                aria-hidden
+                              />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="max-w-64">
+                            <div className="space-y-1">
+                              <p>
+                                {getSeatedElsewhereMessage(seatedElsewhereAt)}
+                              </p>
+                              <p className="text-[11px] opacity-90">
+                                {t("tables.seated_elsewhere.hint")}
+                              </p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                     </Button>
                   )
                 })}
