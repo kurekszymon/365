@@ -2,35 +2,14 @@ import { useDndMonitor, useDroppable } from "@dnd-kit/core"
 import { useMemo, useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { DraggableTable } from "./DraggableTable"
-import { clampToHall, snapPositionToGrid } from "./utils"
+import {
+  calcGridSpacing,
+  clampToHall,
+  gridBackground,
+  snapPositionToGrid,
+} from "./utils"
 import type { GridSpacing, GridStyle, SnapStep } from "@/stores/view.store"
 import { usePlannerStore } from "@/stores/planner.store"
-
-export const NICE_INTERVALS: Array<Exclude<GridSpacing, "auto">> = [
-  1, 2, 5, 10, 25, 50,
-]
-
-function calcGridSpacing(
-  width: number,
-  height: number
-): Exclude<GridSpacing, "auto"> {
-  const raw = Math.max(width, height) / 6
-  return NICE_INTERVALS.find((n) => n >= raw) ?? 50
-}
-
-function gridBackground(style: GridStyle, zoom: number): React.CSSProperties {
-  const color = `rgb(156 163 175 / ${zoom})`
-  if (style === "dots")
-    return {
-      backgroundImage: `radial-gradient(circle, ${color} 1px, transparent 1px)`,
-    }
-  if (style === "grid")
-    return {
-      backgroundImage: `linear-gradient(${color} 1px, transparent 1px), linear-gradient(90deg, ${color} 1px, transparent 1px)`,
-      backgroundPosition: "-0.5px -0.5px",
-    }
-  return {}
-}
 
 interface HallSurfaceProps {
   left: number

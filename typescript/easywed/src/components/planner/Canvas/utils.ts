@@ -1,7 +1,54 @@
+import type { CSSProperties } from "react"
+import type { GridSpacing, GridStyle } from "@/stores/view.store"
 import type { Position, Size } from "@/stores/planner.store"
+
+const NICE_INTERVALS: Array<Exclude<GridSpacing, "auto">> = [
+  1, 2, 5, 10, 25, 50,
+]
 
 const snap = (value: number, step: number) => {
   return Math.round(value / step) * step
+}
+
+export const validSpacings = (
+  width: number,
+  height: number
+): Array<GridSpacing> => {
+  return [...NICE_INTERVALS.filter((n) => n < Math.max(width, height)), "auto"]
+}
+
+export const clampGridSpacing = (
+  spacing: GridSpacing,
+  width: number,
+  height: number
+): GridSpacing => {
+  const valid = validSpacings(width, height)
+  return valid.includes(spacing) ? spacing : 1
+}
+
+export const calcGridSpacing = (
+  width: number,
+  height: number
+): Exclude<GridSpacing, "auto"> => {
+  const raw = Math.max(width, height) / 6
+  return NICE_INTERVALS.find((n) => n >= raw) ?? 50
+}
+
+export const gridBackground = (
+  style: GridStyle,
+  zoom: number
+): CSSProperties => {
+  const color = `rgb(156 163 175 / ${zoom})`
+  if (style === "dots")
+    return {
+      backgroundImage: `radial-gradient(circle, ${color} 1px, transparent 1px)`,
+    }
+  if (style === "grid")
+    return {
+      backgroundImage: `linear-gradient(${color} 1px, transparent 1px), linear-gradient(90deg, ${color} 1px, transparent 1px)`,
+      backgroundPosition: "-0.5px -0.5px",
+    }
+  return {}
 }
 
 export const snapPositionToGrid = (

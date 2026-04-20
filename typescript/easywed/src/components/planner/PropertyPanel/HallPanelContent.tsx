@@ -1,10 +1,9 @@
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
 import { InfoIcon } from "lucide-react"
+import { clampGridSpacing, validSpacings } from "../Canvas/utils"
 import { DimensionsRectangle } from "./fields/DimensionsRectangle"
 
-import type { GridSpacing } from "@/stores/view.store"
-import { NICE_INTERVALS } from "@/components/planner/Canvas/HallSurface"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useViewStore } from "@/stores/view.store"
 import { Button } from "@/components/ui/button"
@@ -15,19 +14,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-
-function validSpacings(width: number, height: number): Array<GridSpacing> {
-  return [...NICE_INTERVALS.filter((n) => n < Math.max(width, height)), "auto"]
-}
-
-function clampGridSpacing(
-  spacing: GridSpacing,
-  width: number,
-  height: number
-): GridSpacing {
-  const valid = validSpacings(width, height)
-  return valid.includes(spacing) ? spacing : 1
-}
 
 export const HallPanelContent = () => {
   const { t } = useTranslation()
