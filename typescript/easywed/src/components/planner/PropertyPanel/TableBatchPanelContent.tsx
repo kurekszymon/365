@@ -4,6 +4,7 @@ import { useShallow } from "zustand/react/shallow"
 import { TableNameField } from "./fields/TableNameField"
 import { TableShapeField } from "./fields/TableShapeField"
 import { TableCapacityField } from "./fields/TableCapacityField"
+import { TableRotationField } from "./fields/TableRotationField"
 import { TableBatchCountField } from "./fields/TableBatchCountField"
 import { RectangularTable } from "./fields/TableRectDimensionsField"
 import { RoundTable } from "./fields/TableRoundDimensionsField"
@@ -19,6 +20,7 @@ const INITIAL_FORM = {
   capacity: DEFAULT_TABLE.capacity,
   width: DEFAULT_TABLE.size.width,
   height: DEFAULT_TABLE.size.height,
+  rotation: DEFAULT_TABLE.rotation,
   count: 2,
 }
 
@@ -68,12 +70,20 @@ export const TableBatchPanelContent = ({ position }: Props) => {
 
   const handleSubmit = () => {
     if (!canSubmit) return
+    const storedSize =
+      form.shape === "round"
+        ? getSizeForShape(form.shape, form.width, form.height)
+        : form.rotation === 90
+          ? { width: form.height, height: form.width }
+          : { width: form.width, height: form.height }
+
     const ids = addTables(
       {
         name: form.name.trim(),
         shape: form.shape,
         capacity: form.capacity,
-        size: getSizeForShape(form.shape, form.width, form.height),
+        size: storedSize,
+        rotation: form.shape === "round" ? 0 : form.rotation,
       },
       form.count,
       position
@@ -109,6 +119,21 @@ export const TableBatchPanelContent = ({ position }: Props) => {
       />
 
       {shapeFields}
+
+      {form.shape === "rectangular" && (
+        <TableRotationField
+          value={form.rotation}
+          onChange={(rotation) => {
+            if (rotation === form.rotation) return
+
+            update({
+              rotation,
+              width: form.height,
+              height: form.width,
+            })
+          }}
+        />
+      )}
 
       <TableCapacityField
         value={form.capacity}

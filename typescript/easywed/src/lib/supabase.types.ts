@@ -168,6 +168,7 @@ export type Database = {
           name: string
           pos_x: number
           pos_y: number
+          rotation: number
           shape: string
           updated_at: string
           wedding_id: string
@@ -182,6 +183,7 @@ export type Database = {
           name?: string
           pos_x: number
           pos_y: number
+          rotation?: number
           shape: string
           updated_at?: string
           wedding_id: string
@@ -196,6 +198,7 @@ export type Database = {
           name?: string
           pos_x?: number
           pos_y?: number
+          rotation?: number
           shape?: string
           updated_at?: string
           wedding_id?: string

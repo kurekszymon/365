@@ -4,6 +4,7 @@
 
 - defined DEFAULT_TABLE
 - add option to batch add tables
+- add support to flipping table's rotation `0 | 90` deg
 
 ### 19.04
 

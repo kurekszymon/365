@@ -8,7 +8,7 @@ import { CanvasActionButton } from "./CanvasActionButton"
 import type { Table } from "@/stores/planner.store"
 import { cn } from "@/lib/utils"
 
-import { usePlannerStore } from "@/stores/planner.store"
+import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
 import { selectSelectedTableId, usePanelStore } from "@/stores/panel.store"
 
 type DraggableTableProps = {
@@ -53,7 +53,8 @@ export const DraggableTable = ({
     data: { type: "table", tableId: table.id },
   })
 
-  const { size, shape, position } = table
+  const { shape, position, rotation } = table
+  const size = getEffectiveSize(table.size, rotation)
   const hasName = table.name.trim().length > 0
   const guestCountLabel = `${guestsAssigned} / ${table.capacity}`
   const ariaLabel = hasName

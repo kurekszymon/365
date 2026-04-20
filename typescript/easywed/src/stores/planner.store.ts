@@ -13,6 +13,10 @@ import {
 
 export type TableShape = "round" | "rectangular"
 
+// Only 0 and 90 are supported today. 45 / 135 would require trig to compute
+// the AABB (width' = |w·cos θ| + |h·sin θ|, height' similarly) and clamp logic.
+export type TableRotation = 0 | 90
+
 export interface Position {
   x: number
   y: number
@@ -30,6 +34,7 @@ export interface Table {
   shape: TableShape
   capacity: number
   size: Size
+  rotation: TableRotation
   position: Position
 }
 
@@ -38,7 +43,11 @@ export const DEFAULT_TABLE: Omit<Table, "id" | "position"> = {
   shape: "rectangular",
   capacity: 8,
   size: { width: 2, height: 1 },
+  rotation: 0,
 }
+
+export const getEffectiveSize = (size: Size, rotation: TableRotation): Size =>
+  rotation === 90 ? { width: size.height, height: size.width } : size
 
 export type HallPreset = "rectangle" | "l-shape" | "u-shape" | "custom"
 
@@ -135,8 +144,9 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
     const { width: hallWidth, height: hallHeight } = get().hall.dimensions
     const gap = 0.5
 
-    const tileW = table.size.width + gap
-    const tileH = table.size.height + gap
+    const effective = getEffectiveSize(table.size, table.rotation)
+    const tileW = effective.width + gap
+    const tileH = effective.height + gap
 
     const availableW = Math.max(tileW, hallWidth - start.x)
     const availableH = Math.max(tileH, hallHeight - start.y)
@@ -186,6 +196,7 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
       capacity: table.capacity,
       width: table.size.width,
       height: table.size.height,
+      rotation: table.rotation,
     }).then((ok) => {
       if (ok) void reassignTableGuests(id, guestIds)
     })

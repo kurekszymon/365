@@ -2,6 +2,7 @@ import type {
   Guest,
   HallPreset,
   Table,
+  TableRotation,
   TableShape,
 } from "@/stores/planner.store"
 import type { Reminder } from "@/stores/reminders.store"
@@ -65,6 +66,7 @@ export const insertTable = async (table: Table): Promise<boolean> => {
     capacity: table.capacity,
     width: table.size.width,
     height: table.size.height,
+    rotation: table.rotation,
     pos_x: table.position.x,
     pos_y: table.position.y,
   })
@@ -89,6 +91,7 @@ export const insertTables = async (
     capacity: table.capacity,
     width: table.size.width,
     height: table.size.height,
+    rotation: table.rotation,
     pos_x: table.position.x,
     pos_y: table.position.y,
   }))
@@ -109,6 +112,7 @@ export const updateTableRow = async (
     capacity?: number
     width?: number
     height?: number
+    rotation?: TableRotation
   }
 ): Promise<boolean> => {
   const { error } = await supabase.from("tables").update(fields).eq("id", id)

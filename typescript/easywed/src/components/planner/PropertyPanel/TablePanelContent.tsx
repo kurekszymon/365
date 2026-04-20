@@ -4,12 +4,17 @@ import { useShallow } from "zustand/react/shallow"
 import { TableNameField } from "./fields/TableNameField"
 import { TableShapeField } from "./fields/TableShapeField"
 import { TableCapacityField } from "./fields/TableCapacityField"
+import { TableRotationField } from "./fields/TableRotationField"
 import { RectangularTable } from "./fields/TableRectDimensionsField"
 import { RoundTable } from "./fields/TableRoundDimensionsField"
 import { GuestAssignmentPicker } from "./fields/GuestAssignmentPicker"
 import { getSizeForShape, isDimensionsValidForShape } from "./fields/utils"
 import type { Position } from "@/stores/planner.store"
-import { DEFAULT_TABLE, usePlannerStore } from "@/stores/planner.store"
+import {
+  DEFAULT_TABLE,
+  getEffectiveSize,
+  usePlannerStore,
+} from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { Button } from "@/components/ui/button"
 
@@ -19,6 +24,7 @@ const INITIAL_FORM = {
   capacity: DEFAULT_TABLE.capacity,
   width: DEFAULT_TABLE.size.width,
   height: DEFAULT_TABLE.size.height,
+  rotation: DEFAULT_TABLE.rotation,
   assignedGuestIds: [] as Array<string>,
 }
 
@@ -53,12 +59,15 @@ export const TablePanelContent = (props: Props) => {
 
   const [form, setForm] = useState(() => {
     if (props.mode === "edit" && editedTable) {
+      const visible = getEffectiveSize(editedTable.size, editedTable.rotation)
+
       return {
         name: editedTable.name,
         shape: editedTable.shape,
         capacity: editedTable.capacity,
-        width: editedTable.size.width,
-        height: editedTable.size.height,
+        width: visible.width,
+        height: visible.height,
+        rotation: editedTable.rotation,
         assignedGuestIds: editedAssignedGuestIds,
       }
     }
@@ -86,6 +95,15 @@ export const TablePanelContent = (props: Props) => {
 
   const canSubmit = isValid(form)
 
+  // form.width/height represent the *visible* rectangle. Storage is the
+  // canonical, unrotated size — so at rotation=90 we swap before persisting.
+  const toStoredSize = (f: typeof form) => {
+    if (f.shape === "round") return getSizeForShape(f.shape, f.width, f.height)
+    return f.rotation === 90
+      ? { width: f.height, height: f.width }
+      : { width: f.width, height: f.height }
+  }
+
   const applyEdit = (f: typeof form) => {
     if (props.mode !== "edit" || !isValid(f)) return
     updateTable(
@@ -94,7 +112,8 @@ export const TablePanelContent = (props: Props) => {
         name: f.name.trim(),
         shape: f.shape,
         capacity: f.capacity,
-        size: getSizeForShape(f.shape, f.width, f.height),
+        size: toStoredSize(f),
+        rotation: f.shape === "round" ? 0 : f.rotation,
       },
       f.assignedGuestIds.slice(0, f.capacity)
     )
@@ -113,7 +132,8 @@ export const TablePanelContent = (props: Props) => {
         name: form.name.trim(),
         shape: form.shape,
         capacity: form.capacity,
-        size: getSizeForShape(form.shape, form.width, form.height),
+        size: toStoredSize(form),
+        rotation: form.shape === "round" ? 0 : form.rotation,
       },
       assignedWithinCapacity,
       props.mode === "add" ? props.position : undefined
@@ -149,6 +169,20 @@ export const TablePanelContent = (props: Props) => {
       />
 
       {shapeFields}
+
+      {form.shape === "rectangular" && (
+        <TableRotationField
+          value={form.rotation}
+          onChange={(rotation) => {
+            if (rotation === form.rotation) return
+            update({
+              rotation,
+              width: form.height,
+              height: form.width,
+            })
+          }}
+        />
+      )}
 
       <TableCapacityField
         value={form.capacity}

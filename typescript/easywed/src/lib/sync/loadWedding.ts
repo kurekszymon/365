@@ -3,6 +3,7 @@ import type {
   Guest,
   HallPreset,
   Table,
+  TableRotation,
   TableShape,
 } from "@/stores/planner.store"
 import type { Reminder } from "@/stores/reminders.store"
@@ -30,7 +31,9 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
 
       supabase
         .from("tables")
-        .select("id, name, shape, capacity, width, height, pos_x, pos_y")
+        .select(
+          "id, name, shape, capacity, width, height, rotation, pos_x, pos_y"
+        )
         .eq("wedding_id", id)
         .is("deleted_at", null)
         .abortSignal(signal),
@@ -67,6 +70,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     shape: t.shape as TableShape,
     capacity: t.capacity,
     size: { width: Number(t.width), height: Number(t.height) },
+    rotation: t.rotation as TableRotation,
     position: { x: Number(t.pos_x), y: Number(t.pos_y) },
   }))
 

@@ -9,7 +9,7 @@ import {
   snapPositionToGrid,
 } from "./utils"
 import type { GridSpacing, GridStyle, SnapStep } from "@/stores/view.store"
-import { usePlannerStore } from "@/stores/planner.store"
+import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
 
 interface HallSurfaceProps {
   left: number
@@ -73,7 +73,7 @@ export const HallSurface = ({
         ...table,
         position: clampToHall(
           table.position,
-          table.size,
+          getEffectiveSize(table.size, table.rotation),
           hallDimensions.width,
           hallDimensions.height
         ),
@@ -102,7 +102,7 @@ export const HallSurface = ({
 
           const next = clampToHall(
             snappedNext,
-            table.size,
+            getEffectiveSize(table.size, table.rotation),
             hallDimensions.width,
             hallDimensions.height
           )
