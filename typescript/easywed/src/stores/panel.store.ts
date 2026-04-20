@@ -4,6 +4,7 @@ import type { Position } from "./planner.store"
 export type PanelView =
   | { kind: "hall" }
   | { kind: "table.add"; position?: Position }
+  | { kind: "tables.batch_add"; position?: Position }
   | { kind: "table.edit"; tableId: string }
   | { kind: "tables.placeholder" }
   | { kind: "guests" }
@@ -15,6 +16,7 @@ type State = {
 type Action = {
   openHall: () => void
   openTableAdd: (position?: Position) => void
+  openTablesBatchAdd: (position?: Position) => void
   openTableEdit: (tableId: string) => void
   openTablesPlaceholder: () => void
   openGuests: () => void
@@ -27,6 +29,8 @@ export const usePanelStore = create<State & Action>((set) => ({
 
   openHall: () => set({ view: { kind: "hall" } }),
   openTableAdd: (position) => set({ view: { kind: "table.add", position } }),
+  openTablesBatchAdd: (position) =>
+    set({ view: { kind: "tables.batch_add", position } }),
   openTableEdit: (tableId) => set({ view: { kind: "table.edit", tableId } }),
   openTablesPlaceholder: () => set({ view: { kind: "tables.placeholder" } }),
   openGuests: () => set({ view: { kind: "guests" } }),
@@ -38,6 +42,7 @@ export const usePanelStore = create<State & Action>((set) => ({
         case "hall":
           return { view: null }
         case "table.add":
+        case "tables.batch_add":
         case "table.edit":
           return { view: { kind: "tables.placeholder" } }
         case "tables.placeholder":

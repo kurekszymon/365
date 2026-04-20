@@ -1,7 +1,13 @@
 import { useTranslation } from "react-i18next"
 import { useRef } from "react"
 import { useShallow } from "zustand/react/shallow"
-import { DotIcon, Grid2x2XIcon, Grid3x3Icon, TableIcon } from "lucide-react"
+import {
+  DotIcon,
+  Grid2x2XIcon,
+  Grid3x3Icon,
+  SquarePlusIcon,
+  TableIcon,
+} from "lucide-react"
 import { ScalePill } from "./ScalePill"
 import { DimensionLabel } from "./DimensionLabel"
 import { CanvasContextMenu } from "./CanvasContextMenu"
@@ -20,7 +26,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { usePlannerStore } from "@/stores/planner.store"
+import { DEFAULT_TABLE, usePlannerStore } from "@/stores/planner.store"
 import { useViewStore } from "@/stores/view.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { useElementSize } from "@/hooks/useElementSize"
@@ -62,6 +68,7 @@ export const Canvas = () => {
   const panel = usePanelStore(
     useShallow((state) => ({
       openHall: state.openHall,
+      openTablesBatchAdd: state.openTablesBatchAdd,
       openTableEdit: state.openTableEdit,
       deselect: state.deselect,
     }))
@@ -113,29 +120,32 @@ export const Canvas = () => {
     <CanvasContextMenu
       viewportToHall={viewportToHall}
       isInHallBounds={isInHallBounds}
-      renderItems={({ position, inHall }) => (
-        <CanvasContextMenuItem
-          disabled={!inHall}
-          onSelect={() => {
-            const tableId = addTable(
-              {
-                name: "",
-                shape: "rectangular",
-                capacity: 8,
-                size: { width: 2, height: 1 },
-              },
-              [],
-              snapStep === "off"
-                ? position
-                : snapPositionToGrid(position, snapStep)
-            )
-            panel.openTableEdit(tableId)
-          }}
-        >
-          <TableIcon className="size-4" />
-          {t("tables.add")}
-        </CanvasContextMenuItem>
-      )}
+      renderItems={({ position, inHall }) => {
+        const snapped =
+          snapStep === "off" ? position : snapPositionToGrid(position, snapStep)
+
+        return (
+          <>
+            <CanvasContextMenuItem
+              disabled={!inHall}
+              onSelect={() => {
+                const tableId = addTable(DEFAULT_TABLE, [], snapped)
+                panel.openTableEdit(tableId)
+              }}
+            >
+              <TableIcon className="size-4" />
+              {t("tables.add")}
+            </CanvasContextMenuItem>
+            <CanvasContextMenuItem
+              disabled={!inHall}
+              onSelect={() => panel.openTablesBatchAdd(snapped)}
+            >
+              <SquarePlusIcon className="size-4" />
+              {t("tables.add_batch")}
+            </CanvasContextMenuItem>
+          </>
+        )
+      }}
     >
       <div
         ref={containerRef}

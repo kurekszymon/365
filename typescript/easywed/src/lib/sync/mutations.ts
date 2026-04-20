@@ -75,6 +75,32 @@ export const insertTable = async (table: Table): Promise<boolean> => {
   return true
 }
 
+export const insertTables = async (
+  tables: Array<Table>
+): Promise<boolean> => {
+  const weddingId = getWeddingId()
+  if (!weddingId || tables.length === 0) return false
+
+  const rows = tables.map((table) => ({
+    id: table.id,
+    wedding_id: weddingId,
+    name: table.name,
+    shape: table.shape,
+    capacity: table.capacity,
+    width: table.size.width,
+    height: table.size.height,
+    pos_x: table.position.x,
+    pos_y: table.position.y,
+  }))
+
+  const { error } = await supabase.from("tables").insert(rows)
+  if (error) {
+    log("insertTables", error)
+    return false
+  }
+  return true
+}
+
 export const updateTableRow = async (
   id: string,
   fields: {

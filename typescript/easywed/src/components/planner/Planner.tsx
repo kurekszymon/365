@@ -1,6 +1,12 @@
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
-import { LandmarkIcon, PlusIcon, UsersIcon, UtensilsIcon } from "lucide-react"
+import {
+  LandmarkIcon,
+  PlusIcon,
+  SquarePlusIcon,
+  UsersIcon,
+  UtensilsIcon,
+} from "lucide-react"
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
 import { Canvas } from "./Canvas"
 import { Header } from "./Header"
@@ -55,6 +61,7 @@ export const Planner = () => {
   const panel = usePanelStore(
     useShallow((state) => ({
       openTableAdd: state.openTableAdd,
+      openTablesBatchAdd: state.openTablesBatchAdd,
       openTableEdit: state.openTableEdit,
       openTablesPlaceholder: state.openTablesPlaceholder,
       openGuests: state.openGuests,
@@ -84,27 +91,34 @@ export const Planner = () => {
                 <PlusIcon />
               </Button>
             </ButtonGroup>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ButtonGroup>
-                  <Button
-                    variant="outline"
-                    disabled={!preset}
-                    onClick={() => {
-                      if (!preset) return
-                      if (selectedTableId) {
-                        panel.openTableEdit(selectedTableId)
-                      } else {
-                        panel.openTablesPlaceholder()
-                      }
-                    }}
-                    title={
-                      preset ? t("tables") : t("tables.configure_hall_first")
-                    }
-                  >
-                    <UtensilsIcon />
-                    <span className="hidden md:inline">{t("tables")}</span>
-                  </Button>
+            <ButtonGroup>
+              <Button variant="outline" onClick={() => panel.openGuests()}>
+                <UsersIcon />
+                <span className="hidden md:inline">{t("guests")}</span>
+              </Button>
+              <Button variant="outline" onClick={() => openDialog("Guest.Add")}>
+                <PlusIcon />
+              </Button>
+            </ButtonGroup>
+            <ButtonGroup>
+              <Button
+                variant="outline"
+                disabled={!preset}
+                onClick={() => {
+                  if (!preset) return
+                  if (selectedTableId) {
+                    panel.openTableEdit(selectedTableId)
+                  } else {
+                    panel.openTablesPlaceholder()
+                  }
+                }}
+                title={preset ? t("tables") : t("tables.configure_hall_first")}
+              >
+                <UtensilsIcon />
+                <span className="hidden md:inline">{t("tables")}</span>
+              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <Button
                     variant="outline"
                     disabled={!preset}
@@ -115,20 +129,30 @@ export const Planner = () => {
                   >
                     <PlusIcon />
                   </Button>
-                </ButtonGroup>
-              </TooltipTrigger>
-              <TooltipContent>
-                {preset ? t("tables.add") : t("tables.configure_hall_first")}
-              </TooltipContent>
-            </Tooltip>
-            <ButtonGroup>
-              <Button variant="outline" onClick={() => panel.openGuests()}>
-                <UsersIcon />
-                <span className="hidden md:inline">{t("guests")}</span>
-              </Button>
-              <Button variant="outline" onClick={() => openDialog("Guest.Add")}>
-                <PlusIcon />
-              </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {preset ? t("tables.add") : t("tables.configure_hall_first")}
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    disabled={!preset}
+                    onClick={() => {
+                      if (!preset) return
+                      panel.openTablesBatchAdd()
+                    }}
+                  >
+                    <SquarePlusIcon />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {preset
+                    ? t("tables.add_batch")
+                    : t("tables.configure_hall_first")}
+                </TooltipContent>
+              </Tooltip>
             </ButtonGroup>
           </div>
         </Header>

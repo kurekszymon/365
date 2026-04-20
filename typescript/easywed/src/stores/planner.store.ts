@@ -2,6 +2,7 @@ import { create } from "zustand"
 import {
   insertGuest,
   insertTable,
+  insertTables,
   reassignTableGuests,
   softDeleteTable,
   updateGuestTable,
@@ -30,6 +31,13 @@ export interface Table {
   capacity: number
   size: Size
   position: Position
+}
+
+export const DEFAULT_TABLE: Omit<Table, "id" | "position"> = {
+  name: "",
+  shape: "rectangular",
+  capacity: 8,
+  size: { width: 2, height: 1 },
 }
 
 export type HallPreset = "rectangle" | "l-shape" | "u-shape" | "custom"
@@ -67,6 +75,11 @@ type Action = {
     guestIds?: Array<string>,
     position?: Position
   ) => string
+  addTables: (
+    table: Omit<Table, "id" | "position">,
+    count: number,
+    startPosition?: Position
+  ) => Array<string>
   updateTable: (
     id: string,
     table: Omit<Table, "id" | "position">,
@@ -114,6 +127,43 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
       if (ok && guestIds.length > 0) void reassignTableGuests(tableId, guestIds)
     })
     return tableId
+  },
+  addTables: (table, count, startPosition) => {
+    if (count < 1) return []
+
+    const start = startPosition ?? { x: 0, y: 0 }
+    const { width: hallWidth, height: hallHeight } = get().hall.dimensions
+    const gap = 0.5
+
+    const tileW = table.size.width + gap
+    const tileH = table.size.height + gap
+
+    const availableW = Math.max(tileW, hallWidth - start.x)
+    const availableH = Math.max(tileH, hallHeight - start.y)
+    const cols = Math.max(1, Math.floor(availableW / tileW))
+    const rowsCap = Math.max(1, Math.floor(availableH / tileH))
+    const capped = Math.min(count, cols * rowsCap)
+
+    const newTables: Array<Table> = Array.from({ length: capped }, (_, i) => {
+      const col = i % cols
+      const row = Math.floor(i / cols)
+      const suffix = capped > 1 && table.name ? ` ${i + 1}` : ""
+
+      return {
+        ...table,
+        name: table.name ? `${table.name}${suffix}` : table.name,
+        id: crypto.randomUUID(),
+        position: {
+          x: start.x + col * tileW,
+          y: start.y + row * tileH,
+        },
+      }
+    })
+
+    set((state) => ({ tables: [...state.tables, ...newTables] }))
+    void insertTables(newTables)
+
+    return newTables.map((t) => t.id)
   },
   updateTable: (id, table, guestIds = []) => {
     set((state) => ({

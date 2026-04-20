@@ -4,9 +4,9 @@ import { useShallow } from "zustand/react/shallow"
 import { TableNameField } from "./fields/TableNameField"
 import { TableShapeField } from "./fields/TableShapeField"
 import { TableCapacityField } from "./fields/TableCapacityField"
+import { TableBatchCountField } from "./fields/TableBatchCountField"
 import { RectangularTable } from "./fields/TableRectDimensionsField"
 import { RoundTable } from "./fields/TableRoundDimensionsField"
-import { GuestAssignmentPicker } from "./fields/GuestAssignmentPicker"
 import { getSizeForShape, isDimensionsValidForShape } from "./fields/utils"
 import type { Position } from "@/stores/planner.store"
 import { DEFAULT_TABLE, usePlannerStore } from "@/stores/planner.store"
@@ -19,59 +19,34 @@ const INITIAL_FORM = {
   capacity: DEFAULT_TABLE.capacity,
   width: DEFAULT_TABLE.size.width,
   height: DEFAULT_TABLE.size.height,
-  assignedGuestIds: [] as Array<string>,
+  count: 2,
 }
 
-type Props =
-  | { mode: "add"; position?: Position }
-  | { mode: "edit"; tableId: string }
+const MAX_BATCH_COUNT = 50
 
-export const TablePanelContent = (props: Props) => {
+interface Props {
+  position?: Position
+}
+
+export const TableBatchPanelContent = ({ position }: Props) => {
   const { t } = useTranslation()
 
-  const tableId = props.mode === "edit" && props.tableId
-
-  const { hallDimensions, addTable, updateTable } = usePlannerStore(
+  const { hallDimensions, addTables } = usePlannerStore(
     useShallow((state) => ({
       hallDimensions: state.hall.dimensions,
-      addTable: state.addTable,
-      updateTable: state.updateTable,
+      addTables: state.addTables,
     }))
-  )
-
-  const editedTable = usePlannerStore((state) =>
-    state.tables.find((table) => table.id === tableId)
-  )
-
-  const editedAssignedGuestIds = usePlannerStore(
-    useShallow((state) =>
-      state.guests.filter((g) => g.tableId === tableId).map((g) => g.id)
-    )
   )
 
   const openTableEdit = usePanelStore((state) => state.openTableEdit)
 
-  const [form, setForm] = useState(() => {
-    if (props.mode === "edit" && editedTable) {
-      return {
-        name: editedTable.name,
-        shape: editedTable.shape,
-        capacity: editedTable.capacity,
-        width: editedTable.size.width,
-        height: editedTable.size.height,
-        assignedGuestIds: editedAssignedGuestIds,
-      }
-    }
-    return INITIAL_FORM
-  })
+  const [form, setForm] = useState(INITIAL_FORM)
 
   const { width: hallMaxWidth, height: hallMaxHeight } = hallDimensions
   const isWidthOutOfBounds = form.width > hallMaxWidth
   const isHeightOutOfBounds = form.height > hallMaxHeight
   const isRoundOutOfBounds =
     form.width > hallMaxWidth || form.width > hallMaxHeight
-
-  const assignedWithinCapacity = form.assignedGuestIds.slice(0, form.capacity)
 
   const isValid = (f: typeof form) => {
     if (!isDimensionsValidForShape(f.shape, f.width, f.height)) return false
@@ -81,44 +56,29 @@ export const TablePanelContent = (props: Props) => {
       if (f.width > hallMaxWidth || f.height > hallMaxHeight) return false
     }
     if (f.capacity <= 0) return false
+    if (f.count < 1) return false
     return true
   }
 
   const canSubmit = isValid(form)
 
-  const applyEdit = (f: typeof form) => {
-    if (props.mode !== "edit" || !isValid(f)) return
-    updateTable(
-      props.tableId,
-      {
-        name: f.name.trim(),
-        shape: f.shape,
-        capacity: f.capacity,
-        size: getSizeForShape(f.shape, f.width, f.height),
-      },
-      f.assignedGuestIds.slice(0, f.capacity)
-    )
-  }
-
   const update = (partial: Partial<typeof form>) => {
-    const next = { ...form, ...partial }
-    setForm(next)
-    applyEdit(next)
+    setForm((prev) => ({ ...prev, ...partial }))
   }
 
-  const handleAddSubmit = () => {
+  const handleSubmit = () => {
     if (!canSubmit) return
-    const newId = addTable(
+    const ids = addTables(
       {
         name: form.name.trim(),
         shape: form.shape,
         capacity: form.capacity,
         size: getSizeForShape(form.shape, form.width, form.height),
       },
-      assignedWithinCapacity,
-      props.mode === "add" ? props.position : undefined
+      form.count,
+      position
     )
-    openTableEdit(newId)
+    if (ids.length > 0) openTableEdit(ids[0])
   }
 
   const shapeFields =
@@ -155,20 +115,15 @@ export const TablePanelContent = (props: Props) => {
         onChange={(capacity) => update({ capacity })}
       />
 
-      <GuestAssignmentPicker
-        tableId={props.mode === "edit" ? props.tableId : null}
-        capacity={form.capacity}
-        assignedGuestIds={assignedWithinCapacity}
-        onAssignedGuestIdsChange={(assignedGuestIds) =>
-          update({ assignedGuestIds })
-        }
+      <TableBatchCountField
+        value={form.count}
+        max={MAX_BATCH_COUNT}
+        onChange={(count) => update({ count })}
       />
 
-      {props.mode === "add" && (
-        <Button onClick={handleAddSubmit} disabled={!canSubmit}>
-          {t("tables.add")}
-        </Button>
-      )}
+      <Button onClick={handleSubmit} disabled={!canSubmit}>
+        {t("tables.add_many", { count: form.count })}
+      </Button>
     </div>
   )
 }

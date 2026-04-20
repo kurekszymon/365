@@ -1,5 +1,10 @@
 # EasyWed — Development Log
 
+### 20.04
+
+- defined DEFAULT_TABLE
+- add option to batch add tables
+
 ### 19.04
 
 - show user friendly error on failed wedding fetch, only log error response

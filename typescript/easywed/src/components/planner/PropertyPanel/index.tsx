@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next"
 import { XIcon } from "lucide-react"
 import { HallPanelContent } from "./HallPanelContent"
 import { TablePanelContent } from "./TablePanelContent"
+import { TableBatchPanelContent } from "./TableBatchPanelContent"
 import { GuestsPanelContent } from "./GuestsPanelContent"
 import { usePanelStore } from "@/stores/panel.store"
 import { Button } from "@/components/ui/button"
@@ -16,6 +17,8 @@ function usePanelTitle(): string {
       return t("hall")
     case "table.add":
       return t("tables.add")
+    case "tables.batch_add":
+      return t("tables.add_batch")
     case "table.edit":
       return t("tables.edit")
     case "tables.placeholder":
@@ -30,6 +33,9 @@ export const PropertyPanel = () => {
   const view = usePanelStore((state) => state.view)
   const close = usePanelStore((state) => state.close)
   const openTableAdd = usePanelStore((state) => state.openTableAdd)
+  const openTablesBatchAdd = usePanelStore(
+    (state) => state.openTablesBatchAdd
+  )
   const title = usePanelTitle()
 
   const isOpen = view !== null
@@ -64,6 +70,12 @@ export const PropertyPanel = () => {
                 position={view.position}
               />
             )}
+            {view.kind === "tables.batch_add" && (
+              <TableBatchPanelContent
+                key="tables.batch_add"
+                position={view.position}
+              />
+            )}
             {view.kind === "table.edit" && (
               <TablePanelContent
                 key={`table.edit.${view.tableId}`}
@@ -76,9 +88,17 @@ export const PropertyPanel = () => {
                 <p className="text-sm text-muted-foreground">
                   {t("tables.select_to_edit")}
                 </p>
-                <Button variant="outline" onClick={() => openTableAdd()}>
-                  {t("tables.add")}
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="outline" onClick={() => openTableAdd()}>
+                    {t("tables.add")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => openTablesBatchAdd()}
+                  >
+                    {t("tables.add_batch")}
+                  </Button>
+                </div>
               </div>
             )}
             {view.kind === "guests" && <GuestsPanelContent />}
