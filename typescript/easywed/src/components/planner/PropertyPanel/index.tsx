@@ -33,9 +33,7 @@ export const PropertyPanel = () => {
   const view = usePanelStore((state) => state.view)
   const close = usePanelStore((state) => state.close)
   const openTableAdd = usePanelStore((state) => state.openTableAdd)
-  const openTablesBatchAdd = usePanelStore(
-    (state) => state.openTablesBatchAdd
-  )
+  const openTablesBatchAdd = usePanelStore((state) => state.openTablesBatchAdd)
   const title = usePanelTitle()
 
   const isOpen = view !== null

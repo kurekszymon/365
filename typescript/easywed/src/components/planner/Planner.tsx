@@ -10,6 +10,7 @@ import {
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
 import { Canvas } from "./Canvas"
 import { Header } from "./Header"
+import { ExportHeader } from "./Header/Export.header"
 import { GuestsSeated } from "./Header/GuestsSeated.header"
 import { PropertyPanel } from "./PropertyPanel"
 import type { DragEndEvent } from "@dnd-kit/core"
@@ -154,6 +155,7 @@ export const Planner = () => {
                 </TooltipContent>
               </Tooltip>
             </ButtonGroup>
+            <ExportHeader />
           </div>
         </Header>
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>

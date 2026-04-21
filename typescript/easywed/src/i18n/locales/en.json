@@ -117,5 +117,25 @@
 
   "canvas.snap.off": "Off",
   "canvas.snap.tooltip": "Tables snap to this distance when dropped",
-  "canvas.scale.tooltip": "Click to reset zoom"
+  "canvas.scale.tooltip": "Click to reset zoom",
+
+  "export": "Export",
+  "export.unassigned": "Unassigned",
+  "export.col.name": "Name",
+  "export.col.table": "Table",
+  "export.col.dietary": "Dietary",
+  "export.col.note": "Note",
+  "export.csv.title": "Export guest list to CSV",
+  "export.csv.fields": "Columns to include",
+  "export.csv.format": "Format",
+  "export.csv.format.flat": "Flat",
+  "export.csv.format.grouped": "Grouped by table",
+  "export.csv.table_disabled_hint": "Table is shown as section headings in grouped mode",
+  "export.csv.section.table": "{{name}} ({{seated}}/{{capacity}} seated)",
+  "export.csv.section.unassigned": "{{label}} ({{count}})",
+  "export.csv.preview": "Preview",
+  "export.csv.preview_empty": "Pick at least one column to see a preview",
+  "export.csv.preview_no_guests": "No guests yet — add some to see a preview",
+  "export.csv.preview_more": "+{{count}} more rows",
+  "export.csv.download": "Download CSV"
 }

@@ -121,5 +121,25 @@
 
   "canvas.snap.off": "Wyłączone",
   "canvas.snap.tooltip": "Stoły wyrównują się do tej odległości po upuszczeniu",
-  "canvas.scale.tooltip": "Kliknij, aby zresetować zoom"
+  "canvas.scale.tooltip": "Kliknij, aby zresetować zoom",
+
+  "export": "Eksport",
+  "export.unassigned": "Bez stołu",
+  "export.col.name": "Imię",
+  "export.col.table": "Stół",
+  "export.col.dietary": "Preferencje żywieniowe",
+  "export.col.note": "Notatka",
+  "export.csv.title": "Eksportuj listę gości do CSV",
+  "export.csv.fields": "Kolumny do eksportu",
+  "export.csv.format": "Format",
+  "export.csv.format.flat": "Płaski",
+  "export.csv.format.grouped": "Pogrupowane po stołach",
+  "export.csv.table_disabled_hint": "Stół jest pokazany jako nagłówek sekcji w trybie pogrupowanym",
+  "export.csv.section.table": "{{name}} ({{seated}}/{{capacity}} zajętych)",
+  "export.csv.section.unassigned": "{{label}} ({{count}})",
+  "export.csv.preview": "Podgląd",
+  "export.csv.preview_empty": "Wybierz co najmniej jedną kolumnę, aby zobaczyć podgląd",
+  "export.csv.preview_no_guests": "Brak gości — dodaj kilku, aby zobaczyć podgląd",
+  "export.csv.preview_more": "+{{count}} kolejnych wierszy",
+  "export.csv.download": "Pobierz CSV"
 }

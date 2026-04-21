@@ -77,9 +77,7 @@ export const insertTable = async (table: Table): Promise<boolean> => {
   return true
 }
 
-export const insertTables = async (
-  tables: Array<Table>
-): Promise<boolean> => {
+export const insertTables = async (tables: Array<Table>): Promise<boolean> => {
   const weddingId = getWeddingId()
   if (!weddingId || tables.length === 0) return false
 

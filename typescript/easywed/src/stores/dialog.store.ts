@@ -2,7 +2,7 @@
 
 import { create } from "zustand"
 
-type Guests = "Guest.Add"
+type Guests = "Guest.Add" | "Guests.Export.Csv"
 type Weddings = "Wedding.Rename" | "Wedding.Create"
 type Dialog = Weddings | Guests
 

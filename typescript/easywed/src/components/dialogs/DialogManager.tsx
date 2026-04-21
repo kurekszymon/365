@@ -1,4 +1,4 @@
-import { AddGuestDialog } from "./guests"
+import { AddGuestDialog, ExportGuestsCsvDialog } from "./guests"
 import { WeddingCreateDialog, WeddingRenameDialog } from "./weddings"
 import { useDialogStore } from "@/stores/dialog.store"
 
@@ -12,6 +12,8 @@ export const DialogManager = () => {
       return <WeddingRenameDialog />
     case "Guest.Add":
       return <AddGuestDialog />
+    case "Guests.Export.Csv":
+      return <ExportGuestsCsvDialog />
     default:
       return <></>
   }
