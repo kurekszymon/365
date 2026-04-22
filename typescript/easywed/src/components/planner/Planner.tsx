@@ -12,6 +12,7 @@ import { Canvas } from "./Canvas"
 import { Header } from "./Header"
 import { ExportHeader } from "./Header/Export.header"
 import { GuestsSeated } from "./Header/GuestsSeated.header"
+import { PlannerPrintView } from "./PlannerPrintView"
 import { PropertyPanel } from "./PropertyPanel"
 import type { DragEndEvent } from "@dnd-kit/core"
 import { ButtonGroup } from "@/components/ui/button-group"
@@ -72,8 +73,9 @@ export const Planner = () => {
   return (
     <>
       <DialogManager />
+      <PlannerPrintView />
 
-      <div className="flex h-screen w-screen flex-col">
+      <div className="flex h-screen w-screen flex-col print:hidden">
         <Header>
           <Header.Title>
             <Header.Nav>

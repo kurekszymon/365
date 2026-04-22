@@ -137,5 +137,12 @@
   "export.csv.preview_empty": "Pick at least one column to see a preview",
   "export.csv.preview_no_guests": "No guests yet — add some to see a preview",
   "export.csv.preview_more": "+{{count}} more rows",
-  "export.csv.download": "Download CSV"
+  "export.csv.download": "Download CSV",
+  "export.format.csv": "CSV",
+  "export.format.pdf": "PDF",
+  "export.pdf.title": "Export as PDF",
+  "export.pdf.fields": "Fields under each table",
+  "export.pdf.download": "Download PDF",
+  "export.pdf.wedding_date": "Wedding date: {{date}}",
+  "export.pdf.generated_on": "Generated {{date}}"
 }

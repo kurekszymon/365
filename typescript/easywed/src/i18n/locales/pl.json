@@ -141,5 +141,12 @@
   "export.csv.preview_empty": "Wybierz co najmniej jedną kolumnę, aby zobaczyć podgląd",
   "export.csv.preview_no_guests": "Brak gości — dodaj kilku, aby zobaczyć podgląd",
   "export.csv.preview_more": "+{{count}} kolejnych wierszy",
-  "export.csv.download": "Pobierz CSV"
+  "export.csv.download": "Pobierz CSV",
+  "export.format.csv": "CSV",
+  "export.format.pdf": "PDF",
+  "export.pdf.title": "Eksportuj do PDF",
+  "export.pdf.fields": "Pola pod każdym stołem",
+  "export.pdf.download": "Pobierz PDF",
+  "export.pdf.wedding_date": "Data ślubu: {{date}}",
+  "export.pdf.generated_on": "Wygenerowano {{date}}"
 }

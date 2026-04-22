@@ -128,3 +128,37 @@
     @apply font-sans;
     }
 }
+
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 10mm;
+    }
+
+    html, body {
+        background: white !important;
+    }
+
+    /* Hide everything by default, then re-reveal the print view. This
+       survives radix portals, devtools, and any other body-level nodes
+       without needing to enumerate them. */
+    body * {
+        visibility: hidden !important;
+    }
+
+    [data-print-view],
+    [data-print-view] * {
+        visibility: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    [data-print-view] {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        display: block !important;
+        overflow: visible !important;
+    }
+}

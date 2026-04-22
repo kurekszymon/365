@@ -2,12 +2,8 @@ import { useDndMonitor, useDroppable } from "@dnd-kit/core"
 import { useMemo, useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { DraggableTable } from "./DraggableTable"
-import {
-  calcGridSpacing,
-  clampToHall,
-  gridBackground,
-  snapPositionToGrid,
-} from "./utils"
+import { HallBackground } from "./HallBackground"
+import { clampToHall, snapPositionToGrid } from "./utils"
 import type { GridSpacing, GridStyle, SnapStep } from "@/stores/view.store"
 import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
 
@@ -34,11 +30,6 @@ export const HallSurface = ({
   snapStep,
   gridSpacing = 1,
 }: HallSurfaceProps) => {
-  const resolvedGridSpacing =
-    gridSpacing === "auto"
-      ? calcGridSpacing(width / ppm, height / ppm)
-      : gridSpacing
-
   const { setNodeRef: setDropRef } = useDroppable({
     // droppable data { type: "hall" } so the shared onDragEnd in Planner.tsx ignores guest drops on the background
     id: "hall-identifier",
@@ -116,18 +107,16 @@ export const HallSurface = ({
   })
 
   return (
-    <div
+    <HallBackground
       ref={setDropRef}
-      data-canvas-element-kind="hall"
-      className="absolute z-10 bg-white shadow-md ring-2 ring-emerald-400"
-      style={{
-        left,
-        top,
-        width,
-        height,
-        backgroundSize: `${ppm * resolvedGridSpacing}px ${ppm * resolvedGridSpacing}px`,
-        ...gridBackground(gridStyle, zoom),
-      }}
+      hallWidth={width}
+      hallHeight={height}
+      ppm={ppm}
+      gridStyle={gridStyle}
+      gridSpacing={gridSpacing}
+      zoom={zoom}
+      className="absolute z-10 shadow-md ring-2 ring-emerald-400"
+      style={{ left, top }}
     >
       {canvasTables.map((ct) => (
         <DraggableTable
@@ -140,6 +129,6 @@ export const HallSurface = ({
           isDraggingGuest={isDraggingGuest}
         />
       ))}
-    </div>
+    </HallBackground>
   )
 }

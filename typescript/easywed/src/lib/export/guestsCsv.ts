@@ -3,6 +3,7 @@ import type { TFunction } from "i18next"
 import type { Guest } from "@/stores/planner.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { usePlannerStore } from "@/stores/planner.store"
+import { groupGuestsByTable } from "@/lib/export/guests"
 
 export const GUEST_FIELDS = ["name", "table", "dietary", "note"] as const
 export type GuestField = (typeof GUEST_FIELDS)[number]
@@ -84,16 +85,15 @@ export const buildRows = (
     cells: active.map((f) => cellFor(f, g)),
   })
 
-  const byName = (a: Guest, b: Guest) => a.name.localeCompare(b.name)
-
   if (formatMode === "flat") {
+    const byName = (a: Guest, b: Guest) => a.name.localeCompare(b.name)
     return { header, rows: [...guests].sort(byName).map(toDataRow) }
   }
 
+  const { groups, unassigned } = groupGuestsByTable(tables, guests)
   const out: Array<BuiltRow> = []
-  const sortedTables = [...tables].sort((a, b) => a.name.localeCompare(b.name))
-  for (const tbl of sortedTables) {
-    const tableGuests = guests.filter((g) => g.tableId === tbl.id).sort(byName)
+
+  for (const { table: tbl, guests: tableGuests } of groups) {
     out.push({
       kind: "heading",
       cells: [
@@ -106,7 +106,7 @@ export const buildRows = (
     })
     for (const g of tableGuests) out.push(toDataRow(g))
   }
-  const unassigned = guests.filter((g) => !g.tableId).sort(byName)
+
   if (unassigned.length > 0) {
     out.push({
       kind: "heading",

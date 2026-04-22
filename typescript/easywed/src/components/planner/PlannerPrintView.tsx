@@ -1,0 +1,200 @@
+import { useMemo } from "react"
+import { useShallow } from "zustand/react/shallow"
+import { useTranslation } from "react-i18next"
+import { HallBackground } from "./Canvas/HallBackground"
+import { TableVisual } from "./Canvas/TableVisual"
+import type { Guest } from "@/stores/planner.store"
+import type { GuestField } from "@/lib/export/guestsCsv"
+import { usePlannerStore } from "@/stores/planner.store"
+import { useGlobalStore } from "@/stores/global.store"
+import { usePrintStore } from "@/stores/print.store"
+import { useViewStore } from "@/stores/view.store"
+import { groupGuestsByTable } from "@/lib/export/guests"
+
+// TODO: only planner is printable - other pages would be blank
+// A4 landscape minus 10mm margins ≈ 277mm × 190mm.
+// At 96 CSS DPI that's ~1047 × 718 px.
+const PRINT_AREA_PX = { width: 1047, height: 718 }
+
+// The "table" column is never passed here (grouping carries it), so only the
+// other three fields are handled.
+const renderGuestFields = (g: Guest, fields: Array<GuestField>) => {
+  const parts: Array<string> = []
+  for (const f of fields) {
+    if (f === "name") parts.push(g.name)
+    else if (f === "dietary" && g.dietary.length > 0)
+      parts.push(g.dietary.join(", "))
+    else if (f === "note" && g.note) parts.push(g.note)
+  }
+  return parts
+}
+
+export const PlannerPrintView = () => {
+  const { t, i18n } = useTranslation()
+
+  const fields = usePrintStore((s) => s.fields)
+
+  const { name, date } = useGlobalStore(
+    useShallow((s) => ({ name: s.name, date: s.date }))
+  )
+
+  const { tables, guests, hall } = usePlannerStore(
+    useShallow((s) => ({
+      tables: s.tables,
+      guests: s.guests,
+      hall: s.hall.dimensions,
+    }))
+  )
+
+  const { gridStyle, gridSpacing } = useViewStore(
+    useShallow((s) => ({
+      gridStyle: s.gridStyle,
+      gridSpacing: s.gridSpacing,
+    }))
+  )
+
+  const assignedCounts = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const tbl of tables) m.set(tbl.id, 0)
+    for (const g of guests) {
+      if (g.tableId) m.set(g.tableId, (m.get(g.tableId) ?? 0) + 1)
+    }
+    return m
+  }, [tables, guests])
+
+  const ppm = useMemo(() => {
+    if (hall.width <= 0 || hall.height <= 0) return 40
+    return Math.floor(
+      Math.min(
+        PRINT_AREA_PX.width / hall.width,
+        PRINT_AREA_PX.height / hall.height
+      )
+    )
+  }, [hall.width, hall.height])
+
+  const { groups, unassigned } = useMemo(
+    () => groupGuestsByTable(tables, guests),
+    [tables, guests]
+  )
+
+  const unassignedLabel = t("export.unassigned")
+
+  const generatedStr = new Date().toLocaleDateString(i18n.language)
+  const weddingDateStr = date ? date.toLocaleDateString(i18n.language) : null
+  const totalGuests = guests.length
+  const seatedGuests = guests.filter((g) => g.tableId).length
+
+  return (
+    <div
+      data-print-view
+      className="fixed inset-0 z-[9999] hidden overflow-auto bg-white text-black print:block"
+    >
+      <section className="relative flex flex-col items-center justify-center gap-6 p-6 print:min-h-[190mm]">
+        <span className="text-7xl font-bold tracking-widest text-gray-800">
+          EZWED
+        </span>
+
+        <div className="flex flex-col items-center gap-1 text-center">
+          <h1 className="text-3xl font-semibold">
+            {name || t("wedding.defaults.name")}
+          </h1>
+          {weddingDateStr && (
+            <p className="text-base text-gray-700">
+              {t("export.pdf.wedding_date", { date: weddingDateStr })}
+            </p>
+          )}
+        </div>
+
+        <p className="text-sm text-gray-600">
+          {t("tables.count", { count: tables.length })} · {seatedGuests}/
+          {totalGuests} {t("guests").toLowerCase()}
+        </p>
+
+        <p className="absolute bottom-6 text-xs text-gray-500">
+          {t("export.pdf.generated_on", { date: generatedStr })}
+        </p>
+      </section>
+
+      <section className="flex items-center justify-center p-6 print:min-h-[190mm] print:break-before-page">
+        <HallBackground
+          hallWidth={hall.width * ppm}
+          hallHeight={hall.height * ppm}
+          ppm={ppm}
+          gridStyle={gridStyle}
+          gridSpacing={gridSpacing}
+          className="border border-emerald-400"
+        >
+          {tables.map((tbl) => (
+            <TableVisual
+              key={tbl.id}
+              table={tbl}
+              guestsAssigned={assignedCounts.get(tbl.id) ?? 0}
+              ppm={ppm}
+            />
+          ))}
+        </HallBackground>
+      </section>
+
+      <section className="p-6 print:break-before-page">
+        <h2 className="mb-4 text-lg font-semibold">{t("guests")}</h2>
+
+        <div className="flex flex-col gap-5">
+          {groups.map(({ table, guests: tableGuests }) => (
+            <div key={table.id} className="break-inside-avoid">
+              <h3 className="mb-2 text-sm font-semibold">
+                {t("export.csv.section.table", {
+                  name: table.name,
+                  seated: tableGuests.length,
+                  capacity: table.capacity,
+                })}
+              </h3>
+              {tableGuests.length === 0 ? (
+                <p className="text-xs text-gray-500">
+                  {t("export.csv.preview_no_guests")}
+                </p>
+              ) : (
+                <ol className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+                  {tableGuests.map((g, idx) => {
+                    const parts = renderGuestFields(g, fields)
+                    return (
+                      <li key={g.id} className="flex gap-1">
+                        <span className="w-5 shrink-0 text-right text-gray-500">
+                          {idx + 1}.
+                        </span>
+                        <span>{parts.join(" — ")}</span>
+                      </li>
+                    )
+                  })}
+                </ol>
+              )}
+            </div>
+          ))}
+
+          {unassigned.length > 0 && (
+            <div className="break-inside-avoid">
+              <h3 className="mb-2 text-sm font-semibold">
+                {t("export.csv.section.unassigned", {
+                  label: unassignedLabel,
+                  count: unassigned.length,
+                })}
+              </h3>
+              <ol className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+                {unassigned.map((g, idx) => {
+                  const parts = renderGuestFields(g, fields)
+                  return (
+                    <li key={g.id} className="flex gap-1">
+                      <span className="w-5 shrink-0 text-right text-gray-500">
+                        {idx + 1}.
+                      </span>
+                      <span>{parts.join(" — ")}</span>
+                    </li>
+                  )
+                })}
+              </ol>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  )
+}

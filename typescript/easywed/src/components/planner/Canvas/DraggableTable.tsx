@@ -1,14 +1,13 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core"
-import { useCallback, useMemo } from "react"
-import { CSS } from "@dnd-kit/utilities"
+import { useCallback } from "react"
 import { CopyIcon, Trash2Icon } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { clamp } from "./utils"
 import { CanvasActionButton } from "./CanvasActionButton"
+import { TableVisual } from "./TableVisual"
 import type { Table } from "@/stores/planner.store"
 import { cn } from "@/lib/utils"
 
-import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
+import { usePlannerStore } from "@/stores/planner.store"
 import { selectSelectedTableId, usePanelStore } from "@/stores/panel.store"
 
 type DraggableTableProps = {
@@ -53,29 +52,6 @@ export const DraggableTable = ({
     data: { type: "table", tableId: table.id },
   })
 
-  const { shape, position, rotation } = table
-  const size = getEffectiveSize(table.size, rotation)
-  const hasName = table.name.trim().length > 0
-  const guestCountLabel = `${guestsAssigned} / ${table.capacity}`
-  const ariaLabel = hasName
-    ? `${table.name} — ${guestCountLabel}`
-    : guestCountLabel
-
-  const clampedTransform = useMemo(() => {
-    if (!transform) return null
-
-    const minX = -position.x * ppm
-    const maxX = (hallWidth - size.width - position.x) * ppm
-    const minY = -position.y * ppm
-    const maxY = (hallHeight - size.height - position.y) * ppm
-
-    return {
-      ...transform,
-      x: clamp(transform.x, minX, maxX),
-      y: clamp(transform.y, minY, maxY),
-    }
-  }, [hallHeight, hallWidth, size, position, ppm, transform])
-
   const setRef = useCallback(
     (el: HTMLDivElement | null) => {
       setDragRef(el)
@@ -85,42 +61,23 @@ export const DraggableTable = ({
   )
 
   return (
-    <div
+    <TableVisual
       ref={setRef}
-      data-canvas-element-kind="table"
-      data-canvas-element-id={table.id}
+      table={table}
+      guestsAssigned={guestsAssigned}
+      ppm={ppm}
+      transform={transform}
+      hallBounds={{ width: hallWidth, height: hallHeight }}
       className={cn(
-        "absolute z-10 flex cursor-grab touch-none items-center justify-center border border-emerald-300 bg-emerald-100 text-emerald-800 shadow-sm active:cursor-grabbing",
-        shape === "round" ? "rounded-full" : "rounded-lg",
+        "z-10 cursor-grab touch-none shadow-sm active:cursor-grabbing",
         isSelected && "ring-2 ring-emerald-600 ring-offset-2",
         isDraggingGuest &&
           isOver &&
           "border-blue-300 bg-blue-50 ring-2 ring-blue-500 ring-offset-2"
       )}
-      style={{
-        left: position.x * ppm,
-        top: position.y * ppm,
-        width: size.width * ppm,
-        height: (shape === "round" ? size.width : size.height) * ppm,
-        transform: clampedTransform
-          ? CSS.Translate.toString(clampedTransform)
-          : undefined,
-      }}
-      aria-label={ariaLabel}
       {...listeners}
       {...attributes}
     >
-      <div className="flex max-w-full flex-col items-center justify-center px-1 leading-tight">
-        {hasName && (
-          <span className="max-w-full truncate text-xs font-medium">
-            {table.name}
-          </span>
-        )}
-        <span className="max-w-full truncate text-[10px] text-emerald-700">
-          {guestCountLabel}
-        </span>
-      </div>
-
       {isSelected && (
         <div
           className="absolute -top-8 right-0 flex gap-1"
@@ -147,6 +104,6 @@ export const DraggableTable = ({
           />
         </div>
       )}
-    </div>
+    </TableVisual>
   )
 }

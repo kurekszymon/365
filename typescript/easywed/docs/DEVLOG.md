@@ -1,5 +1,15 @@
 # EasyWed — Development Log
 
+### 22.04
+
+- add export to pdf, extend csv export dialog
+- use `guests` to calculate guests grouped by table
+- extract TableVisual and HallBackground to seperate dumber component to support print
+
+### 21.04
+
+- add csv export, export grouped by table, export preview
+
 ### 20.04
 
 - defined DEFAULT_TABLE
