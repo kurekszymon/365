@@ -34,7 +34,7 @@ export const HallBackground = ({
     <div
       ref={ref}
       data-canvas-element-kind="hall"
-      className={cn("relative overflow-hidden bg-white", className)}
+      className={cn("relative bg-white", className)}
       style={{
         width: hallWidth,
         height: hallHeight,
