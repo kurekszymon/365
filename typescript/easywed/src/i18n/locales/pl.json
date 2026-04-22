@@ -25,6 +25,8 @@
   "auth.sign_up": "Załóż konto",
   "auth.sign_out": "Wyloguj się",
   "auth.signing_you_in": "Logujemy cię...",
+  "auth.sign_in_with_google": "Zaloguj się przez Google",
+  "auth.or": "lub",
 
   "wedding.rename": "Zmień nazwę wesela",
   "wedding.loading": "Wczytywanie wesela...",

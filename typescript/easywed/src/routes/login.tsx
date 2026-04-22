@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton"
 
 export const Route = createFileRoute("/login")({
   component: Login,
@@ -55,6 +56,17 @@ function Login() {
     setStatus({ kind: "idle" })
   }
 
+  const signInWithGoogle = async () => {
+    setStatus({ kind: "loading" })
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    })
+    if (error) {
+      return handleError(error)
+    }
+  }
+
   const isLoading = status.kind === "loading"
   const canSubmit = email.length > 0 && password.length > 0 && !isLoading
 
@@ -64,6 +76,16 @@ function Login() {
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-semibold">EasyWed</h1>
           <p className="text-sm text-muted-foreground">{t("auth.subtitle")}</p>
+        </div>
+
+        <div className="flex justify-center">
+          <GoogleSignInButton onClick={signInWithGoogle} disabled={isLoading} />
+        </div>
+
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="h-px flex-1 bg-border" />
+          <span className="uppercase">{t("auth.or")}</span>
+          <div className="h-px flex-1 bg-border" />
         </div>
 
         <div className="flex flex-col gap-3">

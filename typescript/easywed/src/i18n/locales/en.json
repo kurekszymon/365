@@ -25,6 +25,8 @@
   "auth.sign_up": "Create account",
   "auth.sign_out": "Sign out",
   "auth.signing_you_in": "Signing you in...",
+  "auth.sign_in_with_google": "Sign in with Google",
+  "auth.or": "or",
 
   "wedding.rename": "Rename wedding",
   "wedding.loading": "Loading your wedding...",

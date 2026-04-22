@@ -6,6 +6,7 @@
 - use `guests` to calculate guests grouped by table
 - extract TableVisual and HallBackground to seperate dumber component to support print
 - remove batch add tables from header
+- added sign in with google [supabase] (either pay for custom domain 10$/month or do handrolled..)
 
 ### 21.04
 
