@@ -3,7 +3,7 @@
 import { create } from "zustand"
 
 type Guests = "Guest.Add" | "Guests.Export.Csv" | "Guests.Export.Pdf"
-type Weddings = "Wedding.Rename" | "Wedding.Create"
+type Weddings = "Wedding.Rename" | "Wedding.Create" | "Wedding.Members"
 type Dialog = Weddings | Guests
 
 type State = {

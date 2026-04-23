@@ -1,6 +1,12 @@
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
-import { LandmarkIcon, PlusIcon, UsersIcon, UtensilsIcon } from "lucide-react"
+import {
+  LandmarkIcon,
+  PlusIcon,
+  UserPlusIcon,
+  UsersIcon,
+  UtensilsIcon,
+} from "lucide-react"
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
 import { Canvas } from "./Canvas"
 import { Header } from "./Header"
@@ -14,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { RemindersPreview } from "@/components/reminders/preview/RemindersPreview"
 import { DialogManager } from "@/components/dialogs/DialogManager"
 import { useDialogStore } from "@/stores/dialog.store"
+import { useGlobalStore } from "@/stores/global.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { selectSelectedTableId, usePanelStore } from "@/stores/panel.store"
 import { useOpenHall } from "@/hooks/useOpenHall"
@@ -27,6 +34,7 @@ export const Planner = () => {
   const { t } = useTranslation()
 
   const openDialog = useDialogStore((state) => state.open)
+  const role = useGlobalStore((state) => state.role)
   const assignGuestToTable = usePlannerStore(
     (state) => state.assignGuestToTable
   )
@@ -132,6 +140,15 @@ export const Planner = () => {
                 </TooltipContent>
               </Tooltip>
             </ButtonGroup>
+            {role === "owner" && (
+              <Button
+                variant="outline"
+                onClick={() => openDialog("Wedding.Members")}
+              >
+                <UserPlusIcon />
+                <span className="hidden md:inline">{t("members.title")}</span>
+              </Button>
+            )}
             <ExportHeader />
           </div>
         </Header>

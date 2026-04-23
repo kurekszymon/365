@@ -1,45 +1,39 @@
 import { useEffect } from "react"
-import { useLocation, useNavigate } from "@tanstack/react-router"
+import { useRouter } from "@tanstack/react-router"
 import { useAuthStore } from "@/stores/auth.store"
 import { supabase } from "@/lib/supabase"
 
-const PUBLIC_PATHS = ["/login", "/auth/callback"]
-
+// Hydrates the Supabase session into the auth store and re-runs router
+// matches on any auth change. Route-level beforeLoad handlers own the
+// actual redirect decisions (see src/routes/index.tsx, wedding.$id.tsx,
+// reminders/index.tsx, login.tsx, invite.$token.tsx).
 export function AuthGate({ children }: { children: React.ReactNode }) {
-  const session = useAuthStore((s) => s.session)
   const isReady = useAuthStore((s) => s.isReady)
   const setSession = useAuthStore((s) => s.setSession)
   const setReady = useAuthStore((s) => s.setReady)
-  const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const router = useRouter()
 
   useEffect(() => {
     supabase.auth
       .getSession()
       .then(({ data }) => setSession(data.session))
       .catch((err: unknown) => console.error("[auth] getSession failed", err))
-      .finally(() => setReady(true))
+      .finally(() => {
+        setReady(true)
+        void router.invalidate()
+      })
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession)
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        void router.invalidate()
+      }
     })
 
     return () => subscription.unsubscribe()
-  }, [setSession, setReady])
-
-  useEffect(() => {
-    if (!isReady) return
-
-    const isPublic = PUBLIC_PATHS.includes(pathname)
-
-    if (!session && !isPublic) {
-      navigate({ to: "/login", replace: true })
-    } else if (session && pathname === "/login") {
-      navigate({ to: "/", replace: true })
-    }
-  }, [isReady, session, pathname, navigate])
+  }, [setSession, setReady, router])
 
   if (!isReady) return null
 

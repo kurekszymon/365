@@ -2,13 +2,22 @@ import { useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { supabase } from "@/lib/supabase"
+import { redirectAuthedAwayFromLogin } from "@/lib/auth/guards"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton"
 
+type LoginSearch = { next?: string }
+
 export const Route = createFileRoute("/login")({
   component: Login,
+  validateSearch: (s: Record<string, unknown>): LoginSearch => ({
+    next: typeof s.next === "string" ? s.next : undefined,
+  }),
+  beforeLoad: ({ search }) => {
+    redirectAuthedAwayFromLogin(search.next)
+  },
 })
 
 type Status =
@@ -18,9 +27,18 @@ type Status =
 
 function Login() {
   const { t } = useTranslation()
+  const { next } = Route.useSearch()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [status, setStatus] = useState<Status>({ kind: "idle" })
+
+  // Preserve ?next= through email confirmation + OAuth round-trips.
+  // Supabase requires a full absolute URL here, so we construct one.
+  const callbackUrl = () => {
+    const url = new URL("/auth/callback", window.location.origin)
+    if (next) url.searchParams.set("next", next)
+    return url.toString()
+  }
 
   const handleError = (err: unknown) => {
     const message = err instanceof Error ? err.message : String(err)
@@ -47,7 +65,7 @@ function Login() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      options: { emailRedirectTo: callbackUrl() },
     })
     if (error) {
       return handleError(error)
@@ -60,7 +78,7 @@ function Login() {
     setStatus({ kind: "loading" })
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: callbackUrl() },
     })
     if (error) {
       return handleError(error)

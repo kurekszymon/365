@@ -1,5 +1,14 @@
 # EasyWed — Development Log
 
+### 23.04
+
+- fix google sign in by configuring proper redirect urls in supabase
+- deploy site to `easywed.kurek.sh`
+- guard routes with `beforeLoad`
+- add option to coedit wedding with someone (and revoke this privilege) (invitation)
+- todo: limit viewer to not edit anything
+- add invite member dialog
+
 ### 22.04
 
 - add export to pdf, extend csv export dialog

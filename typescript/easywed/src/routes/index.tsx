@@ -2,12 +2,16 @@ import { useEffect, useState } from "react"
 import { Link, createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { supabase } from "@/lib/supabase"
+import { requireAuth } from "@/lib/auth/guards"
 import { useAuthStore } from "@/stores/auth.store"
 import { useDialogStore } from "@/stores/dialog.store"
 import { Button } from "@/components/ui/button"
 import { DialogManager } from "@/components/dialogs/DialogManager"
 
 export const Route = createFileRoute("/")({
+  beforeLoad: () => {
+    requireAuth("/")
+  },
   component: Home,
 })
 

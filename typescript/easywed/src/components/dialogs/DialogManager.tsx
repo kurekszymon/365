@@ -3,7 +3,11 @@ import {
   ExportGuestsCsvDialog,
   ExportGuestsPdfDialog,
 } from "./guests"
-import { WeddingCreateDialog, WeddingRenameDialog } from "./weddings"
+import {
+  WeddingCreateDialog,
+  WeddingMembersDialog,
+  WeddingRenameDialog,
+} from "./weddings"
 import { useDialogStore } from "@/stores/dialog.store"
 
 export const DialogManager = () => {
@@ -14,6 +18,8 @@ export const DialogManager = () => {
       return <WeddingCreateDialog />
     case "Wedding.Rename":
       return <WeddingRenameDialog />
+    case "Wedding.Members":
+      return <WeddingMembersDialog />
     case "Guest.Add":
       return <AddGuestDialog />
     case "Guests.Export.Csv":

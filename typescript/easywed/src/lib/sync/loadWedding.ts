@@ -7,13 +7,17 @@ import type {
   TableShape,
 } from "@/stores/planner.store"
 import type { Reminder } from "@/stores/reminders.store"
+import type { WeddingRole } from "@/stores/global.store"
 import { supabase } from "@/lib/supabase"
+import { useAuthStore } from "@/stores/auth.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useRemindersStore } from "@/stores/reminders.store"
 
 export const loadWedding = async (id: string, signal: AbortSignal) => {
-  const [weddingRes, hallRes, tablesRes, guestsRes, remindersRes] =
+  const userId = useAuthStore.getState().session?.user.id
+
+  const [weddingRes, hallRes, tablesRes, guestsRes, remindersRes, memberRes] =
     await Promise.all([
       supabase
         .from("weddings")
@@ -50,6 +54,16 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
         .select("id, text, due, status, created_at, updated_at")
         .eq("wedding_id", id)
         .abortSignal(signal),
+
+      userId
+        ? supabase
+            .from("wedding_members")
+            .select("role")
+            .eq("wedding_id", id)
+            .eq("user_id", userId)
+            .abortSignal(signal)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
     ])
 
   if (weddingRes.error) throw weddingRes.error
@@ -57,11 +71,13 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
   if (tablesRes.error) throw tablesRes.error
   if (guestsRes.error) throw guestsRes.error
   if (remindersRes.error) throw remindersRes.error
+  if (memberRes.error) throw memberRes.error
 
   useGlobalStore.setState({
     weddingId: id,
     name: weddingRes.data.name || undefined,
     date: weddingRes.data.date ? new Date(weddingRes.data.date) : undefined,
+    role: (memberRes.data?.role as WeddingRole | undefined) ?? undefined,
   })
 
   const tables: Array<Table> = tablesRes.data.map((t) => ({

@@ -214,6 +214,50 @@ export type Database = {
           },
         ]
       }
+      wedding_invitations: {
+        Row: {
+          claimed_at: string | null
+          claimed_by: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: string
+          token: string
+          wedding_id: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          role: string
+          token?: string
+          wedding_id: string
+        }
+        Update: {
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role?: string
+          token?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wedding_invitations_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wedding_members: {
         Row: {
           created_at: string
@@ -275,6 +319,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_wedding_invitation: { Args: { _token: string }; Returns: string }
       is_wedding_member: { Args: { _wedding_id: string }; Returns: boolean }
       wedding_role: { Args: { _wedding_id: string }; Returns: string }
     }

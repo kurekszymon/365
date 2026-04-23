@@ -11,10 +11,13 @@ interface Viewport {
   scale: number
 }
 
+export type WeddingRole = "owner" | "editor" | "viewer"
+
 type State = {
   weddingId?: string
   name?: string
   date?: Date
+  role?: WeddingRole
   viewport: Viewport
 }
 
@@ -31,6 +34,7 @@ export const useGlobalStore = create<State & Action>((set) => ({
   weddingId: undefined,
   name: undefined,
   date: undefined,
+  role: undefined,
   viewport: {
     scale: 1,
     pan: {
