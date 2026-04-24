@@ -10,7 +10,7 @@ export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
     if (e.button !== 0 || !e.isPrimary) return
     if (
       (e.target as HTMLElement).closest(
-        "[data-no-pan], [data-canvas-element-kind]"
+        '[data-no-pan], [data-canvas-element-kind="table"]'
       )
     )
       return

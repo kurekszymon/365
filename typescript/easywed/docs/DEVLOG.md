@@ -4,6 +4,7 @@
 
 - configure vite to build with SPA mode and output `index.html` for cloudflare pages
 - limit db calls with persisting state on blur not on change
+- fix no pan on hall
 
 ### 23.04
 
