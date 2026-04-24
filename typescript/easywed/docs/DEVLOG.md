@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 24.04
+
+- configure vite to build with SPA mode and output `index.html` for cloudflare pages
+
 ### 23.04
 
 - fix google sign in by configuring proper redirect urls in supabase
