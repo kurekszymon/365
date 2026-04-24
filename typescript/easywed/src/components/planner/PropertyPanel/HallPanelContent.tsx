@@ -18,11 +18,12 @@ import {
 export const HallPanelContent = () => {
   const { t } = useTranslation()
 
-  const { preset, dimensions, updateHall } = usePlannerStore(
+  const { preset, dimensions, updateHall, saveHall } = usePlannerStore(
     useShallow((state) => ({
       preset: state.hall.preset ?? "rectangle",
       dimensions: state.hall.dimensions,
       updateHall: state.updateHall,
+      saveHall: state.saveHall,
     }))
   )
 
@@ -51,6 +52,7 @@ export const HallPanelContent = () => {
           height={dimensions.height}
           setWidth={setWidth}
           setHeight={setHeight}
+          onBlur={saveHall}
         />
       )}
 

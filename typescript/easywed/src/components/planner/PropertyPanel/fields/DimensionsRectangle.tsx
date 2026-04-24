@@ -8,12 +8,14 @@ interface IProps {
   height: number
   setWidth: (width: number) => void
   setHeight: (height: number) => void
+  onBlur?: () => void
 }
 export const DimensionsRectangle = ({
   width,
   height,
   setWidth,
   setHeight,
+  onBlur,
 }: IProps) => {
   const { t } = useTranslation()
 
@@ -29,6 +31,7 @@ export const DimensionsRectangle = ({
             max={200}
             value={width}
             onChange={(e) => setWidth(Math.max(1, Number(e.target.value)))}
+            onBlur={onBlur}
           />
         </div>
         <div className="flex flex-1 flex-col gap-1">
@@ -40,6 +43,7 @@ export const DimensionsRectangle = ({
             max={200}
             value={height}
             onChange={(e) => setHeight(Math.max(1, Number(e.target.value)))}
+            onBlur={onBlur}
           />
         </div>
       </FieldContent>

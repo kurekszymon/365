@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input"
 interface IProps {
   value: number
   onChange: (value: number) => void
+  onBlur?: () => void
 }
 
-export const TableCapacityField = ({ value, onChange }: IProps) => {
+export const TableCapacityField = ({ value, onChange, onBlur }: IProps) => {
   const { t } = useTranslation()
   return (
     <Field>
@@ -20,6 +21,7 @@ export const TableCapacityField = ({ value, onChange }: IProps) => {
           className="w-full rounded-md border"
           value={value}
           onChange={(e) => onChange(Number(e.target.value))}
+          onBlur={onBlur}
         />
       </FieldContent>
     </Field>

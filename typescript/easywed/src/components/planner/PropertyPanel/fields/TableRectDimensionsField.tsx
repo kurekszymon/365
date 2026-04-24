@@ -9,6 +9,7 @@ type RectangularTableProps = {
   isHeightOutOfBounds: boolean
   onWidthChange: (value: number) => void
   onHeightChange: (value: number) => void
+  onBlur?: () => void
 }
 
 export const RectangularTable = ({
@@ -18,6 +19,7 @@ export const RectangularTable = ({
   isHeightOutOfBounds,
   onWidthChange,
   onHeightChange,
+  onBlur,
 }: RectangularTableProps) => {
   const { t } = useTranslation()
 
@@ -33,6 +35,7 @@ export const RectangularTable = ({
             className="w-full rounded-md border"
             value={width}
             onChange={(e) => onWidthChange(Number(e.target.value))}
+            onBlur={onBlur}
           />
           {isWidthOutOfBounds && (
             <p className="min-h-4 text-xs text-destructive" aria-live="polite">
@@ -52,6 +55,7 @@ export const RectangularTable = ({
             className="w-full rounded-md border"
             value={height}
             onChange={(e) => onHeightChange(Number(e.target.value))}
+            onBlur={onBlur}
           />
           {isHeightOutOfBounds && (
             <p className="min-h-4 text-xs text-destructive" aria-live="polite">

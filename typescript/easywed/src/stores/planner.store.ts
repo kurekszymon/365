@@ -94,6 +94,7 @@ type Action = {
     table: Omit<Table, "id" | "position">,
     guestIds?: Array<string>
   ) => void
+  saveTable: (id: string) => void
   duplicateTable: (id: string) => string | null
   deleteTable: (id: string) => void
   addGuest: (guest: Omit<Guest, "id">) => void
@@ -101,6 +102,7 @@ type Action = {
     preset: HallPreset,
     dimensions: { width: number; height: number }
   ) => void
+  saveHall: () => void
   assignGuestToTable: (guestId: string, tableId: string | null) => void
   updateTablePosition: (id: string, x: number, y: number) => void
 }
@@ -190,6 +192,17 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
         return guest
       }),
     }))
+  },
+  saveTable: (id) => {
+    const state = get()
+    const table = state.tables.find((t) => t.id === id)
+
+    if (!table) return
+
+    const guestIds = state.guests
+      .filter((g) => g.tableId === id)
+      .map((g) => g.id)
+
     void updateTableRow(id, {
       name: table.name,
       shape: table.shape,
@@ -232,10 +245,13 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
     void insertGuest(newGuest)
   },
   updateHall: (preset, dimensions) => {
-    set((state) => ({
-      hall: { ...state.hall, preset, dimensions },
-    }))
-    void upsertHall(preset, dimensions.width, dimensions.height)
+    set((state) => ({ hall: { ...state.hall, preset, dimensions } }))
+  },
+  saveHall: () => {
+    const { hall } = get()
+    if (!hall.preset) return
+
+    void upsertHall(hall.preset, hall.dimensions.width, hall.dimensions.height)
   },
   assignGuestToTable: (guestId, tableId) => {
     const state = get()

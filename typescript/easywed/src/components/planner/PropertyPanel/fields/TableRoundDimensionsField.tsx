@@ -6,12 +6,14 @@ type RoundTableProps = {
   diameter: number
   isOutOfBounds: boolean
   onDiameterChange: (value: number) => void
+  onBlur?: () => void
 }
 
 export const RoundTable = ({
   diameter,
   isOutOfBounds,
   onDiameterChange,
+  onBlur,
 }: RoundTableProps) => {
   const { t } = useTranslation()
 
@@ -26,6 +28,7 @@ export const RoundTable = ({
           className="w-full rounded-md border"
           value={diameter}
           onChange={(e) => onDiameterChange(Number(e.target.value))}
+          onBlur={onBlur}
         />
         {isOutOfBounds && (
           <p className="min-h-4 text-xs text-destructive" aria-live="polite">

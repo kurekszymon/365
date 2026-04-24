@@ -37,11 +37,12 @@ export const TablePanelContent = (props: Props) => {
 
   const tableId = props.mode === "edit" && props.tableId
 
-  const { hallDimensions, addTable, updateTable } = usePlannerStore(
+  const { hallDimensions, addTable, updateTable, saveTable } = usePlannerStore(
     useShallow((state) => ({
       hallDimensions: state.hall.dimensions,
       addTable: state.addTable,
       updateTable: state.updateTable,
+      saveTable: state.saveTable,
     }))
   )
 
@@ -104,7 +105,7 @@ export const TablePanelContent = (props: Props) => {
       : { width: f.width, height: f.height }
   }
 
-  const applyEdit = (f: typeof form) => {
+  const applyToStore = (f: typeof form) => {
     if (props.mode !== "edit" || !isValid(f)) return
     updateTable(
       props.tableId,
@@ -119,10 +120,20 @@ export const TablePanelContent = (props: Props) => {
     )
   }
 
+  const persist = () => {
+    if (props.mode !== "edit") return
+    saveTable(props.tableId)
+  }
+
   const update = (partial: Partial<typeof form>) => {
     const next = { ...form, ...partial }
     setForm(next)
-    applyEdit(next)
+    applyToStore(next)
+  }
+
+  const updateAndCommit = (partial: Partial<typeof form>) => {
+    update(partial)
+    persist()
   }
 
   const handleAddSubmit = () => {
@@ -147,6 +158,7 @@ export const TablePanelContent = (props: Props) => {
         diameter={form.width}
         isOutOfBounds={isRoundOutOfBounds}
         onDiameterChange={(width) => update({ width })}
+        onBlur={persist}
       />
     ) : (
       <RectangularTable
@@ -156,16 +168,21 @@ export const TablePanelContent = (props: Props) => {
         isHeightOutOfBounds={isHeightOutOfBounds}
         onWidthChange={(width) => update({ width })}
         onHeightChange={(height) => update({ height })}
+        onBlur={persist}
       />
     )
 
   return (
     <div className="flex flex-col gap-4">
-      <TableNameField value={form.name} onChange={(name) => update({ name })} />
+      <TableNameField
+        value={form.name}
+        onChange={(name) => update({ name })}
+        onBlur={persist}
+      />
 
       <TableShapeField
         value={form.shape}
-        onChange={(shape) => update({ shape })}
+        onChange={(shape) => updateAndCommit({ shape })}
       />
 
       {shapeFields}
@@ -175,7 +192,7 @@ export const TablePanelContent = (props: Props) => {
           value={form.rotation}
           onChange={(rotation) => {
             if (rotation === form.rotation) return
-            update({
+            updateAndCommit({
               rotation,
               width: form.height,
               height: form.width,
@@ -187,6 +204,7 @@ export const TablePanelContent = (props: Props) => {
       <TableCapacityField
         value={form.capacity}
         onChange={(capacity) => update({ capacity })}
+        onBlur={persist}
       />
 
       <GuestAssignmentPicker
@@ -194,7 +212,7 @@ export const TablePanelContent = (props: Props) => {
         capacity={form.capacity}
         assignedGuestIds={assignedWithinCapacity}
         onAssignedGuestIdsChange={(assignedGuestIds) =>
-          update({ assignedGuestIds })
+          updateAndCommit({ assignedGuestIds })
         }
       />
 
