@@ -370,6 +370,7 @@ export type Database = {
     }
     Functions: {
       claim_wedding_invitation: { Args: { _token: string }; Returns: string }
+      guest_names_valid: { Args: { names: string[] }; Returns: boolean }
       is_wedding_member: { Args: { _wedding_id: string }; Returns: boolean }
       wedding_role: { Args: { _wedding_id: string }; Returns: string }
     }
