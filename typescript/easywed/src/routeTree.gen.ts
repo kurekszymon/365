@@ -18,6 +18,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as WeddingIdIndexRouteImport } from './routes/wedding.$id/index'
 import { Route as WeddingIdRemindersRouteImport } from './routes/wedding.$id/reminders'
 import { Route as WeddingIdPlannerRouteImport } from './routes/wedding.$id/planner'
+import { Route as WeddingIdInvitationsRouteImport } from './routes/wedding.$id/invitations'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -64,6 +65,11 @@ const WeddingIdPlannerRoute = WeddingIdPlannerRouteImport.update({
   path: '/planner',
   getParentRoute: () => WeddingIdRoute,
 } as any)
+const WeddingIdInvitationsRoute = WeddingIdInvitationsRouteImport.update({
+  id: '/invitations',
+  path: '/invitations',
+  getParentRoute: () => WeddingIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
   '/wedding/$id': typeof WeddingIdRouteWithChildren
+  '/wedding/$id/invitations': typeof WeddingIdInvitationsRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
   '/wedding/$id/reminders': typeof WeddingIdRemindersRoute
   '/wedding/$id/': typeof WeddingIdIndexRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/wedding/$id/invitations': typeof WeddingIdInvitationsRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
   '/wedding/$id/reminders': typeof WeddingIdRemindersRoute
   '/wedding/$id': typeof WeddingIdIndexRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
   '/wedding/$id': typeof WeddingIdRouteWithChildren
+  '/wedding/$id/invitations': typeof WeddingIdInvitationsRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
   '/wedding/$id/reminders': typeof WeddingIdRemindersRoute
   '/wedding/$id/': typeof WeddingIdIndexRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/invite/$token'
     | '/wedding/$id'
+    | '/wedding/$id/invitations'
     | '/wedding/$id/planner'
     | '/wedding/$id/reminders'
     | '/wedding/$id/'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/auth/callback'
     | '/invite/$token'
+    | '/wedding/$id/invitations'
     | '/wedding/$id/planner'
     | '/wedding/$id/reminders'
     | '/wedding/$id'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/invite/$token'
     | '/wedding/$id'
+    | '/wedding/$id/invitations'
     | '/wedding/$id/planner'
     | '/wedding/$id/reminders'
     | '/wedding/$id/'
@@ -207,16 +219,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WeddingIdPlannerRouteImport
       parentRoute: typeof WeddingIdRoute
     }
+    '/wedding/$id/invitations': {
+      id: '/wedding/$id/invitations'
+      path: '/invitations'
+      fullPath: '/wedding/$id/invitations'
+      preLoaderRoute: typeof WeddingIdInvitationsRouteImport
+      parentRoute: typeof WeddingIdRoute
+    }
   }
 }
 
 interface WeddingIdRouteChildren {
+  WeddingIdInvitationsRoute: typeof WeddingIdInvitationsRoute
   WeddingIdPlannerRoute: typeof WeddingIdPlannerRoute
   WeddingIdRemindersRoute: typeof WeddingIdRemindersRoute
   WeddingIdIndexRoute: typeof WeddingIdIndexRoute
 }
 
 const WeddingIdRouteChildren: WeddingIdRouteChildren = {
+  WeddingIdInvitationsRoute: WeddingIdInvitationsRoute,
   WeddingIdPlannerRoute: WeddingIdPlannerRoute,
   WeddingIdRemindersRoute: WeddingIdRemindersRoute,
   WeddingIdIndexRoute: WeddingIdIndexRoute,

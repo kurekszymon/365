@@ -1,21 +1,18 @@
 import { useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
-import { ArrowLeftIcon } from "lucide-react"
-import { Link } from "@tanstack/react-router"
 import { DesignEditor } from "./DesignEditor"
 import { InvitationPreview } from "./InvitationPreview"
 import { OrderDialog } from "./OrderDialog"
+import { Header } from "@/components/planner/Header"
 import { useInvitationStore } from "@/stores/invitation.store"
-import { useAuthStore } from "@/stores/auth.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { decodeDesign, encodeDesign } from "@/lib/invitation/hash"
 import "@/lib/invitation/fonts"
 
-export function InvitationsPage() {
+export function InvitationsPage({ weddingId }: { weddingId?: string }) {
   const { t } = useTranslation()
   const setDesign = useInvitationStore((s) => s.setDesign)
   const design = useInvitationStore((s) => s.design)
-  const session = useAuthStore((s) => s.session)
   const guests = usePlannerStore((s) => s.guests)
   const isFirstMount = useRef(true)
 
@@ -39,8 +36,8 @@ export function InvitationsPage() {
     return () => clearTimeout(id)
   }, [design])
 
-  const guestNames = session ? guests.map((g) => g.name) : undefined
-  const guestCount = session && guests.length > 0 ? guests.length : undefined
+  const guestNames = weddingId ? guests.map((g) => g.name) : undefined
+  const guestCount = weddingId && guests.length > 0 ? guests.length : undefined
 
   return (
     <>
@@ -53,24 +50,14 @@ export function InvitationsPage() {
       `}</style>
 
       <div className="flex h-screen flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b bg-background px-4 py-3 print:hidden">
-          <div className="flex items-center gap-3">
-            {session && (
-              <Link
-                to="/"
-                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-              >
-                <ArrowLeftIcon className="h-4 w-4" />
-                {t("invitations.back")}
-              </Link>
-            )}
+        <Header>
+          <Header.Title weddingId={weddingId}>
             <h1 className="text-base font-semibold">
               {t("invitations.page_title")}
             </h1>
-          </div>
+          </Header.Title>
           <OrderDialog />
-        </div>
+        </Header>
 
         {/* Two-column layout */}
         <div className="flex min-h-0 flex-1 overflow-hidden print:hidden">

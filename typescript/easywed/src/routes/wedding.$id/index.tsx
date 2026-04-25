@@ -1,10 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 
 export const Route = createFileRoute("/wedding/$id/")({
   component: WeddingHub,
@@ -33,17 +28,16 @@ function WeddingHub() {
             </p>
           </Link>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="cursor-not-allowed rounded-md border bg-card p-4 opacity-50 select-none">
-                <p className="font-medium">{t("wedding.hub.invitations")}</p>
-                <p className="text-sm text-muted-foreground">
-                  {t("wedding.hub.invitations_desc")}
-                </p>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>{t("common.coming_soon")}</TooltipContent>
-          </Tooltip>
+          <Link
+            to="/wedding/$id/invitations"
+            params={{ id }}
+            className="rounded-md border bg-card p-4 hover:bg-accent"
+          >
+            <p className="font-medium">{t("wedding.hub.invitations")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("wedding.hub.invitations_desc")}
+            </p>
+          </Link>
 
           <Link
             to="/wedding/$id/reminders"

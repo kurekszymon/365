@@ -1,3 +1,5 @@
+import { ArrowLeftIcon } from "lucide-react"
+import { Link } from "@tanstack/react-router"
 import { WeddingName } from "./WeddingName.header"
 import type { PropsWithChildren } from "react"
 
@@ -13,14 +15,31 @@ const Nav = (props: PropsWithChildren) => {
   return <div className="flex min-w-0 items-center gap-3">{props.children}</div>
 }
 
-const Title = (props: PropsWithChildren) => {
+const Title = (props: PropsWithChildren<{ weddingId?: string }>) => {
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <WeddingName />
+      <BackButton weddingId={props.weddingId} />
       {props.children}
     </div>
   )
 }
 
+const BackButton = (props: { weddingId?: string }) => {
+  const { weddingId } = props
+
+  if (!weddingId) return null
+
+  return (
+    <Link
+      to="/wedding/$id"
+      params={{ id: weddingId }}
+      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+    >
+      <ArrowLeftIcon className="h-4 w-4" />
+    </Link>
+  )
+}
+
 Header.Nav = Nav
 Header.Title = Title
+Header.WeddingName = WeddingName

@@ -8,8 +8,7 @@ import {
   UsersIcon,
   UtensilsIcon,
 } from "lucide-react"
-import { format } from "date-fns"
-import { pl } from "date-fns/locale"
+import { useNavigate } from "@tanstack/react-router"
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
 import { Canvas } from "./Canvas"
 import { Header } from "./Header"
@@ -18,7 +17,6 @@ import { GuestsSeated } from "./Header/GuestsSeated.header"
 import { PlannerPrintView } from "./PlannerPrintView"
 import { PropertyPanel } from "./PropertyPanel"
 import type { DragEndEvent } from "@dnd-kit/core"
-import type { InvitationDesign } from "@/stores/invitation.store"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Button } from "@/components/ui/button"
 import { RemindersPreview } from "@/components/reminders/preview/RemindersPreview"
@@ -33,10 +31,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { encodeDesign } from "@/lib/invitation/hash"
 
 export const Planner = () => {
   const { t } = useTranslation()
+  const navigate = useNavigate()
 
   const openDialog = useDialogStore((state) => state.open)
   const role = useGlobalStore((state) => state.role)
@@ -63,34 +61,14 @@ export const Planner = () => {
   }
 
   const preset = usePlannerStore((state) => state.hall.preset)
-  const guestCount = usePlannerStore((state) => state.guests.length)
-  const weddingName = useGlobalStore((state) => state.name)
-  const weddingDate = useGlobalStore((state) => state.date)
+  const weddingId = useGlobalStore((state) => state.weddingId)
 
   const openHall = useOpenHall()
 
   const handleOpenInvitations = () => {
-    const initial: InvitationDesign = {
-      template: "classic",
-      colorScheme: "cream-gold",
-      fontId: "playfair",
-      texts: {
-        headline: "Zapraszamy na ślub",
-        coupleNames: weddingName ?? "",
-        date: weddingDate
-          ? format(weddingDate, "d MMMM yyyy", { locale: pl })
-          : "",
-        time: "",
-        venue: "",
-        venueAddress: "",
-        rsvpEmail: "",
-        rsvpDeadline: "",
-        guestSalutation: "Drogi/a",
-        footer: "",
-      },
-      quantity: Math.ceil(guestCount * 1.12) || 50,
-    }
-    window.open(`/invitations#${encodeDesign(initial)}`, "_blank")
+    if (!weddingId) return
+
+    void navigate({ to: "/wedding/$id/invitations", params: { id: weddingId } })
   }
 
   const selectedTableId = usePanelStore(selectSelectedTableId)
@@ -111,7 +89,8 @@ export const Planner = () => {
 
       <div className="flex h-screen w-screen flex-col print:hidden">
         <Header>
-          <Header.Title>
+          <Header.Title weddingId={weddingId}>
+            <Header.WeddingName />
             <Header.Nav>
               <GuestsSeated />
               <RemindersPreview />
