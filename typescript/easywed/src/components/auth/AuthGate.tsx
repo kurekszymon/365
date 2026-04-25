@@ -40,7 +40,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe()
   }, [setSession, setReady, router])
 
-  const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p))
+  const isPublic = PUBLIC_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  )
   if (!isReady && !isPublic) return null
 
   return <>{children}</>

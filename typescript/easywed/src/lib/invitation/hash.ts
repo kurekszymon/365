@@ -8,13 +8,14 @@ import type {
 import { TEMPLATES } from "@/lib/invitation/templates"
 
 const VALID_TEMPLATES = TEMPLATES.map((t) => t.id)
-const VALID_COLOR_SCHEMES = TEMPLATES.flatMap((t) => t.colorSchemes)
 
 const DANGEROUS_KEYS = ["__proto__", "constructor", "prototype"]
 
 function isSafeObject(v: unknown): v is Record<string, unknown> {
   if (v === null || typeof v !== "object" || Array.isArray(v)) return false
-  return !DANGEROUS_KEYS.some((k) => k in v)
+  // Use own-property check: inherited keys like constructor are fine,
+  // only an own __proto__/constructor key indicates a pollution attempt.
+  return !DANGEROUS_KEYS.some((k) => Object.hasOwn(v, k))
 }
 
 function str(v: unknown): string {
@@ -24,31 +25,30 @@ function str(v: unknown): string {
 function validateDesign(raw: unknown): InvitationDesign | null {
   if (!isSafeObject(raw)) return null
 
-  const { template, colorScheme, fontId, quantity, texts } = raw
+  const { template, colorScheme: rawScheme, fontId, quantity, texts } = raw
 
-  if (!VALID_TEMPLATES.includes(template as InvitationTemplate)) {
-    return null
-  }
+  if (!VALID_TEMPLATES.includes(template as InvitationTemplate)) return null
 
-  if (!VALID_COLOR_SCHEMES.includes(colorScheme as InvitationColorScheme)) {
-    return null
-  }
+  // Resolve template metadata (safe: we just validated template is in VALID_TEMPLATES)
+  const templateMeta = TEMPLATES.find((t) => t.id === template)!
 
-  if (typeof fontId !== "string" || fontId.length === 0) {
-    return null
-  }
+  // Normalize mismatched scheme rather than reject — old/shared hashes stay usable
+  const colorScheme = templateMeta.colorSchemes.includes(
+    rawScheme as InvitationColorScheme
+  )
+    ? (rawScheme as InvitationColorScheme)
+    : templateMeta.defaultColorScheme
+
+  if (typeof fontId !== "string" || fontId.length === 0) return null
 
   if (
     typeof quantity !== "number" ||
     quantity <= 0 ||
     !Number.isFinite(quantity)
-  ) {
+  )
     return null
-  }
 
-  if (!isSafeObject(texts)) {
-    return null
-  }
+  if (!isSafeObject(texts)) return null
 
   const t = texts
 
@@ -73,7 +73,7 @@ function validateDesign(raw: unknown): InvitationDesign | null {
 
   return {
     template: template as InvitationTemplate,
-    colorScheme: colorScheme as InvitationColorScheme,
+    colorScheme,
     fontId,
     quantity,
     texts: validatedTexts,
@@ -91,7 +91,6 @@ export function decodeDesign(raw: string): InvitationDesign | null {
       raw.startsWith("#") ? raw.slice(1) : raw
     )
     if (!json) return null
-
     return validateDesign(JSON.parse(json))
   } catch {
     return null

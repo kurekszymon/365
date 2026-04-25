@@ -18,7 +18,8 @@ export function ShareButton() {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      // fallback: select the URL
+      // clipboard unavailable (non-HTTPS or denied permission) — fail silently
+      // TODO: handle failure
     }
   }
 
