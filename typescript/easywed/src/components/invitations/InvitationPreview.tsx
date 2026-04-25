@@ -36,7 +36,8 @@ export function InvitationPreview({ guests }: InvitationPreviewProps) {
   const { t } = useTranslation()
   const design = useInvitationStore((s) => s.design)
   const Component = TEMPLATE_MAP[design.template]
-  const fontCss = FONT_OPTIONS.find((f) => f.id === design.fontId)?.css ?? DEFAULT_FONT_CSS
+  const fontCss =
+    FONT_OPTIONS.find((f) => f.id === design.fontId)?.css ?? DEFAULT_FONT_CSS
 
   const handlePrint = () => window.print()
 
@@ -58,7 +59,11 @@ export function InvitationPreview({ guests }: InvitationPreviewProps) {
         />
       ))
     ) : (
-      <Component texts={design.texts} colorScheme={design.colorScheme} fontCss={fontCss} />
+      <Component
+        texts={design.texts}
+        colorScheme={design.colorScheme}
+        fontCss={fontCss}
+      />
     )
 
   return (
@@ -75,7 +80,11 @@ export function InvitationPreview({ guests }: InvitationPreviewProps) {
       {/* Screen preview */}
       <div
         className="overflow-hidden rounded-lg border shadow-sm"
-        style={{ width: `${PREVIEW_W}px`, height: `${scaledH}px`, flexShrink: 0 }}
+        style={{
+          width: `${PREVIEW_W}px`,
+          height: `${scaledH}px`,
+          flexShrink: 0,
+        }}
       >
         <div
           style={{
@@ -86,7 +95,11 @@ export function InvitationPreview({ guests }: InvitationPreviewProps) {
             pointerEvents: "none",
           }}
         >
-          <Component texts={design.texts} colorScheme={design.colorScheme} fontCss={fontCss} />
+          <Component
+            texts={design.texts}
+            colorScheme={design.colorScheme}
+            fontCss={fontCss}
+          />
         </div>
       </div>
 

@@ -2,7 +2,11 @@ import { useState } from "react"
 import { CheckIcon, LinkIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 export function ShareButton() {
   const { t } = useTranslation()
@@ -29,7 +33,9 @@ export function ShareButton() {
         </Button>
       </TooltipTrigger>
       <TooltipContent>
-        {copied ? t("invitations.share_copied") : t("invitations.share_tooltip")}
+        {copied
+          ? t("invitations.share_copied")
+          : t("invitations.share_tooltip")}
       </TooltipContent>
     </Tooltip>
   )

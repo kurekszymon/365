@@ -77,12 +77,15 @@ export const Planner = () => {
       texts: {
         headline: "Zapraszamy na ślub",
         coupleNames: weddingName ?? "",
-        date: weddingDate ? format(weddingDate, "d MMMM yyyy", { locale: pl }) : "",
+        date: weddingDate
+          ? format(weddingDate, "d MMMM yyyy", { locale: pl })
+          : "",
         time: "",
         venue: "",
         venueAddress: "",
         rsvpEmail: "",
         rsvpDeadline: "",
+        guestSalutation: "Drogi/a",
         footer: "",
       },
       quantity: Math.ceil(guestCount * 1.12) || 50,

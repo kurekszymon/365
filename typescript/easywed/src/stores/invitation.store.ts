@@ -23,6 +23,7 @@ export interface InvitationTexts {
   venueAddress: string
   rsvpEmail: string
   rsvpDeadline: string
+  guestSalutation: string
   footer: string
 }
 
@@ -48,8 +49,7 @@ type Action = {
 export const useInvitationStore = create<State & Action>((set) => ({
   design: DEFAULT_DESIGN,
 
-  updateDesign: (patch) =>
-    set((s) => ({ design: { ...s.design, ...patch } })),
+  updateDesign: (patch) => set((s) => ({ design: { ...s.design, ...patch } })),
 
   updateTexts: (patch) =>
     set((s) => ({

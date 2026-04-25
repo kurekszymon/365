@@ -1,7 +1,11 @@
 import { useTranslation } from "react-i18next"
 import { InfoIcon } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { useInvitationStore } from "@/stores/invitation.store"
 
 interface QuantityPickerProps {
@@ -24,7 +28,7 @@ export function QuantityPicker({ guestCount }: QuantityPickerProps) {
         {suggested != null && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <InfoIcon className="text-muted-foreground h-3.5 w-3.5 cursor-help" />
+              <InfoIcon className="h-3.5 w-3.5 cursor-help text-muted-foreground" />
             </TooltipTrigger>
             <TooltipContent>
               {t("invitations.quantity_suggestion", { count: suggested })}
@@ -44,7 +48,7 @@ export function QuantityPicker({ guestCount }: QuantityPickerProps) {
         className="w-28"
       />
       {suggested != null && quantity !== suggested && (
-        <p className="text-muted-foreground text-xs">
+        <p className="text-xs text-muted-foreground">
           {t("invitations.quantity_suggestion", { count: suggested })}
           {" — "}
           <button
@@ -56,7 +60,7 @@ export function QuantityPicker({ guestCount }: QuantityPickerProps) {
         </p>
       )}
       {guestCount != null && (
-        <p className="text-muted-foreground text-xs">
+        <p className="text-xs text-muted-foreground">
           {t("invitations.quantity_guests_source", { count: guestCount })}
         </p>
       )}

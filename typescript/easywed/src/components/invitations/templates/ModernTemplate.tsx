@@ -27,8 +27,20 @@ const SCHEMES: Record<
   },
 }
 
-export function ModernTemplate({ texts, colorScheme, fontCss, guestName }: TemplateProps) {
+function salutationLine(salutation: string, guestName?: string): string | null {
+  if (guestName) return `${salutation || "Drogi/a"} ${guestName}`
+  if (salutation) return `${salutation} …`
+  return null
+}
+
+export function ModernTemplate({
+  texts,
+  colorScheme,
+  fontCss,
+  guestName,
+}: TemplateProps) {
   const c = SCHEMES[colorScheme] ?? SCHEMES["pure-white"]
+  const greeting = salutationLine(texts.guestSalutation, guestName)
 
   return (
     <div
@@ -64,7 +76,9 @@ export function ModernTemplate({ texts, colorScheme, fontCss, guestName }: Templ
       )}
 
       {/* Full-width rule */}
-      <div style={{ height: "2px", backgroundColor: c.rule, marginBottom: "32px" }} />
+      <div
+        style={{ height: "2px", backgroundColor: c.rule, marginBottom: "32px" }}
+      />
 
       {/* Couple names */}
       <h1
@@ -82,17 +96,30 @@ export function ModernTemplate({ texts, colorScheme, fontCss, guestName }: Templ
 
       {/* Full-width rule */}
       <div
-        style={{ height: "1px", backgroundColor: c.rule, opacity: 0.2, marginBottom: "32px" }}
+        style={{
+          height: "1px",
+          backgroundColor: c.rule,
+          opacity: 0.2,
+          marginBottom: "32px",
+        }}
       />
 
-      {/* Date + Time */}
+      {/* Date + time */}
       {(texts.date || texts.time) && (
         <div style={{ marginBottom: "20px" }}>
-          <p style={{ fontSize: "22px", fontWeight: 600, letterSpacing: "-0.01em" }}>
+          <p
+            style={{
+              fontSize: "22px",
+              fontWeight: 600,
+              letterSpacing: "-0.01em",
+            }}
+          >
             {texts.date}
           </p>
           {texts.time && (
-            <p style={{ fontSize: "15px", color: c.muted, marginTop: "4px" }}>{texts.time}</p>
+            <p style={{ fontSize: "15px", color: c.muted, marginTop: "4px" }}>
+              {texts.time}
+            </p>
           )}
         </div>
       )}
@@ -113,7 +140,12 @@ export function ModernTemplate({ texts, colorScheme, fontCss, guestName }: Templ
       {(texts.rsvpEmail || texts.rsvpDeadline) && (
         <div style={{ marginTop: "32px" }}>
           <div
-            style={{ height: "1px", backgroundColor: c.rule, opacity: 0.15, marginBottom: "16px" }}
+            style={{
+              height: "1px",
+              backgroundColor: c.rule,
+              opacity: 0.15,
+              marginBottom: "16px",
+            }}
           />
           {texts.rsvpDeadline && (
             <p
@@ -128,23 +160,39 @@ export function ModernTemplate({ texts, colorScheme, fontCss, guestName }: Templ
             </p>
           )}
           {texts.rsvpEmail && (
-            <p style={{ fontSize: "13px", color: c.accent, marginTop: "4px", fontWeight: 500 }}>
+            <p
+              style={{
+                fontSize: "13px",
+                color: c.accent,
+                marginTop: "4px",
+                fontWeight: 500,
+              }}
+            >
               {texts.rsvpEmail}
             </p>
           )}
         </div>
       )}
 
-      {/* Guest name */}
-      {guestName && (
-        <p style={{ marginTop: "28px", fontSize: "13px", color: c.muted }}>
-          Drogi/a {guestName}
+      {/* Guest salutation — muted placeholder in preview, full colour at print time */}
+      {greeting && (
+        <p
+          style={{
+            marginTop: "28px",
+            fontSize: "13px",
+            color: guestName ? c.text : c.muted,
+            fontStyle: "italic",
+          }}
+        >
+          {greeting}
         </p>
       )}
 
       {/* Footer */}
       {texts.footer && (
-        <p style={{ marginTop: "20px", fontSize: "12px", color: c.muted }}>{texts.footer}</p>
+        <p style={{ marginTop: "20px", fontSize: "12px", color: c.muted }}>
+          {texts.footer}
+        </p>
       )}
     </div>
   )

@@ -17,6 +17,7 @@ const PREVIEW_TEXTS: InvitationTexts = {
   venueAddress: "Krasiczyn 179",
   rsvpEmail: "rsvp@wesele.pl",
   rsvpDeadline: "1 maja 2026",
+  guestSalutation: "Drogi/a",
   footer: "",
 }
 
@@ -31,7 +32,8 @@ export function TemplateGallery() {
   const template = useInvitationStore((s) => s.design.template)
   const fontId = useInvitationStore((s) => s.design.fontId)
   const updateDesign = useInvitationStore((s) => s.updateDesign)
-  const fontCss = FONT_OPTIONS.find((f) => f.id === fontId)?.css ?? DEFAULT_FONT_CSS
+  const fontCss =
+    FONT_OPTIONS.find((f) => f.id === fontId)?.css ?? DEFAULT_FONT_CSS
 
   return (
     <div className="flex flex-col gap-3">
@@ -45,7 +47,10 @@ export function TemplateGallery() {
             <button
               key={tmpl.id}
               onClick={() =>
-                updateDesign({ template: tmpl.id, colorScheme: tmpl.defaultColorScheme })
+                updateDesign({
+                  template: tmpl.id,
+                  colorScheme: tmpl.defaultColorScheme,
+                })
               }
               className={cn(
                 "group flex flex-col items-center gap-2 rounded-lg border-2 p-2 transition-all",
@@ -75,7 +80,12 @@ export function TemplateGallery() {
                   />
                 </div>
               </div>
-              <span className={cn("text-xs font-medium", isActive && "text-primary")}>
+              <span
+                className={cn(
+                  "text-xs font-medium",
+                  isActive && "text-primary"
+                )}
+              >
                 {t(tmpl.labelKey)}
               </span>
             </button>

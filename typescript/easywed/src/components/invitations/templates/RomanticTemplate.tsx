@@ -29,8 +29,20 @@ const SCHEMES: Record<
 
 const CORNER = "❧"
 
-export function RomanticTemplate({ texts, colorScheme, fontCss, guestName }: TemplateProps) {
+function salutationLine(salutation: string, guestName?: string): string | null {
+  if (guestName) return `${salutation || "Drogi/a"} ${guestName}`
+  if (salutation) return `${salutation} …`
+  return null
+}
+
+export function RomanticTemplate({
+  texts,
+  colorScheme,
+  fontCss,
+  guestName,
+}: TemplateProps) {
   const c = SCHEMES[colorScheme] ?? SCHEMES["blush"]
+  const greeting = salutationLine(texts.guestSalutation, guestName)
 
   return (
     <div
@@ -63,27 +75,37 @@ export function RomanticTemplate({ texts, colorScheme, fontCss, guestName }: Tem
       />
 
       {/* Corner ornaments */}
-      {(["topLeft", "topRight", "bottomLeft", "bottomRight"] as const).map((pos) => (
-        <span
-          key={pos}
-          style={{
-            position: "absolute",
-            fontSize: "20px",
-            color: c.accent,
-            opacity: 0.6,
-            ...(pos === "topLeft" && { top: "8px", left: "8px" }),
-            ...(pos === "topRight" && { top: "8px", right: "8px", transform: "scaleX(-1)" }),
-            ...(pos === "bottomLeft" && { bottom: "8px", left: "8px", transform: "scaleY(-1)" }),
-            ...(pos === "bottomRight" && {
-              bottom: "8px",
-              right: "8px",
-              transform: "scale(-1,-1)",
-            }),
-          }}
-        >
-          {CORNER}
-        </span>
-      ))}
+      {(["topLeft", "topRight", "bottomLeft", "bottomRight"] as const).map(
+        (pos) => (
+          <span
+            key={pos}
+            style={{
+              position: "absolute",
+              fontSize: "20px",
+              color: c.accent,
+              opacity: 0.6,
+              ...(pos === "topLeft" && { top: "8px", left: "8px" }),
+              ...(pos === "topRight" && {
+                top: "8px",
+                right: "8px",
+                transform: "scaleX(-1)",
+              }),
+              ...(pos === "bottomLeft" && {
+                bottom: "8px",
+                left: "8px",
+                transform: "scaleY(-1)",
+              }),
+              ...(pos === "bottomRight" && {
+                bottom: "8px",
+                right: "8px",
+                transform: "scale(-1,-1)",
+              }),
+            }}
+          >
+            {CORNER}
+          </span>
+        )
+      )}
 
       {/* Headline */}
       {texts.headline && (
@@ -112,7 +134,9 @@ export function RomanticTemplate({ texts, colorScheme, fontCss, guestName }: Tem
         }}
       >
         <div style={{ flex: 1, height: "0.5px", backgroundColor: c.border }} />
-        <span style={{ color: c.accent, fontSize: "18px", lineHeight: 1 }}>✿</span>
+        <span style={{ color: c.accent, fontSize: "18px", lineHeight: 1 }}>
+          ✿
+        </span>
         <div style={{ flex: 1, height: "0.5px", backgroundColor: c.border }} />
       </div>
 
@@ -140,19 +164,32 @@ export function RomanticTemplate({ texts, colorScheme, fontCss, guestName }: Tem
         }}
       >
         <div style={{ flex: 1, height: "0.5px", backgroundColor: c.border }} />
-        <span style={{ color: c.accent, fontSize: "18px", lineHeight: 1 }}>✿</span>
+        <span style={{ color: c.accent, fontSize: "18px", lineHeight: 1 }}>
+          ✿
+        </span>
         <div style={{ flex: 1, height: "0.5px", backgroundColor: c.border }} />
       </div>
 
       {/* Date + time */}
       {(texts.date || texts.time) && (
         <div style={{ marginBottom: "16px" }}>
-          <p style={{ fontSize: "20px", fontWeight: 300, letterSpacing: "0.06em" }}>
+          <p
+            style={{
+              fontSize: "20px",
+              fontWeight: 300,
+              letterSpacing: "0.06em",
+            }}
+          >
             {texts.date}
           </p>
           {texts.time && (
             <p
-              style={{ fontSize: "15px", color: c.muted, fontStyle: "italic", marginTop: "4px" }}
+              style={{
+                fontSize: "15px",
+                color: c.muted,
+                fontStyle: "italic",
+                marginTop: "4px",
+              }}
             >
               godz. {texts.time}
             </p>
@@ -166,7 +203,12 @@ export function RomanticTemplate({ texts, colorScheme, fontCss, guestName }: Tem
           <p style={{ fontSize: "17px", fontWeight: 600 }}>{texts.venue}</p>
           {texts.venueAddress && (
             <p
-              style={{ fontSize: "13px", color: c.muted, fontStyle: "italic", marginTop: "3px" }}
+              style={{
+                fontSize: "13px",
+                color: c.muted,
+                fontStyle: "italic",
+                marginTop: "3px",
+              }}
             >
               {texts.venueAddress}
             </p>
@@ -190,19 +232,32 @@ export function RomanticTemplate({ texts, colorScheme, fontCss, guestName }: Tem
             </p>
           )}
           {texts.rsvpEmail && (
-            <p style={{ fontSize: "13px", color: c.accent, fontStyle: "italic", marginTop: "2px" }}>
+            <p
+              style={{
+                fontSize: "13px",
+                color: c.accent,
+                fontStyle: "italic",
+                marginTop: "2px",
+              }}
+            >
               {texts.rsvpEmail}
             </p>
           )}
         </div>
       )}
 
-      {/* Guest name */}
-      {guestName && (
+      {/* Guest salutation — muted placeholder in preview, full colour at print time */}
+      {greeting && (
         <p
-          style={{ marginTop: "24px", fontStyle: "italic", fontWeight: 300, fontSize: "15px", color: c.muted }}
+          style={{
+            marginTop: "24px",
+            fontStyle: "italic",
+            fontWeight: 300,
+            fontSize: "15px",
+            color: guestName ? c.text : c.muted,
+          }}
         >
-          Drogi/a {guestName}
+          {greeting}
         </p>
       )}
 

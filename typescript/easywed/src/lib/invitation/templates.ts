@@ -54,6 +54,7 @@ export const DEFAULT_TEXTS: InvitationDesign["texts"] = {
   venueAddress: "",
   rsvpEmail: "",
   rsvpDeadline: "",
+  guestSalutation: "Drogi/a",
   footer: "",
 }
 

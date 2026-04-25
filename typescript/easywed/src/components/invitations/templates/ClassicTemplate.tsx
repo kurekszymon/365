@@ -27,8 +27,22 @@ const SCHEMES: Record<
   },
 }
 
-export function ClassicTemplate({ texts, colorScheme, fontCss, guestName }: TemplateProps) {
+// When guestName is provided (print-all), show the full salutation.
+// When guestSalutation is set but no guestName (design preview), show a placeholder.
+function salutationLine(salutation: string, guestName?: string): string | null {
+  if (guestName) return `${salutation || "Drogi/a"} ${guestName}`
+  if (salutation) return `${salutation} …`
+  return null
+}
+
+export function ClassicTemplate({
+  texts,
+  colorScheme,
+  fontCss,
+  guestName,
+}: TemplateProps) {
   const c = SCHEMES[colorScheme] ?? SCHEMES["cream-gold"]
+  const greeting = salutationLine(texts.guestSalutation, guestName)
 
   return (
     <div
@@ -74,7 +88,6 @@ export function ClassicTemplate({ texts, colorScheme, fontCss, guestName }: Temp
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: "0",
           width: "100%",
           textAlign: "center",
         }}
@@ -143,9 +156,23 @@ export function ClassicTemplate({ texts, colorScheme, fontCss, guestName }: Temp
             width: "60%",
           }}
         >
-          <div style={{ flex: 1, height: "1px", backgroundColor: c.border, opacity: 0.4 }} />
+          <div
+            style={{
+              flex: 1,
+              height: "1px",
+              backgroundColor: c.border,
+              opacity: 0.4,
+            }}
+          />
           <span style={{ color: c.accent, fontSize: "16px" }}>✦</span>
-          <div style={{ flex: 1, height: "1px", backgroundColor: c.border, opacity: 0.4 }} />
+          <div
+            style={{
+              flex: 1,
+              height: "1px",
+              backgroundColor: c.border,
+              opacity: 0.4,
+            }}
+          />
         </div>
 
         {/* Venue */}
@@ -155,7 +182,7 @@ export function ClassicTemplate({ texts, colorScheme, fontCss, guestName }: Temp
           </p>
         )}
         {texts.venueAddress && (
-          <p style={{ fontSize: "13px", color: c.muted, marginBottom: "0" }}>
+          <p style={{ fontSize: "13px", color: c.muted }}>
             {texts.venueAddress}
           </p>
         )}
@@ -176,17 +203,26 @@ export function ClassicTemplate({ texts, colorScheme, fontCss, guestName }: Temp
               </p>
             )}
             {texts.rsvpEmail && (
-              <p style={{ fontSize: "13px", color: c.accent, marginTop: "2px" }}>
+              <p
+                style={{ fontSize: "13px", color: c.accent, marginTop: "2px" }}
+              >
                 {texts.rsvpEmail}
               </p>
             )}
           </div>
         )}
 
-        {/* Guest name personalization */}
-        {guestName && (
-          <p style={{ marginTop: "28px", fontStyle: "italic", fontSize: "14px", color: c.muted }}>
-            Drogi/a {guestName}
+        {/* Guest salutation — muted placeholder in preview, full colour at print time */}
+        {greeting && (
+          <p
+            style={{
+              marginTop: "28px",
+              fontStyle: "italic",
+              fontSize: "14px",
+              color: guestName ? c.text : c.muted,
+            }}
+          >
+            {greeting}
           </p>
         )}
 
@@ -206,9 +242,14 @@ export function ClassicTemplate({ texts, colorScheme, fontCss, guestName }: Temp
           </p>
         )}
 
-        {/* Bottom rule */}
+        {/* Decorative bottom rule */}
         <div
-          style={{ width: "80px", height: "1px", backgroundColor: c.accent, marginTop: "28px" }}
+          style={{
+            width: "80px",
+            height: "1px",
+            backgroundColor: c.accent,
+            marginTop: "28px",
+          }}
         />
       </div>
     </div>

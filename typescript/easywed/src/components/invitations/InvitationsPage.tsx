@@ -57,12 +57,17 @@ export function InvitationsPage() {
         <div className="flex items-center justify-between border-b bg-background px-4 py-3 print:hidden">
           <div className="flex items-center gap-3">
             {session && (
-              <Link to="/" className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm">
+              <Link
+                to="/"
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+              >
                 <ArrowLeftIcon className="h-4 w-4" />
                 {t("invitations.back")}
               </Link>
             )}
-            <h1 className="text-base font-semibold">{t("invitations.page_title")}</h1>
+            <h1 className="text-base font-semibold">
+              {t("invitations.page_title")}
+            </h1>
           </div>
           <OrderDialog />
         </div>
