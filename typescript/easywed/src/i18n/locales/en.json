@@ -10,6 +10,7 @@
   "common.width": "Width",
   "common.height": "Height",
   "common.not_supported": "Not supported yet",
+  "common.coming_soon": "Coming soon",
   "common.auto": "Auto",
   "common.close": "Close",
   "common.meters": "{{count}} m",
@@ -56,6 +57,14 @@
   "wedding.create.title": "Let's plan your big day",
   "wedding.create.title_placeholder": "Alex & Jamie",
   "wedding.create.date_info": "You can always fill it up later",
+
+  "wedding.hub.title": "What would you like to do?",
+  "wedding.hub.planner": "Planner",
+  "wedding.hub.planner_desc": "Arrange tables and seat your guests",
+  "wedding.hub.invitations": "Invitations",
+  "wedding.hub.invitations_desc": "Design and order printed invitations",
+  "wedding.hub.reminders": "Reminders",
+  "wedding.hub.reminders_desc": "Keep track of important dates and tasks",
 
   "weddings.subtitle": "Pick a wedding to plan, or create a new one.",
   "weddings.empty": "No weddings yet. Create your first one above.",

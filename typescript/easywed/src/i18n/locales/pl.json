@@ -10,6 +10,7 @@
   "common.width": "Szerokość",
   "common.height": "Wysokość",
   "common.not_supported": "Jeszcze nieobsługiwane",
+  "common.coming_soon": "Wkrótce",
   "common.auto": "Auto",
   "common.close": "Zamknij",
   "common.meters": "{{count}} m",
@@ -56,6 +57,14 @@
   "wedding.create.title": "Zaplanujmy wasz wielki dzień",
   "wedding.create.title_placeholder": "Ślub Kasi i Tomka",
   "wedding.create.date_info": "Zawsze możecie wypełnić to pole później",
+
+  "wedding.hub.title": "Co chcesz zrobić?",
+  "wedding.hub.planner": "Plan sali",
+  "wedding.hub.planner_desc": "Rozmieść stoły i przypisz gości",
+  "wedding.hub.invitations": "Zaproszenia",
+  "wedding.hub.invitations_desc": "Projektuj i zamawiaj zaproszenia",
+  "wedding.hub.reminders": "Przypomnienia",
+  "wedding.hub.reminders_desc": "Pilnuj ważnych dat i zadań",
 
   "weddings.subtitle": "Wybierz wesele do zaplanowania lub utwórz nowe.",
   "weddings.empty": "Brak wesel. Utwórz pierwsze powyżej.",

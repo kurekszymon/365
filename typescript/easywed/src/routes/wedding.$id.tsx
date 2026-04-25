@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
+import { Outlet, createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
-import Planner from "@/components/planner"
 import { requireAuth } from "@/lib/auth/guards"
 import { loadWedding } from "@/lib/sync/loadWedding"
 
@@ -9,10 +8,10 @@ export const Route = createFileRoute("/wedding/$id")({
   beforeLoad: ({ params }) => {
     requireAuth(`/wedding/${params.id}`)
   },
-  component: WeddingPage,
+  component: WeddingLayout,
 })
 
-function WeddingPage() {
+function WeddingLayout() {
   const { id } = Route.useParams()
   const { t } = useTranslation()
 
@@ -62,5 +61,5 @@ function WeddingPage() {
     )
   }
 
-  return <Planner />
+  return <Outlet />
 }

@@ -8,8 +8,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { Route } from "@/routes/wedding.$id"
 
 export const ListRemindersPopover = () => {
+  const { id } = Route.useParams()
+
   const { t } = useTranslation()
 
   return (
@@ -23,7 +26,9 @@ export const ListRemindersPopover = () => {
       <PopoverContent className="w-64" align="start">
         <ReminderList />
         <Button variant={"link"}>
-          <Link to="/reminders">{t("reminders.navigate")}</Link>
+          <Link to="/wedding/$id/reminders" params={{ id }}>
+            {t("reminders.navigate")}
+          </Link>
           <ExternalLinkIcon />
         </Button>
       </PopoverContent>
