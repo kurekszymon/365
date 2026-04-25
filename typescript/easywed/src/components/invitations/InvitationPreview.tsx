@@ -1,4 +1,5 @@
-import { createPortal } from "react-dom"
+import { createPortal, flushSync } from "react-dom"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { PrinterIcon } from "lucide-react"
 import { ClassicTemplate } from "./templates/ClassicTemplate"
@@ -39,7 +40,17 @@ export function InvitationPreview({ guests }: InvitationPreviewProps) {
   const fontCss =
     FONT_OPTIONS.find((f) => f.id === design.fontId)?.css ?? DEFAULT_FONT_CSS
 
-  const handlePrint = () => window.print()
+  const [printAll, setPrintAll] = useState(false)
+
+  const handlePrintPreview = () => {
+    flushSync(() => setPrintAll(false))
+    window.print()
+  }
+
+  const handlePrintAll = () => {
+    flushSync(() => setPrintAll(true))
+    window.print()
+  }
 
   const CARD_W = 585
   const CARD_H = 830
@@ -47,37 +58,34 @@ export function InvitationPreview({ guests }: InvitationPreviewProps) {
   const scale = PREVIEW_W / CARD_W
   const scaledH = CARD_H * scale
 
-  const cards =
-    guests && guests.length > 0 ? (
-      guests.map((name) => (
-        <Component
-          key={name}
-          texts={design.texts}
-          colorScheme={design.colorScheme}
-          fontCss={fontCss}
-          guestName={name}
-        />
-      ))
-    ) : (
-      <Component
-        texts={design.texts}
-        colorScheme={design.colorScheme}
-        fontCss={fontCss}
-      />
-    )
-
   return (
     <div className="flex flex-col gap-4">
       {/* Print target — portalled to body so print:hidden ancestors don't block it.
-          Global @media print reveals [data-print-view] via visibility: visible. */}
+          printAll controls whether we render one card (preview) or all guest cards. */}
       {createPortal(
         <div data-print-view className="hidden">
-          {cards}
+          {printAll && guests && guests.length > 0 ? (
+            guests.map((name, idx) => (
+              <Component
+                key={`${idx}-${name}`}
+                texts={design.texts}
+                colorScheme={design.colorScheme}
+                fontCss={fontCss}
+                guestName={name}
+              />
+            ))
+          ) : (
+            <Component
+              texts={design.texts}
+              colorScheme={design.colorScheme}
+              fontCss={fontCss}
+            />
+          )}
         </div>,
         document.body
       )}
 
-      {/* Screen preview */}
+      {/* Screen preview — always single card, no guest name */}
       <div
         className="overflow-hidden rounded-lg border shadow-sm"
         style={{
@@ -106,12 +114,12 @@ export function InvitationPreview({ guests }: InvitationPreviewProps) {
       {/* Action buttons */}
       <div className="flex flex-col gap-2">
         <ShareButton />
-        <Button variant="outline" onClick={handlePrint}>
+        <Button variant="outline" onClick={handlePrintPreview}>
           <PrinterIcon />
           {t("invitations.print_preview")}
         </Button>
         {guests && guests.length > 0 && (
-          <Button variant="outline" onClick={handlePrint}>
+          <Button variant="outline" onClick={handlePrintAll}>
             <PrinterIcon />
             {t("invitations.print_all", { count: guests.length })}
           </Button>
