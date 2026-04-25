@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next"
+import { salutationLine } from "./utils"
 import type { TemplateProps } from "./types"
 
 const SCHEMES: Record<
@@ -26,14 +27,6 @@ const SCHEMES: Record<
     text: "#0d1a35",
     muted: "#4a5a7a",
   },
-}
-
-// When guestName is provided (print-all), show the full salutation.
-// When guestSalutation is set but no guestName (design preview), show a placeholder.
-function salutationLine(salutation: string, guestName?: string): string | null {
-  if (guestName) return `${salutation || "Drogi/a"} ${guestName}`
-  if (salutation) return `${salutation} …`
-  return null
 }
 
 export function ClassicTemplate({

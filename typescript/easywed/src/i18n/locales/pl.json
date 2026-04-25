@@ -245,17 +245,21 @@
   "invitations.gallery.preview_rsvp_email": "rsvp@wesele.pl",
   "invitations.gallery.preview_rsvp_deadline": "1 maja 2026",
   "invitations.order": "Zamów zaproszenia",
+  "invitations.salutation": "Drogi/Droga",
   "invitations.order_title": "Zamów zaproszenia",
   "invitations.order_name": "Twoje imię i nazwisko",
   "invitations.order_email": "Adres e-mail",
   "invitations.order_phone": "Telefon (opcjonalnie)",
   "invitations.order_notes": "Uwagi do drukarni",
   "invitations.order_quantity_summary": "Ilość: {{count}} sztuk",
+  "invitations.order_quantity_summary_one": "Ilość: 1 sztuka",
+  "invitations.order_quantity_summary_few": "Ilość: {{count}} sztuki",
+  "invitations.order_quantity_summary_many": "Ilość: {{count}} sztuk",
   "invitations.order_submit": "Wyślij zamówienie",
   "invitations.order_submitting": "Wysyłanie...",
   "invitations.order_success": "Zamówienie wysłane!",
   "invitations.order_success_detail": "Sprawdzimy Wasz projekt i odezwiemy się wkrótce.",
   "invitations.order_error": "Coś poszło nie tak. Spróbuj ponownie.",
 
-  "planner.back": "Wróć do planera"
+  "planner.back": "Wróć"
 }

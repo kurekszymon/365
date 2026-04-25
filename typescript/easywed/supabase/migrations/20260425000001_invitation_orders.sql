@@ -27,12 +27,22 @@ create table public.invitation_orders (
 
 alter table public.invitation_orders enable row level security;
 
--- Anyone (including anonymous visitors) can submit an order.
--- WITH CHECK forces status = 'new' so callers cannot pre-set a different status.
--- SELECT and UPDATE are intentionally omitted: the operator manages orders via the
--- Supabase dashboard, which uses the service role key and bypasses RLS entirely.
-create policy "anyone_can_insert_new_order"
+-- Anonymous visitors may only submit orders without a wedding association.
+create policy "anon_can_insert_new_order"
   on public.invitation_orders
   for insert
-  to anon, authenticated
-  with check (status = 'new');
+  to anon
+  with check (status = 'new' and wedding_id is null);
+
+-- Authenticated users may attach an order to a wedding they are a member of,
+-- or submit without a wedding association (e.g. reached the page directly).
+-- SELECT and UPDATE are intentionally omitted: the operator manages orders via the
+-- Supabase dashboard, which uses the service role key and bypasses RLS entirely.
+create policy "member_can_insert_new_order"
+  on public.invitation_orders
+  for insert
+  to authenticated
+  with check (
+    status = 'new' and
+    (wedding_id is null or public.is_wedding_member(wedding_id))
+  );

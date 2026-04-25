@@ -41,12 +41,8 @@ function validateDesign(raw: unknown): InvitationDesign | null {
 
   if (typeof fontId !== "string" || fontId.length === 0) return null
 
-  if (
-    typeof quantity !== "number" ||
-    quantity <= 0 ||
-    !Number.isFinite(quantity)
-  )
-    return null
+  if (typeof quantity !== "number" || !Number.isFinite(quantity)) return null
+  const clampedQuantity = Math.min(1000, Math.max(1, Math.round(quantity)))
 
   if (!isSafeObject(texts)) return null
 
@@ -65,17 +61,19 @@ function validateDesign(raw: unknown): InvitationDesign | null {
     footer: str(t.footer),
   }
 
-  const guestNames =
-    Array.isArray(raw.guestNames) &&
-    (raw.guestNames as Array<unknown>).every((n) => typeof n === "string")
-      ? (raw.guestNames as Array<string>)
-      : []
+  const guestNames = Array.isArray(raw.guestNames)
+    ? (raw.guestNames as Array<unknown>)
+        .slice(0, 500)
+        .filter((n): n is string => typeof n === "string")
+        .map((n) => n.trim().slice(0, 200))
+        .filter((n) => n.length > 0)
+    : []
 
   return {
     template: template as InvitationTemplate,
     colorScheme,
     fontId,
-    quantity,
+    quantity: clampedQuantity,
     texts: validatedTexts,
     guestNames,
   }

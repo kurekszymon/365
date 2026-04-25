@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next"
+import { salutationLine } from "./utils"
 import type { TemplateProps } from "./types"
 
 const SCHEMES: Record<
@@ -26,12 +27,6 @@ const SCHEMES: Record<
     muted: "#a0a0a0",
     rule: "#444444",
   },
-}
-
-function salutationLine(salutation: string, guestName?: string): string | null {
-  if (guestName) return `${salutation || "Drogi/a"} ${guestName}`
-  if (salutation) return `${salutation} …`
-  return null
 }
 
 export function ModernTemplate({

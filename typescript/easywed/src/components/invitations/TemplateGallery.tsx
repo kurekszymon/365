@@ -27,7 +27,7 @@ export function TemplateGallery() {
     venueAddress: t("invitations.gallery.preview_venue_address"),
     rsvpEmail: t("invitations.gallery.preview_rsvp_email"),
     rsvpDeadline: t("invitations.gallery.preview_rsvp_deadline"),
-    guestSalutation: "Drogi/a",
+    guestSalutation: t("invitations.salutation"),
     footer: "",
   }
   const fontId = useInvitationStore((s) => s.design.fontId)

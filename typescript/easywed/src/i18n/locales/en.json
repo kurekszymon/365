@@ -234,17 +234,19 @@
   "invitations.gallery.preview_rsvp_email": "rsvp@wesele.pl",
   "invitations.gallery.preview_rsvp_deadline": "May 1, 2026",
   "invitations.order": "Order invitations",
+  "invitations.salutation": "Dear",
   "invitations.order_title": "Order invitations",
   "invitations.order_name": "Your name",
   "invitations.order_email": "Email address",
   "invitations.order_phone": "Phone (optional)",
   "invitations.order_notes": "Notes for print shop",
   "invitations.order_quantity_summary": "Quantity: {{count}} invitations",
+  "invitations.order_quantity_summary_one": "Quantity: 1 invitation",
   "invitations.order_submit": "Submit order",
   "invitations.order_submitting": "Submitting...",
   "invitations.order_success": "Order submitted!",
   "invitations.order_success_detail": "We'll review your design and be in touch soon.",
   "invitations.order_error": "Something went wrong. Please try again.",
 
-  "planner.back": "Back to planner"
+  "planner.back": "Back"
 }

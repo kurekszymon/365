@@ -1,6 +1,8 @@
 import { useTranslation } from "react-i18next"
+import { salutationLine } from "./utils"
 import type { TemplateProps } from "./types"
 
+// TODO unify schemes
 const SCHEMES: Record<
   string,
   { bg: string; border: string; accent: string; text: string; muted: string }
@@ -29,12 +31,6 @@ const SCHEMES: Record<
 }
 
 const CORNER = "❧"
-
-function salutationLine(salutation: string, guestName?: string): string | null {
-  if (guestName) return `${salutation || "Drogi/a"} ${guestName}`
-  if (salutation) return `${salutation} …`
-  return null
-}
 
 export function RomanticTemplate({
   texts,
