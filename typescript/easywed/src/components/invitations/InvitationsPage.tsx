@@ -12,19 +12,31 @@ import "@/lib/invitation/fonts"
 export function InvitationsPage({ weddingId }: { weddingId?: string }) {
   const { t } = useTranslation()
   const setDesign = useInvitationStore((s) => s.setDesign)
+  const updateDesign = useInvitationStore((s) => s.updateDesign)
   const design = useInvitationStore((s) => s.design)
   const guests = usePlannerStore((s) => s.guests)
   const isFirstMount = useRef(true)
 
-  // On mount: hydrate from URL hash if present
+  // Capture mount-time values so the effect stays stable
+  const mountRef = useRef({ weddingId, guests })
+
+  // On mount: hydrate from URL hash, or seed guest names from planner store
   useEffect(() => {
+    const { weddingId: wId, guests: g } = mountRef.current
     const hash = window.location.hash.slice(1)
     if (hash) {
       const decoded = decodeDesign(hash)
-      if (decoded) setDesign(decoded)
+      if (decoded) {
+        setDesign(decoded)
+        isFirstMount.current = false
+        return
+      }
+    }
+    if (wId && g.length > 0) {
+      updateDesign({ guestNames: g.map((gu) => gu.name) })
     }
     isFirstMount.current = false
-  }, [setDesign])
+  }, [setDesign, updateDesign])
 
   // Sync design → URL hash (debounced)
   useEffect(() => {
@@ -35,9 +47,6 @@ export function InvitationsPage({ weddingId }: { weddingId?: string }) {
     }, 500)
     return () => clearTimeout(id)
   }, [design])
-
-  const guestNames = weddingId ? guests.map((g) => g.name) : undefined
-  const guestCount = weddingId && guests.length > 0 ? guests.length : undefined
 
   return (
     <>
@@ -63,12 +72,12 @@ export function InvitationsPage({ weddingId }: { weddingId?: string }) {
         <div className="flex min-h-0 flex-1 overflow-hidden print:hidden">
           {/* Left: editor */}
           <div className="w-[420px] shrink-0 overflow-y-auto border-r px-5 py-5">
-            <DesignEditor guestCount={guestCount} />
+            <DesignEditor />
           </div>
 
           {/* Right: preview */}
           <div className="flex flex-1 items-start justify-center overflow-y-auto p-8">
-            <InvitationPreview guests={guestNames} />
+            <InvitationPreview />
           </div>
         </div>
       </div>

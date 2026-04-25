@@ -65,12 +65,19 @@ function validateDesign(raw: unknown): InvitationDesign | null {
     footer: str(t.footer),
   }
 
+  const guestNames =
+    Array.isArray(raw.guestNames) &&
+    (raw.guestNames as Array<unknown>).every((n) => typeof n === "string")
+      ? (raw.guestNames as Array<string>)
+      : []
+
   return {
     template: template as InvitationTemplate,
     colorScheme: colorScheme as InvitationColorScheme,
     fontId,
     quantity,
     texts: validatedTexts,
+    guestNames,
   }
 }
 

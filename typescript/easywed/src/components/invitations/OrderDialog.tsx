@@ -50,19 +50,13 @@ export function OrderDialog() {
         contact_phone: form.contactPhone || null,
         quantity: design.quantity,
         design_hash: encodeDesign(design),
+        guest_names:
+          design.guestNames.length > 0 ? design.guestNames : null,
         notes: form.notes || null,
         wedding_id: weddingId ?? null,
       })
 
       if (error) throw error
-
-      // Fire-and-forget the notification edge function
-      void supabase.functions.invoke("notify-invitation-order", {
-        body: {
-          designHash: encodeDesign(design),
-          contactEmail: form.contactEmail,
-        },
-      })
 
       setStatus("success")
       setForm(EMPTY_FORM)

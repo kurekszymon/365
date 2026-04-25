@@ -3,6 +3,9 @@
 ### 25.04
 
 - created app layout on /wedding/{id}
+- add initial invitation designer, wire it up with router
+- include invitation design and guests in hash
+- create guest name picker that saves guests to db for authenticated users
 
 ### 24.04
 

@@ -127,6 +127,7 @@ export type Database = {
           contact_phone: string | null
           created_at: string
           design_hash: string | null
+          guest_names: string[] | null
           id: string
           notes: string | null
           quantity: number
@@ -139,6 +140,7 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           design_hash?: string | null
+          guest_names?: string[] | null
           id?: string
           notes?: string | null
           quantity: number
@@ -151,6 +153,7 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           design_hash?: string | null
+          guest_names?: string[] | null
           id?: string
           notes?: string | null
           quantity?: number

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { ChevronDownIcon } from "lucide-react"
 import { TemplateGallery } from "./TemplateGallery"
 import { QuantityPicker } from "./QuantityPicker"
+import { GuestNamesPicker } from "./GuestNamesPicker"
 import { useInvitationStore } from "@/stores/invitation.store"
 import { COLOR_SCHEME_LABELS, TEMPLATES } from "@/lib/invitation/templates"
 import { FONT_OPTIONS } from "@/lib/invitation/fonts"
@@ -17,11 +18,7 @@ import {
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
-interface DesignEditorProps {
-  guestCount?: number
-}
-
-export function DesignEditor({ guestCount }: DesignEditorProps) {
+export function DesignEditor() {
   const { t } = useTranslation()
   const design = useInvitationStore((s) => s.design)
   const updateTexts = useInvitationStore((s) => s.updateTexts)
@@ -181,12 +178,20 @@ export function DesignEditor({ guestCount }: DesignEditorProps) {
 
       <Separator />
 
+      {/* ── Guests ── */}
+      <section className="flex flex-col gap-3">
+        <p className="text-sm font-semibold">{t("invitations.step_guests")}</p>
+        <GuestNamesPicker />
+      </section>
+
+      <Separator />
+
       {/* ── Quantity & Order ── */}
       <section className="flex flex-col gap-3">
         <p className="text-sm font-semibold">
           {t("invitations.step_quantity")}
         </p>
-        <QuantityPicker guestCount={guestCount} />
+        <QuantityPicker />
       </section>
     </div>
   )

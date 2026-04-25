@@ -8,16 +8,13 @@ import {
 } from "@/components/ui/tooltip"
 import { useInvitationStore } from "@/stores/invitation.store"
 
-interface QuantityPickerProps {
-  guestCount?: number
-}
-
-export function QuantityPicker({ guestCount }: QuantityPickerProps) {
+export function QuantityPicker() {
   const { t } = useTranslation()
   const quantity = useInvitationStore((s) => s.design.quantity)
+  const guestCount = useInvitationStore((s) => s.design.guestNames.length)
   const updateDesign = useInvitationStore((s) => s.updateDesign)
 
-  const suggested = guestCount != null ? Math.ceil(guestCount * 1.12) : null
+  const suggested = guestCount > 0 ? Math.ceil(guestCount * 1.12) : null
 
   return (
     <div className="flex flex-col gap-2">
@@ -59,7 +56,7 @@ export function QuantityPicker({ guestCount }: QuantityPickerProps) {
           </button>
         </p>
       )}
-      {guestCount != null && (
+      {guestCount > 0 && (
         <p className="text-xs text-muted-foreground">
           {t("invitations.quantity_guests_source", { count: guestCount })}
         </p>

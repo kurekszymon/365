@@ -64,4 +64,5 @@ export const DEFAULT_DESIGN: InvitationDesign = {
   fontId: DEFAULT_FONT_ID,
   texts: DEFAULT_TEXTS,
   quantity: 50,
+  guestNames: [],
 }

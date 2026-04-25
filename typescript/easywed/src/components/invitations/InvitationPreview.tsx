@@ -29,13 +29,10 @@ const TEMPLATE_MAP: Record<
   romantic: RomanticTemplate,
 }
 
-interface InvitationPreviewProps {
-  guests?: Array<string>
-}
-
-export function InvitationPreview({ guests }: InvitationPreviewProps) {
+export function InvitationPreview() {
   const { t } = useTranslation()
   const design = useInvitationStore((s) => s.design)
+  const guests = design.guestNames.length > 0 ? design.guestNames : undefined
   const Component = TEMPLATE_MAP[design.template]
   const fontCss =
     FONT_OPTIONS.find((f) => f.id === design.fontId)?.css ?? DEFAULT_FONT_CSS

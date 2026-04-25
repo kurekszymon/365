@@ -6,6 +6,7 @@ create table public.invitation_orders (
   contact_phone text,
   quantity      int         not null check (quantity > 0),
   design_hash   text,
+  guest_names   text[],
   notes         text,
   wedding_id    uuid        references public.weddings(id) on delete set null,
   status        text        not null default 'new'

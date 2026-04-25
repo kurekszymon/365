@@ -33,6 +33,7 @@ export interface InvitationDesign {
   fontId: string
   texts: InvitationTexts
   quantity: number
+  guestNames: Array<string>
 }
 
 type State = {
@@ -43,6 +44,8 @@ type Action = {
   updateDesign: (patch: Partial<Omit<InvitationDesign, "texts">>) => void
   updateTexts: (patch: Partial<InvitationTexts>) => void
   setDesign: (design: InvitationDesign) => void
+  addGuestName: (name: string) => void
+  removeGuestName: (index: number) => void
   reset: () => void
 }
 
@@ -57,6 +60,19 @@ export const useInvitationStore = create<State & Action>((set) => ({
     })),
 
   setDesign: (design) => set({ design }),
+
+  addGuestName: (name) =>
+    set((s) => ({
+      design: { ...s.design, guestNames: [...s.design.guestNames, name] },
+    })),
+
+  removeGuestName: (index) =>
+    set((s) => ({
+      design: {
+        ...s.design,
+        guestNames: s.design.guestNames.filter((_, i) => i !== index),
+      },
+    })),
 
   reset: () => set({ design: DEFAULT_DESIGN }),
 }))
