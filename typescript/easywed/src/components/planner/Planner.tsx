@@ -2,11 +2,14 @@ import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import {
   LandmarkIcon,
+  MailIcon,
   PlusIcon,
   UserPlusIcon,
   UsersIcon,
   UtensilsIcon,
 } from "lucide-react"
+import { format } from "date-fns"
+import { pl } from "date-fns/locale"
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
 import { Canvas } from "./Canvas"
 import { Header } from "./Header"
@@ -15,6 +18,7 @@ import { GuestsSeated } from "./Header/GuestsSeated.header"
 import { PlannerPrintView } from "./PlannerPrintView"
 import { PropertyPanel } from "./PropertyPanel"
 import type { DragEndEvent } from "@dnd-kit/core"
+import type { InvitationDesign } from "@/stores/invitation.store"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Button } from "@/components/ui/button"
 import { RemindersPreview } from "@/components/reminders/preview/RemindersPreview"
@@ -29,6 +33,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { encodeDesign } from "@/lib/invitation/hash"
 
 export const Planner = () => {
   const { t } = useTranslation()
@@ -58,8 +63,32 @@ export const Planner = () => {
   }
 
   const preset = usePlannerStore((state) => state.hall.preset)
+  const guestCount = usePlannerStore((state) => state.guests.length)
+  const weddingName = useGlobalStore((state) => state.name)
+  const weddingDate = useGlobalStore((state) => state.date)
 
   const openHall = useOpenHall()
+
+  const handleOpenInvitations = () => {
+    const initial: InvitationDesign = {
+      template: "classic",
+      colorScheme: "cream-gold",
+      fontId: "playfair",
+      texts: {
+        headline: "Zapraszamy na ślub",
+        coupleNames: weddingName ?? "",
+        date: weddingDate ? format(weddingDate, "d MMMM yyyy", { locale: pl }) : "",
+        time: "",
+        venue: "",
+        venueAddress: "",
+        rsvpEmail: "",
+        rsvpDeadline: "",
+        footer: "",
+      },
+      quantity: Math.ceil(guestCount * 1.12) || 50,
+    }
+    window.open(`/invitations#${encodeDesign(initial)}`, "_blank")
+  }
 
   const selectedTableId = usePanelStore(selectSelectedTableId)
   const panel = usePanelStore(
@@ -149,6 +178,10 @@ export const Planner = () => {
                 <span className="hidden md:inline">{t("members.title")}</span>
               </Button>
             )}
+            <Button variant="outline" onClick={handleOpenInvitations}>
+              <MailIcon />
+              <span className="hidden md:inline">{t("invitations")}</span>
+            </Button>
             <ExportHeader />
           </div>
         </Header>

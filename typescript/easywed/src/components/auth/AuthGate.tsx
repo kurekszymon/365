@@ -1,7 +1,11 @@
 import { useEffect } from "react"
-import { useRouter } from "@tanstack/react-router"
+import { useRouter, useRouterState } from "@tanstack/react-router"
 import { useAuthStore } from "@/stores/auth.store"
 import { supabase } from "@/lib/supabase"
+
+// Routes that render immediately without waiting for session hydration.
+// Auth state still hydrates in the background for opportunistic use.
+const PUBLIC_PATHS = ["/login", "/auth/callback", "/invitations"]
 
 // Hydrates the Supabase session into the auth store and re-runs router
 // matches on any auth change. Route-level beforeLoad handlers own the
@@ -12,6 +16,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const setSession = useAuthStore((s) => s.setSession)
   const setReady = useAuthStore((s) => s.setReady)
   const router = useRouter()
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
 
   useEffect(() => {
     supabase.auth
@@ -35,7 +40,8 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe()
   }, [setSession, setReady, router])
 
-  if (!isReady) return null
+  const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p))
+  if (!isReady && !isPublic) return null
 
   return <>{children}</>
 }
