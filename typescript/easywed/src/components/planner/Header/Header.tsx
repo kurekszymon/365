@@ -1,5 +1,6 @@
 import { ArrowLeftIcon } from "lucide-react"
 import { Link } from "@tanstack/react-router"
+import { useTranslation } from "react-i18next"
 import { WeddingName } from "./WeddingName.header"
 import type { PropsWithChildren } from "react"
 
@@ -26,6 +27,7 @@ const Title = (props: PropsWithChildren<{ weddingId?: string }>) => {
 
 const BackButton = (props: { weddingId?: string }) => {
   const { weddingId } = props
+  const { t } = useTranslation()
 
   if (!weddingId) return null
 
@@ -33,6 +35,8 @@ const BackButton = (props: { weddingId?: string }) => {
     <Link
       to="/wedding/$id"
       params={{ id: weddingId }}
+      title={t("planner.back")}
+      aria-label={t("planner.back")}
       className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
     >
       <ArrowLeftIcon className="h-4 w-4" />
