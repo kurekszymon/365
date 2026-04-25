@@ -212,6 +212,18 @@
   "invitations.print_preview": "Print preview",
   "invitations.print_all": "Print for all {{count}} guests",
   "invitations.print_all_one": "Print for 1 guest",
+  "invitations.template.rsvp_by": "RSVP by",
+  "invitations.template.confirm_by": "Confirm by",
+  "invitations.template.please_confirm_by": "Please confirm by",
+  "invitations.template.time_prefix": "at",
+  "invitations.gallery.preview_headline": "You're Invited",
+  "invitations.gallery.preview_couple": "Anna & Piotr",
+  "invitations.gallery.preview_date": "June 14, 2026",
+  "invitations.gallery.preview_time": "15:00",
+  "invitations.gallery.preview_venue": "Krasiczyn Palace",
+  "invitations.gallery.preview_venue_address": "Krasiczyn 179",
+  "invitations.gallery.preview_rsvp_email": "rsvp@wesele.pl",
+  "invitations.gallery.preview_rsvp_deadline": "May 1, 2026",
   "invitations.order": "Order invitations",
   "invitations.order_title": "Order invitations",
   "invitations.order_name": "Your name",
@@ -223,5 +235,7 @@
   "invitations.order_submitting": "Submitting...",
   "invitations.order_success": "Order submitted!",
   "invitations.order_success_detail": "We'll review your design and be in touch soon.",
-  "invitations.order_error": "Something went wrong. Please try again."
+  "invitations.order_error": "Something went wrong. Please try again.",
+
+  "planner.back": "Back to planner"
 }

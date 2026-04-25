@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import type { TemplateProps } from "./types"
 
 const SCHEMES: Record<
@@ -41,6 +42,7 @@ export function RomanticTemplate({
   fontCss,
   guestName,
 }: TemplateProps) {
+  const { t } = useTranslation()
   const c = SCHEMES[colorScheme] ?? SCHEMES["blush"]
   const greeting = salutationLine(texts.guestSalutation, guestName)
 
@@ -191,7 +193,7 @@ export function RomanticTemplate({
                 marginTop: "4px",
               }}
             >
-              godz. {texts.time}
+              {t("invitations.template.time_prefix")} {texts.time}
             </p>
           )}
         </div>
@@ -228,7 +230,7 @@ export function RomanticTemplate({
                 textTransform: "uppercase",
               }}
             >
-              Proszę o potwierdzenie do {texts.rsvpDeadline}
+              {t("invitations.template.please_confirm_by")} {texts.rsvpDeadline}
             </p>
           )}
           {texts.rsvpEmail && (

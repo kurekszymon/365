@@ -8,19 +8,6 @@ import { DEFAULT_FONT_CSS, FONT_OPTIONS } from "@/lib/invitation/fonts"
 import { useInvitationStore } from "@/stores/invitation.store"
 import { cn } from "@/lib/utils"
 
-const PREVIEW_TEXTS: InvitationTexts = {
-  headline: "Zapraszamy na ślub",
-  coupleNames: "Anna & Piotr",
-  date: "14 czerwca 2026",
-  time: "15:00",
-  venue: "Pałac Krasiczyn",
-  venueAddress: "Krasiczyn 179",
-  rsvpEmail: "rsvp@wesele.pl",
-  rsvpDeadline: "1 maja 2026",
-  guestSalutation: "Drogi/a",
-  footer: "",
-}
-
 const TEMPLATE_COMPONENTS = {
   classic: ClassicTemplate,
   modern: ModernTemplate,
@@ -30,6 +17,19 @@ const TEMPLATE_COMPONENTS = {
 export function TemplateGallery() {
   const { t } = useTranslation()
   const template = useInvitationStore((s) => s.design.template)
+
+  const PREVIEW_TEXTS: InvitationTexts = {
+    headline: t("invitations.gallery.preview_headline"),
+    coupleNames: t("invitations.gallery.preview_couple"),
+    date: t("invitations.gallery.preview_date"),
+    time: t("invitations.gallery.preview_time"),
+    venue: t("invitations.gallery.preview_venue"),
+    venueAddress: t("invitations.gallery.preview_venue_address"),
+    rsvpEmail: t("invitations.gallery.preview_rsvp_email"),
+    rsvpDeadline: t("invitations.gallery.preview_rsvp_deadline"),
+    guestSalutation: "Drogi/a",
+    footer: "",
+  }
   const fontId = useInvitationStore((s) => s.design.fontId)
   const updateDesign = useInvitationStore((s) => s.updateDesign)
   const fontCss =

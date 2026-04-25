@@ -221,6 +221,18 @@
   "invitations.print_all_one": "Drukuj dla 1 gościa",
   "invitations.print_all_few": "Drukuj dla {{count}} gości",
   "invitations.print_all_many": "Drukuj dla {{count}} gości",
+  "invitations.template.rsvp_by": "RSVP do",
+  "invitations.template.confirm_by": "Potwierdzenie do",
+  "invitations.template.please_confirm_by": "Proszę o potwierdzenie do",
+  "invitations.template.time_prefix": "godz.",
+  "invitations.gallery.preview_headline": "Zapraszamy na ślub",
+  "invitations.gallery.preview_couple": "Anna & Piotr",
+  "invitations.gallery.preview_date": "14 czerwca 2026",
+  "invitations.gallery.preview_time": "15:00",
+  "invitations.gallery.preview_venue": "Pałac Krasiczyn",
+  "invitations.gallery.preview_venue_address": "Krasiczyn 179",
+  "invitations.gallery.preview_rsvp_email": "rsvp@wesele.pl",
+  "invitations.gallery.preview_rsvp_deadline": "1 maja 2026",
   "invitations.order": "Zamów zaproszenia",
   "invitations.order_title": "Zamów zaproszenia",
   "invitations.order_name": "Twoje imię i nazwisko",
@@ -232,5 +244,7 @@
   "invitations.order_submitting": "Wysyłanie...",
   "invitations.order_success": "Zamówienie wysłane!",
   "invitations.order_success_detail": "Sprawdzimy Wasz projekt i odezwiemy się wkrótce.",
-  "invitations.order_error": "Coś poszło nie tak. Spróbuj ponownie."
+  "invitations.order_error": "Coś poszło nie tak. Spróbuj ponownie.",
+
+  "planner.back": "Wróć do planera"
 }

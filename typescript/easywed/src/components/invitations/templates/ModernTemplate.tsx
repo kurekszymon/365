@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import type { TemplateProps } from "./types"
 
 const SCHEMES: Record<
@@ -39,6 +40,7 @@ export function ModernTemplate({
   fontCss,
   guestName,
 }: TemplateProps) {
+  const { t } = useTranslation()
   const c = SCHEMES[colorScheme] ?? SCHEMES["pure-white"]
   const greeting = salutationLine(texts.guestSalutation, guestName)
 
@@ -156,7 +158,7 @@ export function ModernTemplate({
                 textTransform: "uppercase",
               }}
             >
-              Potwierdzenie do {texts.rsvpDeadline}
+              {t("invitations.template.confirm_by")} {texts.rsvpDeadline}
             </p>
           )}
           {texts.rsvpEmail && (

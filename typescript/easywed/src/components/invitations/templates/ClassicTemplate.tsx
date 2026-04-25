@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import type { TemplateProps } from "./types"
 
 const SCHEMES: Record<
@@ -41,6 +42,7 @@ export function ClassicTemplate({
   fontCss,
   guestName,
 }: TemplateProps) {
+  const { t } = useTranslation()
   const c = SCHEMES[colorScheme] ?? SCHEMES["cream-gold"]
   const greeting = salutationLine(texts.guestSalutation, guestName)
 
@@ -199,7 +201,7 @@ export function ClassicTemplate({
                   textTransform: "uppercase",
                 }}
               >
-                RSVP do {texts.rsvpDeadline}
+                {t("invitations.template.rsvp_by")} {texts.rsvpDeadline}
               </p>
             )}
             {texts.rsvpEmail && (
