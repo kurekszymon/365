@@ -38,14 +38,21 @@ export function InvitationPreview() {
   // Screen-only: fall back to placeholder text so the preview always looks complete.
   // Print portal uses design.texts directly — only real content goes to paper.
   const previewTexts: InvitationTexts = {
-    headline: design.texts.headline || t("invitations.gallery.preview_headline"),
-    coupleNames: design.texts.coupleNames || t("invitations.gallery.preview_couple"),
+    headline:
+      design.texts.headline || t("invitations.gallery.preview_headline"),
+    coupleNames:
+      design.texts.coupleNames || t("invitations.gallery.preview_couple"),
     date: design.texts.date || t("invitations.gallery.preview_date"),
     time: design.texts.time || t("invitations.gallery.preview_time"),
     venue: design.texts.venue || t("invitations.gallery.preview_venue"),
-    venueAddress: design.texts.venueAddress || t("invitations.gallery.preview_venue_address"),
-    rsvpEmail: design.texts.rsvpEmail || t("invitations.gallery.preview_rsvp_email"),
-    rsvpDeadline: design.texts.rsvpDeadline || t("invitations.gallery.preview_rsvp_deadline"),
+    venueAddress:
+      design.texts.venueAddress ||
+      t("invitations.gallery.preview_venue_address"),
+    rsvpEmail:
+      design.texts.rsvpEmail || t("invitations.gallery.preview_rsvp_email"),
+    rsvpDeadline:
+      design.texts.rsvpDeadline ||
+      t("invitations.gallery.preview_rsvp_deadline"),
     guestSalutation: design.texts.guestSalutation,
     footer: design.texts.footer,
   }
