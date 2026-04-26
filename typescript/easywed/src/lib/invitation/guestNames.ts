@@ -6,7 +6,7 @@ export function sanitizeGuestName(name: string): string {
   return name.trim().slice(0, GUEST_NAME_MAX_LENGTH)
 }
 
-/** Trim, cap, deduplicate-empties, and limit an array of guest names. */
+/** Trim, cap each name, drop blank entries, and limit array length. */
 export function sanitizeGuestNames(names: Array<string>): Array<string> {
   return names
     .map(sanitizeGuestName)

@@ -5,7 +5,7 @@ import type {
   InvitationTemplate,
   InvitationTexts,
 } from "@/stores/invitation.store"
-import { TEMPLATES } from "@/lib/invitation/templates"
+import { TEMPLATES, TEXT_MAX_LENGTHS } from "@/lib/invitation/templates"
 import { sanitizeGuestNames } from "@/lib/invitation/guestNames"
 
 const VALID_TEMPLATES = TEMPLATES.map((t) => t.id)
@@ -19,8 +19,8 @@ function isSafeObject(v: unknown): v is Record<string, unknown> {
   return !DANGEROUS_KEYS.some((k) => Object.hasOwn(v, k))
 }
 
-function str(v: unknown): string {
-  return typeof v === "string" ? v : ""
+function str(v: unknown, maxLength: number): string {
+  return typeof v === "string" ? v.slice(0, maxLength) : ""
 }
 
 function validateDesign(raw: unknown): InvitationDesign | null {
@@ -50,16 +50,16 @@ function validateDesign(raw: unknown): InvitationDesign | null {
   const t = texts
 
   const validatedTexts: InvitationTexts = {
-    headline: str(t.headline),
-    coupleNames: str(t.coupleNames),
-    date: str(t.date),
-    time: str(t.time),
-    venue: str(t.venue),
-    venueAddress: str(t.venueAddress),
-    rsvpEmail: str(t.rsvpEmail),
-    rsvpDeadline: str(t.rsvpDeadline),
-    guestSalutation: str(t.guestSalutation),
-    footer: str(t.footer),
+    headline: str(t.headline, TEXT_MAX_LENGTHS.headline),
+    coupleNames: str(t.coupleNames, TEXT_MAX_LENGTHS.coupleNames),
+    date: str(t.date, TEXT_MAX_LENGTHS.date),
+    time: str(t.time, TEXT_MAX_LENGTHS.time),
+    venue: str(t.venue, TEXT_MAX_LENGTHS.venue),
+    venueAddress: str(t.venueAddress, TEXT_MAX_LENGTHS.venueAddress),
+    rsvpEmail: str(t.rsvpEmail, TEXT_MAX_LENGTHS.rsvpEmail),
+    rsvpDeadline: str(t.rsvpDeadline, TEXT_MAX_LENGTHS.rsvpDeadline),
+    guestSalutation: str(t.guestSalutation, TEXT_MAX_LENGTHS.guestSalutation),
+    footer: str(t.footer, TEXT_MAX_LENGTHS.footer),
   }
 
   const guestNames = Array.isArray(raw.guestNames)

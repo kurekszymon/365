@@ -45,6 +45,20 @@ export const COLOR_SCHEME_LABEL_KEYS: Record<InvitationColorScheme, string> = {
   "dusty-rose": "invitations.color_scheme.dusty_rose",
 }
 
+export const TEXT_MAX_LENGTHS: Record<keyof InvitationDesign["texts"], number> =
+  {
+    headline: 100,
+    coupleNames: 100,
+    date: 50,
+    time: 20,
+    venue: 200,
+    venueAddress: 300,
+    rsvpEmail: 320,
+    rsvpDeadline: 50,
+    guestSalutation: 50,
+    footer: 500,
+  }
+
 export const DEFAULT_TEXTS: InvitationDesign["texts"] = {
   headline: "",
   coupleNames: "",

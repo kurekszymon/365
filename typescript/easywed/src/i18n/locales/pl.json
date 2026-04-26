@@ -266,6 +266,8 @@
   "invitations.order_quantity_summary_one": "Ilość: 1 sztuka",
   "invitations.order_quantity_summary_few": "Ilość: {{count}} sztuki",
   "invitations.order_quantity_summary_many": "Ilość: {{count}} sztuk",
+  "invitations.order_name_required": "Podaj imię i nazwisko",
+  "invitations.order_email_required": "Podaj adres e-mail",
   "invitations.order_submit": "Wyślij zamówienie",
   "invitations.order_submitting": "Wysyłanie...",
   "invitations.order_success": "Zamówienie wysłane!",

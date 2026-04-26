@@ -6,7 +6,11 @@ import { QuantityPicker } from "./QuantityPicker"
 import { GuestNamesPicker } from "./GuestNamesPicker"
 import { useInvitationStore } from "@/stores/invitation.store"
 import { useDialogStore } from "@/stores/dialog.store"
-import { COLOR_SCHEME_LABEL_KEYS, TEMPLATES } from "@/lib/invitation/templates"
+import {
+  COLOR_SCHEME_LABEL_KEYS,
+  TEMPLATES,
+  TEXT_MAX_LENGTHS,
+} from "@/lib/invitation/templates"
 import { FONT_OPTIONS } from "@/lib/invitation/fonts"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -43,6 +47,7 @@ export function DesignEditor() {
         id={`inv-${key}`}
         value={design.texts[key]}
         placeholder={placeholder}
+        maxLength={TEXT_MAX_LENGTHS[key]}
         onChange={(e) => updateTexts({ [key]: e.target.value })}
       />
     </div>

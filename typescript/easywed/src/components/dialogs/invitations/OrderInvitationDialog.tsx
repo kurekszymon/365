@@ -40,6 +40,9 @@ export function OrderInvitationDialog() {
   const [status, setStatus] = useState<
     "idle" | "submitting" | "success" | "error"
   >("idle")
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<keyof OrderForm, string>>
+  >({})
 
   const design = useInvitationStore((s) => s.design)
   const pathname = useRouterState({ select: (s) => s.location.pathname })
@@ -54,11 +57,23 @@ export function OrderInvitationDialog() {
       close()
       setStatus("idle")
       setForm(EMPTY_FORM)
+      setFieldErrors({})
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    const errs: Partial<Record<keyof OrderForm, string>> = {}
+    if (!form.contactName.trim())
+      errs.contactName = t("invitations.order_name_required")
+    if (!form.contactEmail.trim())
+      errs.contactEmail = t("invitations.order_email_required")
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs)
+      return
+    }
+    setFieldErrors({})
     setStatus("submitting")
 
     const quantity = Math.min(Math.max(1, design.quantity), 1000)
@@ -118,7 +133,11 @@ export function OrderInvitationDialog() {
             <p className="mt-1 text-sm text-muted-foreground">
               {t("invitations.order_success_detail")}
             </p>
-            <Button className="mt-4" variant="outline" onClick={() => close()}>
+            <Button
+              className="mt-4"
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
+            >
               {t("common.close")}
             </Button>
           </div>
@@ -149,8 +168,14 @@ export function OrderInvitationDialog() {
                 id="order-name"
                 required
                 maxLength={200}
+                aria-invalid={!!fieldErrors.contactName}
                 {...field("contactName")}
               />
+              {fieldErrors.contactName && (
+                <p className="text-xs text-destructive">
+                  {fieldErrors.contactName}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -161,8 +186,14 @@ export function OrderInvitationDialog() {
                 id="order-email"
                 required
                 maxLength={320}
+                aria-invalid={!!fieldErrors.contactEmail}
                 {...field("contactEmail", "email")}
               />
+              {fieldErrors.contactEmail && (
+                <p className="text-xs text-destructive">
+                  {fieldErrors.contactEmail}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -199,7 +230,11 @@ export function OrderInvitationDialog() {
             )}
 
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => close()}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleOpenChange(false)}
+              >
                 {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={status === "submitting"}>

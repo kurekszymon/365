@@ -254,6 +254,8 @@
   "invitations.order_notes": "Notes for print shop",
   "invitations.order_quantity_summary": "Quantity: {{count}} invitations",
   "invitations.order_quantity_summary_one": "Quantity: 1 invitation",
+  "invitations.order_name_required": "Name is required",
+  "invitations.order_email_required": "Email is required",
   "invitations.order_submit": "Submit order",
   "invitations.order_submitting": "Submitting...",
   "invitations.order_success": "Order submitted!",
