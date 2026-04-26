@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import { DEFAULT_DESIGN } from "@/lib/invitation/templates"
+import { GUEST_LIST_MAX_SIZE, sanitizeGuestName } from "@/lib/invitation/guestNames"
 
 export type InvitationTemplate = "classic" | "modern" | "romantic"
 
@@ -63,11 +64,10 @@ export const useInvitationStore = create<State & Action>((set) => ({
 
   addGuestName: (name) =>
     set((s) => {
-      const trimmed = name.trim().slice(0, 200)
-      if (!trimmed || s.design.guestNames.length >= 500) return s
-
+      const sanitized = sanitizeGuestName(name)
+      if (!sanitized || s.design.guestNames.length >= GUEST_LIST_MAX_SIZE) return s
       return {
-        design: { ...s.design, guestNames: [...s.design.guestNames, trimmed] },
+        design: { ...s.design, guestNames: [...s.design.guestNames, sanitized] },
       }
     }),
 

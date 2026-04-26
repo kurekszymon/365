@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { useRouterState } from "@tanstack/react-router"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -13,6 +14,7 @@ import { useInvitationStore } from "@/stores/invitation.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { encodeDesign } from "@/lib/invitation/hash"
 import { COLOR_SCHEME_LABEL_KEYS, TEMPLATES } from "@/lib/invitation/templates"
+import { sanitizeGuestNames } from "@/lib/invitation/guestNames"
 import { supabase } from "@/lib/supabase"
 
 interface OrderForm {
@@ -40,7 +42,12 @@ export function OrderInvitationDialog() {
   >("idle")
 
   const design = useInvitationStore((s) => s.design)
-  const weddingId = useGlobalStore((s) => s.weddingId)
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const storedWeddingId = useGlobalStore((s) => s.weddingId)
+  // Only attach to a wedding when the user is actually on a wedding route.
+  // The global store retains weddingId after navigation, which would silently
+  // attach anonymous /invitations orders to the last-visited wedding.
+  const weddingId = pathname.startsWith("/wedding/") ? storedWeddingId : null
 
   const handleOpenChange = (next: boolean) => {
     if (!next) {
@@ -62,13 +69,9 @@ export function OrderInvitationDialog() {
         contact_email: form.contactEmail.trim(),
         contact_phone: form.contactPhone.trim() || null,
         quantity,
-        design_hash: encodeDesign(design),
+        design_hash: encodeDesign({ ...design, guestNames: [] }),
         guest_names: (() => {
-          const names = design.guestNames
-            .map((n) => n.trim().slice(0, 200))
-            .filter(Boolean)
-            .slice(0, 500)
-
+          const names = sanitizeGuestNames(design.guestNames)
           return names.length > 0 ? names : null
         })(),
         notes: form.notes.trim() || null,

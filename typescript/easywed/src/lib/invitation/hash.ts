@@ -6,6 +6,7 @@ import type {
   InvitationTexts,
 } from "@/stores/invitation.store"
 import { TEMPLATES } from "@/lib/invitation/templates"
+import { sanitizeGuestNames } from "@/lib/invitation/guestNames"
 
 const VALID_TEMPLATES = TEMPLATES.map((t) => t.id)
 
@@ -62,11 +63,11 @@ function validateDesign(raw: unknown): InvitationDesign | null {
   }
 
   const guestNames = Array.isArray(raw.guestNames)
-    ? (raw.guestNames as Array<unknown>)
-        .slice(0, 500)
-        .filter((n): n is string => typeof n === "string")
-        .map((n) => n.trim().slice(0, 200))
-        .filter((n) => n.length > 0)
+    ? sanitizeGuestNames(
+        (raw.guestNames as Array<unknown>).filter(
+          (n): n is string => typeof n === "string"
+        )
+      )
     : []
 
   return {

@@ -12,6 +12,7 @@ import {
 import { useInvitationStore } from "@/stores/invitation.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { usePlannerStore } from "@/stores/planner.store"
+import { GUEST_LIST_MAX_SIZE } from "@/lib/invitation/guestNames"
 
 export function GuestNamesPicker() {
   const { t } = useTranslation()
@@ -26,8 +27,7 @@ export function GuestNamesPicker() {
   const [manualInput, setManualInput] = useState("")
   const [open, setOpen] = useState(false)
 
-  const GUEST_CAP = 500
-  const atCap = guestNames.length >= GUEST_CAP
+  const atCap = guestNames.length >= GUEST_LIST_MAX_SIZE
   const hasPlannerGuests = plannerGuests.length > 0
 
   const unaddedPlannerGuests = plannerGuests.filter(
@@ -193,8 +193,10 @@ export function GuestNamesPicker() {
             className={`text-xs ${atCap ? "font-medium text-destructive" : "text-muted-foreground"}`}
           >
             {atCap
-              ? t("invitations.guests_cap_reached", { count: GUEST_CAP })
-              : `${guestNames.length} / ${GUEST_CAP}`}
+              ? t("invitations.guests_cap_reached", {
+                  count: GUEST_LIST_MAX_SIZE,
+                })
+              : `${guestNames.length} / ${GUEST_LIST_MAX_SIZE}`}
           </p>
         </>
       )}

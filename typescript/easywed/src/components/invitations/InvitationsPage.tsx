@@ -10,6 +10,7 @@ import { useDialogStore } from "@/stores/dialog.store"
 import { useInvitationStore } from "@/stores/invitation.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { decodeDesign, encodeDesign } from "@/lib/invitation/hash"
+import { sanitizeGuestNames } from "@/lib/invitation/guestNames"
 import "@/lib/invitation/fonts"
 
 export function InvitationsPage({ weddingId }: { weddingId?: string }) {
@@ -37,7 +38,7 @@ export function InvitationsPage({ weddingId }: { weddingId?: string }) {
       }
     }
     if (wId && g.length > 0) {
-      updateDesign({ guestNames: g.map((gu) => gu.name) })
+      updateDesign({ guestNames: sanitizeGuestNames(g.map((gu) => gu.name)) })
     }
     isFirstMount.current = false
   }, [setDesign, updateDesign])
