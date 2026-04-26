@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { MailIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog"
 import { useInvitationStore } from "@/stores/invitation.store"
 import { encodeDesign } from "@/lib/invitation/hash"
+import { COLOR_SCHEME_LABEL_KEYS, TEMPLATES } from "@/lib/invitation/templates"
 import { supabase } from "@/lib/supabase"
 
 interface OrderForm {
@@ -71,6 +72,13 @@ export function OrderDialog({ weddingId }: { weddingId?: string }) {
       setForm((f) => ({ ...f, [key]: e.target.value })),
   })
 
+  const templateSummary = useMemo(() => {
+    const template = TEMPLATES.find((tmpl) => tmpl.id === design.template)
+    if (!template) return t(COLOR_SCHEME_LABEL_KEYS[design.colorScheme])
+
+    return `${t(template.labelKey)} · ${t(COLOR_SCHEME_LABEL_KEYS[design.colorScheme])}`
+  }, [design.template, design.colorScheme, t])
+
   return (
     <>
       <Button
@@ -107,6 +115,23 @@ export function OrderDialog({ weddingId }: { weddingId?: string }) {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              {/* Order summary — lets user verify what they're submitting */}
+              <div className="rounded-md bg-muted/50 px-3 py-2.5 text-sm">
+                <p className="font-medium">{templateSummary}</p>
+                <p className="mt-0.5 text-muted-foreground">
+                  {t("invitations.order_quantity_summary", {
+                    count: design.quantity,
+                  })}
+                </p>
+                {design.guestNames.length > 0 && (
+                  <p className="mt-0.5 text-muted-foreground">
+                    {design.guestNames.slice(0, 3).join(", ")}
+                    {design.guestNames.length > 3 &&
+                      ` +${design.guestNames.length - 3}`}
+                  </p>
+                )}
+              </div>
+
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium" htmlFor="order-name">
                   {t("invitations.order_name")}
@@ -156,14 +181,6 @@ export function OrderDialog({ weddingId }: { weddingId?: string }) {
                   }
                   className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:outline-none"
                 />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <p className="text-xs text-muted-foreground">
-                  {t("invitations.order_quantity_summary", {
-                    count: design.quantity,
-                  })}
-                </p>
               </div>
 
               {status === "error" && (

@@ -46,3 +46,7 @@ export const FONT_OPTIONS: Array<FontOption> = [
 
 export const DEFAULT_FONT_ID = "playfair"
 export const DEFAULT_FONT_CSS = FONT_OPTIONS[0].css
+
+export function getFontCss(fontId: string): string {
+  return FONT_OPTIONS.find((f) => f.id === fontId)?.css ?? DEFAULT_FONT_CSS
+}

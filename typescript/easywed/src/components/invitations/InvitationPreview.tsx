@@ -13,29 +13,27 @@ import type {
 } from "@/stores/invitation.store"
 import { Button } from "@/components/ui/button"
 import { useInvitationStore } from "@/stores/invitation.store"
-import { DEFAULT_FONT_CSS, FONT_OPTIONS } from "@/lib/invitation/fonts"
+import { getFontCss } from "@/lib/invitation/fonts"
 
-const TEMPLATE_MAP: Record<
-  InvitationTemplate,
-  React.ComponentType<{
-    texts: InvitationTexts
-    colorScheme: InvitationColorScheme
-    fontCss: string
-    guestName?: string
-  }>
-> = {
+type TemplateComponent = React.ComponentType<{
+  texts: InvitationTexts
+  colorScheme: InvitationColorScheme
+  fontCss: string
+  guestName?: string
+}>
+
+const TEMPLATE_MAP = {
   classic: ClassicTemplate,
   modern: ModernTemplate,
   romantic: RomanticTemplate,
-}
+} satisfies Record<InvitationTemplate, TemplateComponent>
 
 export function InvitationPreview() {
   const { t } = useTranslation()
   const design = useInvitationStore((s) => s.design)
   const guests = design.guestNames.length > 0 ? design.guestNames : undefined
   const Component = TEMPLATE_MAP[design.template]
-  const fontCss =
-    FONT_OPTIONS.find((f) => f.id === design.fontId)?.css ?? DEFAULT_FONT_CSS
+  const fontCss = getFontCss(design.fontId)
 
   const [printAll, setPrintAll] = useState(false)
 

@@ -4,6 +4,7 @@ import { ChevronDownIcon } from "lucide-react"
 import { TemplateGallery } from "./TemplateGallery"
 import { QuantityPicker } from "./QuantityPicker"
 import { GuestNamesPicker } from "./GuestNamesPicker"
+import { OrderDialog } from "./OrderDialog"
 import { useInvitationStore } from "@/stores/invitation.store"
 import { COLOR_SCHEME_LABEL_KEYS, TEMPLATES } from "@/lib/invitation/templates"
 import { FONT_OPTIONS } from "@/lib/invitation/fonts"
@@ -204,6 +205,7 @@ export function DesignEditor() {
           {t("invitations.step_quantity")}
         </p>
         <QuantityPicker />
+        <OrderDialog />
       </section>
     </div>
   )

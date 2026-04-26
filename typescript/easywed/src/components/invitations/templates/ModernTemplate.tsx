@@ -1,33 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { salutationLine } from "./utils"
 import type { TemplateProps } from "./types"
-
-const SCHEMES: Record<
-  string,
-  { bg: string; text: string; accent: string; muted: string; rule: string }
-> = {
-  "pure-white": {
-    bg: "#ffffff",
-    text: "#1a1a1a",
-    accent: "#1a1a1a",
-    muted: "#888888",
-    rule: "#1a1a1a",
-  },
-  slate: {
-    bg: "#f5f6f7",
-    text: "#2d3748",
-    accent: "#2d3748",
-    muted: "#718096",
-    rule: "#4a5568",
-  },
-  midnight: {
-    bg: "#0f1117",
-    text: "#f0f0f0",
-    accent: "#e8d5b7",
-    muted: "#a0a0a0",
-    rule: "#444444",
-  },
-}
+import { COLOR_SCHEMES } from "@/lib/invitation/colorSchemes"
 
 export function ModernTemplate({
   texts,
@@ -36,7 +10,7 @@ export function ModernTemplate({
   guestName,
 }: TemplateProps) {
   const { t } = useTranslation()
-  const c = SCHEMES[colorScheme] ?? SCHEMES["pure-white"]
+  const c = COLOR_SCHEMES[colorScheme]
   const greeting = salutationLine(texts.guestSalutation, guestName)
 
   return (
@@ -74,7 +48,11 @@ export function ModernTemplate({
 
       {/* Full-width rule */}
       <div
-        style={{ height: "2px", backgroundColor: c.rule, marginBottom: "32px" }}
+        style={{
+          height: "2px",
+          backgroundColor: c.border,
+          marginBottom: "32px",
+        }}
       />
 
       {/* Couple names */}
@@ -95,7 +73,7 @@ export function ModernTemplate({
       <div
         style={{
           height: "1px",
-          backgroundColor: c.rule,
+          backgroundColor: c.border,
           opacity: 0.2,
           marginBottom: "32px",
         }}
@@ -139,7 +117,7 @@ export function ModernTemplate({
           <div
             style={{
               height: "1px",
-              backgroundColor: c.rule,
+              backgroundColor: c.border,
               opacity: 0.15,
               marginBottom: "16px",
             }}

@@ -4,7 +4,7 @@ import { ModernTemplate } from "./templates/ModernTemplate"
 import { RomanticTemplate } from "./templates/RomanticTemplate"
 import type { InvitationTexts } from "@/stores/invitation.store"
 import { TEMPLATES } from "@/lib/invitation/templates"
-import { DEFAULT_FONT_CSS, FONT_OPTIONS } from "@/lib/invitation/fonts"
+import { getFontCss } from "@/lib/invitation/fonts"
 import { useInvitationStore } from "@/stores/invitation.store"
 import { cn } from "@/lib/utils"
 
@@ -32,8 +32,7 @@ export function TemplateGallery() {
   }
   const fontId = useInvitationStore((s) => s.design.fontId)
   const updateDesign = useInvitationStore((s) => s.updateDesign)
-  const fontCss =
-    FONT_OPTIONS.find((f) => f.id === fontId)?.css ?? DEFAULT_FONT_CSS
+  const fontCss = getFontCss(fontId)
 
   return (
     <div className="flex flex-col gap-3">

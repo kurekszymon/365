@@ -1,33 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { salutationLine } from "./utils"
 import type { TemplateProps } from "./types"
-
-const SCHEMES: Record<
-  string,
-  { bg: string; border: string; accent: string; text: string; muted: string }
-> = {
-  "cream-gold": {
-    bg: "#fdf8f0",
-    border: "#b8962e",
-    accent: "#b8962e",
-    text: "#2c1810",
-    muted: "#7a6a5a",
-  },
-  sage: {
-    bg: "#f4f7f2",
-    border: "#5a7a5a",
-    accent: "#3d5c3d",
-    text: "#1a2e1a",
-    muted: "#5a6a5a",
-  },
-  navy: {
-    bg: "#f0f2f7",
-    border: "#1a2d5a",
-    accent: "#1a2d5a",
-    text: "#0d1a35",
-    muted: "#4a5a7a",
-  },
-}
+import { COLOR_SCHEMES } from "@/lib/invitation/colorSchemes"
 
 export function ClassicTemplate({
   texts,
@@ -36,7 +10,7 @@ export function ClassicTemplate({
   guestName,
 }: TemplateProps) {
   const { t } = useTranslation()
-  const c = SCHEMES[colorScheme] ?? SCHEMES["cream-gold"]
+  const c = COLOR_SCHEMES[colorScheme]
   const greeting = salutationLine(texts.guestSalutation, guestName)
 
   return (

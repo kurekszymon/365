@@ -1,34 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { salutationLine } from "./utils"
 import type { TemplateProps } from "./types"
-
-// TODO unify schemes
-const SCHEMES: Record<
-  string,
-  { bg: string; border: string; accent: string; text: string; muted: string }
-> = {
-  blush: {
-    bg: "#fdf5f5",
-    border: "#d4a0a0",
-    accent: "#c9728a",
-    text: "#3d1f2a",
-    muted: "#9a7080",
-  },
-  lavender: {
-    bg: "#f7f5fd",
-    border: "#b0a0d0",
-    accent: "#7c5cbf",
-    text: "#2a1f3d",
-    muted: "#7a6a9a",
-  },
-  "dusty-rose": {
-    bg: "#fdf2ee",
-    border: "#c8a898",
-    accent: "#a06050",
-    text: "#3d2018",
-    muted: "#9a7060",
-  },
-}
+import { COLOR_SCHEMES } from "@/lib/invitation/colorSchemes"
 
 const CORNER = "❧"
 
@@ -39,7 +12,7 @@ export function RomanticTemplate({
   guestName,
 }: TemplateProps) {
   const { t } = useTranslation()
-  const c = SCHEMES[colorScheme] ?? SCHEMES["blush"]
+  const c = COLOR_SCHEMES[colorScheme]
   const greeting = salutationLine(texts.guestSalutation, guestName)
 
   return (
