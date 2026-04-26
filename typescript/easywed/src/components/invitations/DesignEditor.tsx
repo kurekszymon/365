@@ -1,13 +1,14 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { ChevronDownIcon } from "lucide-react"
+import { ChevronDownIcon, MailIcon } from "lucide-react"
 import { TemplateGallery } from "./TemplateGallery"
 import { QuantityPicker } from "./QuantityPicker"
 import { GuestNamesPicker } from "./GuestNamesPicker"
-import { OrderDialog } from "./OrderDialog"
 import { useInvitationStore } from "@/stores/invitation.store"
+import { useDialogStore } from "@/stores/dialog.store"
 import { COLOR_SCHEME_LABEL_KEYS, TEMPLATES } from "@/lib/invitation/templates"
 import { FONT_OPTIONS } from "@/lib/invitation/fonts"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -24,6 +25,7 @@ export function DesignEditor() {
   const design = useInvitationStore((s) => s.design)
   const updateTexts = useInvitationStore((s) => s.updateTexts)
   const updateDesign = useInvitationStore((s) => s.updateDesign)
+  const openDialog = useDialogStore((s) => s.open)
   const [styleOpen, setStyleOpen] = useState(true)
 
   const currentTemplate = TEMPLATES.find((tmpl) => tmpl.id === design.template)
@@ -205,7 +207,10 @@ export function DesignEditor() {
           {t("invitations.step_quantity")}
         </p>
         <QuantityPicker />
-        <OrderDialog />
+        <Button onClick={() => openDialog("Invitation.Order")}>
+          <MailIcon />
+          {t("invitations.order")}
+        </Button>
       </section>
     </div>
   )

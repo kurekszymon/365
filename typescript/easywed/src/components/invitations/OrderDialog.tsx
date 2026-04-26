@@ -92,7 +92,7 @@ export function OrderDialog({ weddingId }: { weddingId?: string }) {
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>{t("invitations.order_title")}</DialogTitle>
           </DialogHeader>

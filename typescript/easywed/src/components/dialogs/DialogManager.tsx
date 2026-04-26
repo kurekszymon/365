@@ -8,6 +8,7 @@ import {
   WeddingMembersDialog,
   WeddingRenameDialog,
 } from "./weddings"
+import { OrderInvitationDialog } from "./invitations/OrderInvitationDialog"
 import { useDialogStore } from "@/stores/dialog.store"
 
 export const DialogManager = () => {
@@ -26,6 +27,8 @@ export const DialogManager = () => {
       return <ExportGuestsCsvDialog />
     case "Guests.Export.Pdf":
       return <ExportGuestsPdfDialog />
+    case "Invitation.Order":
+      return <OrderInvitationDialog />
     default:
       return <></>
   }

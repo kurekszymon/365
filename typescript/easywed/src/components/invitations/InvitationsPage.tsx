@@ -1,9 +1,12 @@
 import { useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
+import { MailIcon } from "lucide-react"
 import { DesignEditor } from "./DesignEditor"
 import { InvitationPreview } from "./InvitationPreview"
-import { OrderDialog } from "./OrderDialog"
 import { Header } from "@/components/planner/Header"
+import { DialogManager } from "@/components/dialogs/DialogManager"
+import { Button } from "@/components/ui/button"
+import { useDialogStore } from "@/stores/dialog.store"
 import { useInvitationStore } from "@/stores/invitation.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { decodeDesign, encodeDesign } from "@/lib/invitation/hash"
@@ -11,6 +14,7 @@ import "@/lib/invitation/fonts"
 
 export function InvitationsPage({ weddingId }: { weddingId?: string }) {
   const { t } = useTranslation()
+  const openDialog = useDialogStore((s) => s.open)
   const setDesign = useInvitationStore((s) => s.setDesign)
   const updateDesign = useInvitationStore((s) => s.updateDesign)
   const design = useInvitationStore((s) => s.design)
@@ -58,6 +62,7 @@ export function InvitationsPage({ weddingId }: { weddingId?: string }) {
         }
       `}</style>
 
+      <DialogManager />
       <div className="flex h-screen flex-col">
         <Header>
           <Header.Title weddingId={weddingId}>
@@ -65,7 +70,10 @@ export function InvitationsPage({ weddingId }: { weddingId?: string }) {
               {t("invitations.page_title")}
             </h1>
           </Header.Title>
-          <OrderDialog weddingId={weddingId} />
+          <Button onClick={() => openDialog("Invitation.Order")}>
+            <MailIcon />
+            {t("invitations.order")}
+          </Button>
         </Header>
 
         {/* Two-column layout */}
