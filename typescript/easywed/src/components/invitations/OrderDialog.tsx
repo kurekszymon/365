@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useInvitationStore } from "@/stores/invitation.store"
-import { useGlobalStore } from "@/stores/global.store"
 import { encodeDesign } from "@/lib/invitation/hash"
 import { supabase } from "@/lib/supabase"
 
@@ -28,7 +27,7 @@ const EMPTY_FORM: OrderForm = {
   notes: "",
 }
 
-export function OrderDialog() {
+export function OrderDialog({ weddingId }: { weddingId?: string }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState<OrderForm>(EMPTY_FORM)
@@ -37,22 +36,22 @@ export function OrderDialog() {
   >("idle")
 
   const design = useInvitationStore((s) => s.design)
-  const weddingId = useGlobalStore((s) => s.weddingId)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setStatus("submitting")
 
+    const quantity = Math.min(Math.max(1, design.quantity), 1000)
+
     try {
       const { error } = await supabase.from("invitation_orders").insert({
-        contact_name: form.contactName,
-        contact_email: form.contactEmail,
-        contact_phone: form.contactPhone || null,
-        quantity: design.quantity,
+        contact_name: form.contactName.trim(),
+        contact_email: form.contactEmail.trim(),
+        contact_phone: form.contactPhone.trim() || null,
+        quantity,
         design_hash: encodeDesign(design),
-        guest_names:
-          design.guestNames.length > 0 ? design.guestNames : null,
-        notes: form.notes || null,
+        guest_names: design.guestNames.length > 0 ? design.guestNames : null,
+        notes: form.notes.trim() || null,
         wedding_id: weddingId ?? null,
       })
 
@@ -112,7 +111,12 @@ export function OrderDialog() {
                 <label className="text-sm font-medium" htmlFor="order-name">
                   {t("invitations.order_name")}
                 </label>
-                <Input id="order-name" required {...field("contactName")} />
+                <Input
+                  id="order-name"
+                  required
+                  maxLength={200}
+                  {...field("contactName")}
+                />
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -122,6 +126,7 @@ export function OrderDialog() {
                 <Input
                   id="order-email"
                   required
+                  maxLength={320}
                   {...field("contactEmail", "email")}
                 />
               </div>
@@ -130,7 +135,11 @@ export function OrderDialog() {
                 <label className="text-sm font-medium" htmlFor="order-phone">
                   {t("invitations.order_phone")}
                 </label>
-                <Input id="order-phone" {...field("contactPhone", "tel")} />
+                <Input
+                  id="order-phone"
+                  maxLength={30}
+                  {...field("contactPhone", "tel")}
+                />
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -140,6 +149,7 @@ export function OrderDialog() {
                 <textarea
                   id="order-notes"
                   rows={3}
+                  maxLength={4000}
                   value={form.notes}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, notes: e.target.value }))

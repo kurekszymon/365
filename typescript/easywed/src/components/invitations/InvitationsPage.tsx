@@ -65,7 +65,7 @@ export function InvitationsPage({ weddingId }: { weddingId?: string }) {
               {t("invitations.page_title")}
             </h1>
           </Header.Title>
-          <OrderDialog />
+          <OrderDialog weddingId={weddingId} />
         </Header>
 
         {/* Two-column layout */}

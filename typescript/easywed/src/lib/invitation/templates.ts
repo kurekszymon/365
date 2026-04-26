@@ -33,20 +33,20 @@ export const TEMPLATES: Array<TemplateMetadata> = [
   },
 ]
 
-export const COLOR_SCHEME_LABELS: Record<InvitationColorScheme, string> = {
-  "cream-gold": "Kremowy / Złoty",
-  sage: "Szałwia",
-  navy: "Granat",
-  "pure-white": "Biel",
-  slate: "Łupek",
-  midnight: "Północ",
-  blush: "Różany",
-  lavender: "Lawenda",
-  "dusty-rose": "Pudrowy róż",
+export const COLOR_SCHEME_LABEL_KEYS: Record<InvitationColorScheme, string> = {
+  "cream-gold": "invitations.color_scheme.cream_gold",
+  sage: "invitations.color_scheme.sage",
+  navy: "invitations.color_scheme.navy",
+  "pure-white": "invitations.color_scheme.pure_white",
+  slate: "invitations.color_scheme.slate",
+  midnight: "invitations.color_scheme.midnight",
+  blush: "invitations.color_scheme.blush",
+  lavender: "invitations.color_scheme.lavender",
+  "dusty-rose": "invitations.color_scheme.dusty_rose",
 }
 
 export const DEFAULT_TEXTS: InvitationDesign["texts"] = {
-  headline: "Zapraszamy na ślub",
+  headline: "",
   coupleNames: "",
   date: "",
   time: "",
@@ -54,7 +54,7 @@ export const DEFAULT_TEXTS: InvitationDesign["texts"] = {
   venueAddress: "",
   rsvpEmail: "",
   rsvpDeadline: "",
-  guestSalutation: "Drogi/a",
+  guestSalutation: "",
   footer: "",
 }
 

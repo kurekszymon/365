@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { CheckIcon, LinkIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
@@ -11,15 +11,22 @@ import {
 export function ShareButton() {
   const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [])
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href)
+      if (timerRef.current) clearTimeout(timerRef.current)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      timerRef.current = setTimeout(() => setCopied(false), 2000)
     } catch {
       // clipboard unavailable (non-HTTPS or denied permission) — fail silently
-      // TODO: handle failure
     }
   }
 

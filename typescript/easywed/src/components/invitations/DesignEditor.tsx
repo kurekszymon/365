@@ -5,7 +5,7 @@ import { TemplateGallery } from "./TemplateGallery"
 import { QuantityPicker } from "./QuantityPicker"
 import { GuestNamesPicker } from "./GuestNamesPicker"
 import { useInvitationStore } from "@/stores/invitation.store"
-import { COLOR_SCHEME_LABELS, TEMPLATES } from "@/lib/invitation/templates"
+import { COLOR_SCHEME_LABEL_KEYS, TEMPLATES } from "@/lib/invitation/templates"
 import { FONT_OPTIONS } from "@/lib/invitation/fonts"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
@@ -116,7 +116,7 @@ export function DesignEditor() {
                         : "border-border bg-background hover:border-primary/50"
                     )}
                   >
-                    {COLOR_SCHEME_LABELS[scheme]}
+                    {t(COLOR_SCHEME_LABEL_KEYS[scheme])}
                   </button>
                 ))}
               </div>
@@ -138,27 +138,39 @@ export function DesignEditor() {
         {textField(
           "coupleNames",
           "invitations.text_couple_names",
-          "Anna & Piotr"
+          t("invitations.gallery.preview_couple")
         )}
         <div className="grid grid-cols-2 gap-3">
-          {textField("date", "invitations.text_date", "14 czerwca 2026")}
-          {textField("time", "invitations.text_time", "15:00")}
+          {textField(
+            "date",
+            "invitations.text_date",
+            t("invitations.gallery.preview_date")
+          )}
+          {textField(
+            "time",
+            "invitations.text_time",
+            t("invitations.gallery.preview_time")
+          )}
         </div>
-        {textField("venue", "invitations.text_venue", "Pałac Krasiczyn")}
+        {textField(
+          "venue",
+          "invitations.text_venue",
+          t("invitations.gallery.preview_venue")
+        )}
         {textField(
           "venueAddress",
           "invitations.text_venue_address",
-          "Krasiczyn 179"
+          t("invitations.gallery.preview_venue_address")
         )}
         {textField(
           "rsvpEmail",
           "invitations.text_rsvp_email",
-          "rsvp@wesele.pl"
+          t("invitations.gallery.preview_rsvp_email")
         )}
         {textField(
           "rsvpDeadline",
           "invitations.text_rsvp_deadline",
-          "1 maja 2026"
+          t("invitations.gallery.preview_rsvp_deadline")
         )}
 
         {/* Guest salutation — personalisation slot */}
@@ -166,7 +178,7 @@ export function DesignEditor() {
           {textField(
             "guestSalutation",
             "invitations.text_guest_salutation",
-            "Drogi/a"
+            t("invitations.salutation")
           )}
           <p className="text-xs text-muted-foreground">
             {t("invitations.text_guest_salutation_hint")}

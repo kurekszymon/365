@@ -37,10 +37,11 @@ export function QuantityPicker() {
         id="invitation-qty"
         type="number"
         min={1}
+        max={1000}
         value={quantity}
         onChange={(e) => {
           const v = parseInt(e.target.value, 10)
-          if (!isNaN(v) && v > 0) updateDesign({ quantity: v })
+          if (!isNaN(v) && v > 0) updateDesign({ quantity: Math.min(v, 1000) })
         }}
         className="w-28"
       />

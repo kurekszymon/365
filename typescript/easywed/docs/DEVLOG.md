@@ -6,6 +6,7 @@
 - add initial invitation designer, wire it up with router
 - include invitation design and guests in hash
 - create guest name picker that saves guests to db for authenticated users
+- built initial version of freemium/premium invitation designer (it's the same designer)
 
 ### 24.04
 
