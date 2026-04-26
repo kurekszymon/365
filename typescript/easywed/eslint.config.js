@@ -11,6 +11,7 @@ export default [
     ignores: [
       "src/components/ui",
       "src/lib/supabase.types.ts",
+      "supabase/functions/**",
       ".output",
       "dist",
     ],

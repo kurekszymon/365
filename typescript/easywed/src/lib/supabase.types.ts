@@ -120,6 +120,56 @@ export type Database = {
           },
         ]
       }
+      invitation_orders: {
+        Row: {
+          contact_email: string
+          contact_name: string
+          contact_phone: string | null
+          created_at: string
+          design_hash: string | null
+          guest_names: string[] | null
+          id: string
+          notes: string | null
+          quantity: number
+          status: string
+          wedding_id: string | null
+        }
+        Insert: {
+          contact_email: string
+          contact_name: string
+          contact_phone?: string | null
+          created_at?: string
+          design_hash?: string | null
+          guest_names?: string[] | null
+          id?: string
+          notes?: string | null
+          quantity: number
+          status?: string
+          wedding_id?: string | null
+        }
+        Update: {
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string | null
+          created_at?: string
+          design_hash?: string | null
+          guest_names?: string[] | null
+          id?: string
+          notes?: string | null
+          quantity?: number
+          status?: string
+          wedding_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitation_orders_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reminders: {
         Row: {
           created_at: string
@@ -320,6 +370,7 @@ export type Database = {
     }
     Functions: {
       claim_wedding_invitation: { Args: { _token: string }; Returns: string }
+      guest_names_valid: { Args: { names: string[] }; Returns: boolean }
       is_wedding_member: { Args: { _wedding_id: string }; Returns: boolean }
       wedding_role: { Args: { _wedding_id: string }; Returns: string }
     }

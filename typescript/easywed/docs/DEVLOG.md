@@ -1,8 +1,18 @@
 # EasyWed — Development Log
 
+### 26.04
+
+- merged feat/invitations
+- cleaning up implementation of invitation, potentially extendind templates
+- todo: configure db webhook for placed orders (or do something related to accept the order)
+
 ### 25.04
 
 - created app layout on /wedding/{id}
+- add initial invitation designer, wire it up with router
+- include invitation design and guests in hash
+- create guest name picker that saves guests to db for authenticated users
+- built initial version of freemium/premium invitation designer (it's the same designer)
 
 ### 24.04
 

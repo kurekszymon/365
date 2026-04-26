@@ -2,11 +2,13 @@ import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import {
   LandmarkIcon,
+  MailIcon,
   PlusIcon,
   UserPlusIcon,
   UsersIcon,
   UtensilsIcon,
 } from "lucide-react"
+import { useNavigate } from "@tanstack/react-router"
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
 import { Canvas } from "./Canvas"
 import { Header } from "./Header"
@@ -32,6 +34,7 @@ import {
 
 export const Planner = () => {
   const { t } = useTranslation()
+  const navigate = useNavigate()
 
   const openDialog = useDialogStore((state) => state.open)
   const role = useGlobalStore((state) => state.role)
@@ -58,8 +61,15 @@ export const Planner = () => {
   }
 
   const preset = usePlannerStore((state) => state.hall.preset)
+  const weddingId = useGlobalStore((state) => state.weddingId)
 
   const openHall = useOpenHall()
+
+  const handleOpenInvitations = () => {
+    if (!weddingId) return
+
+    void navigate({ to: "/wedding/$id/invitations", params: { id: weddingId } })
+  }
 
   const selectedTableId = usePanelStore(selectSelectedTableId)
   const panel = usePanelStore(
@@ -79,7 +89,8 @@ export const Planner = () => {
 
       <div className="flex h-screen w-screen flex-col print:hidden">
         <Header>
-          <Header.Title>
+          <Header.Title weddingId={weddingId}>
+            <Header.WeddingName />
             <Header.Nav>
               <GuestsSeated />
               <RemindersPreview />
@@ -149,6 +160,10 @@ export const Planner = () => {
                 <span className="hidden md:inline">{t("members.title")}</span>
               </Button>
             )}
+            <Button variant="outline" onClick={handleOpenInvitations}>
+              <MailIcon />
+              <span className="hidden md:inline">{t("invitations")}</span>
+            </Button>
             <ExportHeader />
           </div>
         </Header>
