@@ -2,13 +2,31 @@ import LZString from "lz-string"
 import type {
   InvitationColorScheme,
   InvitationDesign,
+  InvitationSide,
   InvitationTemplate,
   InvitationTexts,
 } from "@/stores/invitation.store"
-import { TEMPLATES, TEXT_MAX_LENGTHS } from "@/lib/invitation/templates"
+import {
+  DEFAULT_FIELD_ORDER,
+  DEFAULT_FIELD_SIDES,
+  TEMPLATES,
+  TEXT_MAX_LENGTHS,
+} from "@/lib/invitation/templates"
 import { sanitizeGuestNames } from "@/lib/invitation/guestNames"
 
 const VALID_TEMPLATES = TEMPLATES.map((t) => t.id)
+
+function validateFieldSides(
+  raw: Record<string, unknown>
+): Record<keyof InvitationTexts, InvitationSide> {
+  const sides = { ...DEFAULT_FIELD_SIDES }
+  const keys = Object.keys(DEFAULT_FIELD_SIDES) as Array<keyof InvitationTexts>
+  for (const key of keys) {
+    const v = raw[key]
+    if (v === "front" || v === "back") sides[key] = v
+  }
+  return sides
+}
 
 const DANGEROUS_KEYS = ["__proto__", "constructor", "prototype"]
 
@@ -70,14 +88,47 @@ function validateDesign(raw: unknown): InvitationDesign | null {
       )
     : []
 
+  const fieldSides = isSafeObject(raw.fieldSides)
+    ? validateFieldSides(raw.fieldSides)
+    : DEFAULT_FIELD_SIDES
+
+  const fieldOrder = Array.isArray(raw.fieldOrder)
+    ? validateFieldOrder(raw.fieldOrder as Array<unknown>)
+    : DEFAULT_FIELD_ORDER
+
   return {
     template: template as InvitationTemplate,
     colorScheme,
     fontId,
     quantity: clampedQuantity,
     texts: validatedTexts,
+    fieldSides,
+    fieldOrder,
     guestNames,
   }
+}
+
+function validateFieldOrder(raw: Array<unknown>): Array<keyof InvitationTexts> {
+  const validKeys = new Set(DEFAULT_FIELD_ORDER)
+  const seen = new Set<keyof InvitationTexts>()
+  const result: Array<keyof InvitationTexts> = []
+  for (const item of raw) {
+    if (
+      typeof item === "string" &&
+      validKeys.has(item as keyof InvitationTexts)
+    ) {
+      const key = item as keyof InvitationTexts
+      if (!seen.has(key)) {
+        seen.add(key)
+        result.push(key)
+      }
+    }
+  }
+  // Append any keys missing from the raw array (forward-compat)
+  for (const key of DEFAULT_FIELD_ORDER) {
+    if (!seen.has(key)) result.push(key)
+  }
+  return result
 }
 
 export function encodeDesign(design: InvitationDesign): string {

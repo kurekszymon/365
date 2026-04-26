@@ -5,6 +5,7 @@
 - merged feat/invitations
 - cleaning up implementation of invitation, potentially extendind templates
 - todo: configure db webhook for placed orders (or do something related to accept the order)
+- prototype both sides invitation editor
 
 ### 25.04
 

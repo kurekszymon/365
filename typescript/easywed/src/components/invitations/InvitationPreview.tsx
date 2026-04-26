@@ -1,5 +1,5 @@
 import { createPortal, flushSync } from "react-dom"
-import { useState } from "react"
+import { Fragment, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { PrinterIcon } from "lucide-react"
 import { ClassicTemplate } from "./templates/ClassicTemplate"
@@ -8,18 +8,23 @@ import { RomanticTemplate } from "./templates/RomanticTemplate"
 import { ShareButton } from "./ShareButton"
 import type {
   InvitationColorScheme,
+  InvitationSide,
   InvitationTemplate,
   InvitationTexts,
 } from "@/stores/invitation.store"
 import { Button } from "@/components/ui/button"
 import { useInvitationStore } from "@/stores/invitation.store"
 import { getFontCss } from "@/lib/invitation/fonts"
+import { cn } from "@/lib/utils"
 
 type TemplateComponent = React.ComponentType<{
   texts: InvitationTexts
   colorScheme: InvitationColorScheme
   fontCss: string
   guestName?: string
+  side: InvitationSide
+  fieldSides: Record<keyof InvitationTexts, InvitationSide>
+  fieldOrder: Array<keyof InvitationTexts>
 }>
 
 const TEMPLATE_MAP = {
@@ -34,6 +39,8 @@ export function InvitationPreview() {
   const guests = design.guestNames.length > 0 ? design.guestNames : undefined
   const Component = TEMPLATE_MAP[design.template]
   const fontCss = getFontCss(design.fontId)
+
+  const [previewSide, setPreviewSide] = useState<InvitationSide>("front")
 
   // Screen-only: fall back to placeholder text so the preview always looks complete.
   // Print portal uses design.texts directly — only real content goes to paper.
@@ -75,36 +82,48 @@ export function InvitationPreview() {
   const scale = PREVIEW_W / CARD_W
   const scaledH = CARD_H * scale
 
+  const sharedProps = {
+    colorScheme: design.colorScheme,
+    fontCss,
+    fieldSides: design.fieldSides,
+    fieldOrder: design.fieldOrder,
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Print target — portalled to body so print:hidden ancestors don't block it.
-          printAll controls whether we render one card (preview) or all guest cards. */}
+      {/* Print target — portalled to body so print:hidden ancestors don't block it. */}
       {createPortal(
         <div data-print-view className="hidden">
           {printAll && guests && guests.length > 0 ? (
             guests.map((name, idx) => (
-              <Component
-                key={`${idx}-${name}`}
-                texts={design.texts}
-                colorScheme={design.colorScheme}
-                fontCss={fontCss}
-                guestName={name}
-              />
+              <Fragment key={`${idx}-${name}`}>
+                <Component
+                  texts={design.texts}
+                  guestName={name}
+                  side="front"
+                  {...sharedProps}
+                />
+                <Component
+                  texts={design.texts}
+                  guestName={name}
+                  side="back"
+                  {...sharedProps}
+                />
+              </Fragment>
             ))
           ) : (
-            <Component
-              texts={design.texts}
-              colorScheme={design.colorScheme}
-              fontCss={fontCss}
-            />
+            <>
+              <Component texts={design.texts} side="front" {...sharedProps} />
+              <Component texts={design.texts} side="back" {...sharedProps} />
+            </>
           )}
         </div>,
         document.body
       )}
 
-      {/* Screen preview — always single card, no guest name */}
+      {/* Screen preview — card with side toggle overlaid at top-left */}
       <div
-        className="overflow-hidden rounded-lg border shadow-sm"
+        className="relative overflow-hidden rounded-lg border shadow-sm"
         style={{
           width: `${PREVIEW_W}px`,
           height: `${scaledH}px`,
@@ -120,11 +139,25 @@ export function InvitationPreview() {
             pointerEvents: "none",
           }}
         >
-          <Component
-            texts={previewTexts}
-            colorScheme={design.colorScheme}
-            fontCss={fontCss}
-          />
+          <Component texts={previewTexts} side={previewSide} {...sharedProps} />
+        </div>
+
+        {/* Awers / Rewers toggle — absolute top-left, no vertical space */}
+        <div className="absolute top-2 left-2 flex overflow-hidden rounded-md border border-white/20 shadow-md">
+          {(["front", "back"] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setPreviewSide(s)}
+              className={cn(
+                "px-3 py-1 text-xs font-semibold transition-colors",
+                previewSide === s
+                  ? "bg-black/60 text-white"
+                  : "bg-black/20 text-white/70 hover:bg-black/40 hover:text-white"
+              )}
+            >
+              {s === "front" ? t("invitations.awers") : t("invitations.rewers")}
+            </button>
+          ))}
         </div>
       </div>
 

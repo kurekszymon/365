@@ -255,6 +255,9 @@
   "invitations.color_scheme.lavender": "Lawenda",
   "invitations.color_scheme.dusty_rose": "Pudrowy róż",
 
+  "invitations.awers": "Awers",
+  "invitations.rewers": "Rewers",
+  "invitations.step_text_dnd_hint": "Przeciągnij pola między stronami",
   "invitations.order": "Zamów zaproszenia",
   "invitations.salutation": "Drogi/Droga",
   "invitations.order_title": "Zamów zaproszenia",

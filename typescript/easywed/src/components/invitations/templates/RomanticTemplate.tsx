@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { salutationLine } from "./utils"
 import type { TemplateProps } from "./types"
+import type { InvitationTexts } from "@/stores/invitation.store"
 import { COLOR_SCHEMES } from "@/lib/invitation/colorSchemes"
 
 const CORNER = "❧"
@@ -10,10 +11,174 @@ export function RomanticTemplate({
   colorScheme,
   fontCss,
   guestName,
+  side,
+  fieldSides,
+  fieldOrder,
 }: TemplateProps) {
   const { t } = useTranslation()
   const c = COLOR_SCHEMES[colorScheme]
   const greeting = salutationLine(texts.guestSalutation, guestName)
+
+  const sideFields = fieldOrder.filter((k) => fieldSides[k] === side)
+
+  function renderField(key: keyof InvitationTexts) {
+    switch (key) {
+      case "headline":
+        return texts.headline ? (
+          <p
+            key="headline"
+            style={{
+              fontStyle: "italic",
+              fontWeight: 300,
+              fontSize: "18px",
+              letterSpacing: "0.08em",
+              color: c.muted,
+              marginBottom: "12px",
+            }}
+          >
+            {texts.headline}
+          </p>
+        ) : null
+
+      case "coupleNames":
+        return (
+          <h1
+            key="coupleNames"
+            style={{
+              fontSize: "48px",
+              fontWeight: 600,
+              lineHeight: 1.1,
+              color: c.text,
+              marginBottom: "6px",
+            }}
+          >
+            {texts.coupleNames}
+          </h1>
+        )
+
+      case "date":
+        return texts.date ? (
+          <p
+            key="date"
+            style={{
+              fontSize: "20px",
+              fontWeight: 300,
+              letterSpacing: "0.06em",
+              marginBottom: "4px",
+            }}
+          >
+            {texts.date}
+          </p>
+        ) : null
+
+      case "time":
+        return texts.time ? (
+          <p
+            key="time"
+            style={{
+              fontSize: "15px",
+              color: c.muted,
+              fontStyle: "italic",
+              marginBottom: "12px",
+            }}
+          >
+            {t("invitations.template.time_prefix")} {texts.time}
+          </p>
+        ) : null
+
+      case "venue":
+        return texts.venue ? (
+          <p
+            key="venue"
+            style={{ fontSize: "17px", fontWeight: 600, marginBottom: "3px" }}
+          >
+            {texts.venue}
+          </p>
+        ) : null
+
+      case "venueAddress":
+        return texts.venueAddress ? (
+          <p
+            key="venueAddress"
+            style={{
+              fontSize: "13px",
+              color: c.muted,
+              fontStyle: "italic",
+              marginBottom: "12px",
+            }}
+          >
+            {texts.venueAddress}
+          </p>
+        ) : null
+
+      case "rsvpDeadline":
+        return texts.rsvpDeadline ? (
+          <p
+            key="rsvpDeadline"
+            style={{
+              fontSize: "12px",
+              color: c.muted,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              marginBottom: "4px",
+            }}
+          >
+            {t("invitations.template.please_confirm_by")} {texts.rsvpDeadline}
+          </p>
+        ) : null
+
+      case "rsvpEmail":
+        return texts.rsvpEmail ? (
+          <p
+            key="rsvpEmail"
+            style={{
+              fontSize: "13px",
+              color: c.accent,
+              fontStyle: "italic",
+              marginBottom: "8px",
+            }}
+          >
+            {texts.rsvpEmail}
+          </p>
+        ) : null
+
+      case "guestSalutation":
+        return greeting ? (
+          <p
+            key="guestSalutation"
+            style={{
+              fontStyle: "italic",
+              fontWeight: 300,
+              fontSize: "15px",
+              color: guestName ? c.text : c.muted,
+              marginBottom: "8px",
+            }}
+          >
+            {greeting}
+          </p>
+        ) : null
+
+      case "footer":
+        return texts.footer ? (
+          <p
+            key="footer"
+            style={{
+              fontStyle: "italic",
+              fontWeight: 300,
+              fontSize: "13px",
+              color: c.muted,
+              maxWidth: "360px",
+              marginBottom: "8px",
+            }}
+          >
+            {texts.footer}
+          </p>
+        ) : null
+
+      default:
+        return null
+    }
+  }
 
   return (
     <div
@@ -78,22 +243,6 @@ export function RomanticTemplate({
         )
       )}
 
-      {/* Headline */}
-      {texts.headline && (
-        <p
-          style={{
-            fontStyle: "italic",
-            fontWeight: 300,
-            fontSize: "18px",
-            letterSpacing: "0.08em",
-            color: c.muted,
-            marginBottom: "16px",
-          }}
-        >
-          {texts.headline}
-        </p>
-      )}
-
       {/* Top floral divider */}
       <div
         style={{
@@ -111,18 +260,7 @@ export function RomanticTemplate({
         <div style={{ flex: 1, height: "0.5px", backgroundColor: c.border }} />
       </div>
 
-      {/* Couple names */}
-      <h1
-        style={{
-          fontSize: "48px",
-          fontWeight: 600,
-          lineHeight: 1.1,
-          color: c.text,
-          marginBottom: "6px",
-        }}
-      >
-        {texts.coupleNames}
-      </h1>
+      {sideFields.map((key) => renderField(key))}
 
       {/* Bottom floral divider */}
       <div
@@ -130,7 +268,7 @@ export function RomanticTemplate({
           display: "flex",
           alignItems: "center",
           gap: "10px",
-          margin: "20px 0",
+          marginTop: "16px",
           width: "70%",
         }}
       >
@@ -140,113 +278,6 @@ export function RomanticTemplate({
         </span>
         <div style={{ flex: 1, height: "0.5px", backgroundColor: c.border }} />
       </div>
-
-      {/* Date + time */}
-      {(texts.date || texts.time) && (
-        <div style={{ marginBottom: "16px" }}>
-          <p
-            style={{
-              fontSize: "20px",
-              fontWeight: 300,
-              letterSpacing: "0.06em",
-            }}
-          >
-            {texts.date}
-          </p>
-          {texts.time && (
-            <p
-              style={{
-                fontSize: "15px",
-                color: c.muted,
-                fontStyle: "italic",
-                marginTop: "4px",
-              }}
-            >
-              {t("invitations.template.time_prefix")} {texts.time}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Venue */}
-      {texts.venue && (
-        <div style={{ marginTop: "8px" }}>
-          <p style={{ fontSize: "17px", fontWeight: 600 }}>{texts.venue}</p>
-          {texts.venueAddress && (
-            <p
-              style={{
-                fontSize: "13px",
-                color: c.muted,
-                fontStyle: "italic",
-                marginTop: "3px",
-              }}
-            >
-              {texts.venueAddress}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* RSVP */}
-      {(texts.rsvpEmail || texts.rsvpDeadline) && (
-        <div style={{ marginTop: "24px" }}>
-          {texts.rsvpDeadline && (
-            <p
-              style={{
-                fontSize: "12px",
-                color: c.muted,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-              }}
-            >
-              {t("invitations.template.please_confirm_by")} {texts.rsvpDeadline}
-            </p>
-          )}
-          {texts.rsvpEmail && (
-            <p
-              style={{
-                fontSize: "13px",
-                color: c.accent,
-                fontStyle: "italic",
-                marginTop: "2px",
-              }}
-            >
-              {texts.rsvpEmail}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Guest salutation — muted placeholder in preview, full colour at print time */}
-      {greeting && (
-        <p
-          style={{
-            marginTop: "24px",
-            fontStyle: "italic",
-            fontWeight: 300,
-            fontSize: "15px",
-            color: guestName ? c.text : c.muted,
-          }}
-        >
-          {greeting}
-        </p>
-      )}
-
-      {/* Footer */}
-      {texts.footer && (
-        <p
-          style={{
-            marginTop: "20px",
-            fontStyle: "italic",
-            fontWeight: 300,
-            fontSize: "13px",
-            color: c.muted,
-            maxWidth: "360px",
-          }}
-        >
-          {texts.footer}
-        </p>
-      )}
     </div>
   )
 }

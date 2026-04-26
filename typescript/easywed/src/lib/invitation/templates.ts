@@ -2,6 +2,7 @@ import type {
   InvitationColorScheme,
   InvitationDesign,
   InvitationTemplate,
+  InvitationTexts,
 } from "@/stores/invitation.store"
 import { DEFAULT_FONT_ID } from "@/lib/invitation/fonts"
 
@@ -72,11 +73,42 @@ export const DEFAULT_TEXTS: InvitationDesign["texts"] = {
   footer: "",
 }
 
+export const DEFAULT_FIELD_ORDER: Array<keyof InvitationTexts> = [
+  "headline",
+  "coupleNames",
+  "date",
+  "time",
+  "venue",
+  "venueAddress",
+  "guestSalutation",
+  "rsvpEmail",
+  "rsvpDeadline",
+  "footer",
+]
+
+export const DEFAULT_FIELD_SIDES: Record<
+  keyof InvitationTexts,
+  "front" | "back"
+> = {
+  headline: "front",
+  coupleNames: "front",
+  date: "front",
+  time: "front",
+  venue: "front",
+  venueAddress: "front",
+  guestSalutation: "front",
+  rsvpEmail: "back",
+  rsvpDeadline: "back",
+  footer: "back",
+}
+
 export const DEFAULT_DESIGN: InvitationDesign = {
   template: "classic",
   colorScheme: "cream-gold",
   fontId: DEFAULT_FONT_ID,
   texts: DEFAULT_TEXTS,
+  fieldSides: DEFAULT_FIELD_SIDES,
+  fieldOrder: DEFAULT_FIELD_ORDER,
   quantity: 50,
   guestNames: [],
 }
