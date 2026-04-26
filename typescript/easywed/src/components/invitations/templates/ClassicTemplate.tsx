@@ -97,7 +97,7 @@ export function ClassicTemplate({
             color: c.text,
           }}
         >
-          {texts.coupleNames || "Anna & Piotr"}
+          {texts.coupleNames}
         </h1>
 
         {/* Date + time */}

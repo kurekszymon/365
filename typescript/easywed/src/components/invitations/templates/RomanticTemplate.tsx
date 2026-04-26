@@ -121,7 +121,7 @@ export function RomanticTemplate({
           marginBottom: "6px",
         }}
       >
-        {texts.coupleNames || "Anna & Piotr"}
+        {texts.coupleNames}
       </h1>
 
       {/* Bottom floral divider */}

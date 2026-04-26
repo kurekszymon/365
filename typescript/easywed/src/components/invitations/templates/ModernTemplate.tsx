@@ -66,7 +66,7 @@ export function ModernTemplate({
           color: c.text,
         }}
       >
-        {texts.coupleNames || "Anna & Piotr"}
+        {texts.coupleNames}
       </h1>
 
       {/* Full-width rule */}
