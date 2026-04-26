@@ -26,6 +26,8 @@ export function GuestNamesPicker() {
   const [manualInput, setManualInput] = useState("")
   const [open, setOpen] = useState(false)
 
+  const GUEST_CAP = 500
+  const atCap = guestNames.length >= GUEST_CAP
   const hasPlannerGuests = plannerGuests.length > 0
 
   const unaddedPlannerGuests = plannerGuests.filter(
@@ -60,6 +62,7 @@ export function GuestNamesPicker() {
             <Button
               type="button"
               variant="outline"
+              disabled={atCap}
               className="w-full justify-between font-normal"
             >
               <span
@@ -86,6 +89,7 @@ export function GuestNamesPicker() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t("tables.guests_search_placeholder")}
+              maxLength={200}
               className="mb-2"
             />
 
@@ -94,7 +98,8 @@ export function GuestNamesPicker() {
                 {filteredPlannerGuests.map((g) => (
                   <button
                     key={g.id}
-                    className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted"
+                    disabled={atCap}
+                    className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
                     onClick={() => handleAddFromPlanner(g.name)}
                   >
                     {g.name}
@@ -116,6 +121,7 @@ export function GuestNamesPicker() {
               <Input
                 value={manualInput}
                 placeholder={t("invitations.guests_add_placeholder")}
+                maxLength={200}
                 onChange={(e) => setManualInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -128,7 +134,7 @@ export function GuestNamesPicker() {
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={!manualInput.trim()}
+                disabled={!manualInput.trim() || atCap}
                 onClick={handleAddManual}
               >
                 {t("invitations.guests_add")}
@@ -142,6 +148,8 @@ export function GuestNamesPicker() {
           <Input
             value={manualInput}
             placeholder={t("invitations.guests_add_placeholder")}
+            maxLength={200}
+            disabled={atCap}
             onChange={(e) => setManualInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -153,7 +161,7 @@ export function GuestNamesPicker() {
           <Button
             type="button"
             variant="outline"
-            disabled={!manualInput.trim()}
+            disabled={!manualInput.trim() || atCap}
             onClick={handleAddManual}
           >
             {t("invitations.guests_add")}
@@ -163,23 +171,32 @@ export function GuestNamesPicker() {
 
       {/* Selected guests — readable list, not pills */}
       {guestNames.length > 0 && (
-        <div className="max-h-52 divide-y overflow-y-auto rounded-md border">
-          {guestNames.map((name, idx) => (
-            <div
-              key={idx}
-              className="flex items-center justify-between px-3 py-1.5"
-            >
-              <span className="text-sm">{name}</span>
-              <button
-                aria-label={t("invitations.guests_remove", { name })}
-                onClick={() => removeGuestName(idx)}
-                className="text-muted-foreground hover:text-foreground"
+        <>
+          <div className="max-h-52 divide-y overflow-y-auto rounded-md border">
+            {guestNames.map((name, idx) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between px-3 py-1.5"
               >
-                <XIcon className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ))}
-        </div>
+                <span className="text-sm">{name}</span>
+                <button
+                  aria-label={t("invitations.guests_remove", { name })}
+                  onClick={() => removeGuestName(idx)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <XIcon className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <p
+            className={`text-xs ${atCap ? "font-medium text-destructive" : "text-muted-foreground"}`}
+          >
+            {atCap
+              ? t("invitations.guests_cap_reached", { count: GUEST_CAP })
+              : `${guestNames.length} / ${GUEST_CAP}`}
+          </p>
+        </>
       )}
     </div>
   )

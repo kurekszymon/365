@@ -217,6 +217,7 @@
   "invitations.guests_remove": "Usuń {{name}}",
   "invitations.guests_add_placeholder": "Dodaj imię gościa",
   "invitations.guests_add": "Dodaj",
+  "invitations.guests_cap_reached": "Lista gości jest pełna (maks. {{count}})",
   "invitations.quantity_label": "Ile zaproszeń?",
   "invitations.quantity_suggestion": "Sugerujemy {{count}} sztuk (+12% na ostatnią chwilę)",
   "invitations.quantity_use_suggestion": "użyj sugerowanej",

@@ -211,6 +211,7 @@
   "invitations.guests_remove": "Remove {{name}}",
   "invitations.guests_add_placeholder": "Add guest name",
   "invitations.guests_add": "Add",
+  "invitations.guests_cap_reached": "Guest list is full (max {{count}})",
   "invitations.quantity_label": "How many invitations?",
   "invitations.quantity_suggestion": "We suggest {{count}} (+12% extra for last-minute additions)",
   "invitations.quantity_use_suggestion": "use suggested",

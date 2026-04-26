@@ -63,7 +63,14 @@ export function OrderInvitationDialog() {
         contact_phone: form.contactPhone.trim() || null,
         quantity,
         design_hash: encodeDesign(design),
-        guest_names: design.guestNames.length > 0 ? design.guestNames : null,
+        guest_names: (() => {
+          const names = design.guestNames
+            .map((n) => n.trim().slice(0, 200))
+            .filter(Boolean)
+            .slice(0, 500)
+
+          return names.length > 0 ? names : null
+        })(),
         notes: form.notes.trim() || null,
         wedding_id: weddingId ?? null,
       })

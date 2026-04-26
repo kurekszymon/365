@@ -62,9 +62,14 @@ export const useInvitationStore = create<State & Action>((set) => ({
   setDesign: (design) => set({ design }),
 
   addGuestName: (name) =>
-    set((s) => ({
-      design: { ...s.design, guestNames: [...s.design.guestNames, name] },
-    })),
+    set((s) => {
+      const trimmed = name.trim().slice(0, 200)
+      if (!trimmed || s.design.guestNames.length >= 500) return s
+
+      return {
+        design: { ...s.design, guestNames: [...s.design.guestNames, trimmed] },
+      }
+    }),
 
   removeGuestName: (index) =>
     set((s) => ({
