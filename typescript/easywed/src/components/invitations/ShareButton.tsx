@@ -21,7 +21,8 @@ export function ShareButton() {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href)
+      const publicUrl = `${window.location.origin}/invitations${window.location.hash}`
+      await navigator.clipboard.writeText(publicUrl)
       if (timerRef.current) clearTimeout(timerRef.current)
       setCopied(true)
       timerRef.current = setTimeout(() => setCopied(false), 2000)
