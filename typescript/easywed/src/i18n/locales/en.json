@@ -245,6 +245,12 @@
   "invitations.color_scheme.lavender": "Lavender",
   "invitations.color_scheme.dusty_rose": "Dusty Rose",
 
+  "invitations.side_front": "Front",
+  "invitations.side_back": "Back",
+  "invitations.field_drag_handle": "Drag to reorder",
+  "invitations.snap_on": "Snap",
+  "invitations.snap_off": "Free",
+  "invitations.step_text_dnd_hint": "Drag fields between sides",
   "invitations.order": "Order invitations",
   "invitations.salutation": "Dear",
   "invitations.order_title": "Order invitations",

@@ -6,6 +6,7 @@ import {
 } from "@/lib/invitation/guestNames"
 
 export type InvitationTemplate = "classic" | "modern" | "romantic"
+export type InvitationSide = "front" | "back"
 
 export type InvitationColorScheme =
   | "cream-gold"
@@ -36,6 +37,11 @@ export interface InvitationDesign {
   colorScheme: InvitationColorScheme
   fontId: string
   texts: InvitationTexts
+  fieldSides: Record<keyof InvitationTexts, InvitationSide>
+  fieldOrder: Array<keyof InvitationTexts>
+  fieldPositions: Partial<
+    Record<keyof InvitationTexts, { x: number; y: number }>
+  >
   quantity: number
   guestNames: Array<string>
 }
@@ -50,6 +56,17 @@ type Action = {
   setDesign: (design: InvitationDesign) => void
   addGuestName: (name: string) => void
   removeGuestName: (index: number) => void
+  moveFieldToSide: (field: keyof InvitationTexts, side: InvitationSide) => void
+  reorderFields: (newOrder: Array<keyof InvitationTexts>) => void
+  setFieldSideAndOrder: (
+    field: keyof InvitationTexts,
+    side: InvitationSide,
+    newOrder: Array<keyof InvitationTexts>
+  ) => void
+  setFieldPosition: (
+    key: keyof InvitationTexts,
+    pos: { x: number; y: number }
+  ) => void
   reset: () => void
 }
 
@@ -83,6 +100,34 @@ export const useInvitationStore = create<State & Action>((set) => ({
       design: {
         ...s.design,
         guestNames: s.design.guestNames.filter((_, i) => i !== index),
+      },
+    })),
+
+  moveFieldToSide: (field, side) =>
+    set((s) => ({
+      design: {
+        ...s.design,
+        fieldSides: { ...s.design.fieldSides, [field]: side },
+      },
+    })),
+
+  reorderFields: (newOrder) =>
+    set((s) => ({ design: { ...s.design, fieldOrder: newOrder } })),
+
+  setFieldSideAndOrder: (field, side, newOrder) =>
+    set((s) => ({
+      design: {
+        ...s.design,
+        fieldSides: { ...s.design.fieldSides, [field]: side },
+        fieldOrder: newOrder,
+      },
+    })),
+
+  setFieldPosition: (key, pos) =>
+    set((s) => ({
+      design: {
+        ...s.design,
+        fieldPositions: { ...s.design.fieldPositions, [key]: pos },
       },
     })),
 

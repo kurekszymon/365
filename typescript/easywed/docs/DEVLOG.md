@@ -1,10 +1,20 @@
 # EasyWed — Development Log
 
+### 27.04
+
+- improve both sides invitation editor by free hand dragging
+- clamp dragging to invitation preview
+- show same design on drag
+- TODO: handle seperators, further improve designer
+- TODO: handle dj booth/photo booth in planner
+- TODO: stripe instead of db events for order invitations
+
 ### 26.04
 
 - merged feat/invitations
 - cleaning up implementation of invitation, potentially extendind templates
 - todo: configure db webhook for placed orders (or do something related to accept the order)
+- prototype both sides invitation editor
 
 ### 25.04
 

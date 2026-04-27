@@ -1,6 +1,8 @@
+import { Fragment } from "react"
 import { useTranslation } from "react-i18next"
 import { salutationLine } from "./utils"
 import type { TemplateProps } from "./types"
+import type { InvitationTexts } from "@/stores/invitation.store"
 import { COLOR_SCHEMES } from "@/lib/invitation/colorSchemes"
 
 export function ClassicTemplate({
@@ -8,10 +10,148 @@ export function ClassicTemplate({
   colorScheme,
   fontCss,
   guestName,
+  side,
+  fieldSides,
+  fieldOrder,
+  wrapField,
 }: TemplateProps) {
   const { t } = useTranslation()
   const c = COLOR_SCHEMES[colorScheme]
   const greeting = salutationLine(texts.guestSalutation, guestName)
+
+  const sideFields = fieldOrder.filter((k) => fieldSides[k] === side)
+
+  function renderField(key: keyof InvitationTexts) {
+    switch (key) {
+      case "headline":
+        return texts.headline ? (
+          <p
+            style={{
+              fontStyle: "italic",
+              fontSize: "15px",
+              letterSpacing: "0.12em",
+              color: c.muted,
+              marginBottom: "12px",
+              textTransform: "uppercase",
+            }}
+          >
+            {texts.headline}
+          </p>
+        ) : null
+
+      case "coupleNames":
+        return (
+          <h1
+            style={{
+              fontSize: "42px",
+              fontWeight: 700,
+              lineHeight: 1.1,
+              marginBottom: "8px",
+              color: c.text,
+            }}
+          >
+            {texts.coupleNames}
+          </h1>
+        )
+
+      case "date":
+        return texts.date ? (
+          <p
+            style={{
+              fontSize: "16px",
+              letterSpacing: "0.08em",
+              color: c.muted,
+              marginTop: "8px",
+            }}
+          >
+            {texts.date}
+          </p>
+        ) : null
+
+      case "time":
+        return texts.time ? (
+          <p
+            style={{
+              fontSize: "14px",
+              letterSpacing: "0.06em",
+              color: c.muted,
+              marginTop: "4px",
+            }}
+          >
+            {texts.time}
+          </p>
+        ) : null
+
+      case "venue":
+        return texts.venue ? (
+          <p style={{ fontSize: "18px", fontWeight: 700, marginTop: "12px" }}>
+            {texts.venue}
+          </p>
+        ) : null
+
+      case "venueAddress":
+        return texts.venueAddress ? (
+          <p style={{ fontSize: "13px", color: c.muted, marginTop: "4px" }}>
+            {texts.venueAddress}
+          </p>
+        ) : null
+
+      case "rsvpDeadline":
+        return texts.rsvpDeadline ? (
+          <p
+            style={{
+              fontSize: "12px",
+              color: c.muted,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              marginTop: "16px",
+            }}
+          >
+            {t("invitations.template.rsvp_by")} {texts.rsvpDeadline}
+          </p>
+        ) : null
+
+      case "rsvpEmail":
+        return texts.rsvpEmail ? (
+          <p style={{ fontSize: "13px", color: c.accent, marginTop: "4px" }}>
+            {texts.rsvpEmail}
+          </p>
+        ) : null
+
+      case "guestSalutation":
+        return greeting ? (
+          <p
+            style={{
+              marginTop: "16px",
+              fontStyle: "italic",
+              fontSize: "14px",
+              color: guestName ? c.text : c.muted,
+            }}
+          >
+            {greeting}
+          </p>
+        ) : null
+
+      case "footer":
+        return texts.footer ? (
+          <p
+            style={{
+              marginTop: "16px",
+              fontSize: "12px",
+              color: c.muted,
+              fontStyle: "italic",
+              textAlign: "center",
+              maxWidth: "340px",
+            }}
+          >
+            {texts.footer}
+          </p>
+        ) : null
+
+      default:
+        return null
+    }
+  }
 
   return (
     <div
@@ -71,145 +211,15 @@ export function ClassicTemplate({
           }}
         />
 
-        {/* Headline */}
-        {texts.headline && (
-          <p
-            style={{
-              fontStyle: "italic",
-              fontSize: "15px",
-              letterSpacing: "0.12em",
-              color: c.muted,
-              marginBottom: "20px",
-              textTransform: "uppercase",
-            }}
-          >
-            {texts.headline}
-          </p>
-        )}
-
-        {/* Couple names */}
-        <h1
-          style={{
-            fontSize: "42px",
-            fontWeight: 700,
-            lineHeight: 1.1,
-            marginBottom: "8px",
-            color: c.text,
-          }}
-        >
-          {texts.coupleNames}
-        </h1>
-
-        {/* Date + time */}
-        {(texts.date || texts.time) && (
-          <p
-            style={{
-              fontSize: "16px",
-              letterSpacing: "0.08em",
-              color: c.muted,
-              marginTop: "20px",
-              marginBottom: "4px",
-            }}
-          >
-            {[texts.date, texts.time].filter(Boolean).join("  ·  ")}
-          </p>
-        )}
-
-        {/* Decorative divider */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            margin: "20px 0",
-            width: "60%",
-          }}
-        >
-          <div
-            style={{
-              flex: 1,
-              height: "1px",
-              backgroundColor: c.border,
-              opacity: 0.4,
-            }}
-          />
-          <span style={{ color: c.accent, fontSize: "16px" }}>✦</span>
-          <div
-            style={{
-              flex: 1,
-              height: "1px",
-              backgroundColor: c.border,
-              opacity: 0.4,
-            }}
-          />
-        </div>
-
-        {/* Venue */}
-        {texts.venue && (
-          <p style={{ fontSize: "18px", fontWeight: 700, marginBottom: "4px" }}>
-            {texts.venue}
-          </p>
-        )}
-        {texts.venueAddress && (
-          <p style={{ fontSize: "13px", color: c.muted }}>
-            {texts.venueAddress}
-          </p>
-        )}
-
-        {/* RSVP */}
-        {(texts.rsvpEmail || texts.rsvpDeadline) && (
-          <div style={{ marginTop: "28px", textAlign: "center" }}>
-            {texts.rsvpDeadline && (
-              <p
-                style={{
-                  fontSize: "12px",
-                  color: c.muted,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                }}
-              >
-                {t("invitations.template.rsvp_by")} {texts.rsvpDeadline}
-              </p>
-            )}
-            {texts.rsvpEmail && (
-              <p
-                style={{ fontSize: "13px", color: c.accent, marginTop: "2px" }}
-              >
-                {texts.rsvpEmail}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Guest salutation — muted placeholder in preview, full colour at print time */}
-        {greeting && (
-          <p
-            style={{
-              marginTop: "28px",
-              fontStyle: "italic",
-              fontSize: "14px",
-              color: guestName ? c.text : c.muted,
-            }}
-          >
-            {greeting}
-          </p>
-        )}
-
-        {/* Footer */}
-        {texts.footer && (
-          <p
-            style={{
-              marginTop: "20px",
-              fontSize: "12px",
-              color: c.muted,
-              fontStyle: "italic",
-              textAlign: "center",
-              maxWidth: "340px",
-            }}
-          >
-            {texts.footer}
-          </p>
-        )}
+        {sideFields.map((key) => {
+          const content = renderField(key)
+          if (!content) return null
+          return wrapField ? (
+            wrapField(key, content)
+          ) : (
+            <Fragment key={key}>{content}</Fragment>
+          )
+        })}
 
         {/* Decorative bottom rule */}
         <div

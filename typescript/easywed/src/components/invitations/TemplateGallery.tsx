@@ -3,7 +3,11 @@ import { ClassicTemplate } from "./templates/ClassicTemplate"
 import { ModernTemplate } from "./templates/ModernTemplate"
 import { RomanticTemplate } from "./templates/RomanticTemplate"
 import type { InvitationTexts } from "@/stores/invitation.store"
-import { TEMPLATES } from "@/lib/invitation/templates"
+import {
+  DEFAULT_FIELD_ORDER,
+  DEFAULT_FIELD_SIDES,
+  TEMPLATES,
+} from "@/lib/invitation/templates"
 import { getFontCss } from "@/lib/invitation/fonts"
 import { useInvitationStore } from "@/stores/invitation.store"
 import { cn } from "@/lib/utils"
@@ -76,6 +80,9 @@ export function TemplateGallery() {
                     texts={PREVIEW_TEXTS}
                     colorScheme={tmpl.defaultColorScheme}
                     fontCss={fontCss}
+                    side="front"
+                    fieldSides={DEFAULT_FIELD_SIDES}
+                    fieldOrder={DEFAULT_FIELD_ORDER}
                   />
                 </div>
               </div>

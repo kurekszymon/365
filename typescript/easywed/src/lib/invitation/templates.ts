@@ -1,9 +1,15 @@
 import type {
   InvitationColorScheme,
   InvitationDesign,
+  InvitationSide,
   InvitationTemplate,
+  InvitationTexts,
 } from "@/stores/invitation.store"
 import { DEFAULT_FONT_ID } from "@/lib/invitation/fonts"
+
+/** Physical card dimensions in px (used by the preview canvas and hash validation). */
+export const CARD_W = 585
+export const CARD_H = 830
 
 export interface TemplateMetadata {
   id: InvitationTemplate
@@ -59,6 +65,19 @@ export const TEXT_MAX_LENGTHS: Record<keyof InvitationDesign["texts"], number> =
     footer: 500,
   }
 
+export const FIELD_LABEL_KEYS: Record<keyof InvitationTexts, string> = {
+  headline: "invitations.text_headline",
+  coupleNames: "invitations.text_couple_names",
+  date: "invitations.text_date",
+  time: "invitations.text_time",
+  venue: "invitations.text_venue",
+  venueAddress: "invitations.text_venue_address",
+  rsvpEmail: "invitations.text_rsvp_email",
+  rsvpDeadline: "invitations.text_rsvp_deadline",
+  guestSalutation: "invitations.text_guest_salutation",
+  footer: "invitations.text_footer",
+}
+
 export const DEFAULT_TEXTS: InvitationDesign["texts"] = {
   headline: "",
   coupleNames: "",
@@ -72,11 +91,43 @@ export const DEFAULT_TEXTS: InvitationDesign["texts"] = {
   footer: "",
 }
 
+export const DEFAULT_FIELD_ORDER: Array<keyof InvitationTexts> = [
+  "headline",
+  "coupleNames",
+  "date",
+  "time",
+  "venue",
+  "venueAddress",
+  "guestSalutation",
+  "rsvpEmail",
+  "rsvpDeadline",
+  "footer",
+]
+
+export const DEFAULT_FIELD_SIDES: Record<
+  keyof InvitationTexts,
+  InvitationSide
+> = {
+  headline: "front",
+  coupleNames: "front",
+  date: "front",
+  time: "front",
+  venue: "front",
+  venueAddress: "front",
+  guestSalutation: "front",
+  rsvpEmail: "back",
+  rsvpDeadline: "back",
+  footer: "back",
+}
+
 export const DEFAULT_DESIGN: InvitationDesign = {
   template: "classic",
   colorScheme: "cream-gold",
   fontId: DEFAULT_FONT_ID,
   texts: DEFAULT_TEXTS,
+  fieldSides: DEFAULT_FIELD_SIDES,
+  fieldOrder: DEFAULT_FIELD_ORDER,
+  fieldPositions: {},
   quantity: 50,
   guestNames: [],
 }
