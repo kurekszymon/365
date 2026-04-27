@@ -5,6 +5,7 @@ import {
   DndContext,
   DragOverlay,
   PointerSensor,
+  useDroppable,
   useSensor,
   useSensors,
 } from "@dnd-kit/core"
@@ -80,6 +81,8 @@ function FieldCard({
     >
       {/* Drag handle — top right */}
       <button
+        type="button"
+        aria-label={t("invitations.field_drag_handle")}
         className="absolute top-1.5 right-1.5 cursor-grab touch-none text-muted-foreground/40 transition-colors hover:text-muted-foreground active:cursor-grabbing"
         tabIndex={-1}
         {...dragHandleProps}
@@ -172,8 +175,10 @@ function DropZone({
   fieldPlaceholders,
   isOver,
 }: DropZoneProps) {
+  const { setNodeRef } = useDroppable({ id: sideId })
   return (
     <div
+      ref={setNodeRef}
       className={cn(
         "flex min-h-[80px] flex-1 flex-col gap-1.5 rounded-lg border-2 p-2 transition-colors",
         isOver
@@ -266,14 +271,19 @@ export function DesignEditor() {
       const newOrder = [...design.fieldOrder]
       const overIdStr = over.id as string
       const overIsField = overIdStr !== "front" && overIdStr !== "back"
+
       if (overIsField) {
         const overField = overIdStr as FieldKey
         const fromIdx = newOrder.indexOf(activeField)
         const toIdx = newOrder.indexOf(overField)
-        newOrder.splice(fromIdx, 1)
-        newOrder.splice(toIdx, 0, activeField)
+        setFieldSideAndOrder(
+          activeField,
+          targetZone,
+          arrayMove(newOrder, fromIdx, toIdx)
+        )
+      } else {
+        setFieldSideAndOrder(activeField, targetZone, newOrder)
       }
-      setFieldSideAndOrder(activeField, targetZone, newOrder)
     }
   }
 

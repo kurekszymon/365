@@ -257,6 +257,7 @@
 
   "invitations.awers": "Awers",
   "invitations.rewers": "Rewers",
+  "invitations.field_drag_handle": "Przeciągnij, aby zmienić kolejność",
   "invitations.snap_on": "Przyciąganie",
   "invitations.snap_off": "Swobodnie",
   "invitations.step_text_dnd_hint": "Przeciągnij pola między stronami",

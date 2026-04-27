@@ -111,8 +111,8 @@ function validateDesign(raw: unknown): InvitationDesign | null {
         Number.isFinite(v.y)
       ) {
         fieldPositions[k as keyof InvitationTexts] = {
-          x: Math.max(-100, Math.min(685, Math.round(v.x))),
-          y: Math.max(-100, Math.min(930, Math.round(v.y))),
+          x: Math.max(-100, Math.min(585, Math.round(v.x))),
+          y: Math.max(-100, Math.min(830, Math.round(v.y))),
         }
       }
     }

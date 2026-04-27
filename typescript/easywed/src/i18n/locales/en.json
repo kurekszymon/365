@@ -247,6 +247,7 @@
 
   "invitations.awers": "Front",
   "invitations.rewers": "Back",
+  "invitations.field_drag_handle": "Drag to reorder",
   "invitations.snap_on": "Snap",
   "invitations.snap_off": "Free",
   "invitations.step_text_dnd_hint": "Drag fields between sides",

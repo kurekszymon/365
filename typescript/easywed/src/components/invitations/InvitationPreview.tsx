@@ -220,11 +220,19 @@ export function InvitationPreview() {
   function handleSnapDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (!over || active.id === over.id) return
-    const from = design.fieldOrder.indexOf(active.id as keyof InvitationTexts)
-    const to = design.fieldOrder.indexOf(over.id as keyof InvitationTexts)
-    if (from !== -1 && to !== -1) {
-      reorderFields(arrayMove(design.fieldOrder, from, to))
-    }
+    const activeKey = active.id as keyof InvitationTexts
+    const overKey = over.id as keyof InvitationTexts
+    const fromInSide = sideFields.indexOf(activeKey)
+    const toInSide = sideFields.indexOf(overKey)
+    if (fromInSide === -1 || toInSide === -1) return
+    const reorderedSide = arrayMove(sideFields, fromInSide, toInSide)
+    // Merge the reordered side fields back into the full fieldOrder, preserving
+    // the relative order of fields on the other side and the interleaving positions.
+    let sideIdx = 0
+    const newOrder = design.fieldOrder.map((k) =>
+      design.fieldSides[k] === previewSide ? reorderedSide[sideIdx++] : k
+    )
+    reorderFields(newOrder)
   }
 
   function handleDragStart(event: DragStartEvent) {
