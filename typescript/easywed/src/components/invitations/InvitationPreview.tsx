@@ -31,6 +31,7 @@ import { useInvitationStore } from "@/stores/invitation.store"
 import { Button } from "@/components/ui/button"
 import { COLOR_SCHEMES } from "@/lib/invitation/colorSchemes"
 import { getFontCss } from "@/lib/invitation/fonts"
+import { CARD_H, CARD_W } from "@/lib/invitation/templates"
 
 import { cn } from "@/lib/utils"
 
@@ -47,9 +48,6 @@ type TemplateComponent = React.ComponentType<{
     content: React.ReactNode
   ) => React.ReactNode
 }>
-
-const CARD_W = 585
-const CARD_H = 830
 
 const TEMPLATE_MAP = {
   classic: ClassicTemplate,

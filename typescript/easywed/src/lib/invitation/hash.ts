@@ -7,6 +7,8 @@ import type {
   InvitationTexts,
 } from "@/stores/invitation.store"
 import {
+  CARD_H,
+  CARD_W,
   DEFAULT_FIELD_ORDER,
   DEFAULT_FIELD_SIDES,
   TEMPLATES,
@@ -111,8 +113,8 @@ function validateDesign(raw: unknown): InvitationDesign | null {
         Number.isFinite(v.y)
       ) {
         fieldPositions[k as keyof InvitationTexts] = {
-          x: Math.max(-100, Math.min(585, Math.round(v.x))),
-          y: Math.max(-100, Math.min(830, Math.round(v.y))),
+          x: Math.max(0, Math.min(CARD_W, Math.round(v.x))),
+          y: Math.max(0, Math.min(CARD_H, Math.round(v.y))),
         }
       }
     }

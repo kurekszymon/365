@@ -96,7 +96,7 @@ export function InvitationsPage({ weddingId }: { weddingId?: string }) {
           </div>
 
           {/* Right: preview */}
-          <div className="flex flex-1 items-start justify-center overflow-y-auto p-8">
+          <div className="flex flex-1 items-start justify-center overflow-y-auto p-6">
             <InvitationPreview />
           </div>
         </div>

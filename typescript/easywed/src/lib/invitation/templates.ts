@@ -7,6 +7,10 @@ import type {
 } from "@/stores/invitation.store"
 import { DEFAULT_FONT_ID } from "@/lib/invitation/fonts"
 
+/** Physical card dimensions in px (used by the preview canvas and hash validation). */
+export const CARD_W = 585
+export const CARD_H = 830
+
 export interface TemplateMetadata {
   id: InvitationTemplate
   labelKey: string
