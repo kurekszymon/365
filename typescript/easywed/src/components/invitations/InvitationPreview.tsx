@@ -277,6 +277,21 @@ export function InvitationPreview() {
     )
   }
 
+  // Print equivalent of wrapFieldFree: applies the stored card-space position
+  // without any DnD interactivity. Used when printing in free-drag mode so the
+  // printed output matches what the user arranged on screen.
+  function wrapFieldPrint(
+    key: keyof InvitationTexts,
+    content: React.ReactNode
+  ) {
+    const pos = design.fieldPositions[key] ?? getDefaultFreePos(key)
+    return (
+      <div key={key} style={{ position: "absolute", left: pos.x, top: pos.y }}>
+        {content}
+      </div>
+    )
+  }
+
   const handlePrintPreview = () => {
     flushSync(() => setPrintAll(false))
     window.print()
@@ -299,7 +314,9 @@ export function InvitationPreview() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Print target — portalled to body, no wrapField = no DnD handles in print */}
+      {/* Print target — portalled to body, no DnD handles in print.
+          In free-drag mode the stored fieldPositions are applied via
+          wrapFieldPrint so the printed layout matches the screen arrangement. */}
       {createPortal(
         <div data-print-view className="hidden">
           {printAll && guests && guests.length > 0 ? (
@@ -309,20 +326,32 @@ export function InvitationPreview() {
                   texts={design.texts}
                   guestName={name}
                   side="front"
+                  wrapField={!snapEnabled ? wrapFieldPrint : undefined}
                   {...sharedProps}
                 />
                 <Component
                   texts={design.texts}
                   guestName={name}
                   side="back"
+                  wrapField={!snapEnabled ? wrapFieldPrint : undefined}
                   {...sharedProps}
                 />
               </Fragment>
             ))
           ) : (
             <>
-              <Component texts={design.texts} side="front" {...sharedProps} />
-              <Component texts={design.texts} side="back" {...sharedProps} />
+              <Component
+                texts={design.texts}
+                side="front"
+                wrapField={!snapEnabled ? wrapFieldPrint : undefined}
+                {...sharedProps}
+              />
+              <Component
+                texts={design.texts}
+                side="back"
+                wrapField={!snapEnabled ? wrapFieldPrint : undefined}
+                {...sharedProps}
+              />
             </>
           )}
         </div>,
