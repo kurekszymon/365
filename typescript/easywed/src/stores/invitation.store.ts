@@ -39,6 +39,9 @@ export interface InvitationDesign {
   texts: InvitationTexts
   fieldSides: Record<keyof InvitationTexts, InvitationSide>
   fieldOrder: Array<keyof InvitationTexts>
+  fieldPositions: Partial<
+    Record<keyof InvitationTexts, { x: number; y: number }>
+  >
   quantity: number
   guestNames: Array<string>
 }
@@ -59,6 +62,10 @@ type Action = {
     field: keyof InvitationTexts,
     side: InvitationSide,
     newOrder: Array<keyof InvitationTexts>
+  ) => void
+  setFieldPosition: (
+    key: keyof InvitationTexts,
+    pos: { x: number; y: number }
   ) => void
   reset: () => void
 }
@@ -113,6 +120,14 @@ export const useInvitationStore = create<State & Action>((set) => ({
         ...s.design,
         fieldSides: { ...s.design.fieldSides, [field]: side },
         fieldOrder: newOrder,
+      },
+    })),
+
+  setFieldPosition: (key, pos) =>
+    set((s) => ({
+      design: {
+        ...s.design,
+        fieldPositions: { ...s.design.fieldPositions, [key]: pos },
       },
     })),
 

@@ -24,6 +24,7 @@ import { useInvitationStore } from "@/stores/invitation.store"
 import { useDialogStore } from "@/stores/dialog.store"
 import {
   COLOR_SCHEME_LABEL_KEYS,
+  FIELD_LABEL_KEYS,
   TEMPLATES,
   TEXT_MAX_LENGTHS,
 } from "@/lib/invitation/templates"
@@ -41,19 +42,6 @@ import {
 import { cn } from "@/lib/utils"
 
 type FieldKey = keyof InvitationTexts
-
-const FIELD_LABEL_KEYS: Record<FieldKey, string> = {
-  headline: "invitations.text_headline",
-  coupleNames: "invitations.text_couple_names",
-  date: "invitations.text_date",
-  time: "invitations.text_time",
-  venue: "invitations.text_venue",
-  venueAddress: "invitations.text_venue_address",
-  rsvpEmail: "invitations.text_rsvp_email",
-  rsvpDeadline: "invitations.text_rsvp_deadline",
-  guestSalutation: "invitations.text_guest_salutation",
-  footer: "invitations.text_footer",
-}
 
 interface FieldCardProps {
   fieldKey: FieldKey

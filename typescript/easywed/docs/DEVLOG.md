@@ -1,5 +1,11 @@
 # EasyWed — Development Log
 
+### 27.04
+
+- improve both sides invitation editor by free hand dragging
+- clamp dragging to invitation preview
+- show same design on drag
+
 ### 26.04
 
 - merged feat/invitations

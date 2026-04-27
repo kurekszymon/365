@@ -1,3 +1,4 @@
+import { Fragment } from "react"
 import { useTranslation } from "react-i18next"
 import { salutationLine } from "./utils"
 import type { TemplateProps } from "./types"
@@ -12,6 +13,7 @@ export function ClassicTemplate({
   side,
   fieldSides,
   fieldOrder,
+  wrapField,
 }: TemplateProps) {
   const { t } = useTranslation()
   const c = COLOR_SCHEMES[colorScheme]
@@ -24,7 +26,6 @@ export function ClassicTemplate({
       case "headline":
         return texts.headline ? (
           <p
-            key="headline"
             style={{
               fontStyle: "italic",
               fontSize: "15px",
@@ -41,7 +42,6 @@ export function ClassicTemplate({
       case "coupleNames":
         return (
           <h1
-            key="coupleNames"
             style={{
               fontSize: "42px",
               fontWeight: 700,
@@ -57,7 +57,6 @@ export function ClassicTemplate({
       case "date":
         return texts.date ? (
           <p
-            key="date"
             style={{
               fontSize: "16px",
               letterSpacing: "0.08em",
@@ -72,7 +71,6 @@ export function ClassicTemplate({
       case "time":
         return texts.time ? (
           <p
-            key="time"
             style={{
               fontSize: "14px",
               letterSpacing: "0.06em",
@@ -86,20 +84,14 @@ export function ClassicTemplate({
 
       case "venue":
         return texts.venue ? (
-          <p
-            key="venue"
-            style={{ fontSize: "18px", fontWeight: 700, marginTop: "12px" }}
-          >
+          <p style={{ fontSize: "18px", fontWeight: 700, marginTop: "12px" }}>
             {texts.venue}
           </p>
         ) : null
 
       case "venueAddress":
         return texts.venueAddress ? (
-          <p
-            key="venueAddress"
-            style={{ fontSize: "13px", color: c.muted, marginTop: "4px" }}
-          >
+          <p style={{ fontSize: "13px", color: c.muted, marginTop: "4px" }}>
             {texts.venueAddress}
           </p>
         ) : null
@@ -107,7 +99,6 @@ export function ClassicTemplate({
       case "rsvpDeadline":
         return texts.rsvpDeadline ? (
           <p
-            key="rsvpDeadline"
             style={{
               fontSize: "12px",
               color: c.muted,
@@ -122,10 +113,7 @@ export function ClassicTemplate({
 
       case "rsvpEmail":
         return texts.rsvpEmail ? (
-          <p
-            key="rsvpEmail"
-            style={{ fontSize: "13px", color: c.accent, marginTop: "4px" }}
-          >
+          <p style={{ fontSize: "13px", color: c.accent, marginTop: "4px" }}>
             {texts.rsvpEmail}
           </p>
         ) : null
@@ -133,7 +121,6 @@ export function ClassicTemplate({
       case "guestSalutation":
         return greeting ? (
           <p
-            key="guestSalutation"
             style={{
               marginTop: "16px",
               fontStyle: "italic",
@@ -148,7 +135,6 @@ export function ClassicTemplate({
       case "footer":
         return texts.footer ? (
           <p
-            key="footer"
             style={{
               marginTop: "16px",
               fontSize: "12px",
@@ -225,7 +211,15 @@ export function ClassicTemplate({
           }}
         />
 
-        {sideFields.map((key) => renderField(key))}
+        {sideFields.map((key) => {
+          const content = renderField(key)
+          if (!content) return null
+          return wrapField ? (
+            wrapField(key, content)
+          ) : (
+            <Fragment key={key}>{content}</Fragment>
+          )
+        })}
 
         {/* Decorative bottom rule */}
         <div

@@ -257,6 +257,8 @@
 
   "invitations.awers": "Awers",
   "invitations.rewers": "Rewers",
+  "invitations.snap_on": "Przyciąganie",
+  "invitations.snap_off": "Swobodnie",
   "invitations.step_text_dnd_hint": "Przeciągnij pola między stronami",
   "invitations.order": "Zamów zaproszenia",
   "invitations.salutation": "Drogi/Droga",

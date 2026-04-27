@@ -18,7 +18,6 @@ export function InvitationsPage({ weddingId }: { weddingId?: string }) {
   const openDialog = useDialogStore((s) => s.open)
   const setDesign = useInvitationStore((s) => s.setDesign)
   const updateDesign = useInvitationStore((s) => s.updateDesign)
-  const design = useInvitationStore((s) => s.design)
   const guests = usePlannerStore((s) => s.guests)
   const isFirstMount = useRef(true)
 
@@ -43,15 +42,27 @@ export function InvitationsPage({ weddingId }: { weddingId?: string }) {
     isFirstMount.current = false
   }, [setDesign, updateDesign])
 
-  // Sync design → URL hash (debounced)
+  // Sync design → URL hash (debounced) without subscribing the page component
+  // to every design change, which would rerender both editor and preview.
   useEffect(() => {
-    if (isFirstMount.current) return
-    const id = setTimeout(() => {
-      const hash = encodeDesign(design)
-      history.replaceState(null, "", `#${hash}`)
-    }, 500)
-    return () => clearTimeout(id)
-  }, [design])
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
+
+    const unsubscribe = useInvitationStore.subscribe((state, prevState) => {
+      if (isFirstMount.current || state.design === prevState.design) return
+
+      if (timeoutId) clearTimeout(timeoutId)
+
+      timeoutId = setTimeout(() => {
+        const hash = encodeDesign(state.design)
+        history.replaceState(null, "", `#${hash}`)
+      }, 500)
+    })
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId)
+      unsubscribe()
+    }
+  }, [])
 
   return (
     <>

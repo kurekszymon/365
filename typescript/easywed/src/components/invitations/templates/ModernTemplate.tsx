@@ -1,3 +1,4 @@
+import { Fragment } from "react"
 import { useTranslation } from "react-i18next"
 import { salutationLine } from "./utils"
 import type { TemplateProps } from "./types"
@@ -12,6 +13,7 @@ export function ModernTemplate({
   side,
   fieldSides,
   fieldOrder,
+  wrapField,
 }: TemplateProps) {
   const { t } = useTranslation()
   const c = COLOR_SCHEMES[colorScheme]
@@ -24,7 +26,6 @@ export function ModernTemplate({
       case "headline":
         return texts.headline ? (
           <p
-            key="headline"
             style={{
               fontSize: "11px",
               letterSpacing: "0.2em",
@@ -41,7 +42,6 @@ export function ModernTemplate({
       case "coupleNames":
         return (
           <h1
-            key="coupleNames"
             style={{
               fontSize: "52px",
               fontWeight: 700,
@@ -58,7 +58,6 @@ export function ModernTemplate({
       case "date":
         return texts.date ? (
           <p
-            key="date"
             style={{
               fontSize: "22px",
               fontWeight: 600,
@@ -72,30 +71,21 @@ export function ModernTemplate({
 
       case "time":
         return texts.time ? (
-          <p
-            key="time"
-            style={{ fontSize: "15px", color: c.muted, marginBottom: "16px" }}
-          >
+          <p style={{ fontSize: "15px", color: c.muted, marginBottom: "16px" }}>
             {texts.time}
           </p>
         ) : null
 
       case "venue":
         return texts.venue ? (
-          <p
-            key="venue"
-            style={{ fontSize: "15px", fontWeight: 600, marginBottom: "2px" }}
-          >
+          <p style={{ fontSize: "15px", fontWeight: 600, marginBottom: "2px" }}>
             {texts.venue}
           </p>
         ) : null
 
       case "venueAddress":
         return texts.venueAddress ? (
-          <p
-            key="venueAddress"
-            style={{ fontSize: "13px", color: c.muted, marginBottom: "16px" }}
-          >
+          <p style={{ fontSize: "13px", color: c.muted, marginBottom: "16px" }}>
             {texts.venueAddress}
           </p>
         ) : null
@@ -103,7 +93,6 @@ export function ModernTemplate({
       case "rsvpDeadline":
         return texts.rsvpDeadline ? (
           <p
-            key="rsvpDeadline"
             style={{
               fontSize: "12px",
               color: c.muted,
@@ -119,7 +108,6 @@ export function ModernTemplate({
       case "rsvpEmail":
         return texts.rsvpEmail ? (
           <p
-            key="rsvpEmail"
             style={{
               fontSize: "13px",
               color: c.accent,
@@ -134,7 +122,6 @@ export function ModernTemplate({
       case "guestSalutation":
         return greeting ? (
           <p
-            key="guestSalutation"
             style={{
               fontSize: "13px",
               color: guestName ? c.text : c.muted,
@@ -148,10 +135,7 @@ export function ModernTemplate({
 
       case "footer":
         return texts.footer ? (
-          <p
-            key="footer"
-            style={{ fontSize: "12px", color: c.muted, marginBottom: "8px" }}
-          >
+          <p style={{ fontSize: "12px", color: c.muted, marginBottom: "8px" }}>
             {texts.footer}
           </p>
         ) : null
@@ -175,6 +159,7 @@ export function ModernTemplate({
         justifyContent: "center",
         padding: "72px 80px",
         boxSizing: "border-box",
+        position: "relative",
         pageBreakAfter: "always",
       }}
     >
@@ -187,7 +172,15 @@ export function ModernTemplate({
         }}
       />
 
-      {sideFields.map((key) => renderField(key))}
+      {sideFields.map((key) => {
+        const content = renderField(key)
+        if (!content) return null
+        return wrapField ? (
+          wrapField(key, content)
+        ) : (
+          <Fragment key={key}>{content}</Fragment>
+        )
+      })}
 
       {/* Full-width bottom rule */}
       <div

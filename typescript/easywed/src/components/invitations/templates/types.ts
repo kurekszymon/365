@@ -12,4 +12,8 @@ export interface TemplateProps {
   side: InvitationSide
   fieldSides: Record<keyof InvitationTexts, InvitationSide>
   fieldOrder: Array<keyof InvitationTexts>
+  wrapField?: (
+    key: keyof InvitationTexts,
+    content: React.ReactNode
+  ) => React.ReactNode
 }

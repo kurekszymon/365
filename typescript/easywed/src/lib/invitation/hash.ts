@@ -96,6 +96,28 @@ function validateDesign(raw: unknown): InvitationDesign | null {
     ? validateFieldOrder(raw.fieldOrder as Array<unknown>)
     : DEFAULT_FIELD_ORDER
 
+  const fieldPositions: Partial<
+    Record<keyof InvitationTexts, { x: number; y: number }>
+  > = {}
+  if (isSafeObject(raw.fieldPositions)) {
+    const validFieldKeys = new Set<string>(DEFAULT_FIELD_ORDER)
+    for (const [k, v] of Object.entries(raw.fieldPositions)) {
+      if (
+        validFieldKeys.has(k) &&
+        isSafeObject(v) &&
+        typeof v.x === "number" &&
+        typeof v.y === "number" &&
+        Number.isFinite(v.x) &&
+        Number.isFinite(v.y)
+      ) {
+        fieldPositions[k as keyof InvitationTexts] = {
+          x: Math.max(-100, Math.min(685, Math.round(v.x))),
+          y: Math.max(-100, Math.min(930, Math.round(v.y))),
+        }
+      }
+    }
+  }
+
   return {
     template: template as InvitationTemplate,
     colorScheme,
@@ -104,6 +126,7 @@ function validateDesign(raw: unknown): InvitationDesign | null {
     texts: validatedTexts,
     fieldSides,
     fieldOrder,
+    fieldPositions,
     guestNames,
   }
 }

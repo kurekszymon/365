@@ -1,3 +1,4 @@
+import { Fragment } from "react"
 import { useTranslation } from "react-i18next"
 import { salutationLine } from "./utils"
 import type { TemplateProps } from "./types"
@@ -14,6 +15,7 @@ export function RomanticTemplate({
   side,
   fieldSides,
   fieldOrder,
+  wrapField,
 }: TemplateProps) {
   const { t } = useTranslation()
   const c = COLOR_SCHEMES[colorScheme]
@@ -26,7 +28,6 @@ export function RomanticTemplate({
       case "headline":
         return texts.headline ? (
           <p
-            key="headline"
             style={{
               fontStyle: "italic",
               fontWeight: 300,
@@ -43,7 +44,6 @@ export function RomanticTemplate({
       case "coupleNames":
         return (
           <h1
-            key="coupleNames"
             style={{
               fontSize: "48px",
               fontWeight: 600,
@@ -59,7 +59,6 @@ export function RomanticTemplate({
       case "date":
         return texts.date ? (
           <p
-            key="date"
             style={{
               fontSize: "20px",
               fontWeight: 300,
@@ -74,7 +73,6 @@ export function RomanticTemplate({
       case "time":
         return texts.time ? (
           <p
-            key="time"
             style={{
               fontSize: "15px",
               color: c.muted,
@@ -88,10 +86,7 @@ export function RomanticTemplate({
 
       case "venue":
         return texts.venue ? (
-          <p
-            key="venue"
-            style={{ fontSize: "17px", fontWeight: 600, marginBottom: "3px" }}
-          >
+          <p style={{ fontSize: "17px", fontWeight: 600, marginBottom: "3px" }}>
             {texts.venue}
           </p>
         ) : null
@@ -99,7 +94,6 @@ export function RomanticTemplate({
       case "venueAddress":
         return texts.venueAddress ? (
           <p
-            key="venueAddress"
             style={{
               fontSize: "13px",
               color: c.muted,
@@ -114,7 +108,6 @@ export function RomanticTemplate({
       case "rsvpDeadline":
         return texts.rsvpDeadline ? (
           <p
-            key="rsvpDeadline"
             style={{
               fontSize: "12px",
               color: c.muted,
@@ -130,7 +123,6 @@ export function RomanticTemplate({
       case "rsvpEmail":
         return texts.rsvpEmail ? (
           <p
-            key="rsvpEmail"
             style={{
               fontSize: "13px",
               color: c.accent,
@@ -145,7 +137,6 @@ export function RomanticTemplate({
       case "guestSalutation":
         return greeting ? (
           <p
-            key="guestSalutation"
             style={{
               fontStyle: "italic",
               fontWeight: 300,
@@ -161,7 +152,6 @@ export function RomanticTemplate({
       case "footer":
         return texts.footer ? (
           <p
-            key="footer"
             style={{
               fontStyle: "italic",
               fontWeight: 300,
@@ -260,7 +250,15 @@ export function RomanticTemplate({
         <div style={{ flex: 1, height: "0.5px", backgroundColor: c.border }} />
       </div>
 
-      {sideFields.map((key) => renderField(key))}
+      {sideFields.map((key) => {
+        const content = renderField(key)
+        if (!content) return null
+        return wrapField ? (
+          wrapField(key, content)
+        ) : (
+          <Fragment key={key}>{content}</Fragment>
+        )
+      })}
 
       {/* Bottom floral divider */}
       <div
