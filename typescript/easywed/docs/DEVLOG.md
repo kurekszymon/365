@@ -5,6 +5,9 @@
 - improve both sides invitation editor by free hand dragging
 - clamp dragging to invitation preview
 - show same design on drag
+- TODO: handle seperators, further improve designer
+- TODO: handle dj booth/photo booth in planner
+- TODO: stripe instead of db events for order invitations
 
 ### 26.04
 

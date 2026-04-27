@@ -1,6 +1,7 @@
 import type {
   InvitationColorScheme,
   InvitationDesign,
+  InvitationSide,
   InvitationTemplate,
   InvitationTexts,
 } from "@/stores/invitation.store"
@@ -101,7 +102,7 @@ export const DEFAULT_FIELD_ORDER: Array<keyof InvitationTexts> = [
 
 export const DEFAULT_FIELD_SIDES: Record<
   keyof InvitationTexts,
-  "front" | "back"
+  InvitationSide
 > = {
   headline: "front",
   coupleNames: "front",

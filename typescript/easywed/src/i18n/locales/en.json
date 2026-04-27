@@ -245,8 +245,8 @@
   "invitations.color_scheme.lavender": "Lavender",
   "invitations.color_scheme.dusty_rose": "Dusty Rose",
 
-  "invitations.awers": "Front",
-  "invitations.rewers": "Back",
+  "invitations.side_front": "Front",
+  "invitations.side_back": "Back",
   "invitations.field_drag_handle": "Drag to reorder",
   "invitations.snap_on": "Snap",
   "invitations.snap_off": "Free",

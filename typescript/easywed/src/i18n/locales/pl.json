@@ -255,8 +255,8 @@
   "invitations.color_scheme.lavender": "Lawenda",
   "invitations.color_scheme.dusty_rose": "Pudrowy róż",
 
-  "invitations.awers": "Awers",
-  "invitations.rewers": "Rewers",
+  "invitations.side_front": "Awers",
+  "invitations.side_back": "Rewers",
   "invitations.field_drag_handle": "Przeciągnij, aby zmienić kolejność",
   "invitations.snap_on": "Przyciąganie",
   "invitations.snap_off": "Swobodnie",

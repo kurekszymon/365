@@ -79,12 +79,10 @@ function FieldCard({
         className
       )}
     >
-      {/* Drag handle — top right */}
       <button
         type="button"
         aria-label={t("invitations.field_drag_handle")}
         className="absolute top-1.5 right-1.5 cursor-grab touch-none text-muted-foreground/40 transition-colors hover:text-muted-foreground active:cursor-grabbing"
-        tabIndex={-1}
         {...dragHandleProps}
       >
         <GripVertical className="h-3.5 w-3.5" />
@@ -219,6 +217,13 @@ export function DesignEditor() {
   const [styleOpen, setStyleOpen] = useState(true)
   const [activeId, setActiveId] = useState<FieldKey | null>(null)
   const [overZone, setOverZone] = useState<InvitationSide | null>(null)
+  // Local pending state tracks cross-side moves during drag to avoid
+  // hammering the Zustand store on every pointer-move event.
+  const [pendingOrder, setPendingOrder] = useState<Array<FieldKey> | null>(null)
+  const [pendingSides, setPendingSides] = useState<Record<
+    FieldKey,
+    InvitationSide
+  > | null>(null)
 
   const currentTemplate = TEMPLATES.find((tmpl) => tmpl.id === design.template)
 
@@ -234,12 +239,12 @@ export function DesignEditor() {
     guestSalutation: t("invitations.salutation"),
   }
 
-  const frontFields = design.fieldOrder.filter(
-    (k) => design.fieldSides[k] === "front"
+  const effectiveOrder = pendingOrder ?? design.fieldOrder
+  const effectiveSides = pendingSides ?? design.fieldSides
+  const frontFields = effectiveOrder.filter(
+    (k) => effectiveSides[k] === "front"
   )
-  const backFields = design.fieldOrder.filter(
-    (k) => design.fieldSides[k] === "back"
-  )
+  const backFields = effectiveOrder.filter((k) => effectiveSides[k] === "back")
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -247,7 +252,7 @@ export function DesignEditor() {
 
   function getZoneForId(id: string): InvitationSide | null {
     if (id === "front" || id === "back") return id as InvitationSide
-    return design.fieldSides[id as FieldKey]
+    return effectiveSides[id as FieldKey]
   }
 
   function handleDragStart(event: DragStartEvent) {
@@ -265,10 +270,10 @@ export function DesignEditor() {
     setOverZone(targetZone)
 
     const activeField = active.id as FieldKey
-    const currentSide = design.fieldSides[activeField]
+    const currentSide = effectiveSides[activeField]
     if (targetZone && targetZone !== currentSide) {
-      // Optimistically move to target side for live feedback
-      const newOrder = [...design.fieldOrder]
+      // Track the cross-side move in local pending state; commit once in onDragEnd.
+      const newOrder = [...effectiveOrder]
       const overIdStr = over.id as string
       const overIsField = overIdStr !== "front" && overIdStr !== "back"
 
@@ -276,27 +281,45 @@ export function DesignEditor() {
         const overField = overIdStr as FieldKey
         const fromIdx = newOrder.indexOf(activeField)
         const toIdx = newOrder.indexOf(overField)
-        setFieldSideAndOrder(
-          activeField,
-          targetZone,
-          arrayMove(newOrder, fromIdx, toIdx)
-        )
+        setPendingOrder(arrayMove(newOrder, fromIdx, toIdx))
       } else {
-        setFieldSideAndOrder(activeField, targetZone, newOrder)
+        setPendingOrder(newOrder)
       }
+      setPendingSides({ ...effectiveSides, [activeField]: targetZone })
     }
   }
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
+    const finalOrder = pendingOrder
+    const finalSides = pendingSides
+
     setActiveId(null)
     setOverZone(null)
+    setPendingOrder(null)
+    setPendingSides(null)
 
-    if (!over || active.id === over.id) return
+    if (!over) return
 
     const activeField = active.id as FieldKey
     const overId = over.id as string
 
+    // Commit any cross-side changes that were tracked in pending state.
+    if (
+      finalSides &&
+      finalSides[activeField] !== design.fieldSides[activeField]
+    ) {
+      setFieldSideAndOrder(
+        activeField,
+        finalSides[activeField],
+        finalOrder ?? design.fieldOrder
+      )
+      return
+    }
+
+    if (active.id === over.id) return
+
+    // Same-side reorder (or fast drop before pending state was populated).
     const overIsField = overId !== "front" && overId !== "back"
     if (overIsField) {
       const overField = overId as FieldKey
@@ -321,6 +344,8 @@ export function DesignEditor() {
   function handleDragCancel() {
     setActiveId(null)
     setOverZone(null)
+    setPendingOrder(null)
+    setPendingSides(null)
   }
 
   return (
@@ -416,7 +441,7 @@ export function DesignEditor() {
           <div className="flex gap-2">
             <DropZone
               sideId="front"
-              label={t("invitations.awers")}
+              label={t("invitations.side_front")}
               fields={frontFields}
               texts={design.texts}
               onTextChange={(key, val) => updateTexts({ [key]: val })}
@@ -425,7 +450,7 @@ export function DesignEditor() {
             />
             <DropZone
               sideId="back"
-              label={t("invitations.rewers")}
+              label={t("invitations.side_back")}
               fields={backFields}
               texts={design.texts}
               onTextChange={(key, val) => updateTexts({ [key]: val })}

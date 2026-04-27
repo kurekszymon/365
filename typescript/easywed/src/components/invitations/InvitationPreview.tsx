@@ -213,7 +213,11 @@ export function InvitationPreview() {
     x: number
     y: number
   } {
-    const idx = sideFields.indexOf(key)
+    const ownSide = design.fieldSides[key]
+    const ownSideFields = design.fieldOrder.filter(
+      (k) => design.fieldSides[k] === ownSide
+    )
+    const idx = ownSideFields.indexOf(key)
     return { x: 64, y: 100 + idx * 80 }
   }
 
@@ -408,11 +412,12 @@ export function InvitationPreview() {
             </div>
           )}
 
-          {/* Awers / Rewers toggle — absolute top-left */}
+          {/* Front / Back toggle — absolute top-left */}
           <div className="absolute top-2 left-2 flex overflow-hidden rounded-md border border-white/20 shadow-md">
             {(["front", "back"] as const).map((s) => (
               <button
                 key={s}
+                type="button"
                 onClick={() => setPreviewSide(s)}
                 className={cn(
                   "px-3 py-1 text-xs font-semibold transition-colors",
@@ -422,14 +427,15 @@ export function InvitationPreview() {
                 )}
               >
                 {s === "front"
-                  ? t("invitations.awers")
-                  : t("invitations.rewers")}
+                  ? t("invitations.side_front")
+                  : t("invitations.side_back")}
               </button>
             ))}
           </div>
 
           {/* Snap / Free toggle — absolute top-right */}
           <button
+            type="button"
             onClick={() => setSnapEnabled((v) => !v)}
             title={
               snapEnabled ? t("invitations.snap_on") : t("invitations.snap_off")
