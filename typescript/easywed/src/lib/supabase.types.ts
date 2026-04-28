@@ -34,6 +34,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      fixtures: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          height: number
+          id: string
+          name: string
+          pos_x: number
+          pos_y: number
+          rotation: number
+          shape: string
+          updated_at: string
+          wedding_id: string
+          width: number
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          height: number
+          id: string
+          name?: string
+          pos_x: number
+          pos_y: number
+          rotation?: number
+          shape: string
+          updated_at?: string
+          wedding_id: string
+          width: number
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          height?: number
+          id?: string
+          name?: string
+          pos_x?: number
+          pos_y?: number
+          rotation?: number
+          shape?: string
+          updated_at?: string
+          wedding_id?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fixtures_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guests: {
         Row: {
           created_at: string

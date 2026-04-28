@@ -1,4 +1,6 @@
 import type {
+  Fixture,
+  FixtureShape,
   Guest,
   HallPreset,
   Table,
@@ -211,4 +213,60 @@ export const updateReminderStatus = async (
     .update({ status })
     .eq("id", uuid)
   if (error) log("updateReminderStatus", error)
+}
+
+export const insertFixture = async (fixture: Fixture): Promise<boolean> => {
+  const weddingId = getWeddingId()
+  if (!weddingId) return false
+
+  const { error } = await supabase.from("fixtures").insert({
+    id: fixture.id,
+    wedding_id: weddingId,
+    name: fixture.name,
+    shape: fixture.shape,
+    width: fixture.size.width,
+    height: fixture.size.height,
+    rotation: fixture.rotation,
+    pos_x: fixture.position.x,
+    pos_y: fixture.position.y,
+  })
+  if (error) {
+    log("insertFixture", error)
+    return false
+  }
+  return true
+}
+
+export const updateFixtureRow = async (
+  id: string,
+  fields: {
+    name?: string
+    shape?: FixtureShape
+    width?: number
+    height?: number
+    rotation?: TableRotation
+  }
+): Promise<boolean> => {
+  const { error } = await supabase.from("fixtures").update(fields).eq("id", id)
+  if (error) {
+    log("updateFixtureRow", error)
+    return false
+  }
+  return true
+}
+
+export const updateFixturePos = async (id: string, x: number, y: number) => {
+  const { error } = await supabase
+    .from("fixtures")
+    .update({ pos_x: x, pos_y: y })
+    .eq("id", id)
+  if (error) log("updateFixturePos", error)
+}
+
+export const softDeleteFixture = async (id: string) => {
+  const { error } = await supabase
+    .from("fixtures")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id)
+  if (error) log("softDeleteFixture", error)
 }

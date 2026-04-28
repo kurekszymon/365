@@ -1,10 +1,14 @@
 import { create } from "zustand"
 import {
+  insertFixture,
   insertGuest,
   insertTable,
   insertTables,
   reassignTableGuests,
+  softDeleteFixture,
   softDeleteTable,
+  updateFixturePos,
+  updateFixtureRow,
   updateGuestTable,
   updateTablePos,
   updateTableRow,
@@ -12,6 +16,24 @@ import {
 } from "@/lib/sync/mutations"
 
 export type TableShape = "round" | "rectangular"
+
+export type FixtureShape = "rectangle" | "circle" | "rounded"
+
+export interface Fixture {
+  id: string
+  name: string
+  shape: FixtureShape
+  size: Size
+  rotation: TableRotation
+  position: Position
+}
+
+export const DEFAULT_FIXTURE: Omit<Fixture, "id" | "position"> = {
+  name: "",
+  shape: "rectangle",
+  size: { width: 2, height: 1 },
+  rotation: 0,
+}
 
 // Only 0 and 90 are supported today. 45 / 135 would require trig to compute
 // the AABB (width' = |w·cos θ| + |h·sin θ|, height' similarly) and clamp logic.
@@ -69,6 +91,7 @@ export interface Guest {
 type State = {
   tables: Array<Table>
   guests: Array<Guest>
+  fixtures: Array<Fixture>
   hall: {
     dimensions: {
       width: number
@@ -105,11 +128,21 @@ type Action = {
   saveHall: () => void
   assignGuestToTable: (guestId: string, tableId: string | null) => void
   updateTablePosition: (id: string, x: number, y: number) => void
+  addFixture: (
+    fixture: Omit<Fixture, "id" | "position">,
+    position?: Position
+  ) => string
+  updateFixture: (id: string, fixture: Omit<Fixture, "id" | "position">) => void
+  saveFixture: (id: string) => void
+  duplicateFixture: (id: string) => string | null
+  deleteFixture: (id: string) => void
+  updateFixturePosition: (id: string, x: number, y: number) => void
 }
 
 export const usePlannerStore = create<State & Action>((set, get) => ({
   tables: [],
   guests: [],
+  fixtures: [],
   hall: {
     dimensions: {
       width: 20,
@@ -275,5 +308,65 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
       ),
     }))
     void updateTablePos(id, x, y)
+  },
+
+  addFixture: (fixture, position) => {
+    const fixtureId = crypto.randomUUID()
+    const newFixture: Fixture = {
+      ...fixture,
+      id: fixtureId,
+      position: position ?? { x: 0, y: 0 },
+    }
+    set((state) => ({ fixtures: [...state.fixtures, newFixture] }))
+    void insertFixture(newFixture)
+    return fixtureId
+  },
+  updateFixture: (id, fixture) => {
+    set((state) => ({
+      fixtures: state.fixtures.map((f) =>
+        f.id === id ? { ...f, ...fixture, position: f.position } : f
+      ),
+    }))
+  },
+  saveFixture: (id) => {
+    const fixture = get().fixtures.find((f) => f.id === id)
+    if (!fixture) return
+    void updateFixtureRow(id, {
+      name: fixture.name,
+      shape: fixture.shape,
+      width: fixture.size.width,
+      height: fixture.size.height,
+      rotation: fixture.rotation,
+    })
+  },
+  duplicateFixture: (id) => {
+    const original = get().fixtures.find((f) => f.id === id)
+    if (!original) return null
+    const newId = crypto.randomUUID()
+    const copy: Fixture = {
+      ...original,
+      id: newId,
+      position: {
+        x: original.position.x + 0.5,
+        y: original.position.y + 0.5,
+      },
+    }
+    set((state) => ({ fixtures: [...state.fixtures, copy] }))
+    void insertFixture(copy)
+    return newId
+  },
+  deleteFixture: (id) => {
+    set((state) => ({
+      fixtures: state.fixtures.filter((f) => f.id !== id),
+    }))
+    void softDeleteFixture(id)
+  },
+  updateFixturePosition: (id, x, y) => {
+    set((state) => ({
+      fixtures: state.fixtures.map((f) =>
+        f.id === id ? { ...f, position: { x, y } } : f
+      ),
+    }))
+    void updateFixturePos(id, x, y)
   },
 }))

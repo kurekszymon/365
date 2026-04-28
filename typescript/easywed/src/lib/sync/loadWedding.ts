@@ -1,5 +1,7 @@
 import type {
   Dietary,
+  Fixture,
+  FixtureShape,
   Guest,
   HallPreset,
   Table,
@@ -17,54 +19,68 @@ import { useRemindersStore } from "@/stores/reminders.store"
 export const loadWedding = async (id: string, signal: AbortSignal) => {
   const userId = useAuthStore.getState().session?.user.id
 
-  const [weddingRes, hallRes, tablesRes, guestsRes, remindersRes, memberRes] =
-    await Promise.all([
-      supabase
-        .from("weddings")
-        .select("id, name, date")
-        .eq("id", id)
-        .abortSignal(signal)
-        .single(),
+  const [
+    weddingRes,
+    hallRes,
+    tablesRes,
+    guestsRes,
+    remindersRes,
+    memberRes,
+    fixturesRes,
+  ] = await Promise.all([
+    supabase
+      .from("weddings")
+      .select("id, name, date")
+      .eq("id", id)
+      .abortSignal(signal)
+      .single(),
 
-      supabase
-        .from("halls")
-        .select("preset, width, height")
-        .eq("wedding_id", id)
-        .abortSignal(signal)
-        .maybeSingle(),
+    supabase
+      .from("halls")
+      .select("preset, width, height")
+      .eq("wedding_id", id)
+      .abortSignal(signal)
+      .maybeSingle(),
 
-      supabase
-        .from("tables")
-        .select(
-          "id, name, shape, capacity, width, height, rotation, pos_x, pos_y"
-        )
-        .eq("wedding_id", id)
-        .is("deleted_at", null)
-        .abortSignal(signal),
+    supabase
+      .from("tables")
+      .select(
+        "id, name, shape, capacity, width, height, rotation, pos_x, pos_y"
+      )
+      .eq("wedding_id", id)
+      .is("deleted_at", null)
+      .abortSignal(signal),
 
-      supabase
-        .from("guests")
-        .select("id, name, dietary, note, table_id")
-        .eq("wedding_id", id)
-        .is("deleted_at", null)
-        .abortSignal(signal),
+    supabase
+      .from("guests")
+      .select("id, name, dietary, note, table_id")
+      .eq("wedding_id", id)
+      .is("deleted_at", null)
+      .abortSignal(signal),
 
-      supabase
-        .from("reminders")
-        .select("id, text, due, status, created_at, updated_at")
-        .eq("wedding_id", id)
-        .abortSignal(signal),
+    supabase
+      .from("reminders")
+      .select("id, text, due, status, created_at, updated_at")
+      .eq("wedding_id", id)
+      .abortSignal(signal),
 
-      userId
-        ? supabase
-            .from("wedding_members")
-            .select("role")
-            .eq("wedding_id", id)
-            .eq("user_id", userId)
-            .abortSignal(signal)
-            .maybeSingle()
-        : Promise.resolve({ data: null, error: null }),
-    ])
+    userId
+      ? supabase
+          .from("wedding_members")
+          .select("role")
+          .eq("wedding_id", id)
+          .eq("user_id", userId)
+          .abortSignal(signal)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+
+    supabase
+      .from("fixtures")
+      .select("id, name, shape, width, height, rotation, pos_x, pos_y")
+      .eq("wedding_id", id)
+      .is("deleted_at", null)
+      .abortSignal(signal),
+  ])
 
   if (weddingRes.error) throw weddingRes.error
   if (hallRes.error) throw hallRes.error
@@ -72,6 +88,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
   if (guestsRes.error) throw guestsRes.error
   if (remindersRes.error) throw remindersRes.error
   if (memberRes.error) throw memberRes.error
+  if (fixturesRes.error) throw fixturesRes.error
 
   useGlobalStore.setState({
     weddingId: id,
@@ -109,6 +126,17 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     : { preset: undefined, dimensions: { width: 20, height: 12 } }
 
   usePlannerStore.setState({ tables, guests, hall })
+
+  const fixtures: Array<Fixture> = fixturesRes.data.map((f) => ({
+    id: f.id,
+    name: f.name,
+    shape: f.shape as FixtureShape,
+    size: { width: Number(f.width), height: Number(f.height) },
+    rotation: f.rotation as TableRotation,
+    position: { x: Number(f.pos_x), y: Number(f.pos_y) },
+  }))
+
+  usePlannerStore.setState({ tables, guests, hall, fixtures })
 
   const reminders: Array<Reminder> = remindersRes.data.map((r) => ({
     uuid: r.id,

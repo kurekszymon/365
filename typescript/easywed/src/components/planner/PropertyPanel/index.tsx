@@ -4,6 +4,7 @@ import { HallPanelContent } from "./HallPanelContent"
 import { TablePanelContent } from "./TablePanelContent"
 import { TableBatchPanelContent } from "./TableBatchPanelContent"
 import { GuestsPanelContent } from "./GuestsPanelContent"
+import { FixturePanelContent } from "./FixturePanelContent"
 import { usePanelStore } from "@/stores/panel.store"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -25,6 +26,10 @@ function usePanelTitle(): string {
       return t("tables")
     case "guests":
       return t("guests")
+    case "fixture.add":
+      return t("fixtures.add")
+    case "fixture.edit":
+      return t("fixtures.edit")
   }
 }
 
@@ -100,6 +105,20 @@ export const PropertyPanel = () => {
               </div>
             )}
             {view.kind === "guests" && <GuestsPanelContent />}
+            {view.kind === "fixture.add" && (
+              <FixturePanelContent
+                key="fixture.add"
+                mode="add"
+                position={view.position}
+              />
+            )}
+            {view.kind === "fixture.edit" && (
+              <FixturePanelContent
+                key={`fixture.edit.${view.fixtureId}`}
+                mode="edit"
+                fixtureId={view.fixtureId}
+              />
+            )}
           </div>
         </>
       )}

@@ -3,6 +3,7 @@ import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import { HallBackground } from "./Canvas/HallBackground"
 import { TableVisual } from "./Canvas/TableVisual"
+import { FixtureVisual } from "./Canvas/FixtureVisual"
 import type { Guest } from "@/stores/planner.store"
 import type { GuestField } from "@/lib/export/guestsCsv"
 import { usePlannerStore } from "@/stores/planner.store"
@@ -38,10 +39,11 @@ export const PlannerPrintView = () => {
     useShallow((s) => ({ name: s.name, date: s.date }))
   )
 
-  const { tables, guests, hall } = usePlannerStore(
+  const { tables, guests, fixtures, hall } = usePlannerStore(
     useShallow((s) => ({
       tables: s.tables,
       guests: s.guests,
+      fixtures: s.fixtures,
       hall: s.hall.dimensions,
     }))
   )
@@ -131,6 +133,9 @@ export const PlannerPrintView = () => {
               guestsAssigned={assignedCounts.get(tbl.id) ?? 0}
               ppm={ppm}
             />
+          ))}
+          {fixtures.map((fix) => (
+            <FixtureVisual key={fix.id} fixture={fix} ppm={ppm} />
           ))}
         </HallBackground>
       </section>

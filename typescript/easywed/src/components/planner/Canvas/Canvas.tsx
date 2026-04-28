@@ -5,6 +5,7 @@ import {
   DotIcon,
   Grid2x2XIcon,
   Grid3x3Icon,
+  LayoutPanelLeftIcon,
   SquarePlusIcon,
   TableIcon,
 } from "lucide-react"
@@ -26,7 +27,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { DEFAULT_TABLE, usePlannerStore } from "@/stores/planner.store"
+import {
+  DEFAULT_FIXTURE,
+  DEFAULT_TABLE,
+  usePlannerStore,
+} from "@/stores/planner.store"
 import { useViewStore } from "@/stores/view.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { useElementSize } from "@/hooks/useElementSize"
@@ -65,11 +70,13 @@ export const Canvas = () => {
   const openHall = useOpenHall()
 
   const addTable = usePlannerStore((state) => state.addTable)
+  const addFixture = usePlannerStore((state) => state.addFixture)
   const panel = usePanelStore(
     useShallow((state) => ({
       openHall: state.openHall,
       openTablesBatchAdd: state.openTablesBatchAdd,
       openTableEdit: state.openTableEdit,
+      openFixtureEdit: state.openFixtureEdit,
       deselect: state.deselect,
     }))
   )
@@ -143,6 +150,16 @@ export const Canvas = () => {
               <SquarePlusIcon className="size-4" />
               {t("tables.add_batch")}
             </CanvasContextMenuItem>
+            <CanvasContextMenuItem
+              disabled={!inHall}
+              onSelect={() => {
+                const fixtureId = addFixture(DEFAULT_FIXTURE, snapped)
+                panel.openFixtureEdit(fixtureId)
+              }}
+            >
+              <LayoutPanelLeftIcon className="size-4" />
+              {t("fixtures.add")}
+            </CanvasContextMenuItem>
           </>
         )
       }}
@@ -176,6 +193,10 @@ export const Canvas = () => {
           const captured = findCapturedElement(e.target)
           if (captured?.kind === "table") {
             panel.openTableEdit(captured.id)
+            return
+          }
+          if (captured?.kind === "fixture") {
+            panel.openFixtureEdit(captured.id)
             return
           }
           if (captured?.kind === "hall") {

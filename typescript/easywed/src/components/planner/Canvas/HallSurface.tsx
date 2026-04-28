@@ -2,6 +2,7 @@ import { useDndMonitor, useDroppable } from "@dnd-kit/core"
 import { useMemo, useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { DraggableTable } from "./DraggableTable"
+import { DraggableFixture } from "./DraggableFixture"
 import { HallBackground } from "./HallBackground"
 import { clampToHall, snapPositionToGrid } from "./utils"
 import type { GridSpacing, GridStyle, SnapStep } from "@/stores/view.store"
@@ -36,15 +37,23 @@ export const HallSurface = ({
     data: { type: "hall" },
   })
 
-  const { tables, guests, hallDimensions, updateTablePosition } =
-    usePlannerStore(
-      useShallow((state) => ({
-        tables: state.tables,
-        guests: state.guests,
-        hallDimensions: state.hall.dimensions,
-        updateTablePosition: state.updateTablePosition,
-      }))
-    )
+  const {
+    tables,
+    guests,
+    fixtures,
+    hallDimensions,
+    updateTablePosition,
+    updateFixturePosition,
+  } = usePlannerStore(
+    useShallow((state) => ({
+      tables: state.tables,
+      guests: state.guests,
+      fixtures: state.fixtures,
+      hallDimensions: state.hall.dimensions,
+      updateTablePosition: state.updateTablePosition,
+      updateFixturePosition: state.updateFixturePosition,
+    }))
+  )
 
   const assignedGuestsByTableId = useMemo(() => {
     const counts = new Map<string, number>()
@@ -70,6 +79,20 @@ export const HallSurface = ({
         ),
       })),
     [tables, hallDimensions]
+  )
+
+  const canvasFixtures = useMemo(
+    () =>
+      fixtures.map((fixture) => ({
+        ...fixture,
+        position: clampToHall(
+          fixture.position,
+          getEffectiveSize(fixture.size, fixture.rotation),
+          hallDimensions.width,
+          hallDimensions.height
+        ),
+      })),
+    [fixtures, hallDimensions]
   )
 
   const [isDraggingGuest, setIsDraggingGuest] = useState(false)
@@ -101,6 +124,31 @@ export const HallSurface = ({
           updateTablePosition(id, next.x, next.y)
         }
       }
+
+      if (e.active.data.current?.type === "fixture-drag") {
+        const id = String(e.active.id)
+        const fixture = canvasFixtures.find((cf) => cf.id === id)
+
+        if (fixture) {
+          const rawNext = {
+            x: fixture.position.x + e.delta.x / ppm,
+            y: fixture.position.y + e.delta.y / ppm,
+          }
+
+          const snappedNext =
+            snapStep === "off" ? rawNext : snapPositionToGrid(rawNext, snapStep)
+
+          const next = clampToHall(
+            snappedNext,
+            getEffectiveSize(fixture.size, fixture.rotation),
+            hallDimensions.width,
+            hallDimensions.height
+          )
+
+          updateFixturePosition(id, next.x, next.y)
+        }
+      }
+
       setIsDraggingGuest(false)
     },
     onDragCancel: () => setIsDraggingGuest(false),
@@ -127,6 +175,15 @@ export const HallSurface = ({
           hallHeight={hallDimensions.height}
           ppm={ppm}
           isDraggingGuest={isDraggingGuest}
+        />
+      ))}
+      {canvasFixtures.map((cf) => (
+        <DraggableFixture
+          key={cf.id}
+          fixture={cf}
+          hallWidth={hallDimensions.width}
+          hallHeight={hallDimensions.height}
+          ppm={ppm}
         />
       ))}
     </HallBackground>
