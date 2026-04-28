@@ -59,7 +59,7 @@
   "wedding.create.date_info": "You can always fill it up later",
 
   "wedding.hub.title": "What would you like to do?",
-  "wedding.hub.planner": "Planner",
+  "wedding.hub.planner": "Seat Planner",
   "wedding.hub.planner_desc": "Arrange tables and seat your guests",
   "wedding.hub.invitations": "Invitations",
   "wedding.hub.invitations_desc": "Design and order printed invitations",
@@ -103,7 +103,7 @@
   "tables.guests_capacity_exceeded": "Selected guests exceed table capacity",
   "tables.guests_none": "No guests to assign yet",
   "tables.configure_hall_first": "Configure the hall first",
-  "tables.select_to_edit": "Select a table on the canvas to edit it, or click + to add a new one.",
+  "tables.select_to_edit": "Select a table on the canvas to edit it, or click to add a new one.",
   "tables.capacity_count": "{{count}} seats",
   "tables.capacity_count_one": "{{count}} seat",
   "tables.seated_elsewhere.unknown": "Guest is already seated at another table.",
@@ -114,6 +114,7 @@
 
   "fixtures": "Fixtures",
   "fixtures.add": "Add a fixture",
+  "fixtures.add_tooltip": "A fixed object in the venue — stage, DJ booth, column, etc.",
   "fixtures.edit": "Edit fixture",
   "fixtures.duplicate": "Duplicate fixture",
   "fixtures.delete": "Delete fixture",
@@ -139,6 +140,8 @@
   "guests.unassigned": "Unassigned",
   "guests.seated_ratio": "{{seated_count}}/{{count}} guests seated",
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} guest seated",
+
+  "planner.actions": "Add / Configure",
 
   "hall": "Hall",
   "hall.configure": "Configure wedding hall",
@@ -194,7 +197,7 @@
   "export.pdf.wedding_date": "Wedding date: {{date}}",
   "export.pdf.generated_on": "Generated {{date}}",
 
-  "invitations": "Invitations",
+  "invitations": "Navigate to Invitations Creator",
   "invitations.page_title": "Invitation Creator",
   "invitations.back": "Back",
   "invitations.step_template": "Choose a template",

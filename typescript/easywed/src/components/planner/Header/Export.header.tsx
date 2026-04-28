@@ -7,6 +7,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { useDialogStore } from "@/stores/dialog.store"
 
 export const ExportHeader = () => {
@@ -15,12 +20,16 @@ export const ExportHeader = () => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline">
-          <DownloadIcon />
-          <span className="hidden md:inline">{t("export")}</span>
-        </Button>
-      </DropdownMenuTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <DownloadIcon />
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent>{t("export")}</TooltipContent>
+      </Tooltip>
       <DropdownMenuContent align="end" className="w-auto min-w-0">
         <DropdownMenuItem onClick={() => open("Guests.Export.Csv")}>
           <FileSpreadsheetIcon />

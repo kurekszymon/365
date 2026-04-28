@@ -2,6 +2,7 @@ import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import {
   LandmarkIcon,
+  LayoutPanelLeftIcon,
   MailIcon,
   PlusIcon,
   UserPlusIcon,
@@ -19,18 +20,24 @@ import { PropertyPanel } from "./PropertyPanel"
 import type { DragEndEvent } from "@dnd-kit/core"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Button } from "@/components/ui/button"
-import { RemindersPreview } from "@/components/reminders/preview/RemindersPreview"
-import { DialogManager } from "@/components/dialogs/DialogManager"
-import { useDialogStore } from "@/stores/dialog.store"
-import { useGlobalStore } from "@/stores/global.store"
-import { usePlannerStore } from "@/stores/planner.store"
-import { selectSelectedTableId, usePanelStore } from "@/stores/panel.store"
-import { useOpenHall } from "@/hooks/useOpenHall"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { DialogManager } from "@/components/dialogs/DialogManager"
+import { useDialogStore } from "@/stores/dialog.store"
+import { useGlobalStore } from "@/stores/global.store"
+import { usePlannerStore } from "@/stores/planner.store"
+import { usePanelStore } from "@/stores/panel.store"
+import { useOpenHall } from "@/hooks/useOpenHall"
 
 export const Planner = () => {
   const { t } = useTranslation()
@@ -71,13 +78,13 @@ export const Planner = () => {
     void navigate({ to: "/wedding/$id/invitations", params: { id: weddingId } })
   }
 
-  const selectedTableId = usePanelStore(selectSelectedTableId)
   const panel = usePanelStore(
     useShallow((state) => ({
       openTableAdd: state.openTableAdd,
       openTablesBatchAdd: state.openTablesBatchAdd,
       openTableEdit: state.openTableEdit,
       openTablesPlaceholder: state.openTablesPlaceholder,
+      openFixtureAdd: state.openFixtureAdd,
       openGuests: state.openGuests,
     }))
   )
@@ -93,20 +100,74 @@ export const Planner = () => {
             <Header.WeddingName />
             <Header.Nav>
               <GuestsSeated />
-              <RemindersPreview />
+              {/* <RemindersPreview /> */}
             </Header.Nav>
           </Header.Title>
           <div className="flex items-center gap-2">
-            <ButtonGroup>
-              <Button variant="outline" onClick={openHall}>
-                <LandmarkIcon />
-
-                <span className="hidden md:inline">{t("hall")}</span>
-              </Button>
-              <Button variant="outline" onClick={openHall}>
-                <PlusIcon />
-              </Button>
-            </ButtonGroup>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <PlusIcon />
+                  <span className="hidden md:inline">
+                    {t("planner.actions")}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-auto min-w-52">
+                <DropdownMenuItem onClick={openHall}>
+                  <LandmarkIcon />
+                  {t("hall.configure_short")}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  disabled={!preset}
+                  onClick={() => {
+                    if (!preset) return
+                    panel.openTablesPlaceholder()
+                  }}
+                >
+                  <UtensilsIcon />
+                  {t("tables")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  inset
+                  disabled={!preset}
+                  onClick={() => {
+                    if (!preset) return
+                    panel.openTableAdd()
+                  }}
+                >
+                  {t("tables.add")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  inset
+                  disabled={!preset}
+                  onClick={() => {
+                    if (!preset) return
+                    panel.openTablesBatchAdd()
+                  }}
+                >
+                  {t("tables.add_batch")}
+                </DropdownMenuItem>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuItem
+                      disabled={!preset}
+                      onClick={() => {
+                        if (!preset) return
+                        panel.openFixtureAdd()
+                      }}
+                    >
+                      <LayoutPanelLeftIcon />
+                      {t("fixtures.add")}
+                    </DropdownMenuItem>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    {t("fixtures.add_tooltip")}
+                  </TooltipContent>
+                </Tooltip>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <ButtonGroup>
               <Button variant="outline" onClick={() => panel.openGuests()}>
                 <UsersIcon />
@@ -117,54 +178,29 @@ export const Planner = () => {
               </Button>
             </ButtonGroup>
             <ButtonGroup>
-              <Button
-                variant="outline"
-                disabled={!preset}
-                onClick={() => {
-                  if (!preset) return
-                  if (selectedTableId) {
-                    panel.openTableEdit(selectedTableId)
-                  } else {
-                    panel.openTablesPlaceholder()
-                  }
-                }}
-                title={preset ? t("tables") : t("tables.configure_hall_first")}
-              >
-                <UtensilsIcon />
-                <span className="hidden md:inline">{t("tables")}</span>
-              </Button>
+              {role === "owner" && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      onClick={() => openDialog("Wedding.Members")}
+                    >
+                      <UserPlusIcon />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t("members.title")}</TooltipContent>
+                </Tooltip>
+              )}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    disabled={!preset}
-                    onClick={() => {
-                      if (!preset) return
-                      panel.openTableAdd()
-                    }}
-                  >
-                    <PlusIcon />
+                  <Button variant="outline" onClick={handleOpenInvitations}>
+                    <MailIcon />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
-                  {preset ? t("tables.add") : t("tables.configure_hall_first")}
-                </TooltipContent>
+                <TooltipContent>{t("invitations")}</TooltipContent>
               </Tooltip>
+              <ExportHeader />
             </ButtonGroup>
-            {role === "owner" && (
-              <Button
-                variant="outline"
-                onClick={() => openDialog("Wedding.Members")}
-              >
-                <UserPlusIcon />
-                <span className="hidden md:inline">{t("members.title")}</span>
-              </Button>
-            )}
-            <Button variant="outline" onClick={handleOpenInvitations}>
-              <MailIcon />
-              <span className="hidden md:inline">{t("invitations")}</span>
-            </Button>
-            <ExportHeader />
           </div>
         </Header>
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>

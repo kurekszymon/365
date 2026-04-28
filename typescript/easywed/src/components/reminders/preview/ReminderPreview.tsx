@@ -13,7 +13,7 @@ export const ReminderPreview = ({
   completeReminder: (uuid: string) => void
 }) => {
   return (
-    <div className="mb-2 flex items-center justify-between rounded-md bg-muted px-3 py-2">
+    <div className="flex items-center justify-between rounded-md bg-muted px-3 py-2">
       <div className="flex flex-col">
         <span
           className={cn("truncate font-medium", {
