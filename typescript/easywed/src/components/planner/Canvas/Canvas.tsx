@@ -6,6 +6,7 @@ import {
   Grid2x2XIcon,
   Grid3x3Icon,
   LayoutPanelLeftIcon,
+  RulerIcon,
   SquarePlusIcon,
   TableIcon,
 } from "lucide-react"
@@ -64,6 +65,10 @@ export const Canvas = () => {
   const stepZoom = useViewStore((state) => state.stepZoom)
   const setPan = useViewStore((state) => state.setPan)
   const resetZoomAndPan = useViewStore((state) => state.resetZoomAndPan)
+  const isMeasuring = useViewStore((state) => state.isMeasuring)
+  const toggleMeasuring = useViewStore((state) => state.toggleMeasuring)
+  const measureMode = useViewStore((state) => state.measureMode)
+  const setMeasureMode = useViewStore((state) => state.setMeasureMode)
   const setSnapStep = useViewStore((state) => state.setSnapStep)
   const setGridStyle = useViewStore((state) => state.setGridStyle)
 
@@ -167,7 +172,9 @@ export const Canvas = () => {
       <div
         ref={containerRef}
         className="relative min-h-0 flex-1 overflow-hidden bg-gradient-to-br from-slate-100 via-zinc-50 to-emerald-50/70"
-        style={{ cursor: isPanning ? "grabbing" : "grab" }}
+        style={{
+          cursor: isMeasuring ? "crosshair" : isPanning ? "grabbing" : "grab",
+        }}
         onPointerDown={(e) => {
           pointerMovedRef.current = false
           longPress.start(e)
@@ -262,6 +269,48 @@ export const Canvas = () => {
               {t("canvas.grid.style")}
             </TooltipContent>
           </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                data-no-pan
+                className={`flex cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] backdrop-blur-sm ${
+                  isMeasuring
+                    ? "border-teal-500 bg-teal-50 text-teal-700"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={toggleMeasuring}
+                aria-pressed={isMeasuring}
+              >
+                <RulerIcon className="size-3.5" />
+                {t("measure.tool")}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {t("measure.tooltip")}
+            </TooltipContent>
+          </Tooltip>
+
+          {isMeasuring && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  data-no-pan
+                  className="flex cursor-pointer items-center gap-1.5 rounded-md border border-teal-500 bg-teal-50 px-2 py-1 text-[10px] text-teal-700 backdrop-blur-sm"
+                  onClick={() =>
+                    setMeasureMode(measureMode === "center" ? "border" : "center")
+                  }
+                >
+                  {t(`measure.mode.${measureMode}`)}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {t("measure.mode.tooltip")}
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           <ScalePill reset={resetZoomAndPan} scale={zoom} />
         </div>

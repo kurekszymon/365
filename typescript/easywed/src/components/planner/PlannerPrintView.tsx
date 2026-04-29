@@ -4,12 +4,14 @@ import { useTranslation } from "react-i18next"
 import { HallBackground } from "./Canvas/HallBackground"
 import { TableVisual } from "./Canvas/TableVisual"
 import { FixtureVisual } from "./Canvas/FixtureVisual"
+import { MeasureOverlay } from "./Canvas/MeasureOverlay"
 import type { Guest } from "@/stores/planner.store"
 import type { GuestField } from "@/lib/export/guestsCsv"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { usePrintStore } from "@/stores/print.store"
 import { useViewStore } from "@/stores/view.store"
+import { useMeasuresStore } from "@/stores/measures.store"
 import { groupGuestsByTable } from "@/lib/export/guests"
 
 // TODO: only planner is printable - other pages would be blank
@@ -38,6 +40,10 @@ export const PlannerPrintView = () => {
   const { name, date } = useGlobalStore(
     useShallow((s) => ({ name: s.name, date: s.date }))
   )
+
+  const weddingId = useGlobalStore((s) => s.weddingId)
+  const byWedding = useMeasuresStore((s) => s.byWedding)
+  const measurements = weddingId ? (byWedding[weddingId] ?? []) : []
 
   const { tables, guests, fixtures, hall } = usePlannerStore(
     useShallow((s) => ({
@@ -137,6 +143,12 @@ export const PlannerPrintView = () => {
           {fixtures.map((fix) => (
             <FixtureVisual key={fix.id} fixture={fix} ppm={ppm} />
           ))}
+          <MeasureOverlay
+            measurements={measurements}
+            ppm={ppm}
+            hallWidthPx={hall.width * ppm}
+            hallHeightPx={hall.height * ppm}
+          />
         </HallBackground>
       </section>
 

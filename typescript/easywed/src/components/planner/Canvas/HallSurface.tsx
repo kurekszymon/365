@@ -1,12 +1,23 @@
 import { useDndMonitor, useDroppable } from "@dnd-kit/core"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { DraggableTable } from "./DraggableTable"
 import { DraggableFixture } from "./DraggableFixture"
 import { HallBackground } from "./HallBackground"
-import { clampToHall, snapPositionToGrid } from "./utils"
+import { MeasureOverlay } from "./MeasureOverlay"
+import {
+  clampToHall,
+  nearestCircleBorder,
+  nearestRectBorder,
+  snapPositionToGrid,
+} from "./utils"
 import type { GridSpacing, GridStyle, SnapStep } from "@/stores/view.store"
+import type { Position } from "@/stores/planner.store"
+import type { MeasurementPoint } from "@/stores/measures.store"
+import { useViewStore } from "@/stores/view.store"
 import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
+import { useGlobalStore } from "@/stores/global.store"
+import { useMeasuresStore } from "@/stores/measures.store"
 
 interface HallSurfaceProps {
   left: number
@@ -96,6 +107,121 @@ export const HallSurface = ({
   )
 
   const [isDraggingGuest, setIsDraggingGuest] = useState(false)
+
+  // Measure tool state
+  const isMeasuring = useViewStore((state) => state.isMeasuring)
+  const measureMode = useViewStore((state) => state.measureMode)
+  const weddingId = useGlobalStore((state) => state.weddingId)
+  const { addMeasurement, deleteMeasurement, byWedding } = useMeasuresStore(
+    useShallow((state) => ({
+      addMeasurement: state.addMeasurement,
+      deleteMeasurement: state.deleteMeasurement,
+      byWedding: state.byWedding,
+    }))
+  )
+  const measurements = weddingId ? (byWedding[weddingId] ?? []) : []
+
+  const [pendingPoint, setPendingPoint] = useState<MeasurementPoint | null>(
+    null
+  )
+  const [cursorPos, setCursorPos] = useState<Position | null>(null)
+
+  // Clear pending state when measure mode is turned off
+  useEffect(() => {
+    if (!isMeasuring) {
+      setPendingPoint(null)
+      setCursorPos(null)
+    }
+  }, [isMeasuring])
+
+  /**
+   * Resolves a pointer position (in meters relative to the hall) to either
+   * the center / border of a containing table/fixture, or the raw hall position.
+   */
+  const resolvePoint = (xM: number, yM: number): MeasurementPoint => {
+    for (const table of canvasTables) {
+      const s = getEffectiveSize(table.size, table.rotation)
+      const h = table.shape === "round" ? s.width : s.height
+      if (
+        xM >= table.position.x &&
+        xM <= table.position.x + s.width &&
+        yM >= table.position.y &&
+        yM <= table.position.y + h
+      ) {
+        const cx = table.position.x + s.width / 2
+        const cy = table.position.y + h / 2
+        if (measureMode === "border") {
+          const bp =
+            table.shape === "round"
+              ? nearestCircleBorder(xM, yM, cx, cy, s.width / 2)
+              : nearestRectBorder(
+                  xM,
+                  yM,
+                  table.position.x,
+                  table.position.y,
+                  s.width,
+                  h
+                )
+          return { ...bp, objectId: table.id }
+        }
+        return { x: cx, y: cy, objectId: table.id }
+      }
+    }
+    for (const fixture of canvasFixtures) {
+      const s = getEffectiveSize(fixture.size, fixture.rotation)
+      const h = fixture.shape === "circle" ? s.width : s.height
+      if (
+        xM >= fixture.position.x &&
+        xM <= fixture.position.x + s.width &&
+        yM >= fixture.position.y &&
+        yM <= fixture.position.y + h
+      ) {
+        const cx = fixture.position.x + s.width / 2
+        const cy = fixture.position.y + h / 2
+        if (measureMode === "border") {
+          const bp =
+            fixture.shape === "circle"
+              ? nearestCircleBorder(xM, yM, cx, cy, s.width / 2)
+              : nearestRectBorder(
+                  xM,
+                  yM,
+                  fixture.position.x,
+                  fixture.position.y,
+                  s.width,
+                  h
+                )
+          return { ...bp, objectId: fixture.id }
+        }
+        return { x: cx, y: cy, objectId: fixture.id }
+      }
+    }
+    return { x: xM, y: yM }
+  }
+
+  const handleMeasurePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.stopPropagation()
+    const xM = e.nativeEvent.offsetX / ppm
+    const yM = e.nativeEvent.offsetY / ppm
+    const point = resolvePoint(xM, yM)
+
+    if (!pendingPoint) {
+      setPendingPoint(point)
+      setCursorPos(point)
+    } else {
+      if (weddingId) addMeasurement(weddingId, pendingPoint, point)
+      setPendingPoint(null)
+      setCursorPos(null)
+    }
+  }
+
+  const handleMeasurePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!pendingPoint) return
+    setCursorPos({
+      x: e.nativeEvent.offsetX / ppm,
+      y: e.nativeEvent.offsetY / ppm,
+    })
+  }
+
   useDndMonitor({
     onDragStart: ({ active }) =>
       setIsDraggingGuest(active.data.current?.type === "guest"),
@@ -186,6 +312,26 @@ export const HallSurface = ({
           ppm={ppm}
         />
       ))}
+
+      {/* Measure interaction overlay — sits above tables/fixtures to intercept pointer events */}
+      {isMeasuring && (
+        <div
+          className="absolute inset-0 z-30 cursor-crosshair"
+          onPointerDown={handleMeasurePointerDown}
+          onPointerMove={handleMeasurePointerMove}
+        />
+      )}
+
+      {/* Measurement annotations — always rendered so saved lines are visible */}
+      <MeasureOverlay
+        measurements={measurements}
+        ppm={ppm}
+        hallWidthPx={width}
+        hallHeightPx={height}
+        pendingPoint={isMeasuring ? pendingPoint : null}
+        cursorPos={isMeasuring ? cursorPos : null}
+        onDelete={(id) => weddingId && deleteMeasurement(weddingId, id)}
+      />
     </HallBackground>
   )
 }

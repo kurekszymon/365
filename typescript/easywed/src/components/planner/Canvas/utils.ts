@@ -77,6 +77,49 @@ export const clampToHall = (
   }
 }
 
+/**
+ * Returns the nearest point on the boundary of an axis-aligned rectangle to (xM, yM).
+ * Assumes (xM, yM) is inside the rectangle.
+ */
+export const nearestRectBorder = (
+  xM: number,
+  yM: number,
+  x0: number,
+  y0: number,
+  w: number,
+  h: number
+): Position => {
+  const dLeft = xM - x0
+  const dRight = x0 + w - xM
+  const dTop = yM - y0
+  const dBottom = y0 + h - yM
+  const minD = Math.min(dLeft, dRight, dTop, dBottom)
+  const cx = clamp(xM, x0, x0 + w)
+  const cy = clamp(yM, y0, y0 + h)
+  if (minD === dLeft) return { x: x0, y: cy }
+  if (minD === dRight) return { x: x0 + w, y: cy }
+  if (minD === dTop) return { x: cx, y: y0 }
+  return { x: cx, y: y0 + h }
+}
+
+/**
+ * Returns the nearest point on the circumference of a circle to (xM, yM).
+ * Assumes (xM, yM) is inside the circle.
+ */
+export const nearestCircleBorder = (
+  xM: number,
+  yM: number,
+  cx: number,
+  cy: number,
+  r: number
+): Position => {
+  const dx = xM - cx
+  const dy = yM - cy
+  const len = Math.sqrt(dx * dx + dy * dy)
+  if (len === 0) return { x: cx + r, y: cy }
+  return { x: cx + (dx / len) * r, y: cy + (dy / len) * r }
+}
+
 export type CapturedElement =
   | { kind: "table"; id: string }
   | { kind: "fixture"; id: string }

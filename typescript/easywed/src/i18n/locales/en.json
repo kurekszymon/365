@@ -170,6 +170,13 @@
   "canvas.snap.tooltip": "Tables snap to this distance when dropped",
   "canvas.scale.tooltip": "Click to reset zoom",
 
+  "measure.tool": "Measure",
+  "measure.tooltip": "Toggle measuring tool — click two points on the hall to measure the distance",
+  "measure.delete": "Delete measurement",
+  "measure.mode.center": "Center",
+  "measure.mode.border": "Border",
+  "measure.mode.tooltip": "Snap to object center or nearest edge when clicking on a table or fixture",
+
   "export": "Export",
   "export.unassigned": "Unassigned",
   "export.col.name": "Name",
