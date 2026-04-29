@@ -9,6 +9,7 @@ import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
+import { usePanelStore } from "@/stores/panel.store"
 import {
   DEFAULT_FIXTURE,
   getEffectiveSize,
@@ -32,17 +33,21 @@ export const FixturePanelContent = (props: Props) => {
 
   const fixtureId = props.mode === "edit" && props.fixtureId
 
-  const { hallDimensions, updateFixture, saveFixture } = usePlannerStore(
-    useShallow((state) => ({
-      hallDimensions: state.hall.dimensions,
-      updateFixture: state.updateFixture,
-      saveFixture: state.saveFixture,
-    }))
-  )
+  const { hallDimensions, addFixture, updateFixture, saveFixture } =
+    usePlannerStore(
+      useShallow((state) => ({
+        hallDimensions: state.hall.dimensions,
+        addFixture: state.addFixture,
+        updateFixture: state.updateFixture,
+        saveFixture: state.saveFixture,
+      }))
+    )
 
   const editedFixture = usePlannerStore((state) =>
     state.fixtures.find((f) => f.id === fixtureId)
   )
+
+  const openFixtureEdit = usePanelStore((state) => state.openFixtureEdit)
 
   const [form, setForm] = useState(() => {
     if (props.mode === "edit" && editedFixture) {
@@ -108,6 +113,24 @@ export const FixturePanelContent = (props: Props) => {
   const updateAndCommit = (partial: Partial<typeof form>) => {
     update(partial)
     persist()
+  }
+
+  const canSubmit = isDimensionsValid(form)
+
+  const handleAddSubmit = () => {
+    if (props.mode !== "add" || !canSubmit) return
+
+    const newId = addFixture(
+      {
+        name: form.name.trim(),
+        shape: form.shape,
+        size: toStoredSize(form),
+        rotation: form.shape === "circle" ? 0 : form.rotation,
+      },
+      props.position
+    )
+
+    openFixtureEdit(newId)
   }
 
   return (
@@ -193,6 +216,12 @@ export const FixturePanelContent = (props: Props) => {
             })
           }}
         />
+      )}
+
+      {props.mode === "add" && (
+        <Button onClick={handleAddSubmit} disabled={!canSubmit}>
+          {t("fixtures.add")}
+        </Button>
       )}
     </div>
   )
