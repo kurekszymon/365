@@ -5,9 +5,15 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 import { TanStackDevtools } from "@tanstack/react-devtools"
 
 import { useTranslation } from "react-i18next"
+import { PostHogProvider } from "@posthog/react"
 import appCss from "../styles.css?url"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { AuthGate } from "@/components/auth/AuthGate"
+
+const options = {
+  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+  defaults: "2026-01-30",
+} as const
 
 function NotFound() {
   const { t } = useTranslation()
@@ -55,9 +61,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <TooltipProvider>
-          <AuthGate>{children}</AuthGate>
-        </TooltipProvider>
+        <PostHogProvider
+          apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN}
+          options={options}
+        >
+          <TooltipProvider>
+            <AuthGate>{children}</AuthGate>
+          </TooltipProvider>
+        </PostHogProvider>
+
         <TanStackDevtools
           config={{
             position: "bottom-right",

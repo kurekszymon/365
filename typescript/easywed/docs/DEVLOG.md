@@ -4,6 +4,8 @@
 
 - fix no button when adding fixtures
 - dont include `next` in url params when landing on `/`
+- init posthog
+- TODO: add custom posthog events for wedding/fixture creation, etc
 
 ### 28.04
 
