@@ -1,5 +1,10 @@
 # EasyWed — Development Log
 
+### 29.04
+
+- fix no button when adding fixtures
+- dont include `next` in url params when landing on `/`
+
 ### 28.04
 
 - add fixture type to represent columns/dj booth, etc

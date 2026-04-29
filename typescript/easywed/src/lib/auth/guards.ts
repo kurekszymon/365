@@ -15,9 +15,10 @@ export const requireAuth = (nextPath: string) => {
   const { isReady, session } = useAuthStore.getState()
   if (!isReady || session) return
 
+  // Only set ?next= if not root
   throw redirect({
     to: "/login",
-    search: { next: nextPath },
+    search: nextPath !== "/" ? { next: nextPath } : {},
     replace: true,
   })
 }

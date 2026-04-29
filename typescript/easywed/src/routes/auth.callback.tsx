@@ -23,7 +23,12 @@ function AuthCallback() {
   useEffect(() => {
     if (!isReady) return
     if (!session) {
-      navigate({ to: "/login", search: next ? { next } : {}, replace: true })
+      // Only set ?next= if not root
+      navigate({
+        to: "/login",
+        search: next && next !== "/" ? { next } : {},
+        replace: true,
+      })
       return
     }
     navigate({ to: sanitizeNextPath(next) ?? "/", replace: true })

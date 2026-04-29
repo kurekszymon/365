@@ -36,7 +36,8 @@ function Login() {
   // Supabase requires a full absolute URL here, so we construct one.
   const callbackUrl = () => {
     const url = new URL("/auth/callback", window.location.origin)
-    if (next) url.searchParams.set("next", next)
+    // Only set ?next= if not root
+    if (next && next !== "/") url.searchParams.set("next", next)
     return url.toString()
   }
 
