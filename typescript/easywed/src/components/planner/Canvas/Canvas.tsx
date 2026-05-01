@@ -1,11 +1,12 @@
 import { useTranslation } from "react-i18next"
-import { useRef } from "react"
+import { useEffect, useRef } from "react"
 import { useShallow } from "zustand/react/shallow"
 import {
   DotIcon,
   Grid2x2XIcon,
   Grid3x3Icon,
   LayoutPanelLeftIcon,
+  RulerIcon,
   SquarePlusIcon,
   TableIcon,
 } from "lucide-react"
@@ -21,6 +22,7 @@ import { useHallGeometry } from "./useHallGeometry"
 import { useCanvasZoom } from "./useCanvasZoom"
 import { useCanvasPan } from "./useCanvasPan"
 import { useLongPress } from "./useLongPress"
+import type { HallSurfaceMethods } from "./HallSurface"
 import type { GridStyle, SnapStep } from "@/stores/view.store"
 import {
   Tooltip,
@@ -64,6 +66,10 @@ export const Canvas = () => {
   const stepZoom = useViewStore((state) => state.stepZoom)
   const setPan = useViewStore((state) => state.setPan)
   const resetZoomAndPan = useViewStore((state) => state.resetZoomAndPan)
+  const isMeasuring = useViewStore((state) => state.isMeasuring)
+  const toggleMeasuring = useViewStore((state) => state.toggleMeasuring)
+  const measureMode = useViewStore((state) => state.measureMode)
+  const setMeasureMode = useViewStore((state) => state.setMeasureMode)
   const setSnapStep = useViewStore((state) => state.setSnapStep)
   const setGridStyle = useViewStore((state) => state.setGridStyle)
 
@@ -82,6 +88,15 @@ export const Canvas = () => {
   )
 
   const pointerMovedRef = useRef(false)
+
+  useEffect(() => {
+    if (!isMeasuring) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") toggleMeasuring()
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [isMeasuring, toggleMeasuring])
 
   const {
     width: containerWidth,
@@ -114,6 +129,16 @@ export const Canvas = () => {
     setPan
   )
   const longPress = useLongPress()
+
+  const hallSurfaceRef = useRef<HallSurfaceMethods>(null)
+
+  const toHallCoords = (clientX: number, clientY: number) => {
+    const raw = viewportToHall(clientX, clientY)
+    return {
+      x: Math.min(raw.x, hall.dimensions.width),
+      y: Math.min(raw.y, hall.dimensions.height),
+    }
+  }
 
   const cycleGridStyle = () => setGridStyle(NEXT_GRID_STYLE[gridStyle])
 
@@ -167,13 +192,25 @@ export const Canvas = () => {
       <div
         ref={containerRef}
         className="relative min-h-0 flex-1 overflow-hidden bg-gradient-to-br from-slate-100 via-zinc-50 to-emerald-50/70"
-        style={{ cursor: isPanning ? "grabbing" : "grab" }}
+        style={{
+          cursor: isMeasuring ? "crosshair" : isPanning ? "grabbing" : "grab",
+        }}
         onPointerDown={(e) => {
+          if (isMeasuring) {
+            const { x, y } = toHallCoords(e.clientX, e.clientY)
+            hallSurfaceRef.current?.handleMeasureDown(x, y, e.shiftKey)
+            return
+          }
           pointerMovedRef.current = false
           longPress.start(e)
           onPointerDown(e)
         }}
         onPointerMove={(e) => {
+          if (isMeasuring) {
+            const { x, y } = toHallCoords(e.clientX, e.clientY)
+            hallSurfaceRef.current?.handleMeasureMove(x, y, e.shiftKey)
+            return
+          }
           if (isPanning) pointerMovedRef.current = true
           longPress.cancel()
           onPointerMove(e)
@@ -188,6 +225,7 @@ export const Canvas = () => {
         }}
         onClick={(e) => {
           if (pointerMovedRef.current) return
+          if (isMeasuring) return
           if ((e.target as Element).closest("[data-no-pan]")) return
 
           const captured = findCapturedElement(e.target)
@@ -263,6 +301,50 @@ export const Canvas = () => {
             </TooltipContent>
           </Tooltip>
 
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                data-no-pan
+                className={`flex cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] backdrop-blur-sm ${
+                  isMeasuring
+                    ? "border-teal-500 bg-teal-50 text-teal-700"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={toggleMeasuring}
+                aria-pressed={isMeasuring}
+              >
+                <RulerIcon className="size-3.5" />
+                {t("measure.tool")}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {t("measure.tooltip")}
+            </TooltipContent>
+          </Tooltip>
+
+          {isMeasuring && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  data-no-pan
+                  className="flex cursor-pointer items-center gap-1.5 rounded-md border border-teal-500 bg-teal-50 px-2 py-1 text-[10px] text-teal-700 backdrop-blur-sm"
+                  onClick={() =>
+                    setMeasureMode(
+                      measureMode === "center" ? "border" : "center"
+                    )
+                  }
+                >
+                  {t(`measure.mode.${measureMode}`)}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {t("measure.mode.tooltip")}
+              </TooltipContent>
+            </Tooltip>
+          )}
+
           <ScalePill reset={resetZoomAndPan} scale={zoom} />
         </div>
 
@@ -283,6 +365,7 @@ export const Canvas = () => {
         />
 
         <HallSurface
+          ref={hallSurfaceRef}
           left={hallLeft}
           top={hallTop}
           width={scaledWidth}

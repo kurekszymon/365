@@ -7,6 +7,7 @@ const ZOOM_MAX = 4
 export type SnapStep = 0.1 | 0.25 | 0.5 | 1 | "off"
 export type GridStyle = "dots" | "grid" | "off"
 export type GridSpacing = 1 | 2 | 5 | 10 | 25 | 50 | "auto"
+export type MeasureMode = "center" | "border"
 
 type State = {
   zoom: number
@@ -14,6 +15,8 @@ type State = {
   snapStep: SnapStep
   gridStyle: GridStyle
   gridSpacing: GridSpacing
+  isMeasuring: boolean
+  measureMode: MeasureMode
 }
 
 type Action = {
@@ -23,6 +26,8 @@ type Action = {
   setSnapStep: (step: SnapStep) => void
   setGridStyle: (style: GridStyle) => void
   setGridSpacing: (spacing: GridSpacing) => void
+  toggleMeasuring: () => void
+  setMeasureMode: (mode: MeasureMode) => void
 }
 
 export const useViewStore = create<State & Action>()(
@@ -33,6 +38,8 @@ export const useViewStore = create<State & Action>()(
       snapStep: 1,
       gridStyle: "grid",
       gridSpacing: 1,
+      isMeasuring: false,
+      measureMode: "center",
       resetZoomAndPan: () => set({ zoom: 1, pan: { x: 0, y: 0 } }),
       stepZoom: (direction) =>
         set((state) => ({
@@ -51,6 +58,9 @@ export const useViewStore = create<State & Action>()(
       setSnapStep: (step) => set({ snapStep: step }),
       setGridStyle: (style) => set({ gridStyle: style }),
       setGridSpacing: (spacing) => set({ gridSpacing: spacing }),
+      toggleMeasuring: () =>
+        set((state) => ({ isMeasuring: !state.isMeasuring })),
+      setMeasureMode: (mode) => set({ measureMode: mode }),
     }),
     { name: "easywed.view" }
   )

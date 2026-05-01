@@ -77,6 +77,75 @@ export const clampToHall = (
   }
 }
 
+/**
+ * Returns the nearest point on the boundary of an axis-aligned rectangle to (xM, yM).
+ * Assumes (xM, yM) is inside the rectangle.
+ */
+export const nearestRectBorder = (
+  xM: number,
+  yM: number,
+  x0: number,
+  y0: number,
+  w: number,
+  h: number
+): Position => {
+  const dLeft = xM - x0
+  const dRight = x0 + w - xM
+  const dTop = yM - y0
+  const dBottom = y0 + h - yM
+  const minD = Math.min(dLeft, dRight, dTop, dBottom)
+  const cx = clamp(xM, x0, x0 + w)
+  const cy = clamp(yM, y0, y0 + h)
+  if (minD === dLeft) return { x: x0, y: cy }
+  if (minD === dRight) return { x: x0 + w, y: cy }
+  if (minD === dTop) return { x: cx, y: y0 }
+  return { x: cx, y: y0 + h }
+}
+
+/**
+ * Returns the point on the boundary of an axis-aligned rectangle in the direction
+ * from its center (cx, cy) towards (targetX, targetY). Works for target outside
+ * the rectangle too — useful for "facing" border snap while aiming at another point.
+ */
+export const rectBorderTowards = (
+  targetX: number,
+  targetY: number,
+  cx: number,
+  cy: number,
+  w: number,
+  h: number
+): Position => {
+  const dx = targetX - cx
+  const dy = targetY - cy
+  if (dx === 0 && dy === 0) return { x: cx + w / 2, y: cy }
+  const hw = w / 2
+  const hh = h / 2
+  // Scale factor t so the ray cx + t*dx, cy + t*dy hits the rectangle edge
+  const t = Math.min(
+    dx !== 0 ? hw / Math.abs(dx) : Infinity,
+    dy !== 0 ? hh / Math.abs(dy) : Infinity
+  )
+  return { x: cx + dx * t, y: cy + dy * t }
+}
+
+/**
+ * Returns the nearest point on the circumference of a circle to (xM, yM).
+ * Assumes (xM, yM) is inside the circle.
+ */
+export const nearestCircleBorder = (
+  xM: number,
+  yM: number,
+  cx: number,
+  cy: number,
+  r: number
+): Position => {
+  const dx = xM - cx
+  const dy = yM - cy
+  const len = Math.sqrt(dx * dx + dy * dy)
+  if (len === 0) return { x: cx + r, y: cy }
+  return { x: cx + (dx / len) * r, y: cy + (dy / len) * r }
+}
+
 export type CapturedElement =
   | { kind: "table"; id: string }
   | { kind: "fixture"; id: string }
