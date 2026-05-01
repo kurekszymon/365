@@ -14,12 +14,12 @@ interface MeasureOverlayProps {
   ppm: number
   hallWidthPx: number
   hallHeightPx: number
-  pendingPoint?: MeasurementPoint | null
-  cursorPos?: Position | null
-  onDelete?: (id: string) => void
-  activeDrag?: ActiveDrag | null
-  resolvePoint?: (xM: number, yM: number) => MeasurementPoint
-  onEndpointUpdate?: (
+  pendingPoint: MeasurementPoint | null
+  cursorPos: Position | null
+  onDelete: (id: string) => void
+  activeDrag: ActiveDrag | null
+  resolvePoint: (xM: number, yM: number) => MeasurementPoint
+  onEndpointUpdate: (
     measurementId: string,
     pointKey: "a" | "b",
     point: MeasurementPoint
@@ -49,7 +49,9 @@ export const MeasureOverlay = ({
 
   const canDragEndpoints = !!resolvePoint && !!onEndpointUpdate
 
-  const getSVGCoords = (e: React.PointerEvent): { xM: number; yM: number } | null => {
+  const getSVGCoords = (
+    e: React.PointerEvent
+  ): { xM: number; yM: number } | null => {
     if (!svgRef.current) return null
     const rect = svgRef.current.getBoundingClientRect()
     return {
@@ -88,19 +90,23 @@ export const MeasureOverlay = ({
     const coords = getSVGCoords(e)
     if (!coords) return
     setDragging({ measurementId, pointKey })
-    setDragLivePos(resolvePoint!(coords.xM, coords.yM))
+    setDragLivePos(resolvePoint(coords.xM, coords.yM))
   }
 
-  const handleEndpointPointerMove = (e: React.PointerEvent<SVGCircleElement>) => {
+  const handleEndpointPointerMove = (
+    e: React.PointerEvent<SVGCircleElement>
+  ) => {
     if (!dragging || !canDragEndpoints) return
     const coords = getSVGCoords(e)
     if (!coords) return
-    setDragLivePos(resolvePoint!(coords.xM, coords.yM))
+    setDragLivePos(resolvePoint(coords.xM, coords.yM))
   }
 
-  const handleEndpointPointerUp = (_e: React.PointerEvent<SVGCircleElement>) => {
+  const handleEndpointPointerUp = (
+    _e: React.PointerEvent<SVGCircleElement>
+  ) => {
     if (!dragging || !dragLivePos) return
-    onEndpointUpdate!(dragging.measurementId, dragging.pointKey, dragLivePos)
+    onEndpointUpdate(dragging.measurementId, dragging.pointKey, dragLivePos)
     setDragging(null)
     setDragLivePos(null)
   }
@@ -158,6 +164,7 @@ export const MeasureOverlay = ({
               r={isDraggingA ? 6 : 4}
               fill="#0d9488"
               opacity={0.9}
+              data-no-pan
               style={
                 canDragEndpoints
                   ? {
@@ -177,6 +184,7 @@ export const MeasureOverlay = ({
               r={isDraggingB ? 6 : 4}
               fill="#0d9488"
               opacity={0.9}
+              data-no-pan
               style={
                 canDragEndpoints
                   ? {
@@ -222,8 +230,15 @@ export const MeasureOverlay = ({
                 onClick={() => onDelete(m.id)}
                 role="button"
                 aria-label={t("measure.delete")}
+                data-no-pan
               >
-                <circle cx={deleteX} cy={my - 8} r={7} fill="#f87171" opacity={0.9} />
+                <circle
+                  cx={deleteX}
+                  cy={my - 8}
+                  r={7}
+                  fill="#f87171"
+                  opacity={0.9}
+                />
                 <text
                   x={deleteX}
                   y={my - 4}

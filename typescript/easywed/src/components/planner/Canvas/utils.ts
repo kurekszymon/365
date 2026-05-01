@@ -103,6 +103,32 @@ export const nearestRectBorder = (
 }
 
 /**
+ * Returns the point on the boundary of an axis-aligned rectangle in the direction
+ * from its center (cx, cy) towards (targetX, targetY). Works for target outside
+ * the rectangle too — useful for "facing" border snap while aiming at another point.
+ */
+export const rectBorderTowards = (
+  targetX: number,
+  targetY: number,
+  cx: number,
+  cy: number,
+  w: number,
+  h: number
+): Position => {
+  const dx = targetX - cx
+  const dy = targetY - cy
+  if (dx === 0 && dy === 0) return { x: cx + w / 2, y: cy }
+  const hw = w / 2
+  const hh = h / 2
+  // Scale factor t so the ray cx + t*dx, cy + t*dy hits the rectangle edge
+  const t = Math.min(
+    dx !== 0 ? hw / Math.abs(dx) : Infinity,
+    dy !== 0 ? hh / Math.abs(dy) : Infinity
+  )
+  return { x: cx + dx * t, y: cy + dy * t }
+}
+
+/**
  * Returns the nearest point on the circumference of a circle to (xM, yM).
  * Assumes (xM, yM) is inside the circle.
  */

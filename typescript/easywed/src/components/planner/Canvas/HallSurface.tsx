@@ -9,6 +9,7 @@ import {
   clampToHall,
   nearestCircleBorder,
   nearestRectBorder,
+  rectBorderTowards,
   snapPositionToGrid,
 } from "./utils"
 import type { GridSpacing, GridStyle, SnapStep } from "@/stores/view.store"
@@ -16,8 +17,8 @@ import type { Position } from "@/stores/planner.store"
 import type { MeasurementPoint } from "@/stores/measures.store"
 import { useViewStore } from "@/stores/view.store"
 import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
-import { useGlobalStore } from "@/stores/global.store"
 import { useMeasuresStore } from "@/stores/measures.store"
+import { Route } from "@/routes/wedding.$id/planner"
 
 interface HallSurfaceProps {
   left: number
@@ -111,7 +112,8 @@ export const HallSurface = ({
   // Measure tool state
   const isMeasuring = useViewStore((state) => state.isMeasuring)
   const measureMode = useViewStore((state) => state.measureMode)
-  const weddingId = useGlobalStore((state) => state.weddingId)
+  const weddingId = Route.useParams().id
+
   const {
     addMeasurement,
     deleteMeasurement,
@@ -139,14 +141,72 @@ export const HallSurface = ({
     null
   )
   const [cursorPos, setCursorPos] = useState<Position | null>(null)
+  // Tracks which of the 4 zones (left/right/top/bottom) the cursor is currently in
+  // relative to the pending point's snapped object. null = not yet established / inside.
+  const [pendingSnapZone, setPendingSnapZone] = useState<
+    "left" | "right" | "top" | "bottom" | null
+  >(null)
 
   // Clear pending state when measure mode is turned off
   useEffect(() => {
     if (!isMeasuring) {
       setPendingPoint(null)
       setCursorPos(null)
+      setPendingSnapZone(null)
     }
   }, [isMeasuring])
+
+  // Returns which directional zone the cursor is in relative to a rectangle,
+  // or "inside" if within the object bounds + threshold.
+  const SNAP_FLIP_THRESHOLD = 0.3
+  const getRectZone = (
+    xM: number,
+    yM: number,
+    x0: number,
+    y0: number,
+    w: number,
+    h: number
+  ): "left" | "right" | "top" | "bottom" | "inside" => {
+    if (
+      xM >= x0 - SNAP_FLIP_THRESHOLD &&
+      xM <= x0 + w + SNAP_FLIP_THRESHOLD &&
+      yM >= y0 - SNAP_FLIP_THRESHOLD &&
+      yM <= y0 + h + SNAP_FLIP_THRESHOLD
+    )
+      return "inside"
+    const cx = x0 + w / 2
+    const cy = y0 + h / 2
+    // Normalise by half-extents so aspect ratio doesn't bias the dominant axis
+    const normX = (xM - cx) / (w / 2)
+    const normY = (yM - cy) / (h / 2)
+    return Math.abs(normX) >= Math.abs(normY)
+      ? normX < 0
+        ? "left"
+        : "right"
+      : normY < 0
+        ? "top"
+        : "bottom"
+  }
+
+  const getCircleZone = (
+    xM: number,
+    yM: number,
+    cx: number,
+    cy: number,
+    r: number
+  ): "left" | "right" | "top" | "bottom" | "inside" => {
+    if (Math.sqrt((xM - cx) ** 2 + (yM - cy) ** 2) <= r + SNAP_FLIP_THRESHOLD)
+      return "inside"
+    const dx = xM - cx
+    const dy = yM - cy
+    return Math.abs(dx) >= Math.abs(dy)
+      ? dx < 0
+        ? "left"
+        : "right"
+      : dy < 0
+        ? "top"
+        : "bottom"
+  }
 
   const resolvePoint = useCallback(
     (xM: number, yM: number): MeasurementPoint => {
@@ -206,9 +266,23 @@ export const HallSurface = ({
           return { x: cx, y: cy, objectId: fixture.id }
         }
       }
+      // Snap to hall walls
+      const wallThreshold = 0.3
+      const dLeft = xM
+      const dRight = hallDimensions.width - xM
+      const dTop = yM
+      const dBottom = hallDimensions.height - yM
+      const minWall = Math.min(dLeft, dRight, dTop, dBottom)
+      if (minWall < wallThreshold) {
+        if (minWall === dLeft) return { x: 0, y: yM }
+        if (minWall === dRight) return { x: hallDimensions.width, y: yM }
+        if (minWall === dTop) return { x: xM, y: 0 }
+        return { x: xM, y: hallDimensions.height }
+      }
+
       return { x: xM, y: yM }
     },
-    [canvasTables, canvasFixtures, measureMode]
+    [canvasTables, canvasFixtures, measureMode, hallDimensions]
   )
 
   const handleMeasurePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -220,19 +294,89 @@ export const HallSurface = ({
     if (!pendingPoint) {
       setPendingPoint(point)
       setCursorPos(point)
+      setPendingSnapZone(null)
     } else {
       if (weddingId) addMeasurement(weddingId, pendingPoint, point)
       setPendingPoint(null)
       setCursorPos(null)
+      setPendingSnapZone(null)
     }
   }
 
   const handleMeasurePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!pendingPoint) return
-    setCursorPos({
-      x: e.nativeEvent.offsetX / ppm,
-      y: e.nativeEvent.offsetY / ppm,
-    })
+    const xM = e.nativeEvent.offsetX / ppm
+    const yM = e.nativeEvent.offsetY / ppm
+    setCursorPos({ x: xM, y: yM })
+
+    // In border mode, flip the snap side only when cursor enters a new zone
+    if (pendingPoint.objectId && measureMode === "border") {
+      const table = canvasTables.find((t) => t.id === pendingPoint.objectId)
+      if (table) {
+        const s = getEffectiveSize(table.size, table.rotation)
+        const h = table.shape === "round" ? s.width : s.height
+        const cx = table.position.x + s.width / 2
+        const cy = table.position.y + h / 2
+        const zone =
+          table.shape === "round"
+            ? getCircleZone(xM, yM, cx, cy, s.width / 2)
+            : getRectZone(
+                xM,
+                yM,
+                table.position.x,
+                table.position.y,
+                s.width,
+                h
+              )
+        if (zone !== "inside" && zone !== pendingSnapZone) {
+          setPendingSnapZone(zone)
+          setPendingPoint(
+            table.shape === "round"
+              ? {
+                  ...nearestCircleBorder(xM, yM, cx, cy, s.width / 2),
+                  objectId: table.id,
+                }
+              : {
+                  ...rectBorderTowards(xM, yM, cx, cy, s.width, h),
+                  objectId: table.id,
+                }
+          )
+        }
+        return
+      }
+      const fixture = canvasFixtures.find((f) => f.id === pendingPoint.objectId)
+      if (fixture) {
+        const s = getEffectiveSize(fixture.size, fixture.rotation)
+        const h = fixture.shape === "circle" ? s.width : s.height
+        const cx = fixture.position.x + s.width / 2
+        const cy = fixture.position.y + h / 2
+        const zone =
+          fixture.shape === "circle"
+            ? getCircleZone(xM, yM, cx, cy, s.width / 2)
+            : getRectZone(
+                xM,
+                yM,
+                fixture.position.x,
+                fixture.position.y,
+                s.width,
+                h
+              )
+        if (zone !== "inside" && zone !== pendingSnapZone) {
+          setPendingSnapZone(zone)
+          setPendingPoint(
+            fixture.shape === "circle"
+              ? {
+                  ...nearestCircleBorder(xM, yM, cx, cy, s.width / 2),
+                  objectId: fixture.id,
+                }
+              : {
+                  ...rectBorderTowards(xM, yM, cx, cy, s.width, h),
+                  objectId: fixture.id,
+                }
+          )
+        }
+      }
+    }
   }
 
   useDndMonitor({
@@ -383,14 +527,11 @@ export const HallSurface = ({
         hallHeightPx={height}
         pendingPoint={isMeasuring ? pendingPoint : null}
         cursorPos={isMeasuring ? cursorPos : null}
-        onDelete={(id) => weddingId && deleteMeasurement(weddingId, id)}
+        onDelete={(id) => deleteMeasurement(weddingId, id)}
         activeDrag={activeDrag}
-        resolvePoint={isMeasuring ? resolvePoint : undefined}
-        onEndpointUpdate={
-          isMeasuring && weddingId
-            ? (measurementId, pointKey, point) =>
-                updateMeasurementPoint(weddingId, measurementId, pointKey, point)
-            : undefined
+        resolvePoint={resolvePoint}
+        onEndpointUpdate={(measurementId, pointKey, point) =>
+          updateMeasurementPoint(weddingId, measurementId, pointKey, point)
         }
       />
     </HallBackground>
