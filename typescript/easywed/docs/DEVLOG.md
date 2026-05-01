@@ -1,5 +1,10 @@
 # EasyWed — Development Log
 
+### 01.05
+
+- measurement label now follows dragged object
+- measurement removes stale object id when object is deleted
+
 ### 29.04
 
 - fix no button when adding fixtures

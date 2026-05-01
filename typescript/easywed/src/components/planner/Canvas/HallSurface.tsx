@@ -1,5 +1,5 @@
 import { useDndMonitor, useDroppable } from "@dnd-kit/core"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { DraggableTable } from "./DraggableTable"
 import { DraggableFixture } from "./DraggableFixture"
@@ -112,15 +112,27 @@ export const HallSurface = ({
   const isMeasuring = useViewStore((state) => state.isMeasuring)
   const measureMode = useViewStore((state) => state.measureMode)
   const weddingId = useGlobalStore((state) => state.weddingId)
-  const { addMeasurement, deleteMeasurement, shiftMeasurementPoints, byWedding } =
-    useMeasuresStore(
-      useShallow((state) => ({
-        addMeasurement: state.addMeasurement,
-        deleteMeasurement: state.deleteMeasurement,
-        shiftMeasurementPoints: state.shiftMeasurementPoints,
-        byWedding: state.byWedding,
-      }))
-    )
+  const {
+    addMeasurement,
+    deleteMeasurement,
+    shiftMeasurementPoints,
+    updateMeasurementPoint,
+    byWedding,
+  } = useMeasuresStore(
+    useShallow((state) => ({
+      addMeasurement: state.addMeasurement,
+      deleteMeasurement: state.deleteMeasurement,
+      shiftMeasurementPoints: state.shiftMeasurementPoints,
+      updateMeasurementPoint: state.updateMeasurementPoint,
+      byWedding: state.byWedding,
+    }))
+  )
+
+  const [activeDrag, setActiveDrag] = useState<{
+    id: string
+    dx: number
+    dy: number
+  } | null>(null)
   const measurements = weddingId ? (byWedding[weddingId] ?? []) : []
 
   const [pendingPoint, setPendingPoint] = useState<MeasurementPoint | null>(
@@ -136,69 +148,68 @@ export const HallSurface = ({
     }
   }, [isMeasuring])
 
-  /**
-   * Resolves a pointer position (in meters relative to the hall) to either
-   * the center / border of a containing table/fixture, or the raw hall position.
-   */
-  const resolvePoint = (xM: number, yM: number): MeasurementPoint => {
-    for (const table of canvasTables) {
-      const s = getEffectiveSize(table.size, table.rotation)
-      const h = table.shape === "round" ? s.width : s.height
-      if (
-        xM >= table.position.x &&
-        xM <= table.position.x + s.width &&
-        yM >= table.position.y &&
-        yM <= table.position.y + h
-      ) {
-        const cx = table.position.x + s.width / 2
-        const cy = table.position.y + h / 2
-        if (measureMode === "border") {
-          const bp =
-            table.shape === "round"
-              ? nearestCircleBorder(xM, yM, cx, cy, s.width / 2)
-              : nearestRectBorder(
-                  xM,
-                  yM,
-                  table.position.x,
-                  table.position.y,
-                  s.width,
-                  h
-                )
-          return { ...bp, objectId: table.id }
+  const resolvePoint = useCallback(
+    (xM: number, yM: number): MeasurementPoint => {
+      for (const table of canvasTables) {
+        const s = getEffectiveSize(table.size, table.rotation)
+        const h = table.shape === "round" ? s.width : s.height
+        if (
+          xM >= table.position.x &&
+          xM <= table.position.x + s.width &&
+          yM >= table.position.y &&
+          yM <= table.position.y + h
+        ) {
+          const cx = table.position.x + s.width / 2
+          const cy = table.position.y + h / 2
+          if (measureMode === "border") {
+            const bp =
+              table.shape === "round"
+                ? nearestCircleBorder(xM, yM, cx, cy, s.width / 2)
+                : nearestRectBorder(
+                    xM,
+                    yM,
+                    table.position.x,
+                    table.position.y,
+                    s.width,
+                    h
+                  )
+            return { ...bp, objectId: table.id }
+          }
+          return { x: cx, y: cy, objectId: table.id }
         }
-        return { x: cx, y: cy, objectId: table.id }
       }
-    }
-    for (const fixture of canvasFixtures) {
-      const s = getEffectiveSize(fixture.size, fixture.rotation)
-      const h = fixture.shape === "circle" ? s.width : s.height
-      if (
-        xM >= fixture.position.x &&
-        xM <= fixture.position.x + s.width &&
-        yM >= fixture.position.y &&
-        yM <= fixture.position.y + h
-      ) {
-        const cx = fixture.position.x + s.width / 2
-        const cy = fixture.position.y + h / 2
-        if (measureMode === "border") {
-          const bp =
-            fixture.shape === "circle"
-              ? nearestCircleBorder(xM, yM, cx, cy, s.width / 2)
-              : nearestRectBorder(
-                  xM,
-                  yM,
-                  fixture.position.x,
-                  fixture.position.y,
-                  s.width,
-                  h
-                )
-          return { ...bp, objectId: fixture.id }
+      for (const fixture of canvasFixtures) {
+        const s = getEffectiveSize(fixture.size, fixture.rotation)
+        const h = fixture.shape === "circle" ? s.width : s.height
+        if (
+          xM >= fixture.position.x &&
+          xM <= fixture.position.x + s.width &&
+          yM >= fixture.position.y &&
+          yM <= fixture.position.y + h
+        ) {
+          const cx = fixture.position.x + s.width / 2
+          const cy = fixture.position.y + h / 2
+          if (measureMode === "border") {
+            const bp =
+              fixture.shape === "circle"
+                ? nearestCircleBorder(xM, yM, cx, cy, s.width / 2)
+                : nearestRectBorder(
+                    xM,
+                    yM,
+                    fixture.position.x,
+                    fixture.position.y,
+                    s.width,
+                    h
+                  )
+            return { ...bp, objectId: fixture.id }
+          }
+          return { x: cx, y: cy, objectId: fixture.id }
         }
-        return { x: cx, y: cy, objectId: fixture.id }
       }
-    }
-    return { x: xM, y: yM }
-  }
+      return { x: xM, y: yM }
+    },
+    [canvasTables, canvasFixtures, measureMode]
+  )
 
   const handleMeasurePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.stopPropagation()
@@ -225,10 +236,31 @@ export const HallSurface = ({
   }
 
   useDndMonitor({
-    onDragStart: ({ active }) =>
-      setIsDraggingGuest(active.data.current?.type === "guest"),
+    onDragStart: ({ active }) => {
+      setIsDraggingGuest(active.data.current?.type === "guest")
+      if (
+        active.data.current?.type === "table-drag" ||
+        active.data.current?.type === "fixture-drag"
+      ) {
+        setActiveDrag({ id: String(active.id), dx: 0, dy: 0 })
+      }
+    },
+
+    onDragMove: (e) => {
+      if (
+        e.active.data.current?.type === "table-drag" ||
+        e.active.data.current?.type === "fixture-drag"
+      ) {
+        setActiveDrag({
+          id: String(e.active.id),
+          dx: e.delta.x / ppm,
+          dy: e.delta.y / ppm,
+        })
+      }
+    },
 
     onDragEnd: (e) => {
+      setActiveDrag(null)
       if (e.active.data.current?.type === "table-drag") {
         const id = String(e.active.id)
         const table = canvasTables.find((ct) => ct.id === id)
@@ -295,7 +327,10 @@ export const HallSurface = ({
 
       setIsDraggingGuest(false)
     },
-    onDragCancel: () => setIsDraggingGuest(false),
+    onDragCancel: () => {
+      setActiveDrag(null)
+      setIsDraggingGuest(false)
+    },
   })
 
   return (
@@ -349,6 +384,14 @@ export const HallSurface = ({
         pendingPoint={isMeasuring ? pendingPoint : null}
         cursorPos={isMeasuring ? cursorPos : null}
         onDelete={(id) => weddingId && deleteMeasurement(weddingId, id)}
+        activeDrag={activeDrag}
+        resolvePoint={isMeasuring ? resolvePoint : undefined}
+        onEndpointUpdate={
+          isMeasuring && weddingId
+            ? (measurementId, pointKey, point) =>
+                updateMeasurementPoint(weddingId, measurementId, pointKey, point)
+            : undefined
+        }
       />
     </HallBackground>
   )

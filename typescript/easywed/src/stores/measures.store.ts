@@ -33,6 +33,12 @@ type Action = {
     dy: number
   ) => void
   removeObjectMeasurements: (weddingId: string, objectId: string) => void
+  updateMeasurementPoint: (
+    weddingId: string,
+    measurementId: string,
+    pointKey: "a" | "b",
+    point: MeasurementPoint
+  ) => void
 }
 
 export const useMeasuresStore = create<State & Action>()(
@@ -82,6 +88,23 @@ export const useMeasuresStore = create<State & Action>()(
                   ? { ...m.b, x: m.b.x + dx, y: m.b.y + dy }
                   : m.b,
             })),
+          },
+        }))
+      },
+
+      updateMeasurementPoint: (weddingId, measurementId, pointKey, point) => {
+        set((state) => ({
+          byWedding: {
+            ...state.byWedding,
+            [weddingId]: (state.byWedding[weddingId] ?? []).map((m) =>
+              m.id === measurementId
+                ? {
+                    ...m,
+                    a: pointKey === "a" ? point : m.a,
+                    b: pointKey === "b" ? point : m.b,
+                  }
+                : m
+            ),
           },
         }))
       },
