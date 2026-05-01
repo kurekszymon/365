@@ -47,8 +47,6 @@ export const MeasureOverlay = ({
   } | null>(null)
   const [dragLivePos, setDragLivePos] = useState<MeasurementPoint | null>(null)
 
-  const canDragEndpoints = !!resolvePoint && !!onEndpointUpdate
-
   const getSVGCoords = (
     e: React.PointerEvent
   ): { xM: number; yM: number } | null => {
@@ -84,7 +82,6 @@ export const MeasureOverlay = ({
     measurementId: string,
     pointKey: "a" | "b"
   ) => {
-    if (!canDragEndpoints) return
     e.stopPropagation()
     e.currentTarget.setPointerCapture(e.pointerId)
     const coords = getSVGCoords(e)
@@ -96,15 +93,13 @@ export const MeasureOverlay = ({
   const handleEndpointPointerMove = (
     e: React.PointerEvent<SVGCircleElement>
   ) => {
-    if (!dragging || !canDragEndpoints) return
+    if (!dragging) return
     const coords = getSVGCoords(e)
     if (!coords) return
     setDragLivePos(resolvePoint(coords.xM, coords.yM))
   }
 
-  const handleEndpointPointerUp = (
-    _e: React.PointerEvent<SVGCircleElement>
-  ) => {
+  const handleEndpointPointerUp = () => {
     if (!dragging || !dragLivePos) return
     onEndpointUpdate(dragging.measurementId, dragging.pointKey, dragLivePos)
     setDragging(null)
@@ -165,14 +160,10 @@ export const MeasureOverlay = ({
               fill="#0d9488"
               opacity={0.9}
               data-no-pan
-              style={
-                canDragEndpoints
-                  ? {
-                      pointerEvents: "auto",
-                      cursor: isDraggingA ? "grabbing" : "grab",
-                    }
-                  : undefined
-              }
+              style={{
+                pointerEvents: "auto",
+                cursor: isDraggingA ? "grabbing" : "grab",
+              }}
               onPointerDown={(e) => handleEndpointPointerDown(e, m.id, "a")}
               onPointerMove={handleEndpointPointerMove}
               onPointerUp={handleEndpointPointerUp}
@@ -185,14 +176,10 @@ export const MeasureOverlay = ({
               fill="#0d9488"
               opacity={0.9}
               data-no-pan
-              style={
-                canDragEndpoints
-                  ? {
-                      pointerEvents: "auto",
-                      cursor: isDraggingB ? "grabbing" : "grab",
-                    }
-                  : undefined
-              }
+              style={{
+                pointerEvents: "auto",
+                cursor: isDraggingB ? "grabbing" : "grab",
+              }}
               onPointerDown={(e) => handleEndpointPointerDown(e, m.id, "b")}
               onPointerMove={handleEndpointPointerMove}
               onPointerUp={handleEndpointPointerUp}
@@ -224,34 +211,32 @@ export const MeasureOverlay = ({
             </text>
 
             {/* Delete button — pointer-events re-enabled just for this group */}
-            {onDelete && (
-              <g
-                style={{ pointerEvents: "auto", cursor: "pointer" }}
-                onClick={() => onDelete(m.id)}
-                role="button"
-                aria-label={t("measure.delete")}
-                data-no-pan
+            <g
+              style={{ pointerEvents: "auto", cursor: "pointer" }}
+              onClick={() => onDelete(m.id)}
+              role="button"
+              aria-label={t("measure.delete")}
+              data-no-pan
+            >
+              <circle
+                cx={deleteX}
+                cy={my - 8}
+                r={7}
+                fill="#f87171"
+                opacity={0.9}
+              />
+              <text
+                x={deleteX}
+                y={my - 4}
+                textAnchor="middle"
+                fontSize={9}
+                fill="white"
+                fontFamily="sans-serif"
+                fontWeight="700"
               >
-                <circle
-                  cx={deleteX}
-                  cy={my - 8}
-                  r={7}
-                  fill="#f87171"
-                  opacity={0.9}
-                />
-                <text
-                  x={deleteX}
-                  y={my - 4}
-                  textAnchor="middle"
-                  fontSize={9}
-                  fill="white"
-                  fontFamily="sans-serif"
-                  fontWeight="700"
-                >
-                  ×
-                </text>
-              </g>
-            )}
+                ×
+              </text>
+            </g>
           </g>
         )
       })}

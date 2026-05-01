@@ -309,7 +309,9 @@ export const Canvas = () => {
                   data-no-pan
                   className="flex cursor-pointer items-center gap-1.5 rounded-md border border-teal-500 bg-teal-50 px-2 py-1 text-[10px] text-teal-700 backdrop-blur-sm"
                   onClick={() =>
-                    setMeasureMode(measureMode === "center" ? "border" : "center")
+                    setMeasureMode(
+                      measureMode === "center" ? "border" : "center"
+                    )
                   }
                 >
                   {t(`measure.mode.${measureMode}`)}

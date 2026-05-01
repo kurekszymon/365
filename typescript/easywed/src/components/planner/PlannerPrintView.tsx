@@ -86,11 +86,11 @@ export const PlannerPrintView = () => {
 
   const clampedTables = useMemo(
     () =>
-      tables.map((t) => ({
-        ...t,
+      tables.map((table) => ({
+        ...table,
         position: clampToHall(
-          t.position,
-          getEffectiveSize(t.size, t.rotation),
+          table.position,
+          getEffectiveSize(table.size, table.rotation),
           hall.width,
           hall.height
         ),
@@ -180,6 +180,13 @@ export const PlannerPrintView = () => {
             ppm={ppm}
             hallWidthPx={hall.width * ppm}
             hallHeightPx={hall.height * ppm}
+            // mandatory props
+            pendingPoint={null}
+            cursorPos={null}
+            activeDrag={null}
+            onDelete={() => {}}
+            resolvePoint={(x, y) => ({ x, y })}
+            onEndpointUpdate={() => {}}
           />
         </HallBackground>
       </section>
