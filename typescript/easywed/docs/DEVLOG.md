@@ -8,6 +8,7 @@
 - add Esc listener to quit measuremnets
 - measurement flips when user drags over object that is measured from (bad english, reword it)
 - shift-lock for measure tool — holding Shift while placing the second measurement point constrains the line to the nearest horizontal or vertical axis
+- all measures are now done in Canvas component, expose methods from hall surface with use imperative handle
 
 ### 29.04
 

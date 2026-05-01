@@ -1,5 +1,11 @@
 import { useDndMonitor, useDroppable } from "@dnd-kit/core"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from "react"
 import { useShallow } from "zustand/react/shallow"
 import { DraggableTable } from "./DraggableTable"
 import { DraggableFixture } from "./DraggableFixture"
@@ -12,6 +18,7 @@ import {
   rectBorderTowards,
   snapPositionToGrid,
 } from "./utils"
+import type { Ref } from "react"
 import type { GridSpacing, GridStyle, SnapStep } from "@/stores/view.store"
 import type { Position } from "@/stores/planner.store"
 import type { MeasurementPoint } from "@/stores/measures.store"
@@ -19,6 +26,71 @@ import { useViewStore } from "@/stores/view.store"
 import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
 import { useMeasuresStore } from "@/stores/measures.store"
 import { Route } from "@/routes/wedding.$id/planner"
+
+export interface HallSurfaceMethods {
+  handleMeasureDown: (xM: number, yM: number, shiftKey: boolean) => void
+  handleMeasureMove: (xM: number, yM: number, shiftKey: boolean) => void
+}
+
+const SNAP_FLIP_THRESHOLD = 0.3
+
+const getRectZone = (
+  xM: number,
+  yM: number,
+  x0: number,
+  y0: number,
+  w: number,
+  h: number
+): "left" | "right" | "top" | "bottom" | "inside" => {
+  if (
+    xM >= x0 - SNAP_FLIP_THRESHOLD &&
+    xM <= x0 + w + SNAP_FLIP_THRESHOLD &&
+    yM >= y0 - SNAP_FLIP_THRESHOLD &&
+    yM <= y0 + h + SNAP_FLIP_THRESHOLD
+  )
+    return "inside"
+  const cx = x0 + w / 2
+  const cy = y0 + h / 2
+  const normX = (xM - cx) / (w / 2)
+  const normY = (yM - cy) / (h / 2)
+  return Math.abs(normX) >= Math.abs(normY)
+    ? normX < 0
+      ? "left"
+      : "right"
+    : normY < 0
+      ? "top"
+      : "bottom"
+}
+
+const getCircleZone = (
+  xM: number,
+  yM: number,
+  cx: number,
+  cy: number,
+  r: number
+): "left" | "right" | "top" | "bottom" | "inside" => {
+  if (Math.sqrt((xM - cx) ** 2 + (yM - cy) ** 2) <= r + SNAP_FLIP_THRESHOLD)
+    return "inside"
+  const dx = xM - cx
+  const dy = yM - cy
+  return Math.abs(dx) >= Math.abs(dy)
+    ? dx < 0
+      ? "left"
+      : "right"
+    : dy < 0
+      ? "top"
+      : "bottom"
+}
+
+const constrainToAxis = (
+  xM: number,
+  yM: number,
+  origin: { x: number; y: number }
+): { x: number; y: number } => {
+  const dx = Math.abs(xM - origin.x)
+  const dy = Math.abs(yM - origin.y)
+  return dx >= dy ? { x: xM, y: origin.y } : { x: origin.x, y: yM }
+}
 
 interface HallSurfaceProps {
   left: number
@@ -30,6 +102,7 @@ interface HallSurfaceProps {
   gridStyle: GridStyle
   snapStep: SnapStep
   gridSpacing?: GridSpacing
+  ref?: Ref<HallSurfaceMethods>
 }
 
 export const HallSurface = ({
@@ -42,6 +115,7 @@ export const HallSurface = ({
   gridStyle,
   snapStep,
   gridSpacing = 1,
+  ref,
 }: HallSurfaceProps) => {
   const { setNodeRef: setDropRef } = useDroppable({
     // droppable data { type: "hall" } so the shared onDragEnd in Planner.tsx ignores guest drops on the background
@@ -156,58 +230,6 @@ export const HallSurface = ({
     }
   }, [isMeasuring])
 
-  // Returns which directional zone the cursor is in relative to a rectangle,
-  // or "inside" if within the object bounds + threshold.
-  const SNAP_FLIP_THRESHOLD = 0.3
-  const getRectZone = (
-    xM: number,
-    yM: number,
-    x0: number,
-    y0: number,
-    w: number,
-    h: number
-  ): "left" | "right" | "top" | "bottom" | "inside" => {
-    if (
-      xM >= x0 - SNAP_FLIP_THRESHOLD &&
-      xM <= x0 + w + SNAP_FLIP_THRESHOLD &&
-      yM >= y0 - SNAP_FLIP_THRESHOLD &&
-      yM <= y0 + h + SNAP_FLIP_THRESHOLD
-    )
-      return "inside"
-    const cx = x0 + w / 2
-    const cy = y0 + h / 2
-    // Normalise by half-extents so aspect ratio doesn't bias the dominant axis
-    const normX = (xM - cx) / (w / 2)
-    const normY = (yM - cy) / (h / 2)
-    return Math.abs(normX) >= Math.abs(normY)
-      ? normX < 0
-        ? "left"
-        : "right"
-      : normY < 0
-        ? "top"
-        : "bottom"
-  }
-
-  const getCircleZone = (
-    xM: number,
-    yM: number,
-    cx: number,
-    cy: number,
-    r: number
-  ): "left" | "right" | "top" | "bottom" | "inside" => {
-    if (Math.sqrt((xM - cx) ** 2 + (yM - cy) ** 2) <= r + SNAP_FLIP_THRESHOLD)
-      return "inside"
-    const dx = xM - cx
-    const dy = yM - cy
-    return Math.abs(dx) >= Math.abs(dy)
-      ? dx < 0
-        ? "left"
-        : "right"
-      : dy < 0
-        ? "top"
-        : "bottom"
-  }
-
   const resolvePoint = useCallback(
     (xM: number, yM: number): MeasurementPoint => {
       for (const table of canvasTables) {
@@ -266,8 +288,8 @@ export const HallSurface = ({
           return { x: cx, y: cy, objectId: fixture.id }
         }
       }
-      // Snap to hall walls
-      const wallThreshold = 0.3
+      // Snap to hall walls — threshold scales with zoom so it always covers ~20px
+      const wallThreshold = Math.max(0.3, 20 / ppm)
       const dLeft = xM
       const dRight = hallDimensions.width - xM
       const dTop = yM
@@ -282,128 +304,129 @@ export const HallSurface = ({
 
       return { x: xM, y: yM }
     },
-    [canvasTables, canvasFixtures, measureMode, hallDimensions]
+    [canvasTables, canvasFixtures, measureMode, hallDimensions, ppm]
   )
 
-  // Constrains a point to the same horizontal or vertical axis as the origin
-  // (whichever axis the cursor has moved further along). Used for Shift-lock.
-  const constrainToAxis = (
-    xM: number,
-    yM: number,
-    origin: MeasurementPoint
-  ): { x: number; y: number } => {
-    const dx = Math.abs(xM - origin.x)
-    const dy = Math.abs(yM - origin.y)
-    return dx >= dy ? { x: xM, y: origin.y } : { x: origin.x, y: yM }
-  }
+  const handleMeasureDown = useCallback(
+    (xM: number, yM: number, shiftKey: boolean) => {
+      let x = xM
+      let y = yM
+      if (pendingPoint && shiftKey) {
+        const c = constrainToAxis(x, y, pendingPoint)
+        x = c.x
+        y = c.y
+      }
+      const point = resolvePoint(x, y)
+      if (!pendingPoint) {
+        setPendingPoint(point)
+        setCursorPos(point)
+        setPendingSnapZone(null)
+      } else {
+        if (weddingId) addMeasurement(weddingId, pendingPoint, point)
+        setPendingPoint(null)
+        setCursorPos(null)
+        setPendingSnapZone(null)
+      }
+    },
+    [pendingPoint, resolvePoint, weddingId, addMeasurement]
+  )
 
-  const handleMeasurePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    e.stopPropagation()
-    let xM = e.nativeEvent.offsetX / ppm
-    let yM = e.nativeEvent.offsetY / ppm
-
-    if (pendingPoint && e.shiftKey) {
-      const c = constrainToAxis(xM, yM, pendingPoint)
-      xM = c.x
-      yM = c.y
-    }
-
-    const point = resolvePoint(xM, yM)
-
-    if (!pendingPoint) {
-      setPendingPoint(point)
-      setCursorPos(point)
-      setPendingSnapZone(null)
-    } else {
-      if (weddingId) addMeasurement(weddingId, pendingPoint, point)
-      setPendingPoint(null)
-      setCursorPos(null)
-      setPendingSnapZone(null)
-    }
-  }
-
-  const handleMeasurePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!pendingPoint) return
-    let xM = e.nativeEvent.offsetX / ppm
-    let yM = e.nativeEvent.offsetY / ppm
-
-    if (e.shiftKey) {
-      const c = constrainToAxis(xM, yM, pendingPoint)
-      xM = c.x
-      yM = c.y
-    }
-
-    setCursorPos({ x: xM, y: yM })
-
-    // In border mode, flip the snap side only when cursor enters a new zone
-    if (pendingPoint.objectId && measureMode === "border") {
-      const table = canvasTables.find((t) => t.id === pendingPoint.objectId)
-      if (table) {
-        const s = getEffectiveSize(table.size, table.rotation)
-        const h = table.shape === "round" ? s.width : s.height
-        const cx = table.position.x + s.width / 2
-        const cy = table.position.y + h / 2
-        const zone =
-          table.shape === "round"
-            ? getCircleZone(xM, yM, cx, cy, s.width / 2)
-            : getRectZone(
-                xM,
-                yM,
-                table.position.x,
-                table.position.y,
-                s.width,
-                h
-              )
-        if (zone !== "inside" && zone !== pendingSnapZone) {
-          setPendingSnapZone(zone)
-          setPendingPoint(
+  const handleMeasureMove = useCallback(
+    (xM: number, yM: number, shiftKey: boolean) => {
+      if (!pendingPoint) return
+      let x = xM
+      let y = yM
+      if (shiftKey) {
+        const c = constrainToAxis(x, y, pendingPoint)
+        x = c.x
+        y = c.y
+      }
+      const resolved = resolvePoint(x, y)
+      setCursorPos({ x: resolved.x, y: resolved.y })
+      if (pendingPoint.objectId && measureMode === "border") {
+        const table = canvasTables.find((t) => t.id === pendingPoint.objectId)
+        if (table) {
+          const s = getEffectiveSize(table.size, table.rotation)
+          const h = table.shape === "round" ? s.width : s.height
+          const cx = table.position.x + s.width / 2
+          const cy = table.position.y + h / 2
+          const zone =
             table.shape === "round"
-              ? {
-                  ...nearestCircleBorder(xM, yM, cx, cy, s.width / 2),
-                  objectId: table.id,
-                }
-              : {
-                  ...rectBorderTowards(xM, yM, cx, cy, s.width, h),
-                  objectId: table.id,
-                }
-          )
+              ? getCircleZone(x, y, cx, cy, s.width / 2)
+              : getRectZone(
+                  x,
+                  y,
+                  table.position.x,
+                  table.position.y,
+                  s.width,
+                  h
+                )
+          if (zone !== "inside" && zone !== pendingSnapZone) {
+            setPendingSnapZone(zone)
+            setPendingPoint(
+              table.shape === "round"
+                ? {
+                    ...nearestCircleBorder(x, y, cx, cy, s.width / 2),
+                    objectId: table.id,
+                  }
+                : {
+                    ...rectBorderTowards(x, y, cx, cy, s.width, h),
+                    objectId: table.id,
+                  }
+            )
+          }
+          return
         }
-        return
-      }
-      const fixture = canvasFixtures.find((f) => f.id === pendingPoint.objectId)
-      if (fixture) {
-        const s = getEffectiveSize(fixture.size, fixture.rotation)
-        const h = fixture.shape === "circle" ? s.width : s.height
-        const cx = fixture.position.x + s.width / 2
-        const cy = fixture.position.y + h / 2
-        const zone =
-          fixture.shape === "circle"
-            ? getCircleZone(xM, yM, cx, cy, s.width / 2)
-            : getRectZone(
-                xM,
-                yM,
-                fixture.position.x,
-                fixture.position.y,
-                s.width,
-                h
-              )
-        if (zone !== "inside" && zone !== pendingSnapZone) {
-          setPendingSnapZone(zone)
-          setPendingPoint(
+        const fixture = canvasFixtures.find(
+          (f) => f.id === pendingPoint.objectId
+        )
+        if (fixture) {
+          const s = getEffectiveSize(fixture.size, fixture.rotation)
+          const h = fixture.shape === "circle" ? s.width : s.height
+          const cx = fixture.position.x + s.width / 2
+          const cy = fixture.position.y + h / 2
+          const zone =
             fixture.shape === "circle"
-              ? {
-                  ...nearestCircleBorder(xM, yM, cx, cy, s.width / 2),
-                  objectId: fixture.id,
-                }
-              : {
-                  ...rectBorderTowards(xM, yM, cx, cy, s.width, h),
-                  objectId: fixture.id,
-                }
-          )
+              ? getCircleZone(x, y, cx, cy, s.width / 2)
+              : getRectZone(
+                  x,
+                  y,
+                  fixture.position.x,
+                  fixture.position.y,
+                  s.width,
+                  h
+                )
+          if (zone !== "inside" && zone !== pendingSnapZone) {
+            setPendingSnapZone(zone)
+            setPendingPoint(
+              fixture.shape === "circle"
+                ? {
+                    ...nearestCircleBorder(x, y, cx, cy, s.width / 2),
+                    objectId: fixture.id,
+                  }
+                : {
+                    ...rectBorderTowards(x, y, cx, cy, s.width, h),
+                    objectId: fixture.id,
+                  }
+            )
+          }
         }
       }
-    }
-  }
+    },
+    [
+      pendingPoint,
+      pendingSnapZone,
+      resolvePoint,
+      measureMode,
+      canvasTables,
+      canvasFixtures,
+    ]
+  )
+
+  useImperativeHandle(ref, () => ({ handleMeasureDown, handleMeasureMove }), [
+    handleMeasureDown,
+    handleMeasureMove,
+  ])
 
   useDndMonitor({
     onDragStart: ({ active }) => {
@@ -535,15 +558,6 @@ export const HallSurface = ({
           ppm={ppm}
         />
       ))}
-
-      {/* Measure interaction overlay — sits above tables/fixtures to intercept pointer events */}
-      {isMeasuring && (
-        <div
-          className="absolute inset-0 z-30 cursor-crosshair"
-          onPointerDown={handleMeasurePointerDown}
-          onPointerMove={handleMeasurePointerMove}
-        />
-      )}
 
       {/* Measurement annotations — always rendered so saved lines are visible */}
       <MeasureOverlay

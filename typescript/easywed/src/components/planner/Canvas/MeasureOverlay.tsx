@@ -117,6 +117,7 @@ export const MeasureOverlay = ({
       className="pointer-events-none absolute inset-0 z-40 block"
       width={hallWidthPx}
       height={hallHeightPx}
+      overflow="visible"
       role="group"
       aria-label={t("measure.overlay_label")}
     >
@@ -217,6 +218,7 @@ export const MeasureOverlay = ({
             {onDelete && (
               <g
                 style={{ pointerEvents: "auto", cursor: "pointer" }}
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => onDelete(m.id)}
                 role="button"
                 aria-label={t("measure.delete")}

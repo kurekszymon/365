@@ -22,6 +22,7 @@ import { useHallGeometry } from "./useHallGeometry"
 import { useCanvasZoom } from "./useCanvasZoom"
 import { useCanvasPan } from "./useCanvasPan"
 import { useLongPress } from "./useLongPress"
+import type { HallSurfaceMethods } from "./HallSurface"
 import type { GridStyle, SnapStep } from "@/stores/view.store"
 import {
   Tooltip,
@@ -129,6 +130,16 @@ export const Canvas = () => {
   )
   const longPress = useLongPress()
 
+  const hallSurfaceRef = useRef<HallSurfaceMethods>(null)
+
+  const toHallCoords = (clientX: number, clientY: number) => {
+    const raw = viewportToHall(clientX, clientY)
+    return {
+      x: Math.min(raw.x, hall.dimensions.width),
+      y: Math.min(raw.y, hall.dimensions.height),
+    }
+  }
+
   const cycleGridStyle = () => setGridStyle(NEXT_GRID_STYLE[gridStyle])
 
   if (!hall.preset) {
@@ -185,11 +196,21 @@ export const Canvas = () => {
           cursor: isMeasuring ? "crosshair" : isPanning ? "grabbing" : "grab",
         }}
         onPointerDown={(e) => {
+          if (isMeasuring) {
+            const { x, y } = toHallCoords(e.clientX, e.clientY)
+            hallSurfaceRef.current?.handleMeasureDown(x, y, e.shiftKey)
+            return
+          }
           pointerMovedRef.current = false
           longPress.start(e)
           onPointerDown(e)
         }}
         onPointerMove={(e) => {
+          if (isMeasuring) {
+            const { x, y } = toHallCoords(e.clientX, e.clientY)
+            hallSurfaceRef.current?.handleMeasureMove(x, y, e.shiftKey)
+            return
+          }
           if (isPanning) pointerMovedRef.current = true
           longPress.cancel()
           onPointerMove(e)
@@ -204,6 +225,7 @@ export const Canvas = () => {
         }}
         onClick={(e) => {
           if (pointerMovedRef.current) return
+          if (isMeasuring) return
           if ((e.target as Element).closest("[data-no-pan]")) return
 
           const captured = findCapturedElement(e.target)
@@ -343,6 +365,7 @@ export const Canvas = () => {
         />
 
         <HallSurface
+          ref={hallSurfaceRef}
           left={hallLeft}
           top={hallTop}
           width={scaledWidth}
