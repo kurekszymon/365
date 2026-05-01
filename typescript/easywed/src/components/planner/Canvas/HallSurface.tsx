@@ -112,13 +112,15 @@ export const HallSurface = ({
   const isMeasuring = useViewStore((state) => state.isMeasuring)
   const measureMode = useViewStore((state) => state.measureMode)
   const weddingId = useGlobalStore((state) => state.weddingId)
-  const { addMeasurement, deleteMeasurement, byWedding } = useMeasuresStore(
-    useShallow((state) => ({
-      addMeasurement: state.addMeasurement,
-      deleteMeasurement: state.deleteMeasurement,
-      byWedding: state.byWedding,
-    }))
-  )
+  const { addMeasurement, deleteMeasurement, shiftMeasurementPoints, byWedding } =
+    useMeasuresStore(
+      useShallow((state) => ({
+        addMeasurement: state.addMeasurement,
+        deleteMeasurement: state.deleteMeasurement,
+        shiftMeasurementPoints: state.shiftMeasurementPoints,
+        byWedding: state.byWedding,
+      }))
+    )
   const measurements = weddingId ? (byWedding[weddingId] ?? []) : []
 
   const [pendingPoint, setPendingPoint] = useState<MeasurementPoint | null>(
@@ -248,6 +250,14 @@ export const HallSurface = ({
           )
 
           updateTablePosition(id, next.x, next.y)
+          if (weddingId) {
+            shiftMeasurementPoints(
+              weddingId,
+              id,
+              next.x - table.position.x,
+              next.y - table.position.y
+            )
+          }
         }
       }
 
@@ -272,6 +282,14 @@ export const HallSurface = ({
           )
 
           updateFixturePosition(id, next.x, next.y)
+          if (weddingId) {
+            shiftMeasurementPoints(
+              weddingId,
+              id,
+              next.x - fixture.position.x,
+              next.y - fixture.position.y
+            )
+          }
         }
       }
 

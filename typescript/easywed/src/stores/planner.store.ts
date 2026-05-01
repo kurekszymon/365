@@ -14,6 +14,8 @@ import {
   updateTableRow,
   upsertHall,
 } from "@/lib/sync/mutations"
+import { useGlobalStore } from "@/stores/global.store"
+import { useMeasuresStore } from "@/stores/measures.store"
 
 export type TableShape = "round" | "rectangular"
 
@@ -271,6 +273,8 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
       ),
     }))
     void softDeleteTable(id)
+    const weddingId = useGlobalStore.getState().weddingId
+    if (weddingId) useMeasuresStore.getState().removeObjectMeasurements(weddingId, id)
   },
   addGuest: (guest) => {
     const newGuest: Guest = { ...guest, id: crypto.randomUUID() }
@@ -360,6 +364,8 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
       fixtures: state.fixtures.filter((f) => f.id !== id),
     }))
     void softDeleteFixture(id)
+    const weddingId = useGlobalStore.getState().weddingId
+    if (weddingId) useMeasuresStore.getState().removeObjectMeasurements(weddingId, id)
   },
   updateFixturePosition: (id, x, y) => {
     set((state) => ({

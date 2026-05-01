@@ -44,6 +44,8 @@ export const MeasureOverlay = ({
         const my = (ay + by) / 2
         const d = dist(m.a, m.b)
         const label = `${d.toFixed(2)} m`
+        const labelWidth = Math.max(52, label.length * 6.5)
+        const deleteX = mx + labelWidth / 2 + 10
 
         return (
           <g key={m.id}>
@@ -63,9 +65,9 @@ export const MeasureOverlay = ({
 
             {/* Label background + text */}
             <rect
-              x={mx - 26}
+              x={mx - labelWidth / 2}
               y={my - 10}
-              width={52}
+              width={labelWidth}
               height={20}
               rx={4}
               fill="white"
@@ -94,14 +96,14 @@ export const MeasureOverlay = ({
                 aria-label={t("measure.delete")}
               >
                 <circle
-                  cx={mx + 30}
+                  cx={deleteX}
                   cy={my - 8}
                   r={7}
                   fill="#f87171"
                   opacity={0.9}
                 />
                 <text
-                  x={mx + 30}
+                  x={deleteX}
                   y={my - 4}
                   textAnchor="middle"
                   fontSize={9}

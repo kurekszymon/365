@@ -26,6 +26,13 @@ type Action = {
   ) => void
   deleteMeasurement: (weddingId: string, id: string) => void
   clearAll: (weddingId: string) => void
+  shiftMeasurementPoints: (
+    weddingId: string,
+    objectId: string,
+    dx: number,
+    dy: number
+  ) => void
+  removeObjectMeasurements: (weddingId: string, objectId: string) => void
 }
 
 export const useMeasuresStore = create<State & Action>()(
@@ -57,6 +64,36 @@ export const useMeasuresStore = create<State & Action>()(
       clearAll: (weddingId) => {
         set((state) => ({
           byWedding: { ...state.byWedding, [weddingId]: [] },
+        }))
+      },
+
+      shiftMeasurementPoints: (weddingId, objectId, dx, dy) => {
+        set((state) => ({
+          byWedding: {
+            ...state.byWedding,
+            [weddingId]: (state.byWedding[weddingId] ?? []).map((m) => ({
+              ...m,
+              a:
+                m.a.objectId === objectId
+                  ? { ...m.a, x: m.a.x + dx, y: m.a.y + dy }
+                  : m.a,
+              b:
+                m.b.objectId === objectId
+                  ? { ...m.b, x: m.b.x + dx, y: m.b.y + dy }
+                  : m.b,
+            })),
+          },
+        }))
+      },
+
+      removeObjectMeasurements: (weddingId, objectId) => {
+        set((state) => ({
+          byWedding: {
+            ...state.byWedding,
+            [weddingId]: (state.byWedding[weddingId] ?? []).filter(
+              (m) => m.a.objectId !== objectId && m.b.objectId !== objectId
+            ),
+          },
         }))
       },
     }),
