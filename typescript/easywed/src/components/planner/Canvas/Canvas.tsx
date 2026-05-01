@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next"
-import { useRef } from "react"
+import { useEffect, useRef } from "react"
 import { useShallow } from "zustand/react/shallow"
 import {
   DotIcon,
@@ -87,6 +87,15 @@ export const Canvas = () => {
   )
 
   const pointerMovedRef = useRef(false)
+
+  useEffect(() => {
+    if (!isMeasuring) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") toggleMeasuring()
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [isMeasuring, toggleMeasuring])
 
   const {
     width: containerWidth,
