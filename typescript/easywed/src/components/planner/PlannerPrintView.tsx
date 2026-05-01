@@ -5,9 +5,10 @@ import { HallBackground } from "./Canvas/HallBackground"
 import { TableVisual } from "./Canvas/TableVisual"
 import { FixtureVisual } from "./Canvas/FixtureVisual"
 import { MeasureOverlay } from "./Canvas/MeasureOverlay"
+import { clampToHall } from "./Canvas/utils"
 import type { Guest } from "@/stores/planner.store"
 import type { GuestField } from "@/lib/export/guestsCsv"
-import { usePlannerStore } from "@/stores/planner.store"
+import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { usePrintStore } from "@/stores/print.store"
 import { useViewStore } from "@/stores/view.store"
@@ -18,6 +19,9 @@ import { groupGuestsByTable } from "@/lib/export/guests"
 // A4 landscape minus 10mm margins ≈ 277mm × 190mm.
 // At 96 CSS DPI that's ~1047 × 718 px.
 const PRINT_AREA_PX = { width: 1047, height: 718 }
+// The hall section uses p-6 (24px each side). Subtract from both axes so the
+// scaled hall + padding fits within one page without triggering a mid-section break.
+const SECTION_PADDING_PX = 48
 
 // The "table" column is never passed here (grouping carries it), so only the
 // other three fields are handled.
@@ -74,11 +78,39 @@ export const PlannerPrintView = () => {
     if (hall.width <= 0 || hall.height <= 0) return 40
     return Math.floor(
       Math.min(
-        PRINT_AREA_PX.width / hall.width,
-        PRINT_AREA_PX.height / hall.height
+        (PRINT_AREA_PX.width - SECTION_PADDING_PX) / hall.width,
+        (PRINT_AREA_PX.height - SECTION_PADDING_PX) / hall.height
       )
     )
   }, [hall.width, hall.height])
+
+  const clampedTables = useMemo(
+    () =>
+      tables.map((t) => ({
+        ...t,
+        position: clampToHall(
+          t.position,
+          getEffectiveSize(t.size, t.rotation),
+          hall.width,
+          hall.height
+        ),
+      })),
+    [tables, hall]
+  )
+
+  const clampedFixtures = useMemo(
+    () =>
+      fixtures.map((f) => ({
+        ...f,
+        position: clampToHall(
+          f.position,
+          getEffectiveSize(f.size, f.rotation),
+          hall.width,
+          hall.height
+        ),
+      })),
+    [fixtures, hall]
+  )
 
   const { groups, unassigned } = useMemo(
     () => groupGuestsByTable(tables, guests),
@@ -123,16 +155,16 @@ export const PlannerPrintView = () => {
         </p>
       </section>
 
-      <section className="flex items-center justify-center p-6 print:min-h-[190mm] print:break-before-page">
+      <section className="flex items-center justify-center p-6 print:min-h-[190mm] print:break-before-page print:break-inside-avoid">
         <HallBackground
           hallWidth={hall.width * ppm}
           hallHeight={hall.height * ppm}
           ppm={ppm}
           gridStyle={gridStyle}
           gridSpacing={gridSpacing}
-          className="border border-emerald-400"
+          className="overflow-hidden border border-emerald-400"
         >
-          {tables.map((tbl) => (
+          {clampedTables.map((tbl) => (
             <TableVisual
               key={tbl.id}
               table={tbl}
@@ -140,7 +172,7 @@ export const PlannerPrintView = () => {
               ppm={ppm}
             />
           ))}
-          {fixtures.map((fix) => (
+          {clampedFixtures.map((fix) => (
             <FixtureVisual key={fix.id} fixture={fix} ppm={ppm} />
           ))}
           <MeasureOverlay
