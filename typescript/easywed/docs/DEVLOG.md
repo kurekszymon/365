@@ -4,6 +4,10 @@
 
 - measurement label now follows dragged object
 - measurement removes stale object id when object is deleted
+- added proper padding so planner don't exceed the page on print
+- add Esc listener to quit measuremnets
+- measurement flips when user drags over object that is measured from (bad english, reword it)
+- shift-lock for measure tool — holding Shift while placing the second measurement point constrains the line to the nearest horizontal or vertical axis
 
 ### 29.04
 

@@ -285,10 +285,29 @@ export const HallSurface = ({
     [canvasTables, canvasFixtures, measureMode, hallDimensions]
   )
 
+  // Constrains a point to the same horizontal or vertical axis as the origin
+  // (whichever axis the cursor has moved further along). Used for Shift-lock.
+  const constrainToAxis = (
+    xM: number,
+    yM: number,
+    origin: MeasurementPoint
+  ): { x: number; y: number } => {
+    const dx = Math.abs(xM - origin.x)
+    const dy = Math.abs(yM - origin.y)
+    return dx >= dy ? { x: xM, y: origin.y } : { x: origin.x, y: yM }
+  }
+
   const handleMeasurePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.stopPropagation()
-    const xM = e.nativeEvent.offsetX / ppm
-    const yM = e.nativeEvent.offsetY / ppm
+    let xM = e.nativeEvent.offsetX / ppm
+    let yM = e.nativeEvent.offsetY / ppm
+
+    if (pendingPoint && e.shiftKey) {
+      const c = constrainToAxis(xM, yM, pendingPoint)
+      xM = c.x
+      yM = c.y
+    }
+
     const point = resolvePoint(xM, yM)
 
     if (!pendingPoint) {
@@ -305,8 +324,15 @@ export const HallSurface = ({
 
   const handleMeasurePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!pendingPoint) return
-    const xM = e.nativeEvent.offsetX / ppm
-    const yM = e.nativeEvent.offsetY / ppm
+    let xM = e.nativeEvent.offsetX / ppm
+    let yM = e.nativeEvent.offsetY / ppm
+
+    if (e.shiftKey) {
+      const c = constrainToAxis(xM, yM, pendingPoint)
+      xM = c.x
+      yM = c.y
+    }
+
     setCursorPos({ x: xM, y: yM })
 
     // In border mode, flip the snap side only when cursor enters a new zone
