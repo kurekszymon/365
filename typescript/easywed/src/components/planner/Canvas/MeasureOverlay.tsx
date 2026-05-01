@@ -117,7 +117,8 @@ export const MeasureOverlay = ({
       className="pointer-events-none absolute inset-0 z-40 block"
       width={hallWidthPx}
       height={hallHeightPx}
-      aria-hidden
+      role="group"
+      aria-label={t("measure.overlay_label")}
     >
       {/* Saved measurements */}
       {measurements.map((m) => {
@@ -132,7 +133,9 @@ export const MeasureOverlay = ({
         const d = Math.sqrt((bM.x - aM.x) ** 2 + (bM.y - aM.y) ** 2)
         const label = `${d.toFixed(2)} m`
         const labelWidth = Math.max(52, label.length * 6.5)
-        const deleteX = mx + labelWidth / 2 + 10
+        // Positioned at the top-right corner of the label badge
+        const deleteX = mx + labelWidth / 2 + 5
+        const deleteY = my - 10 - 5
 
         const isDraggingA =
           dragging?.measurementId === m.id && dragging.pointKey === "a"
@@ -221,22 +224,31 @@ export const MeasureOverlay = ({
               >
                 <circle
                   cx={deleteX}
-                  cy={my - 8}
+                  cy={deleteY}
                   r={7}
-                  fill="#f87171"
-                  opacity={0.9}
-                />
-                <text
-                  x={deleteX}
-                  y={my - 4}
-                  textAnchor="middle"
-                  fontSize={9}
                   fill="white"
-                  fontFamily="sans-serif"
-                  fontWeight="700"
-                >
-                  ×
-                </text>
+                  stroke="#fca5a5"
+                  strokeWidth={1.5}
+                  opacity={0.95}
+                />
+                <line
+                  x1={deleteX - 2.5}
+                  y1={deleteY - 2.5}
+                  x2={deleteX + 2.5}
+                  y2={deleteY + 2.5}
+                  stroke="#ef4444"
+                  strokeWidth={1.5}
+                  strokeLinecap="round"
+                />
+                <line
+                  x1={deleteX + 2.5}
+                  y1={deleteY - 2.5}
+                  x2={deleteX - 2.5}
+                  y2={deleteY + 2.5}
+                  stroke="#ef4444"
+                  strokeWidth={1.5}
+                  strokeLinecap="round"
+                />
               </g>
             )}
           </g>

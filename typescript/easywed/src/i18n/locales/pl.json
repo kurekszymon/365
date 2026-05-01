@@ -177,6 +177,7 @@
   "measure.tool": "Mierzenie",
   "measure.tooltip": "Włącz narzędzie mierzenia — kliknij dwa punkty na sali, aby zmierzyć odległość",
   "measure.delete": "Usuń pomiar",
+  "measure.overlay_label": "Pomiary",
   "measure.mode.center": "Środek",
   "measure.mode.border": "Krawędź",
   "measure.mode.tooltip": "Przyciągaj do środka lub najbliższej krawędzi stołu lub elementu",

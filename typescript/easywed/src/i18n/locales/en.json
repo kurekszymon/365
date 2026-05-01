@@ -173,6 +173,7 @@
   "measure.tool": "Measure",
   "measure.tooltip": "Toggle measuring tool — click two points on the hall to measure the distance",
   "measure.delete": "Delete measurement",
+  "measure.overlay_label": "Measurements",
   "measure.mode.center": "Center",
   "measure.mode.border": "Border",
   "measure.mode.tooltip": "Snap to object center or nearest edge when clicking on a table or fixture",
