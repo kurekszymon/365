@@ -1,5 +1,5 @@
 import { useDndMonitor, useDroppable } from "@dnd-kit/core"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { DraggableTable } from "./DraggableTable"
 import { DraggableFixture } from "./DraggableFixture"
@@ -147,11 +147,14 @@ export const HallSurface = ({
     "left" | "right" | "top" | "bottom" | null
   >(null)
 
-  if (!isMeasuring) {
-    setPendingPoint(null)
-    setCursorPos(null)
-    setPendingSnapZone(null)
-  }
+  useEffect(() => {
+    if (!isMeasuring) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPendingPoint(null)
+      setCursorPos(null)
+      setPendingSnapZone(null)
+    }
+  }, [isMeasuring])
 
   // Returns which directional zone the cursor is in relative to a rectangle,
   // or "inside" if within the object bounds + threshold.

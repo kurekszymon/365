@@ -184,7 +184,6 @@ export const PlannerPrintView = () => {
             pendingPoint={null}
             cursorPos={null}
             activeDrag={null}
-            onDelete={() => {}}
             resolvePoint={(x, y) => ({ x, y })}
             onEndpointUpdate={() => {}}
           />

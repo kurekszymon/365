@@ -16,7 +16,7 @@ interface MeasureOverlayProps {
   hallHeightPx: number
   pendingPoint: MeasurementPoint | null
   cursorPos: Position | null
-  onDelete: (id: string) => void
+  onDelete?: (id: string) => void
   activeDrag: ActiveDrag | null
   resolvePoint: (xM: number, yM: number) => MeasurementPoint
   onEndpointUpdate: (
@@ -211,32 +211,34 @@ export const MeasureOverlay = ({
             </text>
 
             {/* Delete button — pointer-events re-enabled just for this group */}
-            <g
-              style={{ pointerEvents: "auto", cursor: "pointer" }}
-              onClick={() => onDelete(m.id)}
-              role="button"
-              aria-label={t("measure.delete")}
-              data-no-pan
-            >
-              <circle
-                cx={deleteX}
-                cy={my - 8}
-                r={7}
-                fill="#f87171"
-                opacity={0.9}
-              />
-              <text
-                x={deleteX}
-                y={my - 4}
-                textAnchor="middle"
-                fontSize={9}
-                fill="white"
-                fontFamily="sans-serif"
-                fontWeight="700"
+            {onDelete && (
+              <g
+                style={{ pointerEvents: "auto", cursor: "pointer" }}
+                onClick={() => onDelete(m.id)}
+                role="button"
+                aria-label={t("measure.delete")}
+                data-no-pan
               >
-                ×
-              </text>
-            </g>
+                <circle
+                  cx={deleteX}
+                  cy={my - 8}
+                  r={7}
+                  fill="#f87171"
+                  opacity={0.9}
+                />
+                <text
+                  x={deleteX}
+                  y={my - 4}
+                  textAnchor="middle"
+                  fontSize={9}
+                  fill="white"
+                  fontFamily="sans-serif"
+                  fontWeight="700"
+                >
+                  ×
+                </text>
+              </g>
+            )}
           </g>
         )
       })}
