@@ -46,8 +46,8 @@ import {
   CARD_W,
   SEPARATOR_STYLE_OPTIONS,
   TEXT_MAX_LENGTHS,
-  isSeparatorId,
   isFieldKey,
+  isSeparatorId,
 } from "@/lib/invitation/templates"
 import { cn } from "@/lib/utils"
 
@@ -411,16 +411,15 @@ function ContextMenu({
       }}
     >
       {/* Free mode: always "add separator here" at click coords */}
-      {!snapEnabled && item(
+      {!snapEnabled && !targetId && item(
         t("invitations.context_add_here"),
         () => onAddSeparatorAtPos(side, { x: Math.round(cardX), y: Math.round(cardY) })
       )}
 
-      {/* Snap mode on a field or separator */}
-      {snapEnabled && (isField || isSep) && targetId && (
+      {(isField || isSep) && targetId && (
         <>
-          {item(t("invitations.context_add_above"), () => onAddSeparatorNear(targetId, "before"))}
-          {item(t("invitations.context_add_below"), () => onAddSeparatorNear(targetId, "after"))}
+          {snapEnabled && item(t("invitations.context_add_above"), () => onAddSeparatorNear(targetId, "before"))}
+          {snapEnabled && item(t("invitations.context_add_below"), () => onAddSeparatorNear(targetId, "after"))}
           {isField && item(
             side === "front" ? t("invitations.context_move_to_back") : t("invitations.context_move_to_front"),
             () => onMoveToSide(targetId, otherSide)
@@ -536,7 +535,7 @@ export function InvitationPreview() {
 
   function handleEdit(id: string) {
     if (!isFieldKey(id)) return
-    const key = id as keyof InvitationTexts
+    const key = id
     setSelectedId(id); setEditingField(key); setEditingDraft(design.texts[key])
     setContextMenu(null)
   }
@@ -551,7 +550,7 @@ export function InvitationPreview() {
       cardX: x / scale,
       cardY: y / scale,
       targetId: id,
-      side: (design.fieldSides[id] ?? previewSide) as InvitationSide,
+      side: (design.fieldSides[id] ?? previewSide),
     })
     setSelectedId(id)
   }
@@ -574,11 +573,11 @@ export function InvitationPreview() {
       if (cmd && !e.shiftKey && e.key === "z") { e.preventDefault(); undo(); return }
       if (cmd && (e.key === "y" || (e.shiftKey && e.key === "z"))) { e.preventDefault(); redo(); return }
       if (cmd && e.key === "c" && selectedId && isFieldKey(selectedId)) {
-        const key = selectedId as keyof InvitationTexts
+        const key = selectedId
         setClipboard({ key, text: design.texts[key], fontId: design.fieldFonts[key] }); return
       }
       if (cmd && e.key === "v" && selectedId && isFieldKey(selectedId) && clipboard) {
-        const key = selectedId as keyof InvitationTexts
+        const key = selectedId
         updateTexts({ [key]: clipboard.text })
         if (clipboard.fontId !== undefined) setFieldFont(key, clipboard.fontId); return
       }
@@ -665,7 +664,7 @@ export function InvitationPreview() {
 
   function makeEditOverlay(id: string): React.ReactNode {
     if (!isFieldKey(id)) return null
-    const key = id as keyof InvitationTexts
+    const key = id
     if (editingField !== key) return null
     return <InlineTextarea fieldKey={key} draft={editingDraft} onDraftChange={setEditingDraft} onCommit={commitEdit} onCancel={cancelEdit} />
   }
@@ -680,7 +679,7 @@ export function InvitationPreview() {
   const commonItemProps = (id: string) => ({
     isSelected: selectedId === id,
     isEditing: editingField !== null && editingField === (isFieldKey(id) ? id : null),
-    isPlaceholder: isFieldKey(id) && placeholderFields.has(id as keyof InvitationTexts),
+    isPlaceholder: isFieldKey(id) && placeholderFields.has(id),
     isSeparator: isSeparatorId(id),
     onSelect: handleSelect, onEdit: handleEdit, onContext: handleContext,
     editOverlay: makeEditOverlay(id), onRefCapture: makeRefCapture(id),
