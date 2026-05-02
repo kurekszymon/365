@@ -1,5 +1,10 @@
 # EasyWed — Development Log
 
+### 02.05
+
+- improve ux for measurements, allow clicking outside when measurement is already started
+- todo: generalize data-no-pan (disallow click or whatever)
+
 ### 01.05
 
 - measurement label now follows dragged object

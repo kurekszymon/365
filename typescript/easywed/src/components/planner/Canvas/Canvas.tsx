@@ -196,7 +196,15 @@ export const Canvas = () => {
           cursor: isMeasuring ? "crosshair" : isPanning ? "grabbing" : "grab",
         }}
         onPointerDown={(e) => {
+          // TODO move to util, use sth else than data-no-pan
+          if ((e.target as Element).closest("[data-no-pan]")) return
           if (isMeasuring) {
+            if (
+              !hallSurfaceRef.current?.hasPendingPoint &&
+              !isInHallBounds(e.clientX, e.clientY)
+            )
+              return
+
             const { x, y } = toHallCoords(e.clientX, e.clientY)
             hallSurfaceRef.current?.handleMeasureDown(x, y, e.shiftKey)
             return

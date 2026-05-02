@@ -30,6 +30,7 @@ import { Route } from "@/routes/wedding.$id/planner"
 export interface HallSurfaceMethods {
   handleMeasureDown: (xM: number, yM: number, shiftKey: boolean) => void
   handleMeasureMove: (xM: number, yM: number, shiftKey: boolean) => void
+  hasPendingPoint: boolean
 }
 
 const SNAP_FLIP_THRESHOLD = 0.3
@@ -423,10 +424,15 @@ export const HallSurface = ({
     ]
   )
 
-  useImperativeHandle(ref, () => ({ handleMeasureDown, handleMeasureMove }), [
-    handleMeasureDown,
-    handleMeasureMove,
-  ])
+  useImperativeHandle(
+    ref,
+    () => ({
+      handleMeasureDown,
+      handleMeasureMove,
+      hasPendingPoint: !!pendingPoint,
+    }),
+    [handleMeasureDown, handleMeasureMove, pendingPoint]
+  )
 
   useDndMonitor({
     onDragStart: ({ active }) => {
