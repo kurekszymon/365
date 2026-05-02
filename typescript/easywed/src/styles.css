@@ -265,3 +265,8 @@
         overflow: visible !important;
     }
 }
+
+.invitation-placeholder {
+    opacity: 0.4;
+    font-style: italic;
+}

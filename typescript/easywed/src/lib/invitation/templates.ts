@@ -4,8 +4,45 @@ import type {
   InvitationSide,
   InvitationTemplate,
   InvitationTexts,
+  SeparatorStyle,
 } from "@/stores/invitation.store"
 import { DEFAULT_FONT_ID } from "@/lib/invitation/fonts"
+
+export const SEPARATOR_STYLE_OPTIONS: Array<{
+  id: SeparatorStyle
+  ornament: string
+}> = [
+  { id: "line", ornament: "—" },
+  { id: "heart", ornament: "♥" },
+  { id: "flower", ornament: "✿" },
+  { id: "star", ornament: "✦" },
+  { id: "diamond", ornament: "◆" },
+]
+
+export function isSeparatorId(id: string): boolean {
+  return id.startsWith("sep-")
+}
+
+export function isFieldKey(id: string): id is keyof InvitationTexts {
+  return FIELD_KEYS.has(id as keyof InvitationTexts)
+}
+
+export function makeSeparatorId(): string {
+  return `sep-${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`
+}
+
+const FIELD_KEYS = new Set<keyof InvitationTexts>([
+  "headline",
+  "coupleNames",
+  "date",
+  "time",
+  "venue",
+  "venueAddress",
+  "rsvpEmail",
+  "rsvpDeadline",
+  "guestSalutation",
+  "footer",
+])
 
 /** Physical card dimensions in px (used by the preview canvas and hash validation). */
 export const CARD_W = 585
@@ -91,7 +128,7 @@ export const DEFAULT_TEXTS: InvitationDesign["texts"] = {
   footer: "",
 }
 
-export const DEFAULT_FIELD_ORDER: Array<keyof InvitationTexts> = [
+export const DEFAULT_FIELD_ORDER: Array<string> = [
   "headline",
   "coupleNames",
   "date",
@@ -104,10 +141,7 @@ export const DEFAULT_FIELD_ORDER: Array<keyof InvitationTexts> = [
   "footer",
 ]
 
-export const DEFAULT_FIELD_SIDES: Record<
-  keyof InvitationTexts,
-  InvitationSide
-> = {
+export const DEFAULT_FIELD_SIDES: Record<string, InvitationSide> = {
   headline: "front",
   coupleNames: "front",
   date: "front",
@@ -124,6 +158,10 @@ export const DEFAULT_DESIGN: InvitationDesign = {
   template: "classic",
   colorScheme: "cream-gold",
   fontId: DEFAULT_FONT_ID,
+  fieldFonts: {},
+  fieldFormats: {},
+  separatorStyles: {},
+  separatorConfigs: {},
   texts: DEFAULT_TEXTS,
   fieldSides: DEFAULT_FIELD_SIDES,
   fieldOrder: DEFAULT_FIELD_ORDER,

@@ -1,9 +1,10 @@
 import { Fragment } from "react"
 import { useTranslation } from "react-i18next"
-import { salutationLine } from "./utils"
+import { salutationLine, getFormatStyle } from "./utils"
 import type { TemplateProps } from "./types"
 import type { InvitationTexts } from "@/stores/invitation.store"
 import { COLOR_SCHEMES } from "@/lib/invitation/colorSchemes"
+import { isSeparatorId } from "@/lib/invitation/templates"
 
 const CORNER = "❧"
 
@@ -11,6 +12,10 @@ export function RomanticTemplate({
   texts,
   colorScheme,
   fontCss,
+  fieldFonts,
+  fieldFormats,
+  separatorStyles,
+  separatorConfigs,
   guestName,
   side,
   fieldSides,
@@ -24,17 +29,21 @@ export function RomanticTemplate({
   const sideFields = fieldOrder.filter((k) => fieldSides[k] === side)
 
   function renderField(key: keyof InvitationTexts) {
+    const ff = fieldFonts?.[key]
+    const fmt = getFormatStyle(key, fieldFormats)
     switch (key) {
       case "headline":
         return texts.headline ? (
           <p
             style={{
+              fontFamily: ff,
               fontStyle: "italic",
               fontWeight: 300,
               fontSize: "18px",
               letterSpacing: "0.08em",
               color: c.muted,
               marginBottom: "12px",
+              ...fmt,
             }}
           >
             {texts.headline}
@@ -45,11 +54,13 @@ export function RomanticTemplate({
         return (
           <h1
             style={{
+              fontFamily: ff,
               fontSize: "48px",
               fontWeight: 600,
               lineHeight: 1.1,
               color: c.text,
               marginBottom: "6px",
+              ...fmt,
             }}
           >
             {texts.coupleNames}
@@ -60,10 +71,12 @@ export function RomanticTemplate({
         return texts.date ? (
           <p
             style={{
+              fontFamily: ff,
               fontSize: "20px",
               fontWeight: 300,
               letterSpacing: "0.06em",
               marginBottom: "4px",
+              ...fmt,
             }}
           >
             {texts.date}
@@ -74,10 +87,12 @@ export function RomanticTemplate({
         return texts.time ? (
           <p
             style={{
+              fontFamily: ff,
               fontSize: "15px",
               color: c.muted,
               fontStyle: "italic",
               marginBottom: "12px",
+              ...fmt,
             }}
           >
             {t("invitations.template.time_prefix")} {texts.time}
@@ -86,7 +101,15 @@ export function RomanticTemplate({
 
       case "venue":
         return texts.venue ? (
-          <p style={{ fontSize: "17px", fontWeight: 600, marginBottom: "3px" }}>
+          <p
+            style={{
+              fontFamily: ff,
+              fontSize: "17px",
+              fontWeight: 600,
+              marginBottom: "3px",
+              ...fmt,
+            }}
+          >
             {texts.venue}
           </p>
         ) : null
@@ -95,10 +118,12 @@ export function RomanticTemplate({
         return texts.venueAddress ? (
           <p
             style={{
+              fontFamily: ff,
               fontSize: "13px",
               color: c.muted,
               fontStyle: "italic",
               marginBottom: "12px",
+              ...fmt,
             }}
           >
             {texts.venueAddress}
@@ -109,11 +134,13 @@ export function RomanticTemplate({
         return texts.rsvpDeadline ? (
           <p
             style={{
+              fontFamily: ff,
               fontSize: "12px",
               color: c.muted,
               letterSpacing: "0.1em",
               textTransform: "uppercase",
               marginBottom: "4px",
+              ...fmt,
             }}
           >
             {t("invitations.template.please_confirm_by")} {texts.rsvpDeadline}
@@ -124,10 +151,12 @@ export function RomanticTemplate({
         return texts.rsvpEmail ? (
           <p
             style={{
+              fontFamily: ff,
               fontSize: "13px",
               color: c.accent,
               fontStyle: "italic",
               marginBottom: "8px",
+              ...fmt,
             }}
           >
             {texts.rsvpEmail}
@@ -138,11 +167,13 @@ export function RomanticTemplate({
         return greeting ? (
           <p
             style={{
+              fontFamily: ff,
               fontStyle: "italic",
               fontWeight: 300,
               fontSize: "15px",
               color: guestName ? c.text : c.muted,
               marginBottom: "8px",
+              ...fmt,
             }}
           >
             {greeting}
@@ -153,12 +184,14 @@ export function RomanticTemplate({
         return texts.footer ? (
           <p
             style={{
+              fontFamily: ff,
               fontStyle: "italic",
               fontWeight: 300,
               fontSize: "13px",
               color: c.muted,
               maxWidth: "360px",
               marginBottom: "8px",
+              ...fmt,
             }}
           >
             {texts.footer}
@@ -250,13 +283,38 @@ export function RomanticTemplate({
         <div style={{ flex: 1, height: "0.5px", backgroundColor: c.border }} />
       </div>
 
-      {sideFields.map((key) => {
+      {sideFields.map((id) => {
+        if (isSeparatorId(id)) {
+          const style = separatorStyles?.[id] ?? "line"
+          const cfg = separatorConfigs?.[id] ?? {}
+          const w = `${cfg.widthPct ?? 80}%`
+          const h = cfg.thicknessPx ?? 0.5
+          const lineEl = <div style={{ flex: 1, height: h, backgroundColor: c.border, opacity: 0.5 }} />
+          const sepContent =
+            style === "line" ? (
+              <div style={{ width: w, height: h, backgroundColor: c.border, opacity: 0.5, margin: "12px auto" }} />
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", margin: "10px auto", width: w }}>
+                {lineEl}
+                <span style={{ color: c.accent, fontSize: "11px", opacity: 0.65, lineHeight: 1, flexShrink: 0, fontFamily: "serif" }}>
+                  {style === "heart" ? "♥" : style === "flower" ? "✿" : style === "star" ? "✦" : "◆"}
+                </span>
+                {lineEl}
+              </div>
+            )
+          return wrapField ? (
+            wrapField(id, sepContent)
+          ) : (
+            <Fragment key={id}>{sepContent}</Fragment>
+          )
+        }
+        const key = id as keyof InvitationTexts
         const content = renderField(key)
         if (!content) return null
         return wrapField ? (
-          wrapField(key, content)
+          wrapField(id, content)
         ) : (
-          <Fragment key={key}>{content}</Fragment>
+          <Fragment key={id}>{content}</Fragment>
         )
       })}
 

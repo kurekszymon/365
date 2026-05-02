@@ -1,31 +1,46 @@
 import LZString from "lz-string"
 import type {
+  FieldFormat,
   InvitationColorScheme,
   InvitationDesign,
   InvitationSide,
   InvitationTemplate,
   InvitationTexts,
+  SeparatorConfig,
+  SeparatorStyle,
 } from "@/stores/invitation.store"
 import {
   CARD_H,
   CARD_W,
   DEFAULT_FIELD_ORDER,
   DEFAULT_FIELD_SIDES,
+  SEPARATOR_STYLE_OPTIONS,
   TEMPLATES,
   TEXT_MAX_LENGTHS,
+  isFieldKey,
+  isSeparatorId,
 } from "@/lib/invitation/templates"
+import { FONT_OPTIONS } from "@/lib/invitation/fonts"
 import { sanitizeGuestNames } from "@/lib/invitation/guestNames"
 
 const VALID_TEMPLATES = TEMPLATES.map((t) => t.id)
+const VALID_FONT_IDS = new Set(FONT_OPTIONS.map((f) => f.id))
+const VALID_SEP_STYLES = new Set<string>(SEPARATOR_STYLE_OPTIONS.map((o) => o.id))
 
 function validateFieldSides(
   raw: Record<string, unknown>
-): Record<keyof InvitationTexts, InvitationSide> {
-  const sides = { ...DEFAULT_FIELD_SIDES }
-  const keys = Object.keys(DEFAULT_FIELD_SIDES) as Array<keyof InvitationTexts>
-  for (const key of keys) {
+): Record<string, InvitationSide> {
+  const sides: Record<string, InvitationSide> = { ...DEFAULT_FIELD_SIDES }
+  // Known field keys
+  for (const key of Object.keys(DEFAULT_FIELD_SIDES)) {
     const v = raw[key]
     if (v === "front" || v === "back") sides[key] = v
+  }
+  // Separator IDs
+  for (const [key, v] of Object.entries(raw)) {
+    if (isSeparatorId(key) && (v === "front" || v === "back")) {
+      sides[key] = v
+    }
   }
   return sides
 }
@@ -34,8 +49,6 @@ const DANGEROUS_KEYS = ["__proto__", "constructor", "prototype"]
 
 function isSafeObject(v: unknown): v is Record<string, unknown> {
   if (v === null || typeof v !== "object" || Array.isArray(v)) return false
-  // Use own-property check: inherited keys like constructor are fine,
-  // only an own __proto__/constructor key indicates a pollution attempt.
   return !DANGEROUS_KEYS.some((k) => Object.hasOwn(v, k))
 }
 
@@ -50,10 +63,8 @@ function validateDesign(raw: unknown): InvitationDesign | null {
 
   if (!VALID_TEMPLATES.includes(template as InvitationTemplate)) return null
 
-  // Resolve template metadata (safe: we just validated template is in VALID_TEMPLATES)
   const templateMeta = TEMPLATES.find((t) => t.id === template)!
 
-  // Normalize mismatched scheme rather than reject — old/shared hashes stay usable
   const colorScheme = templateMeta.colorSchemes.includes(
     rawScheme as InvitationColorScheme
   )
@@ -98,24 +109,71 @@ function validateDesign(raw: unknown): InvitationDesign | null {
     ? validateFieldOrder(raw.fieldOrder as Array<unknown>)
     : DEFAULT_FIELD_ORDER
 
-  const fieldPositions: Partial<
-    Record<keyof InvitationTexts, { x: number; y: number }>
-  > = {}
+  const fieldPositions: Partial<Record<string, { x: number; y: number }>> = {}
   if (isSafeObject(raw.fieldPositions)) {
-    const validFieldKeys = new Set<string>(DEFAULT_FIELD_ORDER)
     for (const [k, v] of Object.entries(raw.fieldPositions)) {
       if (
-        validFieldKeys.has(k) &&
+        (isFieldKey(k) || isSeparatorId(k)) &&
         isSafeObject(v) &&
         typeof v.x === "number" &&
         typeof v.y === "number" &&
         Number.isFinite(v.x) &&
         Number.isFinite(v.y)
       ) {
-        fieldPositions[k as keyof InvitationTexts] = {
+        fieldPositions[k] = {
           x: Math.max(0, Math.min(CARD_W, Math.round(v.x))),
           y: Math.max(0, Math.min(CARD_H, Math.round(v.y))),
         }
+      }
+    }
+  }
+
+  const fieldFonts: Partial<Record<keyof InvitationTexts, string>> = {}
+  if (isSafeObject(raw.fieldFonts)) {
+    for (const [k, v] of Object.entries(raw.fieldFonts)) {
+      if (isFieldKey(k) && typeof v === "string" && VALID_FONT_IDS.has(v)) {
+        fieldFonts[k] = v
+      }
+    }
+  }
+
+  const fieldFormats: Partial<Record<keyof InvitationTexts, FieldFormat>> = {}
+  if (isSafeObject(raw.fieldFormats)) {
+    for (const [k, v] of Object.entries(raw.fieldFormats)) {
+      if (isFieldKey(k) && isSafeObject(v)) {
+        const fmt: FieldFormat = {}
+        if (typeof v.bold === "boolean") fmt.bold = v.bold
+        if (typeof v.italic === "boolean") fmt.italic = v.italic
+        if (typeof v.underline === "boolean") fmt.underline = v.underline
+        if (Object.keys(fmt).length > 0) {
+          fieldFormats[k] = fmt
+        }
+      }
+    }
+  }
+
+  const separatorStyles: Record<string, SeparatorStyle> = {}
+  if (isSafeObject(raw.separatorStyles)) {
+    for (const [k, v] of Object.entries(raw.separatorStyles)) {
+      if (isSeparatorId(k) && typeof v === "string" && VALID_SEP_STYLES.has(v)) {
+        separatorStyles[k] = v as SeparatorStyle
+      }
+    }
+  }
+
+  const separatorConfigs: Record<string, SeparatorConfig> = {}
+  if (isSafeObject(raw.separatorConfigs)) {
+    const VALID_THICKNESS = new Set([0.5, 1, 2, 4])
+    for (const [k, v] of Object.entries(raw.separatorConfigs)) {
+      if (isSeparatorId(k) && isSafeObject(v)) {
+        const cfg: SeparatorConfig = {}
+        if (typeof v.widthPct === "number" && v.widthPct >= 20 && v.widthPct <= 100) {
+          cfg.widthPct = Math.round(v.widthPct / 5) * 5
+        }
+        if (typeof v.thicknessPx === "number" && VALID_THICKNESS.has(v.thicknessPx)) {
+          cfg.thicknessPx = v.thicknessPx
+        }
+        if (Object.keys(cfg).length > 0) separatorConfigs[k] = cfg
       }
     }
   }
@@ -124,6 +182,10 @@ function validateDesign(raw: unknown): InvitationDesign | null {
     template: template as InvitationTemplate,
     colorScheme,
     fontId,
+    fieldFonts,
+    fieldFormats,
+    separatorStyles,
+    separatorConfigs,
     quantity: clampedQuantity,
     texts: validatedTexts,
     fieldSides,
@@ -133,26 +195,32 @@ function validateDesign(raw: unknown): InvitationDesign | null {
   }
 }
 
-function validateFieldOrder(raw: Array<unknown>): Array<keyof InvitationTexts> {
-  const validKeys = new Set(DEFAULT_FIELD_ORDER)
-  const seen = new Set<keyof InvitationTexts>()
-  const result: Array<keyof InvitationTexts> = []
+function validateFieldOrder(raw: Array<unknown>): Array<string> {
+  const validFieldKeys = new Set(DEFAULT_FIELD_ORDER)
+  const seen = new Set<string>()
+  const result: Array<string> = []
+
   for (const item of raw) {
-    if (
-      typeof item === "string" &&
-      validKeys.has(item as keyof InvitationTexts)
-    ) {
-      const key = item as keyof InvitationTexts
-      if (!seen.has(key)) {
-        seen.add(key)
-        result.push(key)
+    if (typeof item !== "string") continue
+    if (isSeparatorId(item)) {
+      // Separator IDs are unique; allow each once
+      if (!seen.has(item)) {
+        seen.add(item)
+        result.push(item)
+      }
+    } else if (validFieldKeys.has(item)) {
+      if (!seen.has(item)) {
+        seen.add(item)
+        result.push(item)
       }
     }
   }
-  // Append any keys missing from the raw array (forward-compat)
+
+  // Append any missing field keys at the end (forward-compat)
   for (const key of DEFAULT_FIELD_ORDER) {
     if (!seen.has(key)) result.push(key)
   }
+
   return result
 }
 
