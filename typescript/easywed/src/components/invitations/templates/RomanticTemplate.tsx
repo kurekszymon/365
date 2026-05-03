@@ -1,10 +1,10 @@
 import { Fragment } from "react"
 import { useTranslation } from "react-i18next"
-import { salutationLine, getFormatStyle } from "./utils"
+import { salutationLine, getFormatStyle, renderSeparator } from "./utils"
 import type { TemplateProps } from "./types"
 import type { InvitationTexts } from "@/stores/invitation.store"
 import { COLOR_SCHEMES } from "@/lib/invitation/colorSchemes"
-import { isSeparatorId } from "@/lib/invitation/templates"
+import { isSeparatorId, isTxtId } from "@/lib/invitation/templates"
 
 const CORNER = "❧"
 
@@ -16,6 +16,7 @@ export function RomanticTemplate({
   fieldFormats,
   separatorStyles,
   separatorConfigs,
+  textBlocks,
   guestName,
   side,
   fieldSides,
@@ -285,27 +286,52 @@ export function RomanticTemplate({
 
       {sideFields.map((id) => {
         if (isSeparatorId(id)) {
-          const style = separatorStyles?.[id] ?? "line"
-          const cfg = separatorConfigs?.[id] ?? {}
-          const w = `${cfg.widthPct ?? 80}%`
-          const h = cfg.thicknessPx ?? 0.5
-          const lineEl = <div style={{ flex: 1, height: h, backgroundColor: c.border, opacity: 0.5 }} />
-          const sepContent =
-            style === "line" ? (
-              <div style={{ width: w, height: h, backgroundColor: c.border, opacity: 0.5, margin: "12px auto" }} />
-            ) : (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", margin: "10px auto", width: w }}>
-                {lineEl}
-                <span style={{ color: c.accent, fontSize: "11px", opacity: 0.65, lineHeight: 1, flexShrink: 0, fontFamily: "serif" }}>
-                  {style === "heart" ? "♥" : style === "flower" ? "✿" : style === "star" ? "✦" : "◆"}
-                </span>
-                {lineEl}
-              </div>
-            )
+          // Romantic defaults: 80% width, 0.5px thickness (spread first so user config overrides)
+          const sepContent = renderSeparator(
+            separatorStyles?.[id] ?? "line",
+            {
+              widthPct: 80,
+              thicknessPx: 0.5,
+              ...(separatorConfigs?.[id] ?? {}),
+            },
+            c,
+            {
+              lineOpacity: 0.5,
+              simpleOpacity: 0.5,
+              ornamentOpacity: 0.65,
+              lineMargin: "12px auto",
+              ornamentMargin: "10px auto",
+            }
+          )
           return wrapField ? (
             wrapField(id, sepContent)
           ) : (
             <Fragment key={id}>{sepContent}</Fragment>
+          )
+        }
+        if (isTxtId(id)) {
+          const txt = textBlocks?.[id] ?? ""
+          if (!txt && !wrapField) return null
+          const fmt = getFormatStyle(id, fieldFormats)
+          const content = txt ? (
+            <p
+              style={{
+                fontSize: "14px",
+                color: c.text,
+                margin: "4px 0",
+                textAlign: "center",
+                ...fmt,
+              }}
+            >
+              {txt}
+            </p>
+          ) : (
+            <span style={{ display: "block", width: "60%", height: "1.5em" }} />
+          )
+          return wrapField ? (
+            wrapField(id, content)
+          ) : (
+            <Fragment key={id}>{content}</Fragment>
           )
         }
         const key = id as keyof InvitationTexts

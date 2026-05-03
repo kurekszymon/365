@@ -1,10 +1,10 @@
 import { Fragment } from "react"
 import { useTranslation } from "react-i18next"
-import { salutationLine, getFormatStyle } from "./utils"
+import { salutationLine, getFormatStyle, renderSeparator } from "./utils"
 import type { TemplateProps } from "./types"
 import type { InvitationTexts } from "@/stores/invitation.store"
 import { COLOR_SCHEMES } from "@/lib/invitation/colorSchemes"
-import { isSeparatorId } from "@/lib/invitation/templates"
+import { isSeparatorId, isTxtId } from "@/lib/invitation/templates"
 
 export function ModernTemplate({
   texts,
@@ -14,6 +14,7 @@ export function ModernTemplate({
   fieldFormats,
   separatorStyles,
   separatorConfigs,
+  textBlocks,
   guestName,
   side,
   fieldSides,
@@ -225,27 +226,46 @@ export function ModernTemplate({
 
       {sideFields.map((id) => {
         if (isSeparatorId(id)) {
-          const style = separatorStyles?.[id] ?? "line"
-          const cfg = separatorConfigs?.[id] ?? {}
-          const w = `${cfg.widthPct ?? 100}%`
-          const h = cfg.thicknessPx ?? 1
-          const lineEl = <div style={{ flex: 1, height: h, backgroundColor: c.border, opacity: 0.4 }} />
-          const sepContent =
-            style === "line" ? (
-              <div style={{ width: w, height: h, backgroundColor: c.border, opacity: 0.35, margin: "14px auto" }} />
-            ) : (
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", margin: "12px auto", width: w }}>
-                {lineEl}
-                <span style={{ color: c.accent, fontSize: "12px", opacity: 0.6, lineHeight: 1, flexShrink: 0, fontFamily: "serif" }}>
-                  {style === "heart" ? "♥" : style === "flower" ? "✿" : style === "star" ? "✦" : "◆"}
-                </span>
-                {lineEl}
-              </div>
-            )
+          const sepContent = renderSeparator(
+            separatorStyles?.[id] ?? "line",
+            separatorConfigs?.[id] ?? {},
+            c,
+            {
+              lineOpacity: 0.4,
+              simpleOpacity: 0.35,
+              ornamentOpacity: 0.6,
+              lineMargin: "14px auto",
+              ornamentMargin: "12px auto",
+            }
+          )
           return wrapField ? (
             wrapField(id, sepContent)
           ) : (
             <Fragment key={id}>{sepContent}</Fragment>
+          )
+        }
+        if (isTxtId(id)) {
+          const txt = textBlocks?.[id] ?? ""
+          if (!txt && !wrapField) return null
+          const fmt = getFormatStyle(id, fieldFormats)
+          const content = txt ? (
+            <p
+              style={{
+                fontSize: "14px",
+                color: c.text,
+                margin: "4px 0",
+                ...fmt,
+              }}
+            >
+              {txt}
+            </p>
+          ) : (
+            <span style={{ display: "block", width: "60%", height: "1.5em" }} />
+          )
+          return wrapField ? (
+            wrapField(id, content)
+          ) : (
+            <Fragment key={id}>{content}</Fragment>
           )
         }
         const key = id as keyof InvitationTexts

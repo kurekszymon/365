@@ -68,7 +68,10 @@ export function DesignEditor() {
                   {FONT_OPTIONS.map((font) => (
                     <SelectItem key={font.id} value={font.id}>
                       <span style={{ fontFamily: font.css }}>{font.label}</span>
-                      <span className="ml-2 text-xs text-muted-foreground" style={{ fontFamily: font.css }}>
+                      <span
+                        className="ml-2 text-xs text-muted-foreground"
+                        style={{ fontFamily: font.css }}
+                      >
                         Ąę Óśź
                       </span>
                     </SelectItem>
@@ -79,7 +82,9 @@ export function DesignEditor() {
 
             {/* Color scheme */}
             <div className="flex flex-col gap-1.5">
-              <p className="text-sm font-medium">{t("invitations.color_scheme")}</p>
+              <p className="text-sm font-medium">
+                {t("invitations.color_scheme")}
+              </p>
               <div className="flex flex-wrap gap-2">
                 {currentTemplate?.colorSchemes.map((scheme) => (
                   <button
@@ -113,7 +118,9 @@ export function DesignEditor() {
 
       {/* ── Quantity & Order ── */}
       <section className="flex flex-col gap-3">
-        <p className="text-sm font-semibold">{t("invitations.step_quantity")}</p>
+        <p className="text-sm font-semibold">
+          {t("invitations.step_quantity")}
+        </p>
         <QuantityPicker />
         <Button onClick={() => openDialog("Invitation.Order")}>
           <MailIcon />

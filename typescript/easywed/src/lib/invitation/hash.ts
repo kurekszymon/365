@@ -19,13 +19,16 @@ import {
   TEXT_MAX_LENGTHS,
   isFieldKey,
   isSeparatorId,
+  isTxtId,
 } from "@/lib/invitation/templates"
 import { FONT_OPTIONS } from "@/lib/invitation/fonts"
 import { sanitizeGuestNames } from "@/lib/invitation/guestNames"
 
 const VALID_TEMPLATES = TEMPLATES.map((t) => t.id)
 const VALID_FONT_IDS = new Set(FONT_OPTIONS.map((f) => f.id))
-const VALID_SEP_STYLES = new Set<string>(SEPARATOR_STYLE_OPTIONS.map((o) => o.id))
+const VALID_SEP_STYLES = new Set<string>(
+  SEPARATOR_STYLE_OPTIONS.map((o) => o.id)
+)
 
 function validateFieldSides(
   raw: Record<string, unknown>
@@ -34,11 +37,14 @@ function validateFieldSides(
   // Known field keys
   for (const key of Object.keys(DEFAULT_FIELD_SIDES)) {
     const v = raw[key]
-    if (v === "front" || v === "back") sides[key] = v
+    if (v === "front" || v === "back" || v === "none") sides[key] = v
   }
-  // Separator IDs
+  // Separator + text-block IDs
   for (const [key, v] of Object.entries(raw)) {
-    if (isSeparatorId(key) && (v === "front" || v === "back")) {
+    if (
+      (isSeparatorId(key) || isTxtId(key)) &&
+      (v === "front" || v === "back" || v === "none")
+    ) {
       sides[key] = v
     }
   }
@@ -71,7 +77,7 @@ function validateDesign(raw: unknown): InvitationDesign | null {
     ? (rawScheme as InvitationColorScheme)
     : templateMeta.defaultColorScheme
 
-  if (typeof fontId !== "string" || fontId.length === 0) return null
+  if (typeof fontId !== "string" || !VALID_FONT_IDS.has(fontId)) return null
 
   if (typeof quantity !== "number" || !Number.isFinite(quantity)) return null
   const clampedQuantity = Math.min(1000, Math.max(1, Math.round(quantity)))
@@ -137,14 +143,21 @@ function validateDesign(raw: unknown): InvitationDesign | null {
     }
   }
 
-  const fieldFormats: Partial<Record<keyof InvitationTexts, FieldFormat>> = {}
+  const fieldFormats: Partial<Record<string, FieldFormat>> = {}
   if (isSafeObject(raw.fieldFormats)) {
     for (const [k, v] of Object.entries(raw.fieldFormats)) {
-      if (isFieldKey(k) && isSafeObject(v)) {
+      if ((isFieldKey(k) || isTxtId(k)) && isSafeObject(v)) {
         const fmt: FieldFormat = {}
         if (typeof v.bold === "boolean") fmt.bold = v.bold
         if (typeof v.italic === "boolean") fmt.italic = v.italic
         if (typeof v.underline === "boolean") fmt.underline = v.underline
+        if (
+          typeof v.fontSize === "number" &&
+          v.fontSize >= 6 &&
+          v.fontSize <= 120
+        ) {
+          fmt.fontSize = Math.round(v.fontSize)
+        }
         if (Object.keys(fmt).length > 0) {
           fieldFormats[k] = fmt
         }
@@ -155,7 +168,11 @@ function validateDesign(raw: unknown): InvitationDesign | null {
   const separatorStyles: Record<string, SeparatorStyle> = {}
   if (isSafeObject(raw.separatorStyles)) {
     for (const [k, v] of Object.entries(raw.separatorStyles)) {
-      if (isSeparatorId(k) && typeof v === "string" && VALID_SEP_STYLES.has(v)) {
+      if (
+        isSeparatorId(k) &&
+        typeof v === "string" &&
+        VALID_SEP_STYLES.has(v)
+      ) {
         separatorStyles[k] = v as SeparatorStyle
       }
     }
@@ -167,13 +184,29 @@ function validateDesign(raw: unknown): InvitationDesign | null {
     for (const [k, v] of Object.entries(raw.separatorConfigs)) {
       if (isSeparatorId(k) && isSafeObject(v)) {
         const cfg: SeparatorConfig = {}
-        if (typeof v.widthPct === "number" && v.widthPct >= 20 && v.widthPct <= 100) {
+        if (
+          typeof v.widthPct === "number" &&
+          v.widthPct >= 20 &&
+          v.widthPct <= 100
+        ) {
           cfg.widthPct = Math.round(v.widthPct / 5) * 5
         }
-        if (typeof v.thicknessPx === "number" && VALID_THICKNESS.has(v.thicknessPx)) {
+        if (
+          typeof v.thicknessPx === "number" &&
+          VALID_THICKNESS.has(v.thicknessPx)
+        ) {
           cfg.thicknessPx = v.thicknessPx
         }
         if (Object.keys(cfg).length > 0) separatorConfigs[k] = cfg
+      }
+    }
+  }
+
+  const textBlocks: Record<string, string> = {}
+  if (isSafeObject(raw.textBlocks)) {
+    for (const [k, v] of Object.entries(raw.textBlocks)) {
+      if (isTxtId(k) && typeof v === "string") {
+        textBlocks[k] = v.slice(0, 500)
       }
     }
   }
@@ -186,6 +219,7 @@ function validateDesign(raw: unknown): InvitationDesign | null {
     fieldFormats,
     separatorStyles,
     separatorConfigs,
+    textBlocks,
     quantity: clampedQuantity,
     texts: validatedTexts,
     fieldSides,
@@ -202,8 +236,8 @@ function validateFieldOrder(raw: Array<unknown>): Array<string> {
 
   for (const item of raw) {
     if (typeof item !== "string") continue
-    if (isSeparatorId(item)) {
-      // Separator IDs are unique; allow each once
+    if (isSeparatorId(item) || isTxtId(item)) {
+      // Dynamic IDs are unique; allow each once
       if (!seen.has(item)) {
         seen.add(item)
         result.push(item)

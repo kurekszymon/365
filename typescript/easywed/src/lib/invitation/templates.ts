@@ -31,6 +31,14 @@ export function makeSeparatorId(): string {
   return `sep-${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`
 }
 
+export function isTxtId(id: string): boolean {
+  return id.startsWith("txt-")
+}
+
+export function makeTxtId(): string {
+  return `txt-${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`
+}
+
 const FIELD_KEYS = new Set<keyof InvitationTexts>([
   "headline",
   "coupleNames",
@@ -116,15 +124,15 @@ export const FIELD_LABEL_KEYS: Record<keyof InvitationTexts, string> = {
 }
 
 export const DEFAULT_TEXTS: InvitationDesign["texts"] = {
-  headline: "",
-  coupleNames: "",
-  date: "",
-  time: "",
-  venue: "",
-  venueAddress: "",
-  rsvpEmail: "",
-  rsvpDeadline: "",
-  guestSalutation: "",
+  headline: "Zapraszamy na ślub",
+  coupleNames: "Anna & Piotr",
+  date: "14 czerwca 2026",
+  time: "15:00",
+  venue: "Pałac Krasiczyn",
+  venueAddress: "Krasiczyn 179",
+  rsvpEmail: "rsvp@wesele.pl",
+  rsvpDeadline: "1 maja 2026",
+  guestSalutation: "Drogi",
   footer: "",
 }
 
@@ -162,6 +170,7 @@ export const DEFAULT_DESIGN: InvitationDesign = {
   fieldFormats: {},
   separatorStyles: {},
   separatorConfigs: {},
+  textBlocks: {},
   texts: DEFAULT_TEXTS,
   fieldSides: DEFAULT_FIELD_SIDES,
   fieldOrder: DEFAULT_FIELD_ORDER,
