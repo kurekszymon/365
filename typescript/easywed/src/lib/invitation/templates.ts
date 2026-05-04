@@ -139,8 +139,10 @@ export const DEFAULT_TEXTS: InvitationDesign["texts"] = {
 export const DEFAULT_FIELD_ORDER: Array<string> = [
   "headline",
   "coupleNames",
+  "sep-default01",
   "date",
   "time",
+  "sep-default02",
   "venue",
   "venueAddress",
   "guestSalutation",
@@ -150,6 +152,8 @@ export const DEFAULT_FIELD_ORDER: Array<string> = [
 ]
 
 export const DEFAULT_FIELD_SIDES: Record<string, InvitationSide> = {
+  "sep-default01": "front",
+  "sep-default02": "front",
   headline: "front",
   coupleNames: "front",
   date: "front",

@@ -215,15 +215,6 @@ export function ModernTemplate({
         pageBreakAfter: "always",
       }}
     >
-      {/* Full-width top rule */}
-      <div
-        style={{
-          height: "2px",
-          backgroundColor: c.border,
-          marginBottom: "32px",
-        }}
-      />
-
       {sideFields.map((id) => {
         if (isSeparatorId(id)) {
           const sepContent = renderSeparator(
@@ -277,16 +268,6 @@ export function ModernTemplate({
           <Fragment key={id}>{content}</Fragment>
         )
       })}
-
-      {/* Full-width bottom rule */}
-      <div
-        style={{
-          height: "1px",
-          backgroundColor: c.border,
-          opacity: 0.2,
-          marginTop: "16px",
-        }}
-      />
     </div>
   )
 }

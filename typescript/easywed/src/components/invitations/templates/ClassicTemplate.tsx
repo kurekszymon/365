@@ -218,26 +218,6 @@ export function ClassicTemplate({
         pageBreakAfter: "always",
       }}
     >
-      {/* Outer border */}
-      <div
-        style={{
-          position: "absolute",
-          inset: "20px",
-          border: `1px solid ${c.border}`,
-          pointerEvents: "none",
-        }}
-      />
-      {/* Inner border */}
-      <div
-        style={{
-          position: "absolute",
-          inset: "26px",
-          border: `0.5px solid ${c.border}`,
-          opacity: 0.5,
-          pointerEvents: "none",
-        }}
-      />
-
       <div
         style={{
           display: "flex",
@@ -247,16 +227,6 @@ export function ClassicTemplate({
           textAlign: "center",
         }}
       >
-        {/* Decorative top rule */}
-        <div
-          style={{
-            width: "80px",
-            height: "1px",
-            backgroundColor: c.accent,
-            marginBottom: "24px",
-          }}
-        />
-
         {sideFields.map((id) => {
           if (isSeparatorId(id)) {
             const sepContent = renderSeparator(
@@ -313,16 +283,6 @@ export function ClassicTemplate({
             <Fragment key={id}>{content}</Fragment>
           )
         })}
-
-        {/* Decorative bottom rule */}
-        <div
-          style={{
-            width: "80px",
-            height: "1px",
-            backgroundColor: c.accent,
-            marginTop: "28px",
-          }}
-        />
       </div>
     </div>
   )

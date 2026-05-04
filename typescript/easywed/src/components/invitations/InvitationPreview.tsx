@@ -83,8 +83,17 @@ function InlineTextarea({
   onCommit: () => void
   onCancel: () => void
 }) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (!ref.current) return
+    ref.current.style.height = "auto"
+    ref.current.style.height = `${ref.current.scrollHeight}px`
+  }, [draft])
+
   return (
     <textarea
+      ref={ref}
       value={draft}
       maxLength={maxLength}
       autoFocus
@@ -104,10 +113,10 @@ function InlineTextarea({
       onDoubleClick={(e) => e.stopPropagation()}
       style={{
         position: "absolute",
-        inset: 0,
-        width: "100%",
-        height: "100%",
-        minHeight: "1.5em",
+        top: 0,
+        left: 0,
+        right: 0,
+        minHeight: "100%",
         background: "transparent",
         border: "none",
         outline: "none",
@@ -213,7 +222,9 @@ function SortableItem({
         isPlaceholder && !isEditing ? "invitation-placeholder" : undefined
       }
     >
-      {children}
+      <div style={{ visibility: isEditing ? "hidden" : undefined }}>
+        {children}
+      </div>
       {editOverlay}
     </div>
   )
@@ -300,8 +311,10 @@ function FreeDraggableField({
         isPlaceholder && !isEditing ? "invitation-placeholder" : undefined
       }
     >
-      <div style={{ position: "relative", width: "100%" }}>
-        {children}
+      <div style={{ position: "relative" }}>
+        <div style={{ visibility: isEditing ? "hidden" : undefined }}>
+          {children}
+        </div>
         {editOverlay}
       </div>
     </div>
@@ -393,7 +406,7 @@ function FloatingToolbar({
   const isTextFieldKey = fieldKey !== null && isFieldKey(fieldKey)
   const fmt = fieldKey ? (fieldFormats[fieldKey] ?? {}) : null
   const currentFontId = isTextFieldKey
-    ? (fieldFonts[fieldKey as keyof InvitationTexts] ?? "__default__")
+    ? (fieldFonts[fieldKey] ?? "__default__")
     : null
   const currentFontSize = fmt?.fontSize ?? "__auto__"
   const currentSepStyle = isSep ? (separatorStyles[selectedId] ?? "line") : null
@@ -881,7 +894,7 @@ export function InvitationPreview() {
     if (editingField === null) return
     if (isFieldKey(editingField)) {
       updateTexts({
-        [editingField as keyof InvitationTexts]: editingDraft.trim(),
+        [editingField]: editingDraft.trim(),
       })
     } else if (isTxtId(editingField)) {
       updateTextBlock(editingField, editingDraft.trim())
@@ -908,7 +921,7 @@ export function InvitationPreview() {
     if (isFieldKey(id)) {
       setSelectedId(id)
       setEditingField(id)
-      setEditingDraft(design.texts[id as keyof InvitationTexts])
+      setEditingDraft(design.texts[id])
     } else if (isTxtId(id)) {
       setSelectedId(id)
       setEditingField(id)
@@ -1134,9 +1147,7 @@ export function InvitationPreview() {
   function makeEditOverlay(id: string): React.ReactNode {
     if (editingField !== id) return null
     if (!isFieldKey(id) && !isTxtId(id)) return null
-    const maxLength = isFieldKey(id)
-      ? TEXT_MAX_LENGTHS[id as keyof InvitationTexts]
-      : 500
+    const maxLength = isFieldKey(id) ? TEXT_MAX_LENGTHS[id] : 500
     return (
       <InlineTextarea
         maxLength={maxLength}
@@ -1411,8 +1422,7 @@ export function InvitationPreview() {
               onRemove={(id) => {
                 if (isSeparatorId(id)) removeSeparator(id)
                 else if (isTxtId(id)) removeTextBlock(id)
-                else if (isFieldKey(id))
-                  moveFieldToSide(id as keyof InvitationTexts, "none")
+                else if (isFieldKey(id)) moveFieldToSide(id, "none")
                 deselect()
               }}
               onRestoreField={(id, side) => moveFieldToSide(id, side)}
@@ -1432,8 +1442,7 @@ export function InvitationPreview() {
                 width: `${CARD_W}px`,
                 display: "flex",
                 flexDirection: "column",
-                alignItems:
-                  design.template === "modern" ? "flex-start" : "center",
+                alignItems: "flex-start",
                 fontFamily: fontCss,
                 color: colorTokens.text,
                 userSelect: "none",

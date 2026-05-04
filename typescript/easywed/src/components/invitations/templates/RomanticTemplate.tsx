@@ -6,8 +6,6 @@ import type { InvitationTexts } from "@/stores/invitation.store"
 import { COLOR_SCHEMES } from "@/lib/invitation/colorSchemes"
 import { isSeparatorId, isTxtId } from "@/lib/invitation/templates"
 
-const CORNER = "❧"
-
 export function RomanticTemplate({
   texts,
   colorScheme,
@@ -224,66 +222,6 @@ export function RomanticTemplate({
         pageBreakAfter: "always",
       }}
     >
-      {/* Decorative border */}
-      <div
-        style={{
-          position: "absolute",
-          inset: "16px",
-          border: `1.5px solid ${c.border}`,
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* Corner ornaments */}
-      {(["topLeft", "topRight", "bottomLeft", "bottomRight"] as const).map(
-        (pos) => (
-          <span
-            key={pos}
-            style={{
-              position: "absolute",
-              fontSize: "20px",
-              color: c.accent,
-              opacity: 0.6,
-              ...(pos === "topLeft" && { top: "8px", left: "8px" }),
-              ...(pos === "topRight" && {
-                top: "8px",
-                right: "8px",
-                transform: "scaleX(-1)",
-              }),
-              ...(pos === "bottomLeft" && {
-                bottom: "8px",
-                left: "8px",
-                transform: "scaleY(-1)",
-              }),
-              ...(pos === "bottomRight" && {
-                bottom: "8px",
-                right: "8px",
-                transform: "scale(-1,-1)",
-              }),
-            }}
-          >
-            {CORNER}
-          </span>
-        )
-      )}
-
-      {/* Top floral divider */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-          marginBottom: "24px",
-          width: "70%",
-        }}
-      >
-        <div style={{ flex: 1, height: "0.5px", backgroundColor: c.border }} />
-        <span style={{ color: c.accent, fontSize: "18px", lineHeight: 1 }}>
-          ✿
-        </span>
-        <div style={{ flex: 1, height: "0.5px", backgroundColor: c.border }} />
-      </div>
-
       {sideFields.map((id) => {
         if (isSeparatorId(id)) {
           // Romantic defaults: 80% width, 0.5px thickness (spread first so user config overrides)
@@ -343,23 +281,6 @@ export function RomanticTemplate({
           <Fragment key={id}>{content}</Fragment>
         )
       })}
-
-      {/* Bottom floral divider */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-          marginTop: "16px",
-          width: "70%",
-        }}
-      >
-        <div style={{ flex: 1, height: "0.5px", backgroundColor: c.border }} />
-        <span style={{ color: c.accent, fontSize: "18px", lineHeight: 1 }}>
-          ✿
-        </span>
-        <div style={{ flex: 1, height: "0.5px", backgroundColor: c.border }} />
-      </div>
     </div>
   )
 }
