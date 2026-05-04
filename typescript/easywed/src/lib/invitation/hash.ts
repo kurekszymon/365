@@ -37,13 +37,13 @@ function validateFieldSides(
   // Known field keys
   for (const key of Object.keys(DEFAULT_FIELD_SIDES)) {
     const v = raw[key]
-    if (v === "front" || v === "back" || v === "none") sides[key] = v
+    if (v === "front" || v === "back") sides[key] = v
   }
   // Separator + text-block IDs
   for (const [key, v] of Object.entries(raw)) {
     if (
       (isSeparatorId(key) || isTxtId(key)) &&
-      (v === "front" || v === "back" || v === "none")
+      (v === "front" || v === "back")
     ) {
       sides[key] = v
     }

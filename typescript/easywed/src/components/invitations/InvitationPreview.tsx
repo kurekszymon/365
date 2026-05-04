@@ -52,7 +52,6 @@ import { FONT_OPTIONS, getFontCss } from "@/lib/invitation/fonts"
 import {
   CARD_H,
   CARD_W,
-  FIELD_LABEL_KEYS,
   SEPARATOR_STYLE_OPTIONS,
   TEXT_MAX_LENGTHS,
   isFieldKey,
@@ -132,6 +131,8 @@ function InlineTextarea({
         boxSizing: "border-box",
         overflow: "hidden",
         caretColor: "rgba(59,130,246,0.9)",
+        boxShadow: "inset 0 0 0 2px rgba(59,130,246,0.7)",
+
         ...matchStyle,
       }}
     />
@@ -198,7 +199,7 @@ function SortableItem({
         position: "relative",
         alignSelf: isSeparator ? "stretch" : undefined,
         boxShadow:
-          isSelected || isEditing
+          isSelected && !isEditing
             ? "inset 0 0 0 2px rgba(59,130,246,0.7)"
             : undefined,
         borderRadius: "2px",
@@ -638,7 +639,6 @@ type ContextMenuState = {
 function ContextMenu({
   menu,
   snapEnabled,
-  hiddenPredefinedFields,
   onAddSeparatorNear,
   onAddSeparatorAtPos,
   onAddTextBlockAt,
@@ -646,12 +646,10 @@ function ContextMenu({
   onMoveToSide,
   onDuplicate,
   onRemove,
-  onRestoreField,
   onClose,
 }: {
   menu: ContextMenuState
   snapEnabled: boolean
-  hiddenPredefinedFields: Array<keyof InvitationTexts>
   onAddSeparatorNear: (nearId: string, pos: "before" | "after") => void
   onAddSeparatorAtPos: (
     side: InvitationSide,
@@ -665,7 +663,6 @@ function ContextMenu({
   onMoveToSide: (fieldId: string, side: InvitationSide) => void
   onDuplicate: (id: string) => void
   onRemove: (id: string) => void
-  onRestoreField: (id: keyof InvitationTexts, side: InvitationSide) => void
   onClose: () => void
 }) {
   const { t } = useTranslation()
@@ -783,12 +780,6 @@ function ContextMenu({
             item(t("invitations.context_add_textblock"), () =>
               onAddTextBlockAt(side, { x: 0, y: 0 })
             )}
-          {hiddenPredefinedFields.map((id) =>
-            item(
-              `${t("invitations.context_restore")}: ${t(FIELD_LABEL_KEYS[id])}`,
-              () => onRestoreField(id, side)
-            )
-          )}
         </>
       )}
     </div>
@@ -818,6 +809,7 @@ export function InvitationPreview() {
   const removeTextBlock = useInvitationStore((s) => s.removeTextBlock)
   const updateTextBlock = useInvitationStore((s) => s.updateTextBlock)
   const duplicateField = useInvitationStore((s) => s.duplicateField)
+  const removeField = useInvitationStore((s) => s.removeField)
   const setFieldFont = useInvitationStore((s) => s.setFieldFont)
   const setFieldFormat = useInvitationStore((s) => s.setFieldFormat)
   const undo = useInvitationStore((s) => s.undo)
@@ -1004,7 +996,7 @@ export function InvitationPreview() {
       ) {
         if (isSeparatorId(selectedId)) removeSeparator(selectedId)
         else if (isTxtId(selectedId)) removeTextBlock(selectedId)
-        else if (isFieldKey(selectedId)) moveFieldToSide(selectedId, "none")
+        else if (isFieldKey(selectedId)) removeField(selectedId)
         deselect()
         return
       }
@@ -1023,6 +1015,7 @@ export function InvitationPreview() {
     setFieldFont,
     removeSeparator,
     removeTextBlock,
+    removeField,
     moveFieldToSide,
   ])
 
@@ -1057,10 +1050,6 @@ export function InvitationPreview() {
     fieldOrder: design.fieldOrder,
     textBlocks: design.textBlocks,
   }
-
-  const hiddenPredefinedFields = design.fieldOrder.filter(
-    (id) => design.fieldSides[id] === "none" && isFieldKey(id)
-  ) as Array<keyof InvitationTexts>
 
   const sideFields = design.fieldOrder.filter(
     (k) => design.fieldSides[k] === previewSide
@@ -1419,7 +1408,6 @@ export function InvitationPreview() {
             <ContextMenu
               menu={contextMenu}
               snapEnabled={snapEnabled}
-              hiddenPredefinedFields={hiddenPredefinedFields}
               onAddSeparatorNear={addSeparatorNear}
               onAddSeparatorAtPos={addSeparatorAtPos}
               onAddTextBlockAt={(side, pos) => {
@@ -1437,10 +1425,9 @@ export function InvitationPreview() {
               onRemove={(id) => {
                 if (isSeparatorId(id)) removeSeparator(id)
                 else if (isTxtId(id)) removeTextBlock(id)
-                else if (isFieldKey(id)) moveFieldToSide(id, "none")
+                else if (isFieldKey(id)) removeField(id)
                 deselect()
               }}
-              onRestoreField={(id, side) => moveFieldToSide(id, side)}
               onClose={() => setContextMenu(null)}
             />
           )}

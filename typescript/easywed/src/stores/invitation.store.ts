@@ -13,7 +13,7 @@ import {
 } from "@/lib/invitation/guestNames"
 
 export type InvitationTemplate = "classic" | "modern" | "romantic"
-export type InvitationSide = "front" | "back" | "none"
+export type InvitationSide = "front" | "back"
 export type SeparatorStyle = "line" | "heart" | "flower" | "star" | "diamond"
 export type SeparatorConfig = {
   widthPct?: number // 20–100, defaults to 100
@@ -116,6 +116,7 @@ type Action = {
   duplicateField: (id: string) => void
   setSeparatorStyle: (sepId: string, style: SeparatorStyle) => void
   setSeparatorConfig: (sepId: string, config: Partial<SeparatorConfig>) => void
+  removeField: (id: string) => void
   setFieldFont: (key: keyof InvitationTexts, fontId: string | null) => void
   setFieldFormat: (key: string, format: Partial<FieldFormat>) => void
   undo: () => void
@@ -336,7 +337,7 @@ export const useInvitationStore = create<State & Action>((set) => ({
   addTextBlockNear: (id, nearId, position) =>
     set((s) => {
       const side = s.design.fieldSides[nearId]
-      if (!side || side === "none") return s
+      if (!side) return s
       const idx = s.design.fieldOrder.indexOf(nearId)
       if (idx === -1) return s
       const insertAt = position === "before" ? idx : idx + 1
@@ -429,6 +430,20 @@ export const useInvitationStore = create<State & Action>((set) => ({
         }
       }
       return withHistory(s, () => ({ design }))
+    }),
+
+  removeField: (id) =>
+    set((s) => {
+      const { [id]: _s, ...restSides } = s.design.fieldSides
+      const { [id]: _p, ...restPositions } = s.design.fieldPositions
+      return withHistory(s, () => ({
+        design: {
+          ...s.design,
+          fieldOrder: s.design.fieldOrder.filter((x) => x !== id),
+          fieldSides: restSides,
+          fieldPositions: restPositions,
+        },
+      }))
     }),
 
   setSeparatorStyle: (sepId, style) =>
