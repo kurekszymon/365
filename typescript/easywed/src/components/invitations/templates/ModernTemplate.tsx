@@ -1,6 +1,6 @@
 import { Fragment } from "react"
 import { useTranslation } from "react-i18next"
-import { salutationLine, getFormatStyle, renderSeparator } from "./utils"
+import { getFormatStyle, renderSeparator, salutationLine } from "./utils"
 import type { TemplateProps } from "./types"
 import type { InvitationTexts } from "@/stores/invitation.store"
 import { COLOR_SCHEMES } from "@/lib/invitation/colorSchemes"

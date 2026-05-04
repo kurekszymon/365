@@ -119,7 +119,7 @@ function validateDesign(raw: unknown): InvitationDesign | null {
   if (isSafeObject(raw.fieldPositions)) {
     for (const [k, v] of Object.entries(raw.fieldPositions)) {
       if (
-        (isFieldKey(k) || isSeparatorId(k)) &&
+        (isFieldKey(k) || isSeparatorId(k) || isTxtId(k)) &&
         isSafeObject(v) &&
         typeof v.x === "number" &&
         typeof v.y === "number" &&

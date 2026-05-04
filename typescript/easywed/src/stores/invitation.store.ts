@@ -11,6 +11,7 @@ import {
   GUEST_LIST_MAX_SIZE,
   sanitizeGuestName,
 } from "@/lib/invitation/guestNames"
+import { omitKey } from "@/lib/utils"
 
 export type InvitationTemplate = "classic" | "modern" | "romantic"
 export type InvitationSide = "front" | "back"
@@ -229,7 +230,6 @@ export const useInvitationStore = create<State & Action>((set) => ({
   addSeparatorNear: (nearId, position) =>
     set((s) => {
       const side = s.design.fieldSides[nearId]
-      if (!side) return s
       const id = makeSeparatorId()
       const idx = s.design.fieldOrder.indexOf(nearId)
       if (idx === -1) return s
@@ -265,18 +265,19 @@ export const useInvitationStore = create<State & Action>((set) => ({
     set((s) => {
       if (!isSeparatorId(sepId)) return s
       return withHistory(s, () => {
-        const { [sepId]: _s, ...restSides } = s.design.fieldSides
-        const { [sepId]: _p, ...restPositions } = s.design.fieldPositions
-        const { [sepId]: _st, ...restStyles } = s.design.separatorStyles
-        const { [sepId]: _sc, ...restConfigs } = s.design.separatorConfigs
+        const separatorStyles = omitKey(s.design.separatorStyles, sepId)
+        const separatorConfigs = omitKey(s.design.separatorConfigs, sepId)
+        const fieldSides = omitKey(s.design.fieldSides, sepId)
+        const fieldPositions = omitKey(s.design.fieldPositions, sepId)
+
         return {
           design: {
             ...s.design,
             fieldOrder: s.design.fieldOrder.filter((id) => id !== sepId),
-            fieldSides: restSides,
-            fieldPositions: restPositions,
-            separatorStyles: restStyles,
-            separatorConfigs: restConfigs,
+            fieldSides,
+            fieldPositions,
+            separatorStyles,
+            separatorConfigs,
           },
         }
       })
@@ -300,18 +301,15 @@ export const useInvitationStore = create<State & Action>((set) => ({
           ...s.design,
           fieldOrder: newOrder,
           fieldSides: { ...s.design.fieldSides, [id]: side },
-          separatorStyles: s.design.separatorStyles[sepId]
-            ? {
-                ...s.design.separatorStyles,
-                [id]: s.design.separatorStyles[sepId],
-              }
-            : s.design.separatorStyles,
-          separatorConfigs: s.design.separatorConfigs[sepId]
-            ? {
-                ...s.design.separatorConfigs,
-                [id]: s.design.separatorConfigs[sepId],
-              }
-            : s.design.separatorConfigs,
+
+          separatorStyles: {
+            ...s.design.separatorStyles,
+            [id]: s.design.separatorStyles[sepId],
+          },
+          separatorConfigs: {
+            ...s.design.separatorConfigs,
+            [id]: s.design.separatorConfigs[sepId],
+          },
           fieldPositions: origPos
             ? { ...s.design.fieldPositions, [id]: { x: 0, y: origPos.y + 40 } }
             : s.design.fieldPositions,
@@ -337,7 +335,6 @@ export const useInvitationStore = create<State & Action>((set) => ({
   addTextBlockNear: (id, nearId, position) =>
     set((s) => {
       const side = s.design.fieldSides[nearId]
-      if (!side) return s
       const idx = s.design.fieldOrder.indexOf(nearId)
       if (idx === -1) return s
       const insertAt = position === "before" ? idx : idx + 1
@@ -359,16 +356,18 @@ export const useInvitationStore = create<State & Action>((set) => ({
   removeTextBlock: (id) =>
     set((s) => {
       if (!isTxtId(id)) return s
-      const { [id]: _t, ...restBlocks } = s.design.textBlocks
-      const { [id]: _s, ...restSides } = s.design.fieldSides
-      const { [id]: _p, ...restPositions } = s.design.fieldPositions
+
+      const textBlocks = omitKey(s.design.textBlocks, id)
+      const fieldSides = omitKey(s.design.fieldSides, id)
+      const fieldPositions = omitKey(s.design.fieldPositions, id)
+
       return withHistory(s, () => ({
         design: {
           ...s.design,
           fieldOrder: s.design.fieldOrder.filter((x) => x !== id),
-          textBlocks: restBlocks,
-          fieldSides: restSides,
-          fieldPositions: restPositions,
+          textBlocks,
+          fieldSides,
+          fieldPositions,
         },
       }))
     }),
@@ -408,16 +407,14 @@ export const useInvitationStore = create<State & Action>((set) => ({
           : s.design.fieldPositions,
       }
       if (isSeparatorId(id)) {
-        if (s.design.separatorStyles[id])
-          design.separatorStyles = {
-            ...design.separatorStyles,
-            [newId]: s.design.separatorStyles[id],
-          }
-        if (s.design.separatorConfigs[id])
-          design.separatorConfigs = {
-            ...design.separatorConfigs,
-            [newId]: s.design.separatorConfigs[id],
-          }
+        design.separatorStyles = {
+          ...design.separatorStyles,
+          [newId]: s.design.separatorStyles[id],
+        }
+        design.separatorConfigs = {
+          ...design.separatorConfigs,
+          [newId]: s.design.separatorConfigs[id],
+        }
       } else if (isTxtId(id)) {
         design.textBlocks = {
           ...design.textBlocks,
@@ -426,7 +423,7 @@ export const useInvitationStore = create<State & Action>((set) => ({
       } else if (isFieldKey(id)) {
         design.textBlocks = {
           ...design.textBlocks,
-          [newId]: s.design.texts[id] ?? "",
+          [newId]: s.design.texts[id],
         }
       }
       return withHistory(s, () => ({ design }))
@@ -434,14 +431,15 @@ export const useInvitationStore = create<State & Action>((set) => ({
 
   removeField: (id) =>
     set((s) => {
-      const { [id]: _s, ...restSides } = s.design.fieldSides
-      const { [id]: _p, ...restPositions } = s.design.fieldPositions
+      const fieldSides = omitKey(s.design.fieldSides, id)
+      const fieldPositions = omitKey(s.design.fieldPositions, id)
+
       return withHistory(s, () => ({
         design: {
           ...s.design,
           fieldOrder: s.design.fieldOrder.filter((x) => x !== id),
-          fieldSides: restSides,
-          fieldPositions: restPositions,
+          fieldSides,
+          fieldPositions,
         },
       }))
     }),
@@ -475,9 +473,10 @@ export const useInvitationStore = create<State & Action>((set) => ({
     set((s) =>
       withHistory(s, () => {
         if (fontId === null) {
-          const { [key]: _removed, ...restFonts } = s.design.fieldFonts
-          return { design: { ...s.design, fieldFonts: restFonts } }
+          const fieldFonts = omitKey(s.design.fieldFonts, key)
+          return { design: { ...s.design, fieldFonts } }
         }
+
         return {
           design: {
             ...s.design,
@@ -492,15 +491,12 @@ export const useInvitationStore = create<State & Action>((set) => ({
       withHistory(s, () => {
         const existing = s.design.fieldFormats[key] ?? {}
         const merged = { ...existing, ...format }
-        // Remove keys that are now undefined (clean up)
-        const cleaned = Object.fromEntries(
-          Object.entries(merged).filter(([, v]) => v !== undefined)
-        ) as FieldFormat
-        const { [key]: _removed, ...restFormats } = s.design.fieldFormats
+
+        const fieldFormats = omitKey(s.design.fieldFormats, key)
         const newFormats =
-          Object.keys(cleaned).length === 0
-            ? restFormats
-            : { ...s.design.fieldFormats, [key]: cleaned }
+          Object.keys(merged).length === 0
+            ? fieldFormats
+            : { ...s.design.fieldFormats, [key]: merged }
         return { design: { ...s.design, fieldFormats: newFormats } }
       })
     ),

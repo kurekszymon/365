@@ -822,7 +822,6 @@ export function InvitationPreview() {
   const [previewSide, setPreviewSide] = useState<InvitationSide>("front")
   const [snapEnabled, setSnapEnabled] = useState(true)
   const [printAll, setPrintAll] = useState(false)
-  const [_activeId, setActiveId] = useState<string | null>(null)
   const [activeOverlayContent, setActiveOverlayContent] =
     useState<React.ReactNode>(null)
   const [editingField, setEditingField] = useState<string | null>(null)
@@ -1081,7 +1080,6 @@ export function InvitationPreview() {
   function handleDragStart(event: DragStartEvent) {
     if (!snapEnabled) return
     const id = event.active.id as string
-    setActiveId(id)
     // For separators, show a full-card-width ghost so it's visible at scale
     if (isSeparatorId(id)) {
       setActiveOverlayContent(
@@ -1116,12 +1114,10 @@ export function InvitationPreview() {
         y: Math.round(Math.max(0, Math.min(CARD_H, pos.y + delta.y / scale))),
       })
     }
-    setActiveId(null)
     setActiveOverlayContent(null)
   }
 
   function handleDragCancel() {
-    setActiveId(null)
     setActiveOverlayContent(null)
   }
 
