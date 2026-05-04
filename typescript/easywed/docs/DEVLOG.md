@@ -1,5 +1,12 @@
 # EasyWed — Development Log
 
+### 04.05
+
+- improve text field editing
+- removed redundant files
+- fixed InlineTextarea styles
+- TODO: deslopify invitations
+
 ### 03.05
 
 - in invitations editor add support for
