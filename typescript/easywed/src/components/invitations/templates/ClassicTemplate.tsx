@@ -1,14 +1,20 @@
 import { Fragment } from "react"
 import { useTranslation } from "react-i18next"
-import { salutationLine } from "./utils"
+import { getFormatStyle, renderSeparator, salutationLine } from "./utils"
 import type { TemplateProps } from "./types"
 import type { InvitationTexts } from "@/stores/invitation.store"
 import { COLOR_SCHEMES } from "@/lib/invitation/colorSchemes"
+import { isSeparatorId, isTxtId } from "@/lib/invitation/templates"
 
 export function ClassicTemplate({
   texts,
   colorScheme,
   fontCss,
+  fieldFonts,
+  fieldFormats,
+  separatorStyles,
+  separatorConfigs,
+  textBlocks,
   guestName,
   side,
   fieldSides,
@@ -22,17 +28,21 @@ export function ClassicTemplate({
   const sideFields = fieldOrder.filter((k) => fieldSides[k] === side)
 
   function renderField(key: keyof InvitationTexts) {
+    const ff = fieldFonts?.[key]
+    const fmt = getFormatStyle(key, fieldFormats)
     switch (key) {
       case "headline":
         return texts.headline ? (
           <p
             style={{
+              fontFamily: ff,
               fontStyle: "italic",
               fontSize: "15px",
               letterSpacing: "0.12em",
               color: c.muted,
               marginBottom: "12px",
               textTransform: "uppercase",
+              ...fmt,
             }}
           >
             {texts.headline}
@@ -43,11 +53,13 @@ export function ClassicTemplate({
         return (
           <h1
             style={{
+              fontFamily: ff,
               fontSize: "42px",
               fontWeight: 700,
               lineHeight: 1.1,
               marginBottom: "8px",
               color: c.text,
+              ...fmt,
             }}
           >
             {texts.coupleNames}
@@ -58,10 +70,12 @@ export function ClassicTemplate({
         return texts.date ? (
           <p
             style={{
+              fontFamily: ff,
               fontSize: "16px",
               letterSpacing: "0.08em",
               color: c.muted,
               marginTop: "8px",
+              ...fmt,
             }}
           >
             {texts.date}
@@ -72,10 +86,12 @@ export function ClassicTemplate({
         return texts.time ? (
           <p
             style={{
+              fontFamily: ff,
               fontSize: "14px",
               letterSpacing: "0.06em",
               color: c.muted,
               marginTop: "4px",
+              ...fmt,
             }}
           >
             {texts.time}
@@ -84,14 +100,30 @@ export function ClassicTemplate({
 
       case "venue":
         return texts.venue ? (
-          <p style={{ fontSize: "18px", fontWeight: 700, marginTop: "12px" }}>
+          <p
+            style={{
+              fontFamily: ff,
+              fontSize: "18px",
+              fontWeight: 700,
+              marginTop: "12px",
+              ...fmt,
+            }}
+          >
             {texts.venue}
           </p>
         ) : null
 
       case "venueAddress":
         return texts.venueAddress ? (
-          <p style={{ fontSize: "13px", color: c.muted, marginTop: "4px" }}>
+          <p
+            style={{
+              fontFamily: ff,
+              fontSize: "13px",
+              color: c.muted,
+              marginTop: "4px",
+              ...fmt,
+            }}
+          >
             {texts.venueAddress}
           </p>
         ) : null
@@ -100,11 +132,13 @@ export function ClassicTemplate({
         return texts.rsvpDeadline ? (
           <p
             style={{
+              fontFamily: ff,
               fontSize: "12px",
               color: c.muted,
               letterSpacing: "0.1em",
               textTransform: "uppercase",
               marginTop: "16px",
+              ...fmt,
             }}
           >
             {t("invitations.template.rsvp_by")} {texts.rsvpDeadline}
@@ -113,7 +147,15 @@ export function ClassicTemplate({
 
       case "rsvpEmail":
         return texts.rsvpEmail ? (
-          <p style={{ fontSize: "13px", color: c.accent, marginTop: "4px" }}>
+          <p
+            style={{
+              fontFamily: ff,
+              fontSize: "13px",
+              color: c.accent,
+              marginTop: "4px",
+              ...fmt,
+            }}
+          >
             {texts.rsvpEmail}
           </p>
         ) : null
@@ -122,10 +164,12 @@ export function ClassicTemplate({
         return greeting ? (
           <p
             style={{
+              fontFamily: ff,
               marginTop: "16px",
               fontStyle: "italic",
               fontSize: "14px",
               color: guestName ? c.text : c.muted,
+              ...fmt,
             }}
           >
             {greeting}
@@ -136,12 +180,14 @@ export function ClassicTemplate({
         return texts.footer ? (
           <p
             style={{
+              fontFamily: ff,
               marginTop: "16px",
               fontSize: "12px",
               color: c.muted,
               fontStyle: "italic",
               textAlign: "center",
               maxWidth: "340px",
+              ...fmt,
             }}
           >
             {texts.footer}
@@ -172,26 +218,6 @@ export function ClassicTemplate({
         pageBreakAfter: "always",
       }}
     >
-      {/* Outer border */}
-      <div
-        style={{
-          position: "absolute",
-          inset: "20px",
-          border: `1px solid ${c.border}`,
-          pointerEvents: "none",
-        }}
-      />
-      {/* Inner border */}
-      <div
-        style={{
-          position: "absolute",
-          inset: "26px",
-          border: `0.5px solid ${c.border}`,
-          opacity: 0.5,
-          pointerEvents: "none",
-        }}
-      />
-
       <div
         style={{
           display: "flex",
@@ -201,35 +227,62 @@ export function ClassicTemplate({
           textAlign: "center",
         }}
       >
-        {/* Decorative top rule */}
-        <div
-          style={{
-            width: "80px",
-            height: "1px",
-            backgroundColor: c.accent,
-            marginBottom: "24px",
-          }}
-        />
-
-        {sideFields.map((key) => {
+        {sideFields.map((id) => {
+          if (isSeparatorId(id)) {
+            const sepContent = renderSeparator(
+              separatorStyles?.[id] ?? "line",
+              separatorConfigs?.[id] ?? {},
+              c,
+              {
+                lineOpacity: 0.55,
+                simpleOpacity: 0.45,
+                ornamentOpacity: 0.65,
+                lineMargin: "12px auto",
+                ornamentMargin: "10px auto",
+              }
+            )
+            return wrapField ? (
+              wrapField(id, sepContent)
+            ) : (
+              <Fragment key={id}>{sepContent}</Fragment>
+            )
+          }
+          if (isTxtId(id)) {
+            const txt = textBlocks?.[id] ?? ""
+            if (!txt && !wrapField) return null
+            const fmt = getFormatStyle(id, fieldFormats)
+            const content = txt ? (
+              <p
+                style={{
+                  fontSize: "14px",
+                  color: c.text,
+                  margin: "4px 0",
+                  textAlign: "center",
+                  ...fmt,
+                }}
+              >
+                {txt}
+              </p>
+            ) : (
+              <span
+                style={{ display: "block", width: "60%", height: "1.5em" }}
+              />
+            )
+            return wrapField ? (
+              wrapField(id, content)
+            ) : (
+              <Fragment key={id}>{content}</Fragment>
+            )
+          }
+          const key = id as keyof InvitationTexts
           const content = renderField(key)
           if (!content) return null
           return wrapField ? (
-            wrapField(key, content)
+            wrapField(id, content)
           ) : (
-            <Fragment key={key}>{content}</Fragment>
+            <Fragment key={id}>{content}</Fragment>
           )
         })}
-
-        {/* Decorative bottom rule */}
-        <div
-          style={{
-            width: "80px",
-            height: "1px",
-            backgroundColor: c.accent,
-            marginTop: "28px",
-          }}
-        />
       </div>
     </div>
   )

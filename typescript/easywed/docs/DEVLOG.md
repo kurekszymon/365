@@ -1,7 +1,23 @@
 # EasyWed — Development Log
 
+### 04.05
+
+- improve text field editing
+- removed redundant files
+- fixed InlineTextarea styles
+- TODO: deslopify invitations
+
+### 03.05
+
+- in invitations editor add support for
+  - inline text editing
+  - separators
+  - per field font size / formatting
+  - undo/redo
+
 ### 02.05
 
+- initial revamp invitations view
 - improve ux for measurements, allow clicking outside when measurement is already started
 - todo: generalize data-no-pan (disallow click or whatever)
 

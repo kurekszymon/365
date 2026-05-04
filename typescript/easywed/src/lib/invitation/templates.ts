@@ -1,11 +1,57 @@
+import type { TFunction } from "i18next"
 import type {
   InvitationColorScheme,
   InvitationDesign,
   InvitationSide,
   InvitationTemplate,
   InvitationTexts,
+  SeparatorStyle,
 } from "@/stores/invitation.store"
 import { DEFAULT_FONT_ID } from "@/lib/invitation/fonts"
+
+export const SEPARATOR_STYLE_OPTIONS: Array<{
+  id: SeparatorStyle
+  ornament: string
+}> = [
+  { id: "line", ornament: "—" },
+  { id: "heart", ornament: "♥" },
+  { id: "flower", ornament: "✿" },
+  { id: "star", ornament: "✦" },
+  { id: "diamond", ornament: "◆" },
+]
+
+export function isSeparatorId(id: string): boolean {
+  return id.startsWith("sep-")
+}
+
+export function isFieldKey(id: string): id is keyof InvitationTexts {
+  return FIELD_KEYS.has(id as keyof InvitationTexts)
+}
+
+export function makeSeparatorId(): string {
+  return `sep-${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`
+}
+
+export function isTxtId(id: string): boolean {
+  return id.startsWith("txt-")
+}
+
+export function makeTxtId(): string {
+  return `txt-${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`
+}
+
+const FIELD_KEYS = new Set<keyof InvitationTexts>([
+  "headline",
+  "coupleNames",
+  "date",
+  "time",
+  "venue",
+  "venueAddress",
+  "rsvpEmail",
+  "rsvpDeadline",
+  "guestSalutation",
+  "footer",
+])
 
 /** Physical card dimensions in px (used by the preview canvas and hash validation). */
 export const CARD_W = 585
@@ -78,24 +124,28 @@ export const FIELD_LABEL_KEYS: Record<keyof InvitationTexts, string> = {
   footer: "invitations.text_footer",
 }
 
-export const DEFAULT_TEXTS: InvitationDesign["texts"] = {
-  headline: "",
-  coupleNames: "",
-  date: "",
-  time: "",
-  venue: "",
-  venueAddress: "",
-  rsvpEmail: "",
-  rsvpDeadline: "",
-  guestSalutation: "",
-  footer: "",
+export function getDefaultTexts(t: TFunction): InvitationDesign["texts"] {
+  return {
+    headline: t("invitations.default_text.headline"),
+    coupleNames: t("invitations.default_text.couple_names"),
+    date: t("invitations.default_text.date"),
+    time: t("invitations.default_text.time"),
+    venue: t("invitations.default_text.venue"),
+    venueAddress: t("invitations.default_text.venue_address"),
+    rsvpEmail: t("invitations.default_text.rsvp_email"),
+    rsvpDeadline: t("invitations.default_text.rsvp_deadline"),
+    guestSalutation: t("invitations.default_text.guest_salutation"),
+    footer: t("invitations.default_text.footer"),
+  }
 }
 
-export const DEFAULT_FIELD_ORDER: Array<keyof InvitationTexts> = [
+export const DEFAULT_FIELD_ORDER: Array<string> = [
   "headline",
   "coupleNames",
+  "sep-default01",
   "date",
   "time",
+  "sep-default02",
   "venue",
   "venueAddress",
   "guestSalutation",
@@ -104,10 +154,9 @@ export const DEFAULT_FIELD_ORDER: Array<keyof InvitationTexts> = [
   "footer",
 ]
 
-export const DEFAULT_FIELD_SIDES: Record<
-  keyof InvitationTexts,
-  InvitationSide
-> = {
+export const DEFAULT_FIELD_SIDES: Record<string, InvitationSide> = {
+  "sep-default01": "front",
+  "sep-default02": "front",
   headline: "front",
   coupleNames: "front",
   date: "front",
@@ -120,14 +169,21 @@ export const DEFAULT_FIELD_SIDES: Record<
   footer: "back",
 }
 
-export const DEFAULT_DESIGN: InvitationDesign = {
-  template: "classic",
-  colorScheme: "cream-gold",
-  fontId: DEFAULT_FONT_ID,
-  texts: DEFAULT_TEXTS,
-  fieldSides: DEFAULT_FIELD_SIDES,
-  fieldOrder: DEFAULT_FIELD_ORDER,
-  fieldPositions: {},
-  quantity: 50,
-  guestNames: [],
+export function makeDefaultDesign(t: TFunction): InvitationDesign {
+  return {
+    template: "classic",
+    colorScheme: "cream-gold",
+    fontId: DEFAULT_FONT_ID,
+    fieldFonts: {},
+    fieldFormats: {},
+    separatorStyles: {},
+    separatorConfigs: {},
+    textBlocks: {},
+    texts: getDefaultTexts(t),
+    fieldSides: DEFAULT_FIELD_SIDES,
+    fieldOrder: DEFAULT_FIELD_ORDER,
+    fieldPositions: {},
+    quantity: 50,
+    guestNames: [],
+  }
 }

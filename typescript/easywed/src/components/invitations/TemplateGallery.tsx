@@ -2,11 +2,11 @@ import { useTranslation } from "react-i18next"
 import { ClassicTemplate } from "./templates/ClassicTemplate"
 import { ModernTemplate } from "./templates/ModernTemplate"
 import { RomanticTemplate } from "./templates/RomanticTemplate"
-import type { InvitationTexts } from "@/stores/invitation.store"
 import {
   DEFAULT_FIELD_ORDER,
   DEFAULT_FIELD_SIDES,
   TEMPLATES,
+  getDefaultTexts,
 } from "@/lib/invitation/templates"
 import { getFontCss } from "@/lib/invitation/fonts"
 import { useInvitationStore } from "@/stores/invitation.store"
@@ -22,18 +22,7 @@ export function TemplateGallery() {
   const { t } = useTranslation()
   const template = useInvitationStore((s) => s.design.template)
 
-  const PREVIEW_TEXTS: InvitationTexts = {
-    headline: t("invitations.gallery.preview_headline"),
-    coupleNames: t("invitations.gallery.preview_couple"),
-    date: t("invitations.gallery.preview_date"),
-    time: t("invitations.gallery.preview_time"),
-    venue: t("invitations.gallery.preview_venue"),
-    venueAddress: t("invitations.gallery.preview_venue_address"),
-    rsvpEmail: t("invitations.gallery.preview_rsvp_email"),
-    rsvpDeadline: t("invitations.gallery.preview_rsvp_deadline"),
-    guestSalutation: t("invitations.salutation"),
-    footer: "",
-  }
+  const PREVIEW_TEXTS = getDefaultTexts(t)
   const fontId = useInvitationStore((s) => s.design.fontId)
   const updateDesign = useInvitationStore((s) => s.updateDesign)
   const fontCss = getFontCss(fontId)
