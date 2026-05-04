@@ -1,9 +1,10 @@
 import { create } from "zustand"
+import i18n from "@/i18n"
 import {
-  DEFAULT_DESIGN,
   isFieldKey,
   isSeparatorId,
   isTxtId,
+  makeDefaultDesign,
   makeSeparatorId,
   makeTxtId,
 } from "@/lib/invitation/templates"
@@ -18,7 +19,7 @@ export type InvitationSide = "front" | "back"
 export type SeparatorStyle = "line" | "heart" | "flower" | "star" | "diamond"
 export type SeparatorConfig = {
   widthPct?: number // 20–100, defaults to 100
-  thicknessPx?: number // 0.5 | 1 | 2, defaults to 1
+  thicknessPx?: number // 0.5 | 1 | 2 | 3, defaults to 1
 }
 export type FieldFormat = {
   bold?: boolean
@@ -137,7 +138,7 @@ function withHistory(
 }
 
 export const useInvitationStore = create<State & Action>((set) => ({
-  design: DEFAULT_DESIGN,
+  design: makeDefaultDesign(i18n.t.bind(i18n)),
   history: { past: [], future: [] },
 
   updateDesign: (patch) =>
@@ -522,5 +523,8 @@ export const useInvitationStore = create<State & Action>((set) => ({
     }),
 
   reset: () =>
-    set({ design: DEFAULT_DESIGN, history: { past: [], future: [] } }),
+    set({
+      design: makeDefaultDesign(i18n.t.bind(i18n)),
+      history: { past: [], future: [] },
+    }),
 }))

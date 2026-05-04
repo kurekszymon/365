@@ -74,14 +74,12 @@ function InlineTextarea({
   draft,
   onDraftChange,
   onCommit,
-  onCancel,
   matchStyle = {},
 }: {
   maxLength: number
   draft: string
   onDraftChange: (v: string) => void
   onCommit: () => void
-  onCancel: () => void
   matchStyle?: React.CSSProperties
 }) {
   const ref = useRef<HTMLTextAreaElement>(null)
@@ -105,11 +103,11 @@ function InlineTextarea({
           onCommit()
         } else if (e.key === "Escape") {
           e.preventDefault()
-          onCancel()
+          onCommit()
         }
         e.stopPropagation()
       }}
-      onBlur={() => setTimeout(onCommit, 150)}
+      onBlur={onCommit}
       onClick={(e) => e.stopPropagation()}
       onDoubleClick={(e) => e.stopPropagation()}
       style={{
@@ -361,7 +359,7 @@ const THICKNESS_OPTIONS: Array<{ value: number; label: string }> = [
   { value: 0.5, label: "·" },
   { value: 1, label: "—" },
   { value: 2, label: "─" },
-  { value: 4, label: "━" },
+  { value: 3, label: "━" },
 ]
 
 function FloatingToolbar({
@@ -846,8 +844,9 @@ export function InvitationPreview() {
   const scaledH = CARD_H * scale
   const colorTokens = COLOR_SCHEMES[design.colorScheme]
 
-  // Toolbar position: placed outside overflow:hidden via wrapper sibling
-  useEffect(() => {
+  // Toolbar position: placed outside overflow:hidden via wrapper sibling.
+  // Also called during drag (onDragMove) so the toolbar follows the element.
+  const recalcToolbarPos = useCallback(() => {
     if (!selectedId || !cardRef.current) {
       setToolbarPos(null)
       return
@@ -873,6 +872,18 @@ export function InvitationPreview() {
     setToolbarPos({ top, left: relLeft })
   }, [selectedId])
 
+  useEffect(() => {
+    recalcToolbarPos()
+    window.addEventListener("resize", recalcToolbarPos)
+    return () => window.removeEventListener("resize", recalcToolbarPos)
+  }, [
+    recalcToolbarPos,
+    design.fieldPositions,
+    design.fieldOrder,
+    design.fieldFormats,
+    previewSide,
+  ])
+
   function commitEdit() {
     if (editingField === null) return
     if (isFieldKey(editingField)) {
@@ -882,10 +893,6 @@ export function InvitationPreview() {
     } else if (isTxtId(editingField)) {
       updateTextBlock(editingField, editingDraft.trim())
     }
-    setEditingField(null)
-    setEditingDraft("")
-  }
-  function cancelEdit() {
     setEditingField(null)
     setEditingDraft("")
   }
@@ -1154,7 +1161,6 @@ export function InvitationPreview() {
         draft={editingDraft}
         onDraftChange={setEditingDraft}
         onCommit={commitEdit}
-        onCancel={cancelEdit}
         matchStyle={matchStyle}
       />
     )
@@ -1282,6 +1288,7 @@ export function InvitationPreview() {
       <DndContext
         sensors={sensors}
         onDragStart={handleDragStart}
+        onDragMove={recalcToolbarPos}
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
         modifiers={snapEnabled ? undefined : [restrictToCard]}
@@ -1305,7 +1312,6 @@ export function InvitationPreview() {
             style={{ width: PREVIEW_W, height: scaledH }}
             onClick={() => {
               deselect()
-              cancelEdit()
               setContextMenu(null)
             }}
             onContextMenu={handleCardContext}

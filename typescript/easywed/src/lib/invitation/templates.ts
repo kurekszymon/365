@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next"
 import type {
   InvitationColorScheme,
   InvitationDesign,
@@ -123,17 +124,19 @@ export const FIELD_LABEL_KEYS: Record<keyof InvitationTexts, string> = {
   footer: "invitations.text_footer",
 }
 
-export const DEFAULT_TEXTS: InvitationDesign["texts"] = {
-  headline: "Zapraszamy na ślub",
-  coupleNames: "Anna & Piotr",
-  date: "14 czerwca 2026",
-  time: "15:00",
-  venue: "Pałac Krasiczyn",
-  venueAddress: "Krasiczyn 179",
-  rsvpEmail: "rsvp@wesele.pl",
-  rsvpDeadline: "1 maja 2026",
-  guestSalutation: "Drogi",
-  footer: "",
+export function getDefaultTexts(t: TFunction): InvitationDesign["texts"] {
+  return {
+    headline: t("invitations.default_text.headline"),
+    coupleNames: t("invitations.default_text.couple_names"),
+    date: t("invitations.default_text.date"),
+    time: t("invitations.default_text.time"),
+    venue: t("invitations.default_text.venue"),
+    venueAddress: t("invitations.default_text.venue_address"),
+    rsvpEmail: t("invitations.default_text.rsvp_email"),
+    rsvpDeadline: t("invitations.default_text.rsvp_deadline"),
+    guestSalutation: t("invitations.default_text.guest_salutation"),
+    footer: t("invitations.default_text.footer"),
+  }
 }
 
 export const DEFAULT_FIELD_ORDER: Array<string> = [
@@ -166,19 +169,21 @@ export const DEFAULT_FIELD_SIDES: Record<string, InvitationSide> = {
   footer: "back",
 }
 
-export const DEFAULT_DESIGN: InvitationDesign = {
-  template: "classic",
-  colorScheme: "cream-gold",
-  fontId: DEFAULT_FONT_ID,
-  fieldFonts: {},
-  fieldFormats: {},
-  separatorStyles: {},
-  separatorConfigs: {},
-  textBlocks: {},
-  texts: DEFAULT_TEXTS,
-  fieldSides: DEFAULT_FIELD_SIDES,
-  fieldOrder: DEFAULT_FIELD_ORDER,
-  fieldPositions: {},
-  quantity: 50,
-  guestNames: [],
+export function makeDefaultDesign(t: TFunction): InvitationDesign {
+  return {
+    template: "classic",
+    colorScheme: "cream-gold",
+    fontId: DEFAULT_FONT_ID,
+    fieldFonts: {},
+    fieldFormats: {},
+    separatorStyles: {},
+    separatorConfigs: {},
+    textBlocks: {},
+    texts: getDefaultTexts(t),
+    fieldSides: DEFAULT_FIELD_SIDES,
+    fieldOrder: DEFAULT_FIELD_ORDER,
+    fieldPositions: {},
+    quantity: 50,
+    guestNames: [],
+  }
 }

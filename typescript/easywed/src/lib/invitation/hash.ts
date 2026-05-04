@@ -109,11 +109,19 @@ function validateDesign(raw: unknown): InvitationDesign | null {
 
   const fieldSides = isSafeObject(raw.fieldSides)
     ? validateFieldSides(raw.fieldSides)
-    : DEFAULT_FIELD_SIDES
+    : { ...DEFAULT_FIELD_SIDES }
 
   const fieldOrder = Array.isArray(raw.fieldOrder)
     ? validateFieldOrder(raw.fieldOrder as Array<unknown>)
     : DEFAULT_FIELD_ORDER
+
+  // Ensure every dynamic id present in fieldOrder has a side entry;
+  // default to "front" so the element is not silently dropped from rendering.
+  for (const id of fieldOrder) {
+    if ((isSeparatorId(id) || isTxtId(id)) && !(id in fieldSides)) {
+      fieldSides[id] = "front"
+    }
+  }
 
   const fieldPositions: Partial<Record<string, { x: number; y: number }>> = {}
   if (isSafeObject(raw.fieldPositions)) {
@@ -180,7 +188,7 @@ function validateDesign(raw: unknown): InvitationDesign | null {
 
   const separatorConfigs: Record<string, SeparatorConfig> = {}
   if (isSafeObject(raw.separatorConfigs)) {
-    const VALID_THICKNESS = new Set([0.5, 1, 2, 4])
+    const VALID_THICKNESS = new Set([0.5, 1, 2, 3])
     for (const [k, v] of Object.entries(raw.separatorConfigs)) {
       if (isSeparatorId(k) && isSafeObject(v)) {
         const cfg: SeparatorConfig = {}
