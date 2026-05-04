@@ -76,12 +76,14 @@ function InlineTextarea({
   onDraftChange,
   onCommit,
   onCancel,
+  matchStyle = {},
 }: {
   maxLength: number
   draft: string
   onDraftChange: (v: string) => void
   onCommit: () => void
   onCancel: () => void
+  matchStyle?: React.CSSProperties
 }) {
   const ref = useRef<HTMLTextAreaElement>(null)
 
@@ -120,7 +122,6 @@ function InlineTextarea({
         background: "transparent",
         border: "none",
         outline: "none",
-        borderBottom: "1px solid rgba(59,130,246,0.45)",
         resize: "none",
         fontFamily: "inherit",
         fontSize: "inherit",
@@ -131,6 +132,7 @@ function InlineTextarea({
         boxSizing: "border-box",
         overflow: "hidden",
         caretColor: "rgba(59,130,246,0.9)",
+        ...matchStyle,
       }}
     />
   )
@@ -145,7 +147,6 @@ function SortableItem({
   children,
   isSelected,
   isEditing,
-  isPlaceholder,
   isSeparator,
   onSelect,
   onEdit,
@@ -158,7 +159,6 @@ function SortableItem({
   children: React.ReactNode
   isSelected: boolean
   isEditing: boolean
-  isPlaceholder: boolean
   isSeparator: boolean
   onSelect: (id: string) => void
   onEdit: (id: string) => void
@@ -198,7 +198,7 @@ function SortableItem({
         position: "relative",
         alignSelf: isSeparator ? "stretch" : undefined,
         boxShadow:
-          isSelected && !isEditing
+          isSelected || isEditing
             ? "inset 0 0 0 2px rgba(59,130,246,0.7)"
             : undefined,
         borderRadius: "2px",
@@ -218,9 +218,6 @@ function SortableItem({
         e.stopPropagation()
         onContext(id, e)
       }}
-      className={
-        isPlaceholder && !isEditing ? "invitation-placeholder" : undefined
-      }
     >
       <div style={{ visibility: isEditing ? "hidden" : undefined }}>
         {children}
@@ -239,7 +236,6 @@ function FreeDraggableField({
   children,
   isSelected,
   isEditing,
-  isPlaceholder,
   isSeparator,
   onSelect,
   onEdit,
@@ -253,7 +249,6 @@ function FreeDraggableField({
   children: React.ReactNode
   isSelected: boolean
   isEditing: boolean
-  isPlaceholder: boolean
   isSeparator: boolean
   onSelect: (id: string) => void
   onEdit: (id: string) => void
@@ -307,9 +302,6 @@ function FreeDraggableField({
         e.stopPropagation()
         onContext(id, e)
       }}
-      className={
-        isPlaceholder && !isEditing ? "invitation-placeholder" : undefined
-      }
     >
       <div style={{ position: "relative" }}>
         <div style={{ visibility: isEditing ? "hidden" : undefined }}>
@@ -1148,6 +1140,29 @@ export function InvitationPreview() {
     if (editingField !== id) return null
     if (!isFieldKey(id) && !isTxtId(id)) return null
     const maxLength = isFieldKey(id) ? TEXT_MAX_LENGTHS[id] : 500
+
+    // Inherit typographic styles from the rendered content element so the
+    // textarea looks identical to the field being edited (h1, p, etc.)
+    const el = fieldEls.current.get(id)
+    const contentEl = el?.querySelector<Element>("h1, h2, h3, p, span")
+    let matchStyle: React.CSSProperties = {}
+    if (contentEl) {
+      const cs = window.getComputedStyle(contentEl)
+      matchStyle = {
+        marginTop: cs.marginTop,
+        fontSize: cs.fontSize,
+        fontWeight: cs.fontWeight,
+        fontFamily: cs.fontFamily,
+        fontStyle: cs.fontStyle,
+        letterSpacing: cs.letterSpacing,
+        lineHeight: cs.lineHeight,
+        textAlign: cs.textAlign as React.CSSProperties["textAlign"],
+        color: cs.color,
+        textTransform: cs.textTransform as React.CSSProperties["textTransform"],
+        textDecoration: cs.textDecoration,
+      }
+    }
+
     return (
       <InlineTextarea
         maxLength={maxLength}
@@ -1155,6 +1170,7 @@ export function InvitationPreview() {
         onDraftChange={setEditingDraft}
         onCommit={commitEdit}
         onCancel={cancelEdit}
+        matchStyle={matchStyle}
       />
     )
   }
@@ -1169,7 +1185,6 @@ export function InvitationPreview() {
   const commonItemProps = (id: string) => ({
     isSelected: selectedId === id,
     isEditing: editingField === id,
-    isPlaceholder: false,
     isSeparator: isSeparatorId(id),
     onSelect: handleSelect,
     onEdit: handleEdit,
