@@ -33,7 +33,7 @@ export const Route = createFileRoute("/venue/templates")({
     const { isReady } = useAuthStore.getState()
     if (!isReady) return
     const { userType } = useGlobalStore.getState()
-    if (userType !== "venue") {
+    if (userType !== "venue" && userType !== "planner") {
       throw redirect({ to: "/", replace: true })
     }
   },

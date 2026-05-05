@@ -347,6 +347,8 @@
   "onboarding.planner.desc": "Organizuję wesela dla wielu par",
   "onboarding.venue.title": "Sala weselna",
   "onboarding.venue.desc": "Oferuję gotowe układy sal dla par",
+  "onboarding.display_name": "Nazwa wyświetlana",
+  "onboarding.display_name_placeholder": "Twoje imię lub nazwa firmy",
   "onboarding.saving": "Zapisywanie...",
 
   "upgrade.title": "Ulepsz swoje konto",

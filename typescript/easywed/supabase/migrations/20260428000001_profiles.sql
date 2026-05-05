@@ -26,15 +26,17 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- Backfill: create profile rows for any auth users that existed before this
+-- migration (the trigger only fires for new sign-ups).
+insert into public.profiles (id)
+select id from auth.users
+on conflict (id) do nothing;
+
 alter table public.profiles enable row level security;
 
--- Own full profile is readable; other users' rows expose only display_name
--- (needed for template attribution in the couple-side template browser).
-create policy "users can view their own profile"
-  on public.profiles for select
-  using (auth.uid() = id);
-
-create policy "authenticated users can read display names"
+-- Any authenticated user can read any profile row (needed so the template
+-- browser can display venue display_names). user_type is not sensitive data.
+create policy "authenticated users can read profiles"
   on public.profiles for select
   using (auth.role() = 'authenticated');
 

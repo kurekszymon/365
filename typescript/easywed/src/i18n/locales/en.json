@@ -335,6 +335,8 @@
   "onboarding.planner.desc": "Managing weddings for multiple couples",
   "onboarding.venue.title": "Venue provider",
   "onboarding.venue.desc": "Offering hall layouts and presets to couples",
+  "onboarding.display_name": "Display name",
+  "onboarding.display_name_placeholder": "Your name or business name",
   "onboarding.saving": "Saving...",
 
   "upgrade.title": "Upgrade your account",

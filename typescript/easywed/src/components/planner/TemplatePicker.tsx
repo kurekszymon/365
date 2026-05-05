@@ -11,6 +11,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { usePlannerStore } from "@/stores/planner.store"
+import { useViewStore } from "@/stores/view.store"
+import { clampGridSpacing } from "@/components/planner/Canvas/utils"
 
 type TemplateRow = {
   id: string
@@ -32,6 +34,10 @@ export function TemplatePicker({ open, onClose }: Props) {
   const { updateHall, saveHall } = usePlannerStore((s) => ({
     updateHall: s.updateHall,
     saveHall: s.saveHall,
+  }))
+  const { gridSpacing, setGridSpacing } = useViewStore((s) => ({
+    gridSpacing: s.gridSpacing,
+    setGridSpacing: s.setGridSpacing,
   }))
 
   const [templates, setTemplates] = useState<Array<TemplateRow>>([])
@@ -57,22 +63,25 @@ export function TemplatePicker({ open, onClose }: Props) {
         return
       }
 
-      // Resolve creator display names.
-      const rows = await Promise.all(
-        data.map(async (tmpl) => {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("display_name")
-            .eq("id", tmpl.creator_id)
-            .maybeSingle()
-          return {
-            ...tmpl,
-            width: Number(tmpl.width),
-            height: Number(tmpl.height),
-            creator_name: profile?.display_name ?? null,
-          }
-        })
+      // Resolve creator display names in one batched query.
+      const creatorIds = [
+        ...new Set(data.map((template) => template.creator_id)),
+      ]
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", creatorIds)
+
+      const nameById = new Map(
+        (profiles ?? []).map((p) => [p.id, p.display_name])
       )
+
+      const rows = data.map((tmpl) => ({
+        ...tmpl,
+        width: Number(tmpl.width),
+        height: Number(tmpl.height),
+        creator_name: nameById.get(tmpl.creator_id) ?? null,
+      }))
 
       setTemplates(rows)
       setLoading(false)
@@ -93,6 +102,12 @@ export function TemplatePicker({ open, onClose }: Props) {
       height: selected.height,
     })
     saveHall()
+    const clamped = clampGridSpacing(
+      gridSpacing,
+      selected.width,
+      selected.height
+    )
+    if (clamped !== gridSpacing) setGridSpacing(clamped)
     setConfirmOpen(false)
     setSelected(null)
     onClose()

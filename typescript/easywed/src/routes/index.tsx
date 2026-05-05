@@ -91,7 +91,11 @@ function Home() {
           <div className="text-center">
             <h1 className="text-3xl font-bold tracking-tight">EasyWed</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              {isCouple ? t("weddings.couple_empty") : t("weddings.subtitle")}
+              {isCouple && weddings.length > 1
+                ? t("weddings.couple_multiple")
+                : isCouple
+                  ? t("weddings.couple_empty")
+                  : t("weddings.subtitle")}
             </p>
           </div>
 
@@ -109,9 +113,6 @@ function Home() {
             ) : weddings.length === 0 ? null : isCouple &&
               weddings.length > 1 ? (
               <>
-                <p className="text-center text-sm text-muted-foreground">
-                  {t("weddings.couple_multiple")}
-                </p>
                 {weddings.map((wedding) => (
                   <div
                     key={wedding.id}

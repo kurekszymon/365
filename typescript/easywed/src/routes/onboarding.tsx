@@ -9,6 +9,8 @@ import { supabase } from "@/lib/supabase"
 import { useAuthStore } from "@/stores/auth.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Field, FieldLabel } from "@/components/ui/field"
 
 export const Route = createFileRoute("/onboarding")({
   beforeLoad: () => {
@@ -64,6 +66,7 @@ function Onboarding() {
   const session = useAuthStore((s) => s.session)
   const setUserType = useGlobalStore((s) => s.setUserType)
   const [selected, setSelected] = useState<UserType | null>(null)
+  const [displayName, setDisplayName] = useState("")
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -74,7 +77,10 @@ function Onboarding() {
 
     const { error } = await supabase
       .from("profiles")
-      .update({ user_type: selected })
+      .update({
+        user_type: selected,
+        display_name: displayName.trim() || null,
+      })
       .eq("id", session.user.id)
 
     if (error) {
@@ -129,6 +135,18 @@ function Onboarding() {
             </button>
           ))}
         </div>
+
+        <Field>
+          <FieldLabel htmlFor="onboarding-name">
+            {t("onboarding.display_name")}
+          </FieldLabel>
+          <Input
+            id="onboarding-name"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            placeholder={t("onboarding.display_name_placeholder")}
+          />
+        </Field>
 
         {saveError && <p className="text-sm text-destructive">{saveError}</p>}
 
