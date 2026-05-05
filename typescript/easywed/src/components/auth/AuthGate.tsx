@@ -7,13 +7,7 @@ import { supabase } from "@/lib/supabase"
 
 // Routes that render immediately without waiting for session hydration.
 // Auth state still hydrates in the background for opportunistic use.
-const PUBLIC_PATHS = [
-  "/login",
-  "/auth/callback",
-  "/invitations",
-  "/onboarding",
-  "/upgrade",
-]
+const PUBLIC_PATHS = ["/login", "/auth/callback", "/invitations"]
 
 async function loadProfile(userId: string) {
   const { data, error } = await supabase
@@ -68,7 +62,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       if (nextSession?.user.id) {
         await loadProfile(nextSession.user.id)
       } else {
-        useGlobalStore.getState().setUserType(null)
+        // undefined = unknown, not null = "needs onboarding". Using null here
+        // would cause requireOnboarded() to redirect to /onboarding if the
+        // next SIGNED_IN event hits a transient loadProfile error.
+        useGlobalStore.getState().setUserType(undefined)
       }
       if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
         void router.invalidate()

@@ -17,7 +17,7 @@ function Upgrade() {
   const userType = useGlobalStore((s) => s.userType)
 
   const handleContinue = () => {
-    if (userType === "venue" || userType === "planner") {
+    if (userType === "venue") {
       void navigate({ to: "/venue/templates", replace: true })
     } else {
       void navigate({ to: "/", replace: true })

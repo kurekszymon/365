@@ -3,13 +3,18 @@
 -- 20260418000002), so this security-definer function bypasses that restriction
 -- safely — it validates ownership and membership before making any changes.
 create function public.transfer_wedding_ownership(_wedding_id uuid, _to_user_id uuid)
-returns void language plpgsql security definer as $$
+returns void language plpgsql security definer
+set search_path = public
+as $$
 begin
   if _to_user_id = auth.uid() then
     raise exception 'cannot transfer ownership to yourself';
   end if;
 
-  if (select owner_id from public.weddings where id = _wedding_id) is distinct from auth.uid() then
+  -- FOR UPDATE serializes concurrent transfers: a second caller for the same
+  -- wedding blocks here until the first transaction commits, preventing both
+  -- from passing the ownership check before either UPDATE runs.
+  if (select owner_id from public.weddings where id = _wedding_id for update) is distinct from auth.uid() then
     raise exception 'not the owner';
   end if;
 

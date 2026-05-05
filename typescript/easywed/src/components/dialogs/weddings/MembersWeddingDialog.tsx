@@ -51,7 +51,7 @@ type MemberAccess = {
 
 type TransferState =
   | { kind: "idle" }
-  | { kind: "confirm"; memberId: string; alreadyHasWedding: boolean }
+  | { kind: "confirm"; memberId: string }
   | { kind: "transferring" }
 
 export const WeddingMembersDialog = () => {
@@ -202,21 +202,8 @@ export const WeddingMembersDialog = () => {
     }
   }
 
-  const handleTransferClick = async (member: MemberAccess) => {
-    if (!weddingId) return
-
-    // Check whether the target already has a wedding (owns one or is a couple
-    // with an existing wedding). We check wedding ownership as a proxy.
-    const { count } = await supabase
-      .from("weddings")
-      .select("id", { count: "exact", head: true })
-      .eq("owner_id", member.user_id)
-
-    setTransferState({
-      kind: "confirm",
-      memberId: member.user_id,
-      alreadyHasWedding: (count ?? 0) > 0,
-    })
+  const handleTransferClick = (member: MemberAccess) => {
+    setTransferState({ kind: "confirm", memberId: member.user_id })
   }
 
   const handleTransferConfirm = async () => {
@@ -384,7 +371,7 @@ export const WeddingMembersDialog = () => {
                       </span>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      {member.role === "editor" &&
+                      {member.role !== "owner" &&
                         member.user_id !== session?.user.id && (
                           <Button
                             size="sm"
@@ -434,9 +421,7 @@ export const WeddingMembersDialog = () => {
             <DialogTitle>{t("members.transfer_confirm_title")}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            {transferState.kind === "confirm" && transferState.alreadyHasWedding
-              ? t("members.transfer_confirm_has_wedding")
-              : t("members.transfer_confirm")}
+            {t("members.transfer_confirm")}
           </p>
           <DialogFooter>
             <Button
