@@ -270,3 +270,18 @@ export const softDeleteFixture = async (id: string) => {
     .eq("id", id)
   if (error) log("softDeleteFixture", error)
 }
+
+export const transferWeddingOwnership = async (
+  weddingId: string,
+  toUserId: string
+): Promise<boolean> => {
+  const { error } = await supabase.rpc("transfer_wedding_ownership", {
+    _wedding_id: weddingId,
+    _to_user_id: toUserId,
+  })
+  if (error) {
+    log("transferWeddingOwnership", error)
+    return false
+  }
+  return true
+}

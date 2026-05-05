@@ -138,6 +138,136 @@ export type Database = {
           },
         ]
       }
+      hall_template_fixtures: {
+        Row: {
+          height: number
+          id: string
+          name: string
+          pos_x: number
+          pos_y: number
+          rotation: number
+          shape: string
+          template_id: string
+          width: number
+        }
+        Insert: {
+          height: number
+          id?: string
+          name?: string
+          pos_x: number
+          pos_y: number
+          rotation?: number
+          shape: string
+          template_id: string
+          width: number
+        }
+        Update: {
+          height?: number
+          id?: string
+          name?: string
+          pos_x?: number
+          pos_y?: number
+          rotation?: number
+          shape?: string
+          template_id?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hall_template_fixtures_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "hall_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hall_template_tables: {
+        Row: {
+          capacity: number
+          height: number
+          id: string
+          name: string
+          pos_x: number
+          pos_y: number
+          rotation: number
+          shape: string
+          template_id: string
+          width: number
+        }
+        Insert: {
+          capacity: number
+          height: number
+          id?: string
+          name?: string
+          pos_x: number
+          pos_y: number
+          rotation?: number
+          shape: string
+          template_id: string
+          width: number
+        }
+        Update: {
+          capacity?: number
+          height?: number
+          id?: string
+          name?: string
+          pos_x?: number
+          pos_y?: number
+          rotation?: number
+          shape?: string
+          template_id?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hall_template_tables_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "hall_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hall_templates: {
+        Row: {
+          created_at: string
+          creator_id: string
+          description: string | null
+          hall_preset: string
+          height: number
+          id: string
+          is_public: boolean
+          name: string
+          updated_at: string
+          width: number
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          hall_preset: string
+          height: number
+          id?: string
+          is_public?: boolean
+          name?: string
+          updated_at?: string
+          width: number
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          hall_preset?: string
+          height?: number
+          id?: string
+          is_public?: boolean
+          name?: string
+          updated_at?: string
+          width?: number
+        }
+        Relationships: []
+      }
       halls: {
         Row: {
           created_at: string
@@ -222,6 +352,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+          user_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_type?: string | null
+        }
+        Relationships: []
       }
       reminders: {
         Row: {
@@ -425,6 +579,10 @@ export type Database = {
       claim_wedding_invitation: { Args: { _token: string }; Returns: string }
       guest_names_valid: { Args: { names: string[] }; Returns: boolean }
       is_wedding_member: { Args: { _wedding_id: string }; Returns: boolean }
+      transfer_wedding_ownership: {
+        Args: { _to_user_id: string; _wedding_id: string }
+        Returns: undefined
+      }
       wedding_role: { Args: { _wedding_id: string }; Returns: string }
     }
     Enums: {

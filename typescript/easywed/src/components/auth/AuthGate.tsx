@@ -1,11 +1,31 @@
 import { useEffect } from "react"
 import { useRouter, useRouterState } from "@tanstack/react-router"
+import type { UserType } from "@/stores/global.store"
 import { useAuthStore } from "@/stores/auth.store"
+import { useGlobalStore } from "@/stores/global.store"
 import { supabase } from "@/lib/supabase"
 
 // Routes that render immediately without waiting for session hydration.
 // Auth state still hydrates in the background for opportunistic use.
-const PUBLIC_PATHS = ["/login", "/auth/callback", "/invitations"]
+const PUBLIC_PATHS = [
+  "/login",
+  "/auth/callback",
+  "/invitations",
+  "/onboarding",
+  "/upgrade",
+]
+
+async function loadProfile(userId: string) {
+  const { data } = await supabase
+    .from("profiles")
+    .select("user_type, display_name")
+    .eq("id", userId)
+    .maybeSingle()
+
+  const setUserType = useGlobalStore.getState().setUserType
+  // null means row exists but user_type not set (pre-onboarding)
+  setUserType((data?.user_type as UserType | null | undefined) ?? null)
+}
 
 // Hydrates the Supabase session into the auth store and re-runs router
 // matches on any auth change. Route-level beforeLoad handlers own the
@@ -21,7 +41,12 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     supabase.auth
       .getSession()
-      .then(({ data }) => setSession(data.session))
+      .then(async ({ data }) => {
+        setSession(data.session)
+        if (data.session?.user.id) {
+          await loadProfile(data.session.user.id)
+        }
+      })
       .catch((err: unknown) => console.error("[auth] getSession failed", err))
       .finally(() => {
         setReady(true)
@@ -30,8 +55,13 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+    } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
       setSession(nextSession)
+      if (nextSession?.user.id) {
+        await loadProfile(nextSession.user.id)
+      } else {
+        useGlobalStore.getState().setUserType(null)
+      }
       if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
         void router.invalidate()
       }

@@ -4,13 +4,15 @@
 
 - invitations: make duplicate actually duplicate, apply proper styles/fontsizes to duplicated field
 - fix removing a field iwth escape by loosing check for focused element
+- initialize user types (couple/venue/planner) split
 
 ### 04.05
 
-- improve text field editing
+- improved text field editing
 - removed redundant files
 - fixed InlineTextarea styles
 - TODO: deslopify invitations
+- ~~TODO: make duplicate actually duplicate~~
 
 ### 03.05
 

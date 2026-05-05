@@ -325,5 +325,62 @@
   "invitations.order_success_detail": "We'll review your design and be in touch soon.",
   "invitations.order_error": "Something went wrong. Please try again.",
 
-  "planner.back": "Back"
+  "planner.back": "Back",
+
+  "onboarding.title": "Welcome to EasyWed",
+  "onboarding.subtitle": "What best describes you?",
+  "onboarding.couple.title": "We're a couple",
+  "onboarding.couple.desc": "Planning our own wedding",
+  "onboarding.planner.title": "Wedding planner",
+  "onboarding.planner.desc": "Managing weddings for multiple couples",
+  "onboarding.venue.title": "Venue provider",
+  "onboarding.venue.desc": "Offering hall layouts and presets to couples",
+  "onboarding.saving": "Saving...",
+
+  "upgrade.title": "Upgrade your account",
+  "upgrade.subtitle": "Planner and venue accounts will require a paid subscription.",
+  "upgrade.coming_soon": "Payments aren't set up yet — you're in for free during beta.",
+  "upgrade.continue": "Continue for free",
+
+  "user_type.couple": "Couple",
+  "user_type.planner": "Wedding planner",
+  "user_type.venue": "Venue",
+
+  "weddings.couple_empty": "You don't have a wedding yet.",
+  "weddings.couple_multiple": "You have multiple weddings. Choose one or delete extras.",
+  "weddings.couple_create": "Create your wedding",
+  "weddings.couple_delete": "Delete",
+
+  "venue.templates.title": "Your hall templates",
+  "venue.templates.empty": "No templates yet. Create your first one.",
+  "venue.templates.create": "New template",
+  "venue.templates.delete": "Delete",
+  "venue.templates.delete_confirm": "Delete this template?",
+  "venue.templates.tables_count": "{{count}} tables",
+  "venue.templates.tables_count_one": "{{count}} table",
+  "venue.templates.fixtures_count": "{{count}} fixtures",
+  "venue.templates.fixtures_count_one": "{{count}} fixture",
+  "venue.templates.loading": "Loading templates...",
+  "venue.templates.create_title": "Create hall template",
+  "venue.templates.name_placeholder": "Grand Ballroom",
+  "venue.templates.description_placeholder": "Optional description",
+  "venue.templates.description": "Description",
+  "venue.templates.visibility": "Visibility",
+  "venue.templates.public": "Public",
+  "venue.templates.private": "Private (only you)",
+
+  "templates.browse": "Browse venue presets",
+  "templates.dialog_title": "Browse hall presets",
+  "templates.empty": "No public hall presets available yet.",
+  "templates.apply": "Apply preset",
+  "templates.by_venue": "by {{name}}",
+  "templates.dimensions": "{{width}} × {{height}} m",
+  "templates.apply_confirm": "Apply this preset?",
+  "templates.apply_confirm_detail": "This will replace your current hall shape and dimensions. Tables and fixtures are not affected.",
+
+  "members.transfer": "Transfer ownership",
+  "members.transfer_confirm_title": "Transfer ownership",
+  "members.transfer_confirm": "Transfer ownership to this member? You'll become an editor.",
+  "members.transfer_confirm_has_wedding": "This person already has a wedding. They'll receive this one as an additional wedding. Continue?",
+  "members.transferring": "Transferring..."
 }

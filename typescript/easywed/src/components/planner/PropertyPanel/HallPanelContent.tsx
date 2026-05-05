@@ -1,6 +1,8 @@
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
-import { InfoIcon } from "lucide-react"
+import { InfoIcon, LayoutTemplateIcon } from "lucide-react"
+import { TemplatePicker } from "../TemplatePicker"
 import { clampGridSpacing, validSpacings } from "../Canvas/utils"
 import { DimensionsRectangle } from "./fields/DimensionsRectangle"
 
@@ -17,6 +19,7 @@ import {
 
 export const HallPanelContent = () => {
   const { t } = useTranslation()
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
 
   const { preset, dimensions, updateHall, saveHall } = usePlannerStore(
     useShallow((state) => ({
@@ -46,6 +49,28 @@ export const HallPanelContent = () => {
 
   return (
     <div className="flex flex-col gap-4">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => setTemplatePickerOpen(true)}
+          >
+            <LayoutTemplateIcon />
+            {t("templates.browse")}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          {t("templates.dialog_title")}
+        </TooltipContent>
+      </Tooltip>
+
+      <TemplatePicker
+        open={templatePickerOpen}
+        onClose={() => setTemplatePickerOpen(false)}
+      />
+
       {preset === "rectangle" && (
         <DimensionsRectangle
           width={dimensions.width}
