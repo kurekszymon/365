@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, redirect } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { PlusIcon, TrashIcon } from "lucide-react"
 import type { HallPreset } from "@/stores/planner.store"
 import { requireAuth, requireOnboarded } from "@/lib/auth/guards"
 import { useAuthStore } from "@/stores/auth.store"
+import { useGlobalStore } from "@/stores/global.store"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import {
@@ -28,6 +29,13 @@ export const Route = createFileRoute("/venue/templates")({
   beforeLoad: () => {
     requireAuth("/venue/templates")
     requireOnboarded()
+
+    const { isReady } = useAuthStore.getState()
+    if (!isReady) return
+    const { userType } = useGlobalStore.getState()
+    if (userType !== "venue") {
+      throw redirect({ to: "/", replace: true })
+    }
   },
   component: VenueTemplates,
 })
@@ -370,6 +378,9 @@ async function fetchTemplates(
 ) {
   setLoading(true)
 
+  // Fetch templates together with their child-row counts in three parallel
+  // requests (1 template list + 1 table counts + 1 fixture counts) instead
+  // of 1 + 2*N individual round-trips.
   const { data, error } = await supabase
     .from("hall_templates")
     .select(
@@ -384,28 +395,48 @@ async function fetchTemplates(
     return
   }
 
-  const withCounts = await Promise.all(
-    data.map(async (tmpl) => {
-      const [tablesRes, fixturesRes] = await Promise.all([
-        supabase
-          .from("hall_template_tables")
-          .select("id", { count: "exact", head: true })
-          .eq("template_id", tmpl.id),
-        supabase
-          .from("hall_template_fixtures")
-          .select("id", { count: "exact", head: true })
-          .eq("template_id", tmpl.id),
-      ])
-      return {
-        ...tmpl,
-        width: Number(tmpl.width),
-        height: Number(tmpl.height),
-        table_count: tablesRes.count ?? 0,
-        fixture_count: fixturesRes.count ?? 0,
-      }
-    })
-  )
+  if (data.length === 0) {
+    setTemplates([])
+    setLoading(false)
+    return
+  }
 
-  setTemplates(withCounts)
+  const ids = data.map((t) => t.id)
+
+  const [tablesRes, fixturesRes] = await Promise.all([
+    supabase
+      .from("hall_template_tables")
+      .select("template_id")
+      .in("template_id", ids),
+    supabase
+      .from("hall_template_fixtures")
+      .select("template_id")
+      .in("template_id", ids),
+  ])
+
+  const tableCounts = new Map<string, number>()
+  const fixtureCounts = new Map<string, number>()
+  for (const row of tablesRes.data ?? []) {
+    tableCounts.set(
+      row.template_id,
+      (tableCounts.get(row.template_id) ?? 0) + 1
+    )
+  }
+  for (const row of fixturesRes.data ?? []) {
+    fixtureCounts.set(
+      row.template_id,
+      (fixtureCounts.get(row.template_id) ?? 0) + 1
+    )
+  }
+
+  setTemplates(
+    data.map((tmpl) => ({
+      ...tmpl,
+      width: Number(tmpl.width),
+      height: Number(tmpl.height),
+      table_count: tableCounts.get(tmpl.id) ?? 0,
+      fixture_count: fixtureCounts.get(tmpl.id) ?? 0,
+    }))
+  )
   setLoading(false)
 }

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { CalendarIcon, LandmarkIcon, UsersIcon } from "lucide-react"
 import type { UserType } from "@/stores/global.store"
@@ -13,6 +13,15 @@ import { Button } from "@/components/ui/button"
 export const Route = createFileRoute("/onboarding")({
   beforeLoad: () => {
     requireAuth("/onboarding")
+
+    // Prevent already-onboarded users from self-upgrading their account type
+    // by revisiting this route directly.
+    const { isReady } = useAuthStore.getState()
+    if (!isReady) return
+    const { userType } = useGlobalStore.getState()
+    if (userType != null) {
+      throw redirect({ to: "/", replace: true })
+    }
   },
   component: Onboarding,
 })
@@ -56,10 +65,12 @@ function Onboarding() {
   const setUserType = useGlobalStore((s) => s.setUserType)
   const [selected, setSelected] = useState<UserType | null>(null)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const handleContinue = async () => {
     if (!selected || !session || saving) return
     setSaving(true)
+    setSaveError(null)
 
     const { error } = await supabase
       .from("profiles")
@@ -68,6 +79,7 @@ function Onboarding() {
 
     if (error) {
       console.error("[onboarding] failed to save user type", error)
+      setSaveError(error.message)
       setSaving(false)
       return
     }
@@ -117,6 +129,8 @@ function Onboarding() {
             </button>
           ))}
         </div>
+
+        {saveError && <p className="text-sm text-destructive">{saveError}</p>}
 
         <Button onClick={handleContinue} disabled={!selected || saving}>
           {saving ? t("onboarding.saving") : t("common.create")}

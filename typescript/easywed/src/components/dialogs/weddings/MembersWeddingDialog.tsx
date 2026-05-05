@@ -59,6 +59,7 @@ export const WeddingMembersDialog = () => {
   const opened = useDialogStore((s) => s.opened)
   const close = useDialogStore((s) => s.close)
   const weddingId = useGlobalStore((s) => s.weddingId)
+  const setGlobalRole = useGlobalStore((s) => s.setRole)
   const session = useAuthStore((s) => s.session)
 
   const [role, setRole] = useState<InviteRole>("editor")
@@ -246,6 +247,9 @@ export const WeddingMembersDialog = () => {
       setMembers,
       setError
     )
+    // Demote the current user in the global store so owner-only controls
+    // (e.g. the Members button) disappear immediately without a page reload.
+    setGlobalRole("editor")
     setTransferState({ kind: "idle" })
   }
 

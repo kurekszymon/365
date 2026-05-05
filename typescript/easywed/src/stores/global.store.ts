@@ -30,6 +30,7 @@ type Action = {
   setName: (name?: string) => void
   setDate: (date?: Date) => void
   setUserType: (userType: UserType | null) => void
+  setRole: (role: WeddingRole | undefined) => void
 
   setPan: (pan: Pan) => void
   setScale: (scale: number) => void
@@ -61,6 +62,7 @@ export const useGlobalStore = create<State & Action>((set) => ({
     })
   },
   setUserType: (userType) => set({ userType }),
+  setRole: (role) => set({ role }),
 
   setPan: (pan) => set((state) => ({ viewport: { ...state.viewport, pan } })),
   setScale: (scale) =>

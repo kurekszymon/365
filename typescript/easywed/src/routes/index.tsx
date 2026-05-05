@@ -32,6 +32,7 @@ type WeddingRow = {
   id: string
   name: string
   date: string | null
+  owner_id: string
 }
 
 function Home() {
@@ -49,7 +50,7 @@ function Home() {
 
     supabase
       .from("weddings")
-      .select("id, name, date")
+      .select("id, name, date, owner_id")
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
         if (error) console.error(error)
@@ -123,13 +124,15 @@ function Home() {
                     >
                       {wedding.name || t("wedding.defaults.name")}
                     </Link>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleDeleteWedding(wedding.id)}
-                    >
-                      {t("weddings.couple_delete")}
-                    </Button>
+                    {wedding.owner_id === session?.user.id && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleDeleteWedding(wedding.id)}
+                      >
+                        {t("weddings.couple_delete")}
+                      </Button>
+                    )}
                   </div>
                 ))}
               </>

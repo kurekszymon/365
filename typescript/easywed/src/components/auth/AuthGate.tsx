@@ -16,11 +16,19 @@ const PUBLIC_PATHS = [
 ]
 
 async function loadProfile(userId: string) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("profiles")
     .select("user_type, display_name")
     .eq("id", userId)
     .maybeSingle()
+
+  // On a transient error keep userType undefined (not null) so the caller
+  // doesn't misinterpret the failure as "needs onboarding" and wipe an
+  // existing role by redirecting an already-onboarded user to /onboarding.
+  if (error) {
+    console.error("[auth] loadProfile failed", error)
+    return
+  }
 
   const setUserType = useGlobalStore.getState().setUserType
   // null means row exists but user_type not set (pre-onboarding)
