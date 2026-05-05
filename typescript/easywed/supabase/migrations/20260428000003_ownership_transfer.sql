@@ -5,6 +5,10 @@
 create function public.transfer_wedding_ownership(_wedding_id uuid, _to_user_id uuid)
 returns void language plpgsql security definer as $$
 begin
+  if _to_user_id = auth.uid() then
+    raise exception 'cannot transfer ownership to yourself';
+  end if;
+
   if (select owner_id from public.weddings where id = _wedding_id) is distinct from auth.uid() then
     raise exception 'not the owner';
   end if;

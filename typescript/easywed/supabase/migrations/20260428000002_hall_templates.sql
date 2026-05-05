@@ -64,7 +64,13 @@ create policy "anyone can view public hall templates"
 
 create policy "creators can insert hall templates"
   on public.hall_templates for insert
-  with check (creator_id = auth.uid());
+  with check (
+    creator_id = auth.uid()
+    and exists (
+      select 1 from public.profiles
+      where id = auth.uid() and user_type in ('venue', 'planner')
+    )
+  );
 
 create policy "creators can update their hall templates"
   on public.hall_templates for update

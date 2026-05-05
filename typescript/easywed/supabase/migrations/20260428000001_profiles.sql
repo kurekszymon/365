@@ -28,9 +28,15 @@ create trigger on_auth_user_created
 
 alter table public.profiles enable row level security;
 
+-- Own full profile is readable; other users' rows expose only display_name
+-- (needed for template attribution in the couple-side template browser).
 create policy "users can view their own profile"
   on public.profiles for select
   using (auth.uid() = id);
+
+create policy "authenticated users can read display names"
+  on public.profiles for select
+  using (auth.role() = 'authenticated');
 
 create policy "users can update their own profile"
   on public.profiles for update
