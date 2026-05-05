@@ -4,6 +4,7 @@
   "scripts": {
     "bench": "bun src/benchmark.ts",
     "bench:mitata": "bun src/benchmark-mitata.ts",
+    "bench:surprises": "bun src/benchmark-mitata-surprises.ts",
     "sizes": "bun scripts/bundle-sizes.ts",
     "typecheck": "tsc --noEmit",
     "typecheck:tsc": "tsc --noEmit --project tsconfig.tsc.json"
@@ -15,3 +16,5 @@
     "typescript": "^5.8.0"
   }
 }
+
+// claude --resume 9abdf940-e37b-47f8-8dcb-d79ce4b8f5ef                                                                                                                                                           
