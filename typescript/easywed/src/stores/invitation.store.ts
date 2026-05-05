@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import i18n from "@/i18n"
 import {
+  TEMPLATE_FIELD_STYLES,
   isFieldKey,
   isSeparatorId,
   isTxtId,
@@ -19,7 +20,7 @@ export type InvitationSide = "front" | "back"
 export type SeparatorStyle = "line" | "heart" | "flower" | "star" | "diamond"
 export type SeparatorConfig = {
   widthPct?: number // 20–100, defaults to 100
-  thicknessPx?: number // 0.5 | 1 | 2 | 3, defaults to 1
+  thicknessPx?: number // 0.5 | 1 | 2 | 3, defaults to 2
 }
 export type FieldFormat = {
   bold?: boolean
@@ -56,7 +57,7 @@ export interface InvitationDesign {
   template: InvitationTemplate
   colorScheme: InvitationColorScheme
   fontId: string
-  fieldFonts: Partial<Record<keyof InvitationTexts, string>>
+  fieldFonts: Partial<Record<string, string>>
   fieldFormats: Partial<Record<string, FieldFormat>>
   separatorStyles: Record<string, SeparatorStyle>
   separatorConfigs: Record<string, SeparatorConfig>
@@ -119,7 +120,7 @@ type Action = {
   setSeparatorStyle: (sepId: string, style: SeparatorStyle) => void
   setSeparatorConfig: (sepId: string, config: Partial<SeparatorConfig>) => void
   removeField: (id: string) => void
-  setFieldFont: (key: keyof InvitationTexts, fontId: string | null) => void
+  setFieldFont: (key: string, fontId: string | null) => void
   setFieldFormat: (key: string, format: Partial<FieldFormat>) => void
   undo: () => void
   redo: () => void
@@ -426,6 +427,32 @@ export const useInvitationStore = create<State & Action>((set) => ({
           ...design.textBlocks,
           [newId]: s.design.texts[id],
         }
+        // Seed the new txtId's fieldFormats with the effective style (template
+        // defaults merged with user overrides) so the duplicate visually matches the original.
+        const templateStyle = TEMPLATE_FIELD_STYLES[s.design.template][id]
+        if (templateStyle && Object.keys(templateStyle).length > 0) {
+          design.fieldFormats = {
+            ...design.fieldFormats,
+            [newId]: { ...templateStyle },
+          }
+        }
+      }
+      // Copy explicit fieldFormats (bold/italic/etc.) for all types; for isFieldKey
+      // the explicit format merges on top of the template-default fontSize above.
+      if (s.design.fieldFormats[id]) {
+        design.fieldFormats = {
+          ...design.fieldFormats,
+          [newId]: {
+            ...(design.fieldFormats[newId] ?? {}),
+            ...s.design.fieldFormats[id],
+          },
+        }
+      }
+      if (s.design.fieldFonts[id]) {
+        design.fieldFonts = {
+          ...design.fieldFonts,
+          [newId]: s.design.fieldFonts[id],
+        }
       }
       return withHistory(s, () => ({ design }))
     }),
@@ -434,11 +461,15 @@ export const useInvitationStore = create<State & Action>((set) => ({
     set((s) => {
       const fieldSides = omitKey(s.design.fieldSides, id)
       const fieldPositions = omitKey(s.design.fieldPositions, id)
+      const fieldFonts = omitKey(s.design.fieldFonts, id)
+      const fieldFormats = omitKey(s.design.fieldFormats, id)
 
       return withHistory(s, () => ({
         design: {
           ...s.design,
           fieldOrder: s.design.fieldOrder.filter((x) => x !== id),
+          fieldFonts,
+          fieldFormats,
           fieldSides,
           fieldPositions,
         },

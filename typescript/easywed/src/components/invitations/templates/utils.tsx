@@ -15,17 +15,20 @@ export const salutationLine = (
 
 export function getFormatStyle(
   key: string,
-  fieldFormats?: Partial<Record<string, FieldFormat>>
+  fieldFormats?: Partial<Record<string, FieldFormat>>,
+  defaultStyle?: Partial<FieldFormat>
 ): React.CSSProperties {
   const fmt = fieldFormats?.[key]
+  const bold = fmt?.bold ?? defaultStyle?.bold
+  const italic = fmt?.italic ?? defaultStyle?.italic
+  const underline = fmt?.underline ?? defaultStyle?.underline
+  const fontSize = fmt?.fontSize ?? defaultStyle?.fontSize
   return {
     whiteSpace: "pre-wrap" as const,
-    ...(fmt?.bold !== undefined && { fontWeight: fmt.bold ? 700 : 400 }),
-    ...(fmt?.italic !== undefined && {
-      fontStyle: fmt.italic ? "italic" : "normal",
-    }),
-    ...(fmt?.underline && { textDecoration: "underline" }),
-    ...(fmt?.fontSize !== undefined && { fontSize: `${fmt.fontSize}px` }),
+    ...(bold !== undefined && { fontWeight: bold ? 700 : 400 }),
+    ...(italic !== undefined && { fontStyle: italic ? "italic" : "normal" }),
+    ...(underline && { textDecoration: "underline" }),
+    ...(fontSize !== undefined && { fontSize: `${fontSize}px` }),
   }
 }
 

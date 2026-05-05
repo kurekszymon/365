@@ -4,7 +4,11 @@ import { getFormatStyle, renderSeparator, salutationLine } from "./utils"
 import type { TemplateProps } from "./types"
 import type { InvitationTexts } from "@/stores/invitation.store"
 import { COLOR_SCHEMES } from "@/lib/invitation/colorSchemes"
-import { isSeparatorId, isTxtId } from "@/lib/invitation/templates"
+import {
+  TEMPLATE_FIELD_STYLES,
+  isSeparatorId,
+  isTxtId,
+} from "@/lib/invitation/templates"
 
 export function ModernTemplate({
   texts,
@@ -29,14 +33,17 @@ export function ModernTemplate({
 
   function renderField(key: keyof InvitationTexts) {
     const ff = fieldFonts?.[key]
-    const fmt = getFormatStyle(key, fieldFormats)
+    const fmt = getFormatStyle(
+      key,
+      fieldFormats,
+      TEMPLATE_FIELD_STYLES.modern[key]
+    )
     switch (key) {
       case "headline":
         return texts.headline ? (
           <p
             style={{
               fontFamily: ff,
-              fontSize: "11px",
               letterSpacing: "0.2em",
               textTransform: "uppercase",
               color: c.muted,
@@ -54,7 +61,6 @@ export function ModernTemplate({
           <h1
             style={{
               fontFamily: ff,
-              fontSize: "52px",
               fontWeight: 700,
               lineHeight: 1.0,
               letterSpacing: "-0.02em",
@@ -72,7 +78,6 @@ export function ModernTemplate({
           <p
             style={{
               fontFamily: ff,
-              fontSize: "22px",
               fontWeight: 600,
               letterSpacing: "-0.01em",
               marginBottom: "4px",
@@ -88,7 +93,6 @@ export function ModernTemplate({
           <p
             style={{
               fontFamily: ff,
-              fontSize: "15px",
               color: c.muted,
               marginBottom: "16px",
               ...fmt,
@@ -103,7 +107,6 @@ export function ModernTemplate({
           <p
             style={{
               fontFamily: ff,
-              fontSize: "15px",
               fontWeight: 600,
               marginBottom: "2px",
               ...fmt,
@@ -118,7 +121,6 @@ export function ModernTemplate({
           <p
             style={{
               fontFamily: ff,
-              fontSize: "13px",
               color: c.muted,
               marginBottom: "16px",
               ...fmt,
@@ -133,7 +135,6 @@ export function ModernTemplate({
           <p
             style={{
               fontFamily: ff,
-              fontSize: "12px",
               color: c.muted,
               letterSpacing: "0.08em",
               textTransform: "uppercase",
@@ -150,7 +151,6 @@ export function ModernTemplate({
           <p
             style={{
               fontFamily: ff,
-              fontSize: "13px",
               color: c.accent,
               fontWeight: 500,
               marginBottom: "8px",
@@ -166,7 +166,6 @@ export function ModernTemplate({
           <p
             style={{
               fontFamily: ff,
-              fontSize: "13px",
               color: guestName ? c.text : c.muted,
               fontStyle: "italic",
               marginBottom: "8px",
@@ -182,7 +181,6 @@ export function ModernTemplate({
           <p
             style={{
               fontFamily: ff,
-              fontSize: "12px",
               color: c.muted,
               marginBottom: "8px",
               ...fmt,
@@ -242,6 +240,7 @@ export function ModernTemplate({
           const content = txt ? (
             <p
               style={{
+                fontFamily: fieldFonts?.[id],
                 fontSize: "14px",
                 color: c.text,
                 margin: "4px 0",

@@ -142,10 +142,14 @@ function validateDesign(raw: unknown): InvitationDesign | null {
     }
   }
 
-  const fieldFonts: Partial<Record<keyof InvitationTexts, string>> = {}
+  const fieldFonts: Partial<Record<string, string>> = {}
   if (isSafeObject(raw.fieldFonts)) {
     for (const [k, v] of Object.entries(raw.fieldFonts)) {
-      if (isFieldKey(k) && typeof v === "string" && VALID_FONT_IDS.has(v)) {
+      if (
+        (isFieldKey(k) || isTxtId(k)) &&
+        typeof v === "string" &&
+        VALID_FONT_IDS.has(v)
+      ) {
         fieldFonts[k] = v
       }
     }

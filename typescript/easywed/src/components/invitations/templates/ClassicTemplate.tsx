@@ -4,7 +4,11 @@ import { getFormatStyle, renderSeparator, salutationLine } from "./utils"
 import type { TemplateProps } from "./types"
 import type { InvitationTexts } from "@/stores/invitation.store"
 import { COLOR_SCHEMES } from "@/lib/invitation/colorSchemes"
-import { isSeparatorId, isTxtId } from "@/lib/invitation/templates"
+import {
+  TEMPLATE_FIELD_STYLES,
+  isSeparatorId,
+  isTxtId,
+} from "@/lib/invitation/templates"
 
 export function ClassicTemplate({
   texts,
@@ -29,7 +33,11 @@ export function ClassicTemplate({
 
   function renderField(key: keyof InvitationTexts) {
     const ff = fieldFonts?.[key]
-    const fmt = getFormatStyle(key, fieldFormats)
+    const fmt = getFormatStyle(
+      key,
+      fieldFormats,
+      TEMPLATE_FIELD_STYLES.classic[key]
+    )
     switch (key) {
       case "headline":
         return texts.headline ? (
@@ -37,7 +45,6 @@ export function ClassicTemplate({
             style={{
               fontFamily: ff,
               fontStyle: "italic",
-              fontSize: "15px",
               letterSpacing: "0.12em",
               color: c.muted,
               marginBottom: "12px",
@@ -54,7 +61,6 @@ export function ClassicTemplate({
           <h1
             style={{
               fontFamily: ff,
-              fontSize: "42px",
               fontWeight: 700,
               lineHeight: 1.1,
               marginBottom: "8px",
@@ -71,7 +77,6 @@ export function ClassicTemplate({
           <p
             style={{
               fontFamily: ff,
-              fontSize: "16px",
               letterSpacing: "0.08em",
               color: c.muted,
               marginTop: "8px",
@@ -87,7 +92,6 @@ export function ClassicTemplate({
           <p
             style={{
               fontFamily: ff,
-              fontSize: "14px",
               letterSpacing: "0.06em",
               color: c.muted,
               marginTop: "4px",
@@ -103,7 +107,6 @@ export function ClassicTemplate({
           <p
             style={{
               fontFamily: ff,
-              fontSize: "18px",
               fontWeight: 700,
               marginTop: "12px",
               ...fmt,
@@ -118,7 +121,6 @@ export function ClassicTemplate({
           <p
             style={{
               fontFamily: ff,
-              fontSize: "13px",
               color: c.muted,
               marginTop: "4px",
               ...fmt,
@@ -133,7 +135,6 @@ export function ClassicTemplate({
           <p
             style={{
               fontFamily: ff,
-              fontSize: "12px",
               color: c.muted,
               letterSpacing: "0.1em",
               textTransform: "uppercase",
@@ -150,7 +151,6 @@ export function ClassicTemplate({
           <p
             style={{
               fontFamily: ff,
-              fontSize: "13px",
               color: c.accent,
               marginTop: "4px",
               ...fmt,
@@ -167,7 +167,6 @@ export function ClassicTemplate({
               fontFamily: ff,
               marginTop: "16px",
               fontStyle: "italic",
-              fontSize: "14px",
               color: guestName ? c.text : c.muted,
               ...fmt,
             }}
@@ -182,7 +181,6 @@ export function ClassicTemplate({
             style={{
               fontFamily: ff,
               marginTop: "16px",
-              fontSize: "12px",
               color: c.muted,
               fontStyle: "italic",
               textAlign: "center",
@@ -254,6 +252,7 @@ export function ClassicTemplate({
             const content = txt ? (
               <p
                 style={{
+                  fontFamily: fieldFonts?.[id],
                   fontSize: "14px",
                   color: c.text,
                   margin: "4px 0",

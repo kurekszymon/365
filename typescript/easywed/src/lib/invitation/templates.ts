@@ -1,5 +1,6 @@
 import type { TFunction } from "i18next"
 import type {
+  FieldFormat,
   InvitationColorScheme,
   InvitationDesign,
   InvitationSide,
@@ -167,6 +168,53 @@ export const DEFAULT_FIELD_SIDES: Record<string, InvitationSide> = {
   rsvpEmail: "back",
   rsvpDeadline: "back",
   footer: "back",
+}
+
+/** Per-template default styles for named fields.
+ * These are the visual defaults baked into each template (font size, bold, italic).
+ * Stored here so the store can copy the effective style on field duplication,
+ * and so getFormatStyle can apply template defaults when no user override exists.
+ */
+export const TEMPLATE_FIELD_STYLES: Record<
+  InvitationTemplate,
+  Partial<Record<keyof InvitationTexts, Partial<FieldFormat>>>
+> = {
+  classic: {
+    headline: { fontSize: 15, italic: true },
+    coupleNames: { fontSize: 42, bold: true },
+    date: { fontSize: 16 },
+    time: { fontSize: 14 },
+    venue: { fontSize: 18, bold: true },
+    venueAddress: { fontSize: 13 },
+    rsvpDeadline: { fontSize: 12 },
+    rsvpEmail: { fontSize: 13 },
+    guestSalutation: { fontSize: 14, italic: true },
+    footer: { fontSize: 12, italic: true },
+  },
+  modern: {
+    headline: { fontSize: 11 },
+    coupleNames: { fontSize: 52, bold: true },
+    date: { fontSize: 22 },
+    time: { fontSize: 15 },
+    venue: { fontSize: 15 },
+    venueAddress: { fontSize: 13 },
+    rsvpDeadline: { fontSize: 12 },
+    rsvpEmail: { fontSize: 13 },
+    guestSalutation: { fontSize: 13, italic: true },
+    footer: { fontSize: 12 },
+  },
+  romantic: {
+    headline: { fontSize: 18, italic: true },
+    coupleNames: { fontSize: 48 },
+    date: { fontSize: 20 },
+    time: { fontSize: 15, italic: true },
+    venue: { fontSize: 17 },
+    venueAddress: { fontSize: 13, italic: true },
+    rsvpDeadline: { fontSize: 12 },
+    rsvpEmail: { fontSize: 13, italic: true },
+    guestSalutation: { fontSize: 15, italic: true },
+    footer: { fontSize: 13, italic: true },
+  },
 }
 
 export function makeDefaultDesign(t: TFunction): InvitationDesign {

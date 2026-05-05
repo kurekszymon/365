@@ -11,7 +11,7 @@ export interface TemplateProps {
   texts: InvitationTexts
   colorScheme: InvitationColorScheme
   fontCss: string
-  fieldFonts?: Partial<Record<keyof InvitationTexts, string>>
+  fieldFonts?: Partial<Record<string, string>>
   fieldFormats?: Partial<Record<string, FieldFormat>>
   separatorStyles?: Record<string, SeparatorStyle>
   separatorConfigs?: Record<string, SeparatorConfig>

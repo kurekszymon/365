@@ -53,6 +53,7 @@ import {
   CARD_H,
   CARD_W,
   SEPARATOR_STYLE_OPTIONS,
+  TEMPLATE_FIELD_STYLES,
   TEXT_MAX_LENGTHS,
   isFieldKey,
   isSeparatorId,
@@ -365,6 +366,7 @@ const THICKNESS_OPTIONS: Array<{ value: number; label: string }> = [
 function FloatingToolbar({
   selectedId,
   pos,
+  template,
   fieldFonts,
   fieldFormats,
   separatorStyles,
@@ -378,11 +380,12 @@ function FloatingToolbar({
 }: {
   selectedId: string | null
   pos: { top: number; left: number } | null
-  fieldFonts: Partial<Record<keyof InvitationTexts, string>>
+  template: InvitationTemplate
+  fieldFonts: Partial<Record<string, string>>
   fieldFormats: Partial<Record<string, FieldFormat>>
   separatorStyles: Record<string, SeparatorStyle>
   separatorConfigs: Record<string, SeparatorConfig>
-  onSetFieldFont: (key: keyof InvitationTexts, id: string | null) => void
+  onSetFieldFont: (key: string, id: string | null) => void
   onSetFieldFormat: (key: string, fmt: Partial<FieldFormat>) => void
   onSetSeparatorStyle: (id: string, style: SeparatorStyle) => void
   onSetSeparatorConfig: (id: string, cfg: Partial<SeparatorConfig>) => void
@@ -394,16 +397,24 @@ function FloatingToolbar({
 
   const isSep = isSeparatorId(selectedId)
   const fieldKey = !isSep ? selectedId : null // string id for both predefined fields and txt blocks
-  const isTextFieldKey = fieldKey !== null && isFieldKey(fieldKey)
   const fmt = fieldKey ? (fieldFormats[fieldKey] ?? {}) : null
-  const currentFontId = isTextFieldKey
+  const templateDefault =
+    fieldKey && isFieldKey(fieldKey)
+      ? (TEMPLATE_FIELD_STYLES[template][fieldKey] ?? {})
+      : {}
+  const bold = fmt?.bold ?? templateDefault.bold
+  const italic = fmt?.italic ?? templateDefault.italic
+  const underline = fmt?.underline ?? templateDefault.underline
+  const isTextField =
+    fieldKey !== null && (isFieldKey(fieldKey) || isTxtId(fieldKey))
+  const currentFontId = isTextField
     ? (fieldFonts[fieldKey] ?? "__default__")
     : null
   const currentFontSize = fmt?.fontSize ?? "__auto__"
   const currentSepStyle = isSep ? (separatorStyles[selectedId] ?? "line") : null
   const sepCfg = isSep ? (separatorConfigs[selectedId] ?? {}) : null
-  const currentWidthPct = sepCfg?.widthPct ?? 100
-  const currentThickness = sepCfg?.thicknessPx ?? 1
+  const currentWidthPct = sepCfg?.widthPct ?? 85
+  const currentThickness = sepCfg?.thicknessPx ?? 2
 
   return (
     <div
@@ -429,31 +440,23 @@ function FloatingToolbar({
       {fieldKey && fmt !== null && (
         <>
           <ToolbarButton
-            active={!!fmt.bold}
-            onClick={() =>
-              onSetFieldFormat(fieldKey, { bold: fmt.bold ? undefined : true })
-            }
+            active={!!bold}
+            onClick={() => onSetFieldFormat(fieldKey, { bold: !bold })}
             title="Bold"
           >
             <BoldIcon className="h-3 w-3" />
           </ToolbarButton>
           <ToolbarButton
-            active={!!fmt.italic}
-            onClick={() =>
-              onSetFieldFormat(fieldKey, {
-                italic: fmt.italic ? undefined : true,
-              })
-            }
+            active={!!italic}
+            onClick={() => onSetFieldFormat(fieldKey, { italic: !italic })}
             title="Italic"
           >
             <ItalicIcon className="h-3 w-3" />
           </ToolbarButton>
           <ToolbarButton
-            active={!!fmt.underline}
+            active={!!underline}
             onClick={() =>
-              onSetFieldFormat(fieldKey, {
-                underline: fmt.underline ? undefined : true,
-              })
+              onSetFieldFormat(fieldKey, { underline: !underline })
             }
             title="Underline"
           >
@@ -464,10 +467,7 @@ function FloatingToolbar({
             <Select
               value={currentFontId}
               onValueChange={(id) =>
-                onSetFieldFont(
-                  fieldKey as keyof InvitationTexts,
-                  id === "__default__" ? null : id
-                )
+                onSetFieldFont(fieldKey, id === "__default__" ? null : id)
               }
             >
               <SelectTrigger
@@ -1395,6 +1395,7 @@ export function InvitationPreview() {
           <FloatingToolbar
             selectedId={selectedId}
             pos={toolbarPos}
+            template={design.template}
             fieldFonts={design.fieldFonts}
             fieldFormats={design.fieldFormats}
             separatorStyles={design.separatorStyles}

@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 05.05
+
+- invitations: make duplicate actually duplicate, apply proper styles/fontsizes to duplicated field
+
 ### 04.05
 
 - improve text field editing
