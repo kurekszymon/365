@@ -3,6 +3,7 @@
 ### 05.05
 
 - invitations: make duplicate actually duplicate, apply proper styles/fontsizes to duplicated field
+- fix removing a field iwth escape by loosing check for focused element
 
 ### 04.05
 

@@ -998,7 +998,9 @@ export function InvitationPreview() {
       if (
         (e.key === "Delete" || e.key === "Backspace") &&
         selectedId &&
-        document.activeElement === document.body
+        !(document.activeElement instanceof HTMLInputElement) &&
+        !(document.activeElement instanceof HTMLTextAreaElement) &&
+        !(document.activeElement instanceof HTMLSelectElement)
       ) {
         if (isSeparatorId(selectedId)) removeSeparator(selectedId)
         else if (isTxtId(selectedId)) removeTextBlock(selectedId)
