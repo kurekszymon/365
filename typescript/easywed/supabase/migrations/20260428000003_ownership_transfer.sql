@@ -25,6 +25,16 @@ begin
   end if;
 
   select user_type into _to_t from public.profiles where id = _to_user_id;
+  -- Mirror the insert gate (enforce_wedding_insert_gate): a transfer must not
+  -- be a back door around onboarding/subscription requirements. Without this,
+  -- an unonboarded invitee could be made owner even though they couldn't
+  -- INSERT a wedding themselves.
+  if _to_t is null then
+    raise exception 'recipient_not_onboarded';
+  end if;
+  if not public.has_active_subscription(_to_user_id) then
+    raise exception 'recipient_no_active_subscription';
+  end if;
   if _to_t = 'couple' and exists (
     select 1 from public.weddings
     where owner_id = _to_user_id and id <> _wedding_id

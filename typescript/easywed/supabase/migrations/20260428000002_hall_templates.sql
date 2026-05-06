@@ -74,7 +74,8 @@ create policy "creators can insert hall templates"
 
 create policy "creators can update their hall templates"
   on public.hall_templates for update
-  using (creator_id = auth.uid());
+  using (creator_id = auth.uid())
+  with check (creator_id = auth.uid());
 
 create policy "creators can delete their hall templates"
   on public.hall_templates for delete
@@ -102,6 +103,12 @@ create policy "creators can insert template tables"
 create policy "creators can update template tables"
   on public.hall_template_tables for update
   using (
+    exists (
+      select 1 from public.hall_templates t
+      where t.id = template_id and t.creator_id = auth.uid()
+    )
+  )
+  with check (
     exists (
       select 1 from public.hall_templates t
       where t.id = template_id and t.creator_id = auth.uid()
@@ -139,6 +146,12 @@ create policy "creators can insert template fixtures"
 create policy "creators can update template fixtures"
   on public.hall_template_fixtures for update
   using (
+    exists (
+      select 1 from public.hall_templates t
+      where t.id = template_id and t.creator_id = auth.uid()
+    )
+  )
+  with check (
     exists (
       select 1 from public.hall_templates t
       where t.id = template_id and t.creator_id = auth.uid()

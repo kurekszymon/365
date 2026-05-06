@@ -37,7 +37,14 @@ async function loadProfile(userId: string) {
   setUserType(
     (profileRes.data?.user_type as UserType | null | undefined) ?? null
   )
-  setHasSubscription(!!subRes.data)
+  // Only commit hasSubscription on a successful query — a transient sub fetch
+  // failure must not collapse to "false", which would bounce an already-paid
+  // user to /upgrade (requireSubscription treats undefined as still-loading).
+  if (subRes.error) {
+    console.error("[auth] loadProfile subscription failed", subRes.error)
+  } else {
+    setHasSubscription(!!subRes.data)
+  }
 }
 
 // Hydrates the Supabase session into the auth store and re-runs router
