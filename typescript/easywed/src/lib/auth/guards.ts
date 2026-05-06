@@ -1,5 +1,6 @@
 import { redirect } from "@tanstack/react-router"
 import { useAuthStore } from "@/stores/auth.store"
+import { useGlobalStore } from "@/stores/global.store"
 
 export const sanitizeNextPath = (next: unknown): string | undefined => {
   if (typeof next !== "string") return undefined
@@ -31,4 +32,14 @@ export const redirectAuthedAwayFromLogin = (next?: unknown) => {
     to: sanitizeNextPath(next) ?? "/",
     replace: true,
   })
+}
+
+// Redirect signed-in but un-onboarded users (profile.user_type IS NULL) to
+// /onboarding. Pre-load (userType === undefined) passes through; AuthGate
+// will invalidate once profile resolves.
+export const requireOnboarded = () => {
+  const userType = useGlobalStore.getState().userType
+  if (userType === null) {
+    throw redirect({ to: "/onboarding", replace: true })
+  }
 }

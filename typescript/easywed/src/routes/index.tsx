@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react"
-import { Link, createFileRoute } from "@tanstack/react-router"
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { supabase } from "@/lib/supabase"
-import { requireAuth } from "@/lib/auth/guards"
+import { requireAuth, requireOnboarded } from "@/lib/auth/guards"
 import { useAuthStore } from "@/stores/auth.store"
-import { useDialogStore } from "@/stores/dialog.store"
+import { useGlobalStore } from "@/stores/global.store"
 import { Button } from "@/components/ui/button"
 import { DialogManager } from "@/components/dialogs/DialogManager"
 
 export const Route = createFileRoute("/")({
   beforeLoad: () => {
     requireAuth("/")
+    requireOnboarded()
   },
   component: Home,
 })
@@ -23,14 +24,21 @@ type WeddingRow = {
 
 function Home() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const session = useAuthStore((s) => s.session)
-  const openDialog = useDialogStore((s) => s.open)
+  const userType = useGlobalStore((s) => s.userType)
 
   const [weddings, setWeddings] = useState<Array<WeddingRow>>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!session) return
+    if (userType === "venue") {
+      navigate({ to: "/venue", replace: true })
+    }
+  }, [userType, navigate])
+
+  useEffect(() => {
+    if (!session || userType === "venue") return
 
     supabase
       .from("weddings")
@@ -42,7 +50,21 @@ function Home() {
         setWeddings(data ?? [])
         setLoading(false)
       })
-  }, [session])
+  }, [session, userType])
+
+  // Couple with exactly one wedding: drop them straight onto it.
+  useEffect(() => {
+    if (loading || userType !== "couple") return
+    if (weddings.length === 1) {
+      navigate({
+        to: "/wedding/$id",
+        params: { id: weddings[0].id },
+        replace: true,
+      })
+    }
+  }, [loading, userType, weddings, navigate])
+
+  if (userType === "venue") return null
 
   return (
     <>
@@ -56,21 +78,23 @@ function Home() {
             </p>
           </div>
 
-          <Button onClick={() => openDialog("Wedding.Create")}>
-            {t("common.create")}
-          </Button>
-
           <div className="flex flex-col gap-2">
             {loading ? (
               <p className="text-center text-sm text-muted-foreground">
                 {t("weddings.loading")}
               </p>
             ) : weddings.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground">
-                {t("weddings.empty")}
-              </p>
+              <div className="flex flex-col gap-3 rounded-lg border bg-card p-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  {t("weddings.no_wedding_yet")}
+                </p>
+                <Link to="/halls">
+                  <Button className="w-full">
+                    {t("weddings.no_wedding_yet.cta")}
+                  </Button>
+                </Link>
+              </div>
             ) : (
-              // TODO: based on a role (couple/planner/site) render only one wedding / list etc.
               weddings.map((wedding) => (
                 <Link
                   key={wedding.id}
