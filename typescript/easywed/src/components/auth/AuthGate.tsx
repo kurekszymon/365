@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase"
 const PUBLIC_PATHS = ["/login", "/auth/callback", "/invitations"]
 
 async function loadProfile(userId: string) {
+  const now = new Date().toISOString()
   const [profileRes, subRes] = await Promise.all([
     supabase
       .from("profiles")
@@ -21,14 +22,20 @@ async function loadProfile(userId: string) {
       .select("id")
       .eq("user_id", userId)
       .eq("status", "active")
+      .or(`expires_at.is.null,expires_at.gt.${now}`)
       .maybeSingle(),
   ])
 
   // On a transient error keep userType undefined (not null) so the caller
   // doesn't misinterpret the failure as "needs onboarding" and wipe an
   // existing role by redirecting an already-onboarded user to /onboarding.
+  // However, fail closed on the subscription gate (set false rather than
+  // leaving undefined) so subscription-gated routes are not accessible while
+  // profile state is unknown.
   if (profileRes.error) {
     console.error("[auth] loadProfile failed", profileRes.error)
+    const { setHasSubscription } = useGlobalStore.getState()
+    setHasSubscription(false)
     return
   }
 

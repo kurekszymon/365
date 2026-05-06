@@ -63,14 +63,23 @@ export function TemplatePicker({ open, onClose }: Props) {
         return
       }
 
+      if (data.length === 0) {
+        setTemplates([])
+        setLoading(false)
+        return
+      }
+
       // Resolve creator display names in one batched query.
       const creatorIds = [
         ...new Set(data.map((template) => template.creator_id)),
       ]
-      const { data: profiles } = await supabase
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("id, display_name")
         .in("id", creatorIds)
+      if (profilesError) {
+        console.error("[TemplatePicker] profiles fetch", profilesError)
+      }
 
       const nameById = new Map(
         (profiles ?? []).map((p) => [p.id, p.display_name])

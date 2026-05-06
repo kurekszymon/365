@@ -70,6 +70,7 @@ create policy "creators can insert hall templates"
       select 1 from public.profiles
       where id = auth.uid() and user_type in ('venue', 'planner')
     )
+    and public.has_active_subscription(auth.uid())
   );
 
 create policy "creators can update their hall templates"

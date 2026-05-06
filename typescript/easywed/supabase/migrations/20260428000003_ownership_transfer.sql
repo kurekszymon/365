@@ -94,3 +94,10 @@ end; $$;
 create trigger weddings_enforce_insert_gate
   before insert on public.weddings
   for each row execute function public.enforce_wedding_insert_gate();
+
+-- Restrict RPC access to authenticated users only. Postgres grants EXECUTE to
+-- PUBLIC by default; without this, anonymous callers could invoke the function
+-- and take row-level locks via the SELECT ... FOR UPDATE before the ownership
+-- check runs.
+revoke execute on function public.transfer_wedding_ownership(uuid, uuid) from public;
+grant execute on function public.transfer_wedding_ownership(uuid, uuid) to authenticated;

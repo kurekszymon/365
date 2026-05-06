@@ -81,6 +81,7 @@ function VenueTemplates() {
   const session = useAuthStore((s) => s.session)
   const [templates, setTemplates] = useState<Array<TemplateRow>>([])
   const [loading, setLoading] = useState(true)
+  const [listError, setListError] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [form, setForm] = useState<CreateForm>(DEFAULT_FORM)
   const [submitting, setSubmitting] = useState(false)
@@ -88,7 +89,7 @@ function VenueTemplates() {
 
   useEffect(() => {
     if (!session) return
-    void fetchTemplates(session.user.id, setTemplates, setLoading)
+    void fetchTemplates(session.user.id, setTemplates, setLoading, setListError)
   }, [session])
 
   const handleCreate = async () => {
@@ -176,6 +177,8 @@ function VenueTemplates() {
           <p className="text-center text-sm text-muted-foreground">
             {t("venue.templates.loading")}
           </p>
+        ) : listError ? (
+          <p className="text-center text-sm text-destructive">{listError}</p>
         ) : templates.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground">
             {t("venue.templates.empty")}
@@ -379,7 +382,8 @@ function VenueTemplates() {
 async function fetchTemplates(
   userId: string,
   setTemplates: (rows: Array<TemplateRow>) => void,
-  setLoading: (v: boolean) => void
+  setLoading: (v: boolean) => void,
+  setListError: (msg: string | null) => void
 ) {
   setLoading(true)
 
@@ -396,6 +400,7 @@ async function fetchTemplates(
 
   if (error) {
     console.error("[venue/templates] fetch", error)
+    setListError(error.message)
     setLoading(false)
     return
   }
@@ -419,15 +424,25 @@ async function fetchTemplates(
       .in("template_id", ids),
   ])
 
+  if (tablesRes.error || fixturesRes.error) {
+    console.error("[venue/templates] child-row fetch failed", {
+      tablesErr: tablesRes.error,
+      fixturesErr: fixturesRes.error,
+    })
+    setListError((tablesRes.error ?? fixturesRes.error)!.message)
+    setLoading(false)
+    return
+  }
+
   const tableCounts = new Map<string, number>()
   const fixtureCounts = new Map<string, number>()
-  for (const row of tablesRes.data ?? []) {
+  for (const row of tablesRes.data) {
     tableCounts.set(
       row.template_id,
       (tableCounts.get(row.template_id) ?? 0) + 1
     )
   }
-  for (const row of fixturesRes.data ?? []) {
+  for (const row of fixturesRes.data) {
     fixtureCounts.set(
       row.template_id,
       (fixtureCounts.get(row.template_id) ?? 0) + 1
