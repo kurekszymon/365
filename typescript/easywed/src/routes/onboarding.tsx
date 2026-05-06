@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { useEffect, useState } from "react"
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
 import { requireAuth } from "@/lib/auth/guards"
@@ -13,6 +13,16 @@ import { Label } from "@/components/ui/label"
 export const Route = createFileRoute("/onboarding")({
   beforeLoad: () => {
     requireAuth("/onboarding")
+    // If profile already classified the user, never render the picker.
+    // AuthGate invalidates the router after loadProfile resolves, so this
+    // re-runs once userType moves from undefined → 'couple' | 'venue'.
+    const userType = useGlobalStore.getState().userType
+    if (userType === "couple") {
+      throw redirect({ to: "/", replace: true })
+    }
+    if (userType === "venue") {
+      throw redirect({ to: "/venue", replace: true })
+    }
   },
   component: Onboarding,
 })
@@ -34,15 +44,13 @@ function Onboarding() {
   const [venueName, setVenueName] = useState("")
   const [status, setStatus] = useState<Status>({ kind: "idle" })
 
-  // Already onboarded? Bounce to the right home for their role.
-  if (userType === "couple") {
-    navigate({ to: "/", replace: true })
-    return null
-  }
-  if (userType === "venue") {
-    navigate({ to: "/venue", replace: true })
-    return null
-  }
+  // If userType flips to a real value while this screen is mounted (e.g.
+  // a tab in the background invokes set_user_type), bounce out. The guard
+  // covers initial load; this covers post-mount transitions.
+  useEffect(() => {
+    if (userType === "couple") navigate({ to: "/", replace: true })
+    else if (userType === "venue") navigate({ to: "/venue", replace: true })
+  }, [userType, navigate])
 
   const handleSubmit = async () => {
     if (!choice || !session) return

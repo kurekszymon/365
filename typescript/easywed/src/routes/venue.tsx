@@ -39,9 +39,10 @@ function VenueDashboard() {
   useEffect(() => {
     if (!session) return
     const ctrl = new AbortController()
-    // Box the cancelled flag so its mutation in the cleanup is not narrowed
-    // away by TS when read inside the async closure below.
+    // Box the cancelled flag and read it through a helper so TS doesn't
+    // narrow `state.cancelled` to `false` after the first read.
     const state = { cancelled: false }
+    const isCancelled = () => state.cancelled
 
     void (async () => {
       const venueRes = await supabase
@@ -51,7 +52,7 @@ function VenueDashboard() {
         .abortSignal(ctrl.signal)
         .maybeSingle()
 
-      if (state.cancelled) return
+      if (isCancelled()) return
       if (venueRes.error) {
         setError(venueRes.error.message)
         setLoading(false)
@@ -67,8 +68,7 @@ function VenueDashboard() {
           .order("created_at", { ascending: false })
           .abortSignal(ctrl.signal)
 
-        // No second cancelled check: if the cleanup fires during this await
-        // the supabase call is aborted and surfaces as hallsRes.error below.
+        if (isCancelled()) return
         if (hallsRes.error) {
           setError(hallsRes.error.message)
         } else {
