@@ -351,10 +351,13 @@
   "onboarding.display_name_placeholder": "Twoje imię lub nazwa firmy",
   "onboarding.saving": "Zapisywanie...",
 
-  "upgrade.title": "Ulepsz swoje konto",
-  "upgrade.subtitle": "Konta plannerów i sal wymagają płatnej subskrypcji.",
-  "upgrade.coming_soon": "Płatności nie są jeszcze skonfigurowane — korzystasz bezpłatnie w wersji beta.",
-  "upgrade.continue": "Kontynuuj bezpłatnie",
+  "upgrade.couple.title": "Wszystko gotowe",
+  "upgrade.couple.subtitle": "Twój darmowy plan dla par jest gotowy. Potwierdź, aby rozpocząć planowanie.",
+  "upgrade.couple.cta": "Potwierdź",
+  "upgrade.pro.title": "Dostęp w fazie beta",
+  "upgrade.pro.subtitle": "Konta planera i sali są darmowe w fazie beta. Płatne plany pojawią się później.",
+  "upgrade.pro.cta": "Rozpocznij betę",
+  "upgrade.error_generic": "Coś poszło nie tak, spróbuj ponownie.",
 
   "user_type.couple": "Para",
   "user_type.planner": "Wedding planner",
@@ -399,6 +402,6 @@
   "members.transfer": "Przekaż własność",
   "members.transfer_confirm_title": "Przekaż własność",
   "members.transfer_confirm": "Przekazać własność wesela temu członkowi? Staniesz się edytorem.",
-  "members.transfer_confirm_has_wedding": "Ta osoba ma już wesele. Otrzyma to wesele jako dodatkowe. Kontynuować?",
+  "members.transfer_couple_blocked": "Ta para ma już swoje wesele.",
   "members.transferring": "Przekazywanie..."
 }

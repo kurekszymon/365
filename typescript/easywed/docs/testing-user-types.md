@@ -36,11 +36,11 @@ Easiest via **Supabase Studio** → http://127.0.0.1:54323 → **Authentication 
 
 Create three users (email + password, auto-confirm enabled in local config):
 
-| Email | Password | Will become |
-|---|---|---|
-| `couple@test.com` | `test1234` | Couple |
-| `planner@test.com` | `test1234` | Planner |
-| `venue@test.com` | `test1234` | Venue |
+| Email             | Password   | Will become |
+| ----------------- | ---------- | ----------- |
+| `couple@test.com` | `test1234` | Couple      |
+| `planner@test.com`| `test1234` | Planner     |
+| `venue@test.com`  | `test1234` | Venue       |
 
 The `handle_new_user` trigger auto-creates a `profiles` row with `user_type = null` for each one.
 
@@ -56,20 +56,22 @@ supabase auth admin create-user --email venue@test.com --password test1234 --ema
 
 ## 3. Scenario A — Onboarding flow (all users)
 
-Sign in as any of the three users. Since `profiles.user_type` is `null`, the app redirects to `/onboarding`.
+All three roles flow `/onboarding` → `/upgrade` → `/`.
 
-1. Sign in at http://localhost:3000/login as `couple@test.com`.
-2. ✅ You should land on `/onboarding` instead of `/`.
+1. Sign in at http://localhost:3000/login as `couple@test.com`. Since `profiles.user_type` is `null`, the app redirects to `/onboarding`.
+2. ✅ Lands on `/onboarding`.
 3. Select **"We're a couple"** and click Continue.
-4. ✅ You should land on `/` (no wedding yet → shows create prompt).
-5. Repeat for `planner@test.com` → select "Wedding planner" → lands on `/upgrade` → click "Continue for free" → lands on `/` (multi-wedding list).
-6. Repeat for `venue@test.com` → select "Venue provider" → lands on `/upgrade` → click "Continue for free" → lands on `/venue/templates`.
+4. ✅ Lands on `/upgrade` showing "You're all set" + a Confirm button.
+5. Click **Confirm**. ✅ Lands on `/` (no wedding yet → shows create prompt).
+6. Repeat for `planner@test.com` → select "Wedding planner" → lands on `/upgrade` showing "Beta access" → click **Start beta** → lands on `/` (multi-wedding list).
+7. Repeat for `venue@test.com` → select "Venue provider" → lands on `/upgrade` showing "Beta access" → click **Start beta** → lands on `/` (multi-wedding list — same as planner).
 
-To reset any user back to pre-onboarding, clear `user_type` via Studio:
+To reset any user back to pre-onboarding, clear `user_type` and the active subscription via Studio (column-level revoke means the UPDATE has to be run as service-role / from Studio, not from the app):
 
 ```sql
--- Studio → SQL editor
+-- Studio → SQL editor (service role bypass)
 UPDATE public.profiles SET user_type = null WHERE id = '<user-uuid>';
+DELETE FROM public.subscriptions WHERE user_id = '<user-uuid>';
 ```
 
 ---
@@ -88,6 +90,7 @@ Signed in as `couple@test.com` (user_type = 'couple').
 - Click **Create your wedding**, fill in a name, submit.
 - ✅ App auto-redirects directly to `/wedding/<id>` (the planner).
 - Navigating back to `/` should redirect again — no list shown.
+- ✅ The Create button on `/` disappears once the couple owns a wedding.
 
 ### B3. Members button is hidden
 
@@ -96,22 +99,7 @@ Signed in as `couple@test.com` (user_type = 'couple').
 
 ### B4. Multiple weddings edge case
 
-To test the fallback list view, manually insert a second wedding via Studio:
-
-```sql
--- Studio → SQL editor
-INSERT INTO public.weddings (owner_id, name)
-VALUES (
-  (SELECT id FROM auth.users WHERE email = 'couple@test.com'),
-  'Second wedding'
-);
--- The trigger will auto-insert the owner into wedding_members.
-```
-
-- Reload `/`.
-- ✅ Landing page shows "You have multiple weddings. Choose one or delete extras." with both listed.
-- Delete one via the **Delete** button.
-- ✅ Only one remains; refresh auto-redirects.
+To test the fallback list view, manually insert a second wedding via Studio (the BEFORE INSERT trigger on `weddings` blocks couples with an existing wedding — the new `enforce_couple_one_wedding` trigger; insert through service-role with a **different** owner first, then transfer would also be blocked, so the only way to set this state up is to reset triggers temporarily — see Scenario H).
 
 ---
 
@@ -119,22 +107,20 @@ VALUES (
 
 Signed in as `venue@test.com` (user_type = 'venue').
 
-### C1. Landing redirects to template library
+### C1. Landing shows multi-wedding list
 
-- Visiting `/` should immediately redirect to `/venue/templates`.
-- ✅ Template library page loads (empty).
+- Visiting `/` shows the multi-wedding list (same UX as planner) — **not** `/venue/templates`.
+- ✅ Templates are still managed under `/venue/templates`.
 
 ### C2. Create a template
 
-- Click **New template**.
-- Fill in: Name = "Grand Ballroom", Width = 25, Height = 15, Shape = Rectangle, Visibility = Public.
-- Click **Create**.
+- Navigate to `/venue/templates`.
+- Click **New template**. Fill in: Name = "Grand Ballroom", Width = 25, Height = 15, Shape = Rectangle, Visibility = Public. Click **Create**.
 - ✅ Template appears in the list showing "0 tables · Public".
 
 ### C3. Verify in the DB
 
 ```sql
--- Studio → SQL editor
 SELECT id, name, hall_preset, width, height, is_public, creator_id
 FROM public.hall_templates;
 ```
@@ -155,71 +141,130 @@ With the venue template created in Scenario C:
 3. ✅ At the top of the hall panel there is a **"Browse venue presets"** button.
 4. Click it → Template Picker dialog opens.
 5. ✅ The "Grand Ballroom" template created by the venue appears.
-6. Click **Apply preset** → confirmation dialog appears.
-7. Confirm.
-8. ✅ Hall dimensions update to 25 × 15 m and the hall preset switches to "Rectangle".
+6. Click **Apply preset** → confirmation dialog appears, confirm.
+7. ✅ Hall dimensions update to 25 × 15 m and the hall preset switches to "Rectangle".
 
 ---
 
-## 7. Scenario E — Planner creates a wedding for a couple
+## 7. Scenario E — Planner / Venue creates a wedding for a couple
 
-Signed in as `planner@test.com` (user_type = 'planner').
+Signed in as `planner@test.com` (user_type = 'planner'). Same flow works for `venue@test.com`.
 
 ### E1. Create a wedding on behalf of a couple
 
-- Click **Create** on the landing page.
-- Name it "Smith & Jones Wedding", submit.
+- Click **Create** on the landing page. Name it "Smith & Jones Wedding", submit.
 - ✅ Lands on the planner. The **Members button is visible** (planner is owner, not couple).
 
 ### E2. Invite the couple as editor
 
 - Click the **UserPlus** button to open the Members dialog.
 - Role = **Editor**, click **Create invite link**, copy the link.
-- Paste it in a new incognito window and sign in as `couple@test.com`.
+- Paste it in a new incognito window and sign in as `couple@test.com` (must have completed onboarding + upgrade first).
 - ✅ Couple joins the wedding as editor.
 
-Now `couple@test.com` has **two** weddings (their own from Scenario B + this one). The landing page shows the "multiple weddings" view.
+### E3. Transfer ownership to a couple **without** a wedding
 
-### E3. Transfer ownership to the couple
+If `couple@test.com` does NOT already own a wedding:
 
-- Back as `planner@test.com` in the Members dialog, the couple's row now shows a **Transfer** (share icon) button.
-- Click it → confirmation dialog: "This person already has a wedding. They'll receive this one as an additional wedding. Continue?"
-- ✅ Click **Transfer ownership**.
+- Back as `planner@test.com` in the Members dialog, the couple's row shows a **Transfer** (share icon) button.
+- Click it → confirmation dialog: "Transfer ownership to this member? You'll become an editor."
+- ✅ Click **Transfer ownership**. Roles flip: couple is now `owner`, planner is `editor`.
+- ✅ As `couple@test.com`, the Members button is **not visible** even though they are the owner.
 
-Verify in Studio:
+### E4. Transfer to a couple **with** a wedding is blocked
+
+See Scenario J below.
+
+---
+
+## 8. Scenario F (safety) — Privilege escalation blocked
+
+The `user_type` column has UPDATE revoked from `authenticated`, so users cannot self-promote.
+
+As `couple@test.com` (or via PostgREST `PATCH /profiles?id=eq.<me>` body `{user_type:'venue'}` — same effect), in Studio's SQL editor switch role to authenticated:
+
+```sql
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claim.sub = '<couple-uuid>';
+UPDATE public.profiles SET user_type = 'venue' WHERE id = '<couple-uuid>';
+```
+
+Expect: `permission denied for column user_type`.
+
+---
+
+## 9. Scenario G (safety) — `set_user_type` is one-shot
+
+After completing onboarding (so `user_type` is set), run:
+
+```sql
+SELECT public.set_user_type('venue');
+```
+
+Expect exception: `user_type already set or profile missing`.
+
+---
+
+## 10. Scenario H (safety) — Couple second-wedding blocked
+
+Signed in as a couple who already owns a wedding. Try to insert a second one directly:
+
+```sql
+-- Studio → SQL editor (set role first to make this realistic)
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claim.sub = '<couple-uuid>';
+INSERT INTO public.weddings (name, owner_id) VALUES ('Second', auth.uid());
+```
+
+Expect exception: `couple_already_owns_wedding`.
+
+---
+
+## 11. Scenario I (safety) — Insert without an active subscription is blocked
+
+As a planner in Studio, expire the active subscription:
+
+```sql
+UPDATE public.subscriptions SET status = 'expired'
+WHERE user_id = (SELECT id FROM auth.users WHERE email = 'planner@test.com');
+```
+
+Then in the running app:
+
+- Reload `/`. ✅ Route guard redirects to `/upgrade`.
+- If you bypass the UI and try to INSERT a wedding via SQL with the same auth role, expect exception: `owner_no_active_subscription`.
+
+Restore the sub when done:
+
+```sql
+UPDATE public.subscriptions SET status = 'active'
+WHERE user_id = (SELECT id FROM auth.users WHERE email = 'planner@test.com');
+```
+
+---
+
+## 12. Scenario J (safety) — Transfer to couple-with-wedding blocked
+
+Setup: planner owns Wedding A and has invited the couple as a member; the couple already owns their own Wedding B (from Scenario B).
+
+- As `planner@test.com` in the Members dialog of Wedding A, click the **Transfer** icon next to the couple member.
+- Confirm.
+- ✅ UI surfaces a destructive toast/inline error: **"That couple already owns a wedding."**
+- Roles do not change. Verify in Studio:
 
 ```sql
 SELECT wm.user_id, wm.role, u.email, w.owner_id
 FROM public.wedding_members wm
 JOIN auth.users u ON u.id = wm.user_id
 JOIN public.weddings w ON w.id = wm.wedding_id
-WHERE w.name = 'Smith & Jones Wedding';
+WHERE w.name = 'Wedding A';
 ```
 
-Expected: couple is now `owner`, planner is `editor`.
-
-- ✅ As `couple@test.com`, the Members button is **not visible** even though they are now the owner.
+Expected: planner is still `owner`, couple is still `editor`.
 
 ---
 
-## 8. Scenario F — Upgrade stub
-
-- Sign out.
-- Sign up a brand-new user (e.g. `newvenue@test.com`).
-- On `/onboarding`, select **Venue provider**, click Continue.
-- ✅ Lands on `/upgrade` showing "Payments aren't set up yet — you're in for free during beta."
-- Click **Continue for free**.
-- ✅ Lands on `/venue/templates`.
-- Verify `profiles` row was set:
-
-```sql
-SELECT id, user_type FROM public.profiles
-WHERE id = (SELECT id FROM auth.users WHERE email = 'newvenue@test.com');
-```
-
----
-
-## 9. Reverting to remote
+## 13. Reverting to remote
 
 When done, restore `.env.local`:
 

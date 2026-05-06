@@ -23,6 +23,7 @@ type State = {
   date?: Date
   role?: WeddingRole
   userType: UserType | null | undefined
+  hasSubscription: boolean | undefined
   viewport: Viewport
 }
 
@@ -30,6 +31,7 @@ type Action = {
   setName: (name?: string) => void
   setDate: (date?: Date) => void
   setUserType: (userType: UserType | null | undefined) => void
+  setHasSubscription: (hasSubscription: boolean | undefined) => void
   setRole: (role: WeddingRole | undefined) => void
 
   setPan: (pan: Pan) => void
@@ -43,6 +45,7 @@ export const useGlobalStore = create<State & Action>((set) => ({
   date: undefined,
   role: undefined,
   userType: undefined,
+  hasSubscription: undefined,
   viewport: {
     scale: 1,
     pan: {
@@ -62,6 +65,7 @@ export const useGlobalStore = create<State & Action>((set) => ({
     })
   },
   setUserType: (userType: UserType | null | undefined) => set({ userType }),
+  setHasSubscription: (hasSubscription) => set({ hasSubscription }),
   setRole: (role) => set({ role }),
 
   setPan: (pan) => set((state) => ({ viewport: { ...state.viewport, pan } })),

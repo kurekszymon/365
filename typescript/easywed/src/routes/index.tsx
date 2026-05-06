@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react"
-import {
-  Link,
-  createFileRoute,
-  redirect,
-  useNavigate,
-} from "@tanstack/react-router"
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { supabase } from "@/lib/supabase"
-import { requireAuth, requireOnboarded } from "@/lib/auth/guards"
+import {
+  requireAuth,
+  requireOnboarded,
+  requireSubscription,
+} from "@/lib/auth/guards"
 import { useAuthStore } from "@/stores/auth.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { useDialogStore } from "@/stores/dialog.store"
@@ -18,12 +17,7 @@ export const Route = createFileRoute("/")({
   beforeLoad: () => {
     requireAuth("/")
     requireOnboarded()
-
-    // Venue users go directly to their template library.
-    const { userType } = useGlobalStore.getState()
-    if (userType === "venue") {
-      throw redirect({ to: "/venue/templates", replace: true })
-    }
+    requireSubscription()
   },
   component: Home,
 })

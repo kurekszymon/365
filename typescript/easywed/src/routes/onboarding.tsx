@@ -75,13 +75,9 @@ function Onboarding() {
     setSaving(true)
     setSaveError(null)
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        user_type: selected,
-        display_name: displayName.trim() || null,
-      })
-      .eq("id", session.user.id)
+    const { error } = await supabase.rpc("set_user_type", {
+      _user_type: selected,
+    })
 
     if (error) {
       console.error("[onboarding] failed to save user type", error)
@@ -90,13 +86,19 @@ function Onboarding() {
       return
     }
 
-    setUserType(selected)
-
-    if (selected === "couple") {
-      void navigate({ to: "/", replace: true })
-    } else {
-      void navigate({ to: "/upgrade", replace: true })
+    const trimmedName = displayName.trim()
+    if (trimmedName) {
+      const { error: nameError } = await supabase
+        .from("profiles")
+        .update({ display_name: trimmedName })
+        .eq("id", session.user.id)
+      if (nameError) {
+        console.error("[onboarding] failed to save display name", nameError)
+      }
     }
+
+    setUserType(selected)
+    void navigate({ to: "/upgrade", replace: true })
   }
 
   return (

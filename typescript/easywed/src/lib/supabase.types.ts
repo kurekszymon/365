@@ -415,6 +415,36 @@ export type Database = {
           },
         ]
       }
+      subscriptions: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          started_at: string
+          status: string
+          tier: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          started_at?: string
+          status: string
+          tier: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+          tier?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tables: {
         Row: {
           capacity: number
@@ -578,7 +608,10 @@ export type Database = {
     Functions: {
       claim_wedding_invitation: { Args: { _token: string }; Returns: string }
       guest_names_valid: { Args: { names: string[] }; Returns: boolean }
+      has_active_subscription: { Args: { _user_id: string }; Returns: boolean }
       is_wedding_member: { Args: { _wedding_id: string }; Returns: boolean }
+      set_user_type: { Args: { _user_type: string }; Returns: undefined }
+      start_beta_subscription: { Args: never; Returns: undefined }
       transfer_wedding_ownership: {
         Args: { _to_user_id: string; _wedding_id: string }
         Returns: undefined

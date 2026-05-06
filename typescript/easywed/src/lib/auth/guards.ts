@@ -36,6 +36,19 @@ export const requireOnboarded = () => {
   }
 }
 
+// Redirects to /upgrade if the user has no active subscription.
+// Call after requireOnboarded.
+export const requireSubscription = () => {
+  const { isReady } = useAuthStore.getState()
+  if (!isReady) return
+
+  const { hasSubscription } = useGlobalStore.getState()
+  if (hasSubscription === undefined) return
+  if (!hasSubscription) {
+    throw redirect({ to: "/upgrade", replace: true })
+  }
+}
+
 export const redirectAuthedAwayFromLogin = (next?: unknown) => {
   const { isReady, session } = useAuthStore.getState()
   if (!isReady || !session) return

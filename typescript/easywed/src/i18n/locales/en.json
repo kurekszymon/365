@@ -339,10 +339,13 @@
   "onboarding.display_name_placeholder": "Your name or business name",
   "onboarding.saving": "Saving...",
 
-  "upgrade.title": "Upgrade your account",
-  "upgrade.subtitle": "Planner and venue accounts will require a paid subscription.",
-  "upgrade.coming_soon": "Payments aren't set up yet — you're in for free during beta.",
-  "upgrade.continue": "Continue for free",
+  "upgrade.couple.title": "You're all set",
+  "upgrade.couple.subtitle": "Your free couple plan is ready. Confirm to start planning.",
+  "upgrade.couple.cta": "Confirm",
+  "upgrade.pro.title": "Beta access",
+  "upgrade.pro.subtitle": "Planner and venue accounts are free during beta. Paid tiers come later.",
+  "upgrade.pro.cta": "Start beta",
+  "upgrade.error_generic": "Something went wrong, please try again.",
 
   "user_type.couple": "Couple",
   "user_type.planner": "Wedding planner",
@@ -383,6 +386,6 @@
   "members.transfer": "Transfer ownership",
   "members.transfer_confirm_title": "Transfer ownership",
   "members.transfer_confirm": "Transfer ownership to this member? You'll become an editor.",
-  "members.transfer_confirm_has_wedding": "This person already has a wedding. They'll receive this one as an additional wedding. Continue?",
+  "members.transfer_couple_blocked": "That couple already owns a wedding.",
   "members.transferring": "Transferring..."
 }

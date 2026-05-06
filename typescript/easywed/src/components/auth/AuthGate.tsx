@@ -10,23 +10,34 @@ import { supabase } from "@/lib/supabase"
 const PUBLIC_PATHS = ["/login", "/auth/callback", "/invitations"]
 
 async function loadProfile(userId: string) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("user_type, display_name")
-    .eq("id", userId)
-    .maybeSingle()
+  const [profileRes, subRes] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("user_type, display_name")
+      .eq("id", userId)
+      .maybeSingle(),
+    supabase
+      .from("subscriptions")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .maybeSingle(),
+  ])
 
   // On a transient error keep userType undefined (not null) so the caller
   // doesn't misinterpret the failure as "needs onboarding" and wipe an
   // existing role by redirecting an already-onboarded user to /onboarding.
-  if (error) {
-    console.error("[auth] loadProfile failed", error)
+  if (profileRes.error) {
+    console.error("[auth] loadProfile failed", profileRes.error)
     return
   }
 
-  const setUserType = useGlobalStore.getState().setUserType
+  const { setUserType, setHasSubscription } = useGlobalStore.getState()
   // null means row exists but user_type not set (pre-onboarding)
-  setUserType((data?.user_type as UserType | null | undefined) ?? null)
+  setUserType(
+    (profileRes.data?.user_type as UserType | null | undefined) ?? null
+  )
+  setHasSubscription(!!subRes.data)
 }
 
 // Hydrates the Supabase session into the auth store and re-runs router
@@ -65,7 +76,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
         // undefined = unknown, not null = "needs onboarding". Using null here
         // would cause requireOnboarded() to redirect to /onboarding if the
         // next SIGNED_IN event hits a transient loadProfile error.
-        useGlobalStore.getState().setUserType(undefined)
+        const store = useGlobalStore.getState()
+        store.setUserType(undefined)
+        store.setHasSubscription(undefined)
       }
       if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
         void router.invalidate()

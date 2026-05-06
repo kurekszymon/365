@@ -3,7 +3,11 @@ import { createFileRoute, redirect } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { PlusIcon, TrashIcon } from "lucide-react"
 import type { HallPreset } from "@/stores/planner.store"
-import { requireAuth, requireOnboarded } from "@/lib/auth/guards"
+import {
+  requireAuth,
+  requireOnboarded,
+  requireSubscription,
+} from "@/lib/auth/guards"
 import { useAuthStore } from "@/stores/auth.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { supabase } from "@/lib/supabase"
@@ -29,6 +33,7 @@ export const Route = createFileRoute("/venue/templates")({
   beforeLoad: () => {
     requireAuth("/venue/templates")
     requireOnboarded()
+    requireSubscription()
 
     const { isReady } = useAuthStore.getState()
     if (!isReady) return

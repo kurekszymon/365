@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react"
 import { Outlet, createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
-import { requireAuth } from "@/lib/auth/guards"
+import {
+  requireAuth,
+  requireOnboarded,
+  requireSubscription,
+} from "@/lib/auth/guards"
 import { loadWedding } from "@/lib/sync/loadWedding"
 
 export const Route = createFileRoute("/wedding/$id")({
   beforeLoad: ({ params }) => {
     requireAuth(`/wedding/${params.id}`)
-    // requireOnboarded is intentionally omitted: /invite/$token claims membership
-    // and navigates here before the user has set a user_type. RLS gates actual
-    // data access; the planner works correctly for null-type users.
+    requireOnboarded()
+    requireSubscription()
   },
   component: WeddingLayout,
 })

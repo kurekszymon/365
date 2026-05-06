@@ -221,7 +221,12 @@ export const WeddingMembersDialog = () => {
     )
 
     if (rpcError) {
-      setError(rpcError.message)
+      const message = rpcError.message.includes(
+        "recipient_couple_already_owns_wedding"
+      )
+        ? t("members.transfer_couple_blocked")
+        : rpcError.message
+      setError(message)
       setTransferState({ kind: "idle" })
       return
     }
