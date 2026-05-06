@@ -92,6 +92,8 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
 
   useGlobalStore.setState({
     weddingId: id,
+    subjectKind: "wedding",
+    subjectId: id,
     name: weddingRes.data.name || undefined,
     date: weddingRes.data.date ? new Date(weddingRes.data.date) : undefined,
     role: (memberRes.data?.role as WeddingRole | undefined) ?? undefined,
