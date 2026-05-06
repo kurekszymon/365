@@ -1,0 +1,17 @@
+{
+  "name": "enums-benchmark",
+  "version": "1.0.0",
+  "scripts": {
+    "bench": "bun src/benchmark.ts",
+    "bench:mitata": "bun src/benchmark-mitata.ts",
+    "sizes": "bun scripts/bundle-sizes.ts",
+    "typecheck": "tsc --noEmit",
+    "typecheck:tsc": "tsc --noEmit --project tsconfig.tsc.json"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.13",
+    "esbuild": "^0.25.0",
+    "mitata": "^1.0.34",
+    "typescript": "^5.8.0"
+  }
+}

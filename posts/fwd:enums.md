@@ -178,6 +178,42 @@ the `typeof X[keyof typeof X]` pattern looks noisy the first time you see it, bu
 
 the tradeoff? you lose the named namespace feel of `Direction.Up` being exclusively tied to the `Direction` enum type. with `as const`, `Direction.Up` and the raw string `'UP'` are interchangeable - TypeScript won't complain about either. depending on your perspective that's a feature (flexibility) or a bug (less nominal typing).
 
+## the benchmark
+
+talk is cheap. I put together a [small sandbox](https://github.com/szymonkurek/365/tree/main/posts/enums-benchmark) that runs each pattern through esbuild and a 5M-iteration runtime loop. here's what it actually shows:
+
+### bundle sizes (esbuild, minified)
+
+| pattern | bytes | notes |
+| ------- | ----- | ----- |
+| `enum` | 368 | IIFE + reverse mapping for numeric enum |
+| `as const` object | 269 | plain object literal |
+| string literal union | 176 | type alias itself emits nothing; includes a runtime guard helper |
+| `const enum` | ~0 | fully inlined by `tsc`; can't measure with esbuild |
+
+the string literal union number is almost all the `isDirection()` guard function and the `DIRECTIONS` array — the `type Direction = ...` line itself produces zero bytes. if you don't need a runtime guard, a string union is truly zero-cost.
+
+the gap between `enum` and `as const` is the IIFE overhead and the numeric enum's reverse mapping (`Priority[0] = "Low"` etc). for a pure string enum, the emitted IIFE is still present — it's just shorter.
+
+### runtime (5M iterations, measured on Apple M-series)
+
+| operation | `enum` | `as const` | string union |
+| --------- | ------ | ---------- | ------------ |
+| property access | 2.29 ns | 1.22 ns | 1.12 ns (raw string) |
+| equality check | 1.23 ns | 2.16 ns | 2.95 ns |
+| `Object.values` iteration | 27.21 ns | 26.17 ns | 1.67 ns (array.length) |
+| membership check | 28.30 ns | 29.23 ns | 8.27 ns |
+
+**the headline: it doesn't matter**. everything in the property access and equality rows is 1–3 ns — noise at any real call frequency. the gap in iteration and membership is real (~3.5x) but only exists because `Object.values()` allocates a new array on every call. if you cache it, they're identical.
+
+the practical takeaway: don't pick your enum pattern for runtime performance reasons. pick it for the DX and emit story.
+
+### the `const enum` isolatedModules footgun
+
+`const enum` compiles fine when tsc sees the whole program. the problem is single-file transpilers (esbuild, swc, babel): they transform each `.ts` file in isolation, so when they hit `Direction.Up` imported from another file, they have no idea what value to inline. the const enum was never emitted as a real object, so the property lookup returns `undefined` at runtime — no compile error, just a silent breakage.
+
+TypeScript warns about this for ambient const enums (`.d.ts` / library types) when `isolatedModules: true` is set. for same-project const enums, it's a bundler-level footgun. the TS docs [explicitly warn against publishing ambient enums](https://www.typescriptlang.org/docs/handbook/enums.html#const-enum-pitfalls), and TypeScript's own repo works around it with [`preserveConstEnums`](https://www.typescriptlang.org/tsconfig/#preserveConstEnums).
+
 ## tl;dr
 
 |                      | runtime object | iteratable | `isolatedModules` | type safety | zero emit |
@@ -191,4 +227,12 @@ the tradeoff? you lose the named namespace feel of `Direction.Up` being exclusiv
 
 \** emits a plain object literal - minimal, predictable, no IIFE magic
 
-if you don't need runtime iteration - **string literal union**. if you do - **`as const`**. reach for `enum` only when you genuinely need reverse mapping or are in a codebase that already commits to them. avoid `const enum` in anything that touches a modern bundler.
+the verdict, backed by actual numbers: **string literal union if you don't need runtime iteration**. **`as const` if you do**. reach for `enum` only when you genuinely need reverse mapping, or the codebase is already committed to them. avoid `const enum` in anything that touches a modern bundler — the footgun isn't worth the zero-emit win you can get from the other two anyway.
+
+---
+
+further reading:
+- [TypeScript Handbook: Enums](https://www.typescriptlang.org/docs/handbook/enums.html)
+- [tsconfig: isolatedModules](https://www.typescriptlang.org/tsconfig/#isolatedModules)
+- [tsconfig: preserveConstEnums](https://www.typescriptlang.org/tsconfig/#preserveConstEnums)
+- [TypeScript Playground: enum examples](https://www.typescriptlang.org/play/typescript/language-extensions/enums.ts.html)
