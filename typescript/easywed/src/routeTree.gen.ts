@@ -9,10 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UpgradeRouteImport } from './routes/upgrade'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as InvitationsRouteImport } from './routes/invitations'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WeddingIdRouteImport } from './routes/wedding.$id'
+import { Route as VenueTemplatesRouteImport } from './routes/venue.templates'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as WeddingIdIndexRouteImport } from './routes/wedding.$id/index'
@@ -20,6 +23,16 @@ import { Route as WeddingIdRemindersRouteImport } from './routes/wedding.$id/rem
 import { Route as WeddingIdPlannerRouteImport } from './routes/wedding.$id/planner'
 import { Route as WeddingIdInvitationsRouteImport } from './routes/wedding.$id/invitations'
 
+const UpgradeRoute = UpgradeRouteImport.update({
+  id: '/upgrade',
+  path: '/upgrade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -38,6 +51,11 @@ const IndexRoute = IndexRouteImport.update({
 const WeddingIdRoute = WeddingIdRouteImport.update({
   id: '/wedding/$id',
   path: '/wedding/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VenueTemplatesRoute = VenueTemplatesRouteImport.update({
+  id: '/venue/templates',
+  path: '/venue/templates',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InviteTokenRoute = InviteTokenRouteImport.update({
@@ -75,8 +93,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/invitations': typeof InvitationsRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
+  '/upgrade': typeof UpgradeRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/venue/templates': typeof VenueTemplatesRoute
   '/wedding/$id': typeof WeddingIdRouteWithChildren
   '/wedding/$id/invitations': typeof WeddingIdInvitationsRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
@@ -87,8 +108,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/invitations': typeof InvitationsRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
+  '/upgrade': typeof UpgradeRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/venue/templates': typeof VenueTemplatesRoute
   '/wedding/$id/invitations': typeof WeddingIdInvitationsRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
   '/wedding/$id/reminders': typeof WeddingIdRemindersRoute
@@ -99,8 +123,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/invitations': typeof InvitationsRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
+  '/upgrade': typeof UpgradeRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/venue/templates': typeof VenueTemplatesRoute
   '/wedding/$id': typeof WeddingIdRouteWithChildren
   '/wedding/$id/invitations': typeof WeddingIdInvitationsRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
@@ -113,8 +140,11 @@ export interface FileRouteTypes {
     | '/'
     | '/invitations'
     | '/login'
+    | '/onboarding'
+    | '/upgrade'
     | '/auth/callback'
     | '/invite/$token'
+    | '/venue/templates'
     | '/wedding/$id'
     | '/wedding/$id/invitations'
     | '/wedding/$id/planner'
@@ -125,8 +155,11 @@ export interface FileRouteTypes {
     | '/'
     | '/invitations'
     | '/login'
+    | '/onboarding'
+    | '/upgrade'
     | '/auth/callback'
     | '/invite/$token'
+    | '/venue/templates'
     | '/wedding/$id/invitations'
     | '/wedding/$id/planner'
     | '/wedding/$id/reminders'
@@ -136,8 +169,11 @@ export interface FileRouteTypes {
     | '/'
     | '/invitations'
     | '/login'
+    | '/onboarding'
+    | '/upgrade'
     | '/auth/callback'
     | '/invite/$token'
+    | '/venue/templates'
     | '/wedding/$id'
     | '/wedding/$id/invitations'
     | '/wedding/$id/planner'
@@ -149,13 +185,30 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   InvitationsRoute: typeof InvitationsRoute
   LoginRoute: typeof LoginRoute
+  OnboardingRoute: typeof OnboardingRoute
+  UpgradeRoute: typeof UpgradeRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  VenueTemplatesRoute: typeof VenueTemplatesRoute
   WeddingIdRoute: typeof WeddingIdRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/upgrade': {
+      id: '/upgrade'
+      path: '/upgrade'
+      fullPath: '/upgrade'
+      preLoaderRoute: typeof UpgradeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -182,6 +235,13 @@ declare module '@tanstack/react-router' {
       path: '/wedding/$id'
       fullPath: '/wedding/$id'
       preLoaderRoute: typeof WeddingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/venue/templates': {
+      id: '/venue/templates'
+      path: '/venue/templates'
+      fullPath: '/venue/templates'
+      preLoaderRoute: typeof VenueTemplatesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invite/$token': {
@@ -251,8 +311,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   InvitationsRoute: InvitationsRoute,
   LoginRoute: LoginRoute,
+  OnboardingRoute: OnboardingRoute,
+  UpgradeRoute: UpgradeRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   InviteTokenRoute: InviteTokenRoute,
+  VenueTemplatesRoute: VenueTemplatesRoute,
   WeddingIdRoute: WeddingIdRouteWithChildren,
 }
 export const routeTree = rootRouteImport

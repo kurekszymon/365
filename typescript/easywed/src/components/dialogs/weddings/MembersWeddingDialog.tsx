@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { CheckIcon, CopyIcon, TrashIcon, UserXIcon } from "lucide-react"
+import {
+  CheckIcon,
+  CopyIcon,
+  ShareIcon,
+  TrashIcon,
+  UserXIcon,
+} from "lucide-react"
 
 import {
   Dialog,
@@ -43,11 +49,17 @@ type MemberAccess = {
   created_at: string
 }
 
+type TransferState =
+  | { kind: "idle" }
+  | { kind: "confirm"; memberId: string }
+  | { kind: "transferring" }
+
 export const WeddingMembersDialog = () => {
   const { t } = useTranslation()
   const opened = useDialogStore((s) => s.opened)
   const close = useDialogStore((s) => s.close)
   const weddingId = useGlobalStore((s) => s.weddingId)
+  const setGlobalRole = useGlobalStore((s) => s.setRole)
   const session = useAuthStore((s) => s.session)
 
   const [role, setRole] = useState<InviteRole>("editor")
@@ -60,6 +72,9 @@ export const WeddingMembersDialog = () => {
     url: string
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [transferState, setTransferState] = useState<TransferState>({
+    kind: "idle",
+  })
 
   const isOpen = opened === "Wedding.Members"
 
@@ -187,158 +202,246 @@ export const WeddingMembersDialog = () => {
     }
   }
 
+  const handleTransferClick = (member: MemberAccess) => {
+    setTransferState({ kind: "confirm", memberId: member.user_id })
+  }
+
+  const handleTransferConfirm = async () => {
+    if (transferState.kind !== "confirm" || !weddingId) return
+    const { memberId } = transferState
+    setTransferState({ kind: "transferring" })
+    setError(null)
+
+    const { error: rpcError } = await supabase.rpc(
+      "transfer_wedding_ownership",
+      {
+        _wedding_id: weddingId,
+        _to_user_id: memberId,
+      }
+    )
+
+    if (rpcError) {
+      const message = rpcError.message.includes(
+        "recipient_couple_already_owns_wedding"
+      )
+        ? t("members.transfer_couple_blocked")
+        : rpcError.message
+      setError(message)
+      setTransferState({ kind: "idle" })
+      return
+    }
+
+    // Reload members to reflect the new roles.
+    await refresh(
+      weddingId,
+      new AbortController().signal,
+      setInvitations,
+      setMembers,
+      setError
+    )
+    // Demote the current user in the global store so owner-only controls
+    // (e.g. the Members button) disappear immediately without a page reload.
+    setGlobalRole("editor")
+    setTransferState({ kind: "idle" })
+  }
+
   const pending = invitations.filter((i) => !i.claimed_at)
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(next) => {
-        if (!next) {
-          close()
-          setRole("editor")
-          setError(null)
-          setCopiedId(null)
-          setFallbackUrl(null)
-        }
-      }}
-    >
-      <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
-        <DialogHeader>
-          <DialogTitle>{t("members.title")}</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog
+        open={isOpen}
+        onOpenChange={(next) => {
+          if (!next) {
+            close()
+            setRole("editor")
+            setError(null)
+            setCopiedId(null)
+            setFallbackUrl(null)
+            setTransferState({ kind: "idle" })
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle>{t("members.title")}</DialogTitle>
+          </DialogHeader>
 
-        <div className="flex flex-col gap-3">
-          <Field>
-            <FieldLabel htmlFor="invite-role">{t("members.role")}</FieldLabel>
-            <Select
-              value={role}
-              onValueChange={(v) => setRole(v as InviteRole)}
-            >
-              <SelectTrigger id="invite-role">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="editor">
-                  {t("members.role.editor")}
-                </SelectItem>
-                <SelectItem value="viewer">
-                  {t("members.role.viewer")}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          <Button onClick={handleCreate} disabled={submitting}>
-            {t("members.create_invite")}
-          </Button>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-        </div>
-
-        {pending.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase">
-              {t("members.pending")}
-            </p>
-            <ul className="flex flex-col gap-2">
-              {pending.map((inv) => (
-                <li
-                  key={inv.id}
-                  className="flex flex-col gap-1 rounded-md border p-2 text-sm"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate font-medium">
-                        {t("members.link_only")}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {t(`members.role.${inv.role}`)} &middot;{" "}
-                        {t("members.expires", {
-                          date: new Date(inv.expires_at).toLocaleDateString(),
-                        })}
-                      </span>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleCopy(inv)}
-                    >
-                      {copiedId === inv.id ? (
-                        <>
-                          <CheckIcon />
-                          {t("members.copied")}
-                        </>
-                      ) : (
-                        <>
-                          <CopyIcon />
-                          {t("members.copy_link")}
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleRevoke(inv.id)}
-                      aria-label={t("members.revoke")}
-                    >
-                      <TrashIcon />
-                    </Button>
-                  </div>
-                  {fallbackUrl?.id === inv.id && (
-                    <input
-                      readOnly
-                      value={fallbackUrl.url}
-                      className="w-full truncate rounded border bg-muted px-2 py-1 text-xs"
-                      onFocus={(e) => e.currentTarget.select()}
-                    />
-                  )}
-                </li>
-              ))}
-            </ul>
+          <div className="flex flex-col gap-3">
+            <Field>
+              <FieldLabel htmlFor="invite-role">{t("members.role")}</FieldLabel>
+              <Select
+                value={role}
+                onValueChange={(v) => setRole(v as InviteRole)}
+              >
+                <SelectTrigger id="invite-role">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="editor">
+                    {t("members.role.editor")}
+                  </SelectItem>
+                  <SelectItem value="viewer">
+                    {t("members.role.viewer")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Button onClick={handleCreate} disabled={submitting}>
+              {t("members.create_invite")}
+            </Button>
+            {error && <p className="text-sm text-destructive">{error}</p>}
           </div>
-        )}
 
-        {members.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase">
-              {t("members.active")}
-            </p>
-            <ul className="flex flex-col gap-2">
-              {members.map((member) => (
-                <li
-                  key={member.user_id}
-                  className="flex items-center gap-2 rounded-md border p-2 text-sm"
-                >
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate font-medium">
-                      {getMemberLabel(member, session?.user.id, t)}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {t(`members.role.${member.role}`)}
-                    </span>
-                  </div>
-                  {member.role !== "owner" &&
-                    member.user_id !== session?.user.id && (
+          {pending.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase">
+                {t("members.pending")}
+              </p>
+              <ul className="flex flex-col gap-2">
+                {pending.map((inv) => (
+                  <li
+                    key={inv.id}
+                    className="flex flex-col gap-1 rounded-md border p-2 text-sm"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        <span className="truncate font-medium">
+                          {t("members.link_only")}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {t(`members.role.${inv.role}`)} &middot;{" "}
+                          {t("members.expires", {
+                            date: new Date(inv.expires_at).toLocaleDateString(),
+                          })}
+                        </span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleCopy(inv)}
+                      >
+                        {copiedId === inv.id ? (
+                          <>
+                            <CheckIcon />
+                            {t("members.copied")}
+                          </>
+                        ) : (
+                          <>
+                            <CopyIcon />
+                            {t("members.copy_link")}
+                          </>
+                        )}
+                      </Button>
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => handleRemoveAccess(member)}
-                        aria-label={t("members.remove_access")}
+                        onClick={() => handleRevoke(inv.id)}
+                        aria-label={t("members.revoke")}
                       >
-                        <UserXIcon />
+                        <TrashIcon />
                       </Button>
+                    </div>
+                    {fallbackUrl?.id === inv.id && (
+                      <input
+                        readOnly
+                        value={fallbackUrl.url}
+                        className="w-full truncate rounded border bg-muted px-2 py-1 text-xs"
+                        onFocus={(e) => e.currentTarget.select()}
+                      />
                     )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-        <DialogFooter>
-          <Button variant="outline" onClick={close}>
-            {t("common.close")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          {members.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase">
+                {t("members.active")}
+              </p>
+              <ul className="flex flex-col gap-2">
+                {members.map((member) => (
+                  <li
+                    key={member.user_id}
+                    className="flex items-center gap-2 rounded-md border p-2 text-sm"
+                  >
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate font-medium">
+                        {getMemberLabel(member, session?.user.id, t)}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {t(`members.role.${member.role}`)}
+                      </span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      {member.role !== "owner" &&
+                        member.user_id !== session?.user.id && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleTransferClick(member)}
+                            aria-label={t("members.transfer")}
+                            title={t("members.transfer")}
+                          >
+                            <ShareIcon />
+                          </Button>
+                        )}
+                      {member.role !== "owner" &&
+                        member.user_id !== session?.user.id && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleRemoveAccess(member)}
+                            aria-label={t("members.remove_access")}
+                          >
+                            <UserXIcon />
+                          </Button>
+                        )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={close}>
+              {t("common.close")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Transfer ownership confirmation dialog */}
+      <Dialog
+        open={transferState.kind === "confirm"}
+        onOpenChange={(next) => {
+          if (!next) setTransferState({ kind: "idle" })
+        }}
+      >
+        <DialogContent className="sm:max-w-sm" aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle>{t("members.transfer_confirm_title")}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {t("members.transfer_confirm")}
+          </p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setTransferState({ kind: "idle" })}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button onClick={handleTransferConfirm}>
+              {t("members.transfer")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 

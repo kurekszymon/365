@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react"
 import { Outlet, createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
-import { requireAuth } from "@/lib/auth/guards"
+import {
+  requireAuth,
+  requireOnboarded,
+  requireSubscription,
+} from "@/lib/auth/guards"
 import { loadWedding } from "@/lib/sync/loadWedding"
 
 export const Route = createFileRoute("/wedding/$id")({
   beforeLoad: ({ params }) => {
     requireAuth(`/wedding/${params.id}`)
+    requireOnboarded()
+    requireSubscription()
   },
   component: WeddingLayout,
 })

@@ -1,5 +1,6 @@
 import { redirect } from "@tanstack/react-router"
 import { useAuthStore } from "@/stores/auth.store"
+import { useGlobalStore } from "@/stores/global.store"
 
 export const sanitizeNextPath = (next: unknown): string | undefined => {
   if (typeof next !== "string") return undefined
@@ -21,6 +22,31 @@ export const requireAuth = (nextPath: string) => {
     search: nextPath !== "/" ? { next: nextPath } : {},
     replace: true,
   })
+}
+
+// Redirects to /onboarding if the user hasn't selected an account type yet.
+// Call after requireAuth so session is guaranteed.
+export const requireOnboarded = () => {
+  const { isReady } = useAuthStore.getState()
+  if (!isReady) return
+
+  const { userType } = useGlobalStore.getState()
+  if (userType === null) {
+    throw redirect({ to: "/onboarding", replace: true })
+  }
+}
+
+// Redirects to /upgrade if the user has no active subscription.
+// Call after requireOnboarded.
+export const requireSubscription = () => {
+  const { isReady } = useAuthStore.getState()
+  if (!isReady) return
+
+  const { hasSubscription } = useGlobalStore.getState()
+  if (hasSubscription === undefined) return
+  if (!hasSubscription) {
+    throw redirect({ to: "/upgrade", replace: true })
+  }
 }
 
 export const redirectAuthedAwayFromLogin = (next?: unknown) => {

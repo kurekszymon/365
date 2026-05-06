@@ -45,6 +45,7 @@ export const Planner = () => {
 
   const openDialog = useDialogStore((state) => state.open)
   const role = useGlobalStore((state) => state.role)
+  const userType = useGlobalStore((state) => state.userType)
   const assignGuestToTable = usePlannerStore(
     (state) => state.assignGuestToTable
   )
@@ -178,7 +179,7 @@ export const Planner = () => {
               </Button>
             </ButtonGroup>
             <ButtonGroup>
-              {role === "owner" && (
+              {role === "owner" && userType !== "couple" && (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button

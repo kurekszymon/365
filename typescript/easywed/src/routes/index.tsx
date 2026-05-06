@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react"
-import { Link, createFileRoute } from "@tanstack/react-router"
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { supabase } from "@/lib/supabase"
-import { requireAuth } from "@/lib/auth/guards"
+import {
+  requireAuth,
+  requireOnboarded,
+  requireSubscription,
+} from "@/lib/auth/guards"
 import { useAuthStore } from "@/stores/auth.store"
+import { useGlobalStore } from "@/stores/global.store"
 import { useDialogStore } from "@/stores/dialog.store"
 import { Button } from "@/components/ui/button"
 import { DialogManager } from "@/components/dialogs/DialogManager"
@@ -11,6 +16,8 @@ import { DialogManager } from "@/components/dialogs/DialogManager"
 export const Route = createFileRoute("/")({
   beforeLoad: () => {
     requireAuth("/")
+    requireOnboarded()
+    requireSubscription()
   },
   component: Home,
 })
@@ -19,11 +26,14 @@ type WeddingRow = {
   id: string
   name: string
   date: string | null
+  owner_id: string
 }
 
 function Home() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const session = useAuthStore((s) => s.session)
+  const userType = useGlobalStore((s) => s.userType)
   const openDialog = useDialogStore((s) => s.open)
 
   const [weddings, setWeddings] = useState<Array<WeddingRow>>([])
@@ -34,15 +44,38 @@ function Home() {
 
     supabase
       .from("weddings")
-      .select("id, name, date")
+      .select("id, name, date, owner_id")
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
         if (error) console.error(error)
-
         setWeddings(data ?? [])
         setLoading(false)
       })
   }, [session])
+
+  // Couples with exactly one wedding get auto-redirected.
+  useEffect(() => {
+    if (userType !== "couple" || loading) return
+    if (weddings.length === 1) {
+      void navigate({
+        to: "/wedding/$id",
+        params: { id: weddings[0].id },
+        replace: true,
+      })
+    }
+  }, [userType, weddings, loading, navigate])
+
+  const handleDeleteWedding = async (id: string) => {
+    const { error } = await supabase.from("weddings").delete().eq("id", id)
+    if (error) {
+      console.error(error)
+      return
+    }
+    setWeddings((prev) => prev.filter((w) => w.id !== id))
+  }
+
+  const isCouple = userType === "couple"
+  const showCreateButton = !isCouple || weddings.length === 0
 
   return (
     <>
@@ -52,25 +85,53 @@ function Home() {
           <div className="text-center">
             <h1 className="text-3xl font-bold tracking-tight">EasyWed</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              {t("weddings.subtitle")}
+              {isCouple && weddings.length > 1
+                ? t("weddings.couple_multiple")
+                : isCouple
+                  ? t("weddings.couple_empty")
+                  : t("weddings.subtitle")}
             </p>
           </div>
 
-          <Button onClick={() => openDialog("Wedding.Create")}>
-            {t("common.create")}
-          </Button>
+          {showCreateButton && (
+            <Button onClick={() => openDialog("Wedding.Create")}>
+              {isCouple ? t("weddings.couple_create") : t("common.create")}
+            </Button>
+          )}
 
           <div className="flex flex-col gap-2">
             {loading ? (
               <p className="text-center text-sm text-muted-foreground">
                 {t("weddings.loading")}
               </p>
-            ) : weddings.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground">
-                {t("weddings.empty")}
-              </p>
+            ) : weddings.length === 0 ? null : isCouple &&
+              weddings.length > 1 ? (
+              <>
+                {weddings.map((wedding) => (
+                  <div
+                    key={wedding.id}
+                    className="flex items-center gap-2 rounded-md border bg-card p-3 text-sm"
+                  >
+                    <Link
+                      to="/wedding/$id"
+                      params={{ id: wedding.id }}
+                      className="min-w-0 flex-1 truncate hover:underline"
+                    >
+                      {wedding.name || t("wedding.defaults.name")}
+                    </Link>
+                    {wedding.owner_id === session?.user.id && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleDeleteWedding(wedding.id)}
+                      >
+                        {t("weddings.couple_delete")}
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </>
             ) : (
-              // TODO: based on a role (couple/planner/site) render only one wedding / list etc.
               weddings.map((wedding) => (
                 <Link
                   key={wedding.id}
