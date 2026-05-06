@@ -218,6 +218,9 @@ export const insertGuest = async (guest: Guest) => {
   if (error) log("insertGuest", error)
 }
 
+// Scoping every guest/reminder UPDATE by wedding_id is defence-in-depth on
+// top of RLS: if subjectId ever drifts client-side, the query just affects
+// zero rows instead of someone else's wedding.
 export const updateGuestTable = async (
   guestId: string,
   tableId: string | null
@@ -228,6 +231,7 @@ export const updateGuestTable = async (
     .from("guests")
     .update({ table_id: tableId })
     .eq("id", guestId)
+    .eq("wedding_id", weddingId)
   if (error) log("updateGuestTable", error)
 }
 
@@ -242,6 +246,7 @@ export const reassignTableGuests = async (
     .from("guests")
     .update({ table_id: null })
     .eq("table_id", tableId)
+    .eq("wedding_id", weddingId)
   if (unassign.error) log("reassignTableGuests unassign", unassign.error)
 
   if (guestIds.length === 0) return
@@ -250,6 +255,7 @@ export const reassignTableGuests = async (
     .from("guests")
     .update({ table_id: tableId })
     .in("id", guestIds)
+    .eq("wedding_id", weddingId)
   if (assign.error) log("reassignTableGuests assign", assign.error)
 }
 
