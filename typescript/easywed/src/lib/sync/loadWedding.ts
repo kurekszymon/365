@@ -125,8 +125,6 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
       }
     : { preset: undefined, dimensions: { width: 20, height: 12 } }
 
-  usePlannerStore.setState({ tables, guests, hall })
-
   const fixtures: Array<Fixture> = fixturesRes.data.map((f) => ({
     id: f.id,
     name: f.name,

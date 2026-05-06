@@ -38,6 +38,8 @@ The app uses a specific pattern that spans three files and is easy to miss:
 2. **`src/lib/sync/loadWedding.ts`** hydrates the planner/reminders stores from Supabase in one parallel `Promise.all` call, given a wedding id. Called from `src/routes/wedding.$id.tsx` with an `AbortController`.
 3. **`src/lib/sync/mutations.ts`** exports per-action functions (`insertTable`, `updateGuestTable`, `upsertHall`, …). Store actions optimistically update Zustand state first, then fire-and-forget the matching mutation (`void insertTable(...)`). The mutations currently only `console.error` on failure — there is no toast/rollback layer, so optimistic state can diverge from the DB on error. Keep this in mind when adding new mutations.
 
+**`updateX` vs `saveX` split:** For tables and fixtures, `updateTable`/`updateFixture` are **local-only** state updates used for live preview while the user edits in the PropertyPanel. `saveTable`/`saveFixture` are the ones that call mutations and persist to Supabase. Do not treat the missing mutation call in `updateX` as a bug — it is by design.
+
 `global.store.ts` holds the current `weddingId`. Mutations read it via `getWeddingId()` to scope inserts; if none is loaded, they no-op with a warning.
 
 ### Auth

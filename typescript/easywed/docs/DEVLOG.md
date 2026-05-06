@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 06.05
+
+- save a rerender with not calling setPlannerStore before setting fixtures
+
 ### 05.05
 
 - invitations: make duplicate actually duplicate, apply proper styles/fontsizes to duplicated field
