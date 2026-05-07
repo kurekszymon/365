@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 07.05
+
+- add undo/redo buttons in invitations creator
+
 ### 06.05
 
 - save a rerender with not calling setPlannerStore before setting fixtures

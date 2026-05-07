@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
-import { MailIcon } from "lucide-react"
+import { MailIcon, Redo2Icon, Undo2Icon } from "lucide-react"
 import { DesignEditor } from "./DesignEditor"
 import { InvitationPreview } from "./InvitationPreview"
 import { Header } from "@/components/planner/Header"
@@ -18,6 +18,9 @@ export function InvitationsPage({ weddingId }: { weddingId?: string }) {
   const openDialog = useDialogStore((s) => s.open)
   const setDesign = useInvitationStore((s) => s.setDesign)
   const updateDesign = useInvitationStore((s) => s.updateDesign)
+  const undo = useInvitationStore((s) => s.undo)
+  const redo = useInvitationStore((s) => s.redo)
+  const invitationHistory = useInvitationStore((s) => s.history)
   const guests = usePlannerStore((s) => s.guests)
   const isFirstMount = useRef(true)
 
@@ -96,7 +99,25 @@ export function InvitationsPage({ weddingId }: { weddingId?: string }) {
           </div>
 
           {/* Right: preview */}
-          <div className="flex flex-1 items-start justify-center overflow-y-auto p-6">
+          <div className="relative flex flex-1 items-start justify-center overflow-y-auto p-6">
+            <div className="absolute top-3 left-3 z-20 flex items-center gap-1 rounded-md border bg-background/80 backdrop-blur-sm">
+              <button
+                type="button"
+                className="cursor-pointer px-1.5 py-1 text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                disabled={invitationHistory.past.length === 0}
+                onClick={undo}
+              >
+                <Undo2Icon className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                className="cursor-pointer px-1.5 py-1 text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                disabled={invitationHistory.future.length === 0}
+                onClick={redo}
+              >
+                <Redo2Icon className="size-3.5" />
+              </button>
+            </div>
             <InvitationPreview />
           </div>
         </div>
