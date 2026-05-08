@@ -45,7 +45,7 @@ export function StartWeddingDialog({
   }
 
   const handleStart = async () => {
-    if (!hall || !name.trim() || submitting) return
+    if (!hall || !name.trim() || submitting || !date) return
     setSubmitting(true)
     setError(null)
     const { data, error: rpcError } = await supabase.rpc(
@@ -53,7 +53,7 @@ export function StartWeddingDialog({
       {
         _hall_id: hall.id,
         _name: name.trim(),
-        _date: date ? formatDateForPostgresDate(date) : null,
+        _date: formatDateForPostgresDate(date),
       }
     )
     setSubmitting(false)
@@ -111,7 +111,10 @@ export function StartWeddingDialog({
           >
             {t("common.cancel")}
           </Button>
-          <Button onClick={handleStart} disabled={!name.trim() || submitting}>
+          <Button
+            onClick={handleStart}
+            disabled={!name.trim() || submitting || !date}
+          >
             {t("halls.start_dialog.confirm")}
           </Button>
         </DialogFooter>
