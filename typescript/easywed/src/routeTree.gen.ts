@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as InvitationsRouteImport } from './routes/invitations'
 import { Route as HallsRouteImport } from './routes/halls'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as VenueIndexRouteImport } from './routes/venue/index'
 import { Route as WeddingIdRouteImport } from './routes/wedding.$id'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
@@ -22,7 +23,7 @@ import { Route as WeddingIdIndexRouteImport } from './routes/wedding.$id/index'
 import { Route as WeddingIdRemindersRouteImport } from './routes/wedding.$id/reminders'
 import { Route as WeddingIdPlannerRouteImport } from './routes/wedding.$id/planner'
 import { Route as WeddingIdInvitationsRouteImport } from './routes/wedding.$id/invitations'
-import { Route as VenueHallsIdRouteImport } from './routes/venue.halls.$id'
+import { Route as VenueHallsIdRouteImport } from './routes/venue/halls.$id'
 
 const VenueRoute = VenueRouteImport.update({
   id: '/venue',
@@ -53,6 +54,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const VenueIndexRoute = VenueIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => VenueRoute,
 } as any)
 const WeddingIdRoute = WeddingIdRouteImport.update({
   id: '/wedding/$id',
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
   '/wedding/$id': typeof WeddingIdRouteWithChildren
+  '/venue/': typeof VenueIndexRoute
   '/venue/halls/$id': typeof VenueHallsIdRoute
   '/wedding/$id/invitations': typeof WeddingIdInvitationsRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
@@ -117,9 +124,9 @@ export interface FileRoutesByTo {
   '/invitations': typeof InvitationsRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
-  '/venue': typeof VenueRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/venue': typeof VenueIndexRoute
   '/venue/halls/$id': typeof VenueHallsIdRoute
   '/wedding/$id/invitations': typeof WeddingIdInvitationsRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
@@ -137,6 +144,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
   '/wedding/$id': typeof WeddingIdRouteWithChildren
+  '/venue/': typeof VenueIndexRoute
   '/venue/halls/$id': typeof VenueHallsIdRoute
   '/wedding/$id/invitations': typeof WeddingIdInvitationsRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
@@ -155,6 +163,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/invite/$token'
     | '/wedding/$id'
+    | '/venue/'
     | '/venue/halls/$id'
     | '/wedding/$id/invitations'
     | '/wedding/$id/planner'
@@ -167,9 +176,9 @@ export interface FileRouteTypes {
     | '/invitations'
     | '/login'
     | '/onboarding'
-    | '/venue'
     | '/auth/callback'
     | '/invite/$token'
+    | '/venue'
     | '/venue/halls/$id'
     | '/wedding/$id/invitations'
     | '/wedding/$id/planner'
@@ -186,6 +195,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/invite/$token'
     | '/wedding/$id'
+    | '/venue/'
     | '/venue/halls/$id'
     | '/wedding/$id/invitations'
     | '/wedding/$id/planner'
@@ -249,6 +259,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/venue/': {
+      id: '/venue/'
+      path: '/'
+      fullPath: '/venue/'
+      preLoaderRoute: typeof VenueIndexRouteImport
+      parentRoute: typeof VenueRoute
+    }
     '/wedding/$id': {
       id: '/wedding/$id'
       path: '/wedding/$id'
@@ -309,10 +326,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface VenueRouteChildren {
+  VenueIndexRoute: typeof VenueIndexRoute
   VenueHallsIdRoute: typeof VenueHallsIdRoute
 }
 
 const VenueRouteChildren: VenueRouteChildren = {
+  VenueIndexRoute: VenueIndexRoute,
   VenueHallsIdRoute: VenueHallsIdRoute,
 }
 

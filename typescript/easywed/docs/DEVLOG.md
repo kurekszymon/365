@@ -1,5 +1,10 @@
 # EasyWed — Development Log
 
+### 08.05
+
+- hide the preset selection for venues (not supported yet)
+- tested and verified feat/venue-role branch
+
 ### 07.05
 
 - add undo/redo buttons in invitations creator
