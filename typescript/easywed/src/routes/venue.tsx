@@ -298,16 +298,20 @@ function CreateHallForm({
         </div>
       </div>
       <div className="flex items-center justify-between gap-3">
-        <select
-          value={preset}
-          onChange={(e) => setPreset(e.target.value as HallPreset)}
-          className="rounded-md border bg-background px-3 py-1.5 text-sm"
-        >
-          <option value="rectangle">rectangle</option>
-          <option value="l-shape">l-shape</option>
-          <option value="u-shape">u-shape</option>
-          <option value="custom">custom</option>
-        </select>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="hall-preset">{t("venue.halls.preset")}</Label>
+          <select
+            id="hall-preset"
+            value={preset}
+            onChange={(e) => setPreset(e.target.value as HallPreset)}
+            className="rounded-md border bg-background px-3 py-1.5 text-sm"
+          >
+            <option value="rectangle">rectangle</option>
+            <option value="l-shape">l-shape</option>
+            <option value="u-shape">u-shape</option>
+            <option value="custom">custom</option>
+          </select>
+        </div>
         <Button
           onClick={handleCreate}
           disabled={!name.trim() || width <= 0 || height <= 0 || submitting}

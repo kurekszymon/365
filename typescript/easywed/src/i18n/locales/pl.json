@@ -74,6 +74,7 @@
 
   "onboarding.title": "Witaj w EasyWed",
   "onboarding.subtitle": "Powiedz nam, jak będziesz korzystać z aplikacji.",
+  "onboarding.role_group_label": "Jestem",
   "onboarding.couple.label": "Jestem parą",
   "onboarding.couple.description": "Planujemy własne wesele — stoły, goście, zaproszenia.",
   "onboarding.venue.label": "Jestem salą weselną",
@@ -87,6 +88,7 @@
   "venue.dashboard.back": "Wróć do panelu",
   "venue.halls.empty": "Brak sal. Dodaj pierwszą powyżej.",
   "venue.halls.create": "Dodaj salę",
+  "venue.halls.preset": "Układ",
   "venue.halls.delete": "Usuń",
   "venue.halls.delete_confirm": "Usunąć tę salę? Pary, które już rozpoczęły z niej wesele, zachowują swoją kopię.",
   "venue.halls.edit_layout": "Edytuj układ",

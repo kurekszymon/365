@@ -96,7 +96,11 @@ function Onboarding() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div
+          role="radiogroup"
+          aria-label={t("onboarding.role_group_label")}
+          className="flex flex-col gap-2"
+        >
           <RoleCard
             title={t("onboarding.couple.label")}
             description={t("onboarding.couple.description")}
@@ -151,6 +155,8 @@ function RoleCard({
   return (
     <button
       type="button"
+      role="radio"
+      aria-checked={selected}
       onClick={onSelect}
       className={`flex flex-col gap-1 rounded-lg border p-4 text-left transition-colors ${
         selected
