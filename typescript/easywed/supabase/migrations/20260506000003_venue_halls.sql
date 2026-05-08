@@ -148,7 +148,8 @@ create policy "owners insert venue_hall_tables"
 
 create policy "owners update venue_hall_tables"
   on public.venue_hall_tables for update
-  using (public.is_venue_hall_owner(hall_id));
+  using (public.is_venue_hall_owner(hall_id))
+  with check (public.is_venue_hall_owner(hall_id));
 
 create policy "owners delete venue_hall_tables"
   on public.venue_hall_tables for delete
@@ -165,7 +166,8 @@ create policy "owners insert venue_hall_fixtures"
 
 create policy "owners update venue_hall_fixtures"
   on public.venue_hall_fixtures for update
-  using (public.is_venue_hall_owner(hall_id));
+  using (public.is_venue_hall_owner(hall_id))
+  with check (public.is_venue_hall_owner(hall_id));
 
 create policy "owners delete venue_hall_fixtures"
   on public.venue_hall_fixtures for delete
