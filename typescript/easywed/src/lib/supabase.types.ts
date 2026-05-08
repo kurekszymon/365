@@ -223,6 +223,30 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+          user_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_type?: string | null
+        }
+        Relationships: []
+      }
       reminders: {
         Row: {
           created_at: string
@@ -316,6 +340,189 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      venue_hall_fixtures: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          hall_id: string
+          height: number
+          id: string
+          name: string
+          pos_x: number
+          pos_y: number
+          rotation: number
+          shape: string
+          updated_at: string
+          width: number
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          hall_id: string
+          height: number
+          id: string
+          name?: string
+          pos_x: number
+          pos_y: number
+          rotation?: number
+          shape: string
+          updated_at?: string
+          width: number
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          hall_id?: string
+          height?: number
+          id?: string
+          name?: string
+          pos_x?: number
+          pos_y?: number
+          rotation?: number
+          shape?: string
+          updated_at?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_hall_fixtures_hall_id_fkey"
+            columns: ["hall_id"]
+            isOneToOne: false
+            referencedRelation: "venue_halls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venue_hall_tables: {
+        Row: {
+          capacity: number
+          created_at: string
+          deleted_at: string | null
+          hall_id: string
+          height: number
+          id: string
+          name: string
+          pos_x: number
+          pos_y: number
+          rotation: number
+          shape: string
+          updated_at: string
+          width: number
+        }
+        Insert: {
+          capacity: number
+          created_at?: string
+          deleted_at?: string | null
+          hall_id: string
+          height: number
+          id: string
+          name?: string
+          pos_x: number
+          pos_y: number
+          rotation?: number
+          shape: string
+          updated_at?: string
+          width: number
+        }
+        Update: {
+          capacity?: number
+          created_at?: string
+          deleted_at?: string | null
+          hall_id?: string
+          height?: number
+          id?: string
+          name?: string
+          pos_x?: number
+          pos_y?: number
+          rotation?: number
+          shape?: string
+          updated_at?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_hall_tables_hall_id_fkey"
+            columns: ["hall_id"]
+            isOneToOne: false
+            referencedRelation: "venue_halls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venue_halls: {
+        Row: {
+          created_at: string
+          description: string | null
+          height: number
+          id: string
+          is_public: boolean
+          name: string
+          preset: string
+          updated_at: string
+          venue_id: string
+          width: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          height: number
+          id?: string
+          is_public?: boolean
+          name?: string
+          preset: string
+          updated_at?: string
+          venue_id: string
+          width: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          height?: number
+          id?: string
+          is_public?: boolean
+          name?: string
+          preset?: string
+          updated_at?: string
+          venue_id?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_halls_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venues: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       wedding_invitations: {
         Row: {
@@ -428,213 +635,6 @@ export type Database = {
           },
         ]
       }
-      profiles: {
-        Row: {
-          created_at: string
-          display_name: string | null
-          id: string
-          updated_at: string
-          user_type: string | null
-        }
-        Insert: {
-          created_at?: string
-          display_name?: string | null
-          id: string
-          updated_at?: string
-          user_type?: string | null
-        }
-        Update: {
-          created_at?: string
-          display_name?: string | null
-          id?: string
-          updated_at?: string
-          user_type?: string | null
-        }
-        Relationships: []
-      }
-      venues: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          owner_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          owner_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          owner_id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      venue_halls: {
-        Row: {
-          created_at: string
-          description: string | null
-          height: number
-          id: string
-          is_public: boolean
-          name: string
-          preset: string
-          updated_at: string
-          venue_id: string
-          width: number
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          height: number
-          id?: string
-          is_public?: boolean
-          name?: string
-          preset: string
-          updated_at?: string
-          venue_id: string
-          width: number
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          height?: number
-          id?: string
-          is_public?: boolean
-          name?: string
-          preset?: string
-          updated_at?: string
-          venue_id?: string
-          width?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "venue_halls_venue_id_fkey"
-            columns: ["venue_id"]
-            isOneToOne: false
-            referencedRelation: "venues"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      venue_hall_tables: {
-        Row: {
-          capacity: number
-          created_at: string
-          deleted_at: string | null
-          hall_id: string
-          height: number
-          id: string
-          name: string
-          pos_x: number
-          pos_y: number
-          rotation: number
-          shape: string
-          updated_at: string
-          width: number
-        }
-        Insert: {
-          capacity: number
-          created_at?: string
-          deleted_at?: string | null
-          hall_id: string
-          height: number
-          id: string
-          name?: string
-          pos_x: number
-          pos_y: number
-          rotation?: number
-          shape: string
-          updated_at?: string
-          width: number
-        }
-        Update: {
-          capacity?: number
-          created_at?: string
-          deleted_at?: string | null
-          hall_id?: string
-          height?: number
-          id?: string
-          name?: string
-          pos_x?: number
-          pos_y?: number
-          rotation?: number
-          shape?: string
-          updated_at?: string
-          width?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "venue_hall_tables_hall_id_fkey"
-            columns: ["hall_id"]
-            isOneToOne: false
-            referencedRelation: "venue_halls"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      venue_hall_fixtures: {
-        Row: {
-          created_at: string
-          deleted_at: string | null
-          hall_id: string
-          height: number
-          id: string
-          name: string
-          pos_x: number
-          pos_y: number
-          rotation: number
-          shape: string
-          updated_at: string
-          width: number
-        }
-        Insert: {
-          created_at?: string
-          deleted_at?: string | null
-          hall_id: string
-          height: number
-          id: string
-          name?: string
-          pos_x: number
-          pos_y: number
-          rotation?: number
-          shape: string
-          updated_at?: string
-          width: number
-        }
-        Update: {
-          created_at?: string
-          deleted_at?: string | null
-          hall_id?: string
-          height?: number
-          id?: string
-          name?: string
-          pos_x?: number
-          pos_y?: number
-          rotation?: number
-          shape?: string
-          updated_at?: string
-          width?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "venue_hall_fixtures_hall_id_fkey"
-            columns: ["hall_id"]
-            isOneToOne: false
-            referencedRelation: "venue_halls"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
@@ -648,7 +648,7 @@ export type Database = {
       is_wedding_member: { Args: { _wedding_id: string }; Returns: boolean }
       set_user_type: { Args: { _user_type: string }; Returns: undefined }
       start_wedding_from_hall: {
-        Args: { _hall_id: string; _name: string; _date: string | null }
+        Args: { _date: string; _hall_id: string; _name: string }
         Returns: string
       }
       wedding_role: { Args: { _wedding_id: string }; Returns: string }
