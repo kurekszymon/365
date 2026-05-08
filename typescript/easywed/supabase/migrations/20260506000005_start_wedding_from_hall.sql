@@ -44,7 +44,7 @@ begin
     id, wedding_id, name, shape, capacity, width, height, rotation, pos_x, pos_y
   )
   select
-    gen_random_uuid(), new_wedding_id, vt.name, vt.shape, vt.capacity,
+    extensions.gen_random_uuid(), new_wedding_id, vt.name, vt.shape, vt.capacity,
     vt.width, vt.height, vt.rotation, vt.pos_x, vt.pos_y
   from public.venue_hall_tables vt
   where vt.hall_id = _hall_id and vt.deleted_at is null;
@@ -53,7 +53,7 @@ begin
     id, wedding_id, name, shape, width, height, rotation, pos_x, pos_y
   )
   select
-    gen_random_uuid(), new_wedding_id, vf.name, vf.shape,
+    extensions.gen_random_uuid(), new_wedding_id, vf.name, vf.shape,
     vf.width, vf.height, vf.rotation, vf.pos_x, vf.pos_y
   from public.venue_hall_fixtures vf
   where vf.hall_id = _hall_id and vf.deleted_at is null;

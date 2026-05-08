@@ -88,11 +88,9 @@ function Home() {
                 <p className="text-sm text-muted-foreground">
                   {t("weddings.no_wedding_yet")}
                 </p>
-                <Link to="/halls">
-                  <Button className="w-full">
-                    {t("weddings.no_wedding_yet.cta")}
-                  </Button>
-                </Link>
+                <Button asChild className="w-full">
+                  <Link to="/halls">{t("weddings.no_wedding_yet.cta")}</Link>
+                </Button>
               </div>
             ) : (
               weddings.map((wedding) => (
