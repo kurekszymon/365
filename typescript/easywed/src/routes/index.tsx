@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase"
 import { requireAuth, requireOnboarded } from "@/lib/auth/guards"
 import { useAuthStore } from "@/stores/auth.store"
 import { useGlobalStore } from "@/stores/global.store"
+import { useDialogStore } from "@/stores/dialog.store"
 import { Button } from "@/components/ui/button"
 import { DialogManager } from "@/components/dialogs/DialogManager"
 
@@ -27,6 +28,8 @@ function Home() {
   const navigate = useNavigate()
   const session = useAuthStore((s) => s.session)
   const userType = useGlobalStore((s) => s.userType)
+
+  const openDialog = useDialogStore((s) => s.open)
 
   const [weddings, setWeddings] = useState<Array<WeddingRow>>([])
   const [loading, setLoading] = useState(true)
@@ -91,6 +94,13 @@ function Home() {
                 <Button asChild className="w-full">
                   <Link to="/halls">{t("weddings.no_wedding_yet.cta")}</Link>
                 </Button>
+                <button
+                  type="button"
+                  onClick={() => openDialog("Wedding.Create")}
+                  className="cursor-pointer text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                >
+                  {t("weddings.no_wedding_yet.from_scratch")}
+                </button>
               </div>
             ) : (
               weddings.map((wedding) => (

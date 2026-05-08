@@ -71,6 +71,7 @@
   "weddings.loading": "Loading your weddings...",
   "weddings.no_wedding_yet": "You haven't started a wedding yet.",
   "weddings.no_wedding_yet.cta": "Browse venue halls",
+  "weddings.no_wedding_yet.from_scratch": "or start from scratch",
 
   "onboarding.title": "Welcome to EasyWed",
   "onboarding.subtitle": "Tell us how you'll be using the app.",
@@ -103,7 +104,6 @@
   "halls.start_dialog.name": "Wedding name",
   "halls.start_dialog.confirm": "Start wedding",
   "halls.start_dialog.error": "Could not start a wedding from this hall.",
-
 
   "tables.count": "{{count}} tables",
   "tables.count_one": "{{count}} table",

@@ -4,7 +4,7 @@
 
 - hide the preset selection for venues (not supported yet)
 - tested and verified feat/venue-role branch
-- todo: add start from scratch for couples
+- ~~todo: add start from scratch for couples~~
 - todo: add search for halls, group venues by halls, add calendar?
 - todo: improve sign out for couples in landing page (and add some profile tab with sign out / edit profile etc)
 - todo: add component for sign out button
