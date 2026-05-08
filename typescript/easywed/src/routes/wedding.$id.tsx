@@ -1,12 +1,21 @@
 import { useEffect, useState } from "react"
-import { Outlet, createFileRoute } from "@tanstack/react-router"
+import { Outlet, createFileRoute, redirect } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
-import { requireAuth } from "@/lib/auth/guards"
+import { requireAuth, requireOnboarded } from "@/lib/auth/guards"
 import { loadWedding } from "@/lib/sync/loadWedding"
+import { supabase } from "@/lib/supabase"
 
 export const Route = createFileRoute("/wedding/$id")({
-  beforeLoad: ({ params }) => {
+  beforeLoad: async ({ params }) => {
     requireAuth(`/wedding/${params.id}`)
+    requireOnboarded()
+    const { data: isMember, error } = await supabase.rpc("is_wedding_member", {
+      _wedding_id: params.id,
+    })
+    if (error) throw error
+    if (isMember === false) {
+      throw redirect({ to: "/", replace: true })
+    }
   },
   component: WeddingLayout,
 })

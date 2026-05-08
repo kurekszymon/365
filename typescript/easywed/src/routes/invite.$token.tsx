@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 
 import { requireAuth } from "@/lib/auth/guards"
 import { supabase } from "@/lib/supabase"
+import { useGlobalStore } from "@/stores/global.store"
 
 export const Route = createFileRoute("/invite/$token")({
   beforeLoad: ({ params }) => {
@@ -35,6 +36,16 @@ function InviteClaim() {
           })
           return
         }
+
+        // The claim RPC sets profiles.user_type='couple' if it was null.
+        // Mirror that in the local store so requireOnboarded doesn't bounce
+        // the user to /onboarding for the one render before AuthGate
+        // refreshes the profile.
+        const userType = useGlobalStore.getState().userType
+        if (userType !== "venue") {
+          useGlobalStore.setState({ userType: "couple" })
+        }
+
         navigate({ to: "/wedding/$id", params: { id: data }, replace: true })
       })
 
