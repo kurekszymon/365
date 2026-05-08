@@ -19,8 +19,7 @@ import { useGlobalStore } from "@/stores/global.store"
 // short-circuit when subjectKind is not 'wedding'.
 const getSubject = (): { kind: SubjectKind; id: string } | null => {
   const { subjectKind, subjectId, weddingId } = useGlobalStore.getState()
-  const id =
-    subjectKind === "wedding" ? (subjectId ?? weddingId) : subjectId
+  const id = subjectKind === "wedding" ? (subjectId ?? weddingId) : subjectId
   if (!id) {
     console.warn("[sync] no subject loaded; skipping mutation")
     return null
@@ -76,10 +75,12 @@ export const upsertHall = async (
   if (!subject) return
 
   if (subject.kind === "wedding") {
-    const { error } = await supabase.from("halls").upsert(
-      { wedding_id: subject.id, preset, width, height },
-      { onConflict: "wedding_id" }
-    )
+    const { error } = await supabase
+      .from("halls")
+      .upsert(
+        { wedding_id: subject.id, preset, width, height },
+        { onConflict: "wedding_id" }
+      )
     if (error) log("upsertHall", error)
     return
   }
@@ -110,9 +111,7 @@ export const insertTable = async (table: Table): Promise<boolean> => {
   }
   const { error } =
     subject.kind === "wedding"
-      ? await supabase
-          .from("tables")
-          .insert({ ...row, wedding_id: subject.id })
+      ? await supabase.from("tables").insert({ ...row, wedding_id: subject.id })
       : await supabase
           .from("venue_hall_tables")
           .insert({ ...row, hall_id: subject.id })
@@ -277,10 +276,13 @@ export const updateReminderStatus = async (
   uuid: string,
   status: Reminder["status"]
 ) => {
+  const weddingId = getWeddingId()
+  if (!weddingId) return
   const { error } = await supabase
     .from("reminders")
     .update({ status })
     .eq("id", uuid)
+    .eq("wedding_id", weddingId)
   if (error) log("updateReminderStatus", error)
 }
 

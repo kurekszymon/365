@@ -40,7 +40,9 @@ export function HallCatalog({
 
     supabase
       .from("venue_halls")
-      .select("id, name, description, preset, width, height, venue:venues(name)")
+      .select(
+        "id, name, description, preset, width, height, venue:venues(name)"
+      )
       .eq("is_public", true)
       .order("created_at", { ascending: false })
       .abortSignal(ctrl.signal)
@@ -67,7 +69,9 @@ export function HallCatalog({
 
   if (status.kind === "loading") {
     return (
-      <p className="text-sm text-muted-foreground">{t("halls.catalog.loading")}</p>
+      <p className="text-sm text-muted-foreground">
+        {t("halls.catalog.loading")}
+      </p>
     )
   }
 
@@ -77,7 +81,9 @@ export function HallCatalog({
 
   if (status.entries.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">{t("halls.catalog.empty")}</p>
+      <p className="text-sm text-muted-foreground">
+        {t("halls.catalog.empty")}
+      </p>
     )
   }
 

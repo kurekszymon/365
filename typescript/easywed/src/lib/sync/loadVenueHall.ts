@@ -20,7 +20,9 @@ export const loadVenueHall = async (id: string, signal: AbortSignal) => {
   const [hallRes, tablesRes, fixturesRes] = await Promise.all([
     supabase
       .from("venue_halls")
-      .select("id, venue_id, name, description, preset, width, height, is_public")
+      .select(
+        "id, venue_id, name, description, preset, width, height, is_public"
+      )
       .eq("id", id)
       .abortSignal(signal)
       .single(),

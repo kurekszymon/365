@@ -22,17 +22,32 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
 
   useEffect(() => {
+    // Holds the AbortController for the in-flight loadProfile request, if
+    // any. A fresh SIGNED_IN, a SIGNED_OUT, or unmount aborts the previous
+    // request so its response cannot overwrite userType after the session
+    // changed. AbortSignal is one-shot, so each loadProfile call mints its
+    // own controller; reusing one across requests would leave the second
+    // call permanently aborted after the first cancellation.
+    let profileAbort: AbortController | null = null
+
     // Loads profiles.user_type into the global store. Always invalidates the
     // router on completion so guards re-run with the freshly known userType
     // — without this, a route entered while userType was still `undefined`
     // would never see the transition to `null` and `requireOnboarded` would
     // not redirect to /onboarding.
     const loadProfile = async (userId: string) => {
+      profileAbort?.abort()
+      const ctrl = new AbortController()
+      profileAbort = ctrl
+
       const { data, error } = await supabase
         .from("profiles")
         .select("user_type")
         .eq("id", userId)
+        .abortSignal(ctrl.signal)
         .maybeSingle()
+
+      if (ctrl.signal.aborted) return
 
       if (error) {
         // Leave userType undefined so requireOnboarded does not falsely
@@ -42,7 +57,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       }
 
       const raw = data?.user_type ?? null
-      setUserType(raw === "couple" || raw === "venue" ? (raw as UserType) : null)
+      setUserType(
+        raw === "couple" || raw === "venue" ? (raw as UserType) : null
+      )
       void router.invalidate()
     }
 
@@ -66,6 +83,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
         void loadProfile(nextSession.user.id)
       }
       if (event === "SIGNED_OUT") {
+        profileAbort?.abort()
         setUserType(undefined)
       }
       if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
@@ -73,7 +91,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      profileAbort?.abort()
+      subscription.unsubscribe()
+    }
   }, [setSession, setReady, setUserType, router])
 
   const isPublic = PUBLIC_PATHS.some(

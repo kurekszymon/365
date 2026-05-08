@@ -33,12 +33,13 @@ create trigger on_auth_user_created
 
 alter table public.profiles enable row level security;
 
--- Authenticated users can read any profile. Required so couples can render
--- venue display names from venue_halls catalog without a server hop.
-create policy "authenticated can view profiles"
+-- Profiles are private: a signed-in user can only read their own row.
+-- Public-facing names (e.g. venue display names in the halls catalog) come
+-- from public.venues, not from profiles, so cross-user reads are unnecessary.
+create policy "users view own profile"
   on public.profiles for select
   to authenticated
-  using (true);
+  using (id = auth.uid());
 
 create policy "users update own profile"
   on public.profiles for update

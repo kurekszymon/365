@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react"
-import { Link, createFileRoute } from "@tanstack/react-router"
+import { Link, createFileRoute, redirect } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
 import { requireAuth, requireOnboarded } from "@/lib/auth/guards"
 import { supabase } from "@/lib/supabase"
 import { useAuthStore } from "@/stores/auth.store"
+import { useGlobalStore } from "@/stores/global.store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,6 +14,12 @@ export const Route = createFileRoute("/venue")({
   beforeLoad: () => {
     requireAuth("/venue")
     requireOnboarded()
+    // Couples have no business on the venue dashboard — its inserts would
+    // hit RLS failures (venues INSERT policy gates on profile.user_type).
+    // Bounce them to their own root, where index.tsx will route correctly.
+    if (useGlobalStore.getState().userType === "couple") {
+      throw redirect({ to: "/", replace: true })
+    }
   },
   component: VenueDashboard,
 })
@@ -261,7 +268,7 @@ function CreateHallForm({
     <div className="flex flex-col gap-3 rounded-lg border bg-card p-4">
       <h2 className="text-sm font-semibold">{t("venue.halls.create")}</h2>
       <div className="grid gap-3 sm:grid-cols-4">
-        <div className="sm:col-span-2 flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
           <Label htmlFor="hall-name">{t("common.name")}</Label>
           <Input
             id="hall-name"
@@ -407,9 +414,7 @@ function HallRow({
         onClick={handleTogglePublic}
         className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
       >
-        {hall.is_public
-          ? t("venue.halls.public")
-          : t("venue.halls.private")}
+        {hall.is_public ? t("venue.halls.public") : t("venue.halls.private")}
       </button>
       <Link
         to="/venue/halls/$id"

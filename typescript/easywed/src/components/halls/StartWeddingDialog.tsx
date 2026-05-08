@@ -16,7 +16,6 @@ import { DatePicker } from "@/components/ui/datepicker"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { supabase } from "@/lib/supabase"
 
-
 export function StartWeddingDialog({
   hall,
   onOpenChange,
