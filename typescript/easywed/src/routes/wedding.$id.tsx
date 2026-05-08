@@ -9,10 +9,11 @@ export const Route = createFileRoute("/wedding/$id")({
   beforeLoad: async ({ params }) => {
     requireAuth(`/wedding/${params.id}`)
     requireOnboarded()
-    const { data: isMember } = await supabase.rpc("is_wedding_member", {
+    const { data: isMember, error } = await supabase.rpc("is_wedding_member", {
       _wedding_id: params.id,
     })
-    if (!isMember) {
+    if (error) throw error
+    if (isMember === false) {
       throw redirect({ to: "/", replace: true })
     }
   },

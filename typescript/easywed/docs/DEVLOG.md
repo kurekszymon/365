@@ -9,6 +9,7 @@
 - todo: improve sign out for couples in landing page (and add some profile tab with sign out / edit profile etc)
 - todo: add component for sign out button
 - todo: hide buttons when role = venue
+- todo: let user switch profile?
 
 ### 07.05
 

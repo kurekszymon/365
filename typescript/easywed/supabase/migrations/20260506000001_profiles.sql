@@ -78,3 +78,10 @@ $$;
 
 revoke all on function public.set_user_type(text) from public;
 grant execute on function public.set_user_type(text) to authenticated;
+
+-- Backfill profiles for users that already existed before this migration ran.
+-- Leave user_type null so onboarding continues to set it via set_user_type().
+insert into public.profiles (id)
+select u.id
+from auth.users u
+on conflict (id) do nothing;
