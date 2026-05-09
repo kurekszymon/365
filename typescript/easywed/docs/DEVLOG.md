@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 09.05
+
+- hide unnecessary controls for venue
+
 ### 08.05
 
 - hide the preset selection for venues (not supported yet)
@@ -8,7 +12,7 @@
 - todo: add search for halls, group venues by halls, add calendar?
 - todo: improve sign out for couples in landing page (and add some profile tab with sign out / edit profile etc)
 - todo: add component for sign out button
-- todo: hide buttons when role = venue
+  ~~- todo: hide buttons when role = venue~~
 - todo: let user switch profile?
 
 ### 07.05
