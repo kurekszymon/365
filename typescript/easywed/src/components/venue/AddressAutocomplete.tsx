@@ -51,6 +51,7 @@ export function AddressAutocomplete({
 
       const el = new El({})
       if (placeholder) el.placeholder = placeholder
+      el.style.colorScheme = "light"
       element = el
       containerRef.current.appendChild(el)
 
