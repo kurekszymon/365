@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 10.05
+
+- group halls by venue
+
 ### 09.05
 
 - group halls by venue
