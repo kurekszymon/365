@@ -30,10 +30,12 @@ Created this repo so i can explore some programming concepts I wanted and learn 
   https://hoverbear.org/blog/optional-arguments/
 - gpui rendering 120 fps for text editor
   https://zed.dev/blog/videogame#gpui-rendering
+- idempotency is easy until the second request is different https://blog.dochia.dev/blog/idempotency/
+- webrtc is the problem https://moq.dev/blog/webrtc-is-the-problem/
 
 ### papers
 
-- [What every programmer should now about memory](https://people.freebsd.org/~lstewart/articles/cpumemory.pdf)
+- [What every programmer should know about memory](https://people.freebsd.org/~lstewart/articles/cpumemory.pdf)
 
 ## rust
 
@@ -43,7 +45,7 @@ I don't have a proper idea on what to build with C++ and from some digging it re
 **project goal** i want to first familiarize myself with concepts from the book and then build a code editor for my needs.
 [read more](./rust/README.md)
 
-## typescript 
+## typescript
 
 ### webrtc
 
@@ -73,7 +75,7 @@ key takeways:
 
 ### easywed
 
-wedding planner TBD
+wedding planner app to help couples connect with venues and plan seats/invitations
 
 - tanstack start
 - zustand
