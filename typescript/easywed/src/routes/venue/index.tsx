@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react"
 import { Link, createFileRoute, redirect } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
+import { ChevronDown, ChevronUp } from "lucide-react"
 
+import type {
+  Fixture,
+  FixtureShape,
+  Table,
+  TableRotation,
+  TableShape,
+} from "@/stores/planner.store"
 import { requireAuth, requireOnboarded } from "@/lib/auth/guards"
 import { supabase } from "@/lib/supabase"
 import { useAuthStore } from "@/stores/auth.store"
@@ -9,6 +17,9 @@ import { useGlobalStore } from "@/stores/global.store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { HallBackground } from "@/components/planner/Canvas/HallBackground"
+import { TableVisual } from "@/components/planner/Canvas/TableVisual"
+import { FixtureVisual } from "@/components/planner/Canvas/FixtureVisual"
 
 export const Route = createFileRoute("/venue/")({
   beforeLoad: () => {
@@ -311,6 +322,93 @@ function CreateHallForm({
   )
 }
 
+const PREVIEW_MAX_W = 560
+const PREVIEW_MAX_H = 280
+
+function HallPreview({ hall }: { hall: Hall }) {
+  const [tables, setTables] = useState<Array<Table>>([])
+  const [fixtures, setFixtures] = useState<Array<Fixture>>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const ctrl = new AbortController()
+    void (async () => {
+      const [tablesRes, fixturesRes] = await Promise.all([
+        supabase
+          .from("venue_hall_tables")
+          .select(
+            "id, name, shape, capacity, width, height, rotation, pos_x, pos_y"
+          )
+          .eq("hall_id", hall.id)
+          .is("deleted_at", null)
+          .abortSignal(ctrl.signal),
+        supabase
+          .from("venue_hall_fixtures")
+          .select("id, name, shape, width, height, rotation, pos_x, pos_y")
+          .eq("hall_id", hall.id)
+          .is("deleted_at", null)
+          .abortSignal(ctrl.signal),
+      ])
+      if (ctrl.signal.aborted) return
+      if (!tablesRes.error) {
+        setTables(
+          tablesRes.data.map((t) => ({
+            id: t.id,
+            name: t.name,
+            shape: t.shape as TableShape,
+            capacity: t.capacity,
+            size: { width: Number(t.width), height: Number(t.height) },
+            rotation: t.rotation as TableRotation,
+            position: { x: Number(t.pos_x), y: Number(t.pos_y) },
+          }))
+        )
+      }
+      if (!fixturesRes.error) {
+        setFixtures(
+          fixturesRes.data.map((f) => ({
+            id: f.id,
+            name: f.name,
+            shape: f.shape as FixtureShape,
+            size: { width: Number(f.width), height: Number(f.height) },
+            rotation: f.rotation as TableRotation,
+            position: { x: Number(f.pos_x), y: Number(f.pos_y) },
+          }))
+        )
+      }
+      setLoading(false)
+    })()
+    return () => ctrl.abort()
+  }, [hall.id])
+
+  const ppm = Math.floor(
+    Math.min(PREVIEW_MAX_W / hall.width, PREVIEW_MAX_H / hall.height)
+  )
+
+  if (loading) {
+    return <p className="px-1 py-2 text-xs text-muted-foreground">Loading…</p>
+  }
+
+  return (
+    <div className="overflow-auto rounded-md">
+      <HallBackground
+        hallWidth={hall.width * ppm}
+        hallHeight={hall.height * ppm}
+        ppm={ppm}
+        gridStyle="dots"
+        gridSpacing="auto"
+        className="overflow-hidden border border-dashed"
+      >
+        {tables.map((tbl) => (
+          <TableVisual key={tbl.id} table={tbl} guestsAssigned={0} ppm={ppm} />
+        ))}
+        {fixtures.map((fix) => (
+          <FixtureVisual key={fix.id} fixture={fix} ppm={ppm} />
+        ))}
+      </HallBackground>
+    </div>
+  )
+}
+
 function HallRow({
   hall,
   onUpdated,
@@ -321,6 +419,7 @@ function HallRow({
   onDeleted: (id: string) => void
 }) {
   const { t } = useTranslation()
+  const [showPreview, setShowPreview] = useState(false)
   const [renaming, setRenaming] = useState(false)
   const [name, setName] = useState(hall.name)
 
@@ -370,53 +469,64 @@ function HallRow({
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3">
-      <div className="flex flex-1 items-center gap-3">
-        {renaming ? (
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onBlur={handleRename}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") void handleRename()
-              if (e.key === "Escape") {
-                setName(hall.name)
-                setRenaming(false)
-              }
-            }}
-            autoFocus
-            className="max-w-xs"
-          />
-        ) : (
-          <button
-            type="button"
-            onClick={() => setRenaming(true)}
-            className="text-sm font-medium hover:underline"
-          >
-            {hall.name || t("wedding.defaults.name")}
-          </button>
-        )}
-        <span className="text-xs text-muted-foreground">
-          {hall.preset} · {hall.width}×{hall.height} m
-        </span>
+    <div className="flex flex-col gap-2 rounded-lg border bg-card p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-1 items-center gap-3">
+          {renaming ? (
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={handleRename}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void handleRename()
+                if (e.key === "Escape") {
+                  setName(hall.name)
+                  setRenaming(false)
+                }
+              }}
+              autoFocus
+              className="max-w-xs"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setRenaming(true)}
+              className="text-sm font-medium hover:underline"
+            >
+              {hall.name || t("wedding.defaults.name")}
+            </button>
+          )}
+          <span className="text-xs text-muted-foreground">
+            {hall.preset} · {hall.width}×{hall.height} m
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={handleTogglePublic}
+          className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+        >
+          {hall.is_public ? t("venue.halls.public") : t("venue.halls.private")}
+        </button>
+        <Link
+          to="/venue/halls/$id"
+          params={{ id: hall.id }}
+          className="rounded-md border px-3 py-1.5 text-xs hover:bg-accent"
+        >
+          {t("venue.halls.edit_layout")}
+        </Link>
+        <Button variant="outline" size="sm" onClick={handleDelete}>
+          {t("venue.halls.delete")}
+        </Button>
+        <button
+          type="button"
+          onClick={() => setShowPreview((v) => !v)}
+          className="rounded-md border p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          aria-label={showPreview ? "Hide preview" : "Show preview"}
+        >
+          {showPreview ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={handleTogglePublic}
-        className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
-      >
-        {hall.is_public ? t("venue.halls.public") : t("venue.halls.private")}
-      </button>
-      <Link
-        to="/venue/halls/$id"
-        params={{ id: hall.id }}
-        className="rounded-md border px-3 py-1.5 text-xs hover:bg-accent"
-      >
-        {t("venue.halls.edit_layout")}
-      </Link>
-      <Button variant="outline" size="sm" onClick={handleDelete}>
-        {t("venue.halls.delete")}
-      </Button>
+      {showPreview && <HallPreview hall={hall} />}
     </div>
   )
 }
