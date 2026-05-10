@@ -87,32 +87,50 @@ export function HallCatalog({
     )
   }
 
+  const groups = status.entries.reduce<Map<string, Array<HallCatalogEntry>>>(
+    (acc, hall) => {
+      const key = hall.venueName || ""
+      const list = acc.get(key) ?? []
+      list.push(hall)
+      acc.set(key, list)
+      return acc
+    },
+    new Map()
+  )
+
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {status.entries.map((hall) => (
-        <button
-          key={hall.id}
-          type="button"
-          onClick={() => onPick(hall)}
-          className="flex flex-col gap-1 rounded-lg border bg-card p-4 text-left transition-colors hover:bg-accent"
-        >
-          <span className="text-sm font-medium">
-            {hall.name || t("wedding.defaults.name")}
-          </span>
-          {hall.venueName && (
-            <span className="text-xs text-muted-foreground">
-              {t("halls.by_venue", { venue: hall.venueName })}
-            </span>
+    <div className="flex flex-col gap-6">
+      {Array.from(groups.entries()).map(([venueName, halls]) => (
+        <div key={venueName}>
+          {venueName && (
+            <p className="mb-2 text-sm font-semibold">{venueName}</p>
           )}
-          <span className="mt-1 text-xs text-muted-foreground">
-            {hall.preset} · {hall.width}×{hall.height} m
-          </span>
-          {hall.description && (
-            <span className="mt-1 text-xs text-muted-foreground">
-              {hall.description}
-            </span>
-          )}
-        </button>
+          <div className="flex flex-wrap gap-2">
+            {halls.map((hall) => (
+              <button
+                key={hall.id}
+                type="button"
+                onClick={() => onPick(hall)}
+                className="flex w-36 cursor-pointer flex-col gap-1 rounded-lg border bg-card p-3 text-left transition-colors hover:bg-accent"
+              >
+                <span className="text-sm leading-tight font-medium">
+                  {hall.name || t("wedding.defaults.name")}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {hall.preset}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {hall.width}×{hall.height} m
+                </span>
+                {hall.description && (
+                  <span className="line-clamp-2 text-xs text-muted-foreground">
+                    {hall.description}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   )
