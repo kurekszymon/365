@@ -1,5 +1,15 @@
 # EasyWed — Development Log
 
+### 11.05
+
+- use https://github.com/visgl/react-google-maps instead of @google/js-maps-loader (written from memory, name might differ)
+- show proper address on venue address save
+
+### 10.05
+
+- draft address picker google places api
+- group halls by venue
+
 ### 09.05
 
 - group halls by venue

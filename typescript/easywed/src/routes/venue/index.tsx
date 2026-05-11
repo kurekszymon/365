@@ -2,6 +2,9 @@ import { useEffect, useState } from "react"
 import { Link, createFileRoute, redirect } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
+import { APIProvider } from "@vis.gl/react-google-maps"
+
+import type { PlaceResult } from "@/components/venue/AddressAutocomplete"
 import { requireAuth, requireOnboarded } from "@/lib/auth/guards"
 import { supabase } from "@/lib/supabase"
 import { useAuthStore } from "@/stores/auth.store"
@@ -9,6 +12,7 @@ import { useGlobalStore } from "@/stores/global.store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { AddressAutocomplete } from "@/components/venue/AddressAutocomplete"
 
 export const Route = createFileRoute("/venue/")({
   beforeLoad: () => {
@@ -21,10 +25,30 @@ export const Route = createFileRoute("/venue/")({
       throw redirect({ to: "/", replace: true })
     }
   },
-  component: VenueDashboard,
+  component: VenueRoot,
 })
 
-type Venue = { id: string; name: string }
+function VenueRoot() {
+  if (!import.meta.env.VITE_GOOGLE_MAPS_API_KEY) {
+    console.error("[venue] missing Google Maps API key")
+    return <VenueDashboard />
+  }
+
+  return (
+    <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? ""}>
+      <VenueDashboard />
+    </APIProvider>
+  )
+}
+
+type Venue = {
+  id: string
+  name: string
+  address_text: string | null
+  google_place_id: string | null
+  lat: number | null
+  lng: number | null
+}
 type Hall = {
   id: string
   name: string
@@ -42,6 +66,8 @@ function VenueDashboard() {
   const [halls, setHalls] = useState<Array<Hall>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [editingAddress, setEditingAddress] = useState(false)
+  const [pendingPlace, setPendingPlace] = useState<PlaceResult | null>(null)
 
   useEffect(() => {
     if (!session) return
@@ -54,7 +80,7 @@ function VenueDashboard() {
     void (async () => {
       const venueRes = await supabase
         .from("venues")
-        .select("id, name")
+        .select("id, name, address_text, google_place_id, lat, lng")
         .eq("owner_id", session.user.id)
         .abortSignal(ctrl.signal)
         .maybeSingle()
@@ -118,15 +144,91 @@ function VenueDashboard() {
     )
   }
 
+  const handleSaveAddress = async () => {
+    if (!pendingPlace) return
+    const { error: updateError } = await supabase
+      .from("venues")
+      .update({
+        address_text: pendingPlace.address_text,
+        google_place_id: pendingPlace.google_place_id,
+        lat: pendingPlace.lat,
+        lng: pendingPlace.lng,
+      })
+      .eq("id", venue.id)
+    if (updateError) {
+      console.error("[venue] update address", updateError)
+      return
+    }
+    setVenue((v) => v && { ...v, ...pendingPlace })
+    setPendingPlace(null)
+    setEditingAddress(false)
+  }
+
+  const directionsUrl =
+    venue.lat != null && venue.lng != null
+      ? `https://www.google.com/maps/search/?api=1&query=${venue.lat},${venue.lng}${venue.google_place_id ? `&query_place_id=${venue.google_place_id}` : ""}`
+      : null
+
   return (
     <div className="flex min-h-svh flex-col items-center p-6">
       <div className="flex w-full max-w-3xl flex-col gap-6">
         <div className="flex items-center justify-between">
-          <div>
+          <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold">{venue.name}</h1>
             <p className="text-sm text-muted-foreground">
               {t("venue.dashboard.subtitle")}
             </p>
+            {editingAddress ? (
+              <div className="flex items-center gap-2 pt-1">
+                <AddressAutocomplete onSelect={setPendingPlace} />
+                <Button
+                  size="sm"
+                  onClick={handleSaveAddress}
+                  disabled={!pendingPlace}
+                >
+                  {t("common.save")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setPendingPlace(null)
+                    setEditingAddress(false)
+                  }}
+                >
+                  {t("common.cancel")}
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 pt-1">
+                {venue.address_text ? (
+                  <span className="text-sm text-muted-foreground">
+                    {venue.address_text}
+                  </span>
+                ) : (
+                  <span className="text-sm text-muted-foreground/60">
+                    {t("venue.dashboard.no_address")}
+                  </span>
+                )}
+                {directionsUrl && (
+                  <a
+                    href={directionsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary underline underline-offset-4"
+                  >
+                    {t("venue.dashboard.get_directions")}
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setEditingAddress(true)}
+                  className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                >
+                  {t("venue.dashboard.edit_address")}
+                </button>
+              </div>
+            )}
           </div>
           <button
             type="button"
@@ -175,6 +277,7 @@ function CreateVenueForm({ onCreated }: { onCreated: (v: Venue) => void }) {
   const { t } = useTranslation()
   const session = useAuthStore((s) => s.session)
   const [name, setName] = useState("")
+  const [place, setPlace] = useState<PlaceResult | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -184,15 +287,29 @@ function CreateVenueForm({ onCreated }: { onCreated: (v: Venue) => void }) {
     setError(null)
     const { data, error: insertError } = await supabase
       .from("venues")
-      .insert({ owner_id: session.user.id, name: name.trim() })
-      .select("id, name")
+      .insert({
+        owner_id: session.user.id,
+        name: name.trim(),
+        address_text: place?.address_text ?? null,
+        google_place_id: place?.google_place_id ?? null,
+        lat: place?.lat ?? null,
+        lng: place?.lng ?? null,
+      })
+      .select("id, name, address_text, google_place_id, lat, lng")
       .single()
     setSubmitting(false)
     if (insertError) {
       setError(insertError.message)
       return
     }
-    onCreated({ id: data.id, name: data.name })
+    onCreated({
+      id: data.id,
+      name: data.name,
+      address_text: data.address_text,
+      google_place_id: data.google_place_id,
+      lat: data.lat,
+      lng: data.lng,
+    })
   }
 
   return (
@@ -201,13 +318,19 @@ function CreateVenueForm({ onCreated }: { onCreated: (v: Venue) => void }) {
         <h1 className="text-xl font-semibold">
           {t("venue.dashboard.create_title")}
         </h1>
-        <Label htmlFor="venue-name">{t("onboarding.venue.name_label")}</Label>
-        <Input
-          id="venue-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          autoFocus
-        />
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="venue-name">{t("onboarding.venue.name_label")}</Label>
+          <Input
+            id="venue-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            autoFocus
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label>{t("venue.dashboard.address_label")}</Label>
+          <AddressAutocomplete onSelect={setPlace} />
+        </div>
         <Button onClick={handleCreate} disabled={!name.trim() || submitting}>
           {t("common.create")}
         </Button>
