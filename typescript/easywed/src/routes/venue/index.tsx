@@ -29,6 +29,11 @@ export const Route = createFileRoute("/venue/")({
 })
 
 function VenueRoot() {
+  if (!import.meta.env.VITE_GOOGLE_MAPS_API_KEY) {
+    console.error("[venue] missing Google Maps API key")
+    return <VenueDashboard />
+  }
+
   return (
     <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? ""}>
       <VenueDashboard />
