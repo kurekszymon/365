@@ -1,36 +1,11 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { supabase } from "@/lib/supabase"
 
-export type HallCatalogEntry = {
-  id: string
-  name: string
-  description: string | null
-  preset: string
-  width: number
-  height: number
-  venueName: string
-  addressText: string | null
-  lat: number | null
-  lng: number | null
-  googlePlaceId: string | null
-}
+import type { HallCatalogEntry } from "@/lib/venue/types"
+import { fetchHallCatalog } from "@/lib/sync/fetchHallCatalog"
+import { getVenuePhotoUrl } from "@/lib/venue/photoMutations"
 
-type HallRow = {
-  id: string
-  name: string
-  description: string | null
-  preset: string
-  width: number
-  height: number
-  venue: {
-    name: string
-    address_text: string | null
-    lat: number | null
-    lng: number | null
-    google_place_id: string | null
-  } | null
-}
+export type { HallCatalogEntry }
 
 type Status =
   | { kind: "loading" }
@@ -47,37 +22,12 @@ export function HallCatalog({
 
   useEffect(() => {
     const ctrl = new AbortController()
-
-    supabase
-      .from("venue_halls")
-      .select(
-        "id, name, description, preset, width, height, venue:venues(name, address_text, lat, lng, google_place_id)"
-      )
-      .eq("is_public", true)
-      .order("created_at", { ascending: false })
-      .abortSignal(ctrl.signal)
-      .then(({ data, error }) => {
+    fetchHallCatalog(ctrl.signal)
+      .then((entries) => setStatus({ kind: "ready", entries }))
+      .catch((err: Error) => {
         if (ctrl.signal.aborted) return
-        if (error) {
-          setStatus({ kind: "error", message: error.message })
-          return
-        }
-        const entries = (data as Array<HallRow>).map((row) => ({
-          id: row.id,
-          name: row.name,
-          description: row.description,
-          preset: row.preset,
-          width: Number(row.width),
-          height: Number(row.height),
-          venueName: row.venue?.name ?? "",
-          addressText: row.venue?.address_text ?? null,
-          lat: row.venue?.lat ?? null,
-          lng: row.venue?.lng ?? null,
-          googlePlaceId: row.venue?.google_place_id ?? null,
-        }))
-        setStatus({ kind: "ready", entries })
+        setStatus({ kind: "error", message: err.message })
       })
-
     return () => ctrl.abort()
   }, [])
 
@@ -140,6 +90,18 @@ export function HallCatalog({
                         {t("halls.catalog.get_directions")}
                       </a>
                     )}
+                  </div>
+                )}
+                {first.photos.length > 0 && (
+                  <div className="mt-1 flex gap-1">
+                    {first.photos.slice(0, 3).map((photo) => (
+                      <img
+                        key={photo.id}
+                        src={getVenuePhotoUrl(photo.storage_path)}
+                        alt=""
+                        className="h-12 w-12 rounded object-cover"
+                      />
+                    ))}
                   </div>
                 )}
               </div>

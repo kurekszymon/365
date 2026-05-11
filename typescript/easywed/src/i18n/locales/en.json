@@ -100,6 +100,15 @@
   "venue.halls.public": "Public",
   "venue.halls.private": "Hidden",
 
+  "venue.photos.title": "Venue photos",
+  "venue.photos.upload": "Upload photo",
+  "venue.photos.uploading": "Uploading...",
+  "venue.photos.loading": "Loading photos...",
+  "venue.photos.empty": "No photos yet. Upload one above.",
+  "venue.photos.delete": "Remove",
+  "venue.photos.delete_confirm": "Remove this photo? This cannot be undone.",
+  "venue.photos.upload_error": "Could not upload the photo. Please try again.",
+
   "halls.catalog.title": "Find a venue",
   "halls.catalog.loading": "Loading halls...",
   "halls.catalog.empty": "No public halls yet. Check back soon.",

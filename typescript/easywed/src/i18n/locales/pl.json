@@ -100,6 +100,15 @@
   "venue.halls.public": "Publiczna",
   "venue.halls.private": "Ukryta",
 
+  "venue.photos.title": "Zdjęcia sali",
+  "venue.photos.upload": "Wgraj zdjęcie",
+  "venue.photos.uploading": "Wgrywanie...",
+  "venue.photos.loading": "Wczytywanie zdjęć...",
+  "venue.photos.empty": "Brak zdjęć. Dodaj pierwsze powyżej.",
+  "venue.photos.delete": "Usuń",
+  "venue.photos.delete_confirm": "Usunąć to zdjęcie? Tej operacji nie można cofnąć.",
+  "venue.photos.upload_error": "Nie udało się wgrać zdjęcia. Spróbuj ponownie.",
+
   "halls.catalog.title": "Znajdź salę",
   "halls.catalog.loading": "Wczytywanie sal...",
   "halls.catalog.empty": "Nie ma jeszcze publicznych sal. Zajrzyj wkrótce.",
