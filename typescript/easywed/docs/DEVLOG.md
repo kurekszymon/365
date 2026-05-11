@@ -2,6 +2,7 @@
 
 ### 11.05
 
+- split venue into smaller, more maintainable chunks. [ref](https://github.com/kurekszymon/365/pull/14)
 - use https://github.com/visgl/react-google-maps instead of @google/js-maps-loader (written from memory, name might differ)
 - show proper address on venue address save
 
