@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { Link, createFileRoute, redirect } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
+
+import { APIProvider } from "@vis.gl/react-google-maps"
 
 import type { PlaceResult } from "@/components/venue/AddressAutocomplete"
 import { requireAuth, requireOnboarded } from "@/lib/auth/guards"
@@ -23,8 +25,16 @@ export const Route = createFileRoute("/venue/")({
       throw redirect({ to: "/", replace: true })
     }
   },
-  component: VenueDashboard,
+  component: VenueRoot,
 })
+
+function VenueRoot() {
+  return (
+    <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? ""}>
+      <VenueDashboard />
+    </APIProvider>
+  )
+}
 
 type Venue = {
   id: string
@@ -52,7 +62,7 @@ function VenueDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editingAddress, setEditingAddress] = useState(false)
-  const pendingPlace = useRef<PlaceResult | null>(null)
+  const [pendingPlace, setPendingPlace] = useState<PlaceResult | null>(null)
 
   useEffect(() => {
     if (!session) return
@@ -130,23 +140,22 @@ function VenueDashboard() {
   }
 
   const handleSaveAddress = async () => {
-    const place = pendingPlace.current
-    if (!place) return
+    if (!pendingPlace) return
     const { error: updateError } = await supabase
       .from("venues")
       .update({
-        address_text: place.address_text,
-        google_place_id: place.google_place_id,
-        lat: place.lat,
-        lng: place.lng,
+        address_text: pendingPlace.address_text,
+        google_place_id: pendingPlace.google_place_id,
+        lat: pendingPlace.lat,
+        lng: pendingPlace.lng,
       })
       .eq("id", venue.id)
     if (updateError) {
       console.error("[venue] update address", updateError)
       return
     }
-    setVenue((v) => v && { ...v, ...place })
-    pendingPlace.current = null
+    setVenue((v) => v && { ...v, ...pendingPlace })
+    setPendingPlace(null)
     setEditingAddress(false)
   }
 
@@ -166,19 +175,19 @@ function VenueDashboard() {
             </p>
             {editingAddress ? (
               <div className="flex items-center gap-2 pt-1">
-                <AddressAutocomplete
-                  onSelect={(place) => {
-                    pendingPlace.current = place
-                  }}
-                />
-                <Button size="sm" onClick={handleSaveAddress}>
+                <AddressAutocomplete onSelect={setPendingPlace} />
+                <Button
+                  size="sm"
+                  onClick={handleSaveAddress}
+                  disabled={!pendingPlace}
+                >
                   {t("common.save")}
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    pendingPlace.current = null
+                    setPendingPlace(null)
                     setEditingAddress(false)
                   }}
                 >
