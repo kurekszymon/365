@@ -11,6 +11,7 @@ import { AddressAutocomplete } from "@/components/venue/AddressAutocomplete"
 import { CreateVenueForm } from "@/components/venue/CreateVenueForm"
 import { CreateHallForm } from "@/components/venue/CreateHallForm"
 import { HallRow } from "@/components/venue/HallRow"
+import { VenuePhotoGallery } from "@/components/venue/VenuePhotoGallery"
 
 export function VenueDashboard() {
   const { t } = useTranslation()
@@ -172,6 +173,8 @@ export function VenueDashboard() {
             {t("auth.sign_out")}
           </button>
         </div>
+
+        <VenuePhotoGallery venueId={venue.id} />
 
         <CreateHallForm
           venueId={venue.id}

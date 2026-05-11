@@ -497,6 +497,38 @@ export type Database = {
           },
         ]
       }
+      venue_photos: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          storage_path: string
+          venue_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          storage_path: string
+          venue_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          storage_path?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_photos_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venues: {
         Row: {
           address_text: string | null
