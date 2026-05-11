@@ -35,7 +35,10 @@ create policy "authenticated can read venue_photos"
 
 create policy "venue owners insert venue_photos"
   on public.venue_photos for insert
-  with check (public.is_venue_owner(venue_id));
+  with check (
+    public.is_venue_owner(venue_id)
+    and storage_path like (venue_id::text || '/%')
+  );
 
 create policy "venue owners delete venue_photos"
   on public.venue_photos for delete
@@ -49,11 +52,14 @@ create policy "public can read venue photos"
   on storage.objects for select
   using (bucket_id = 'venue-photos');
 
+-- The regex guard runs before the ::uuid cast so a malformed path segment
+-- results in a clean denial rather than a server error.
 create policy "venue owners can upload photos"
   on storage.objects for insert
   to authenticated
   with check (
     bucket_id = 'venue-photos'
+    and (storage.foldername(name))[1] ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
     and public.is_venue_owner((storage.foldername(name))[1]::uuid)
   );
 
@@ -62,5 +68,6 @@ create policy "venue owners can delete photos"
   to authenticated
   using (
     bucket_id = 'venue-photos'
+    and (storage.foldername(name))[1] ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
     and public.is_venue_owner((storage.foldername(name))[1]::uuid)
   );

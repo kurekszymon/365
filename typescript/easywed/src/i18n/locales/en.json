@@ -108,6 +108,7 @@
   "venue.photos.delete": "Remove",
   "venue.photos.delete_confirm": "Remove this photo? This cannot be undone.",
   "venue.photos.upload_error": "Could not upload the photo. Please try again.",
+  "venue.photos.photo_alt": "Venue photo {{index}}",
 
   "halls.catalog.title": "Find a venue",
   "halls.catalog.loading": "Loading halls...",

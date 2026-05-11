@@ -7,7 +7,7 @@ export async function fetchHallCatalog(
   const { data, error } = await supabase
     .from("venue_halls")
     .select(
-      "id, name, description, preset, width, height, venue:venues(name, address_text, lat, lng, google_place_id, venue_photos(id, storage_path, display_order))"
+      "id, name, description, preset, width, height, venue:venues(name, address_text, lat, lng, google_place_id, venue_photos(id, storage_path, display_order, created_at))"
     )
     .eq("is_public", true)
     .order("created_at", { ascending: false })
@@ -27,8 +27,12 @@ export async function fetchHallCatalog(
     lat: row.venue.lat ?? null,
     lng: row.venue.lng ?? null,
     googlePlaceId: row.venue.google_place_id ?? null,
-    photos: row.venue.venue_photos.sort(
-      (a, b) => a.display_order - b.display_order
-    ),
+    photos: row.venue.venue_photos
+      .slice()
+      .sort(
+        (a, b) =>
+          a.display_order - b.display_order ||
+          a.created_at.localeCompare(b.created_at)
+      ),
   }))
 }

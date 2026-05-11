@@ -94,11 +94,11 @@ export function HallCatalog({
                 )}
                 {first.photos.length > 0 && (
                   <div className="mt-1 flex gap-1">
-                    {first.photos.slice(0, 3).map((photo) => (
+                    {first.photos.slice(0, 3).map((photo, i) => (
                       <img
                         key={photo.id}
                         src={getVenuePhotoUrl(photo.storage_path)}
-                        alt=""
+                        alt={t("venue.photos.photo_alt", { index: i + 1 })}
                         className="h-12 w-12 rounded object-cover"
                       />
                     ))}

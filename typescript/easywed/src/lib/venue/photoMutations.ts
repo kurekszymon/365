@@ -35,14 +35,13 @@ export async function uploadVenuePhoto(
   return data
 }
 
-export async function deleteVenuePhoto(
-  id: string,
-  storagePath: string
-): Promise<boolean> {
-  const { error: rowError } = await supabase
+export async function deleteVenuePhoto(id: string): Promise<boolean> {
+  const { data, error: rowError } = await supabase
     .from("venue_photos")
     .delete()
     .eq("id", id)
+    .select("storage_path")
+    .single()
 
   if (rowError) {
     log("delete row", rowError)
@@ -51,7 +50,7 @@ export async function deleteVenuePhoto(
 
   const { error: storageError } = await supabase.storage
     .from("venue-photos")
-    .remove([storagePath])
+    .remove([data.storage_path])
 
   if (storageError) {
     log("delete object (non-fatal)", storageError)

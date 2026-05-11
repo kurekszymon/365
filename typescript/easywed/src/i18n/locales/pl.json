@@ -108,6 +108,7 @@
   "venue.photos.delete": "Usuń",
   "venue.photos.delete_confirm": "Usunąć to zdjęcie? Tej operacji nie można cofnąć.",
   "venue.photos.upload_error": "Nie udało się wgrać zdjęcia. Spróbuj ponownie.",
+  "venue.photos.photo_alt": "Zdjęcie sali {{index}}",
 
   "halls.catalog.title": "Znajdź salę",
   "halls.catalog.loading": "Wczytywanie sal...",

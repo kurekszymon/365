@@ -50,7 +50,7 @@ export function VenuePhotoGallery({ venueId }: { venueId: string }) {
 
   const handleDelete = async (photo: VenuePhoto) => {
     if (!window.confirm(t("venue.photos.delete_confirm"))) return
-    const ok = await deleteVenuePhoto(photo.id, photo.storage_path)
+    const ok = await deleteVenuePhoto(photo.id)
     if (ok) setPhotos((prev) => prev.filter((p) => p.id !== photo.id))
   }
 
@@ -91,17 +91,17 @@ export function VenuePhotoGallery({ venueId }: { venueId: string }) {
 
       {photos.length > 0 && (
         <div className="flex flex-wrap gap-3">
-          {photos.map((photo) => (
+          {photos.map((photo, i) => (
             <div key={photo.id} className="group relative">
               <img
                 src={getVenuePhotoUrl(photo.storage_path)}
-                alt=""
+                alt={t("venue.photos.photo_alt", { index: i + 1 })}
                 className="h-24 w-24 rounded-lg object-cover"
               />
               <button
                 type="button"
                 onClick={() => handleDelete(photo)}
-                className="absolute top-1 right-1 hidden rounded bg-black/60 px-1.5 py-0.5 text-xs text-white group-hover:block"
+                className="absolute top-1 right-1 hidden rounded bg-black/60 px-1.5 py-0.5 text-xs text-white group-focus-within:block group-hover:block"
               >
                 {t("venue.photos.delete")}
               </button>
