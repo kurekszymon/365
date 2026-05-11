@@ -36,24 +36,11 @@ export async function uploadVenuePhoto(
 }
 
 export async function deleteVenuePhoto(id: string): Promise<boolean> {
-  const { data, error: rowError } = await supabase
-    .from("venue_photos")
-    .delete()
-    .eq("id", id)
-    .select("storage_path")
-    .single()
+  const { error } = await supabase.from("venue_photos").delete().eq("id", id)
 
-  if (rowError) {
-    log("delete row", rowError)
+  if (error) {
+    log("delete", error)
     return false
-  }
-
-  const { error: storageError } = await supabase.storage
-    .from("venue-photos")
-    .remove([data.storage_path])
-
-  if (storageError) {
-    log("delete object (non-fatal)", storageError)
   }
 
   return true

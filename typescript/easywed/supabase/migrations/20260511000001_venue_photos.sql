@@ -44,13 +44,30 @@ create policy "venue owners delete venue_photos"
   on public.venue_photos for delete
   using (public.is_venue_owner(venue_id));
 
+-- Cascade storage object deletion whenever a venue_photos row is deleted
+-- (covers app deletes, direct SQL, and ON DELETE CASCADE from venues).
+-- SECURITY DEFINER bypasses the caller's RLS on storage.objects so the
+-- trigger works even when initiated by a background/service-role operation.
+create or replace function public.delete_venue_photo_object()
+returns trigger language plpgsql security definer as $$
+begin
+  delete from storage.objects
+  where bucket_id = 'venue-photos' and name = old.storage_path;
+  return old;
+end;
+$$;
+
+create trigger venue_photos_delete_object
+  after delete on public.venue_photos
+  for each row execute function public.delete_venue_photo_object();
+
 -- Storage RLS: path format is {venue_id}/{filename}.
 -- storage.foldername(name)[1] extracts the first path segment (the venue_id)
 -- and casts it to uuid for is_venue_owner(), reusing the existing helper.
 
-create policy "public can read venue photos"
-  on storage.objects for select
-  using (bucket_id = 'venue-photos');
+-- No SELECT policy on storage.objects: the bucket is public so individual
+-- files are accessible via getPublicUrl without a policy. Omitting the policy
+-- prevents anonymous enumeration of all objects in the bucket.
 
 -- The regex guard runs before the ::uuid cast so a malformed path segment
 -- results in a clean denial rather than a server error.

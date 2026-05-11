@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
+import type { ChangeEvent } from "react"
 
 import type { VenuePhoto } from "@/lib/venue/types"
 import {
@@ -33,7 +34,7 @@ export function VenuePhotoGallery({ venueId }: { venueId: string }) {
     return () => ctrl.abort()
   }, [venueId])
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(true)
