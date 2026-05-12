@@ -1,0 +1,19 @@
+$ bun scripts/tree-shaking.ts
+────────────────────────────────────────────────────────────────────────
+tree-shaking — consumer imports one member, what survives?
+────────────────────────────────────────────────────────────────────────
+
+pattern                bundled     min    gzip
+──────────────────────────────────────────────
+enum                        66      19      39
+as-const                   189      73      93
+string-union                84      19      39
+
+note: surprise outcome. esbuild understands `enum` semantics well enough to
+DCE the entire IIFE when only one member is referenced — `Direction.Up` is
+inlined as `"UP"`, the rest vanishes. `as const` objects, by contrast, are
+runtime object values, so bundlers generally keep the whole literal: dropping
+unused properties could change observable behavior. string literal union is
+type-only, so the import vanishes..
+
+artifacts: enums-benchmark/out/tree-shake

@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "bench": "bun src/benchmark.ts",
-    "bench:mitata": "bun src/benchmark-mitata.ts",
     "sizes": "bun scripts/bundle-sizes.ts",
+    "treeshake": "bun scripts/tree-shaking.ts",
     "typecheck": "tsc --noEmit",
     "typecheck:tsc": "tsc --noEmit --project tsconfig.tsc.json"
   },
