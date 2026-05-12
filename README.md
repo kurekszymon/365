@@ -22,7 +22,7 @@ Created this repo so i can explore some programming concepts I wanted and learn 
 
 ### not mine
 
-- Karpathy's description of his project, with intro to gpt https://karpathy.github.io/2026/02/12/microgpt/
+- Karpathy's description of his microgpt project, with intro to gpt https://karpathy.github.io/2026/02/12/microgpt/
 - set of aricles on memory (V8) https://v8.dev/blog/tags/memory
 - researching about js memory usage for numbers vs rust/cpp:
   https://angular.love/here-is-what-you-need-to-know-about-javascripts-number-type
@@ -32,6 +32,7 @@ Created this repo so i can explore some programming concepts I wanted and learn 
   https://zed.dev/blog/videogame#gpui-rendering
 - idempotency is easy until the second request is different https://blog.dochia.dev/blog/idempotency/
 - webrtc is the problem https://moq.dev/blog/webrtc-is-the-problem/
+- What forces layout/reflow https://gist.github.com/paulirish/5d52fb081b3570c81e3a
 
 ### papers
 
