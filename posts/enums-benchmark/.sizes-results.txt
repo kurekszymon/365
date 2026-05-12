@@ -23,4 +23,4 @@ string-union-20uses                   1351     827     309
 note: gzip is the column that matters in production. 100-byte differences
 minified collapse to single-digit deltas once gzip handles repeated literals.
 
-artifacts: /Users/szymonkurek/repos/365/posts/enums-benchmark/out/sizes
+artifacts: enums-benchmark/out/sizes

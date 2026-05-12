@@ -36,7 +36,11 @@ type Row = {
 };
 
 async function transformAndWrite(label: string, source: string): Promise<Row> {
-  const raw = await transform(source, { loader: "ts", format: "esm", target: "es2022" });
+  const raw = await transform(source, {
+    loader: "ts",
+    format: "esm",
+    target: "es2022",
+  });
   const min = await transform(source, {
     loader: "ts",
     format: "esm",
@@ -75,11 +79,18 @@ for (const entry of [
   const tscOut = resolve(outDir, "_tsc-tmp");
   rmSync(tscOut, { recursive: true, force: true });
   execSync(
-    `${resolve(root, "node_modules/.bin/tsc")} --project ${resolve(root, "tsconfig.tsc.json")} --outDir ${tscOut} --noEmit false`,
-    { cwd: root, stdio: ["ignore", "pipe", "pipe"] }
+    `bun tsc --project ${resolve(root, "tsconfig.tsc.json")} --outDir ${tscOut} --noEmit false`,
+    { cwd: root, stdio: ["ignore", "pipe", "pipe"] },
   );
-  const tscEmitted = readFileSync(resolve(tscOut, "src/patterns/const-enum.js"), "utf8");
-  const min = await transform(tscEmitted, { loader: "js", target: "es2022", minify: true });
+  const tscEmitted = readFileSync(
+    resolve(tscOut, "src/patterns/const-enum.js"),
+    "utf8",
+  );
+  const min = await transform(tscEmitted, {
+    loader: "js",
+    target: "es2022",
+    minify: true,
+  });
   writeFileSync(resolve(outDir, "const-enum.raw.js"), tscEmitted);
   writeFileSync(resolve(outDir, "const-enum.min.js"), min.code);
   rmSync(tscOut, { recursive: true, force: true });
@@ -162,7 +173,7 @@ printTable(useRows);
 
 console.log(
   "\nnote: gzip is the column that matters in production. 100-byte differences\n" +
-    "minified collapse to single-digit deltas once gzip handles repeated literals."
+    "minified collapse to single-digit deltas once gzip handles repeated literals.",
 );
 console.log(`\nartifacts: ${outDir}`);
 
@@ -183,7 +194,7 @@ function printTable(rows: Row[]) {
       "pattern".padEnd(34) +
       "raw".padStart(8) +
       "min".padStart(8) +
-      "gzip".padStart(8)
+      "gzip".padStart(8),
   );
   console.log("─".repeat(58));
   for (const r of rows) {
@@ -191,7 +202,7 @@ function printTable(rows: Row[]) {
       r.pattern.padEnd(34) +
         String(r.raw).padStart(8) +
         String(r.minified).padStart(8) +
-        String(r.gzipped).padStart(8)
+        String(r.gzipped).padStart(8),
     );
   }
 }

@@ -126,7 +126,8 @@ console.log(
   "\nnote: surprise outcome. esbuild understands `enum` semantics well enough to\n" +
     "DCE the entire IIFE when only one member is referenced — `Direction.Up` is\n" +
     'inlined as `"UP"`, the rest vanishes. `as const` objects, by contrast, are\n' +
-    "plain expressions the bundler can't prove side-effect-free, so the whole\n" +
-    "literal ships. string literal union is type-only, so the import vanishes.",
+    "exported object literals, and bundlers generally can't drop individual\n" +
+    "properties while preserving object identity/enumeration semantics, so the\n" +
+    "whole literal ships. string literal union is type-only, so the import vanishes.",
 );
 console.log(`\nartifacts: ${outDir}`);
