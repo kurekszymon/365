@@ -1,60 +1,41 @@
-import { Direction as EnumDirection } from "./patterns/enum";
+import { bench, group, summary, run, do_not_optimize } from "mitata";
+import { Direction as EnumDirection, Priority } from "./patterns/enum";
 import { Direction as AsConstDirection } from "./patterns/as-const";
 
-const RUNS = 5_000_000;
-
-function bench(label: string, fn: () => void): void {
-  // warmup
-  for (let i = 0; i < 10_000; i++) fn();
-  const start = performance.now();
-  for (let i = 0; i < RUNS; i++) fn();
-  const ms = performance.now() - start;
-  const nsPerOp = ((ms / RUNS) * 1e6).toFixed(2);
-  console.log(`${label.padEnd(52)} ${nsPerOp.padStart(8)} ns/op`);
-}
-
-// prevent dead-code elimination
-let sink = 0;
-const consume = (v: string) => { sink += v.length; };
-const consumeBool = (v: boolean) => { sink += v ? 1 : 0; };
-const consumeNum = (v: number) => { sink += v; };
-
-const enumVal = EnumDirection.Up;
-const asConstVal = AsConstDirection.Up;
-const rawString: string = "UP";
 const STRING_DIRECTIONS = ["UP", "DOWN", "LEFT", "RIGHT"] as const;
 
-console.log(`\n${"─".repeat(64)}`);
-console.log(`TypeScript enum patterns — runtime benchmark (${RUNS.toLocaleString()} iterations)`);
-console.log("─".repeat(64));
+// fair as-const equivalent of Priority (same 3 numeric values, no reverse mapping)
+const AsConstPriority = { Low: 0, Medium: 1, High: 2 } as const;
 
-console.log("\n[property access]");
-bench("enum: Direction.Up", () => consume(EnumDirection.Up));
-bench("as const: Direction.Up", () => consume(AsConstDirection.Up));
-bench("string literal: 'UP' (raw)", () => consume(rawString));
+// numeric enum gets a synthesised reverse map at runtime:
+//   Priority → { 0:"Low", 1:"Medium", 2:"High", Low:0, Medium:1, High:2 }
+// Object.keys/values/entries walk all 6 entries, not the 3 you defined.
+// AsConstPriority has 3 — that's the apples-to-apples comparison.
 
-console.log("\n[equality check]");
-bench("enum: val === Direction.Up", () => consumeBool(enumVal === EnumDirection.Up));
-bench("as const: val === Direction.Up", () => consumeBool(asConstVal === AsConstDirection.Up));
-bench("string literal: val === 'UP'", () => consumeBool(rawString === "UP"));
+summary(() => {
+  group("enumeration — Object.keys", () => {
+    bench("string enum (Direction, 4 keys)", () => do_not_optimize(Object.keys(EnumDirection)));
+    bench("numeric enum (Priority) ← reverse-mapped, 6 keys", () => do_not_optimize(Object.keys(Priority)));
+    bench("as const numeric (AsConstPriority, 3 keys)", () => do_not_optimize(Object.keys(AsConstPriority)));
+    bench("as const string (AsConstDirection, 4 keys)", () => do_not_optimize(Object.keys(AsConstDirection)));
+  });
+});
 
-console.log("\n[Object.values / array iteration]");
-bench("enum: Object.values(Direction)", () => consumeNum(Object.values(EnumDirection).length));
-bench("as const: Object.values(Direction)", () => consumeNum(Object.values(AsConstDirection).length));
-bench("string union: array.length (parallel array)", () => consumeNum(STRING_DIRECTIONS.length));
+summary(() => {
+  group("enumeration — Object.values", () => {
+    bench("string enum", () => do_not_optimize(Object.values(EnumDirection)));
+    bench("numeric enum", () => do_not_optimize(Object.values(Priority)));
+    bench("as const numeric", () => do_not_optimize(Object.values(AsConstPriority)));
+    bench("string union (static array ref)", () => do_not_optimize(STRING_DIRECTIONS));
+  });
+});
 
-console.log("\n[membership check / narrowing]");
-bench("enum: Object.values includes", () =>
-  consumeBool((Object.values(EnumDirection) as string[]).includes("UP"))
-);
-bench("as const: Object.values includes", () =>
-  consumeBool((Object.values(AsConstDirection) as string[]).includes("UP"))
-);
-bench("string union: array includes", () =>
-  consumeBool((STRING_DIRECTIONS as readonly string[]).includes("UP"))
-);
+summary(() => {
+  group("enumeration — Object.entries", () => {
+    bench("string enum", () => do_not_optimize(Object.entries(EnumDirection)));
+    bench("numeric enum ← 6 entries, both directions", () => do_not_optimize(Object.entries(Priority)));
+    bench("as const numeric", () => do_not_optimize(Object.entries(AsConstPriority)));
+  });
+});
 
-console.log("\n" + "─".repeat(64) + "\n");
-
-// prevent elimination
-process.on("exit", () => { if (sink < 0) console.log(sink); });
+await run();

@@ -1,0 +1,26 @@
+$ bun scripts/bundle-sizes.ts
+────────────────────────────────────────────────────────────────────────
+definition-only emit (a file declaring the pattern, no usage)
+────────────────────────────────────────────────────────────────────────
+
+pattern                                raw     min    gzip
+──────────────────────────────────────────────────────────
+enum                                   739     368     275
+as-const                               374     269     221
+string-union                           236     176     165
+const-enum (via tsc inline)            564      56      73
+
+────────────────────────────────────────────────────────────────────────
+20-use scenario (definition + 20 call sites bundled as one file)
+────────────────────────────────────────────────────────────────────────
+
+pattern                                raw     min    gzip
+──────────────────────────────────────────────────────────
+enum-20uses                           2149    1059     423
+as-const-20uses                       1849    1020     376
+string-union-20uses                   1351     827     309
+
+note: gzip is the column that matters in production. 100-byte differences
+minified collapse to single-digit deltas once gzip handles repeated literals.
+
+artifacts: /Users/szymonkurek/repos/365/posts/enums-benchmark/out/sizes

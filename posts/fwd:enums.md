@@ -1,9 +1,5 @@
 # fwd: enums (WIP)
 
-## tl;dr
-
-don't need runtime? → **string literal union**. need runtime iteration? → **`as const`** object. skip `const enum` in modern frontend toolchains. regular `enum` only if the codebase already commits to them.
-
 ## preface
 
 the **_enums vs string literals_** is one of those internet rabbit holes\*
@@ -53,28 +49,36 @@ var assignment = MicCheck.One;
 ```
 
 thanks to that, you can
+
 ```ts
-enum E { F, G };
+enum E {
+  F,
+  G,
+}
 // pass it to the function
-const f = (e: { F: number; }) => e.F;
+const f = (e: { F: number }) => e.F;
 f(E);
 
 // iterate over enum (keys|values|entries)
-Object.entries(E)
+Object.entries(E);
 
 // use reverse mapping like (only for numeric enums)
-E[1] // -> 'G'
+E[1]; // -> 'G'
 
 // note that you wouldn't be able to do that for string enums like
-enum A { B = "-B", C = "C-" };
-A[1] // -> undefined (no reverse mapping)
+enum A {
+  B = "-B",
+  C = "C-",
+}
+
+A[1]; // -> undefined (no reverse mapping)
 ```
 
 but of course as it was mentioned you are left with the artifacts, so what are the alternatives?
 
 ### `const enum`
 
-unlike a regular `enum`, a `const enum` does not exist at runtime, it is **fully erased** during compilation, so the code above be transpiled down to
+unlike a regular `enum`, a `const enum` does not exist at runtime, it is **fully erased** during compilation, so the code above would be transpiled down to
 
 ```ts
 const enum Enumeration {
@@ -101,7 +105,7 @@ you could make use of it in
 - internal tooling / scripts / CLIs
 - any project compiled with `tsc`
 
-Modern frontend toolchains (_esbuild_, _swc_, _babel_) have moved to **single-file transpilation**, what means that each `.ts` file is transform independently, without looking at other files.
+Modern frontend toolchains (_esbuild_, _swc_, _babel_) have moved to **single-file transpilation**, what means that each `.ts` file is transformed independently, without looking at other files.
 A single-file transpiler sees `Enumeration.Incomplete` in one file, but it has no idea what value `Incomplete` resolved to, because the enum definition lives elsewhere.
 
 Set `isolatedModules` to true to make TypeScript warn you if you write certain code that can't be correctly interpreted by this single-file transpilation process [(read more in docs)](https://www.typescriptlang.org/tsconfig/#isolatedModules).
@@ -115,13 +119,13 @@ but you could simulate them with
 ### string literal union
 
 Which is the most straight forward way of defining various possibilities with TypeScript.
-Instead of definining a separate entity holding the data, you can declare a type alias
+Instead of defining a separate entity holding the data, you can declare a type alias
 
 ```ts
-type Kind = 'string' | 'other_string';
-const f = (s: Kind) => {}
+type Kind = "string" | "other_string";
+const f = (s: Kind) => {};
 // or inline it
-const f = (s: 'string' | 'other_string') => {}
+const f = (s: "string" | "other_string") => {};
 ```
 
 Unlike `const enums` - `string literal union` works with `isolatedModules`.
@@ -129,7 +133,7 @@ Similarly to `const enums` it has no runtime, so you cannot iterate over possibl
 
 Honestly, I don't see many real cons - string unions give you enum-like type checks with zero runtime cost. If you don't inline them, but assign to a type, the intent can be as obvious as for the enum.
 
-If you'd actually need a runtime object that you could derive `string literal union type` from, you can mark your objects
+If you do need a runtime object that you can derive a `string literal union type` from, you can mark your objects
 
 ### `as const`
 
@@ -137,10 +141,10 @@ this is where things get interesting. `as const` is a type assertion that tells 
 
 ```ts
 const Direction = {
-  Up: 'UP',
-  Down: 'DOWN',
-  Left: 'LEFT',
-  Right: 'RIGHT',
+  Up: "UP",
+  Down: "DOWN",
+  Left: "LEFT",
+  Right: "RIGHT",
 } as const;
 
 // derive the union type from the object
@@ -153,7 +157,7 @@ what does this buy you? quite a lot actually:
 - you get a **runtime object** you can pass around, iterate over, use in lookups
 - you get a **derived union type** that works exactly like a string literal union
 - it plays nicely with `isolatedModules` - no cross-file resolution needed
-- no IIFE, no reverse mapping weirdness - it's just a plain frozen object
+- no IIFE, no reverse mapping weirdness - it's just a plain object
 
 ```ts
 // iterate over values
@@ -161,12 +165,12 @@ Object.values(Direction); // ['UP', 'DOWN', 'LEFT', 'RIGHT']
 
 // use as a type
 const move = (dir: Direction) => {};
-move(Direction.Up);    // ✓
-move('UP');            // ✓
-move('DIAGONAL');      // ✗ type error
+move(Direction.Up); // ✓
+move("UP"); // ✓
+move("DIAGONAL"); // ✗ type error
 
 // you can also do arrays
-const Roles = ['admin', 'user', 'guest'] as const;
+const Roles = ["admin", "user", "guest"] as const;
 type Role = (typeof Roles)[number];
 // -> 'admin' | 'user' | 'guest'
 
@@ -178,60 +182,172 @@ the `typeof X[keyof typeof X]` pattern looks noisy the first time you see it, bu
 
 the tradeoff? you lose the named namespace feel of `Direction.Up` being exclusively tied to the `Direction` enum type. with `as const`, `Direction.Up` and the raw string `'UP'` are interchangeable - TypeScript won't complain about either. depending on your perspective that's a feature (flexibility) or a bug (less nominal typing).
 
+one more modern flavour worth knowing: `satisfies`. when you want both runtime data and a constraint check at the declaration site, write `[...] as const satisfies Direction[]` — TypeScript verifies the array against the type without widening it.
+
+```ts
+const DIRECTIONS = [
+  "UP",
+  "DOWN",
+  "LEFT",
+  "RIGHT",
+] as const satisfies Direction[];
+// type stays the narrow tuple; misspelling 'UPP' fails at the declaration, not the call site
+```
+
+### nominal vs structural
+
+the single biggest semantic difference between `enum` and the alternatives — and the one most "string union vs enum" PRs miss:
+
+```ts
+enum E {
+  Up = "UP",
+}
+const f = (d: E) => d;
+f(E.Up); // ✓
+f("UP"); // ✗ Argument of type '"UP"' is not assignable to parameter of type 'E'
+
+const C = { Up: "UP" } as const;
+type C = (typeof C)[keyof typeof C];
+const g = (d: C) => d;
+g(C.Up); // ✓
+g("UP"); // ✓ — raw string accepted, no error
+```
+
+`enum` is **nominal**: `E.Up` and the raw string `'UP'` are different types, even though they hold the same value. `as const` and string literal union are **structural**: the type _is_ the set of literal values, so raw strings line up just fine.
+
+teams that lean nominal value: misuse is harder, refactors are safer, the import is the type's identity. teams that lean structural value: less ceremony, raw strings interop with JSON / forms / URLs without coercion. neither is wrong. it's the single design decision the runtime cost arguments are a proxy for.
+
+### discriminated unions
+
+string literal unions become more interesting when you compose them. the canonical TS pattern is the tagged union:
+
+```ts
+type Shape =
+  | { kind: "circle"; r: number }
+  | { kind: "square"; s: number }
+  | { kind: "rect"; w: number; h: number };
+
+function area(s: Shape): number {
+  switch (s.kind) {
+    case "circle":
+      return Math.PI * s.r * s.r;
+    case "square":
+      return s.s * s.s;
+    case "rect":
+      return s.w * s.h;
+  }
+}
+```
+
+TypeScript narrows `s.r`/`s.s`/`s.w` per branch based on the literal `kind`. this composes with anything that uses a string literal — and substantially less well with `enum`, since the enum member's type is `Shape['kind']` rather than a literal that the narrower can match against directly.
+
+### when to actually reach for `enum`
+
+the verdict at the top says "only if the codebase commits to them" — that's true but doesn't help if you're deciding. legitimate reasons to keep an enum:
+
+- **numeric bit-flags.** `enum Permission { Read = 1, Write = 2, Execute = 4 }` reads naturally, and `granted & Permission.Write` survives refactors better than `granted & 2`. an `as const` object with the same numbers does the exact same job at the same cost — choose whichever your team finds clearer.
+- **built-in reverse mapping.** `Priority[1] === 'Medium'` works only on numeric enums. you can replicate it with `as const` + a cached `Map`, but the enum gets it for free.
+- **you want nominal typing.** see above. you decide whether that's "stricter" or "noisier".
+- **TS 5.x has improved enum ergonomics** (string-enum autocompletion in switch arms, less `keyof typeof` ceremony in callers). if you dismissed enums in 2020, the friction is lower now.
+
+if none of these apply, the choice is mostly cosmetic.
+
 ## the benchmark
 
-talk is cheap. I put together a [small sandbox](https://github.com/szymonkurek/365/tree/main/posts/enums-benchmark) that runs each pattern through esbuild and a 5M-iteration runtime loop. here's what it actually shows:
+talk is cheap. I put together a [sandbox](https://github.com/szymonkurek/365/tree/main/posts/enums-benchmark) that exercises each pattern through esbuild (bundle sizes including gzip and tree-shaking) and [mitata](https://github.com/evanwashere/mitata) for the iteration benchmarks. emitted JS is committed to `out/(sizes|tree-shake)/` so claims can be cross-checked by opening the files.
 
-### bundle sizes (esbuild, minified)
+- bundle-sizes answers: "if I publish this file, how much code ships?" (worst case — assumes every export gets used)
+- tree-shaking answers: "if a consumer imports one member, how much survives DCE?" (best case — modern bundler doing its job)
 
-| pattern | bytes | notes |
-| ------- | ----- | ----- |
-| `enum` | 368 | IIFE + reverse mapping for numeric enum |
-| `as const` object | 269 | plain object literal |
-| string literal union | 176 | type alias itself emits nothing; includes a runtime guard helper |
-| `const enum` | ~0 | fully inlined by `tsc`; can't measure with esbuild |
+all numbers below are on **Apple M3, Bun 1.3.11**.
 
-the string literal union number is almost all the `isDirection()` guard function and the `DIRECTIONS` array — the `type Direction = ...` line itself produces zero bytes. if you don't need a runtime guard, a string union is truly zero-cost.
+### bundle sizes (esbuild, gzipped)
 
-the gap between `enum` and `as const` is the IIFE overhead and the numeric enum's reverse mapping (`Priority[0] = "Low"` etc). for a pure string enum, the emitted IIFE is still present — it's just shorter.
+| pattern              | min | gzip | notes                                             |
+| -------------------- | --: | ---: | ------------------------------------------------- |
+| `enum` (string)      | 368 |  275 | IIFE per declaration                              |
+| `as const` object    | 269 |  221 | plain object literal                              |
+| string literal union | 176 |  165 | includes `DIRECTIONS` array + `isDirection` guard |
+| `const enum` via tsc |  56 |   73 | values fully inlined; smallest by far             |
 
-### runtime (5M iterations, measured on Apple M-series)
+the type-only line `type Direction = ...` emits zero bytes. the 165-byte string-union number is almost all the runtime guard you wrote, not the type. and the `const enum` "small" number requires you to actually compile through `tsc` — feed the same file through esbuild's per-file transform and you get the regular `enum` IIFE back, as discussed above.
 
-| operation | `enum` | `as const` | string union |
-| --------- | ------ | ---------- | ------------ |
-| property access | 2.29 ns | 1.22 ns | 1.12 ns (raw string) |
-| equality check | 1.23 ns | 2.16 ns | 2.95 ns |
-| `Object.values` iteration | 27.21 ns | 26.17 ns | 1.67 ns (array.length) |
-| membership check | 28.30 ns | 29.23 ns | 8.27 ns |
+what happens when 20 different call sites reference the pattern? gzip flattens the differences considerably:
 
-**the headline: it doesn't matter**. everything in the property access and equality rows is 1–3 ns — noise at any real call frequency. the gap in iteration and membership is real (~3.5x) but only exists because `Object.values()` allocates a new array on every call. if you cache it, they're identical.
+| pattern + 20 uses    |  min | gzip |
+| -------------------- | ---: | ---: |
+| `enum`               | 1059 |  423 |
+| `as const`           | 1020 |  376 |
+| string literal union |  827 |  309 |
 
-the practical takeaway: don't pick your enum pattern for runtime performance reasons. pick it for the DX and emit story.
+114 bytes between the heaviest and lightest pattern, across 20 usages, after gzip. ~6 bytes per use. for any frontend app where bundle size is a real concern, the choice of enum pattern is the wrong lever to pull.
 
-### the `const enum` isolatedModules footgun
+### tree-shaking — what survives an `import` of one member?
 
-`const enum` compiles fine when tsc sees the whole program. the problem is single-file transpilers (esbuild, swc, babel): they transform each `.ts` file in isolation, so when they hit `Direction.Up` imported from another file, they have no idea what value to inline. the const enum was never emitted as a real object, so the property lookup returns `undefined` at runtime — no compile error, just a silent breakage.
+```
+pattern        bundled  min  gzip
+enum                66   19    39
+as-const           189   73    93
+string-union        84   19    39
+```
 
-TypeScript warns about this for ambient const enums (`.d.ts` / library types) when `isolatedModules: true` is set. for same-project const enums, it's a bundler-level footgun. the TS docs [explicitly warn against publishing ambient enums](https://www.typescriptlang.org/docs/handbook/enums.html#const-enum-pitfalls), and TypeScript's own repo works around it with [`preserveConstEnums`](https://www.typescriptlang.org/tsconfig/#preserveConstEnums).
+the regular `enum` IIFE has _known_ semantics, so esbuild can prove the unused members are pure and DCE them. the `as const` object literal is a plain expression — the bundler can't easily prove the unused properties are unobserved, so the whole literal usually ships. string literal union is type-only: nothing to import.
+
+(this one surprised me. the conventional wisdom that "enum keeps all members alive" is true for older bundlers and bare `tsc` output, but modern esbuild is smart enough to inline the single observed access.)
+
+### runtime
+
+call-site operations across all patterns sit within the same ~2–6 ns range on JSC and aren't worth measuring at the headline level. the one place numbers diverge meaningfully is iteration.
+
+### what actually differs
+
+**numeric enum iteration.** `Object.keys(Priority)` on a 3-variant numeric enum runs **~40× slower** than the same call on a string enum or an equivalent `as const` object (~93 ns vs ~2.5 ns), because numeric enums get the synthesised reverse map (`{0:"Low",1:"Medium",2:"High",Low:0,Medium:1,High:2}`) and `Object.keys` walks all six entries. `Object.entries` is similarly costly (~222 ns vs ~82 ns). if you iterate numeric enums in a hot loop, it adds up — switch to an `as const` object with the same numeric values and the cost drops to the same ~3 ns as any other plain object.
+
+### `as const` is identical to a plain object
+
+stripped of types, the runtime is the same shape:
+
+```ts
+const A = { Up: "UP" }; // plain
+const B = { Up: "UP" } as const; // type-narrowed, runtime identical
+const C = Object.freeze({ Up: "UP" }); // additionally frozen at runtime
+```
+
+`as const` is a 100% type-level assertion. it costs nothing at runtime — it just constrains what TypeScript infers.
 
 ## tl;dr
 
-|                      | runtime object | iteratable | `isolatedModules` | type safety | zero emit |
-| -------------------- | -------------- | ---------- | ----------------- | ----------- | --------- |
-| `enum`               | ✓              | ✓          | ✓                 | ✓           | ✗         |
-| `const enum`         | ✗              | ✗          | ✗*                | ✓           | ✓         |
-| string literal union | ✗              | ✗          | ✓                 | ✓           | ✓         |
-| `as const` object    | ✓              | ✓          | ✓                 | ✓           | ~✓**      |
+### decision tree
 
-\* works with `tsc`, breaks with single-file transpilers unless you jump through hoops
+- need a runtime object you can iterate / pass around / use for membership checks? → **`as const` object**.
+- only type-checking string values? → **string literal union** (zero emit).
+- need bit-flag arithmetic or built-in reverse mapping? → **numeric `enum`**. (string enums offer no advantage over `as const`.)
+- single-project app, full `tsc` build, never publishing a package? → **`const enum`** is OK, but pays back almost nothing once you bundle. probably not worth it.
+- working in a codebase already standardized on one pattern? → keep using it. consistency dominates.
 
-\** emits a plain object literal - minimal, predictable, no IIFE magic
+### feature matrix
 
-the verdict, backed by actual numbers: **string literal union if you don't need runtime iteration**. **`as const` if you do**. reach for `enum` only when you genuinely need reverse mapping, or the codebase is already committed to them. avoid `const enum` in anything that touches a modern bundler — the footgun isn't worth the zero-emit win you can get from the other two anyway.
+|                      | runtime object | iterable | `isolatedModules` safe | nominal | emit                             |
+| -------------------- | -------------- | -------- | ---------------------- | ------- | -------------------------------- |
+| `enum`               | ✓              | ✓        | ✓                      | ✓       | IIFE per declaration             |
+| `const enum`         | ✗\*            | ✗        | ✗†                     | ✓       | inlined (whole-program tsc only) |
+| string literal union | ✗              | ✗        | ✓                      | ✗       | nothing (type-only)              |
+| `as const` object    | ✓              | ✓        | ✓                      | ✗       | plain object literal             |
+
+\* with single-file transpilers, modern esbuild emits the IIFE anyway — defeating the purpose
+
+† works with whole-program `tsc`; per-file transpilers downgrade or break depending on whether the values are reachable
+
+### verdict
+
+backed by actual numbers: **string literal union if you don't need runtime iteration**. **`as const` object if you do**. **numeric `enum` for bit-flags or reverse mapping** — string enums in modern TS are a coin flip with `as const`, pick whichever your team finds more readable. **avoid `const enum`** unless you're 100% on tsc-only, single-project: it either silently downgrades to a regular enum (esbuild) or breaks across package boundaries (ambient `.d.ts`), and the byte savings don't matter after gzip.
+
+the runtime-cost argument that started this whole rabbit hole is a 2-nanosecond distraction. pick on semantics — nominal vs structural, runtime presence vs zero emit — not on benchmark headlines.
 
 ---
 
 further reading:
+
 - [TypeScript Handbook: Enums](https://www.typescriptlang.org/docs/handbook/enums.html)
 - [tsconfig: isolatedModules](https://www.typescriptlang.org/tsconfig/#isolatedModules)
 - [tsconfig: preserveConstEnums](https://www.typescriptlang.org/tsconfig/#preserveConstEnums)
