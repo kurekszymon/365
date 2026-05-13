@@ -72,38 +72,6 @@ for (const entry of [
   defRows.push(await transformAndWrite(basename(entry, ".ts"), src));
 }
 
-// const-enum: pass through tsc first (whole-program inlines), then minify + gzip
-// the resulting .js. Without this, esbuild silently downgrades const enum to a
-// regular enum IIFE — which is the "footgun 1" path, not the inlined path.
-{
-  const tscOut = resolve(outDir, "_tsc-tmp");
-  rmSync(tscOut, { recursive: true, force: true });
-  execSync(
-    `bun tsc --project ${resolve(root, "tsconfig.tsc.json")} --outDir ${tscOut} --noEmit false`,
-    { cwd: root, stdio: ["ignore", "pipe", "pipe"] },
-  );
-  const tscEmitted = readFileSync(
-    resolve(tscOut, "src/patterns/const-enum.js"),
-    "utf8",
-  );
-  const min = await transform(tscEmitted, {
-    loader: "js",
-    target: "es2022",
-    minify: true,
-  });
-  writeFileSync(resolve(outDir, "const-enum.raw.js"), tscEmitted);
-  writeFileSync(resolve(outDir, "const-enum.min.js"), min.code);
-  rmSync(tscOut, { recursive: true, force: true });
-  defRows.push({
-    pattern: "const-enum (via tsc inline)",
-    raw: Buffer.byteLength(tscEmitted, "utf8"),
-    minified: Buffer.byteLength(min.code, "utf8"),
-    gzipped: gzipSync(Buffer.from(min.code, "utf8")).byteLength,
-  });
-}
-
-printTable(defRows);
-
 // ─── pattern 2: 20-use scenario ──────────────────────────────────────────────
 // What's the marginal cost when a pattern is referenced from 20 call sites?
 // IIFEs and runtime objects pay once. Inlined strings pay per reference (until

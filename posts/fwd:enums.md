@@ -291,7 +291,7 @@ as-const           189   73    93
 string-union        84   19    39
 ```
 
-the regular `enum` IIFE has _known_ semantics, so esbuild can prove the unused members are pure and DCE them. the `as const` object literal is a plain expression — the bundler can't easily prove the unused properties are unobserved, so the whole literal usually ships. string literal union is type-only: nothing to import.
+the mechanism is two-stage and worth spelling out, because the common framing ("esbuild proves unused members are pure") isn't quite right. esbuild's TS frontend rewrites the enum into a `/* @__PURE__ */`-annotated IIFE — visible in `out/tree-shake/enum-transformed.js`, and notably **not** something `tsc` does (run `tsc` on the same `lib.ts` and you get a bare, unmarked IIFE). it also inlines string-enum member accesses, so `Direction.Up` becomes the literal `"UP"` at the call site. with no remaining reference to the IIFE's result, the pure marker green-lights DCE and the wrapper disappears in `out/tree-shake/enum-bundled.js`. the `as const` object has neither rewrite nor marker (compare `out/tree-shake/as-const-transformed.js` — plain `const` declaration, no annotation), so per-property DCE is off the table and the whole literal ships. string literal union is type-only: nothing to import.
 
 (this one surprised me. the conventional wisdom that "enum keeps all members alive" is true for older bundlers and bare `tsc` output, but modern esbuild is smart enough to inline the single observed access.)
 
