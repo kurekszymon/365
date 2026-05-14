@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 14.05
+
+- created `easywed/v1` branch to contain barebones version if needed, as I noticed deployment drifted from what I wanted to have there with no migrations applied to remote. Keep v1 before talking to customers, continue development on local branches. (keep state on f7dc58e76c9f5b057d2fe8c3072e377b30f8701d)
+
 ### 11.05
 
 - split venue into smaller, more maintainable chunks. [ref](https://github.com/kurekszymon/365/pull/14)
