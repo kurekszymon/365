@@ -1,10 +1,13 @@
 // Bundle-size measurement across all four patterns.
 //
-// Each pattern is transpiled with esbuild in two modes:
+// Each pattern is transpiled with esbuild in three modes:
 //   - "definition only"   — what the pattern itself emits (the historical metric)
-//   - "20-use scenario"   — definition + 20 call sites that reference a member,
+//   - "100-use scenario"   — definition + many call sites that reference a member,
 //                           bundled as a single file. This shows the marginal
 //                           cost when the pattern is actually used.
+//   - "tree-shake"        — lib + single-import consumer bundled together.
+//                           Shows how much dead code esbuild eliminates when
+//                           only one member is referenced (src/tree-shake/).
 //
 // For each, we report raw, minified, and gzipped bytes. Gzipped is what ships;
 // raw/minified are useful for understanding what esbuild emits.
@@ -17,11 +20,10 @@
 // All emitted JS is written to enums-benchmark/out/sizes/<pattern>.{raw,min}.js
 // so the numbers below can be cross-checked by opening the files.
 
-import { build, transform } from "esbuild";
+import { build, BuildOptions, transform } from "esbuild";
 import { gzipSync } from "node:zlib";
-import { resolve, basename } from "path";
+import { resolve } from "path";
 import { writeFileSync, mkdirSync, readFileSync, rmSync } from "fs";
-import { execSync } from "child_process";
 
 const root = resolve(import.meta.dir, "..");
 const outDir = resolve(root, "out", "sizes");
@@ -63,74 +65,52 @@ console.log("definition-only emit (a file declaring the pattern, no usage)");
 console.log("─".repeat(72));
 
 const defRows: Row[] = [];
-for (const entry of [
-  "src/patterns/enum.ts",
-  "src/patterns/as-const.ts",
-  "src/patterns/string-union.ts",
-]) {
-  const src = readFileSync(resolve(root, entry), "utf8");
-  defRows.push(await transformAndWrite(basename(entry, ".ts"), src));
+for (const pattern of ["enum", "as-const", "string-union"]) {
+  const src = readFileSync(
+    resolve(root, "src/bundle-sizes", pattern, "lib.ts"),
+    "utf8",
+  );
+  defRows.push(await transformAndWrite(pattern, src));
 }
 
-// ─── pattern 2: 20-use scenario ──────────────────────────────────────────────
-// What's the marginal cost when a pattern is referenced from 20 call sites?
+printTable(defRows);
+
+// ─── pattern 2: 100-use scenario ──────────────────────────────────────────────
+// What's the marginal cost when a pattern is referenced from 100 call sites?
 // IIFEs and runtime objects pay once. Inlined strings pay per reference (until
 // minifier deduplicates). The gzip column is the realistic answer.
 console.log("\n" + "─".repeat(72));
-console.log("20-use scenario (definition + 20 call sites bundled as one file)");
+console.log(
+  "100-use scenario (definition + 100 call sites bundled as one file)",
+);
 console.log("─".repeat(72));
 
-const usePatterns: { name: string; src: string }[] = [
-  {
-    name: "enum-20uses",
-    src:
-      readFileSync(resolve(root, "src/patterns/enum.ts"), "utf8") +
-      "\n" +
-      generateUses("EnumDirection", (k) => `Direction.${k}`),
-  },
-  {
-    name: "as-const-20uses",
-    src:
-      readFileSync(resolve(root, "src/patterns/as-const.ts"), "utf8") +
-      "\n" +
-      generateUses("AsConstDirection", (k) => `Direction.${k}`),
-  },
-  {
-    name: "string-union-20uses",
-    src:
-      readFileSync(resolve(root, "src/patterns/string-union.ts"), "utf8") +
-      "\n" +
-      generateUses("StringUnion", (k) => `"${k.toUpperCase()}" as const`),
-  },
-];
+const buildCfg = {
+  bundle: true,
+  write: false,
+  format: "esm",
+  platform: "neutral",
+  target: "es2022",
+} satisfies BuildOptions;
 
 const useRows: Row[] = [];
-for (const p of usePatterns) {
-  const srcFile = resolve(outDir, `${p.name}.src.ts`);
-  writeFileSync(srcFile, p.src);
+for (const pattern of ["enum", "as-const", "string-union"]) {
+  const entryPoint = resolve(root, "src/bundle-sizes", pattern, "consumer.ts");
   const built = await build({
-    entryPoints: [srcFile],
-    bundle: false,
-    write: false,
-    format: "esm",
-    platform: "neutral",
-    target: "es2022",
+    ...buildCfg,
+    entryPoints: [entryPoint],
   });
   const minBuilt = await build({
-    entryPoints: [srcFile],
-    bundle: false,
-    write: false,
-    format: "esm",
-    platform: "neutral",
-    target: "es2022",
+    ...buildCfg,
+    entryPoints: [entryPoint],
     minify: true,
   });
   const rawCode = built.outputFiles[0].text;
   const minCode = minBuilt.outputFiles[0].text;
-  writeFileSync(resolve(outDir, `${p.name}.raw.js`), rawCode);
-  writeFileSync(resolve(outDir, `${p.name}.min.js`), minCode);
+  writeFileSync(resolve(outDir, `${pattern}-100uses.raw.js`), rawCode);
+  writeFileSync(resolve(outDir, `${pattern}-100uses.min.js`), minCode);
   useRows.push({
-    pattern: p.name,
+    pattern: `${pattern}-100uses`,
     raw: Buffer.byteLength(rawCode, "utf8"),
     minified: Buffer.byteLength(minCode, "utf8"),
     gzipped: gzipSync(Buffer.from(minCode, "utf8")).byteLength,
@@ -146,16 +126,6 @@ console.log(
 console.log(`\nartifacts: ${outDir}`);
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
-function generateUses(suffix: string, ref: (k: string) => string): string {
-  const keys = ["Up", "Down", "Left", "Right"];
-  const lines: string[] = [];
-  for (let i = 0; i < 20; i++) {
-    const k = keys[i % 4]!;
-    lines.push(`export const use_${suffix}_${i} = ${ref(k)};`);
-  }
-  return lines.join("\n");
-}
-
 function printTable(rows: Row[]) {
   console.log(
     "\n" +
