@@ -1,3 +1,5 @@
+### THIS ARTICLE IS UNDER DEVELOPMENT
+
 # fwd: enums (WIP)
 
 ## preface
@@ -254,7 +256,7 @@ if none of these apply, the choice is mostly cosmetic.
 
 ## the benchmark
 
-talk is cheap. I put together a [sandbox](https://github.com/szymonkurek/365/tree/main/posts/enums-benchmark) that exercises each pattern through esbuild (bundle sizes including gzip and tree-shaking) and [mitata](https://github.com/evanwashere/mitata) for the iteration benchmarks. emitted JS is committed to `out/(sizes|tree-shake)/` so claims can be cross-checked by opening the files.
+emitted JS is committed to `out/(sizes|tree-shake)/` so claims can be cross-checked by opening the files.
 
 - bundle-sizes answers: "if I publish this file, how much code ships?" (worst case — assumes every export gets used)
 - tree-shaking answers: "if a consumer imports one member, how much survives DCE?" (best case — modern bundler doing its job)

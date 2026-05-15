@@ -1,3 +1,5 @@
+# UPDATE README, UPDATE ARTICLE
+
 # enums-benchmark
 
 Sandbox for the `fwd: enums` article. Compares four TypeScript enum patterns
