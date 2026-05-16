@@ -1,44 +1,38 @@
-# UPDATE README, UPDATE ARTICLE
-
 # enums-benchmark
 
-Sandbox for the `fwd: enums` article. Compares four TypeScript enum patterns
-across bundle size, tree-shaking, runtime iteration cost, and type safety.
+Sandbox for the `fwd: enums` article. Compares TypeScript enum-like patterns
+for bundle size, tree-shaking, and type safety.
 
 ## patterns
 
-| file                           | pattern                          |
-| ------------------------------ | -------------------------------- |
-| `src/patterns/enum.ts`         | regular `enum`                   |
-| `src/patterns/const-enum.ts`   | `const enum`                     |
-| `src/patterns/string-union.ts` | string literal union             |
-| `src/patterns/as-const.ts`     | `as const` object + derived type |
+| file                           | pattern                          | used in size/tree-shake |
+| ------------------------------ | -------------------------------- | ----------------------- |
+| `src/patterns/enum.ts`         | regular `enum`                   | yes                     |
+| `src/patterns/string-union.ts` | string literal union             | yes                     |
+| `src/patterns/as-const.ts`     | `as const` object + derived type | yes                     |
+| `src/patterns/const-enum.ts`   | `const enum`                     | no (typecheck only)     |
 
 ## commands
 
 ```sh
 bun install
 
-# mitata runtime benchmark — Object.keys/.values/.entries across patterns
-bun run bench
-
-# bundle sizes — minified + gzipped, definition-only and 20-use scenarios,
-# const-enum compiled through tsc for a fair "inlined" measurement
+# bundle sizes — definition-only and 100-use scenarios (enum/as-const/string-union)
 bun run sizes
 
 # tree-shaking — what survives when a consumer imports one member.
-# Writes intermediate JS to out/tree-shake/ (committed) so the inlined "UP"
+# Writes intermediate JS to out/tree-shake/ (git-ignored) so the inlined "UP"
 # literal can be verified by opening out/tree-shake/enum-minified.js.
 bun run treeshake
 
 # typecheck — isolatedModules: true (modern bundler mode)
 bun typecheck
 
-# typecheck — isolatedModules: false (whole-program tsc), includes const-enum.ts
+# typecheck — isolatedModules: false (whole-program tsc), includes const-enum
 bun run typecheck:tsc
 ```
 
-## hardware + runtime (numbers below were measured on this)
+## hardware (numbers below were measured on this)
 
 - CPU: Apple M3 (arm64)
 - OS: macOS Darwin 25.4.0
@@ -51,62 +45,39 @@ between patterns are robust.
 
 ### bundle sizes — definition only (esbuild)
 
-| pattern                       | raw | min | gzip |
-| ----------------------------- | --: | --: | ---: |
-| `enum`                        | 739 | 368 |  275 |
-| `as const`                    | 374 | 269 |  221 |
-| string literal union          | 236 | 176 |  165 |
-| `const enum` (via tsc inline) | 564 |  56 |   73 |
+| pattern              | raw | min | gzip |
+| -------------------- | --: | --: | ---: |
+| `enum`               | 239 | 100 |  113 |
+| `as const`           | 108 |  80 |  100 |
+| string literal union |  87 |  62 |   82 |
 
-### bundle sizes — 20 call sites referencing the pattern
+### bundle sizes — 100 call sites referencing the pattern
 
-| pattern              |  min | gzip |
-| -------------------- | ---: | ---: |
-| `enum`               | 1059 |  423 |
-| `as const`           | 1020 |  376 |
-| string literal union |  827 |  309 |
+| pattern              |  raw |  min | gzip |
+| -------------------- | ---: | ---: | ---: |
+| `enum`               | 4230 | 2204 |  627 |
+| `as const`           | 4071 | 2258 |  672 |
+| string literal union | 3142 | 2192 |  625 |
 
-114 bytes between heaviest and lightest after gzip, over 20 usages. ~6 bytes
-per use. choose-your-pattern is not the lever you pull for bundle size.
+47 bytes between heaviest and lightest after gzip, over 100 usages. About
+0.47 bytes per use. Pattern choice is usually not the dominant bundle-size lever.
 
 ### tree-shaking — consumer imports one member
 
 | pattern              | bundled | min | gzip |
 | -------------------- | ------: | --: | ---: |
-| `enum`               |      28 |  19 |   39 |
-| `as const`           |     109 |  73 |   93 |
-| string literal union |      38 |  19 |   39 |
+| `enum`               |     161 |  80 |   60 |
+| `as const`           |     271 | 134 |  106 |
+| string literal union |     208 |  96 |   80 |
 
-Surprise: esbuild's enum-aware DCE _wins_ here. The IIFE collapses to a single
-inlined string when only one member is referenced. The `as const` object
-literal usually survives whole.
-
-### runtime — iteration (ns/op, mitata)
-
-The interesting gap is numeric-enum iteration. The synthesised reverse map
-doubles the entry count and tanks `Object.keys`/`entries` performance:
-
-| operation                                  |  ns/op | vs. string enum |
-| ------------------------------------------ | -----: | --------------: |
-| `Object.keys(stringEnum)` — 4 keys         | 2.3 ns |              1× |
-| `Object.keys(numericEnum)` — 6 entries     |  93 ns |             40× |
-| `Object.keys(asConstNumeric)` — 3 keys     | 2.5 ns |           ~1.1× |
-| `Object.entries(stringEnum)`               |  82 ns |              1× |
-| `Object.entries(numericEnum)`              | 222 ns |           ~2.7× |
-| `Object.entries(asConstNumeric)`           |  66 ns |           ~0.8× |
-| `Object.values(stringEnum)`                |  28 ns |              1× |
-| `Object.values(asConstNumeric)`            |  22 ns |           ~0.8× |
-| static array ref (string-union DIRECTIONS) | 0.5 ns |            ~55× |
-
-The rest of the call-site operations (property access, equality, switch
-dispatch, set lookups) sit in the same ~2–6 ns range on JSC across all
-patterns. Not worth measuring at the headline level — pick on semantics.
+esbuild's enum-aware DCE still wins here: for regular `enum`, member access is
+inlined and the pure-marked wrapper can be dropped when only one member is used.
+`as const` keeps a runtime object literal, so the bundle keeps more code.
 
 ## reference outputs
 
 The raw clean output (ANSI stripped) of the last canonical run is committed in:
 
-- `.bench-results.txt`
 - `.sizes-results.txt`
 - `.treeshake-results.txt`
 

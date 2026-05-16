@@ -1,24 +1,16 @@
-// Bundle-size measurement across all four patterns.
+// Bundle-size measurement across three patterns.
 //
-// Each pattern is transpiled with esbuild in three modes:
-//   - "definition only"   — what the pattern itself emits (the historical metric)
-//   - "100-use scenario"   — definition + many call sites that reference a member,
-//                           bundled as a single file. This shows the marginal
-//                           cost when the pattern is actually used.
-//   - "tree-shake"        — lib + single-import consumer bundled together.
-//                           Shows how much dead code esbuild eliminates when
-//                           only one member is referenced (src/tree-shake/).
+// Each pattern is measured with esbuild in two scenarios:
+//   - "definition only"  — what the pattern declaration itself emits.
+//   - "100-use scenario" — definition + many call sites bundled as one file.
 //
 // For each, we report raw, minified, and gzipped bytes. Gzipped is what ships;
 // raw/minified are useful for understanding what esbuild emits.
 //
-// `const enum` is special: esbuild can't inline it (no whole-program view), so
-// instead we compile through tsc first (which DOES inline), then run the JS
-// through esbuild minification + gzip. That's the only fair measurement of the
-// "fully inlined" promise.
+// Tree-shaking is measured by a separate script (scripts/tree-shaking.ts).
 //
-// All emitted JS is written to enums-benchmark/out/sizes/<pattern>.{raw,min}.js
-// so the numbers below can be cross-checked by opening the files.
+// Emitted JS is written to out/sizes/<pattern>.{raw,min}.js so numbers can be
+// cross-checked against generated artifacts.
 
 import { build, BuildOptions, transform } from "esbuild";
 import { gzipSync } from "node:zlib";
@@ -123,7 +115,7 @@ console.log(
   "\nnote: gzip is the column that matters in production. 100-byte differences\n" +
     "minified collapse to single-digit deltas once gzip handles repeated literals.",
 );
-console.log(`\nartifacts: ${outDir}`);
+console.log("\nartifacts: out/sizes");
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 function printTable(rows: Row[]) {

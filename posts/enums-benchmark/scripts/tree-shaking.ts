@@ -15,30 +15,18 @@
 //   - <name>-minified.js     same, plus minification.
 //
 // Expected behaviour:
-//   - string literal union: zero cost. Type-only. Nothing to import. See
-//     out/tree-shake/string-union-bundled.js — only the consumer's own
-//     `const value = "UP"` survives; the import vanishes.
-//   - as const object: plain object literal, no /* @__PURE__ */ anywhere
-//     (compare out/tree-shake/as-const-transformed.js with the enum one
-//     — the marker is absent), so esbuild preserves the whole literal in
+//   - string literal union: no runtime definition from lib.ts (type-only).
+//     The bundled output still includes consumer runtime code.
+//   - as const object: plain object literal, no /* @__PURE__ */ marker on the
+//     object definition, so esbuild preserves the whole literal in
 //     out/tree-shake/as-const-bundled.js. Per-property DCE on plain objects
-//     is off the table; the marker can only drop an entire expression when
-//     its result is unused.
+//     is off the table.
 //   - regular enum: esbuild's TS frontend rewrites the enum to a
 //     /* @__PURE__ */-annotated IIFE itself (tsc does NOT add that marker —
-//     run `tsc` on lib.ts to see a bare IIFE). The annotation is visible in
-//     out/tree-shake/enum-transformed.js — open it to see
-//     `export var Direction = /* @__PURE__ */ ((Direction2) => { … })(…)`.
-//     Because the IIFE is marked pure AND esbuild inlines string-enum member
-//     accesses to their literals, `Direction.Up` becomes "UP" and the whole
-//     wrapper is DCE'd in out/tree-shake/enum-bundled.js: a single
-//     `console.log("UP" /* Up */)`.
-//   - pure-marked as const: same shape as as-const, but the factory is wrapped
-//     in a hand-written /* @__PURE__ */ IIFE. When Direction.Up is accessed
-//     the object must still be constructed — size equals as-const. The
-//     annotation only helps when the result is entirely dead, in which case
-//     the whole IIFE is dropped rather than preserved for its potential
-//     side effects.
+//     run `tsc` on lib.ts to see a bare IIFE). Because the IIFE is marked pure
+//     and esbuild inlines string-enum member accesses to their literals,
+//     `Direction.Up` becomes "UP" and the enum wrapper is DCE'd in
+//     out/tree-shake/enum-bundled.js.
 
 import { build, transform, type BuildOptions } from "esbuild";
 import { gzipSync } from "node:zlib";
@@ -115,17 +103,9 @@ console.log(
     "esbuild's own TypeScript frontend — tsc does not emit it. Combined with\n" +
     'esbuild\'s string-enum member inlining, `Direction.Up` becomes `"UP"` and\n' +
     "the wrapper is DCE'd (see out/tree-shake/enum-bundled.js). `as const`\n" +
-    "objects are plain object literals with no pure marker, so bundlers can't\n" +
-    "drop individual properties while preserving object identity — the whole\n" +
-    "literal ships (see out/tree-shake/as-const-bundled.js). string literal\n" +
-    "union is type-only, so the import vanishes\n" +
-    "(see out/tree-shake/string-union-bundled.js).\n" +
-    "pure-marked has the same size as as-const — /* @__PURE__ */ marks the\n" +
-    "factory call as side-effect-free, but since Direction.Up is accessed the\n" +
-    "object must still be constructed. The annotation only eliminates the call\n" +
-    "when the result is entirely dead (no reference at all). Per-property DCE\n" +
-    "is not on the table for plain objects regardless of the marker — that is\n" +
-    "exactly what makes the enum path (esbuild rewriting + inlining before\n" +
-    "bundling) the unique case here.",
+    "objects are plain object literals, so bundlers preserve the literal when\n" +
+    "a property is used (see out/tree-shake/as-const-bundled.js). string\n" +
+    "literal union has no runtime lib emit, so only consumer runtime code\n" +
+    "remains (see out/tree-shake/string-union-bundled.js).",
 );
-console.log(`\nartifacts: ${outDir}`);
+console.log("\nartifacts: out/tree-shake");
