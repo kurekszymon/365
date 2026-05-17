@@ -40,7 +40,7 @@ const tsconfig = resolve(root, "tsconfig.json");
 rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });
 
-const patterns = ["enum", "as-const", "string-union"] as const;
+const patterns = ["enum", "num-enum", "as-const", "string-union"] as const;
 
 // Shared esbuild options. `target` is inherited from tsconfig; the rest are
 // esbuild-specific bundler flags that don't exist in tsconfig.
@@ -99,13 +99,17 @@ for (const name of patterns) {
 }
 
 console.log(
-  "note: the `/* @__PURE__ */` annotation on the `enum` IIFE comes from\n" +
-    "esbuild's own TypeScript frontend — tsc does not emit it. Combined with\n" +
-    'esbuild\'s string-enum member inlining, `Direction.Up` becomes `"UP"` and\n' +
-    "the wrapper is DCE'd (see out/tree-shake/enum-bundled.js). `as const`\n" +
-    "objects are plain object literals, so bundlers preserve the literal when\n" +
-    "a property is used (see out/tree-shake/as-const-bundled.js). string\n" +
-    "literal union has no runtime lib emit, so only consumer runtime code\n" +
-    "remains (see out/tree-shake/string-union-bundled.js).",
+  "note: the `/* @__PURE__ */` annotation on the `enum`/`num-enum` IIFE comes\n" +
+    "from esbuild's own TypeScript frontend — tsc does not emit it. For string\n" +
+    'enums, esbuild also inlines member accesses (`Direction.Up` → `"UP"`), so\n' +
+    "the wrapper is DCE'd (see out/tree-shake/enum-bundled.js). For numeric\n" +
+    "enums, esbuild inlines member accesses to their numeric literals\n" +
+    "`Direction.Up` → `0`), so the wrapper is likewise DCE'd — but the IIFE\n" +
+    "is larger because numeric enums also emit reverse mappings\n" +
+    "(see out/tree-shake/num-enum-transformed.js). `as const` objects are plain\n" +
+    "object literals, so bundlers preserve the literal when a property is used\n" +
+    "(see out/tree-shake/as-const-bundled.js). string literal union has no\n" +
+    "runtime lib emit, so only consumer runtime code remains\n" +
+    "(see out/tree-shake/string-union-bundled.js).",
 );
 console.log("\nartifacts: out/tree-shake");
