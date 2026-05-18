@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type {
+  Design,
   Field,
   FieldGeometry,
+  PartId,
   ResizeHandle,
   Side,
 } from '#/lib/invitation/types'
@@ -22,6 +25,13 @@ import { FloatingToolbar } from '#/components/editor/FloatingToolbar'
 import { CanvasContextMenu } from '#/components/editor/ContextMenu'
 import { GhostCard } from '#/components/editor/GhostCard'
 import { Button } from '#/components/ui/button'
+import { cn } from '#/lib/utils'
+
+function getPartBg(design: Design, partId: PartId, defaultBg: string): string {
+  if (partId === 'invitation') return defaultBg
+  const overrideId = design.partColorSchemes?.[partId]
+  return overrideId ? getColorScheme(overrideId).bg : defaultBg
+}
 
 // Refs hold drag/resize setup state (initial geom, start pointer).
 // useState holds live visual position during the interaction.
@@ -54,6 +64,8 @@ export const Canvas = () => {
   const dragRef = useRef<DragState | null>(null)
   const resizeRef = useRef<ResizeState | null>(null)
 
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+
   const [liveDrag, setLiveDrag] = useState<{
     fieldId: string
     dx: number
@@ -81,6 +93,7 @@ export const Canvas = () => {
   const resizeField = useDesignStore((s) => s.resizeField)
   const updateField = useDesignStore((s) => s.updateField)
   const togglePartEnabled = useDesignStore((s) => s.togglePartEnabled)
+  const setPartColorScheme = useDesignStore((s) => s.setPartColorScheme)
 
   const dims = PART_DIMENSIONS[activePart]
   const colors = getColorScheme(design.colorScheme)
@@ -249,6 +262,10 @@ export const Canvas = () => {
         <div
           ref={cardRef}
           data-testid="canvas-card"
+          data-scheme={
+            design.partColorSchemes?.[activePart as 'extra' | 'envelope'] ??
+            design.colorScheme
+          }
           style={{
             width: dims.w,
             height: dims.h,
@@ -256,7 +273,7 @@ export const Canvas = () => {
             transformOrigin: 'center center',
             position: 'relative',
             flexShrink: 0,
-            background: colors.bg,
+            background: getPartBg(design, activePart, colors.bg),
             boxShadow: '0 4px 32px rgba(0,0,0,0.18)',
           }}
           onClick={onCanvasClick}
@@ -268,6 +285,32 @@ export const Canvas = () => {
             width={dims.w}
             height={dims.h}
           />
+
+          {activePart === 'envelope' && (
+            <svg
+              data-testid="canvas-envelope-fold"
+              className="no-print"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'none',
+                zIndex: 1,
+              }}
+              viewBox={`0 0 ${dims.w} ${dims.h}`}
+              preserveAspectRatio="none"
+            >
+              <polyline
+                points={`0,0 ${dims.w / 2},${dims.h * 0.38} ${dims.w},0`}
+                fill="none"
+                stroke={colors.border}
+                strokeWidth="1.5"
+                strokeDasharray="6,6"
+                opacity="0.45"
+              />
+            </svg>
+          )}
 
           {/* Front/back switcher — overlaid at card bottom, hidden on print */}
           <div
@@ -379,30 +422,51 @@ export const Canvas = () => {
       </div>
 
       {/* Ghost panel */}
-      <div className="flex w-44 flex-shrink-0 flex-col items-center justify-center gap-8 border-l border-gray-200 bg-gray-50 px-3 py-6">
-        <GhostCard
-          partId="invitation"
-          label="Invitation"
-          design={design}
-          activePart={activePart}
-          onActivate={() => setActivePart('invitation')}
-        />
-        <GhostCard
-          partId="extra"
-          label="Extra"
-          design={design}
-          activePart={activePart}
-          onActivate={() => setActivePart('extra')}
-          onToggle={() => togglePartEnabled('extra')}
-        />
-        <GhostCard
-          partId="envelope"
-          label="Envelope"
-          design={design}
-          activePart={activePart}
-          onActivate={() => setActivePart('envelope')}
-          onToggle={() => togglePartEnabled('envelope')}
-        />
+      <div
+        data-testid="ghost-panel"
+        className={cn(
+          'relative flex flex-shrink-0 border-l border-gray-200 bg-gray-50 transition-all duration-150',
+          sidebarOpen ? 'w-44' : 'w-8',
+        )}
+      >
+        <button
+          data-testid="ghost-panel-toggle"
+          onClick={() => setSidebarOpen((v) => !v)}
+          className="absolute -left-3 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm hover:text-gray-700"
+          title={sidebarOpen ? 'Collapse parts panel' : 'Expand parts panel'}
+        >
+          {sidebarOpen ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+        </button>
+
+        {sidebarOpen && (
+          <div className="flex w-full flex-col items-center justify-center gap-8 px-3 py-6">
+            <GhostCard
+              partId="invitation"
+              label="Invitation"
+              design={design}
+              activePart={activePart}
+              onActivate={() => setActivePart('invitation')}
+            />
+            <GhostCard
+              partId="extra"
+              label="Extra"
+              design={design}
+              activePart={activePart}
+              onActivate={() => setActivePart('extra')}
+              onToggle={() => togglePartEnabled('extra')}
+              onSetColorScheme={(id) => setPartColorScheme('extra', id)}
+            />
+            <GhostCard
+              partId="envelope"
+              label="Envelope"
+              design={design}
+              activePart={activePart}
+              onActivate={() => setActivePart('envelope')}
+              onToggle={() => togglePartEnabled('envelope')}
+              onSetColorScheme={(id) => setPartColorScheme('envelope', id)}
+            />
+          </div>
+        )}
       </div>
     </div>
   )

@@ -6,35 +6,38 @@ test.describe('Share link', () => {
     await expect(page.getByRole('button', { name: /share/i })).toBeVisible()
   })
 
-  test('share button copies link with hash', async ({ page, context }) => {
-    // Mock clipboard so it works reliably in headless mode (no focus/activation
-    // requirement, which can silently fail in Playwright's headless Chromium).
-    await context.addInitScript(() => {
-      let _stored = ''
-      Object.defineProperty(navigator, 'clipboard', {
-        configurable: true,
-        value: {
-          writeText: async (text: string) => {
-            _stored = text
-          },
-          readText: async () => _stored,
-        },
-      })
-    })
-
+  test('share button copies link with hash', async ({ page }) => {
     // Load a preset so there's a non-empty design
     await page.goto('/')
     await Promise.all([
       page.waitForURL('**/editor#**'),
       page.getByRole('link', { name: 'Centered Classic' }).click(),
     ])
+    await page.waitForSelector('[data-field-type="text"]', { timeout: 5000 })
+
+    // Mock clipboard after page has fully loaded — avoids addInitScript race
+    // conditions with non-configurable navigator.clipboard in headless Chromium.
+    await page.evaluate(() => {
+      ;(window as any).__clipboardText = ''
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: {
+          writeText: async (text: string) => {
+            ;(window as any).__clipboardText = text
+          },
+          readText: async () => (window as any).__clipboardText,
+        },
+      })
+    })
 
     await page.getByRole('button', { name: /share/i }).click()
     await expect(page.getByRole('button', { name: /copied/i })).toBeVisible({
       timeout: 3000,
     })
 
-    const clip = await page.evaluate(() => navigator.clipboard.readText())
+    const clip = await page.evaluate(
+      () => (window as any).__clipboardText as string,
+    )
     expect(clip).toContain('/editor#')
   })
 

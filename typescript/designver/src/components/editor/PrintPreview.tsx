@@ -19,9 +19,8 @@ export function PrintPreview({ onClose }: PrintPreviewProps) {
   const guests = useDesignStore((s) => s.guests)
 
   const guestList = guests.length > 0 ? guests : ['']
-  const enabledParts = design.enabledParts ?? { extra: true, envelope: true }
   const PARTS = ALL_PARTS.filter(
-    (part) => part === 'invitation' || enabledParts[part],
+    (part) => part === 'invitation' || design.enabledParts[part],
   )
 
   useEffect(() => {

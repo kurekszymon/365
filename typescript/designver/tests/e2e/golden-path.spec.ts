@@ -16,9 +16,13 @@ test.describe('Golden path', () => {
       page.waitForURL('**/editor'),
       page.getByRole('link', { name: 'Blank canvas' }).click(),
     ])
-    await expect(page.getByRole('radio', { name: 'Invitation' })).toBeVisible()
-    await expect(page.getByRole('radio', { name: 'Extra' })).toBeVisible()
-    await expect(page.getByRole('radio', { name: 'Envelope' })).toBeVisible()
+    await expect(
+      page.locator('[data-testid="ghost-card-invitation"]'),
+    ).toBeVisible()
+    await expect(page.locator('[data-testid="ghost-card-extra"]')).toBeVisible()
+    await expect(
+      page.locator('[data-testid="ghost-card-envelope"]'),
+    ).toBeVisible()
   })
 
   test('opens preset editor from landing page and URL contains hash', async ({
@@ -44,10 +48,15 @@ test.describe('Golden path', () => {
 
   test('editor updates hash when color scheme changes', async ({ page }) => {
     await page.goto('/editor')
+    await page.waitForSelector('[data-testid="canvas-card"]')
     const hashBefore = new URL(page.url()).hash
 
+    // Ensure no leftover listbox before clicking (matches the helper used in part-backgrounds)
+    await page
+      .waitForSelector('[role="listbox"]', { state: 'hidden', timeout: 3000 })
+      .catch(() => {})
     // Open the shadcn Select for color scheme (first select-trigger in toolbar)
-    await page.locator('[data-slot="select-trigger"]').first().click()
+    await page.locator('header [data-slot="select-trigger"]').first().click()
     // Radix Select renders its listbox into a portal with role="listbox"
     await page.waitForSelector('[role="listbox"]', { timeout: 4000 })
     await page.getByRole('option', { name: 'blush' }).click()
@@ -76,11 +85,11 @@ test.describe('Golden path', () => {
   test('right-click on canvas shows context menu', async ({ page }) => {
     await page.goto('/editor')
     await page.waitForSelector('[data-testid="canvas-card"]')
-    // Click at a specific position well inside the scaled card
-    await page.locator('[data-testid="canvas-card"]').click({
-      button: 'right',
-      position: { x: 100, y: 100 },
-    })
+    // force:true bypasses Playwright's actionability check which is unreliable
+    // on CSS-transformed elements before ResizeObserver has settled the scale
+    await page
+      .locator('[data-testid="canvas-card"]')
+      .click({ button: 'right', force: true })
     await expect(page.getByText('Add text')).toBeVisible({ timeout: 3000 })
   })
 

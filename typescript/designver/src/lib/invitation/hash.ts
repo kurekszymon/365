@@ -177,12 +177,20 @@ function validateDesign(raw: unknown): Design | null {
     envelope: typeof rawEp.envelope === 'boolean' ? rawEp.envelope : true,
   }
 
+  const rawPcs = isSafeObject(raw.partColorSchemes) ? raw.partColorSchemes : {}
+  const partColorSchemes: Design['partColorSchemes'] = {}
+  for (const k of ['extra', 'envelope'] as const) {
+    if (typeof rawPcs[k] === 'string' && VALID_COLOR_SCHEME_IDS.has(rawPcs[k]))
+      partColorSchemes[k] = rawPcs[k]
+  }
+
   return {
     version: 1,
     parts,
     colorScheme,
     defaultFontId,
     enabledParts,
+    ...(Object.keys(partColorSchemes).length > 0 ? { partColorSchemes } : {}),
     ...(guests ? { guests } : {}),
   }
 }

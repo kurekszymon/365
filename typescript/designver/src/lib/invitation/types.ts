@@ -64,6 +64,7 @@ export interface Design {
   colorScheme: string
   defaultFontId: string
   enabledParts: EnabledParts
+  partColorSchemes?: Partial<Record<'extra' | 'envelope', string>>
   guests?: string[] // only serialized when user opts in
 }
 

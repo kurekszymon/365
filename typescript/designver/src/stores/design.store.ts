@@ -72,6 +72,10 @@ interface Actions {
   ) => void
   setColorScheme: (scheme: string) => void
   setDefaultFont: (fontId: string) => void
+  setPartColorScheme: (
+    partId: 'extra' | 'envelope',
+    schemeId: string | null,
+  ) => void
   togglePartEnabled: (partId: 'extra' | 'envelope') => void
   undo: () => void
   redo: () => void
@@ -397,6 +401,14 @@ export const useDesignStore = create<StoreState>()(
           defaultFontId: fontId,
         }),
       })),
+
+    setPartColorScheme: (partId, schemeId) =>
+      set((s) => {
+        const next = { ...s.design.partColorSchemes }
+        if (schemeId === null) delete next[partId]
+        else next[partId] = schemeId
+        return { design: { ...s.design, partColorSchemes: next } }
+      }),
 
     togglePartEnabled: (partId) =>
       set((s) => {
