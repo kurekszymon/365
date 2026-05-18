@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { TextField } from '#/lib/invitation/types'
 import { buildTextStyle } from '#/components/editor/FieldRenderer'
+import { MAX_FIELD_CONTENT_LENGTH } from '#/lib/invitation/defaults'
 
 interface InlineTextEditorProps {
   field: TextField
@@ -38,6 +39,7 @@ export function InlineTextEditor({
     <textarea
       ref={ref}
       defaultValue={field.content}
+      maxLength={MAX_FIELD_CONTENT_LENGTH}
       style={{
         ...textStyle,
         position: 'absolute',

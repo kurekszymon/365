@@ -7,6 +7,7 @@ const minimalDesign: Design = {
   version: 1,
   colorScheme: 'cream-gold',
   defaultFontId: 'playfair',
+  enabledParts: { extra: true, envelope: true },
   parts: {
     invitation: { front: [], back: [] },
     extra: { front: [], back: [] },
@@ -18,6 +19,7 @@ const richDesign: Design = {
   version: 1,
   colorScheme: 'blush',
   defaultFontId: 'cormorant',
+  enabledParts: { extra: true, envelope: true },
   parts: {
     invitation: {
       front: [
@@ -174,5 +176,14 @@ describe('decodeDesign validation', () => {
     })
     const decoded = decodeDesign(encoded)
     expect(decoded?.guests).toEqual(['Anna', 'Jakub'])
+  })
+
+  it('preserves enabledParts when present', () => {
+    const encoded = encodeDesign({
+      ...minimalDesign,
+      enabledParts: { extra: true, envelope: false },
+    })
+    const decoded = decodeDesign(encoded)
+    expect(decoded?.enabledParts).toEqual({ extra: true, envelope: false })
   })
 })

@@ -35,11 +35,18 @@ export const DEFAULT_DESIGN: Design = {
   },
   colorScheme: 'cream-gold',
   defaultFontId: 'playfair',
+  enabledParts: { extra: true, envelope: true },
 }
 
+// Maximum chars for a field ID. IDs used as React keys and HTML data-attributes;
+// no functional need for long IDs, and unbounded length bloats undo history.
+export const MAX_FIELD_ID_LENGTH = 64
+// Cap prevents a crafted hash from flooding the canvas with thousands of
+// fields, each of which spawns DOM nodes, selection frames, and undo entries.
+export const MAX_FIELDS_PER_SIDE = 200
 export const MIN_FIELD_W = 40
 export const MIN_FIELD_H = 20
-
+export const MAX_FIELD_CONTENT_LENGTH = 2000
 // Clamp a geometry so the field stays inside the card
 export function clampGeomToBounds(
   geom: FieldGeometry,

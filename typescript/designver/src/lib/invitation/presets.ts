@@ -24,6 +24,7 @@ export const PRESETS: Preset[] = [
       version: 1,
       colorScheme: 'cream-gold',
       defaultFontId: 'playfair',
+      enabledParts: { extra: true, envelope: true },
       parts: {
         invitation: {
           front: [
@@ -115,6 +116,7 @@ export const PRESETS: Preset[] = [
       version: 1,
       colorScheme: 'pure-white',
       defaultFontId: 'inter',
+      enabledParts: { extra: true, envelope: true },
       parts: {
         invitation: {
           front: [
@@ -189,6 +191,7 @@ export const PRESETS: Preset[] = [
       version: 1,
       colorScheme: 'blush',
       defaultFontId: 'cormorant',
+      enabledParts: { extra: true, envelope: true },
       parts: {
         invitation: {
           front: [

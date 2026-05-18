@@ -11,7 +11,7 @@ interface PrintPreviewProps {
   onClose: () => void
 }
 
-const PARTS: PartId[] = ['invitation', 'extra', 'envelope']
+const ALL_PARTS: PartId[] = ['invitation', 'extra', 'envelope']
 const SIDES: Side[] = ['front', 'back']
 
 export function PrintPreview({ onClose }: PrintPreviewProps) {
@@ -19,6 +19,10 @@ export function PrintPreview({ onClose }: PrintPreviewProps) {
   const guests = useDesignStore((s) => s.guests)
 
   const guestList = guests.length > 0 ? guests : ['']
+  const enabledParts = design.enabledParts ?? { extra: true, envelope: true }
+  const PARTS = ALL_PARTS.filter(
+    (part) => part === 'invitation' || enabledParts[part],
+  )
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {

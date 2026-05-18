@@ -53,11 +53,17 @@ export interface PartContent {
   back: Field[]
 }
 
+export interface EnabledParts {
+  extra: boolean
+  envelope: boolean
+}
+
 export interface Design {
   version: 1
   parts: Record<PartId, PartContent>
   colorScheme: string
   defaultFontId: string
+  enabledParts: EnabledParts
   guests?: string[] // only serialized when user opts in
 }
 

@@ -4,7 +4,6 @@ import type {
   Design,
   EditorUIState,
   Field,
-  FieldFormat,
   FieldGeometry,
   PartId,
   Side,
@@ -73,6 +72,7 @@ interface Actions {
   ) => void
   setColorScheme: (scheme: string) => void
   setDefaultFont: (fontId: string) => void
+  togglePartEnabled: (partId: 'extra' | 'envelope') => void
   undo: () => void
   redo: () => void
 
@@ -291,6 +291,14 @@ export const useDesignStore = create<StoreState>()(
 
     updateField: (partId, fieldId, patch) => {
       const state = get()
+      // Strip identity fields from the patch: mutating `type` or `id` would
+      // produce a Field whose shape doesn't match its discriminated-union type,
+      // silently breaking FieldRenderer and hash serialization.
+      const {
+        type: _type,
+        id: _id,
+        ...safePatch
+      } = patch as Record<string, unknown>
       // Find which side contains this field
       const sides: Side[] = ['front', 'back']
       for (const side of sides) {
@@ -299,13 +307,10 @@ export const useDesignStore = create<StoreState>()(
             ...withHistory(
               s.design,
               s.history,
-              updateFieldInPart(
-                s.design,
-                partId,
-                side,
-                fieldId,
-                (f) => ({ ...f, ...patch }) as Field,
-              ),
+              updateFieldInPart(s.design, partId, side, fieldId, (f) => ({
+                ...f,
+                ...safePatch,
+              })),
             ),
           }))
           return
@@ -392,6 +397,23 @@ export const useDesignStore = create<StoreState>()(
           defaultFontId: fontId,
         }),
       })),
+
+    togglePartEnabled: (partId) =>
+      set((s) => {
+        const current = s.design.enabledParts
+        const next = { ...current, [partId]: !current[partId] }
+        const uiPatch =
+          !next[partId] && s.activePart === partId
+            ? { activePart: 'invitation' as const }
+            : {}
+        return {
+          ...withHistory(s.design, s.history, {
+            ...s.design,
+            enabledParts: next,
+          }),
+          ...uiPatch,
+        }
+      }),
 
     undo: () =>
       set((s) => {

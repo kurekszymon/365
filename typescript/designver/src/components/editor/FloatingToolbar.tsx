@@ -147,7 +147,10 @@ export function FloatingToolbar({
           {/* Font size */}
           <Select
             value={fmt.fontSize?.toString() ?? ''}
-            onValueChange={(v) => patchText({ fontSize: parseInt(v) })}
+            onValueChange={(v) => {
+              const fs = parseInt(v)
+              if (!isNaN(fs)) patchText({ fontSize: fs })
+            }}
           >
             <SelectTrigger className="h-7 w-16 text-xs">
               <SelectValue placeholder="Size" />

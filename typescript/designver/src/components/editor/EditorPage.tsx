@@ -3,7 +3,6 @@ import { Printer, Users, Grid, Undo2, Redo2 } from 'lucide-react'
 import { useDesignStore } from '#/stores/design.store'
 import { COLOR_SCHEMES } from '#/lib/invitation/colorSchemes'
 import { FONT_OPTIONS } from '#/lib/invitation/fonts'
-import { PartSwitcher } from '#/components/editor/PartSwitcher'
 import { Canvas } from '#/components/editor/Canvas'
 import { GuestSidebar } from '#/components/editor/GuestSidebar'
 import { ShareButton } from '#/components/editor/ShareButton'
@@ -64,7 +63,7 @@ export function EditorPage() {
         {/* Top bar */}
         <header className="flex h-12 flex-shrink-0 items-center justify-between border-b border-gray-200 bg-white px-3 shadow-sm">
           {/* Left: logo + undo/redo + style controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" data-testid="header-left">
             <a
               href="/"
               className="mr-2 text-sm font-semibold tracking-tight text-gray-800"
@@ -162,9 +161,6 @@ export function EditorPage() {
             </Tooltip>
           </div>
 
-          {/* Center: part switcher */}
-          <PartSwitcher />
-
           {/* Right: guests + share + print */}
           <div className="flex items-center gap-2">
             <Button
@@ -172,6 +168,7 @@ export function EditorPage() {
               variant="ghost"
               className="h-8 gap-1.5 px-3 text-sm"
               onClick={toggleGuestSidebar}
+              data-testid="guest-sidebar-toggle"
             >
               <Users size={14} />
               Guests

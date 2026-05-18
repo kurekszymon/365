@@ -13,7 +13,12 @@ import { FONT_OPTIONS } from '#/lib/invitation/fonts'
 import { VALID_COLOR_SCHEME_IDS } from '#/lib/invitation/colorSchemes'
 import { VALID_ICON_KEYS } from '#/lib/invitation/icons'
 import { sanitizeGuestNames } from '#/lib/invitation/guestNames'
-import { PART_DIMENSIONS } from '#/lib/invitation/defaults'
+import {
+  MAX_FIELD_CONTENT_LENGTH,
+  MAX_FIELD_ID_LENGTH,
+  MAX_FIELDS_PER_SIDE,
+  PART_DIMENSIONS,
+} from '#/lib/invitation/defaults'
 
 const VALID_FONT_IDS = new Set(FONT_OPTIONS.map((f) => f.id))
 const VALID_SEP_STYLES = new Set(['line', 'heart', 'flower', 'star', 'diamond'])
@@ -67,6 +72,7 @@ function validateFormat(raw: unknown): FieldFormat | undefined {
 function validateField(raw: unknown, partId: PartId): Field | null {
   if (!isSafeObject(raw)) return null
   if (typeof raw.id !== 'string' || !raw.id) return null
+  if (raw.id.length > MAX_FIELD_ID_LENGTH) return null
 
   const geom = validateGeom(raw.geom, partId)
   if (!geom) return null
@@ -76,7 +82,9 @@ function validateField(raw: unknown, partId: PartId): Field | null {
       type: 'text',
       id: raw.id,
       content:
-        typeof raw.content === 'string' ? raw.content.slice(0, 2000) : '',
+        typeof raw.content === 'string'
+          ? raw.content.slice(0, MAX_FIELD_CONTENT_LENGTH)
+          : '',
       format: validateFormat(raw.format),
       geom,
     }
@@ -116,6 +124,7 @@ function validatePartContent(raw: unknown, partId: PartId): PartContent {
     const seen = new Set<string>()
     const fields: Field[] = []
     for (const item of side) {
+      if (fields.length >= MAX_FIELDS_PER_SIDE) break
       const f = validateField(item, partId)
       if (f && !seen.has(f.id)) {
         seen.add(f.id)
@@ -162,11 +171,18 @@ function validateDesign(raw: unknown): Design | null {
       )
     : undefined
 
+  const rawEp = isSafeObject(raw.enabledParts) ? raw.enabledParts : {}
+  const enabledParts: Design['enabledParts'] = {
+    extra: typeof rawEp.extra === 'boolean' ? rawEp.extra : true,
+    envelope: typeof rawEp.envelope === 'boolean' ? rawEp.envelope : true,
+  }
+
   return {
     version: 1,
     parts,
     colorScheme,
     defaultFontId,
+    enabledParts,
     ...(guests ? { guests } : {}),
   }
 }

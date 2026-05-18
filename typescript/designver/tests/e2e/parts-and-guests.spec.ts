@@ -1,15 +1,15 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Parts and guests', () => {
-  test('part switcher shows all three parts', async ({ page }) => {
+  test('ghost panel shows extra and envelope', async ({ page }) => {
     await page.goto('/editor')
-    await expect(page.getByRole('radio', { name: 'Invitation' })).toBeVisible()
-    await expect(page.getByRole('radio', { name: 'Extra' })).toBeVisible()
-    await expect(page.getByRole('radio', { name: 'Envelope' })).toBeVisible()
-    // Invitation is initially selected
-    await expect(
-      page.getByRole('radio', { name: 'Invitation' }),
-    ).toHaveAttribute('data-state', 'on')
+    await expect(page.getByTestId('canvas-card')).toBeVisible()
+    // Ghost panel checkboxes for Extra and Envelope are visible
+    await expect(page.getByLabel('Extra')).toBeVisible()
+    await expect(page.getByLabel('Envelope')).toBeVisible()
+    // Both are checked by default
+    await expect(page.getByLabel('Extra')).toBeChecked()
+    await expect(page.getByLabel('Envelope')).toBeChecked()
   })
 
   test('front/back switcher buttons are visible', async ({ page }) => {
@@ -29,8 +29,8 @@ test.describe('Parts and guests', () => {
 
   test('guest sidebar closes with escape', async ({ page }) => {
     await page.goto('/editor')
-    await page.getByRole('button', { name: /guests/i }).waitFor()
-    await page.getByRole('button', { name: /guests/i }).click()
+    await page.getByTestId('guest-sidebar-toggle').waitFor()
+    await page.getByTestId('guest-sidebar-toggle').click()
     await expect(page.getByText(/Guests & Addressants/i)).toBeVisible({
       timeout: 5000,
     })
@@ -42,8 +42,8 @@ test.describe('Parts and guests', () => {
 
   test('adding guests in sidebar', async ({ page }) => {
     await page.goto('/editor')
-    await page.getByRole('button', { name: /guests/i }).waitFor()
-    await page.getByRole('button', { name: /guests/i }).click()
+    await page.getByTestId('guest-sidebar-toggle').waitFor()
+    await page.getByTestId('guest-sidebar-toggle').click()
 
     const input = page.getByPlaceholder('Guest name')
     await expect(input).toBeVisible({ timeout: 5000 })
