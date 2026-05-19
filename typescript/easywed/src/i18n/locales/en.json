@@ -28,6 +28,8 @@
   "auth.signing_you_in": "Signing you in...",
   "auth.sign_in_with_google": "Sign in with Google",
   "auth.or": "or",
+  "auth.sign_up_hint": "Fill in the fields above and click \"Create account\" to register.",
+  "auth.email_sent": "Check your email — we sent you a confirmation link.",
 
   "members.title": "Members",
   "members.role": "Role",
