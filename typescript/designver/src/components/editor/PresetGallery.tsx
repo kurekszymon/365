@@ -11,10 +11,10 @@ const THUMB_SCALE = 0.22
 export function PresetGallery() {
   return (
     <main className="page-wrap px-4 pb-16 pt-12">
-      <h1 className="display-title mb-2 text-3xl font-bold text-[var(--sea-ink)]">
+      <h1 className="display-title mb-2 text-3xl font-bold text-foreground">
         Invitation Designer
       </h1>
-      <p className="mb-10 text-[var(--sea-ink-soft)]">
+      <p className="mb-10 text-muted-foreground">
         Start from a preset or build from a blank canvas.
       </p>
 
@@ -23,10 +23,10 @@ export function PresetGallery() {
         <a
           href="/editor"
           aria-label="Blank canvas"
-          className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-gray-300 p-4 no-underline transition hover:border-gray-400 hover:bg-gray-50"
+          className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-border p-4 no-underline transition hover:border-muted-foreground hover:bg-accent"
         >
           <div
-            className="flex items-center justify-center rounded-xl bg-gray-100"
+            className="flex items-center justify-center rounded-xl bg-muted"
             style={{
               width: PART_DIMENSIONS.invitation.w * THUMB_SCALE,
               height: PART_DIMENSIONS.invitation.h * THUMB_SCALE,
@@ -34,10 +34,10 @@ export function PresetGallery() {
           >
             <PlusCircle
               size={32}
-              className="text-gray-400 group-hover:text-gray-600"
+              className="text-muted-foreground group-hover:text-foreground"
             />
           </div>
-          <span className="text-sm font-medium text-gray-600">
+          <span className="text-sm font-medium text-muted-foreground">
             Blank canvas
           </span>
         </a>
@@ -53,7 +53,7 @@ export function PresetGallery() {
               key={preset.id}
               href={`/editor#${encoded}`}
               aria-label={preset.label}
-              className="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 p-4 no-underline transition hover:border-gray-300 hover:shadow-md"
+              className="group flex flex-col items-center gap-3 rounded-2xl border border-border p-4 no-underline transition hover:border-muted-foreground hover:shadow-md"
             >
               {/* Thumbnail */}
               <div
@@ -97,10 +97,12 @@ export function PresetGallery() {
               </div>
 
               <div className="text-center">
-                <p className="text-sm font-medium text-gray-700">
+                <p className="text-sm font-medium text-foreground">
                   {preset.label}
                 </p>
-                <p className="text-xs text-gray-400">{preset.description}</p>
+                <p className="text-xs text-muted-foreground">
+                  {preset.description}
+                </p>
               </div>
             </a>
           )

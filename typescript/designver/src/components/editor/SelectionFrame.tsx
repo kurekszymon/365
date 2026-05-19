@@ -51,7 +51,7 @@ export function SelectionFrame({ onResizeStart }: SelectionFrameProps) {
   return (
     <div
       className="pointer-events-none absolute inset-0"
-      style={{ outline: '2px solid #3b82f6', outlineOffset: '1px' }}
+      style={{ outline: '2px solid var(--ring)', outlineOffset: '1px' }}
     >
       {HANDLES.map(({ id, style }) => (
         <div
@@ -61,8 +61,8 @@ export function SelectionFrame({ onResizeStart }: SelectionFrameProps) {
             ...style,
             width: 8,
             height: 8,
-            background: 'white',
-            border: '1.5px solid #3b82f6',
+            background: 'var(--background)',
+            border: '1.5px solid var(--ring)',
             borderRadius: 2,
             zIndex: 10,
           }}

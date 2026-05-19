@@ -31,25 +31,27 @@ export function GuestSidebar() {
   return (
     <Sheet open={open} onOpenChange={setGuestSidebarOpen}>
       <SheetContent side="right" className="flex w-80 flex-col gap-0 p-0">
-        <SheetHeader className="border-b border-gray-100 px-4 py-3">
+        <SheetHeader className="border-b border-border px-4 py-3">
           <SheetTitle className="text-base">Guests & Addressants</SheetTitle>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-4 py-3">
           {guests.length === 0 ? (
-            <p className="text-sm text-gray-400">No guests added yet.</p>
+            <p className="text-sm text-muted-foreground">
+              No guests added yet.
+            </p>
           ) : (
             <ul className="space-y-1">
               {guests.map((name, i) => (
                 <li
                   key={i}
-                  className="flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-gray-50"
+                  className="flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-accent"
                 >
-                  <span className="text-sm text-gray-700">{name}</span>
+                  <span className="text-sm text-foreground">{name}</span>
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
+                    className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
                     onClick={() => removeGuest(i)}
                   >
                     <Trash2 size={12} />
@@ -60,7 +62,7 @@ export function GuestSidebar() {
           )}
         </div>
 
-        <div className="border-t border-gray-100 px-4 py-3 space-y-3">
+        <div className="border-t border-border px-4 py-3 space-y-3">
           <div className="flex gap-2">
             <Input
               placeholder="Guest name"
@@ -76,18 +78,18 @@ export function GuestSidebar() {
             </Button>
           </div>
 
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
             <Toggle
               size="sm"
               pressed={includeInHash}
               onPressedChange={setIncludeGuestsInHash}
-              className="h-5 w-9 rounded-full data-[state=on]:bg-blue-500"
+              className="h-5 w-9 rounded-full data-[state=on]:bg-primary"
               aria-label="Include guests in share link"
             />
             Include in share link
           </label>
           {includeInHash && (
-            <p className="text-xs text-amber-600">
+            <p className="text-xs text-primary">
               Share links will contain all guest names and may be longer.
             </p>
           )}

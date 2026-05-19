@@ -121,7 +121,7 @@ export function CanvasContextMenu({
   return (
     <div
       ref={ref}
-      className="absolute z-[100] min-w-40 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-xl"
+      className="absolute z-[100] min-w-40 overflow-hidden rounded-lg border border-border bg-popover py-1 shadow-xl"
       style={{ left: menuLeft, top: menuTop }}
       onPointerDown={(e) => e.stopPropagation()}
     >
@@ -149,7 +149,7 @@ export function CanvasContextMenu({
               onClick={handleSendToBack}
             />
           )}
-          <div className="my-1 border-t border-gray-100" />
+          <div className="my-1 border-t border-border" />
           <MenuItem
             icon={<Type size={13} />}
             label="Add text"
@@ -165,7 +165,7 @@ export function CanvasContextMenu({
             label="Add icon"
             onClick={addIcon}
           />
-          <div className="my-1 border-t border-gray-100" />
+          <div className="my-1 border-t border-border" />
           <MenuItem
             icon={<Trash2 size={13} />}
             label="Delete"
@@ -212,7 +212,7 @@ function MenuItem({
 }) {
   return (
     <button
-      className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-gray-50 ${danger ? 'text-red-500' : 'text-gray-700'}`}
+      className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-accent ${danger ? 'text-destructive' : 'text-foreground'}`}
       onClick={onClick}
     >
       {icon}

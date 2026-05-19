@@ -28,21 +28,21 @@ export function IconPicker({ onSelect, onClose }: IconPickerProps) {
   return (
     <div
       ref={ref}
-      className="absolute left-0 top-full z-50 mt-1 w-72 rounded-lg border border-gray-200 bg-white p-3 shadow-xl"
+      className="absolute left-0 top-full z-50 mt-1 w-72 rounded-lg border border-border bg-popover p-3 shadow-xl"
       onPointerDown={(e) => e.stopPropagation()}
     >
       {ICON_CATEGORIES.map((cat) => {
         const icons = ICON_REGISTRY.filter((i) => i.category === cat)
         return (
           <div key={cat} className="mb-3">
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {cat}
             </p>
             <div className="grid grid-cols-6 gap-1">
               {icons.map((icon) => (
                 <button
                   key={icon.key}
-                  className="flex flex-col items-center gap-0.5 rounded p-1.5 text-xs text-gray-600 hover:bg-gray-100"
+                  className="flex flex-col items-center gap-0.5 rounded p-1.5 text-xs text-muted-foreground hover:bg-accent"
                   title={icon.label}
                   onClick={() => onSelect(icon.key)}
                 >

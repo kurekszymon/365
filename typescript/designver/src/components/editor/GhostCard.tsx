@@ -72,7 +72,7 @@ export const GhostCard = ({
               opacity: enabled ? 1 : 0.25,
               cursor: enabled ? 'pointer' : 'default',
               boxShadow: isActive
-                ? '0 0 0 2px #3b82f6, 0 1px 6px rgba(0,0,0,0.12)'
+                ? '0 0 0 2px var(--ring), 0 1px 6px rgba(0,0,0,0.12)'
                 : '0 1px 4px rgba(0,0,0,0.14)',
               flexShrink: 0,
             }}
@@ -137,7 +137,7 @@ export const GhostCard = ({
       </Tooltip>
 
       {onToggle ? (
-        <label className="flex cursor-pointer select-none items-center gap-1.5 text-xs text-gray-500">
+        <label className="flex cursor-pointer select-none items-center gap-1.5 text-xs text-muted-foreground">
           <input
             type="checkbox"
             checked={enabled}
@@ -147,7 +147,9 @@ export const GhostCard = ({
           {label}
         </label>
       ) : (
-        <span className="select-none text-xs text-gray-500">{label}</span>
+        <span className="select-none text-xs text-muted-foreground">
+          {label}
+        </span>
       )}
 
       {onSetColorScheme && enabled && (

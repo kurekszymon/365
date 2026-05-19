@@ -85,7 +85,7 @@ export function FloatingToolbar({
   return (
     <div
       ref={toolbarRef}
-      className="absolute z-50 flex flex-wrap items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 py-1.5 shadow-xl"
+      className="absolute z-50 flex flex-wrap items-center gap-1 rounded-lg border border-border bg-card px-2 py-1.5 shadow-xl"
       style={{
         top: pos.top,
         left: pos.left,
@@ -121,7 +121,7 @@ export function FloatingToolbar({
           >
             <Underline size={14} />
           </Button>
-          <div className="mx-1 h-5 w-px bg-gray-200" />
+          <div className="mx-1 h-5 w-px bg-border" />
 
           {/* Font family */}
           <Select
@@ -166,7 +166,7 @@ export function FloatingToolbar({
 
           {/* Font weight */}
           <div className="flex items-center gap-1">
-            <span className="text-xs text-gray-400">W</span>
+            <span className="text-xs text-muted-foreground">W</span>
             <Slider
               className="w-20"
               min={100}
@@ -177,7 +177,7 @@ export function FloatingToolbar({
             />
           </div>
 
-          <div className="mx-1 h-5 w-px bg-gray-200" />
+          <div className="mx-1 h-5 w-px bg-border" />
 
           {/* Alignment */}
           {(['left', 'center', 'right'] as const).map((align) => {
@@ -220,7 +220,7 @@ export function FloatingToolbar({
               {opt.ornament}
             </Button>
           ))}
-          <div className="mx-1 h-5 w-px bg-gray-200" />
+          <div className="mx-1 h-5 w-px bg-border" />
           {/* Thickness */}
           {([0.5, 1, 2, 3] as const).map((t) => (
             <Button
@@ -265,11 +265,11 @@ export function FloatingToolbar({
         </>
       )}
 
-      <div className="mx-1 h-5 w-px bg-gray-200" />
+      <div className="mx-1 h-5 w-px bg-border" />
       <Button
         size="sm"
         variant="ghost"
-        className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
+        className="h-7 w-7 p-0 text-destructive hover:text-destructive/80"
         onClick={() => removeField(activePart, field.id)}
       >
         <Trash2 size={14} />

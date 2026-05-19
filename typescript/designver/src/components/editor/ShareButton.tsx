@@ -31,7 +31,7 @@ export function ShareButton() {
             onClick={handleShare}
           >
             {copied ? (
-              <Check size={14} className="text-green-500" />
+              <Check size={14} className="text-primary" />
             ) : (
               <Link size={14} />
             )}

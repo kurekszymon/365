@@ -250,7 +250,7 @@ export const Canvas = () => {
   const editingField = fields.find((f) => f.id === editingId)
 
   return (
-    <div className="relative flex flex-1 overflow-hidden bg-gray-100">
+    <div className="relative flex flex-1 overflow-hidden bg-muted">
       {/* Main card area */}
       <div
         ref={containerRef}
@@ -324,7 +324,7 @@ export const Canvas = () => {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div className="flex overflow-hidden rounded-lg border border-border bg-card shadow-sm">
               {(['front', 'back'] as Side[]).map((side) => (
                 <Button
                   key={side}
@@ -425,14 +425,14 @@ export const Canvas = () => {
       <div
         data-testid="ghost-panel"
         className={cn(
-          'relative flex flex-shrink-0 border-l border-gray-200 bg-gray-50 transition-all duration-150',
+          'relative flex flex-shrink-0 border-l border-border bg-background transition-all duration-150',
           sidebarOpen ? 'w-44' : 'w-8',
         )}
       >
         <button
           data-testid="ghost-panel-toggle"
           onClick={() => setSidebarOpen((v) => !v)}
-          className="absolute -left-3 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm hover:text-gray-700"
+          className="absolute -left-3 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm hover:text-foreground"
           title={sidebarOpen ? 'Collapse parts panel' : 'Expand parts panel'}
         >
           {sidebarOpen ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}

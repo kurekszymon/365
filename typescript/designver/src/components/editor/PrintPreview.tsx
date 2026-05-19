@@ -32,10 +32,10 @@ export function PrintPreview({ onClose }: PrintPreviewProps) {
   }, [onClose])
 
   const content = (
-    <div className="print-preview fixed inset-0 z-[200] flex flex-col bg-gray-200 print:bg-white">
+    <div className="print-preview fixed inset-0 z-[200] flex flex-col bg-muted print:bg-white">
       {/* Toolbar — hidden in print */}
-      <div className="no-print flex items-center justify-between bg-white px-4 py-2 shadow-sm">
-        <span className="text-sm font-medium text-gray-700">
+      <div className="no-print flex items-center justify-between bg-card px-4 py-2 shadow-sm">
+        <span className="text-sm font-medium text-foreground">
           Print Preview — {guestList.length}{' '}
           {guestList.length === 1 ? 'guest' : 'guests'} × {PARTS.length} parts ×
           2 sides
@@ -98,7 +98,7 @@ export function PrintPreview({ onClose }: PrintPreviewProps) {
                   ))}
                   {/* Guest name label for identification in screen view */}
                   {guest && (
-                    <div className="no-print absolute bottom-1 right-2 text-[10px] text-gray-300">
+                    <div className="no-print absolute bottom-1 right-2 text-[10px] text-muted-foreground">
                       {guest} · {partId} {side}
                     </div>
                   )}

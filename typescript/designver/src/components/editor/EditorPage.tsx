@@ -59,14 +59,14 @@ export function EditorPage() {
 
   return (
     <TooltipProvider>
-      <div className="editor-page flex h-screen flex-col overflow-hidden bg-gray-50">
+      <div className="editor-page flex h-screen flex-col overflow-hidden bg-background">
         {/* Top bar */}
-        <header className="flex h-12 flex-shrink-0 items-center justify-between border-b border-gray-200 bg-white px-3 shadow-sm">
+        <header className="flex h-12 flex-shrink-0 items-center justify-between border-b border-border bg-card px-3 shadow-sm">
           {/* Left: logo + undo/redo + style controls */}
           <div className="flex items-center gap-2" data-testid="header-left">
             <a
               href="/"
-              className="mr-2 text-sm font-semibold tracking-tight text-gray-800"
+              className="mr-2 text-sm font-semibold tracking-tight text-foreground"
             >
               designver
             </a>
@@ -101,7 +101,7 @@ export function EditorPage() {
               <TooltipContent>Redo</TooltipContent>
             </Tooltip>
 
-            <div className="mx-2 h-5 w-px bg-gray-200" />
+            <div className="mx-2 h-5 w-px bg-border" />
 
             {/* Color scheme */}
             <Select value={design.colorScheme} onValueChange={setColorScheme}>

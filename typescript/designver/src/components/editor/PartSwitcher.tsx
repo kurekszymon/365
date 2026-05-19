@@ -23,20 +23,20 @@ export function PartSwitcher() {
         onValueChange={(v) => {
           if (v) setActivePart(v as PartId)
         }}
-        className="rounded-lg border border-gray-200 bg-gray-50 p-0.5"
+        className="rounded-lg border border-border bg-muted p-0.5"
       >
         {PARTS.map(({ id, label }) => (
           <ToggleGroupItem
             key={id}
             value={id}
-            className="h-8 rounded-md px-3 text-sm data-[state=on]:bg-white data-[state=on]:shadow-sm"
+            className="h-8 rounded-md px-3 text-sm data-[state=on]:bg-background data-[state=on]:shadow-sm"
           >
             {label}
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
 
-      <div className="flex overflow-hidden rounded-lg border border-gray-200">
+      <div className="flex overflow-hidden rounded-lg border border-border">
         {(['front', 'back'] as Side[]).map((side) => (
           <Button
             key={side}
