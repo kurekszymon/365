@@ -28,6 +28,8 @@
   "auth.signing_you_in": "Logujemy cię...",
   "auth.sign_in_with_google": "Zaloguj się przez Google",
   "auth.or": "lub",
+  "auth.sign_up_hint": "Wypełnij pola powyżej i kliknij \"Załóż konto\", aby się zarejestrować.",
+  "auth.email_sent": "Sprawdź skrzynkę — wysłaliśmy Ci link potwierdzający.",
 
   "members.title": "Członkowie",
   "members.role": "Rola",

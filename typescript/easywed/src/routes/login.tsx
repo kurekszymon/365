@@ -23,6 +23,7 @@ export const Route = createFileRoute("/login")({
 type Status =
   | { kind: "idle" }
   | { kind: "loading" }
+  | { kind: "success" }
   | { kind: "error"; message: string }
 
 function Login() {
@@ -72,7 +73,7 @@ function Login() {
       return handleError(error)
     }
 
-    setStatus({ kind: "idle" })
+    setStatus({ kind: "success" })
   }
 
   const signInWithGoogle = async () => {
@@ -130,6 +131,10 @@ function Login() {
           </div>
         </div>
 
+        <p className="text-xs text-muted-foreground">
+          {t("auth.sign_up_hint")}
+        </p>
+
         <div className="flex flex-col gap-2">
           <Button onClick={signIn} disabled={!canSubmit}>
             {t("auth.sign_in")}
@@ -139,6 +144,9 @@ function Login() {
           </Button>
         </div>
 
+        {status.kind === "success" && (
+          <p className="text-sm text-green-600">{t("auth.email_sent")}</p>
+        )}
         {status.kind === "error" && (
           <p className="text-sm text-destructive">{status.message}</p>
         )}
