@@ -1,9 +1,15 @@
 import { useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { CircleHelp, Plus, Trash2 } from 'lucide-react'
 import { useDesignStore } from '#/stores/design.store'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Toggle } from '#/components/ui/toggle'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
 import {
   Sheet,
   SheetContent,
@@ -78,21 +84,32 @@ export function GuestSidebar() {
             </Button>
           </div>
 
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm text-foreground">
             <Toggle
               size="sm"
               pressed={includeInHash}
               onPressedChange={setIncludeGuestsInHash}
-              className="h-5 w-9 rounded-full data-[state=on]:bg-primary"
+              className="relative h-5 w-9 rounded-full border border-border bg-muted p-0 transition-colors hover:bg-muted data-[state=on]:border-primary data-[state=on]:bg-primary after:absolute after:left-0.5 after:top-1/2 after:h-3.5 after:w-3.5 after:-translate-y-1/2 after:rounded-full after:bg-background after:transition-transform after:content-[''] data-[state=on]:after:translate-x-4"
               aria-label="Include guests in share link"
             />
-            Include in share link
-          </label>
-          {includeInHash && (
-            <p className="text-xs text-primary">
-              Share links will contain all guest names and may be longer.
-            </p>
-          )}
+            <span>Include in share link</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                    aria-label="More info about including guests in share link"
+                  >
+                    <CircleHelp size={14} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Share links will contain all guest names and may be longer.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
