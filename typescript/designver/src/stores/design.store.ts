@@ -26,17 +26,29 @@ const GUESTS_STORAGE_KEY = 'designver:guests'
 
 // --- History ---
 
-type HistoryState = { past: Design[]; future: Design[] }
+type HistoryEntry = { design: Design; activePart: PartId; activeSide: Side }
+type HistoryState = { past: HistoryEntry[]; future: HistoryEntry[] }
 
 function withHistory(
-  currentDesign: Design,
-  history: HistoryState,
+  s: {
+    design: Design
+    activePart: PartId
+    activeSide: Side
+    history: HistoryState
+  },
   next: Design,
 ): { design: Design; history: HistoryState } {
   return {
     design: next,
     history: {
-      past: [currentDesign, ...history.past].slice(0, HISTORY_LIMIT),
+      past: [
+        {
+          design: s.design,
+          activePart: s.activePart,
+          activeSide: s.activeSide,
+        },
+        ...s.history.past,
+      ].slice(0, HISTORY_LIMIT),
       future: [],
     },
   }
@@ -170,7 +182,7 @@ export const useDesignStore = create<StoreState>()(
       const preset = getPreset(presetId)
       if (!preset) return
       set((s) => ({
-        ...withHistory(s.design, s.history, preset.design),
+        ...withHistory(s, preset.design),
         selectedId: null,
         editingId: null,
       }))
@@ -179,7 +191,7 @@ export const useDesignStore = create<StoreState>()(
     addField: (partId, side, fieldWithoutId) => {
       const field = { ...fieldWithoutId, id: generateId() }
       set((s) => ({
-        ...withHistory(s.design, s.history, {
+        ...withHistory(s, {
           ...s.design,
           parts: {
             ...s.design.parts,
@@ -208,7 +220,7 @@ export const useDesignStore = create<StoreState>()(
           },
         }
         return {
-          ...withHistory(s.design, s.history, next),
+          ...withHistory(s, next),
           selectedId: s.selectedId === fieldId ? null : s.selectedId,
           editingId: s.editingId === fieldId ? null : s.editingId,
         }
@@ -242,7 +254,7 @@ export const useDesignStore = create<StoreState>()(
           },
         }
         return {
-          ...withHistory(s.design, s.history, next),
+          ...withHistory(s, next),
           selectedId: clone.id,
         }
       }),
@@ -263,7 +275,7 @@ export const useDesignStore = create<StoreState>()(
           },
         }
         return {
-          ...withHistory(s.design, s.history, next),
+          ...withHistory(s, next),
           activeSide: 'front' as const,
           selectedId: fieldId,
         }
@@ -287,7 +299,7 @@ export const useDesignStore = create<StoreState>()(
           },
         }
         return {
-          ...withHistory(s.design, s.history, next),
+          ...withHistory(s, next),
           activeSide: 'back' as const,
           selectedId: fieldId,
         }
@@ -309,8 +321,7 @@ export const useDesignStore = create<StoreState>()(
         if (state.design.parts[partId][side].some((f) => f.id === fieldId)) {
           set((s) => ({
             ...withHistory(
-              s.design,
-              s.history,
+              s,
               updateFieldInPart(s.design, partId, side, fieldId, (f) => ({
                 ...f,
                 ...safePatch,
@@ -337,8 +348,7 @@ export const useDesignStore = create<StoreState>()(
           )
           set((s) => ({
             ...withHistory(
-              s.design,
-              s.history,
+              s,
               updateFieldInPart(s.design, partId, side, fieldId, (f) => ({
                 ...f,
                 geom: newGeom,
@@ -362,8 +372,7 @@ export const useDesignStore = create<StoreState>()(
           const clamped = clampGeomToBounds(newGeom, dims)
           set((s) => ({
             ...withHistory(
-              s.design,
-              s.history,
+              s,
               updateFieldInPart(s.design, partId, side, fieldId, (f) => {
                 const updated = { ...f, geom: clamped }
                 if (isCorner && f.type === 'text' && f.format?.fontSize) {
@@ -388,7 +397,7 @@ export const useDesignStore = create<StoreState>()(
 
     setColorScheme: (scheme) =>
       set((s) => ({
-        ...withHistory(s.design, s.history, {
+        ...withHistory(s, {
           ...s.design,
           colorScheme: scheme,
         }),
@@ -396,7 +405,7 @@ export const useDesignStore = create<StoreState>()(
 
     setDefaultFont: (fontId) =>
       set((s) => ({
-        ...withHistory(s.design, s.history, {
+        ...withHistory(s, {
           ...s.design,
           defaultFontId: fontId,
         }),
@@ -419,7 +428,7 @@ export const useDesignStore = create<StoreState>()(
             ? { activePart: 'invitation' as const }
             : {}
         return {
-          ...withHistory(s.design, s.history, {
+          ...withHistory(s, {
             ...s.design,
             enabledParts: next,
           }),
@@ -432,8 +441,22 @@ export const useDesignStore = create<StoreState>()(
         if (s.history.past.length === 0) return s
         const [prev, ...rest] = s.history.past
         return {
-          design: prev,
-          history: { past: rest, future: [s.design, ...s.history.future] },
+          design: prev.design,
+          activePart: prev.activePart,
+          activeSide: prev.activeSide,
+          selectedId: null,
+          editingId: null,
+          history: {
+            past: rest,
+            future: [
+              {
+                design: s.design,
+                activePart: s.activePart,
+                activeSide: s.activeSide,
+              },
+              ...s.history.future,
+            ],
+          },
         }
       }),
 
@@ -442,8 +465,22 @@ export const useDesignStore = create<StoreState>()(
         if (s.history.future.length === 0) return s
         const [next, ...rest] = s.history.future
         return {
-          design: next,
-          history: { past: [s.design, ...s.history.past], future: rest },
+          design: next.design,
+          activePart: next.activePart,
+          activeSide: next.activeSide,
+          selectedId: null,
+          editingId: null,
+          history: {
+            past: [
+              {
+                design: s.design,
+                activePart: s.activePart,
+                activeSide: s.activeSide,
+              },
+              ...s.history.past,
+            ],
+            future: rest,
+          },
         }
       }),
 
