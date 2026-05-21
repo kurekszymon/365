@@ -31,6 +31,8 @@ async fn downloads_bazel() {
         "{}/{}/{}",
         info.lang, info.name, info.version
     ));
+    // Bazel's download URL has no `v` prefix — assert the exact URL to catch
+    // regressions if the URL pattern changes.
     assert_eq!(
         info.url,
         format!(
@@ -57,9 +59,12 @@ async fn installs_bazel() {
     blueprint.use_tool().unwrap();
 
     let bin_dir = eddy_bin_dir();
+    // Bazel has no `links` and no `custom_bin_path`, so the symlink is named
+    // after the tool ("bazel") and points to `dir/bazel`.
     let link_path = bin_dir.join("bazel");
     assert!(link_path.is_symlink());
     let target = std::fs::read_link(&link_path).unwrap();
+    // info.name is &'static str ("bazel"); dir.join(info.name) appends it as a path segment.
     assert_eq!(target, dir.join(info.name));
 }
 

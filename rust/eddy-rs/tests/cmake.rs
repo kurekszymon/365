@@ -18,6 +18,11 @@ fn checks_pkg_name() {
 
 #[test]
 fn picks_latest_url() {
+    // Version::Latest triggers the "releases/latest/download" URL path.
+    // We assert on a substring rather than the full URL because the pkg_name
+    // contains a "latest" placeholder that's only valid on macOS builds.
+    // Improvement: assert the full URL when not on macOS by constructing the
+    // expected pkg_name per-platform in the test.
     let info = cmake::build(Version::Latest);
     assert!(info.url.contains("releases/latest/download/"));
 }
@@ -58,8 +63,14 @@ async fn installs_cmake() {
     blueprint.use_tool().unwrap();
 
     let bin_dir = eddy_bin_dir();
+    // Iterating `&["cmake", "cpack", "ctest", "ccmake"]` gives `&&str` items.
+    // The loop variable `bin` is `&&str`; dereferencing once (or just using `*bin`
+    // in format) gives `&str`. Both work because &str: Display.
     for bin in &["cmake", "cpack", "ctest", "ccmake"] {
         let link_path = bin_dir.join(bin);
+        // Custom assert message: the second argument to assert! is a format string
+        // shown when the assertion fails. Unlike TS's `expect(x).toBe(y, message)`,
+        // Rust's assert! puts the message at the end.
         assert!(link_path.is_symlink(), "{bin} should be a symlink");
         let target = std::fs::read_link(&link_path).unwrap();
         assert_eq!(target, dir.join(&custom).join(bin));
@@ -75,6 +86,8 @@ async fn deletes_cmake_installation() {
         "{}/{}/{}",
         info.lang, info.name, info.version
     ));
+    // .to_string() allocates an owned String so `base` outlives `info.pkg_name`
+    // after info is moved into ToolBlueprint below.
     let base = base_pkg_name(&info.pkg_name).to_string();
 
     let mut blueprint = ToolBlueprint::new(info.clone());

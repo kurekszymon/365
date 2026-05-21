@@ -17,6 +17,7 @@ pub fn build(version: Version) -> ToolInfo {
         { format!("conan-{ver}-linux-x86_64.tgz") }
     };
 
+    // Conan's tag does NOT use a `v` prefix (unlike cmake/ninja).
     let url = match &version {
         Version::Latest => format!(
             "https://github.com/conan-io/conan/releases/latest/download/{pkg_name}"
@@ -32,7 +33,10 @@ pub fn build(version: Version) -> ToolInfo {
         version,
         pkg_name,
         url,
+        // The conan binary lives inside a `bin/` subdirectory of the extracted archive.
+        // PathBuf::from("bin") is just a path value — no filesystem access happens here.
         custom_bin_path: Some(PathBuf::from("bin")),
+        // links: None means the symlink uses the tool name ("conan") directly.
         links: None,
         steps: vec![InstallStep::Extract],
     }
