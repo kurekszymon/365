@@ -85,10 +85,43 @@ Read more:
 - [enums at runtime](https://www.typescriptlang.org/docs/handbook/enums.html#enums-at-runtime)
 - [reverse mapping](https://www.typescriptlang.org/docs/handbook/enums.html#reverse-mappings)
 
+### const enum
+
+or something that on paper seems like an obvious pick, but it's really not..?
+Consider following example (compiled with `tsc`)
+
+```tsx
+const enum Direction {
+  Up = "UP",
+  Down = "DOWN",
+  Left = "LEFT",
+  Right = "RIGHT",
+}
+
+const direction = Direction.Down;
+
+// would be transformed to
+
+const direction = "DOWN"; /* ConstDirection.Down */
+```
+
+[TS Playground Link](https://www.typescriptlang.org/play/?#code/MYewdgzgLgBApmArgWxgYXNAIgSwE5zBQ7gwDeAUDDAKoAOMAvDAEQ0AKLANFTFiAHcwTVlgDyAdQBy3XgBk4AM1jMWcgKIAxACqzqAJRwBzABYrW+gJIBxABK6eAXwoVQkWABN8hYqWYZ3XAIiEjAAOn4hIA)
+
+Interestingly **const enum pitfalls** section in TS docs is longer than **const enum** section itself, highly recommend digging into that, but in short:
+
+`const enum` **is not** the best pick when you are **not** using `tsc` or you have `isolatedModules: true` in your _tsconfig.json_. That's because modern transpilers operate on a single file at a time - since `const enum` is inlined to JS value - using it with `isolatedModules` will result in an error of referencing ambient enum.
+
+As mentioned in previous section - [you'll see](#bench) that using `esbuild` allows you to inline enum values basically replicating `const enum` desired behavior without the pitfalls.
+
+Read more:
+
+- [const enum pitfalls](https://www.typescriptlang.org/docs/handbook/enums.html#const-enum-pitfalls)
+- [isolatedModules](https://www.typescriptlang.org/tsconfig/isolatedModules.html)
+
 ### string literal
 
 ### object as const
 
-### const enum
-
 ## bench
+
+referenced twice already, need to really show that esbuild inlines enum properly :D
