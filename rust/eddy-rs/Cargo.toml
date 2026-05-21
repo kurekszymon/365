@@ -1,0 +1,28 @@
+[package]
+name = "eddy-rs"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "eddy"
+path = "src/main.rs"
+
+[lib]
+name = "eddy_rs"
+path = "src/lib.rs"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+dirs = "5"
+futures-util = "0.3"
+indicatif = "0.17"
+regex = "1"
+reqwest = { version = "0.12", features = ["rustls-tls", "json", "stream"], default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+
+[dev-dependencies]
+serial_test = "3"
+tempfile = "3"
