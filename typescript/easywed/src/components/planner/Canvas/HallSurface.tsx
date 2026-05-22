@@ -25,7 +25,7 @@ import type { MeasurementPoint } from "@/stores/measures.store"
 import { useViewStore } from "@/stores/view.store"
 import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
 import { useMeasuresStore } from "@/stores/measures.store"
-import { useGlobalStore } from "@/stores/global.store"
+import { Route } from "@/routes/wedding.$id/planner"
 
 export interface HallSurfaceMethods {
   handleMeasureDown: (xM: number, yM: number, shiftKey: boolean) => void
@@ -187,7 +187,7 @@ export const HallSurface = ({
   // Measure tool state
   const isMeasuring = useViewStore((state) => state.isMeasuring)
   const measureMode = useViewStore((state) => state.measureMode)
-  const weddingId = useGlobalStore((state) => state.subjectId)
+  const weddingId = Route.useParams().id
 
   const {
     addMeasurement,

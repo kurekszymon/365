@@ -3,7 +3,6 @@ import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { WeddingName } from "./WeddingName.header"
 import type { PropsWithChildren } from "react"
-import { useGlobalStore } from "@/stores/global.store"
 
 export const Header = (props: PropsWithChildren) => {
   return (
@@ -26,25 +25,9 @@ const Title = (props: PropsWithChildren<{ weddingId?: string }>) => {
   )
 }
 
-// Routes back to the wedding hub when planning a wedding, or to the venue
-// dashboard when editing a venue hall template. Hidden for any other state.
 const BackButton = (props: { weddingId?: string }) => {
   const { weddingId } = props
   const { t } = useTranslation()
-  const subjectKind = useGlobalStore((s) => s.subjectKind)
-
-  if (subjectKind === "venue_hall") {
-    return (
-      <Link
-        to="/venue"
-        title={t("planner.back")}
-        aria-label={t("planner.back")}
-        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeftIcon className="h-4 w-4" />
-      </Link>
-    )
-  }
 
   if (!weddingId) return null
 
