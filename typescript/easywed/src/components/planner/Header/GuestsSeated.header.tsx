@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next"
 import { usePlannerStore } from "@/stores/planner.store"
-import { CoupleOnly } from "@/components/CoupleOnly"
 
 export const GuestsSeated = () => {
   const { t } = useTranslation()
@@ -11,14 +10,12 @@ export const GuestsSeated = () => {
   const assignedGuestsCount = guests.filter((g) => g.tableId).length
 
   return (
-    <CoupleOnly>
-      <span className="hidden text-xs text-muted-foreground tabular-nums sm:block">
-        {t("tables.count", { count: tables.length })} ·{" "}
-        {t("guests.seated_ratio", {
-          count: guests.length,
-          seated_count: assignedGuestsCount,
-        })}
-      </span>
-    </CoupleOnly>
+    <span className="hidden text-xs text-muted-foreground tabular-nums sm:block">
+      {t("tables.count", { count: tables.length })} ·{" "}
+      {t("guests.seated_ratio", {
+        count: guests.length,
+        seated_count: assignedGuestsCount,
+      })}
+    </span>
   )
 }

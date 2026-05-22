@@ -38,7 +38,6 @@ import { useGlobalStore } from "@/stores/global.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { useOpenHall } from "@/hooks/useOpenHall"
-import { CoupleOnly } from "@/components/CoupleOnly"
 
 export const Planner = () => {
   const { t } = useTranslation()
@@ -169,46 +168,39 @@ export const Planner = () => {
                 </Tooltip>
               </DropdownMenuContent>
             </DropdownMenu>
-            <CoupleOnly>
-              <ButtonGroup>
-                <Button variant="outline" onClick={() => panel.openGuests()}>
-                  <UsersIcon />
-                  <span className="hidden md:inline">{t("guests")}</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => openDialog("Guest.Add")}
-                >
-                  <PlusIcon />
-                </Button>
-              </ButtonGroup>
-            </CoupleOnly>
-            <CoupleOnly>
-              <ButtonGroup>
-                {role === "owner" && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        onClick={() => openDialog("Wedding.Members")}
-                      >
-                        <UserPlusIcon />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{t("members.title")}</TooltipContent>
-                  </Tooltip>
-                )}
+            <ButtonGroup>
+              <Button variant="outline" onClick={() => panel.openGuests()}>
+                <UsersIcon />
+                <span className="hidden md:inline">{t("guests")}</span>
+              </Button>
+              <Button variant="outline" onClick={() => openDialog("Guest.Add")}>
+                <PlusIcon />
+              </Button>
+            </ButtonGroup>
+            <ButtonGroup>
+              {role === "owner" && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" onClick={handleOpenInvitations}>
-                      <MailIcon />
+                    <Button
+                      variant="outline"
+                      onClick={() => openDialog("Wedding.Members")}
+                    >
+                      <UserPlusIcon />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>{t("invitations")}</TooltipContent>
+                  <TooltipContent>{t("members.title")}</TooltipContent>
                 </Tooltip>
-                <ExportHeader />
-              </ButtonGroup>
-            </CoupleOnly>
+              )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" onClick={handleOpenInvitations}>
+                    <MailIcon />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t("invitations")}</TooltipContent>
+              </Tooltip>
+              <ExportHeader />
+            </ButtonGroup>
           </div>
         </Header>
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
