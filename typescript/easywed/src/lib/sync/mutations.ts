@@ -8,63 +8,32 @@ import type {
   TableShape,
 } from "@/stores/planner.store"
 import type { Reminder } from "@/stores/reminders.store"
-import type { SubjectKind } from "@/stores/global.store"
-import type { Hall, Venue, VenueAddress } from "@/lib/venue/types"
 import { supabase } from "@/lib/supabase"
 import { useGlobalStore } from "@/stores/global.store"
 
-// Resolve the current planner subject. The planner UI is reused for editing
-// either a wedding (writes to public.tables/fixtures/halls) or a venue hall
-// template (writes to public.venue_hall_tables/fixtures and venue_halls).
-// Mutations that are wedding-only (guests, reminders, wedding metadata)
-// short-circuit when subjectKind is not 'wedding'.
-const getSubject = (): { kind: SubjectKind; id: string } | null => {
-  const { subjectKind, subjectId, weddingId } = useGlobalStore.getState()
-  const id = subjectKind === "wedding" ? (subjectId ?? weddingId) : subjectId
-  if (!id) {
-    console.warn("[sync] no subject loaded; skipping mutation")
-    return null
-  }
-  return { kind: subjectKind, id }
-}
-
 const getWeddingId = (): string | null => {
-  const { subjectKind, weddingId } = useGlobalStore.getState()
-  if (subjectKind !== "wedding" || !weddingId) {
+  const id = useGlobalStore.getState().weddingId
+  if (!id) {
+    console.warn("[sync] no wedding loaded; skipping mutation")
     return null
   }
-  return weddingId
+  return id
 }
 
 const log = (label: string, error: unknown) =>
   console.error(`[sync] ${label}`, error)
 
-// Persist the planner subject's name/date. In wedding mode this updates
-// public.weddings; in venue_hall mode only the name is meaningful (halls
-// have no date) and it goes to public.venue_halls.
 export const updateWedding = async (updates: {
   name?: string
   date?: string | null
 }) => {
-  const subject = getSubject()
-  if (!subject) return
-
-  if (subject.kind === "wedding") {
-    const { error } = await supabase
-      .from("weddings")
-      .update(updates)
-      .eq("id", subject.id)
-    if (error) log("updateWedding", error)
-    return
-  }
-
-  if (updates.name !== undefined) {
-    const { error } = await supabase
-      .from("venue_halls")
-      .update({ name: updates.name })
-      .eq("id", subject.id)
-    if (error) log("updateWedding(venue)", error)
-  }
+  const weddingId = useGlobalStore.getState().weddingId
+  if (!weddingId) return
+  const { error } = await supabase
+    .from("weddings")
+    .update(updates)
+    .eq("id", weddingId)
+  if (error) log("updateWedding", error)
 }
 
 export const upsertHall = async (
@@ -72,35 +41,28 @@ export const upsertHall = async (
   width: number,
   height: number
 ) => {
-  const subject = getSubject()
-  if (!subject) return
+  const weddingId = getWeddingId()
+  if (!weddingId) return
 
-  if (subject.kind === "wedding") {
-    const { error } = await supabase
-      .from("halls")
-      .upsert(
-        { wedding_id: subject.id, preset, width, height },
-        { onConflict: "wedding_id" }
-      )
-    if (error) log("upsertHall", error)
-    return
-  }
-
-  // venue_hall: the row already exists (venue dashboard created it before
-  // navigating to the editor); just update preset + dimensions in place.
-  const { error } = await supabase
-    .from("venue_halls")
-    .update({ preset, width, height })
-    .eq("id", subject.id)
-  if (error) log("upsertHall(venue)", error)
+  const { error } = await supabase.from("halls").upsert(
+    {
+      wedding_id: weddingId,
+      preset,
+      width,
+      height,
+    },
+    { onConflict: "wedding_id" }
+  )
+  if (error) log("upsertHall", error)
 }
 
 export const insertTable = async (table: Table): Promise<boolean> => {
-  const subject = getSubject()
-  if (!subject) return false
+  const weddingId = getWeddingId()
+  if (!weddingId) return false
 
-  const row = {
+  const { error } = await supabase.from("tables").insert({
     id: table.id,
+    wedding_id: weddingId,
     name: table.name,
     shape: table.shape,
     capacity: table.capacity,
@@ -109,13 +71,7 @@ export const insertTable = async (table: Table): Promise<boolean> => {
     rotation: table.rotation,
     pos_x: table.position.x,
     pos_y: table.position.y,
-  }
-  const { error } =
-    subject.kind === "wedding"
-      ? await supabase.from("tables").insert({ ...row, wedding_id: subject.id })
-      : await supabase
-          .from("venue_hall_tables")
-          .insert({ ...row, hall_id: subject.id })
+  })
   if (error) {
     log("insertTable", error)
     return false
@@ -124,11 +80,12 @@ export const insertTable = async (table: Table): Promise<boolean> => {
 }
 
 export const insertTables = async (tables: Array<Table>): Promise<boolean> => {
-  const subject = getSubject()
-  if (!subject || tables.length === 0) return false
+  const weddingId = getWeddingId()
+  if (!weddingId || tables.length === 0) return false
 
   const rows = tables.map((table) => ({
     id: table.id,
+    wedding_id: weddingId,
     name: table.name,
     shape: table.shape,
     capacity: table.capacity,
@@ -139,14 +96,7 @@ export const insertTables = async (tables: Array<Table>): Promise<boolean> => {
     pos_y: table.position.y,
   }))
 
-  const { error } =
-    subject.kind === "wedding"
-      ? await supabase
-          .from("tables")
-          .insert(rows.map((r) => ({ ...r, wedding_id: subject.id })))
-      : await supabase
-          .from("venue_hall_tables")
-          .insert(rows.map((r) => ({ ...r, hall_id: subject.id })))
+  const { error } = await supabase.from("tables").insert(rows)
   if (error) {
     log("insertTables", error)
     return false
@@ -165,9 +115,7 @@ export const updateTableRow = async (
     rotation?: TableRotation
   }
 ): Promise<boolean> => {
-  const { subjectKind } = useGlobalStore.getState()
-  const tbl = subjectKind === "wedding" ? "tables" : "venue_hall_tables"
-  const { error } = await supabase.from(tbl).update(fields).eq("id", id)
+  const { error } = await supabase.from("tables").update(fields).eq("id", id)
   if (error) {
     log("updateTableRow", error)
     return false
@@ -176,28 +124,22 @@ export const updateTableRow = async (
 }
 
 export const updateTablePos = async (id: string, x: number, y: number) => {
-  const { subjectKind } = useGlobalStore.getState()
-  const tbl = subjectKind === "wedding" ? "tables" : "venue_hall_tables"
   const { error } = await supabase
-    .from(tbl)
+    .from("tables")
     .update({ pos_x: x, pos_y: y })
     .eq("id", id)
   if (error) log("updateTablePos", error)
 }
 
 export const softDeleteTable = async (id: string) => {
-  const { subjectKind } = useGlobalStore.getState()
-  if (subjectKind === "wedding") {
-    const unassign = await supabase
-      .from("guests")
-      .update({ table_id: null })
-      .eq("table_id", id)
-    if (unassign.error) log("softDeleteTable unassign", unassign.error)
-  }
+  const unassign = await supabase
+    .from("guests")
+    .update({ table_id: null })
+    .eq("table_id", id)
+  if (unassign.error) log("softDeleteTable unassign", unassign.error)
 
-  const tbl = subjectKind === "wedding" ? "tables" : "venue_hall_tables"
   const del = await supabase
-    .from(tbl)
+    .from("tables")
     .update({ deleted_at: new Date().toISOString() })
     .eq("id", id)
   if (del.error) log("softDeleteTable", del.error)
@@ -218,20 +160,14 @@ export const insertGuest = async (guest: Guest) => {
   if (error) log("insertGuest", error)
 }
 
-// Scoping every guest/reminder UPDATE by wedding_id is defence-in-depth on
-// top of RLS: if subjectId ever drifts client-side, the query just affects
-// zero rows instead of someone else's wedding.
 export const updateGuestTable = async (
   guestId: string,
   tableId: string | null
 ) => {
-  const weddingId = getWeddingId()
-  if (!weddingId) return
   const { error } = await supabase
     .from("guests")
     .update({ table_id: tableId })
     .eq("id", guestId)
-    .eq("wedding_id", weddingId)
   if (error) log("updateGuestTable", error)
 }
 
@@ -239,14 +175,10 @@ export const reassignTableGuests = async (
   tableId: string,
   guestIds: Array<string>
 ) => {
-  const weddingId = getWeddingId()
-  if (!weddingId) return
-
   const unassign = await supabase
     .from("guests")
     .update({ table_id: null })
     .eq("table_id", tableId)
-    .eq("wedding_id", weddingId)
   if (unassign.error) log("reassignTableGuests unassign", unassign.error)
 
   if (guestIds.length === 0) return
@@ -255,7 +187,6 @@ export const reassignTableGuests = async (
     .from("guests")
     .update({ table_id: tableId })
     .in("id", guestIds)
-    .eq("wedding_id", weddingId)
   if (assign.error) log("reassignTableGuests assign", assign.error)
 }
 
@@ -277,22 +208,20 @@ export const updateReminderStatus = async (
   uuid: string,
   status: Reminder["status"]
 ) => {
-  const weddingId = getWeddingId()
-  if (!weddingId) return
   const { error } = await supabase
     .from("reminders")
     .update({ status })
     .eq("id", uuid)
-    .eq("wedding_id", weddingId)
   if (error) log("updateReminderStatus", error)
 }
 
 export const insertFixture = async (fixture: Fixture): Promise<boolean> => {
-  const subject = getSubject()
-  if (!subject) return false
+  const weddingId = getWeddingId()
+  if (!weddingId) return false
 
-  const row = {
+  const { error } = await supabase.from("fixtures").insert({
     id: fixture.id,
+    wedding_id: weddingId,
     name: fixture.name,
     shape: fixture.shape,
     width: fixture.size.width,
@@ -300,15 +229,7 @@ export const insertFixture = async (fixture: Fixture): Promise<boolean> => {
     rotation: fixture.rotation,
     pos_x: fixture.position.x,
     pos_y: fixture.position.y,
-  }
-  const { error } =
-    subject.kind === "wedding"
-      ? await supabase
-          .from("fixtures")
-          .insert({ ...row, wedding_id: subject.id })
-      : await supabase
-          .from("venue_hall_fixtures")
-          .insert({ ...row, hall_id: subject.id })
+  })
   if (error) {
     log("insertFixture", error)
     return false
@@ -326,9 +247,7 @@ export const updateFixtureRow = async (
     rotation?: TableRotation
   }
 ): Promise<boolean> => {
-  const { subjectKind } = useGlobalStore.getState()
-  const tbl = subjectKind === "wedding" ? "fixtures" : "venue_hall_fixtures"
-  const { error } = await supabase.from(tbl).update(fields).eq("id", id)
+  const { error } = await supabase.from("fixtures").update(fields).eq("id", id)
   if (error) {
     log("updateFixtureRow", error)
     return false
@@ -337,125 +256,17 @@ export const updateFixtureRow = async (
 }
 
 export const updateFixturePos = async (id: string, x: number, y: number) => {
-  const { subjectKind } = useGlobalStore.getState()
-  const tbl = subjectKind === "wedding" ? "fixtures" : "venue_hall_fixtures"
   const { error } = await supabase
-    .from(tbl)
+    .from("fixtures")
     .update({ pos_x: x, pos_y: y })
     .eq("id", id)
   if (error) log("updateFixturePos", error)
 }
 
 export const softDeleteFixture = async (id: string) => {
-  const { subjectKind } = useGlobalStore.getState()
-  const tbl = subjectKind === "wedding" ? "fixtures" : "venue_hall_fixtures"
   const { error } = await supabase
-    .from(tbl)
+    .from("fixtures")
     .update({ deleted_at: new Date().toISOString() })
     .eq("id", id)
   if (error) log("softDeleteFixture", error)
-}
-
-export const createVenue = async (
-  ownerId: string,
-  name: string,
-  address: VenueAddress | null
-): Promise<Venue | null> => {
-  const { data, error } = await supabase
-    .from("venues")
-    .insert({
-      owner_id: ownerId,
-      name,
-      address_text: address?.address_text ?? null,
-      google_place_id: address?.google_place_id ?? null,
-      lat: address?.lat ?? null,
-      lng: address?.lng ?? null,
-    })
-    .select("id, name, address_text, google_place_id, lat, lng")
-    .single()
-  if (error) {
-    log("createVenue", error)
-    return null
-  }
-  return data
-}
-
-export const updateVenueAddress = async (
-  venueId: string,
-  address: VenueAddress
-): Promise<boolean> => {
-  const { error } = await supabase
-    .from("venues")
-    .update(address)
-    .eq("id", venueId)
-  if (error) {
-    log("updateVenueAddress", error)
-    return false
-  }
-  return true
-}
-
-export const createHall = async (
-  venueId: string,
-  name: string,
-  preset: HallPreset,
-  width: number,
-  height: number
-): Promise<Hall | null> => {
-  const { data, error } = await supabase
-    .from("venue_halls")
-    .insert({ venue_id: venueId, name, preset, width, height, is_public: true })
-    .select("id, name, preset, width, height, is_public")
-    .single()
-  if (error) {
-    log("createHall", error)
-    return null
-  }
-  return {
-    id: data.id,
-    name: data.name,
-    preset: data.preset,
-    width: Number(data.width),
-    height: Number(data.height),
-    is_public: data.is_public,
-  }
-}
-
-export const renameHall = async (
-  id: string,
-  name: string
-): Promise<boolean> => {
-  const { error } = await supabase
-    .from("venue_halls")
-    .update({ name })
-    .eq("id", id)
-  if (error) {
-    log("renameHall", error)
-    return false
-  }
-  return true
-}
-
-export const deleteHall = async (id: string): Promise<boolean> => {
-  const { error } = await supabase.from("venue_halls").delete().eq("id", id)
-  if (error) {
-    log("deleteHall", error)
-    return false
-  }
-  return true
-}
-
-export const toggleHallPublic = async (
-  id: string,
-  isPublic: boolean
-): Promise<boolean> => {
-  const { error } = await supabase
-    .from("venue_halls")
-    .update({ is_public: isPublic })
-    .eq("id", id)
-  if (error) {
-    log("toggleHallPublic", error)
-    return false
-  }
-  return true
 }

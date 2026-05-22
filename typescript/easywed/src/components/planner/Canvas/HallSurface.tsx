@@ -25,7 +25,7 @@ import type { MeasurementPoint } from "@/stores/measures.store"
 import { useViewStore } from "@/stores/view.store"
 import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
 import { useMeasuresStore } from "@/stores/measures.store"
-import { useGlobalStore } from "@/stores/global.store"
+import { Route } from "@/routes/wedding.$id/planner"
 
 export interface HallSurfaceMethods {
   handleMeasureDown: (xM: number, yM: number, shiftKey: boolean) => void
@@ -187,7 +187,7 @@ export const HallSurface = ({
   // Measure tool state
   const isMeasuring = useViewStore((state) => state.isMeasuring)
   const measureMode = useViewStore((state) => state.measureMode)
-  const weddingId = useGlobalStore((state) => state.subjectId)
+  const weddingId = Route.useParams().id
 
   const {
     addMeasurement,
@@ -573,15 +573,12 @@ export const HallSurface = ({
         hallHeightPx={height}
         pendingPoint={isMeasuring ? pendingPoint : null}
         cursorPos={isMeasuring ? cursorPos : null}
-        onDelete={(id) => {
-          if (weddingId) deleteMeasurement(weddingId, id)
-        }}
+        onDelete={(id) => deleteMeasurement(weddingId, id)}
         activeDrag={activeDrag}
         resolvePoint={resolvePoint}
-        onEndpointUpdate={(measurementId, pointKey, point) => {
-          if (weddingId)
-            updateMeasurementPoint(weddingId, measurementId, pointKey, point)
-        }}
+        onEndpointUpdate={(measurementId, pointKey, point) =>
+          updateMeasurementPoint(weddingId, measurementId, pointKey, point)
+        }
       />
     </HallBackground>
   )

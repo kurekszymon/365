@@ -1,7 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
-import { supabase } from "@/lib/supabase"
-import { Button } from "@/components/ui/button"
 
 export const Route = createFileRoute("/wedding/$id/")({
   component: WeddingHub,
@@ -51,14 +49,6 @@ function WeddingHub() {
               {t("wedding.hub.reminders_desc")}
             </p>
           </Link> */}
-
-          <Button
-            variant="ghost"
-            className="w-full"
-            onClick={() => supabase.auth.signOut()}
-          >
-            {t("auth.sign_out")}
-          </Button>
         </div>
       </div>
     </div>

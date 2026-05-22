@@ -1,43 +1,5 @@
 # EasyWed — Development Log
 
-### 19.05
-
-- add login hints
-- configure custom SMTP
-- configure email template
-
-### 14.05
-
-- created `easywed/v1` branch to contain barebones version if needed, as I noticed deployment drifted from what I wanted to have there with no migrations applied to remote. Keep v1 before talking to customers, continue development on local branches. (keep state on f7dc58e76c9f5b057d2fe8c3072e377b30f8701d)
-
-### 11.05
-
-- split venue into smaller, more maintainable chunks. [ref](https://github.com/kurekszymon/365/pull/14)
-- use https://github.com/visgl/react-google-maps instead of @google/js-maps-loader (written from memory, name might differ)
-- show proper address on venue address save
-
-### 10.05
-
-- draft address picker google places api
-- group halls by venue
-
-### 09.05
-
-- group halls by venue
-- remove redundant cta for couples
-- hide unnecessary controls for venue
-
-### 08.05
-
-- hide the preset selection for venues (not supported yet)
-- tested and verified feat/venue-role branch
-- ~~todo: add start from scratch for couples~~
-- todo: add search for halls, group venues by halls, add calendar?
-- todo: improve sign out for couples in landing page (and add some profile tab with sign out / edit profile etc)
-- todo: add component for sign out button
-  ~~- todo: hide buttons when role = venue~~
-- todo: let user switch profile?
-
 ### 07.05
 
 - add undo/redo buttons in invitations creator
