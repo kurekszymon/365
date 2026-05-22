@@ -10,5 +10,9 @@
     "types": ["bun-types"]
   },
   "include": ["src/**/*", "scripts/**/*"],
-  "exclude": ["src/patterns/const-enum.ts"]
+  "exclude": [
+    "src/patterns/const-enum.ts",
+    "src/bundle-sizes/const-enum/**",
+    "src/tree-shake/const-enum/**"
+  ]
 }

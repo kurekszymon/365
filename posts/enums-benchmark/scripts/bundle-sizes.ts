@@ -57,7 +57,13 @@ console.log("definition-only emit (a file declaring the pattern, no usage)");
 console.log("─".repeat(72));
 
 const defRows: Row[] = [];
-for (const pattern of ["enum", "num-enum", "as-const", "string-union"]) {
+for (const pattern of [
+  "enum",
+  "num-enum",
+  "as-const",
+  "string-union",
+  "const-enum",
+]) {
   const src = readFileSync(
     resolve(root, "src/bundle-sizes", pattern, "lib.ts"),
     "utf8",
@@ -86,7 +92,13 @@ const buildCfg = {
 } satisfies BuildOptions;
 
 const useRows: Row[] = [];
-for (const pattern of ["enum", "num-enum", "as-const", "string-union"]) {
+for (const pattern of [
+  "enum",
+  "num-enum",
+  "as-const",
+  "string-union",
+  "const-enum",
+]) {
   const entryPoint = resolve(root, "src/bundle-sizes", pattern, "consumer.ts");
   const built = await build({
     ...buildCfg,

@@ -125,3 +125,9 @@ Read more:
 ## bench
 
 referenced twice already, need to really show that esbuild inlines enum properly :D
+
+Read more:
+
+- https://esbuild.github.io/api/#tree-shaking
+- https://esbuild.github.io/api/#ignore-annotations
+- https://esbuild.github.io/api/#pure

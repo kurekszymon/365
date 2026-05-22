@@ -40,7 +40,13 @@ const tsconfig = resolve(root, "tsconfig.json");
 rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });
 
-const patterns = ["enum", "num-enum", "as-const", "string-union"] as const;
+const patterns = [
+  "enum",
+  "num-enum",
+  "as-const",
+  "string-union",
+  "const-enum",
+] as const;
 
 // Shared esbuild options. `target` is inherited from tsconfig; the rest are
 // esbuild-specific bundler flags that don't exist in tsconfig.
