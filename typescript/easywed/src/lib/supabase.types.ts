@@ -499,37 +499,25 @@ export type Database = {
       }
       venues: {
         Row: {
-          address_text: string | null
           created_at: string
           description: string | null
-          google_place_id: string | null
           id: string
-          lat: number | null
-          lng: number | null
           name: string
           owner_id: string
           updated_at: string
         }
         Insert: {
-          address_text?: string | null
           created_at?: string
           description?: string | null
-          google_place_id?: string | null
           id?: string
-          lat?: number | null
-          lng?: number | null
           name?: string
           owner_id: string
           updated_at?: string
         }
         Update: {
-          address_text?: string | null
           created_at?: string
           description?: string | null
-          google_place_id?: string | null
           id?: string
-          lat?: number | null
-          lng?: number | null
           name?: string
           owner_id?: string
           updated_at?: string

@@ -6,10 +6,6 @@ create table public.venues (
   owner_id uuid not null references auth.users(id) on delete cascade,
   name text not null default '',
   description text,
-  address_text text,
-  google_place_id text,
-  lat double precision,
-  lng double precision,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

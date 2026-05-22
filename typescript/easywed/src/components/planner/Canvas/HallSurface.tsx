@@ -573,15 +573,12 @@ export const HallSurface = ({
         hallHeightPx={height}
         pendingPoint={isMeasuring ? pendingPoint : null}
         cursorPos={isMeasuring ? cursorPos : null}
-        onDelete={(id) => {
-          if (weddingId) deleteMeasurement(weddingId, id)
-        }}
+        onDelete={(id) => deleteMeasurement(weddingId, id)}
         activeDrag={activeDrag}
         resolvePoint={resolvePoint}
-        onEndpointUpdate={(measurementId, pointKey, point) => {
-          if (weddingId)
-            updateMeasurementPoint(weddingId, measurementId, pointKey, point)
-        }}
+        onEndpointUpdate={(measurementId, pointKey, point) =>
+          updateMeasurementPoint(weddingId, measurementId, pointKey, point)
+        }
       />
     </HallBackground>
   )
