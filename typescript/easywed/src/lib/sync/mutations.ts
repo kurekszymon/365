@@ -9,7 +9,6 @@ import type {
 } from "@/stores/planner.store"
 import type { Reminder } from "@/stores/reminders.store"
 import type { SubjectKind } from "@/stores/global.store"
-import type { Hall, Venue, VenueAddress } from "@/lib/venue/types"
 import { supabase } from "@/lib/supabase"
 import { useGlobalStore } from "@/stores/global.store"
 
@@ -354,108 +353,4 @@ export const softDeleteFixture = async (id: string) => {
     .update({ deleted_at: new Date().toISOString() })
     .eq("id", id)
   if (error) log("softDeleteFixture", error)
-}
-
-export const createVenue = async (
-  ownerId: string,
-  name: string,
-  address: VenueAddress | null
-): Promise<Venue | null> => {
-  const { data, error } = await supabase
-    .from("venues")
-    .insert({
-      owner_id: ownerId,
-      name,
-      address_text: address?.address_text ?? null,
-      google_place_id: address?.google_place_id ?? null,
-      lat: address?.lat ?? null,
-      lng: address?.lng ?? null,
-    })
-    .select("id, name, address_text, google_place_id, lat, lng")
-    .single()
-  if (error) {
-    log("createVenue", error)
-    return null
-  }
-  return data
-}
-
-export const updateVenueAddress = async (
-  venueId: string,
-  address: VenueAddress
-): Promise<boolean> => {
-  const { error } = await supabase
-    .from("venues")
-    .update(address)
-    .eq("id", venueId)
-  if (error) {
-    log("updateVenueAddress", error)
-    return false
-  }
-  return true
-}
-
-export const createHall = async (
-  venueId: string,
-  name: string,
-  preset: HallPreset,
-  width: number,
-  height: number
-): Promise<Hall | null> => {
-  const { data, error } = await supabase
-    .from("venue_halls")
-    .insert({ venue_id: venueId, name, preset, width, height, is_public: true })
-    .select("id, name, preset, width, height, is_public")
-    .single()
-  if (error) {
-    log("createHall", error)
-    return null
-  }
-  return {
-    id: data.id,
-    name: data.name,
-    preset: data.preset,
-    width: Number(data.width),
-    height: Number(data.height),
-    is_public: data.is_public,
-  }
-}
-
-export const renameHall = async (
-  id: string,
-  name: string
-): Promise<boolean> => {
-  const { error } = await supabase
-    .from("venue_halls")
-    .update({ name })
-    .eq("id", id)
-  if (error) {
-    log("renameHall", error)
-    return false
-  }
-  return true
-}
-
-export const deleteHall = async (id: string): Promise<boolean> => {
-  const { error } = await supabase.from("venue_halls").delete().eq("id", id)
-  if (error) {
-    log("deleteHall", error)
-    return false
-  }
-  return true
-}
-
-export const toggleHallPublic = async (
-  id: string,
-  isPublic: boolean
-): Promise<boolean> => {
-  const { error } = await supabase
-    .from("venue_halls")
-    .update({ is_public: isPublic })
-    .eq("id", id)
-  if (error) {
-    log("toggleHallPublic", error)
-    return false
-  }
-  return true
 }
