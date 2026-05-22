@@ -1,44 +1,33 @@
 // Tree-shaking: if a file imports one member of a pattern, what's left after
-// minification + DCE?
+// minification + DCE? Compares esbuild vs rolldown.
 //
 // Fixtures live in src/tree-shake/<pattern>/{lib,consumer}.ts. The consumer
-// imports ONE value from the lib. We bundle the consumer with esbuild (bundle
-// + minify) and measure the resulting size.
+// imports ONE value from the lib.
 //
-// Three files per pattern land in enums-benchmark/out/tree-shake/:
-//   - <name>-transformed.js  esbuild's TS-frontend output for lib.ts BEFORE
-//                            tree-shaking. This is where the /* @__PURE__ */
-//                            marker on the enum IIFE is visible — the bundled
-//                            file has it stripped because the wrapper itself
-//                            was DCE'd. The transformed file is the proof.
-//   - <name>-bundled.js      consumer bundled, tree-shaken, not minified.
-//   - <name>-minified.js     same, plus minification.
+// Artifacts per bundler:
+//   out/<bundler>/tree-shake/<name>-bundled.js     bundled, not minified
+//   out/<bundler>/tree-shake/<name>-minified.js    bundled + minified
 //
-// Expected behaviour:
-//   - string literal union: no runtime definition from lib.ts (type-only).
-//     The bundled output still includes consumer runtime code.
-//   - as const object: plain object literal, no /* @__PURE__ */ marker on the
-//     object definition, so esbuild preserves the whole literal in
-//     out/tree-shake/as-const-bundled.js. Per-property DCE on plain objects
-//     is off the table.
-//   - regular enum: esbuild's TS frontend rewrites the enum to a
-//     /* @__PURE__ */-annotated IIFE itself (tsc does NOT add that marker —
-//     run `tsc` on lib.ts to see a bare IIFE). Because the IIFE is marked pure
-//     and esbuild inlines string-enum member accesses to their literals,
-//     `Direction.Up` becomes "UP" and the enum wrapper is DCE'd in
-//     out/tree-shake/enum-bundled.js.
+// esbuild-only extra:
+//   out/esbuild/tree-shake/<name>-transformed.js   TS frontend output of lib.ts
+//                                                  before DCE (shows /* @__PURE__ */)
 
 import { build, transform, type BuildOptions } from "esbuild";
+import { rolldown } from "rolldown";
 import { gzipSync } from "node:zlib";
 import { resolve } from "path";
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from "fs";
 
 const root = resolve(import.meta.dir, "..");
-const outDir = resolve(root, "out", "tree-shake");
 const fixturesDir = resolve(root, "src", "tree-shake");
 const tsconfig = resolve(root, "tsconfig.json");
-rmSync(outDir, { recursive: true, force: true });
-mkdirSync(outDir, { recursive: true });
+
+const esbuildOut = resolve(root, "out", "esbuild", "tree-shake");
+const rolldownOut = resolve(root, "out", "rolldown", "tree-shake");
+rmSync(esbuildOut, { recursive: true, force: true });
+rmSync(rolldownOut, { recursive: true, force: true });
+mkdirSync(esbuildOut, { recursive: true });
+mkdirSync(rolldownOut, { recursive: true });
 
 const patterns = [
   "enum",
@@ -48,9 +37,7 @@ const patterns = [
   "const-enum",
 ] as const;
 
-// Shared esbuild options. `target` is inherited from tsconfig; the rest are
-// esbuild-specific bundler flags that don't exist in tsconfig.
-const baseConfig = {
+const esbuildBase = {
   bundle: true,
   write: false,
   format: "esm",
@@ -59,30 +46,15 @@ const baseConfig = {
   tsconfig,
 } satisfies BuildOptions;
 
-console.log("─".repeat(72));
-console.log("tree-shaking — consumer imports one member, what survives?");
-console.log("─".repeat(72));
-console.log(
-  "\n" +
-    "pattern".padEnd(20) +
-    "bundled".padStart(10) +
-    "min".padStart(8) +
-    "gzip".padStart(8),
-);
-console.log("─".repeat(46));
+type Sizes = { bundled: number; min: number; gz: number };
 
-for (const name of patterns) {
+// ─── esbuild ─────────────────────────────────────────────────────────────────
+
+async function esbuildTreeShake(name: string): Promise<Sizes> {
   const entryPoints = [resolve(fixturesDir, name, "consumer.ts")];
+  const built = await build({ ...esbuildBase, entryPoints });
+  const minBuilt = await build({ ...esbuildBase, entryPoints, minify: true });
 
-  const built = await build({ ...baseConfig, entryPoints });
-  const minBuilt = await build({ ...baseConfig, entryPoints, minify: true });
-
-  // Transform-only emit of lib.ts: no bundling, no DCE, no minify. This is
-  // what esbuild's TypeScript frontend produces BEFORE tree-shaking runs, so
-  // the /* @__PURE__ */ marker on the enum IIFE is preserved verbatim and
-  // can be eyeballed in out/tree-shake/<name>-transformed.js. The bundled
-  // file shows the post-DCE result; the transformed file shows the input
-  // that DCE was working from.
   const libSource = readFileSync(resolve(fixturesDir, name, "lib.ts"), "utf8");
   const transformed = await transform(libSource, {
     loader: "ts",
@@ -92,30 +64,91 @@ for (const name of patterns) {
 
   const code = built.outputFiles[0].text;
   const min = minBuilt.outputFiles[0].text;
-  writeFileSync(resolve(outDir, `${name}-bundled.js`), code);
-  writeFileSync(resolve(outDir, `${name}-minified.js`), min);
-  writeFileSync(resolve(outDir, `${name}-transformed.js`), transformed.code);
+  writeFileSync(resolve(esbuildOut, `${name}-bundled.js`), code);
+  writeFileSync(resolve(esbuildOut, `${name}-minified.js`), min);
+  writeFileSync(
+    resolve(esbuildOut, `${name}-transformed.js`),
+    transformed.code,
+  );
 
+  return {
+    bundled: Buffer.byteLength(code, "utf8"),
+    min: Buffer.byteLength(min, "utf8"),
+    gz: gzipSync(Buffer.from(min, "utf8")).byteLength,
+  };
+}
+
+// ─── rolldown ────────────────────────────────────────────────────────────────
+
+async function rolldownTreeShake(name: string): Promise<Sizes> {
+  const entryPoint = resolve(fixturesDir, name, "consumer.ts");
+
+  const bundle = await rolldown({ input: entryPoint });
+  const { output } = await bundle.generate({ format: "esm" });
+  const code = output[0].code;
+  await bundle.close();
+
+  const minBundle = await rolldown({ input: entryPoint });
+  const { output: minOutput } = await minBundle.generate({
+    format: "esm",
+    minify: true,
+  });
+  const min = minOutput[0].code;
+  await minBundle.close();
+
+  writeFileSync(resolve(rolldownOut, `${name}-bundled.js`), code);
+  writeFileSync(resolve(rolldownOut, `${name}-minified.js`), min);
+
+  return {
+    bundled: Buffer.byteLength(code, "utf8"),
+    min: Buffer.byteLength(min, "utf8"),
+    gz: gzipSync(Buffer.from(min, "utf8")).byteLength,
+  };
+}
+
+// ─── run ─────────────────────────────────────────────────────────────────────
+
+console.log("─".repeat(80));
+console.log("tree-shaking — consumer imports one member, what survives?");
+console.log("─".repeat(80));
+
+const col = 10;
+const patW = 16;
+console.log(
+  "\n" +
+    "pattern".padEnd(patW) +
+    "esbuild".padStart((col * 3) / 2).padEnd(col * 3) +
+    "rolldown".padStart((col * 3) / 2),
+);
+console.log(
+  " ".repeat(patW) +
+    "bundled".padStart(col) +
+    "min".padStart(col) +
+    "gzip".padStart(col) +
+    "bundled".padStart(col) +
+    "min".padStart(col) +
+    "gzip".padStart(col),
+);
+console.log("─".repeat(patW + col * 6));
+
+for (const name of patterns) {
+  const esbuildSizes = await esbuildTreeShake(name);
+  const rolldownSizes = await rolldownTreeShake(name);
   console.log(
-    name.padEnd(20) +
-      String(Buffer.byteLength(code, "utf8")).padStart(10) +
-      String(Buffer.byteLength(min, "utf8")).padStart(8) +
-      String(gzipSync(Buffer.from(min, "utf8")).byteLength).padStart(8),
+    name.padEnd(patW) +
+      String(esbuildSizes.bundled).padStart(col) +
+      String(esbuildSizes.min).padStart(col) +
+      String(esbuildSizes.gz).padStart(col) +
+      String(rolldownSizes.bundled).padStart(col) +
+      String(rolldownSizes.min).padStart(col) +
+      String(rolldownSizes.gz).padStart(col),
   );
 }
 
 console.log(
-  "note: the `/* @__PURE__ */` annotation on the `enum`/`num-enum` IIFE comes\n" +
-    "from esbuild's own TypeScript frontend — tsc does not emit it. For string\n" +
-    'enums, esbuild also inlines member accesses (`Direction.Up` → `"UP"`), so\n' +
-    "the wrapper is DCE'd (see out/tree-shake/enum-bundled.js). For numeric\n" +
-    "enums, esbuild inlines member accesses to their numeric literals\n" +
-    "`Direction.Up` → `0`), so the wrapper is likewise DCE'd — but the IIFE\n" +
-    "is larger because numeric enums also emit reverse mappings\n" +
-    "(see out/tree-shake/num-enum-transformed.js). `as const` objects are plain\n" +
-    "object literals, so bundlers preserve the literal when a property is used\n" +
-    "(see out/tree-shake/as-const-bundled.js). string literal union has no\n" +
-    "runtime lib emit, so only consumer runtime code remains\n" +
-    "(see out/tree-shake/string-union-bundled.js).",
+  "\nnote: esbuild annotates enum IIFEs with /* @__PURE__ */ and inlines member\n" +
+    "accesses, enabling DCE of the wrapper. rolldown (via oxc) may differ —\n" +
+    "inspect out/esbuild/tree-shake vs out/rolldown/tree-shake for the diff.\n" +
+    "out/esbuild/tree-shake/<name>-transformed.js shows the pre-DCE IR.",
 );
-console.log("\nartifacts: out/tree-shake");
+console.log("\nartifacts: out/esbuild/tree-shake  out/rolldown/tree-shake");
