@@ -2,8 +2,6 @@
 
 ### 09.05
 
-- group halls by venue
-- remove redundant cta for couples
 - hide unnecessary controls for venue
 
 ### 08.05
