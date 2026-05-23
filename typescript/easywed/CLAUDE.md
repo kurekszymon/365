@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-Package manager is **bun** (see `bun.lock`). Scripts are defined in `package.json`:
+Package manager is **pnpm** (see `pnpm-lock.lock`). Scripts are defined in `package.json`:
 
-- `bun dev` — Vite dev server on port 3000
-- `bun run build` — production build
-- `bun typecheck` — `tsc --noEmit` (use this for type checks; don't invoke `tsc` directly)
-- `bun test` — `vitest run`. For a single file: `bun test path/to/file.test.ts`. For watch mode: `bunx vitest`
-- `bun run lint` — ESLint (config: `eslint.config.js`, extends `@tanstack/eslint-config`)
-- `bun run format` — Prettier
+- `pnpm dev` — Vite dev server on port 3000
+- `pnpm run build` — production build
+- `pnpm typecheck` — `tsc --noEmit` (use this for type checks; don't invoke `tsc` directly)
+- `pnpm test` — `vitest run`. For a single file: `pnpm test path/to/file.test.ts`. For watch mode: `pnpm dlx vitest`
+- `pnpm run lint` — ESLint (config: `eslint.config.js`, extends `@tanstack/eslint-config`)
+- `pnpm run format` — Prettier
 
 Supabase local stack (see `docs/supabase.md` for the full flow):
 

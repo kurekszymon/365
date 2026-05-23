@@ -1,5 +1,14 @@
 # EasyWed — Development Log
 
+### 23.05
+
+- migrate from bun to pnpm
+
+### 22.05
+
+- revert commits to serve easywed v1 (748f188c03303696151c866a6d4e4fe43f9b5aee)
+- talking to prospects
+
 ### 07.05
 
 - add undo/redo buttons in invitations creator
