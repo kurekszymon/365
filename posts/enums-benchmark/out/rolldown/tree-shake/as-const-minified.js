@@ -1,0 +1,1 @@
+const e={Up:`UP`,Down:`DOWN`,Left:`LEFT`,Right:`RIGHT`};console.log(e.Up),console.log(e.Down),console.log(e.Left),console.log(e.Right);
