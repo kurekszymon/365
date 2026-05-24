@@ -10,13 +10,15 @@
 //   out/esbuild/sizes/<pattern>.{raw,min}.js
 //   out/rolldown/sizes/<pattern>.{raw,min}.js
 
-import { build, BuildOptions, transform } from "esbuild";
+import { build, type BuildOptions, transform } from "esbuild";
 import { rolldown } from "rolldown";
 import { gzipSync } from "node:zlib";
-import { resolve } from "path";
+import { dirname, resolve } from "path";
+import { fileURLToPath } from "node:url";
 import { writeFileSync, mkdirSync, readFileSync, rmSync } from "fs";
 
-const root = resolve(import.meta.dir, "..");
+const scriptDir = dirname(fileURLToPath(import.meta.url));
+const root = resolve(scriptDir, "..");
 const esbuildOut = resolve(root, "out", "esbuild", "sizes");
 const rolldownOut = resolve(root, "out", "rolldown", "sizes");
 rmSync(resolve(root, "out", "esbuild", "sizes"), {

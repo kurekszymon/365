@@ -1,14 +1,15 @@
 {
   "name": "enums-benchmark",
+  "type": "module",
   "version": "1.0.0",
   "scripts": {
-    "sizes": "bun scripts/bundle-sizes.ts",
-    "treeshake": "bun scripts/tree-shaking.ts",
+    "sizes": "node scripts/bundle-sizes.ts",
+    "treeshake": "node scripts/tree-shaking.ts",
     "typecheck": "tsc --noEmit",
     "typecheck:tsc": "tsc --noEmit --project tsconfig.tsc.json"
   },
   "devDependencies": {
-    "@types/bun": "^1.3.13",
+    "@types/node": "^25.9.1",
     "esbuild": "^0.25.0",
     "rolldown": "^1.0.2",
     "typescript": "^5.8.0"

@@ -15,10 +15,12 @@
 import { build, transform, type BuildOptions } from "esbuild";
 import { rolldown } from "rolldown";
 import { gzipSync } from "node:zlib";
-import { resolve } from "path";
+import { dirname, resolve } from "path";
+import { fileURLToPath } from "url";
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from "fs";
 
-const root = resolve(import.meta.dir, "..");
+const scriptDir = dirname(fileURLToPath(import.meta.url));
+const root = resolve(scriptDir, "..");
 const fixturesDir = resolve(root, "src", "tree-shake");
 const tsconfig = resolve(root, "tsconfig.json");
 

@@ -1,19 +1,19 @@
-────────────────────────────────────────────────────────────────────────
+────────────────────────────────────────────────────────────────────────────────
 tree-shaking — consumer imports one member, what survives?
-────────────────────────────────────────────────────────────────────────
+────────────────────────────────────────────────────────────────────────────────
 
-pattern                bundled     min    gzip
-──────────────────────────────────────────────
-enum                       161      80      60
-as-const                   271     134     106
-string-union               208      96      80
-note: the `/* @__PURE__ */` annotation on the `enum` IIFE comes from
-esbuild's own TypeScript frontend — tsc does not emit it. Combined with
-esbuild's string-enum member inlining, `Direction.Up` becomes `"UP"` and
-the wrapper is DCE'd (see out/tree-shake/enum-bundled.js). `as const`
-objects are plain object literals, so bundlers preserve the literal when
-a property is used (see out/tree-shake/as-const-bundled.js). string
-literal union has no runtime lib emit, so only consumer runtime code
-remains (see out/tree-shake/string-union-bundled.js).
+pattern                 esbuild                      rolldown
+                   bundled       min      gzip   bundled       min      gzip
+────────────────────────────────────────────────────────────────────────────
+enum                   161        80        60       138        79        61
+num-enum               146        61        47       123        60        46
+as-const               271       134       106       308       135       108
+string-union           208        96        80       236        79        61
+const-enum             167        80        60       144        79        61
 
-artifacts: out/tree-shake
+note: esbuild annotates enum IIFEs with /* @__PURE__ */ and inlines member
+accesses, enabling DCE of the wrapper. rolldown (via oxc) may differ —
+inspect out/esbuild/tree-shake vs out/rolldown/tree-shake for the diff.
+out/esbuild/tree-shake/<name>-transformed.js shows the pre-DCE IR.
+
+artifacts: out/esbuild/tree-shake  out/rolldown/tree-shake
