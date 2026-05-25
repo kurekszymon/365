@@ -12,13 +12,13 @@ importers:
         specifier: ^25.9.1
         version: 25.9.1
       esbuild:
-        specifier: ^0.25.0
+        specifier: ^0.25.12
         version: 0.25.12
       rolldown:
         specifier: ^1.0.2
         version: 1.0.2
       typescript:
-        specifier: ^5.8.0
+        specifier: ^5.9.3
         version: 5.9.3
 
 packages:
