@@ -44,7 +44,11 @@ enum Direction {
 }
 ```
 
+<!-- use infobox for mdx -->
+
 I purposefully marked a difference between NUMERIC and STRING enums, since there are some differences in how they are handled behind the scenes.
+
+Enums at runtime are treated as regular object, so it is possible to iterate over keys or use them as function arguments. One possible problem with that may be the fact that for numeric enums you get reverse mappings, so `Object.values()` **will produce twice as many** values.
 
 Consider this TSC Output for cases above. Right away you can notice _two_ major things.
 
@@ -84,43 +88,6 @@ Read more:
 
 - [enums at runtime](https://www.typescriptlang.org/docs/handbook/enums.html#enums-at-runtime)
 - [reverse mapping](https://www.typescriptlang.org/docs/handbook/enums.html#reverse-mappings)
-
-### const enum
-
-or something that on paper seems like an obvious pick, but it's really not..?
-Consider following example (compiled with `tsc`)
-
-```ts
-const enum Direction {
-  Up = "UP",
-  Down = "DOWN",
-  Left = "LEFT",
-  Right = "RIGHT",
-}
-
-const direction = Direction.Down;
-
-// would be transformed to
-
-const direction = "DOWN"; /* ConstDirection.Down */
-```
-
-[TS Playground Link](https://www.typescriptlang.org/play/?#code/MYewdgzgLgBApmArgWxgYXNAIgSwE5zBQ7gwDeAUDDAKoAOMAvDAEQ0AKLANFTFiAHcwTVlgDyAdQBy3XgBk4AM1jMWcgKIAxACqzqAJRwBzABYrW+gJIBxABK6eAXwoVQkWABN8hYqWYZ3XAIiEjAAOn4hIA)
-
-Interestingly **const enum pitfalls** section in TS docs is longer than **const enum** section itself, highly recommend digging into that, but in short:
-
-`const enum` **is not** the best pick when you are **not** using `tsc` or you have `isolatedModules: true` in your _tsconfig.json_. That's because modern transpilers operate on a single file at a time - what means that each `.ts` file is transformed independently, without looking at other files.
-A single-file transpiler sees `Direction.Down` in one file, but it has no idea what value `Down` resolved to, because the enum definition lives elsewhere - since `const enum` is inlined to JS value - using it with `isolatedModules` will result in an error of referencing ambient enum.
-
-Because of that `const enum` **is not** treated as object on runtime, it is only possible to use it in property or
-index access.
-
-As mentioned in previous section - [you'll see](#bench) that using `esbuild` or `rolldown` allows you to inline enum values basically replicating `const enum` desired behavior without the pitfalls.
-
-Read more:
-
-- [const enum pitfalls](https://www.typescriptlang.org/docs/handbook/enums.html#const-enum-pitfalls)
-- [isolatedModules](https://www.typescriptlang.org/tsconfig/isolatedModules.html)
 
 ### type union
 
@@ -181,7 +148,7 @@ type Str = "1" | "2";
 const str: Str = "1";
 
 function fn(arg: Str) {
-  void (arg == "3");
+  void (arg == "2");
 }
 
 type Num = 1 | 2;
@@ -206,7 +173,7 @@ function fOmit(arg: Omit<Obj, "status">) {
   // ^ Property 'status' does not exist on type 'Omit<Obj, "status">'.(2339)
 }
 
-// WOULD PRODUCE
+// --- WOULD PRODUCE ---
 
 const str = "1";
 function fn(arg) {
@@ -236,9 +203,61 @@ Read more:
 - [discriminated unions](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes-func.html#discriminated-unions)
 - [utility types](https://www.typescriptlang.org/docs/handbook/utility-types.html)
 
-### object as const
+## alternatives
 
-## sum (or sth)
+### const assertion (as const)
+
+\_\_
+
+Read more:
+
+- [what as const means in typescript](https://stackoverflow.com/a/66993654)
+- [const assertions](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions)
+- [literal inference](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-inference)
+- [r/typescript](https://www.reddit.com/r/typescript/comments/1e3yyaj/use_string_literal_instead_of_enums/)
+
+### const enum
+
+or something that on paper seems like an obvious pick, but it's really not..?
+Consider following example (compiled with `tsc`)
+
+```ts
+const enum Direction {
+  Up = "UP",
+  Down = "DOWN",
+  Left = "LEFT",
+  Right = "RIGHT",
+}
+
+const direction = Direction.Down;
+
+// would be transformed to
+
+const direction = "DOWN"; /* ConstDirection.Down */
+```
+
+[TS Playground Link](https://www.typescriptlang.org/play/?#code/MYewdgzgLgBApmArgWxgYXNAIgSwE5zBQ7gwDeAUDDAKoAOMAvDAEQ0AKLANFTFiAHcwTVlgDyAdQBy3XgBk4AM1jMWcgKIAxACqzqAJRwBzABYrW+gJIBxABK6eAXwoVQkWABN8hYqWYZ3XAIiEjAAOn4hIA)
+
+Interestingly **const enum pitfalls** section in TS docs is longer than **const enum** section itself, highly recommend digging into that, but in short:
+
+`const enum` **is not** the best pick when you are **not** using `tsc` or you have `isolatedModules: true` in your _tsconfig.json_. That's because modern transpilers operate on a single file at a time - what means that each `.ts` file is transformed independently, without looking at other files.
+A single-file transpiler sees `Direction.Down` in one file, but it has no idea what value `Down` resolved to, because the enum definition lives elsewhere - since `const enum` is inlined to JS value - using it with `isolatedModules` will result in an error of referencing ambient enum.
+
+Because of that `const enum` **is not** treated as object on runtime, it is only possible to use it in property or
+index access.
+
+As mentioned in previous section - [you'll see](#bench) that using `esbuild` or `rolldown` allows you to inline enum values basically replicating `const enum` desired behavior without the pitfalls.
+
+Read more:
+
+- [const enum pitfalls](https://www.typescriptlang.org/docs/handbook/enums.html#const-enum-pitfalls)
+- [isolatedModules](https://www.typescriptlang.org/tsconfig/isolatedModules.html)
+
+## bench
+
+referenced three times already, need to really show that esbuild inlines enum properly :D
+
+## verdict
 
 If you **do** need runtime:
 I think enums are great for showing intent of enumerable values. They are well optimized in modern bundlers so it's safe to use them and send a clear message about the intent.
@@ -246,10 +265,6 @@ I think enums are great for showing intent of enumerable values. They are well o
 If you **don't need** runtime, but just want to ensure type safety for your arguments or variables - type union is a great and truly cost free tool to use.
 
 Avoid `const enum` if you are not using `tsc` exclusively. With modern bundlers [covered here](#bench), regular enum is inlined the same way as `const enum` would be.
-
-## bench
-
-referenced three times already, need to really show that esbuild inlines enum properly :D
 
 Read more:
 
