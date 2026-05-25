@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAD Floor Planner — Rust/WASM</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #12121a;
+  color: #e0e0f0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+}
+
+#header {
+  background: #1a1a2e;
+  border-bottom: 1px solid #2a2a50;
+  padding: 0 16px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+#header h1 { font-size: 15px; font-weight: 600; color: #9090d0; }
+#header span { font-size: 11px; color: #404068; }
+
+#layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Sidebar ───────────────────────────────────────────────────────────── */
+#sidebar {
+  width: 220px;
+  background: #16162a;
+  border-right: 1px solid #2a2a50;
+  padding: 14px 10px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #44446a;
+  margin-bottom: 5px;
+}
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 7px 9px;
+  margin-bottom: 3px;
+  background: #1e1e38;
+  border: 1px solid #2e2e58;
+  border-radius: 5px;
+  color: #9090c0;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.btn:hover { background: #28285a; border-color: #4848a0; color: #c0c0e8; }
+.btn.active { background: #28408a; border-color: #5070e0; color: #c0d4ff; }
+.btn.danger { background: #2a1a1a; border-color: #6a2828; color: #d07070; }
+.btn.danger:hover { background: #3a2020; border-color: #aa3030; color: #ff9090; }
+
+.hint-block {
+  background: #1a1a30;
+  border: 1px solid #24244a;
+  border-radius: 5px;
+  padding: 8px 10px;
+  font-size: 11px;
+  color: #50507a;
+  line-height: 2;
+}
+.hint-block kbd {
+  background: #1e1e3a;
+  border: 1px solid #34346a;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-family: monospace;
+  color: #8080b0;
+}
+
+#shape-info {
+  background: #1a1a30;
+  border: 1px solid #2c2c58;
+  border-radius: 5px;
+  padding: 9px 10px;
+  font-size: 11px;
+  color: #6060a0;
+  line-height: 2;
+}
+#shape-info .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #404068; }
+
+/* ── Canvas ────────────────────────────────────────────────────────────── */
+#canvas-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #131320;
+}
+canvas {
+  display: block;
+  cursor: default;
+}
+canvas.add-mode  { cursor: crosshair; }
+canvas.drag-mode { cursor: grabbing; }
+
+/* ── Status bar ────────────────────────────────────────────────────────── */
+#statusbar {
+  background: #16162a;
+  border-top: 1px solid #2a2a50;
+  padding: 5px 14px;
+  font-size: 11px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-shrink: 0;
+  height: 28px;
+}
+#status-msg { flex: 1; color: #6060a0; }
+#status-msg.ok    { color: #40a060; }
+#status-msg.error { color: #d06060; }
+#status-coords    { font-family: monospace; color: #40406a; white-space: nowrap; }
+#status-mode      { font-family: monospace; color: #404078; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>CAD Floor Planner</h1>
+  <span>Rust + WASM · collision detection · boundary constraints · arbitrary rotation</span>
+</div>
+
+<div id="layout">
+  <aside id="sidebar">
+
+    <div>
+      <div class="section-label">Room Boundary</div>
+      <button class="btn active" id="btn-rect" onclick="setRoom('rect')">▭ Rectangle  12 × 10 m</button>
+      <button class="btn"        id="btn-l"    onclick="setRoom('l')">⌐ L-Shape  12×10 (4×4 cut)</button>
+      <button class="btn"        id="btn-u"    onclick="setRoom('u')">⊓ U-Shape  12×8 (4×4 notch)</button>
+    </div>
+
+    <div>
+      <div class="section-label">Add Furniture</div>
+      <button class="btn" id="add-0" onclick="startAdd('rect',[2,1])">▭ Rect 2 × 1 m</button>
+      <button class="btn" id="add-1" onclick="startAdd('rect',[3,2])">▭ Rect 3 × 2 m</button>
+      <button class="btn" id="add-2" onclick="startAdd('rect',[2,2])">■ Square 2 × 2 m</button>
+      <button class="btn" id="add-3" onclick="startAdd('lshape',[3,3,1.5,1.5])">⌐ L-Shape 3×3 m</button>
+      <button class="btn" id="add-4" onclick="startAdd('ushape',[3,2.5,1.5,1.5])">⊓ U-Shape 3×2.5 m</button>
+    </div>
+
+    <div>
+      <div class="section-label">Controls</div>
+      <div class="hint-block">
+        <kbd>click</kbd> place / select<br>
+        <kbd>drag</kbd> move shape<br>
+        <kbd>R</kbd> rotate 45°<br>
+        <kbd>scroll</kbd> rotate 15°<br>
+        <kbd>Del</kbd> delete selected<br>
+        <kbd>Esc</kbd> cancel / deselect
+      </div>
+    </div>
+
+    <div>
+      <button class="btn danger" onclick="clearAll()">✕ Clear All Shapes</button>
+    </div>
+
+    <div id="shape-info" style="display:none">
+      <div class="label">Selected Shape</div>
+      <div id="shape-info-body"></div>
+    </div>
+
+  </aside>
+
+  <div id="canvas-wrap">
+    <canvas id="canvas"></canvas>
+  </div>
+</div>
+
+<div id="statusbar">
+  <span id="status-msg">Ready — choose a room shape and add furniture</span>
+  <span id="status-mode">mode: select</span>
+  <span id="status-coords">x: 0.00  y: 0.00</span>
+</div>
+
+<script type="module">
+import init, { CadEngine } from './pkg/cad.js';
+await init();
+
+// ── State ─────────────────────────────────────────────────────────────────────
+
+let cad = new CadEngine();
+let scale = 60;          // px per world-unit (1 unit = 1 metre)
+let panX  = 80;
+let panY  = 80;
+
+const shapes = new Map(); // BigInt id → { localVerts, x, y, rotDeg, label, type, params }
+let boundaryVerts = null; // [[x,y], ...] world coords
+
+let mode         = 'select';  // 'select' | 'add'
+let pendingAdd   = null;      // shape being placed
+let mouseWorld   = [0, 0];
+let selectedId   = null;      // BigInt | null
+let drag         = null;      // active drag state
+let ghostValid   = false;     // cached validation for current ghost position
+
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+
+// ── Coordinate transforms ─────────────────────────────────────────────────────
+
+const toCanvas = (wx, wy) => [panX + wx * scale, panY + wy * scale];
+const toWorld  = (cx, cy) => [(cx - panX) / scale, (cy - panY) / scale];
+
+function applyTransform(verts, x, y, rotDeg) {
+  const r = rotDeg * Math.PI / 180;
+  const cos = Math.cos(r), sin = Math.sin(r);
+  return verts.map(([vx, vy]) => [vx*cos - vy*sin + x, vx*sin + vy*cos + y]);
+}
+
+function centroidOf(verts) {
+  let sx = 0, sy = 0;
+  for (const [x, y] of verts) { sx += x; sy += y; }
+  return [sx / verts.length, sy / verts.length];
+}
+
+// ── Local vertex factories (must match Rust polygon.rs exactly) ───────────────
+
+function makeLocalVerts(type, params) {
+  const [a, b, c, d] = params;
+  if (type === 'rect') {
+    const [w, h] = [a, b];
+    return [[-w/2, -h/2], [w/2, -h/2], [w/2, h/2], [-w/2, h/2]];
+  }
+  if (type === 'lshape') {
+    const [ow, oh, cw, ch] = [a, b, c, d];
+    return [[0,0],[ow,0],[ow,oh-ch],[ow-cw,oh-ch],[ow-cw,oh],[0,oh]];
+  }
+  if (type === 'ushape') {
+    const [ow, oh, cw, ch] = [a, b, c, d];
+    const cx = (ow - cw) / 2;
+    return [[0,0],[ow,0],[ow,oh],[cx+cw,oh],[cx+cw,oh-ch],[cx,oh-ch],[cx,oh],[0,oh]];
+  }
+  return [];
+}
+
+// ── Validation helpers ────────────────────────────────────────────────────────
+
+function tryValidate(localVerts, x, y, rotDeg) {
+  try {
+    return cad.validatePlacement(localVerts, x, y, rotDeg);
+  } catch {
+    return { valid: false, collisions: [], exceeds_boundary: true };
+  }
+}
+
+function tryValidateMove(id, x, y, rotDeg) {
+  try {
+    return cad.validateMove(id, x, y, rotDeg);
+  } catch {
+    return { valid: false, collisions: [], exceeds_boundary: true };
+  }
+}
+
+// ── Room setup ────────────────────────────────────────────────────────────────
+
+function setRoom(type) {
+  cad = new CadEngine();
+  shapes.clear();
+  selectedId = null;
+  drag = null;
+  pendingAdd = null;
+  mode = 'select';
+  canvas.className = '';
+
+  if (type === 'rect') {
+    cad.setRectangularBoundary(12, 10);
+    boundaryVerts = [[0,0],[12,0],[12,10],[0,10]];
+    fitView(12, 10);
+  } else if (type === 'l') {
+    cad.setLShapeBoundary(12, 10, 4, 4);
+    boundaryVerts = makeLocalVerts('lshape', [12, 10, 4, 4]);
+    fitView(12, 10);
+  } else if (type === 'u') {
+    cad.setUShapeBoundary(12, 8, 4, 4);
+    boundaryVerts = makeLocalVerts('ushape', [12, 8, 4, 4]);
+    fitView(12, 8);
+  }
+
+  document.querySelectorAll('[id^="btn-"]').forEach(b => b.classList.remove('active'));
+  document.getElementById(`btn-${type}`).classList.add('active');
+  document.getElementById('shape-info').style.display = 'none';
+  setStatus(`Room: ${type === 'rect' ? 'Rectangle' : type === 'l' ? 'L-Shape' : 'U-Shape'}`);
+  setModeLabel('select');
+}
+
+function fitView(roomW, roomH) {
+  const wrap  = document.getElementById('canvas-wrap');
+  const pad   = 120;
+  const sx    = (wrap.clientWidth  - pad) / roomW;
+  const sy    = (wrap.clientHeight - pad) / roomH;
+  scale       = Math.min(sx, sy, 80);
+  panX        = (wrap.clientWidth  - roomW * scale) / 2;
+  panY        = (wrap.clientHeight - roomH * scale) / 2;
+}
+
+// ── Add mode ──────────────────────────────────────────────────────────────────
+
+window.startAdd = function(type, params) {
+  mode = 'add';
+  const lv    = makeLocalVerts(type, params);
+  const label = `${type === 'rect' ? 'Rect' : type === 'lshape' ? 'L' : 'U'} ${params[0]}×${params[1]}`;
+  pendingAdd  = { type, params, localVerts: lv, rotDeg: 0, label };
+  ghostValid  = tryValidate(lv, ...mouseWorld, 0).valid;
+  selectedId  = null;
+  canvas.className = 'add-mode';
+  document.querySelectorAll('[id^="add-"]').forEach(b => b.classList.remove('active'));
+  // Highlight active add button
+  const addBtns = { 'rect/2,1': 0, 'rect/3,2': 1, 'rect/2,2': 2, 'lshape/3,3,1.5,1.5': 3, 'ushape/3,2.5,1.5,1.5': 4 };
+  const key = `${type}/${params.join(',')}`;
+  if (addBtns[key] !== undefined) document.getElementById(`add-${addBtns[key]}`).classList.add('active');
+  setStatus(`Placing ${label} — click to drop, R / scroll to rotate, Esc to cancel`);
+  setModeLabel('add');
+};
+
+function cancelAdd() {
+  mode = 'add' ? 'select' : mode;
+  mode = 'select';
+  pendingAdd = null;
+  ghostValid = false;
+  canvas.className = '';
+  document.querySelectorAll('[id^="add-"]').forEach(b => b.classList.remove('active'));
+  setModeLabel('select');
+}
+
+// ── Place / move shapes ───────────────────────────────────────────────────────
+
+function commitAdd(x, y) {
+  const { type, params, localVerts, rotDeg, label } = pendingAdd;
+  try {
+    let id;
+    if (type === 'rect')   id = cad.addRectangle(...params, x, y, rotDeg);
+    else if (type === 'lshape') id = cad.addLShape(...params, x, y, rotDeg);
+    else if (type === 'ushape') id = cad.addUShape(...params, x, y, rotDeg);
+    shapes.set(id, { localVerts, x, y, rotDeg, label, type, params });
+    selectedId = id;
+    updateShapeInfo(id);
+    setStatus(`Placed ${label}`, 'ok');
+    return true;
+  } catch (err) {
+    setStatus(`Cannot place: ${err}`, 'error');
+    return false;
+  }
+}
+
+function commitMove(id, x, y, rotDeg) {
+  try {
+    cad.moveShape(id, x, y, rotDeg);
+    const s = shapes.get(id);
+    s.x = x; s.y = y; s.rotDeg = rotDeg;
+    updateShapeInfo(id);
+    setStatus(`Moved to (${x.toFixed(1)}, ${y.toFixed(1)})`, 'ok');
+    return true;
+  } catch (err) {
+    setStatus(`Cannot move: ${err}`, 'error');
+    return false;
+  }
+}
+
+function tryRotateSelected(delta) {
+  if (selectedId === null || !shapes.has(selectedId)) return;
+  const s      = shapes.get(selectedId);
+  const newRot = ((s.rotDeg + delta) % 360 + 360) % 360;
+  const ok     = tryValidateMove(selectedId, s.x, s.y, newRot).valid;
+  if (ok) { commitMove(selectedId, s.x, s.y, newRot); }
+  else    { setStatus('Cannot rotate — collision or boundary violation', 'error'); }
+}
+
+// ── Clear ─────────────────────────────────────────────────────────────────────
+
+window.clearAll = function() {
+  const active = document.querySelector('[id^="btn-"].active')?.id.replace('btn-', '') || 'rect';
+  setRoom(active);
+};
+
+// ── Canvas rendering ──────────────────────────────────────────────────────────
+
+function drawPolygon(worldVerts, fill, stroke, lineWidth, alpha = 1) {
+  if (!worldVerts?.length) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.beginPath();
+  const [sx, sy] = toCanvas(...worldVerts[0]);
+  ctx.moveTo(sx, sy);
+  for (let i = 1; i < worldVerts.length; i++) {
+    const [px, py] = toCanvas(...worldVerts[i]);
+    ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  if (fill)   { ctx.fillStyle = fill;   ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lineWidth; ctx.stroke(); }
+  ctx.restore();
+}
+
+function drawLabel(worldVerts, text, color) {
+  const [cx, cy] = toCanvas(...centroidOf(worldVerts));
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.font = `${Math.max(9, scale * 0.15)}px monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, cx, cy);
+  ctx.restore();
+}
+
+function drawAnchorDot(wx, wy, color) {
+  const [cx, cy] = toCanvas(wx, wy);
+  ctx.beginPath();
+  ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function drawGrid() {
+  const step   = scale;
+  const startX = ((panX % step) + step) % step;
+  const startY = ((panY % step) + step) % step;
+  ctx.strokeStyle = 'rgba(80,80,140,0.10)';
+  ctx.lineWidth   = 1;
+  for (let x = startX; x <= canvas.width;  x += step) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+  }
+  for (let y = startY; y <= canvas.height; y += step) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+  }
+  // Origin cross
+  ctx.strokeStyle = 'rgba(80,80,160,0.22)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath(); ctx.moveTo(panX, 0); ctx.lineTo(panX, canvas.height); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, panY); ctx.lineTo(canvas.width, panY); ctx.stroke();
+}
+
+function render() {
+  // Sync canvas size to container
+  const wrap = document.getElementById('canvas-wrap');
+  if (canvas.width !== wrap.clientWidth || canvas.height !== wrap.clientHeight) {
+    canvas.width  = wrap.clientWidth;
+    canvas.height = wrap.clientHeight;
+  }
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#131320';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  drawGrid();
+
+  // Room boundary
+  if (boundaryVerts) {
+    drawPolygon(boundaryVerts, '#17172e', '#4848c0', 2);
+    // Room label
+    const [cx, cy] = toCanvas(...centroidOf(boundaryVerts));
+    ctx.fillStyle  = '#26264a';
+    ctx.font       = '11px monospace';
+    ctx.textAlign  = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('ROOM BOUNDARY', cx, panY - 16);
+  }
+
+  // Placed shapes
+  for (const [id, s] of shapes) {
+    if (drag?.id === id) continue; // skip — rendered as ghost instead
+
+    const worldVerts = applyTransform(s.localVerts, s.x, s.y, s.rotDeg);
+    const isSel      = id === selectedId;
+
+    drawPolygon(worldVerts,
+      isSel ? '#1e3a90' : '#182e78',
+      isSel ? '#6090ff' : '#3a5ac0',
+      isSel ? 2.0 : 1.5
+    );
+    drawLabel(worldVerts, s.label, isSel ? '#aac4ff' : '#5068a0');
+
+    if (isSel) drawAnchorDot(s.x, s.y, '#6090ff');
+  }
+
+  // Drag ghost (moving an existing shape)
+  if (drag) {
+    // Faint original position
+    const origVerts = applyTransform(drag.localVerts, drag.startPos[0], drag.startPos[1], drag.rotDeg);
+    drawPolygon(origVerts, null, 'rgba(80,80,180,0.25)', 1);
+
+    // Ghost at current position
+    const ghostVerts = applyTransform(drag.localVerts, drag.currentX, drag.currentY, drag.rotDeg);
+    const v = drag.valid;
+    drawPolygon(ghostVerts,
+      v ? 'rgba(40,200,80,0.28)' : 'rgba(220,50,50,0.28)',
+      v ? '#40dd70' : '#ff5050',
+      2.0
+    );
+    drawAnchorDot(drag.currentX, drag.currentY, v ? '#40dd70' : '#ff5050');
+  }
+
+  // Add-mode ghost (new shape being placed)
+  if (mode === 'add' && pendingAdd) {
+    const [mx, my] = mouseWorld;
+    const ghostVerts = applyTransform(pendingAdd.localVerts, mx, my, pendingAdd.rotDeg);
+    const v = ghostValid;
+    drawPolygon(ghostVerts,
+      v ? 'rgba(40,210,80,0.28)' : 'rgba(220,55,55,0.28)',
+      v ? '#48ff80' : '#ff6060',
+      2.0
+    );
+    drawAnchorDot(mx, my, v ? '#48ff80' : '#ff6060');
+
+    // Rotation arc hint
+    if (pendingAdd.rotDeg !== 0) {
+      const [ax, ay] = toCanvas(mx, my);
+      const r = Math.max(8, scale * 0.12);
+      ctx.beginPath();
+      ctx.arc(ax, ay, r, -Math.PI/2, -Math.PI/2 + pendingAdd.rotDeg * Math.PI/180, pendingAdd.rotDeg < 0);
+      ctx.strokeStyle = v ? '#48ff80' : '#ff6060';
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 0.5;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  requestAnimationFrame(render);
+}
+
+// ── Mouse events ──────────────────────────────────────────────────────────────
+
+canvas.addEventListener('mousemove', e => {
+  const [wx, wy] = toWorld(e.offsetX, e.offsetY);
+  mouseWorld = [wx, wy];
+  document.getElementById('status-coords').textContent = `x: ${wx.toFixed(2)}  y: ${wy.toFixed(2)}`;
+
+  if (mode === 'add' && pendingAdd) {
+    ghostValid = tryValidate(pendingAdd.localVerts, wx, wy, pendingAdd.rotDeg).valid;
+    return;
+  }
+
+  if (drag) {
+    const dx = wx - drag.startMouse[0];
+    const dy = wy - drag.startMouse[1];
+    drag.currentX = drag.startPos[0] + dx;
+    drag.currentY = drag.startPos[1] + dy;
+    drag.valid    = tryValidateMove(drag.id, drag.currentX, drag.currentY, drag.rotDeg).valid;
+    document.getElementById('status-coords').textContent =
+      `x: ${drag.currentX.toFixed(2)}  y: ${drag.currentY.toFixed(2)}  ${drag.valid ? '✓ ok' : '✗ blocked'}`;
+  }
+});
+
+canvas.addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  if (mode === 'add') return;
+
+  const [wx, wy] = toWorld(e.offsetX, e.offsetY);
+  const id = cad.queryPoint(wx, wy);
+
+  if (id !== null) {
+    selectedId = id;
+    const s = shapes.get(id);
+    drag = {
+      id,
+      startMouse: [wx, wy],
+      startPos:   [s.x, s.y],
+      localVerts: s.localVerts,
+      rotDeg:     s.rotDeg,
+      currentX:   s.x,
+      currentY:   s.y,
+      valid:      true,
+    };
+    canvas.className = 'drag-mode';
+    updateShapeInfo(id);
+    setStatus(`Dragging ${s.label}…`);
+  } else {
+    selectedId = null;
+    document.getElementById('shape-info').style.display = 'none';
+  }
+});
+
+canvas.addEventListener('mouseup', e => {
+  if (e.button !== 0) return;
+  const [wx, wy] = toWorld(e.offsetX, e.offsetY);
+
+  if (mode === 'add' && pendingAdd) {
+    commitAdd(wx, wy);
+    return;
+  }
+
+  if (drag) {
+    if (drag.valid) {
+      commitMove(drag.id, drag.currentX, drag.currentY, drag.rotDeg);
+    } else {
+      setStatus('Dropped in invalid position — reverted', 'error');
+    }
+    drag = null;
+    canvas.className = '';
+  }
+});
+
+canvas.addEventListener('mouseleave', () => {
+  if (drag) {
+    // Cancel drag when mouse leaves canvas
+    drag = null;
+    canvas.className = '';
+    setStatus('Drag cancelled');
+  }
+});
+
+canvas.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  if (mode === 'add') { cancelAdd(); setStatus('Cancelled'); return; }
+  const [wx, wy] = toWorld(e.offsetX, e.offsetY);
+  const id = cad.queryPoint(wx, wy);
+  if (id !== null) {
+    const label = shapes.get(id)?.label || `#${id}`;
+    cad.removeShape(id);
+    shapes.delete(id);
+    if (selectedId === id) { selectedId = null; document.getElementById('shape-info').style.display = 'none'; }
+    setStatus(`Removed ${label}`);
+  }
+});
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? 15 : -15;
+
+  if (mode === 'add' && pendingAdd) {
+    pendingAdd.rotDeg = ((pendingAdd.rotDeg + delta) % 360 + 360) % 360;
+    ghostValid = tryValidate(pendingAdd.localVerts, ...mouseWorld, pendingAdd.rotDeg).valid;
+    setStatus(`Rotation: ${pendingAdd.rotDeg}°`);
+  } else if (selectedId !== null) {
+    tryRotateSelected(delta);
+  }
+}, { passive: false });
+
+// ── Keyboard ──────────────────────────────────────────────────────────────────
+
+document.addEventListener('keydown', e => {
+  // Don't steal focus from inputs
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  if (e.key === 'Escape') {
+    if (mode === 'add') { cancelAdd(); setStatus('Cancelled'); }
+    else               { selectedId = null; drag = null; canvas.className = ''; document.getElementById('shape-info').style.display = 'none'; }
+    return;
+  }
+
+  if (e.key === 'r' || e.key === 'R') {
+    if (mode === 'add' && pendingAdd) {
+      pendingAdd.rotDeg = ((pendingAdd.rotDeg + 45) % 360 + 360) % 360;
+      ghostValid = tryValidate(pendingAdd.localVerts, ...mouseWorld, pendingAdd.rotDeg).valid;
+      setStatus(`Rotation: ${pendingAdd.rotDeg}°`);
+    } else {
+      tryRotateSelected(45);
+    }
+    return;
+  }
+
+  if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId !== null) {
+    const label = shapes.get(selectedId)?.label || `#${selectedId}`;
+    cad.removeShape(selectedId);
+    shapes.delete(selectedId);
+    selectedId = null;
+    document.getElementById('shape-info').style.display = 'none';
+    setStatus(`Deleted ${label}`);
+    return;
+  }
+});
+
+// ── Shape info panel ──────────────────────────────────────────────────────────
+
+function updateShapeInfo(id) {
+  const s = shapes.get(id);
+  if (!s) return;
+  document.getElementById('shape-info').style.display = 'block';
+  document.getElementById('shape-info-body').innerHTML =
+    `Type&nbsp;&nbsp; ${s.label}<br>` +
+    `X&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${s.x.toFixed(2)} m<br>` +
+    `Y&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${s.y.toFixed(2)} m<br>` +
+    `Angle&nbsp; ${s.rotDeg.toFixed(0)}°`;
+}
+
+// ── Status bar ────────────────────────────────────────────────────────────────
+
+let statusTimer = null;
+function setStatus(msg, type = '') {
+  const el    = document.getElementById('status-msg');
+  el.textContent = msg;
+  el.className   = type;
+  clearTimeout(statusTimer);
+  statusTimer = setTimeout(() => {
+    el.textContent = mode === 'add' ? `Placing ${pendingAdd?.label} — click to drop` : 'Ready';
+    el.className   = '';
+  }, 3500);
+}
+
+function setModeLabel(m) {
+  document.getElementById('status-mode').textContent = `mode: ${m}`;
+}
+
+// ── Resize ────────────────────────────────────────────────────────────────────
+
+window.addEventListener('resize', () => {
+  const active = document.querySelector('[id^="btn-"].active')?.id.replace('btn-', '') || 'rect';
+  const [rw, rh] = active === 'u' ? [12, 8] : [12, 10];
+  fitView(rw, rh);
+});
+
+// ── Expose globals for inline onclick ────────────────────────────────────────
+
+window.setRoom  = setRoom;
+window.clearAll = clearAll;
+
+// ── Bootstrap ─────────────────────────────────────────────────────────────────
+
+setRoom('rect');
+requestAnimationFrame(render);
+</script>
+</body>
+</html>
