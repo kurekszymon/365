@@ -55,6 +55,8 @@ Consider this TSC Output for cases above. Right away you can notice _two_ major 
 1. Enums are not transpiled to regular js object, but an IIFE.
 2. Numeric enums have one more assignment round trip.
 
+<!-- MARK TO REFINE -->
+
 People call the first one an enum tax. but as you will see in [esbuild / rolldown output](#bench), modern compilers handle enum generated IIFE differently - can inline enum values instead of passing whole object around.
 
 For the second one - this is because of a fact, that numeric enums get _reverse mapping_, essentially allowing you to do what's shown at the end of the example.
@@ -246,6 +248,8 @@ A single-file transpiler sees `Direction.Down` in one file, but it has no idea w
 Because of that `const enum` **is not** treated as object on runtime, it is only possible to use it in property or
 index access.
 
+<!-- MARK TO REFINE -->
+
 As mentioned in previous section - [you'll see](#bench) that using `esbuild` or `rolldown` allows you to inline enum values basically replicating `const enum` desired behavior without the pitfalls.
 
 Read more:
@@ -254,6 +258,8 @@ Read more:
 - [isolatedModules](https://www.typescriptlang.org/tsconfig/isolatedModules.html)
 
 ## bench
+
+<!-- MARK TO REFINE -->
 
 referenced three times already, need to really show that esbuild inlines enum properly :D
 

@@ -1,3 +1,5 @@
+# probably should create a react app and build like this for real world usage. in current setup enum gets inlined which is not the case for default (i.e.) tanstack configuration
+
 # enums-benchmark
 
 Sandbox for the `fwd: enums` article. Compares TypeScript enum-like patterns
