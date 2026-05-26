@@ -294,9 +294,7 @@ mod tests {
         let r = Polygon::rectangle(2.0, 2.0);
         let t = Transform2D::from_degrees(5.0, 5.0, 90.0);
         let rotated = r.transformed(&t);
-        // Top-right corner (1,1) should become roughly (-1,1) + (5,5) = (4,6)
         let v = rotated.vertices();
-        // Just check that it's different from the original
         assert!((v[0].x - r.vertices()[0].x).abs() > 0.1);
     }
 
@@ -307,5 +305,84 @@ mod tests {
         let placed = r.transformed(&t);
         assert!(placed.contains_point(2.0, 2.0));
         assert!(!placed.contains_point(5.0, 5.0));
+    }
+
+    #[test]
+    fn u_shape_is_not_convex() {
+        let u = Polygon::u_shape(6.0, 6.0, 2.0, 2.0);
+        assert!(!u.is_convex());
+    }
+
+    #[test]
+    fn u_shape_decomposes_into_convex_parts() {
+        let u = Polygon::u_shape(6.0, 6.0, 2.0, 2.0);
+        let parts = u.decompose();
+        assert!(!parts.is_empty());
+        for p in &parts {
+            assert!(p.is_convex());
+        }
+    }
+
+    #[test]
+    fn bounding_box_correct_for_rectangle() {
+        let r = Polygon::rectangle(4.0, 6.0);
+        let bb = r.bounding_box();
+        assert!((bb.min.x - (-2.0)).abs() < 1e-10);
+        assert!((bb.max.x - 2.0).abs() < 1e-10);
+        assert!((bb.min.y - (-3.0)).abs() < 1e-10);
+        assert!((bb.max.y - 3.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn aabb_touching_at_edge_is_not_overlap() {
+        // Rectangles sharing an edge (min == max) — strict < means no overlap
+        let a = Aabb { min: Point2::new(0.0, 0.0), max: Point2::new(1.0, 1.0) };
+        let b = Aabb { min: Point2::new(1.0, 0.0), max: Point2::new(2.0, 1.0) };
+        assert!(!a.overlaps(&b));
+    }
+
+    #[test]
+    fn aabb_overlapping_returns_true() {
+        let a = Aabb { min: Point2::new(0.0, 0.0), max: Point2::new(2.0, 2.0) };
+        let b = Aabb { min: Point2::new(1.0, 1.0), max: Point2::new(3.0, 3.0) };
+        assert!(a.overlaps(&b));
+    }
+
+    #[test]
+    fn custom_polygon_requires_three_vertices() {
+        let result = Polygon::custom(vec![[0.0, 0.0], [1.0, 0.0]]);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn l_shape_point_in_cutout_is_outside() {
+        // l_shape(4,4,2,2): vertices [0,0],[4,0],[4,2],[2,2],[2,4],[0,4]
+        // Cutout region is x∈[2,4], y∈[2,4]
+        let l = Polygon::l_shape(4.0, 4.0, 2.0, 2.0);
+        assert!(!l.contains_point(3.0, 3.0)); // inside cutout
+        assert!(l.contains_point(1.0, 3.0));  // left arm — inside
+        assert!(l.contains_point(3.0, 1.0));  // bottom arm — inside
+    }
+
+    #[test]
+    fn to_convex_parts_rectangle_is_single_part() {
+        let r = Polygon::rectangle(3.0, 3.0);
+        let parts = r.to_convex_parts();
+        assert_eq!(parts.len(), 1);
+    }
+
+    #[test]
+    fn to_convex_parts_l_shape_yields_multiple_parts() {
+        let l = Polygon::l_shape(4.0, 4.0, 2.0, 2.0);
+        let parts = l.to_convex_parts();
+        assert!(parts.len() > 1);
+    }
+
+    #[test]
+    fn transformed_polygon_preserves_vertex_count() {
+        let l = Polygon::l_shape(4.0, 4.0, 2.0, 2.0);
+        let count = l.vertices().len();
+        let t = Transform2D::from_degrees(1.0, 2.0, 30.0);
+        assert_eq!(l.transformed(&t).vertices().len(), count);
     }
 }

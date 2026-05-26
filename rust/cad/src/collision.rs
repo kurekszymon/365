@@ -77,4 +77,33 @@ mod tests {
         let t_b = Transform2D::new(1.0, 0.0, 0.0);
         assert!(shapes_collide(&l, &t_a, &parts, &l, &t_b, &parts));
     }
+
+    #[test]
+    fn rectangles_exactly_touching_do_not_collide() {
+        // 2×2 rectangles centered at (0,0) and (2,0): edges meet at x=1 but no overlap
+        let r = Polygon::rectangle(2.0, 2.0);
+        let parts = r.to_convex_parts();
+        let t_a = Transform2D::new(0.0, 0.0, 0.0);
+        let t_b = Transform2D::new(2.0, 0.0, 0.0);
+        assert!(!shapes_collide(&r, &t_a, &parts, &r, &t_b, &parts));
+    }
+
+    #[test]
+    fn l_shapes_far_apart_do_not_collide() {
+        let l = Polygon::l_shape(4.0, 4.0, 2.0, 2.0);
+        let parts = l.to_convex_parts();
+        let t_a = Transform2D::new(0.0, 0.0, 0.0);
+        let t_b = Transform2D::new(20.0, 20.0, 0.0);
+        assert!(!shapes_collide(&l, &t_a, &parts, &l, &t_b, &parts));
+    }
+
+    #[test]
+    fn rotated_rectangles_that_overlap_collide() {
+        let r = Polygon::rectangle(4.0, 1.0);
+        let parts = r.to_convex_parts();
+        // One horizontal, one vertical — placed at origin both, cross in center
+        let t_horiz = Transform2D::from_degrees(0.0, 0.0, 0.0);
+        let t_vert = Transform2D::from_degrees(0.0, 0.0, 90.0);
+        assert!(shapes_collide(&r, &t_horiz, &parts, &r, &t_vert, &parts));
+    }
 }

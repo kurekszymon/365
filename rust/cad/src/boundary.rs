@@ -104,11 +104,46 @@ mod tests {
         // L-shape boundary: 10x10 with 5x5 cut from top-right
         let boundary = Boundary::new(Polygon::l_shape(10.0, 10.0, 5.0, 5.0));
         let shape = Polygon::rectangle(3.0, 3.0);
-        // Try placing in the cut-out area (top-right)
         let t = Transform2D::new(8.5, 8.5, 0.0);
         assert!(!boundary.contains_shape(&shape, &t));
-        // Placing in the valid bottom-left area should succeed
         let t2 = Transform2D::new(2.0, 2.0, 0.0);
         assert!(boundary.contains_shape(&shape, &t2));
+    }
+
+    #[test]
+    fn u_shape_boundary_blocks_notch() {
+        // u_shape(10,10,4,4): notch at x∈[3,7], y∈[6,10]
+        let boundary = Boundary::new(Polygon::u_shape(10.0, 10.0, 4.0, 4.0));
+        let shape = Polygon::rectangle(1.0, 1.0);
+        // Center at (5,8) — fully inside the notch, should be rejected
+        let t_notch = Transform2D::new(5.0, 8.0, 0.0);
+        assert!(!boundary.contains_shape(&shape, &t_notch));
+        // Center at (1.5,1.5) — bottom-left corner, clearly inside
+        let t_inside = Transform2D::new(1.5, 1.5, 0.0);
+        assert!(boundary.contains_shape(&shape, &t_inside));
+    }
+
+    #[test]
+    fn shape_straddling_boundary_edge_is_rejected() {
+        // 10x10 boundary from (0,0) to (10,10)
+        let boundary = Boundary::new(
+            Polygon::rectangle(10.0, 10.0).transformed(&Transform2D::new(5.0, 5.0, 0.0)),
+        );
+        let shape = Polygon::rectangle(4.0, 4.0);
+        // Centered at (9,5): x spans 7..11, right side exits boundary
+        let t = Transform2D::new(9.0, 5.0, 0.0);
+        assert!(!boundary.contains_shape(&shape, &t));
+    }
+
+    #[test]
+    fn rotated_shape_fits_inside_large_boundary() {
+        // 20x20 boundary centered at origin
+        let boundary = Boundary::new(
+            Polygon::rectangle(20.0, 20.0).transformed(&Transform2D::new(10.0, 10.0, 0.0)),
+        );
+        let shape = Polygon::rectangle(2.0, 2.0);
+        // 45° rotation — diagonal ~2.83, still fits easily near center
+        let t = Transform2D::from_degrees(10.0, 10.0, 45.0);
+        assert!(boundary.contains_shape(&shape, &t));
     }
 }

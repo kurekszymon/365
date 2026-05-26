@@ -270,4 +270,104 @@ mod tests {
         assert_eq!(scene.query_point(5.0, 5.0), Some(id));
         assert_eq!(scene.query_point(20.0, 20.0), None);
     }
+
+    #[test]
+    fn validate_placement_reports_collision_without_mutating() {
+        let mut scene = Scene::new();
+        let r = Polygon::rectangle(2.0, 2.0);
+        scene.add_shape(r.clone(), Transform2D::new(0.0, 0.0, 0.0), Default::default()).unwrap();
+
+        let result = scene.validate_placement(&r, &Transform2D::new(0.5, 0.0, 0.0));
+        assert!(!result.valid);
+        assert!(!result.collisions.is_empty());
+        // Scene must be unchanged — only one shape present
+        assert_eq!(scene.all_shapes().len(), 1);
+    }
+
+    #[test]
+    fn validate_move_does_not_self_collide() {
+        let mut scene = Scene::new();
+        let r = Polygon::rectangle(2.0, 2.0);
+        let id = scene.add_shape(r, Transform2D::new(0.0, 0.0, 0.0), Default::default()).unwrap();
+        // Moving to the same position must not flag the shape as colliding with itself
+        let result = scene.validate_move(id, &Transform2D::new(0.0, 0.0, 0.0));
+        assert!(result.valid);
+        assert!(result.collisions.is_empty());
+    }
+
+    #[test]
+    fn validate_move_still_detects_other_shapes() {
+        let mut scene = Scene::new();
+        let r = Polygon::rectangle(2.0, 2.0);
+        let id1 = scene.add_shape(r.clone(), Transform2D::new(0.0, 0.0, 0.0), Default::default()).unwrap();
+        scene.add_shape(r, Transform2D::new(5.0, 0.0, 0.0), Default::default()).unwrap();
+        // Moving id1 into id2's position should fail validation
+        let result = scene.validate_move(id1, &Transform2D::new(5.0, 0.0, 0.0));
+        assert!(!result.valid);
+        assert!(!result.collisions.is_empty());
+    }
+
+    #[test]
+    fn remove_existing_shape_returns_true() {
+        let mut scene = Scene::new();
+        let id = scene.add_shape(Polygon::rectangle(2.0, 2.0), Transform2D::new(0.0, 0.0, 0.0), Default::default()).unwrap();
+        assert!(scene.remove_shape(id));
+        assert_eq!(scene.all_shapes().len(), 0);
+    }
+
+    #[test]
+    fn remove_nonexistent_shape_returns_false() {
+        let mut scene = Scene::new();
+        assert!(!scene.remove_shape(999));
+    }
+
+    #[test]
+    fn move_nonexistent_shape_returns_not_found() {
+        let mut scene = Scene::new();
+        let err = scene.move_shape(999, Transform2D::new(0.0, 0.0, 0.0));
+        assert!(matches!(err, Err(PlacementError::ObjectNotFound(999))));
+    }
+
+    #[test]
+    fn all_shapes_count_matches_additions() {
+        let mut scene = Scene::new();
+        let r = Polygon::rectangle(1.0, 1.0);
+        for i in 0..4 {
+            scene.add_shape(r.clone(), Transform2D::new(i as f64 * 3.0, 0.0, 0.0), Default::default()).unwrap();
+        }
+        assert_eq!(scene.all_shapes().len(), 4);
+    }
+
+    #[test]
+    fn boundary_is_none_by_default_and_some_after_set() {
+        let mut scene = Scene::new();
+        assert!(scene.boundary().is_none());
+        scene.set_boundary(Polygon::rectangle(10.0, 10.0).transformed(&Transform2D::new(5.0, 5.0, 0.0)));
+        assert!(scene.boundary().is_some());
+    }
+
+    #[test]
+    fn l_shaped_boundary_rejects_shape_in_cutout() {
+        let mut scene = Scene::new();
+        // l_shape(10,10,5,5): cutout at x∈[5,10], y∈[5,10]
+        scene.set_boundary(Polygon::l_shape(10.0, 10.0, 5.0, 5.0));
+        let shape = Polygon::rectangle(2.0, 2.0);
+        // Centered at (8,8) — inside the cutout
+        let err = scene.add_shape(shape.clone(), Transform2D::new(8.0, 8.0, 0.0), Default::default());
+        assert!(matches!(err, Err(PlacementError::ExceedsBoundary)));
+        // Centered at (2,2) — valid region
+        let ok = scene.add_shape(shape, Transform2D::new(2.0, 2.0, 0.0), Default::default());
+        assert!(ok.is_ok());
+    }
+
+    #[test]
+    fn get_shape_info_returns_correct_id_and_vertex_count() {
+        let mut scene = Scene::new();
+        let r = Polygon::rectangle(2.0, 3.0);
+        let vertex_count = r.vertices().len();
+        let id = scene.add_shape(r, Transform2D::new(1.0, 1.0, 0.0), Default::default()).unwrap();
+        let info = scene.get_shape_info(id).unwrap();
+        assert_eq!(info.id, id);
+        assert_eq!(info.world_vertices.len(), vertex_count);
+    }
 }
