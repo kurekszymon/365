@@ -1,0 +1,82 @@
+{
+  "id": "ru-04-people",
+  "cards": [
+    {
+      "id": "ru-04-01",
+      "source": { "en": "My mom is at home.", "pl": "Moja mama jest w domu." },
+      "target": "Моя мама дома.",
+      "newWords": ["мама"],
+      "notes": { "en": "моя = my (feminine)", "pl": "моя = moja (rodzaj żeński)" }
+    },
+    {
+      "id": "ru-04-02",
+      "source": { "en": "Dad went to work.", "pl": "Tata poszedł do pracy." },
+      "target": "Папа пошёл на работу.",
+      "newWords": ["папа"]
+    },
+    {
+      "id": "ru-04-03",
+      "source": { "en": "My friend knows this street.", "pl": "Mój przyjaciel zna tę ulicę." },
+      "target": "Мой друг знает эту улицу.",
+      "newWords": ["друг"],
+      "notes": { "en": "друг = friend (male)", "pl": "друг = przyjaciel" }
+    },
+    {
+      "id": "ru-04-04",
+      "source": { "en": "The child wants to eat.", "pl": "Dziecko chce jeść." },
+      "target": "Ребёнок хочет есть.",
+      "newWords": ["ребёнок"]
+    },
+    {
+      "id": "ru-04-05",
+      "source": { "en": "My brother goes to school.", "pl": "Mój brat chodzi do szkoły." },
+      "target": "Мой брат ходит в школу.",
+      "newWords": ["брат"],
+      "notes": { "en": "брат = brother", "pl": "брат = brat" }
+    },
+    {
+      "id": "ru-04-06",
+      "source": { "en": "Mom likes to drink tea.", "pl": "Mama lubi pić herbatę." },
+      "target": "Маме нравится пить чай.",
+      "newWords": ["мама"]
+    },
+    {
+      "id": "ru-04-07",
+      "source": { "en": "My friend and I went to the store.", "pl": "Z przyjacielem poszliśmy do sklepu." },
+      "target": "Мы с другом ходили в магазин.",
+      "newWords": ["другом"],
+      "notes": { "en": "с другом = with a friend (instrumental case)", "pl": "с другом = z przyjacielem (narzędnik)" }
+    },
+    {
+      "id": "ru-04-08",
+      "source": { "en": "Dad knows how to cook soup.", "pl": "Tata umie gotować zupę." },
+      "target": "Папа умеет готовить суп.",
+      "newWords": ["папа"]
+    },
+    {
+      "id": "ru-04-09",
+      "source": { "en": "The children are at home.", "pl": "Dzieci są w domu." },
+      "target": "Дети дома.",
+      "newWords": ["дети"],
+      "notes": { "en": "дети = children (plural of ребёнок)", "pl": "дети = dzieci (l.mn. od ребёнок)" }
+    },
+    {
+      "id": "ru-04-10",
+      "source": { "en": "My brother wants water.", "pl": "Mój brat chce wodę." },
+      "target": "Мой брат хочет воду.",
+      "newWords": ["брат"]
+    },
+    {
+      "id": "ru-04-11",
+      "source": { "en": "Mom went to the store to buy bread.", "pl": "Mama poszła do sklepu kupić chleb." },
+      "target": "Мама пошла в магазин купить хлеб.",
+      "newWords": ["мама"]
+    },
+    {
+      "id": "ru-04-12",
+      "source": { "en": "I like my friend.", "pl": "Lubię mojego przyjaciela." },
+      "target": "Мне нравится мой друг.",
+      "newWords": ["друг"]
+    }
+  ]
+}

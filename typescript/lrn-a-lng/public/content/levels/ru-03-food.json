@@ -1,0 +1,86 @@
+{
+  "id": "ru-03-food",
+  "cards": [
+    {
+      "id": "ru-03-01",
+      "source": { "en": "I want to drink water.", "pl": "Chcę pić wodę." },
+      "target": "Я хочу пить воду.",
+      "newWords": ["пить", "воду"],
+      "notes": { "en": "воду = water (accusative of вода)", "pl": "воду = wodę (biernik od вода)" }
+    },
+    {
+      "id": "ru-03-02",
+      "source": { "en": "I like tea with milk.", "pl": "Lubię herbatę z mlekiem." },
+      "target": "Мне нравится чай с молоком.",
+      "newWords": ["чай", "молоком"],
+      "notes": { "en": "с молоком = with milk (instrumental case)", "pl": "с молоком = z mlekiem (narzędnik)" }
+    },
+    {
+      "id": "ru-03-03",
+      "source": { "en": "We eat bread every day.", "pl": "Jemy chleb każdego dnia." },
+      "target": "Мы едим хлеб каждый день.",
+      "newWords": ["едим", "хлеб"],
+      "notes": { "en": "едим = we eat (from есть)", "pl": "едим = jemy (od есть)" }
+    },
+    {
+      "id": "ru-03-04",
+      "source": { "en": "The soup is very tasty.", "pl": "Zupa jest bardzo smaczna." },
+      "target": "Суп очень вкусный.",
+      "newWords": ["суп", "вкусный"],
+      "notes": { "en": "вкусный = tasty/delicious", "pl": "вкусный = smaczny/pyszny" }
+    },
+    {
+      "id": "ru-03-05",
+      "source": { "en": "She drinks milk in the morning.", "pl": "Ona pije mleko rano." },
+      "target": "Она пьёт молоко утром.",
+      "newWords": ["пьёт", "молоко"],
+      "notes": { "en": "пьёт = she/he drinks (from пить)", "pl": "пьёт = pije (od пить)" }
+    },
+    {
+      "id": "ru-03-06",
+      "source": { "en": "I want to buy bread.", "pl": "Chcę kupić chleb." },
+      "target": "Я хочу купить хлеб.",
+      "newWords": ["купить", "хлеб"],
+      "notes": { "en": "купить = to buy", "pl": "купить = kupić" }
+    },
+    {
+      "id": "ru-03-07",
+      "source": { "en": "Do you want tea?", "pl": "Chcesz herbatę?" },
+      "target": "Ты хочешь чай?",
+      "newWords": ["чай"]
+    },
+    {
+      "id": "ru-03-08",
+      "source": { "en": "I went to the store to buy water.", "pl": "Poszedłem do sklepu kupić wodę." },
+      "target": "Я ходил в магазин купить воду.",
+      "newWords": ["купить", "воду"]
+    },
+    {
+      "id": "ru-03-09",
+      "source": { "en": "He knows how to cook soup.", "pl": "On umie gotować zupę." },
+      "target": "Он умеет готовить суп.",
+      "newWords": ["готовить", "суп"],
+      "notes": { "en": "готовить = to cook, умеет = knows how to", "pl": "готовить = gotować, умеет = umie" }
+    },
+    {
+      "id": "ru-03-10",
+      "source": { "en": "There is no milk at home.", "pl": "W domu nie ma mleka." },
+      "target": "Дома нет молока.",
+      "newWords": ["молока"],
+      "notes": { "en": "нет молока = no milk (genitive case)", "pl": "нет молока = nie ma mleka (dopełniacz)" }
+    },
+    {
+      "id": "ru-03-11",
+      "source": { "en": "Children like to eat bread with soup.", "pl": "Dzieci lubią jeść chleb z zupą." },
+      "target": "Детям нравится есть хлеб с супом.",
+      "newWords": ["хлеб", "супом"]
+    },
+    {
+      "id": "ru-03-12",
+      "source": { "en": "I drink water every day.", "pl": "Piję wodę każdego dnia." },
+      "target": "Я пью воду каждый день.",
+      "newWords": ["пью", "воду"],
+      "notes": { "en": "пью = I drink (from пить)", "pl": "пью = piję (od пить)" }
+    }
+  ]
+}

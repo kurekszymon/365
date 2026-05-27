@@ -1,0 +1,83 @@
+{
+  "id": "ru-05-time",
+  "cards": [
+    {
+      "id": "ru-05-01",
+      "source": { "en": "In the morning I drink tea.", "pl": "Rano piję herbatę." },
+      "target": "Утром я пью чай.",
+      "newWords": ["утром"],
+      "notes": { "en": "утром = in the morning (instrumental of утро)", "pl": "утром = rano (narzędnik od утро)" }
+    },
+    {
+      "id": "ru-05-02",
+      "source": { "en": "In the evening we eat soup.", "pl": "Wieczorem jemy zupę." },
+      "target": "Вечером мы едим суп.",
+      "newWords": ["вечером"],
+      "notes": { "en": "вечером = in the evening (from вечер)", "pl": "вечером = wieczorem (od вечер)" }
+    },
+    {
+      "id": "ru-05-03",
+      "source": { "en": "Today I go to school.", "pl": "Dzisiaj idę do szkoły." },
+      "target": "Сегодня я иду в школу.",
+      "newWords": ["сегодня"]
+    },
+    {
+      "id": "ru-05-04",
+      "source": { "en": "I always want to eat.", "pl": "Zawsze chcę jeść." },
+      "target": "Я всегда хочу есть.",
+      "newWords": ["всегда"],
+      "notes": { "en": "всегда = always", "pl": "всегда = zawsze" }
+    },
+    {
+      "id": "ru-05-05",
+      "source": { "en": "First I eat, then I go.", "pl": "Najpierw jem, potem idę." },
+      "target": "Сначала я ем, потом иду.",
+      "newWords": ["сначала", "потом"],
+      "notes": { "en": "сначала = first/at first, потом = then/after", "pl": "сначала = najpierw, потом = potem" }
+    },
+    {
+      "id": "ru-05-06",
+      "source": { "en": "Mom always goes to work in the morning.", "pl": "Mama zawsze chodzi do pracy rano." },
+      "target": "Мама всегда ходит на работу утром.",
+      "newWords": ["всегда", "утром"]
+    },
+    {
+      "id": "ru-05-07",
+      "source": { "en": "Today dad is at home.", "pl": "Dzisiaj tata jest w domu." },
+      "target": "Сегодня папа дома.",
+      "newWords": ["сегодня"]
+    },
+    {
+      "id": "ru-05-08",
+      "source": { "en": "In the evening I always drink milk.", "pl": "Wieczorem zawsze piję mleko." },
+      "target": "Вечером я всегда пью молоко.",
+      "newWords": ["вечером", "всегда"]
+    },
+    {
+      "id": "ru-05-09",
+      "source": { "en": "My brother went to the store, then came home.", "pl": "Mój brat poszedł do sklepu, potem wrócił do domu." },
+      "target": "Мой брат ходил в магазин, потом пришёл домой.",
+      "newWords": ["потом"],
+      "notes": { "en": "пришёл = came/arrived (from прийти)", "pl": "пришёл = przyszedł (od прийти)" }
+    },
+    {
+      "id": "ru-05-10",
+      "source": { "en": "Today I want to eat soup.", "pl": "Dzisiaj chcę zjeść zupę." },
+      "target": "Сегодня я хочу есть суп.",
+      "newWords": ["сегодня"]
+    },
+    {
+      "id": "ru-05-11",
+      "source": { "en": "My friend always knows everything.", "pl": "Mój przyjaciel zawsze wszystko wie." },
+      "target": "Мой друг всегда всё знает.",
+      "newWords": ["всегда"],
+      "notes": { "en": "всё = everything", "pl": "всё = wszystko" }
+    },
+    {
+      "id": "ru-05-12",
+      "source": { "en": "In the morning I eat bread, in the evening soup.", "pl": "Rano jem chleb, wieczorem zupę." },
+      "target": "Утром я ем хлеб, вечером суп.",
+      "newWords": ["утром", "вечером"]
+    }
+  ]
+}

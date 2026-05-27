@@ -1,0 +1,85 @@
+{
+  "id": "ru-02-places",
+  "cards": [
+    {
+      "id": "ru-02-01",
+      "source": { "en": "I am going home.", "pl": "Idę do domu." },
+      "target": "Я иду домой.",
+      "newWords": ["домой"],
+      "notes": { "en": "домой = homeward (direction), дом = home (place)", "pl": "домой = do domu (kierunek)" }
+    },
+    {
+      "id": "ru-02-02",
+      "source": { "en": "The school is on this street.", "pl": "Szkoła jest na tej ulicy." },
+      "target": "Школа на этой улице.",
+      "newWords": ["школа", "улице"],
+      "notes": { "en": "улице = street (prepositional case of улица)", "pl": "улице = ulicy (miejscownik od улица)" }
+    },
+    {
+      "id": "ru-02-03",
+      "source": { "en": "I want to go to the store.", "pl": "Chcę iść do sklepu." },
+      "target": "Я хочу идти в магазин.",
+      "newWords": ["магазин"],
+      "notes": { "en": "магазин = store/shop", "pl": "магазин = sklep" }
+    },
+    {
+      "id": "ru-02-04",
+      "source": { "en": "She works at home.", "pl": "Ona pracuje w domu." },
+      "target": "Она работает дома.",
+      "newWords": ["работает", "дома"],
+      "notes": { "en": "работает = works (from работать), дома = at home", "pl": "работает = pracuje (od работать), дома = w domu" }
+    },
+    {
+      "id": "ru-02-05",
+      "source": { "en": "The children go to school.", "pl": "Dzieci idą do szkoły." },
+      "target": "Дети идут в школу.",
+      "newWords": ["школу"],
+      "notes": { "en": "школу = school (accusative case of школа)", "pl": "школу = szkoły (biernik od школа)" }
+    },
+    {
+      "id": "ru-02-06",
+      "source": { "en": "I like this street.", "pl": "Lubię tę ulicę." },
+      "target": "Мне нравится эта улица.",
+      "newWords": ["улица"]
+    },
+    {
+      "id": "ru-02-07",
+      "source": { "en": "He went to work.", "pl": "Poszedł do pracy." },
+      "target": "Он пошёл на работу.",
+      "newWords": ["работу"],
+      "notes": { "en": "на работу = to work (direction)", "pl": "на работу = do pracy (kierunek)" }
+    },
+    {
+      "id": "ru-02-08",
+      "source": { "en": "The house is big.", "pl": "Dom jest duży." },
+      "target": "Дом большой.",
+      "newWords": ["дом", "большой"],
+      "notes": { "en": "большой = big/large", "pl": "большой = duży" }
+    },
+    {
+      "id": "ru-02-09",
+      "source": { "en": "Where is the store?", "pl": "Gdzie jest sklep?" },
+      "target": "Где магазин?",
+      "newWords": ["магазин"]
+    },
+    {
+      "id": "ru-02-10",
+      "source": { "en": "I know this school.", "pl": "Znam tę szkołę." },
+      "target": "Я знаю эту школу.",
+      "newWords": ["школу"]
+    },
+    {
+      "id": "ru-02-11",
+      "source": { "en": "We want to go home.", "pl": "Chcemy iść do domu." },
+      "target": "Мы хотим идти домой.",
+      "newWords": ["домой"]
+    },
+    {
+      "id": "ru-02-12",
+      "source": { "en": "There are many people on the street.", "pl": "Na ulicy jest dużo ludzi." },
+      "target": "На улице много людей.",
+      "newWords": ["улице"],
+      "notes": { "en": "много людей = many people", "pl": "много людей = dużo ludzi" }
+    }
+  ]
+}

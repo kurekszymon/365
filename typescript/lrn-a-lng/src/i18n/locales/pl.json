@@ -1,0 +1,54 @@
+{
+  "app": {
+    "title": "lrn-a-lng"
+  },
+  "nav": {
+    "home": "Poziomy",
+    "review": "Powtórka",
+    "settings": "Ustawienia"
+  },
+  "home": {
+    "title": "Poziomy",
+    "locked": "Zablokowany",
+    "completed": "Ukończony",
+    "cards": "{{count}} kart"
+  },
+  "level": {
+    "cardOf": "{{current}} / {{total}}",
+    "knew": "Wiedziałem",
+    "didntKnow": "Nie wiedziałem",
+    "tapToReveal": "Dotknij, aby odkryć",
+    "notes": "Notatki"
+  },
+  "summary": {
+    "title": "Poziom ukończony!",
+    "correct": "Poprawne",
+    "incorrect": "Do powtórki",
+    "nextLevel": "Następny poziom",
+    "reviewMistakes": "Powtórz błędy",
+    "backHome": "Wróć do poziomów"
+  },
+  "review": {
+    "title": "Powtórka",
+    "empty": "Brak kart do powtórki!",
+    "emptyDesc": "Ukończ kilka poziomów i wróć, aby ćwiczyć.",
+    "cardsToReview": "{{count}} kart do powtórki"
+  },
+  "settings": {
+    "title": "Ustawienia",
+    "sourceLanguage": "Język źródłowy",
+    "uiLanguage": "Język interfejsu",
+    "exportProgress": "Eksportuj postęp",
+    "importProgress": "Importuj postęp",
+    "resetProgress": "Resetuj cały postęp",
+    "resetConfirm": "Czy na pewno? Tej operacji nie można cofnąć.",
+    "resetCancel": "Anuluj",
+    "resetConfirmBtn": "Resetuj",
+    "importSuccess": "Postęp zaimportowany pomyślnie!",
+    "importError": "Nieprawidłowy plik postępu."
+  },
+  "languages": {
+    "en": "Angielski",
+    "pl": "Polski"
+  }
+}

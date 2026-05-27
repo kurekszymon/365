@@ -1,0 +1,89 @@
+{
+  "id": "ru-01-basic-verbs",
+  "cards": [
+    {
+      "id": "ru-01-01",
+      "source": { "en": "I go to school.", "pl": "Idę do szkoły." },
+      "target": "Я иду в школу.",
+      "newWords": ["иду"],
+      "notes": { "en": "иду = I go/am going (from идти)", "pl": "иду = idę (od идти)" }
+    },
+    {
+      "id": "ru-01-02",
+      "source": { "en": "I like to eat apples.", "pl": "Lubię jeść jabłka." },
+      "target": "Мне нравится есть яблоки.",
+      "newWords": ["нравится", "есть"],
+      "notes": { "en": "нравится = to like (impersonal: lit. 'it pleases me')", "pl": "нравится = lubić (dosł. 'podoba mi się')" }
+    },
+    {
+      "id": "ru-01-03",
+      "source": { "en": "I want to sleep.", "pl": "Chcę spać." },
+      "target": "Я хочу спать.",
+      "newWords": ["хочу"],
+      "notes": { "en": "хочу = I want (from хотеть)", "pl": "хочу = chcę (od хотеть)" }
+    },
+    {
+      "id": "ru-01-04",
+      "source": { "en": "I know this word.", "pl": "Znam to słowo." },
+      "target": "Я знаю это слово.",
+      "newWords": ["знаю"],
+      "notes": { "en": "знаю = I know (from знать)", "pl": "знаю = znam (od знать)" }
+    },
+    {
+      "id": "ru-01-05",
+      "source": { "en": "She goes to work.", "pl": "Ona idzie do pracy." },
+      "target": "Она идёт на работу.",
+      "newWords": ["идёт"],
+      "notes": { "en": "идёт = she/he goes (3rd person of идти)", "pl": "идёт = idzie (3 os. od идти)" }
+    },
+    {
+      "id": "ru-01-06",
+      "source": { "en": "We like this film.", "pl": "Lubimy ten film." },
+      "target": "Нам нравится этот фильм.",
+      "newWords": ["нравится"],
+      "notes": { "en": "Нам нравится = We like (lit. 'to us it pleases')", "pl": "Нам нравится = lubimy (dosł. 'nam się podoba')" }
+    },
+    {
+      "id": "ru-01-07",
+      "source": { "en": "He wants to eat.", "pl": "On chce jeść." },
+      "target": "Он хочет есть.",
+      "newWords": ["хочет", "есть"],
+      "notes": { "en": "хочет = he/she wants (3rd person of хотеть)", "pl": "хочет = chce (3 os. od хотеть)" }
+    },
+    {
+      "id": "ru-01-08",
+      "source": { "en": "Do you know where it is?", "pl": "Wiesz, gdzie to jest?" },
+      "target": "Ты знаешь, где это?",
+      "newWords": ["знаешь"],
+      "notes": { "en": "знаешь = you know (informal, from знать)", "pl": "знаешь = wiesz (od знать)" }
+    },
+    {
+      "id": "ru-01-09",
+      "source": { "en": "I went to the park.", "pl": "Poszedłem do parku." },
+      "target": "Я ходил в парк.",
+      "newWords": ["ходил"],
+      "notes": { "en": "ходил = went (past tense, male speaker, from ходить)", "pl": "ходил = chodziłem (czas przeszły, od ходить)" }
+    },
+    {
+      "id": "ru-01-10",
+      "source": { "en": "They want to know.", "pl": "Oni chcą wiedzieć." },
+      "target": "Они хотят знать.",
+      "newWords": ["хотят", "знать"],
+      "notes": { "en": "хотят = they want (from хотеть)", "pl": "хотят = chcą (od хотеть)" }
+    },
+    {
+      "id": "ru-01-11",
+      "source": { "en": "I like to eat tomato soup.", "pl": "Lubię jeść zupę pomidorową." },
+      "target": "Мне нравится есть томатный суп.",
+      "newWords": ["нравится", "есть"],
+      "notes": { "en": "томатный суп = tomato soup", "pl": "томатный суп = zupa pomidorowa" }
+    },
+    {
+      "id": "ru-01-12",
+      "source": { "en": "Where are you going?", "pl": "Dokąd idziesz?" },
+      "target": "Куда ты идёшь?",
+      "newWords": ["идёшь"],
+      "notes": { "en": "идёшь = you are going (informal, from идти)", "pl": "идёшь = idziesz (od идти)" }
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "app": {
+    "title": "lrn-a-lng"
+  },
+  "nav": {
+    "home": "Home",
+    "review": "Review",
+    "settings": "Settings"
+  },
+  "home": {
+    "title": "Levels",
+    "locked": "Locked",
+    "completed": "Completed",
+    "cards": "{{count}} cards"
+  },
+  "level": {
+    "cardOf": "{{current}} / {{total}}",
+    "knew": "Knew it",
+    "didntKnow": "Didn't know",
+    "tapToReveal": "Tap to reveal",
+    "notes": "Notes"
+  },
+  "summary": {
+    "title": "Level Complete!",
+    "correct": "Correct",
+    "incorrect": "Needs practice",
+    "nextLevel": "Next Level",
+    "reviewMistakes": "Review mistakes",
+    "backHome": "Back to levels"
+  },
+  "review": {
+    "title": "Review",
+    "empty": "No cards to review!",
+    "emptyDesc": "Complete some levels and come back to practice.",
+    "cardsToReview": "{{count}} cards to review"
+  },
+  "settings": {
+    "title": "Settings",
+    "sourceLanguage": "Source language",
+    "uiLanguage": "UI language",
+    "exportProgress": "Export progress",
+    "importProgress": "Import progress",
+    "resetProgress": "Reset all progress",
+    "resetConfirm": "Are you sure? This cannot be undone.",
+    "resetCancel": "Cancel",
+    "resetConfirmBtn": "Reset",
+    "importSuccess": "Progress imported successfully!",
+    "importError": "Invalid progress file."
+  },
+  "languages": {
+    "en": "English",
+    "pl": "Polish"
+  }
+}

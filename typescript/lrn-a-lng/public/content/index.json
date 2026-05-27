@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "targetLanguage": "ru",
+  "levels": [
+    {
+      "id": "ru-01-basic-verbs",
+      "order": 1,
+      "title": { "en": "Basic Verbs", "pl": "Podstawowe czasowniki" },
+      "description": { "en": "go, eat, like, want, know", "pl": "iść, jeść, lubić, chcieć, wiedzieć" },
+      "newWords": ["идти", "есть", "нравиться", "хотеть", "знать"],
+      "cardCount": 12,
+      "file": "levels/ru-01-basic-verbs.json"
+    },
+    {
+      "id": "ru-02-places",
+      "order": 2,
+      "title": { "en": "Places & Directions", "pl": "Miejsca i kierunki" },
+      "description": { "en": "home, school, store, street", "pl": "dom, szkoła, sklep, ulica" },
+      "newWords": ["дом", "школа", "магазин", "улица", "работа"],
+      "cardCount": 12,
+      "file": "levels/ru-02-places.json"
+    },
+    {
+      "id": "ru-03-food",
+      "order": 3,
+      "title": { "en": "Food & Drink", "pl": "Jedzenie i picie" },
+      "description": { "en": "bread, water, soup, tea", "pl": "chleb, woda, zupa, herbata" },
+      "newWords": ["хлеб", "вода", "суп", "чай", "молоко"],
+      "cardCount": 12,
+      "file": "levels/ru-03-food.json"
+    },
+    {
+      "id": "ru-04-people",
+      "order": 4,
+      "title": { "en": "People & Family", "pl": "Ludzie i rodzina" },
+      "description": { "en": "mother, father, friend, child", "pl": "matka, ojciec, przyjaciel, dziecko" },
+      "newWords": ["мама", "папа", "друг", "ребёнок", "брат"],
+      "cardCount": 12,
+      "file": "levels/ru-04-people.json"
+    },
+    {
+      "id": "ru-05-time",
+      "order": 5,
+      "title": { "en": "Time & Routine", "pl": "Czas i codzienna rutyna" },
+      "description": { "en": "morning, evening, today, always", "pl": "rano, wieczór, dzisiaj, zawsze" },
+      "newWords": ["утро", "вечер", "сегодня", "всегда", "потом"],
+      "cardCount": 12,
+      "file": "levels/ru-05-time.json"
+    }
+  ]
+}
