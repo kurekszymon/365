@@ -213,7 +213,7 @@ let scale = 60;          // px per world-unit (1 unit = 1 metre)
 let panX  = 80;
 let panY  = 80;
 
-const shapes = new Map(); // BigInt id → { localVerts, x, y, rotDeg, label, type, params }
+const shapes = new Map(); // BigInt id → { x, y, rotDeg, label, type, params }
 let boundaryVerts = null; // [[x,y], ...] world coords
 
 let mode         = 'select';  // 'select' | 'add'
@@ -233,44 +233,27 @@ const ctx    = canvas.getContext('2d');
 const toCanvas = (wx, wy) => [panX + wx * scale, panY + wy * scale];
 const toWorld  = (cx, cy) => [(cx - panX) / scale, (cy - panY) / scale];
 
-function applyTransform(verts, x, y, rotDeg) {
-  const r = rotDeg * Math.PI / 180;
-  const cos = Math.cos(r), sin = Math.sin(r);
-  return verts.map(([vx, vy]) => [vx*cos - vy*sin + x, vx*sin + vy*cos + y]);
-}
-
 function centroidOf(verts) {
   let sx = 0, sy = 0;
   for (const [x, y] of verts) { sx += x; sy += y; }
   return [sx / verts.length, sy / verts.length];
 }
 
-// ── Local vertex factories (must match Rust polygon.rs exactly) ───────────────
+// ── World-vertex helpers (delegate to WASM) ───────────────────────────────────
 
-function makeLocalVerts(type, params) {
+function getWorldVerts(type, params, x, y, rotDeg) {
   const [a, b, c, d] = params;
-  if (type === 'rect') {
-    const [w, h] = [a, b];
-    return [[-w/2, -h/2], [w/2, -h/2], [w/2, h/2], [-w/2, h/2]];
-  }
-  if (type === 'lshape') {
-    const [ow, oh, cw, ch] = [a, b, c, d];
-    return [[0,0],[ow,0],[ow,oh-ch],[ow-cw,oh-ch],[ow-cw,oh],[0,oh]];
-  }
-  if (type === 'ushape') {
-    const [ow, oh, cw, ch] = [a, b, c, d];
-    const cx = (ow - cw) / 2;
-    return [[0,0],[ow,0],[ow,oh],[cx+cw,oh],[cx+cw,oh-ch],[cx,oh-ch],[cx,oh],[0,oh]];
-  }
+  if (type === 'rect')   return cad.getRectWorldVerts(a, b, x, y, rotDeg);
+  if (type === 'lshape') return cad.getLShapeWorldVerts(a, b, c, d, x, y, rotDeg);
+  if (type === 'ushape') return cad.getUShapeWorldVerts(a, b, c, d, x, y, rotDeg);
   return [];
 }
 
 // ── Resize handles ────────────────────────────────────────────────────────────
 
-function getResizeHandles(s) {
-  if (s.type !== 'rect') return [];
-  const worldVerts = applyTransform(s.localVerts, s.x, s.y, s.rotDeg);
-  return worldVerts.map((wv, i) => ({ worldPos: wv, idx: i }));
+function getResizeHandles(id, type) {
+  if (type !== 'rect') return [];
+  return cad.getShapeVertices(id).map((wv, i) => ({ worldPos: wv, idx: i }));
 }
 
 function hitTestHandles(handles, canvasX, canvasY) {
@@ -298,7 +281,7 @@ function drawHandles(handles, activeIdx = -1) {
 }
 
 function commitResize() {
-  const { id, newX, newY, newW, newH, rotDeg, ghostLocalVerts, type } = resize;
+  const { id, newX, newY, newW, newH, rotDeg, type } = resize;
   const label = `Rect ${newW.toFixed(1)}×${newH.toFixed(1)}`;
   shapes.delete(id);
   let newId;
@@ -309,7 +292,7 @@ function commitResize() {
     setStatus(`Resize failed: ${err}`, 'error');
     return;
   }
-  shapes.set(newId, { localVerts: ghostLocalVerts, x: newX, y: newY, rotDeg, label, type: 'rect', params: [newW, newH] });
+  shapes.set(newId, { x: newX, y: newY, rotDeg, label, type: 'rect', params: [newW, newH] });
   selectedId = newId;
   resize = null;
   updateShapeInfo(newId);
@@ -317,14 +300,14 @@ function commitResize() {
 }
 
 function revertResize() {
-  const { id, origLocalVerts, origX, origY, origParams, origLabel, rotDeg, type } = resize;
+  const { id, origX, origY, origParams, origLabel, rotDeg, type } = resize;
   shapes.delete(id);
   let newId;
   try {
     if (type === 'rect')        newId = cad.addRectangle(...origParams, origX, origY, rotDeg);
     else if (type === 'lshape') newId = cad.addLShape(...origParams, origX, origY, rotDeg);
     else if (type === 'ushape') newId = cad.addUShape(...origParams, origX, origY, rotDeg);
-    shapes.set(newId, { localVerts: origLocalVerts, x: origX, y: origY, rotDeg, label: origLabel, type, params: origParams });
+    shapes.set(newId, { x: origX, y: origY, rotDeg, label: origLabel, type, params: origParams });
     selectedId = newId;
     updateShapeInfo(newId);
   } catch {
@@ -336,9 +319,13 @@ function revertResize() {
 
 // ── Validation helpers ────────────────────────────────────────────────────────
 
-function tryValidate(localVerts, x, y, rotDeg) {
+function tryValidate(type, params, x, y, rotDeg) {
   try {
-    return cad.validatePlacement(localVerts, x, y, rotDeg);
+    const [a, b, c, d] = params;
+    if (type === 'rect')   return cad.validateRectPlacement(a, b, x, y, rotDeg);
+    if (type === 'lshape') return cad.validateLShapePlacement(a, b, c, d, x, y, rotDeg);
+    if (type === 'ushape') return cad.validateUShapePlacement(a, b, c, d, x, y, rotDeg);
+    return { valid: false, collisions: [], exceeds_boundary: true };
   } catch {
     return { valid: false, collisions: [], exceeds_boundary: true };
   }
@@ -368,17 +355,15 @@ function setRoom(type) {
 
   if (type === 'rect') {
     cad.setRectangularBoundary(12, 10);
-    boundaryVerts = [[0,0],[12,0],[12,10],[0,10]];
     fitView(12, 10);
   } else if (type === 'l') {
     cad.setLShapeBoundary(12, 10, 4, 4);
-    boundaryVerts = makeLocalVerts('lshape', [12, 10, 4, 4]);
     fitView(12, 10);
   } else if (type === 'u') {
     cad.setUShapeBoundary(12, 8, 4, 4);
-    boundaryVerts = makeLocalVerts('ushape', [12, 8, 4, 4]);
     fitView(12, 8);
   }
+  boundaryVerts = cad.getBoundary();
 
   document.querySelectorAll('[id^="btn-"]').forEach(b => b.classList.remove('active'));
   document.getElementById(`btn-${type}`).classList.add('active');
@@ -401,10 +386,9 @@ function fitView(roomW, roomH) {
 
 window.startAdd = function(type, params) {
   mode = 'add';
-  const lv    = makeLocalVerts(type, params);
   const label = `${type === 'rect' ? 'Rect' : type === 'lshape' ? 'L' : 'U'} ${params[0]}×${params[1]}`;
-  pendingAdd  = { type, params, localVerts: lv, rotDeg: 0, label };
-  ghostValid  = tryValidate(lv, ...mouseWorld, 0).valid;
+  pendingAdd  = { type, params, rotDeg: 0, label };
+  ghostValid  = tryValidate(type, params, ...mouseWorld, 0).valid;
   selectedId  = null;
   canvas.className = 'add-mode';
   document.querySelectorAll('[id^="add-"]').forEach(b => b.classList.remove('active'));
@@ -429,13 +413,13 @@ function cancelAdd() {
 // ── Place / move shapes ───────────────────────────────────────────────────────
 
 function commitAdd(x, y) {
-  const { type, params, localVerts, rotDeg, label } = pendingAdd;
+  const { type, params, rotDeg, label } = pendingAdd;
   try {
     let id;
     if (type === 'rect')   id = cad.addRectangle(...params, x, y, rotDeg);
     else if (type === 'lshape') id = cad.addLShape(...params, x, y, rotDeg);
     else if (type === 'ushape') id = cad.addUShape(...params, x, y, rotDeg);
-    shapes.set(id, { localVerts, x, y, rotDeg, label, type, params });
+    shapes.set(id, { x, y, rotDeg, label, type, params });
     selectedId = id;
     updateShapeInfo(id);
     setStatus(`Placed ${label}`, 'ok');
@@ -564,7 +548,7 @@ function render() {
     if (drag?.id === id)   continue; // rendered as drag ghost
     if (resize?.id === id) continue; // rendered as resize ghost
 
-    const worldVerts = applyTransform(s.localVerts, s.x, s.y, s.rotDeg);
+    const worldVerts = cad.getShapeVertices(id);
     const isSel      = id === selectedId;
 
     drawPolygon(worldVerts,
@@ -576,19 +560,21 @@ function render() {
 
     if (isSel) {
       drawAnchorDot(s.x, s.y, '#6090ff');
-      const handles = getResizeHandles(s);
-      if (handles.length) drawHandles(handles, hoveredHandle?.idx ?? -1);
+      if (s.type === 'rect') {
+        const handles = worldVerts.map((wv, i) => ({ worldPos: wv, idx: i }));
+        drawHandles(handles, hoveredHandle?.idx ?? -1);
+      }
     }
   }
 
   // Drag ghost (moving an existing shape)
   if (drag) {
-    // Faint original position
-    const origVerts = applyTransform(drag.localVerts, drag.startPos[0], drag.startPos[1], drag.rotDeg);
+    // Faint original position — shape is still in WASM at startPos
+    const origVerts = cad.getShapeVertices(drag.id);
     drawPolygon(origVerts, null, 'rgba(80,80,180,0.25)', 1);
 
     // Ghost at current position
-    const ghostVerts = applyTransform(drag.localVerts, drag.currentX, drag.currentY, drag.rotDeg);
+    const ghostVerts = getWorldVerts(drag.type, drag.params, drag.currentX, drag.currentY, drag.rotDeg);
     const v = drag.valid;
     drawPolygon(ghostVerts,
       v ? 'rgba(40,200,80,0.28)' : 'rgba(220,50,50,0.28)',
@@ -598,12 +584,12 @@ function render() {
     drawAnchorDot(drag.currentX, drag.currentY, v ? '#40dd70' : '#ff5050');
   }
 
-  // Resize ghost (resizing an existing shape)
+  // Resize ghost (resizing an existing shape — shape is removed from WASM during resize)
   if (resize) {
-    const origVerts = applyTransform(resize.origLocalVerts, resize.origX, resize.origY, resize.rotDeg);
+    const origVerts = getWorldVerts('rect', resize.origParams, resize.origX, resize.origY, resize.rotDeg);
     drawPolygon(origVerts, null, 'rgba(80,80,180,0.25)', 1);
 
-    const ghostVerts = applyTransform(resize.ghostLocalVerts, resize.newX, resize.newY, resize.rotDeg);
+    const ghostVerts = getWorldVerts('rect', [resize.newW, resize.newH], resize.newX, resize.newY, resize.rotDeg);
     const v = resize.valid;
     drawPolygon(ghostVerts,
       v ? 'rgba(40,200,80,0.28)' : 'rgba(220,50,50,0.28)',
@@ -611,14 +597,14 @@ function render() {
       2.0
     );
     drawAnchorDot(resize.newX, resize.newY, v ? '#40dd70' : '#ff5050');
-    const ghostHandles = getResizeHandles({ type: 'rect', localVerts: resize.ghostLocalVerts, x: resize.newX, y: resize.newY, rotDeg: resize.rotDeg });
+    const ghostHandles = ghostVerts.map((wv, i) => ({ worldPos: wv, idx: i }));
     drawHandles(ghostHandles, resize.handleIdx);
   }
 
   // Add-mode ghost (new shape being placed)
   if (mode === 'add' && pendingAdd) {
     const [mx, my] = mouseWorld;
-    const ghostVerts = applyTransform(pendingAdd.localVerts, mx, my, pendingAdd.rotDeg);
+    const ghostVerts = getWorldVerts(pendingAdd.type, pendingAdd.params, mx, my, pendingAdd.rotDeg);
     const v = ghostValid;
     drawPolygon(ghostVerts,
       v ? 'rgba(40,210,80,0.28)' : 'rgba(220,55,55,0.28)',
@@ -660,9 +646,7 @@ canvas.addEventListener('mousemove', e => {
     const dx = wx - newCX, dy = wy - newCY;
     const newW = Math.max(0.3, 2 * Math.abs(dx * cos + dy * sin));
     const newH = Math.max(0.3, 2 * Math.abs(-dx * sin + dy * cos));
-    const newLocalVerts = makeLocalVerts('rect', [newW, newH]);
-    const valid = tryValidate(newLocalVerts, newCX, newCY, resize.rotDeg).valid;
-    resize.ghostLocalVerts = newLocalVerts;
+    const valid = tryValidate('rect', [newW, newH], newCX, newCY, resize.rotDeg).valid;
     resize.newX = newCX;
     resize.newY = newCY;
     resize.newW = newW;
@@ -674,7 +658,7 @@ canvas.addEventListener('mousemove', e => {
   }
 
   if (mode === 'add' && pendingAdd) {
-    ghostValid = tryValidate(pendingAdd.localVerts, wx, wy, pendingAdd.rotDeg).valid;
+    ghostValid = tryValidate(pendingAdd.type, pendingAdd.params, wx, wy, pendingAdd.rotDeg).valid;
     return;
   }
 
@@ -692,7 +676,7 @@ canvas.addEventListener('mousemove', e => {
   // Update hover handle cursor when idle
   if (mode === 'select' && selectedId !== null && shapes.has(selectedId)) {
     const s = shapes.get(selectedId);
-    const handles = getResizeHandles(s);
+    const handles = getResizeHandles(selectedId, s.type);
     const handle = hitTestHandles(handles, e.offsetX, e.offsetY);
     if (handle) {
       canvas.style.cursor = 'nwse-resize';
@@ -713,24 +697,22 @@ canvas.addEventListener('mousedown', e => {
   // Check resize handles first (only for selected rect shapes)
   if (selectedId !== null && shapes.has(selectedId)) {
     const s = shapes.get(selectedId);
-    const handles = getResizeHandles(s);
+    const handles = getResizeHandles(selectedId, s.type);
     const handle = hitTestHandles(handles, e.offsetX, e.offsetY);
     if (handle) {
-      const anchorLocal = s.localVerts[(handle.idx + 2) % 4];
-      const anchorWorld = applyTransform([anchorLocal], s.x, s.y, s.rotDeg)[0];
+      const worldVerts = cad.getShapeVertices(selectedId);
+      const anchorWorld = worldVerts[(handle.idx + 2) % 4];
       cad.removeShape(selectedId); // remove from Rust so validatePlacement won't self-collide
       resize = {
         id: selectedId,
         handleIdx: handle.idx,
         anchorWorld,
-        origLocalVerts: s.localVerts,
         origX: s.x,
         origY: s.y,
         origParams: [...s.params],
         origLabel: s.label,
         rotDeg: s.rotDeg,
         type: s.type,
-        ghostLocalVerts: s.localVerts,
         newX: s.x,
         newY: s.y,
         newW: s.params[0],
@@ -752,7 +734,8 @@ canvas.addEventListener('mousedown', e => {
       id,
       startMouse: [wx, wy],
       startPos:   [s.x, s.y],
-      localVerts: s.localVerts,
+      type:       s.type,
+      params:     s.params,
       rotDeg:     s.rotDeg,
       currentX:   s.x,
       currentY:   s.y,
@@ -835,7 +818,7 @@ canvas.addEventListener('wheel', e => {
 
   if (mode === 'add' && pendingAdd) {
     pendingAdd.rotDeg = ((pendingAdd.rotDeg + delta) % 360 + 360) % 360;
-    ghostValid = tryValidate(pendingAdd.localVerts, ...mouseWorld, pendingAdd.rotDeg).valid;
+    ghostValid = tryValidate(pendingAdd.type, pendingAdd.params, ...mouseWorld, pendingAdd.rotDeg).valid;
     setStatus(`Rotation: ${pendingAdd.rotDeg}°`);
   } else if (selectedId !== null) {
     tryRotateSelected(delta);
@@ -866,7 +849,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'r' || e.key === 'R') {
     if (mode === 'add' && pendingAdd) {
       pendingAdd.rotDeg = ((pendingAdd.rotDeg + 45) % 360 + 360) % 360;
-      ghostValid = tryValidate(pendingAdd.localVerts, ...mouseWorld, pendingAdd.rotDeg).valid;
+      ghostValid = tryValidate(pendingAdd.type, pendingAdd.params, ...mouseWorld, pendingAdd.rotDeg).valid;
       setStatus(`Rotation: ${pendingAdd.rotDeg}°`);
     } else {
       tryRotateSelected(45);

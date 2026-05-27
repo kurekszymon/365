@@ -147,6 +147,57 @@ impl CadEngine {
         serde_wasm_bindgen::to_value(&result).map_err(|e| JsValue::from_str(&e.to_string()))
     }
 
+    /// Validate placing a rectangle without committing.
+    #[wasm_bindgen(js_name = "validateRectPlacement")]
+    pub fn validate_rect_placement(&self, w: f64, h: f64, x: f64, y: f64, rot_deg: f64) -> Result<JsValue, JsValue> {
+        let poly = Polygon::rectangle(w, h);
+        let t = Transform2D::from_degrees(x, y, rot_deg);
+        let result = self.scene.validate_placement(&poly, &t);
+        serde_wasm_bindgen::to_value(&result).map_err(|e| JsValue::from_str(&e.to_string()))
+    }
+
+    /// Validate placing an L-shape without committing.
+    #[wasm_bindgen(js_name = "validateLShapePlacement")]
+    pub fn validate_l_shape_placement(&self, ow: f64, oh: f64, cw: f64, ch: f64, x: f64, y: f64, rot_deg: f64) -> Result<JsValue, JsValue> {
+        let poly = Polygon::l_shape(ow, oh, cw, ch);
+        let t = Transform2D::from_degrees(x, y, rot_deg);
+        let result = self.scene.validate_placement(&poly, &t);
+        serde_wasm_bindgen::to_value(&result).map_err(|e| JsValue::from_str(&e.to_string()))
+    }
+
+    /// Validate placing a U-shape without committing.
+    #[wasm_bindgen(js_name = "validateUShapePlacement")]
+    pub fn validate_u_shape_placement(&self, ow: f64, oh: f64, cw: f64, ch: f64, x: f64, y: f64, rot_deg: f64) -> Result<JsValue, JsValue> {
+        let poly = Polygon::u_shape(ow, oh, cw, ch);
+        let t = Transform2D::from_degrees(x, y, rot_deg);
+        let result = self.scene.validate_placement(&poly, &t);
+        serde_wasm_bindgen::to_value(&result).map_err(|e| JsValue::from_str(&e.to_string()))
+    }
+
+    /// World-space vertices for a hypothetical rectangle placement (for ghost rendering).
+    #[wasm_bindgen(js_name = "getRectWorldVerts")]
+    pub fn get_rect_world_verts(&self, w: f64, h: f64, x: f64, y: f64, rot_deg: f64) -> JsValue {
+        let world = Polygon::rectangle(w, h).transformed(&Transform2D::from_degrees(x, y, rot_deg));
+        let verts: Vec<[f64; 2]> = world.vertices().iter().map(|p| [p.x, p.y]).collect();
+        serde_wasm_bindgen::to_value(&verts).unwrap_or(JsValue::NULL)
+    }
+
+    /// World-space vertices for a hypothetical L-shape placement.
+    #[wasm_bindgen(js_name = "getLShapeWorldVerts")]
+    pub fn get_l_shape_world_verts(&self, ow: f64, oh: f64, cw: f64, ch: f64, x: f64, y: f64, rot_deg: f64) -> JsValue {
+        let world = Polygon::l_shape(ow, oh, cw, ch).transformed(&Transform2D::from_degrees(x, y, rot_deg));
+        let verts: Vec<[f64; 2]> = world.vertices().iter().map(|p| [p.x, p.y]).collect();
+        serde_wasm_bindgen::to_value(&verts).unwrap_or(JsValue::NULL)
+    }
+
+    /// World-space vertices for a hypothetical U-shape placement.
+    #[wasm_bindgen(js_name = "getUShapeWorldVerts")]
+    pub fn get_u_shape_world_verts(&self, ow: f64, oh: f64, cw: f64, ch: f64, x: f64, y: f64, rot_deg: f64) -> JsValue {
+        let world = Polygon::u_shape(ow, oh, cw, ch).transformed(&Transform2D::from_degrees(x, y, rot_deg));
+        let verts: Vec<[f64; 2]> = world.vertices().iter().map(|p| [p.x, p.y]).collect();
+        serde_wasm_bindgen::to_value(&verts).unwrap_or(JsValue::NULL)
+    }
+
     /// Validate a placement without committing. Returns {valid, collisions, exceedsBoundary}.
     #[wasm_bindgen(js_name = "validatePlacement")]
     pub fn validate_placement(
