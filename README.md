@@ -1,17 +1,17 @@
 # 365
 
-Created this repo so i can explore some programming concepts I wanted and learn document my progress over time. Aiming for a concept per month, unless something gets super interesting.
+Created this repo to (due to lack of a better word) _force_ myself to do something everyday. This comes from a fact that when I heard about Broadcast Channel API I finally understood system that felt like magic beforehand (because what genius would write a program that makes two tabs communicate between each other through wasm? not me for sure). I thought that there is much more examples like this in the wild so decided to keep track of those things as well as develop some projects ideas that come to mind during this time.
 
 - [365](#365)
   - [articles](#articles)
     - [mine](#mine)
     - [not mine](#not-mine)
     - [papers](#papers)
-  - [rust](#rust)
   - [webrtc](#webrtc)
   - [electron](#electron)
-  - [react 19](#react-19)
   - [webgpu](#webgpu)
+  - [rust](#rust)
+  - [easywed](#easywed)
 
 ## articles
 
