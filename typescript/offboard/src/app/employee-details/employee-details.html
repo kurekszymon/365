@@ -1,1 +1,36 @@
-<dialog #dialog (close)="close()">Hello from employee details! user id {{ id }}</dialog>
+<dialog #dialog aria-labelledby="dialog-title" (close)="close()">
+  @if (employee(); as emp) {
+    <header class="dialog-header">
+      <div>
+        <h2 id="dialog-title" class="dialog-header__name">{{ emp.name }}</h2>
+        <p class="dialog-header__meta">{{ emp.department }} · Last day: {{ emp.last_day }}</p>
+      </div>
+      <button type="button" class="close-btn" aria-label="Close dialog" (click)="close()">X</button>
+    </header>
+
+    <div class="dialog-body">
+      <section aria-label="Equipment list">
+        <h3 class="section-title">Equipment ({{ emp.equipment.length }} items)</h3>
+        <ul class="equipment-list">
+          @for (eq of emp.equipment; track eq.id) {
+            <li class="equipment-card">
+              <div class="eq-info">
+                <div class="eq-info__primary">
+                  <span class="eq-name">{{ eq.name }}</span>
+                  <span class="eq-type">{{ eq.type }}</span>
+                </div>
+                <div class="eq-info__secondary">
+                  <span>S/N: {{ eq.serial }}</span>
+                  <span>Assigned condition: {{ eq.condition_at_assignment }}</span>
+                </div>
+                <span class="badge badge--pending" aria-label="Status: Pending">Pending</span>
+              </div>
+            </li>
+          }
+        </ul>
+      </section>
+    </div>
+  } @else {
+    <p class="loading">Loading employee data…</p>
+  }
+</dialog>
