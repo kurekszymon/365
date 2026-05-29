@@ -1,0 +1,51 @@
+@let item = eq();
+@let step = phase();
+
+<div class="eq-info">
+  <div class="eq-info__primary">
+    <span class="eq-name">{{ item.name }}</span>
+    <span class="eq-type">{{ item.type }}</span>
+  </div>
+
+  <div class="eq-info__secondary">
+    <span>S/N: {{ item.serial }}</span>
+    <span>Assigned condition: {{ item.condition_at_assignment }}</span>
+  </div>
+
+  @if (step === 'returned') {
+    <span class="badge badge--returned" aria-label="Status: Returned">Returned</span>
+  } @else if (step === 'issue') {
+    <span class="badge badge--issue" aria-label="Status: Issue reported">Issue reported</span>
+  } @else {
+    <span class="badge badge--pending" aria-label="Status: Pending">Pending</span>
+  }
+</div>
+
+@if (step === 'returned') {
+  <div class="eq-result eq-result--returned">
+    Returned in <strong>{{ condition() }}</strong> condition
+  </div>
+} @else if (step === 'issue') {
+  <div class="eq-result eq-result--issue">
+    Issue reported: <strong>{{ note() }}</strong>
+  </div>
+} @else if (step === 'return-form') {
+  <app-return-form
+    [equipmentId]="item.id"
+    (confirmed)="onReturnConfirmed($event)"
+    (cancelled)="cancel()"
+  />
+} @else if (step === 'issue-form') {
+  <app-issue-form
+    [equipmentId]="item.id"
+    (reported)="onIssueReported($event)"
+    (cancelled)="cancel()"
+  />
+} @else {
+  <div class="eq-actions">
+    <button type="button" class="btn btn--primary" (click)="openReturnForm()">
+      Mark as returned
+    </button>
+    <button type="button" class="btn btn--ghost" (click)="openIssueForm()">Report an issue</button>
+  </div>
+}

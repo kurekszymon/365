@@ -9,10 +9,11 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { EmployeeService } from '../employee.service';
+import { EquipmentItem } from '../equipment-item/equipment-item';
 
 @Component({
   selector: 'app-employee-details',
-  imports: [],
+  imports: [EquipmentItem],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './employee-details.html',
   styleUrl: './employee-details.css',

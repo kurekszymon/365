@@ -13,19 +13,7 @@
         <h3 class="section-title">Equipment ({{ emp.equipment.length }} items)</h3>
         <ul class="equipment-list">
           @for (eq of emp.equipment; track eq.id) {
-            <li class="equipment-card">
-              <div class="eq-info">
-                <div class="eq-info__primary">
-                  <span class="eq-name">{{ eq.name }}</span>
-                  <span class="eq-type">{{ eq.type }}</span>
-                </div>
-                <div class="eq-info__secondary">
-                  <span>S/N: {{ eq.serial }}</span>
-                  <span>Assigned condition: {{ eq.condition_at_assignment }}</span>
-                </div>
-                <span class="badge badge--pending" aria-label="Status: Pending">Pending</span>
-              </div>
-            </li>
+            <li app-equipment-item [eq]="eq"></li>
           }
         </ul>
       </section>

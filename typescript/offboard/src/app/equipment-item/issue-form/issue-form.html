@@ -1,0 +1,16 @@
+<form class="eq-action-form" (submit)="submit($event)">
+  <label [for]="'note-' + equipmentId()" class="eq-form-label">Issue description</label>
+  <textarea
+    [id]="'note-' + equipmentId()"
+    [value]="note()"
+    (input)="onNoteInput($event)"
+    class="eq-form-textarea"
+    rows="2"
+    placeholder="e.g. Screen cracked, Not returned by employee"
+    required
+  ></textarea>
+  <div class="eq-form-actions">
+    <button type="submit" class="btn btn--danger">Report issue</button>
+    <button type="button" class="btn btn--ghost" (click)="cancelled.emit()">Cancel</button>
+  </div>
+</form>

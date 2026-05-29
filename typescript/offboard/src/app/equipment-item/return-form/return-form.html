@@ -1,0 +1,16 @@
+<form class="eq-action-form" (submit)="submit($event)">
+  <label [for]="'condition-' + equipmentId()" class="eq-form-label">Return condition</label>
+  <select
+    [id]="'condition-' + equipmentId()"
+    (change)="onConditionChange($event)"
+    class="eq-form-select"
+  >
+    @for (opt of options; track opt) {
+      <option [value]="opt" [selected]="opt === condition()">{{ opt }}</option>
+    }
+  </select>
+  <div class="eq-form-actions">
+    <button type="submit" class="btn btn--primary">Confirm return</button>
+    <button type="button" class="btn btn--ghost" (click)="cancelled.emit()">Cancel</button>
+  </div>
+</form>
