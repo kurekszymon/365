@@ -1,8 +1,26 @@
 <form class="eq-action-form" (submit)="submit($event)">
-  <label [for]="'note-' + equipmentId()" class="eq-form-label">Issue description</label>
+  <div class="eq-form-label-row">
+    <label [for]="'note-' + equipmentId()" class="eq-form-label">Issue description</label>
+    <button
+      type="button"
+      class="btn btn--suggest-note"
+      [disabled]="isSuggesting()"
+      [attr.aria-disabled]="isSuggesting()"
+      (click)="suggestNote()"
+      title="Suggest a note using AI"
+    >
+      @if (isSuggesting()) {
+        <span class="suggest-spinner" aria-hidden="true"></span>
+        Generating…
+      } @else {
+        ✦ Suggest note
+      }
+    </button>
+  </div>
   <textarea
     [id]="'note-' + equipmentId()"
     [value]="note()"
+    [attr.aria-busy]="isSuggesting()"
     (input)="onNoteInput($event)"
     class="eq-form-textarea"
     rows="2"

@@ -32,6 +32,7 @@ run `pnpm start` in seperate terminal
 
 - as I didn't use newer angular for some time I did use AI to help me understand / read about some of new syntax, alongside reading [docs](#reference-docs)
 - as mentioned beforehand - used ai to generate css, for shortcomings I did need to point out that some styles are repeated to bubble them up to src/styles.css
+- generated me some sample ai outputs for `suggest note` :D
 
 ## to improve
 
