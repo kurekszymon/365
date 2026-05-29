@@ -1,9 +1,8 @@
-import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { Equipment, ReturnCondition } from '../../models/equipment.model';
 import { ReturnForm } from './return-form/return-form';
 import { IssueForm } from './issue-form/issue-form';
-
-type ItemPhase = 'idle' | 'return-form' | 'issue-form' | 'returned' | 'issue';
+import { ItemPhase } from '../../models/itemphase.type';
 
 @Component({
   selector: 'li[app-equipment-item]',
@@ -14,6 +13,8 @@ type ItemPhase = 'idle' | 'return-form' | 'issue-form' | 'returned' | 'issue';
 })
 export class EquipmentItem {
   eq = input.required<Equipment>();
+
+  statusChange = output<ItemPhase>();
 
   protected phase = signal<ItemPhase>('idle');
   protected condition = signal<ReturnCondition>(ReturnCondition.Good);
@@ -30,11 +31,13 @@ export class EquipmentItem {
   protected onReturnConfirmed(condition: ReturnCondition): void {
     this.condition.set(condition);
     this.phase.set('returned');
+    this.statusChange.emit('returned');
   }
 
   protected onIssueReported(note: string): void {
     this.note.set(note);
     this.phase.set('issue');
+    this.statusChange.emit('issue');
   }
 
   protected cancel(): void {

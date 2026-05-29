@@ -57,16 +57,26 @@
         <ul class="employee-list" aria-label="Employees">
           @for (employee of employees(); track employee.id) {
             <li>
-              <a class="employee-card" [routerLink]="['/offboard', employee.id]">
-                <span class="employee-card__name">{{ employee.name }}</span>
-                <span class="employee-card__meta"
-                  >{{ employee.department }} · last day @ {{ employee.last_day }}</span
-                >
-              </a>
+              @if (completedIds().has(employee.id)) {
+                <div class="employee-card employee-card--offboarded" aria-disabled="true">
+                  <span class="employee-card__name">{{ employee.name }}</span>
+                  <span class="employee-card__meta"
+                    >{{ employee.department }} · last day @ {{ employee.last_day }}</span
+                  >
+                  <span class="employee-card__badge">Offboarded</span>
+                </div>
+              } @else {
+                <a class="employee-card" [routerLink]="['/offboard', employee.id]">
+                  <span class="employee-card__name">{{ employee.name }}</span>
+                  <span class="employee-card__meta"
+                    >{{ employee.department }} · last day @ {{ employee.last_day }}</span
+                  >
+                </a>
+              }
             </li>
           }
           <li>
-            <a class="employee-card" [routerLink]="['/offboard', 'emp-123']">
+            <a class="employee-card">
               <span class="employee-card__name">{{ 'John Doe' }}</span>
               <span class="employee-card__meta"
                 >{{ 'Engineering' }} · last day @ {{ '2024-06-30' }}</span

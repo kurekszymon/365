@@ -33,6 +33,14 @@ run `pnpm start` in seperate terminal
 - as I didn't use newer angular for some time I did use AI to help me understand / read about some of new syntax, alongside reading [docs](#reference-docs)
 - as mentioned beforehand - used ai to generate css, for shortcomings I did need to point out that some styles are repeated to bubble them up to src/styles.css
 
+## to improve
+
+- persist state for equipment return process (it's bad ux to close dialog and needing to return everything from the start)
+- clean up css, lots of dead code probably, some rules have no sense, would be good to have a proper design system and not mix modern and old material ui style
+- introduce `internationalization` for admins from different countries
+- invalidate cache on employee service
+- use a design system for better ux
+
 ## reference docs
 
 - https://angular.dev/guide/templates/defer

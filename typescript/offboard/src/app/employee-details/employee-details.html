@@ -9,14 +9,26 @@
     </header>
 
     <div class="dialog-body">
-      <section aria-label="Equipment list">
-        <h3 class="section-title">Equipment ({{ emp.equipment.length }} items)</h3>
-        <ul class="equipment-list">
-          @for (eq of emp.equipment; track eq.id) {
-            <li app-equipment-item [eq]="eq"></li>
-          }
-        </ul>
-      </section>
+      @if (offboardingDone()) {
+        <app-offboarding-confirmation [employeeName]="emp.name" (closed)="close()" />
+      } @else {
+        <section aria-label="Equipment list">
+          <h3 class="section-title">Equipment ({{ emp.equipment.length }} items)</h3>
+          <ul class="equipment-list">
+            @for (eq of emp.equipment; track eq.id) {
+              <li app-equipment-item [eq]="eq" (statusChange)="onStatusChange($event)"></li>
+            }
+          </ul>
+        </section>
+
+        <app-offboarding-summary
+          [pending]="pending()"
+          [returned]="returnedCount()"
+          [issues]="issueCount()"
+          [allActioned]="allActioned()"
+          (complete)="completeOffboarding()"
+        />
+      }
     </div>
   } @else {
     <p class="loading">Loading employee data…</p>

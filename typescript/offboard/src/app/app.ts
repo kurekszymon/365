@@ -13,7 +13,10 @@ import { EmployeeService } from './employee.service';
 })
 export class App {
   private employeeService = inject(EmployeeService);
+
   protected employees = toSignal(this.employeeService.getEmployees(), {
     initialValue: [] as Employee[],
   });
+
+  protected completedIds = this.employeeService.completedIds;
 }
