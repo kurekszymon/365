@@ -27,6 +27,9 @@ run `pnpm start` in seperate terminal
   in case I'd need to iterate over something I would replace it with enum/object, i.e. ReturnCondition - needed values for dropdown option, cna use enum for both type safety and convenience
 - mostly using ai to generate css (i know it was probably not desired, as it was defined to not use ui lib in spec, but i just can't help myself to get something generate css for me)
 - split down components to be self contained (trying to be reasonable about it, i.e. seperate issue-form and return-form as a children of equipment item. they introduce some clutter and it's easy to only react to emited value (output))
+- use plain html elements so keyboard navigation is possible
+- dont store state anywhere (added comment in service why im storing state there)
+- for summary AI - didn't use proper AI call as I don't have API key with $$ to verify if LLM is actually being called via api (only using via claude/copilot subscription)
 
 ## on ai
 
@@ -36,7 +39,6 @@ run `pnpm start` in seperate terminal
 
 ## to improve
 
-- persist state for equipment return process (it's bad ux to close dialog and needing to return everything from the start)
 - clean up css, lots of dead code probably, some rules have no sense, would be good to have a proper design system and not mix modern and old material ui style
 - introduce `internationalization` for admins from different countries
 - invalidate cache on employee service

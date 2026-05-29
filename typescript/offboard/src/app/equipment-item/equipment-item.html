@@ -42,13 +42,17 @@
 } @else if (step === 'return-form') {
   <app-return-form
     [equipmentId]="item.id"
+    [initialCondition]="condition()"
     (confirmed)="onReturnConfirmed($event)"
+    (conditionChange)="onConditionDraft($event)"
     (cancelled)="cancel()"
   />
 } @else if (step === 'issue-form') {
   <app-issue-form
     [equipmentId]="item.id"
+    [initialNote]="note()"
     (reported)="onIssueReported($event)"
+    (noteChange)="onNoteDraft($event)"
     (cancelled)="cancel()"
   />
 } @else {

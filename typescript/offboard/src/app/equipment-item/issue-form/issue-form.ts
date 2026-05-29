@@ -19,15 +19,19 @@ const MOCK_NOTES = [
 })
 export class IssueForm {
   equipmentId = input.required<string>();
+  initialNote = input<string>('');
 
   reported = output<string>();
+  noteChange = output<string>();
   cancelled = output();
 
-  protected note = signal('');
+  protected note = signal(this.initialNote());
   protected isSuggesting = signal(false);
 
   protected onNoteInput(event: Event): void {
-    this.note.set((event.target as HTMLTextAreaElement).value);
+    const value = (event.target as HTMLTextAreaElement).value;
+    this.note.set(value);
+    this.noteChange.emit(value);
   }
 
   protected suggestNote(): void {

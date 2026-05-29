@@ -14,7 +14,7 @@ import { EmployeeService } from '../employee.service';
 import { EquipmentItem } from '../equipment-item/equipment-item';
 import { OffboardingSummary } from './offboarding-summary/offboarding-summary';
 import { OffboardingConfirmation } from './offboarding-confirmation/offboarding-confirmation';
-import { ItemPhase } from '../../models/itemphase.type';
+import { DialogStateService } from '../dialog-state.service';
 
 @Component({
   selector: 'app-employee-details',
@@ -27,14 +27,27 @@ export class EmployeeDetails {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private employeeService = inject(EmployeeService);
+  private dialogState = inject(DialogStateService);
 
   protected id = this.route.snapshot.paramMap.get('id')!;
   protected employee = toSignal(this.employeeService.getEmployee(this.id));
 
   private dialogRef = viewChild<ElementRef<HTMLDialogElement>>('dialog');
 
-  protected returnedCount = signal(0);
-  protected issueCount = signal(0);
+  protected returnedCount = computed(() => {
+    const emp = this.employee();
+    if (!emp) return 0;
+    const state = this.dialogState.state();
+    return emp.equipment.filter((eq) => state[eq.id]?.phase === 'returned').length;
+  });
+
+  protected issueCount = computed(() => {
+    const emp = this.employee();
+    if (!emp) return 0;
+    const state = this.dialogState.state();
+    return emp.equipment.filter((eq) => state[eq.id]?.phase === 'issue').length;
+  });
+
   protected pending = computed(
     () => (this.employee()?.equipment.length ?? 0) - this.returnedCount() - this.issueCount(),
   );
@@ -46,11 +59,6 @@ export class EmployeeDetails {
   constructor() {
     // https://angular.dev/guide/components/lifecycle
     afterNextRender(() => this.dialogRef()?.nativeElement.showModal());
-  }
-
-  protected onStatusChange(phase: ItemPhase): void {
-    if (phase === 'returned') this.returnedCount.update((n) => n + 1);
-    else if (phase === 'issue') this.issueCount.update((n) => n + 1);
   }
 
   protected completeOffboarding(): void {
