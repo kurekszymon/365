@@ -24,8 +24,6 @@ import { DialogStateService } from '../dialog-state.service';
 export class EquipmentItem implements OnInit {
   eq = input.required<Equipment>();
 
-  statusChange = output<ItemPhase>();
-
   private dialogState = inject(DialogStateService);
 
   protected phase = signal<ItemPhase>('idle');
@@ -61,14 +59,12 @@ export class EquipmentItem implements OnInit {
     this.condition.set(condition);
     this.phase.set('returned');
     this.save();
-    this.statusChange.emit('returned');
   }
 
   protected onIssueReported(note: string): void {
     this.note.set(note);
     this.phase.set('issue');
     this.save();
-    this.statusChange.emit('issue');
   }
 
   protected onConditionDraft(condition: ReturnCondition): void {

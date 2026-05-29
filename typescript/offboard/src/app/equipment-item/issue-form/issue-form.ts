@@ -39,6 +39,7 @@ export class IssueForm {
     setTimeout(() => {
       const random = MOCK_NOTES[Math.floor(Math.random() * MOCK_NOTES.length)];
       this.note.set(random);
+      this.noteChange.emit(random);
       this.isSuggesting.set(false);
     }, 2000);
   }
