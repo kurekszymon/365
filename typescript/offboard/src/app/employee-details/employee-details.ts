@@ -34,26 +34,24 @@ export class EmployeeDetails {
 
   private dialogRef = viewChild<ElementRef<HTMLDialogElement>>('dialog');
 
-  protected returnedCount = computed(() => {
+  public returnedCount = computed(() => {
     const emp = this.employee();
     if (!emp) return 0;
     const state = this.dialogState.state();
     return emp.equipment.filter((eq) => state[eq.id]?.phase === 'returned').length;
   });
 
-  protected issueCount = computed(() => {
+  public issueCount = computed(() => {
     const emp = this.employee();
     if (!emp) return 0;
     const state = this.dialogState.state();
     return emp.equipment.filter((eq) => state[eq.id]?.phase === 'issue').length;
   });
 
-  protected pending = computed(
+  public pending = computed(
     () => (this.employee()?.equipment.length ?? 0) - this.returnedCount() - this.issueCount(),
   );
-  protected allActioned = computed(
-    () => this.pending() === 0 && !!this.employee()?.equipment.length,
-  );
+  public allActioned = computed(() => this.pending() === 0 && !!this.employee()?.equipment.length);
   protected offboardingDone = signal(false);
 
   constructor() {

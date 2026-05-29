@@ -26,11 +26,11 @@ export class EquipmentItem implements OnInit {
 
   private dialogState = inject(DialogStateService);
 
-  protected phase = signal<ItemPhase>('idle');
-  protected condition = signal<ReturnCondition>(ReturnCondition.Good);
-  protected note = signal('');
+  public phase = signal<ItemPhase>('idle');
+  public condition = signal<ReturnCondition>(ReturnCondition.Good);
+  public note = signal('');
 
-  protected isConditionWorse = computed(
+  public isConditionWorse = computed(
     () =>
       this.condition() === ReturnCondition.Damaged ||
       this.condition() === ReturnCondition.MissingAccessories,
@@ -45,23 +45,23 @@ export class EquipmentItem implements OnInit {
     }
   }
 
-  protected openReturnForm(): void {
+  public openReturnForm(): void {
     this.phase.set('return-form');
     this.save();
   }
 
-  protected openIssueForm(): void {
+  public openIssueForm(): void {
     this.phase.set('issue-form');
     this.save();
   }
 
-  protected onReturnConfirmed(condition: ReturnCondition): void {
+  public onReturnConfirmed(condition: ReturnCondition): void {
     this.condition.set(condition);
     this.phase.set('returned');
     this.save();
   }
 
-  protected onIssueReported(note: string): void {
+  public onIssueReported(note: string): void {
     this.note.set(note);
     this.phase.set('issue');
     this.save();
@@ -77,7 +77,7 @@ export class EquipmentItem implements OnInit {
     this.save();
   }
 
-  protected cancel(): void {
+  public cancel(): void {
     this.phase.set('idle');
     this.save();
   }
