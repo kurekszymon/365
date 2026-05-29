@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { Equipment, ReturnCondition } from '../../models/equipment.model';
 import { ReturnForm } from './return-form/return-form';
 import { IssueForm } from './issue-form/issue-form';
@@ -19,6 +19,12 @@ export class EquipmentItem {
   protected phase = signal<ItemPhase>('idle');
   protected condition = signal<ReturnCondition>(ReturnCondition.Good);
   protected note = signal('');
+
+  protected isConditionWorse = computed(
+    () =>
+      this.condition() === ReturnCondition.Damaged ||
+      this.condition() === ReturnCondition.MissingAccessories,
+  );
 
   protected openReturnForm(): void {
     this.phase.set('return-form');

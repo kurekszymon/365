@@ -23,7 +23,17 @@
 
 @if (step === 'returned') {
   <div class="eq-result eq-result--returned">
-    Returned in <strong>{{ condition() }}</strong> condition
+    <span
+      >Returned in <strong>{{ condition() }}</strong> condition</span
+    >
+    @if (isConditionWorse()) {
+      <span
+        class="condition-diff"
+        aria-label="Condition worse than assigned ({{ item.condition_at_assignment }})"
+      >
+        ⚠ assigned as {{ item.condition_at_assignment }}
+      </span>
+    }
   </div>
 } @else if (step === 'issue') {
   <div class="eq-result eq-result--issue">
