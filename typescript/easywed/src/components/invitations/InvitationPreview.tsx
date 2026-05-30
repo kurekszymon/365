@@ -1152,7 +1152,7 @@ export function InvitationPreview() {
         lineHeight: cs.lineHeight,
         textAlign: cs.textAlign as React.CSSProperties["textAlign"],
         color: cs.color,
-        textTransform: cs.textTransform as React.CSSProperties["textTransform"],
+        textTransform: cs.textTransform,
         textDecoration: cs.textDecoration,
       }
     }
