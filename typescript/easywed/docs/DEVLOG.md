@@ -1,5 +1,10 @@
 # EasyWed — Development Log
 
+### 30.05
+
+- add CAD export
+- write DXF exporter
+
 ### 23.05
 
 - migrate from bun to pnpm

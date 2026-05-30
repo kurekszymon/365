@@ -4,6 +4,7 @@ import type { Guest } from "@/stores/planner.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { groupGuestsByTable } from "@/lib/export/guests"
+import { downloadBlob } from "@/lib/export/downloadBlob"
 
 export const GUEST_FIELDS = ["name", "table", "dietary", "note"] as const
 export type GuestField = (typeof GUEST_FIELDS)[number]
@@ -17,21 +18,6 @@ const buildFilename = () => {
   // Only strip characters that filesystems actually reject. Unicode is fine.
   const safe = (name ?? "").replace(/[/\\?%*:|"<>]/g, "-").trim()
   return `${safe || "easywed"}-guests-${iso}.csv`
-}
-
-const downloadBlob = (blob: Blob, filename: string) => {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement("a")
-  a.href = url
-  a.download = filename
-  document.body.appendChild(a)
-  a.click()
-  setTimeout(() => {
-    // Defer teardown so the browser has time to kick off the download request
-    // before the object URL is invalidated.
-    a.remove()
-    URL.revokeObjectURL(url)
-  }, 100)
 }
 
 // Guard against CSV formula injection: any cell whose first character is one
