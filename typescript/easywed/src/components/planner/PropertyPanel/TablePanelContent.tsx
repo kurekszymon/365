@@ -152,6 +152,8 @@ export const TablePanelContent = (props: Props) => {
     openTableEdit(newId)
   }
 
+  const isCustom = form.shape === "custom"
+
   const shapeFields =
     form.shape === "round" ? (
       <RoundTable
@@ -180,25 +182,33 @@ export const TablePanelContent = (props: Props) => {
         onBlur={persist}
       />
 
-      <TableShapeField
-        value={form.shape}
-        onChange={(shape) => updateAndCommit({ shape })}
-      />
+      {isCustom ? (
+        <p className="text-xs text-muted-foreground">
+          {t("tables.shape.custom_readonly")}
+        </p>
+      ) : (
+        <>
+          <TableShapeField
+            value={form.shape}
+            onChange={(shape) => updateAndCommit({ shape })}
+          />
 
-      {shapeFields}
+          {shapeFields}
 
-      {form.shape === "rectangular" && (
-        <TableRotationField
-          value={form.rotation}
-          onChange={(rotation) => {
-            if (rotation === form.rotation) return
-            updateAndCommit({
-              rotation,
-              width: form.height,
-              height: form.width,
-            })
-          }}
-        />
+          {form.shape === "rectangular" && (
+            <TableRotationField
+              value={form.rotation}
+              onChange={(rotation) => {
+                if (rotation === form.rotation) return
+                updateAndCommit({
+                  rotation,
+                  width: form.height,
+                  height: form.width,
+                })
+              }}
+            />
+          )}
+        </>
       )}
 
       <TableCapacityField

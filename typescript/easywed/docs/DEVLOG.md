@@ -1,5 +1,13 @@
 # EasyWed — Development Log
 
+### 31.05
+
+- support custom shapes to support import from cad
+- DXF import known limits: object rotation isn't recovered (every imported
+  table/fixture lands at rotation 0, so a rect drawn rotated in CAD degrades to
+  an uneditable custom/polygon shape); only the `seated/capacity` slash form in
+  labels is parsed as capacity, bare trailing numbers stay part of the name
+
 ### 30.05
 
 - add CAD export

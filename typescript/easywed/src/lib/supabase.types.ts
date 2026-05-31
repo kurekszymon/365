@@ -38,6 +38,7 @@ export type Database = {
         Row: {
           created_at: string
           deleted_at: string | null
+          geometry: Json | null
           height: number
           id: string
           name: string
@@ -52,6 +53,7 @@ export type Database = {
         Insert: {
           created_at?: string
           deleted_at?: string | null
+          geometry?: Json | null
           height: number
           id: string
           name?: string
@@ -66,6 +68,7 @@ export type Database = {
         Update: {
           created_at?: string
           deleted_at?: string | null
+          geometry?: Json | null
           height?: number
           id?: string
           name?: string
@@ -266,6 +269,7 @@ export type Database = {
           capacity: number
           created_at: string
           deleted_at: string | null
+          geometry: Json | null
           height: number
           id: string
           name: string
@@ -281,6 +285,7 @@ export type Database = {
           capacity: number
           created_at?: string
           deleted_at?: string | null
+          geometry?: Json | null
           height: number
           id: string
           name?: string
@@ -296,6 +301,7 @@ export type Database = {
           capacity?: number
           created_at?: string
           deleted_at?: string | null
+          geometry?: Json | null
           height?: number
           id?: string
           name?: string
@@ -425,6 +431,17 @@ export type Database = {
       claim_wedding_invitation: { Args: { _token: string }; Returns: string }
       guest_names_valid: { Args: { names: string[] }; Returns: boolean }
       is_wedding_member: { Args: { _wedding_id: string }; Returns: boolean }
+      replace_planner_layout: {
+        Args: {
+          p_fixtures: Json
+          p_hall_height: number
+          p_hall_preset: string
+          p_hall_width: number
+          p_tables: Json
+          p_wedding_id: string
+        }
+        Returns: undefined
+      }
       wedding_role: { Args: { _wedding_id: string }; Returns: string }
     }
     Enums: {

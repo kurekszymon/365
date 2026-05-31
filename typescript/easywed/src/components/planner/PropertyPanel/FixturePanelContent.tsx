@@ -73,6 +73,8 @@ export const FixturePanelContent = (props: Props) => {
   const isCircleOutOfBounds =
     form.width > hallMaxWidth || form.width > hallMaxHeight
 
+  const isPolygon = form.shape === "polygon"
+
   const isDimensionsValid = (f: typeof form) => {
     if (!Number.isFinite(f.width) || f.width <= 0) return false
     if (f.shape === "circle") {
@@ -141,81 +143,89 @@ export const FixturePanelContent = (props: Props) => {
         onBlur={persist}
       />
 
-      <Field>
-        <FieldLabel>{t("fixtures.shape")}</FieldLabel>
-        <FieldContent>
-          <ButtonGroup className="w-full">
-            {(["rectangle", "circle", "rounded"] as Array<FixtureShape>).map(
-              (shape) => (
-                <Button
-                  key={shape}
-                  type="button"
-                  size="xs"
-                  className="flex-1"
-                  variant={form.shape === shape ? "default" : "outline"}
-                  onClick={() => {
-                    const next: Partial<typeof form> = { shape }
-                    if (shape === "circle") {
-                      next.height = form.width
-                    }
-                    updateAndCommit(next)
-                  }}
-                >
-                  {t(`fixtures.shape.${shape}`)}
-                </Button>
-              )
-            )}
-          </ButtonGroup>
-        </FieldContent>
-      </Field>
+      {isPolygon ? (
+        <p className="text-xs text-muted-foreground">
+          {t("fixtures.shape.polygon_readonly")}
+        </p>
+      ) : (
+        <>
+          <Field>
+            <FieldLabel>{t("fixtures.shape")}</FieldLabel>
+            <FieldContent>
+              <ButtonGroup className="w-full">
+                {(
+                  ["rectangle", "circle", "rounded"] as Array<FixtureShape>
+                ).map((shape) => (
+                  <Button
+                    key={shape}
+                    type="button"
+                    size="xs"
+                    className="flex-1"
+                    variant={form.shape === shape ? "default" : "outline"}
+                    onClick={() => {
+                      const next: Partial<typeof form> = { shape }
+                      if (shape === "circle") {
+                        next.height = form.width
+                      }
+                      updateAndCommit(next)
+                    }}
+                  >
+                    {t(`fixtures.shape.${shape}`)}
+                  </Button>
+                ))}
+              </ButtonGroup>
+            </FieldContent>
+          </Field>
 
-      {form.shape === "circle" ? (
-        <Field>
-          <FieldLabel>{t("fixtures.diameter")}</FieldLabel>
-          <FieldContent>
-            <Input
-              type="number"
-              min={0.1}
-              step={0.1}
-              className="w-full rounded-md border"
-              value={form.width}
-              onChange={(e) => update({ width: Number(e.target.value) })}
+          {form.shape === "circle" ? (
+            <Field>
+              <FieldLabel>{t("fixtures.diameter")}</FieldLabel>
+              <FieldContent>
+                <Input
+                  type="number"
+                  min={0.1}
+                  step={0.1}
+                  className="w-full rounded-md border"
+                  value={form.width}
+                  onChange={(e) => update({ width: Number(e.target.value) })}
+                  onBlur={persist}
+                />
+                {isCircleOutOfBounds && (
+                  <p
+                    className="min-h-4 text-xs text-destructive"
+                    aria-live="polite"
+                  >
+                    {t("fixtures.dimensions_oob")}
+                  </p>
+                )}
+              </FieldContent>
+            </Field>
+          ) : (
+            <RectangularTable
+              width={form.width}
+              height={form.height}
+              isWidthOutOfBounds={isWidthOutOfBounds}
+              isHeightOutOfBounds={isHeightOutOfBounds}
+              onWidthChange={(width) => update({ width })}
+              onHeightChange={(height) => update({ height })}
               onBlur={persist}
             />
-            {isCircleOutOfBounds && (
-              <p
-                className="min-h-4 text-xs text-destructive"
-                aria-live="polite"
-              >
-                {t("fixtures.dimensions_oob")}
-              </p>
-            )}
-          </FieldContent>
-        </Field>
-      ) : (
-        <RectangularTable
-          width={form.width}
-          height={form.height}
-          isWidthOutOfBounds={isWidthOutOfBounds}
-          isHeightOutOfBounds={isHeightOutOfBounds}
-          onWidthChange={(width) => update({ width })}
-          onHeightChange={(height) => update({ height })}
-          onBlur={persist}
-        />
-      )}
+          )}
 
-      {form.shape !== "circle" && (
-        <TableRotationField
-          value={form.rotation}
-          onChange={(rotation) => {
-            if (rotation === form.rotation) return
-            updateAndCommit({
-              rotation,
-              width: form.height,
-              height: form.width,
-            })
-          }}
-        />
+          {form.shape !== "circle" && (
+            <TableRotationField
+              value={form.rotation}
+              onChange={(rotation) => {
+                if (rotation === form.rotation) return
+                updateAndCommit({
+                  rotation,
+                  width: form.height,
+                  height: form.width,
+                })
+              }}
+            />
+          )}
+        </>
       )}
 
       {props.mode === "add" && (

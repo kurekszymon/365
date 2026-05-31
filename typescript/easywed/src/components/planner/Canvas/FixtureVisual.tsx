@@ -17,6 +17,7 @@ const SHAPE_CLASS: Record<Fixture["shape"], string> = {
   rectangle: "rounded-sm",
   circle: "rounded-full",
   rounded: "rounded-3xl",
+  polygon: "",
 }
 
 export const FixtureVisual = ({
@@ -30,9 +31,16 @@ export const FixtureVisual = ({
   ref,
   ...rest
 }: FixtureVisualProps) => {
-  const { shape, position, rotation, id, name } = fixture
+  const { shape, position, rotation, id, name, geometry } = fixture
   const size = getEffectiveSize(fixture.size, rotation)
   const hasName = name.trim().length > 0
+  // Defensive guard: `geometry` is JSONB at rest, so a malformed payload
+  // (e.g. {}) would still be truthy and crash when we map over vertices.
+  const isPolygon =
+    shape === "polygon" &&
+    geometry != null &&
+    Array.isArray(geometry.vertices) &&
+    geometry.vertices.length > 0
 
   const clamped =
     transform && hallBounds
@@ -57,8 +65,9 @@ export const FixtureVisual = ({
       data-canvas-element-id={id}
       aria-label={hasName ? name : "Fixture"}
       className={cn(
-        "absolute flex items-center justify-center border border-slate-400 bg-slate-200 text-slate-700",
-        SHAPE_CLASS[shape],
+        "absolute flex items-center justify-center text-slate-700",
+        !isPolygon && "border border-slate-400 bg-slate-200",
+        !isPolygon && SHAPE_CLASS[shape],
         className
       )}
       style={{
@@ -75,8 +84,30 @@ export const FixtureVisual = ({
       }}
       {...rest}
     >
+      {isPolygon && (
+        <svg
+          className="absolute inset-0 h-full w-full"
+          viewBox={`0 0 ${fixture.size.width} ${fixture.size.height}`}
+          preserveAspectRatio="none"
+          aria-hidden
+        >
+          {geometry.closed ? (
+            <polygon
+              points={geometry.vertices.map((v) => `${v.x},${v.y}`).join(" ")}
+              className="fill-slate-200 stroke-slate-400"
+              vectorEffect="non-scaling-stroke"
+            />
+          ) : (
+            <polyline
+              points={geometry.vertices.map((v) => `${v.x},${v.y}`).join(" ")}
+              className="fill-none stroke-slate-400"
+              vectorEffect="non-scaling-stroke"
+            />
+          )}
+        </svg>
+      )}
       {hasName && (
-        <div className="flex max-w-full flex-col items-center justify-center px-1 leading-tight">
+        <div className="relative z-10 flex max-w-full flex-col items-center justify-center px-1 leading-tight">
           <span className="max-w-full truncate text-xs font-medium">
             {name}
           </span>

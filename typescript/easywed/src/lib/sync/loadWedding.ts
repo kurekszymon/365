@@ -2,6 +2,7 @@ import type {
   Dietary,
   Fixture,
   FixtureShape,
+  Geometry,
   Guest,
   HallPreset,
   Table,
@@ -45,7 +46,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     supabase
       .from("tables")
       .select(
-        "id, name, shape, capacity, width, height, rotation, pos_x, pos_y"
+        "id, name, shape, capacity, width, height, rotation, pos_x, pos_y, geometry"
       )
       .eq("wedding_id", id)
       .is("deleted_at", null)
@@ -76,7 +77,9 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
 
     supabase
       .from("fixtures")
-      .select("id, name, shape, width, height, rotation, pos_x, pos_y")
+      .select(
+        "id, name, shape, width, height, rotation, pos_x, pos_y, geometry"
+      )
       .eq("wedding_id", id)
       .is("deleted_at", null)
       .abortSignal(signal),
@@ -105,6 +108,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     size: { width: Number(t.width), height: Number(t.height) },
     rotation: t.rotation as TableRotation,
     position: { x: Number(t.pos_x), y: Number(t.pos_y) },
+    ...(t.geometry ? { geometry: t.geometry as unknown as Geometry } : {}),
   }))
 
   const guests: Array<Guest> = guestsRes.data.map((g) => ({
@@ -132,6 +136,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     size: { width: Number(f.width), height: Number(f.height) },
     rotation: f.rotation as TableRotation,
     position: { x: Number(f.pos_x), y: Number(f.pos_y) },
+    ...(f.geometry ? { geometry: f.geometry as unknown as Geometry } : {}),
   }))
 
   usePlannerStore.setState({ tables, guests, hall, fixtures })

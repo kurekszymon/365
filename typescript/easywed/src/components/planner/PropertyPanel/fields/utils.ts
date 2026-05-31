@@ -14,6 +14,7 @@ export const isDimensionsValidForShape = (
     case "round":
       return true
     case "rectangular":
+    case "custom":
       return Number.isFinite(height) && height > 0
   }
 }
@@ -30,6 +31,7 @@ export const getSizeForShape = (
         height: width,
       }
     case "rectangular":
+    case "custom":
       return {
         width,
         height,
