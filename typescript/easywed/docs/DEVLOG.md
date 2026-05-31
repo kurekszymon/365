@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 31.05
+
+- support custom shapes to support import from cad
+
 ### 30.05
 
 - add CAD export

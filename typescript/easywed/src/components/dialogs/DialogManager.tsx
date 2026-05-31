@@ -3,7 +3,7 @@ import {
   ExportGuestsCsvDialog,
   ExportGuestsPdfDialog,
 } from "./guests"
-import { ExportPlannerDxfDialog } from "./planner"
+import { ExportPlannerDxfDialog, ImportPlannerDxfDialog } from "./planner"
 import {
   WeddingCreateDialog,
   WeddingMembersDialog,
@@ -30,6 +30,8 @@ export const DialogManager = () => {
       return <ExportGuestsPdfDialog />
     case "Planner.Export.Dxf":
       return <ExportPlannerDxfDialog />
+    case "Planner.Import.Dxf":
+      return <ImportPlannerDxfDialog />
     case "Invitation.Order":
       return <OrderInvitationDialog />
     default:

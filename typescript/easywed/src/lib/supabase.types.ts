@@ -431,6 +431,17 @@ export type Database = {
       claim_wedding_invitation: { Args: { _token: string }; Returns: string }
       guest_names_valid: { Args: { names: string[] }; Returns: boolean }
       is_wedding_member: { Args: { _wedding_id: string }; Returns: boolean }
+      replace_planner_layout: {
+        Args: {
+          p_wedding_id: string
+          p_hall_preset: string
+          p_hall_width: number
+          p_hall_height: number
+          p_tables: Json
+          p_fixtures: Json
+        }
+        Returns: undefined
+      }
       wedding_role: { Args: { _wedding_id: string }; Returns: string }
     }
     Enums: {

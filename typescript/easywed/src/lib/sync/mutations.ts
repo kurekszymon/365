@@ -232,6 +232,56 @@ export const updateReminderStatus = async (
   if (error) log("updateReminderStatus", error)
 }
 
+// Atomic counterpart to per-row inserts: replaces the entire planner layout
+// for a wedding in a single transaction via the `replace_planner_layout` RPC.
+// Used by the DXF import wizard once the user confirms the preview.
+export const replacePlannerLayout = async (
+  hall: { preset: HallPreset; width: number; height: number },
+  tables: Array<Table>,
+  fixtures: Array<Fixture>
+): Promise<boolean> => {
+  const weddingId = getWeddingId()
+  if (!weddingId) return false
+
+  const tablePayload = tables.map((t) => ({
+    id: t.id,
+    name: t.name,
+    shape: t.shape,
+    capacity: t.capacity,
+    width: t.size.width,
+    height: t.size.height,
+    rotation: t.rotation,
+    pos_x: t.position.x,
+    pos_y: t.position.y,
+    geometry: toJsonOrNull(t.geometry),
+  }))
+  const fixturePayload = fixtures.map((f) => ({
+    id: f.id,
+    name: f.name,
+    shape: f.shape,
+    width: f.size.width,
+    height: f.size.height,
+    rotation: f.rotation,
+    pos_x: f.position.x,
+    pos_y: f.position.y,
+    geometry: toJsonOrNull(f.geometry),
+  }))
+
+  const { error } = await supabase.rpc("replace_planner_layout", {
+    p_wedding_id: weddingId,
+    p_hall_preset: hall.preset,
+    p_hall_width: hall.width,
+    p_hall_height: hall.height,
+    p_tables: tablePayload as unknown as Json,
+    p_fixtures: fixturePayload as unknown as Json,
+  })
+  if (error) {
+    log("replacePlannerLayout", error)
+    return false
+  }
+  return true
+}
+
 export const insertFixture = async (fixture: Fixture): Promise<boolean> => {
   const weddingId = getWeddingId()
   if (!weddingId) return false

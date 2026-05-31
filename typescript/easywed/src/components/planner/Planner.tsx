@@ -15,6 +15,7 @@ import { Canvas } from "./Canvas"
 import { Header } from "./Header"
 import { ExportHeader } from "./Header/Export.header"
 import { GuestsSeated } from "./Header/GuestsSeated.header"
+import { ImportHeader } from "./Header/Import.header"
 import { PlannerPrintView } from "./PlannerPrintView"
 import { PropertyPanel } from "./PropertyPanel"
 import type { DragEndEvent } from "@dnd-kit/core"
@@ -199,6 +200,7 @@ export const Planner = () => {
                 </TooltipTrigger>
                 <TooltipContent>{t("invitations")}</TooltipContent>
               </Tooltip>
+              <ImportHeader />
               <ExportHeader />
             </ButtonGroup>
           </div>
