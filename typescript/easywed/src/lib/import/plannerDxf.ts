@@ -16,14 +16,6 @@ export interface ImportPreview {
   hall: { width: number; height: number; preset: HallPreset }
   tables: Array<Table>
   fixtures: Array<Fixture>
-  // True when the source DXF has the EasyWed layer naming convention, so the
-  // wizard can auto-skip the layer-mapping step.
-  detectedAsEasywed: boolean
-  // The mapping that was used to produce this preview. The wizard keeps it so
-  // the user can come back and re-edit step 2.
-  mapping: LayerMapping
-  // All layer names found in the file, in source order.
-  layers: Array<string>
 }
 
 export interface ImportWarning {
@@ -42,6 +34,14 @@ export interface ImportWarning {
 
 export interface ImportResult {
   preview: ImportPreview | null
+  // Layer metadata is always populated, even when `preview` is null. This lets
+  // the wizard drive its layer-mapping step on files that don't auto-detect as
+  // EasyWed exports — without it, the initial parse (where every layer maps
+  // to "ignore") would always fail with `no_hall` and dead-end into the error
+  // stage.
+  layers: Array<string>
+  mapping: LayerMapping
+  detectedAsEasywed: boolean
   warnings: Array<ImportWarning>
 }
 
@@ -464,6 +464,9 @@ export const parsePlannerDxf = (
   } catch (err) {
     return {
       preview: null,
+      layers: [],
+      mapping: {},
+      detectedAsEasywed: false,
       warnings: [
         {
           code: "skipped_unknown",
@@ -497,7 +500,13 @@ export const parsePlannerDxf = (
   const hallDims = extractHallDimensions(byRole.hall)
   if (!hallDims) {
     warnings.push({ code: "no_hall" })
-    return { preview: null, warnings }
+    return {
+      preview: null,
+      layers: layerNames,
+      mapping,
+      detectedAsEasywed,
+      warnings,
+    }
   }
 
   // World-to-app offset: anchor the hall outline's bottom-left at (0, 0) in
@@ -534,10 +543,10 @@ export const parsePlannerDxf = (
       },
       tables,
       fixtures,
-      detectedAsEasywed,
-      mapping,
-      layers: layerNames,
     },
+    layers: layerNames,
+    mapping,
+    detectedAsEasywed,
     warnings,
   }
 }

@@ -31,6 +31,19 @@ type Stage =
   | { kind: "committing" }
   | { kind: "error"; message: string }
 
+const formatWarnings = (
+  warnings: Array<ImportWarning>,
+  t: (key: string, opts?: Record<string, unknown>) => string
+): string =>
+  warnings
+    .map((w) => {
+      // Pass `count` so i18next picks the right plural variant (en `_one`,
+      // pl `_one`/`_few`/`_many`). Without it, plural-only keys render raw.
+      const base = t(warningKey(w.code), { count: w.count ?? 0 })
+      return w.detail ? `${base} (${w.detail})` : base
+    })
+    .join(" · ")
+
 const ROLES: Array<LayerRole> = [
   "hall",
   "tables",
@@ -81,23 +94,28 @@ export const ImportPlannerDxfDialog = () => {
   const onFileChosen = async (file: File) => {
     const text = await file.text()
     const result = parsePlannerDxf(text)
-    if (!result.preview) {
-      setStage({
-        kind: "error",
-        message: result.warnings.map((w) => t(warningKey(w.code))).join(" · "),
-      })
-      return
-    }
-    // Auto-skip layer mapping when the file looks like an EasyWed export.
-    if (result.preview.detectedAsEasywed) {
+    // Auto-skip layer mapping when the file looks like an EasyWed export and
+    // we already have a usable preview.
+    if (result.preview && result.detectedAsEasywed) {
       setStage({
         kind: "preview",
         preview: result.preview,
         warnings: result.warnings,
       })
-    } else {
-      setStage({ kind: "layers", result, raw: text })
+      return
     }
+    // Otherwise drive the layer-mapping step — even if the initial parse came
+    // back without a preview. `buildAutoMapping` defaults every non-EasyWed
+    // layer to "ignore", so the hall isn't detected yet; the user picks roles
+    // in step 2 and we re-parse.
+    if (result.layers.length > 0) {
+      setStage({ kind: "layers", result, raw: text })
+      return
+    }
+    setStage({
+      kind: "error",
+      message: formatWarnings(result.warnings, t),
+    })
   }
 
   const onLayersConfirmed = (mapping: LayerMapping, raw: string) => {
@@ -105,7 +123,7 @@ export const ImportPlannerDxfDialog = () => {
     if (!result.preview) {
       setStage({
         kind: "error",
-        message: result.warnings.map((w) => t(warningKey(w.code))).join(" · "),
+        message: formatWarnings(result.warnings, t),
       })
       return
     }
@@ -181,10 +199,10 @@ export const ImportPlannerDxfDialog = () => {
           </div>
         )}
 
-        {stage.kind === "layers" && stage.result.preview && (
+        {stage.kind === "layers" && (
           <LayerMappingStep
-            layers={stage.result.preview.layers}
-            initial={stage.result.preview.mapping}
+            layers={stage.result.layers}
+            initial={stage.result.mapping}
             onCancel={reset}
             onConfirm={(mapping) => onLayersConfirmed(mapping, stage.raw)}
           />

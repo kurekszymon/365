@@ -248,4 +248,64 @@ describe("buildPlannerDxf with custom shapes", () => {
     const poly = findEntity(dxf, "LWPOLYLINE", hall.end)
     expect(groupValues(poly.lines, 70)).toEqual(["0"])
   })
+
+  // L-shape: bbox 2m × 2m, top-left at app (6, 4). Local vertices
+  // (top-left origin, Y-down): (0,0)→(2,0)→(2,1)→(1,1)→(1,2)→(0,2).
+  const L_FIXTURE: Fixture = {
+    id: "f-l",
+    name: "Stage",
+    shape: "polygon",
+    size: { width: 2, height: 2 },
+    rotation: 0,
+    position: { x: 6, y: 4 },
+    geometry: {
+      vertices: [
+        { x: 0, y: 0 },
+        { x: 2, y: 0 },
+        { x: 2, y: 1 },
+        { x: 1, y: 1 },
+        { x: 1, y: 2 },
+        { x: 0, y: 2 },
+      ],
+      closed: true,
+    },
+  }
+
+  it("emits a polygon fixture as a closed LWPOLYLINE on the FIXTURES layer", () => {
+    const dxf = buildPlannerDxf({
+      hall: HALL,
+      tables: [],
+      fixtures: [L_FIXTURE],
+      guests: [],
+      options: {
+        includeLabels: false,
+        includeDimensions: false,
+        includeCapacity: false,
+      },
+    })
+    const hall = findEntity(dxf, "LWPOLYLINE")
+    const poly = findEntity(dxf, "LWPOLYLINE", hall.end)
+    expect(groupValues(poly.lines, 8)).toEqual(["FIXTURES"])
+    expect(groupValues(poly.lines, 90)).toEqual(["6"])
+    expect(groupValues(poly.lines, 70)).toEqual(["1"])
+    // World DXF: x = px + lx, y = hallH - py - ly with hallH=12, px=6, py=4.
+    //   (0,0) → (6, 8)   (2,0) → (8, 8)   (2,1) → (8, 7)
+    //   (1,1) → (7, 7)   (1,2) → (7, 6)   (0,2) → (6, 6)
+    expect(groupValues(poly.lines, 10)).toEqual([
+      "6.0",
+      "8.0",
+      "8.0",
+      "7.0",
+      "7.0",
+      "6.0",
+    ])
+    expect(groupValues(poly.lines, 20)).toEqual([
+      "8.0",
+      "8.0",
+      "7.0",
+      "7.0",
+      "6.0",
+      "6.0",
+    ])
+  })
 })

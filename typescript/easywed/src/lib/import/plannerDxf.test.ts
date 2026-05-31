@@ -66,11 +66,12 @@ describe("parsePlannerDxf round-trip", () => {
       },
     })
 
-    const { preview, warnings } = parsePlannerDxf(dxf)
+    const result = parsePlannerDxf(dxf)
+    const { preview, warnings } = result
     expect(preview).not.toBeNull()
     if (!preview) throw new Error("preview missing")
 
-    expect(preview.detectedAsEasywed).toBe(true)
+    expect(result.detectedAsEasywed).toBe(true)
     expect(preview.hall.width).toBeCloseTo(HALL.width, 3)
     expect(preview.hall.height).toBeCloseTo(HALL.height, 3)
 

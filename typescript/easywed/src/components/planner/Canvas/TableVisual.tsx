@@ -85,11 +85,19 @@ export const TableVisual = ({
           preserveAspectRatio="none"
           aria-hidden
         >
-          <polygon
-            points={geometry.vertices.map((v) => `${v.x},${v.y}`).join(" ")}
-            className="fill-emerald-100 stroke-emerald-300"
-            vectorEffect="non-scaling-stroke"
-          />
+          {geometry.closed ? (
+            <polygon
+              points={geometry.vertices.map((v) => `${v.x},${v.y}`).join(" ")}
+              className="fill-emerald-100 stroke-emerald-300"
+              vectorEffect="non-scaling-stroke"
+            />
+          ) : (
+            <polyline
+              points={geometry.vertices.map((v) => `${v.x},${v.y}`).join(" ")}
+              className="fill-none stroke-emerald-300"
+              vectorEffect="non-scaling-stroke"
+            />
+          )}
         </svg>
       )}
       <div className="relative z-10 flex max-w-full flex-col items-center justify-center px-1 leading-tight">

@@ -85,11 +85,19 @@ export const FixtureVisual = ({
           preserveAspectRatio="none"
           aria-hidden
         >
-          <polygon
-            points={geometry.vertices.map((v) => `${v.x},${v.y}`).join(" ")}
-            className="fill-slate-200 stroke-slate-400"
-            vectorEffect="non-scaling-stroke"
-          />
+          {geometry.closed ? (
+            <polygon
+              points={geometry.vertices.map((v) => `${v.x},${v.y}`).join(" ")}
+              className="fill-slate-200 stroke-slate-400"
+              vectorEffect="non-scaling-stroke"
+            />
+          ) : (
+            <polyline
+              points={geometry.vertices.map((v) => `${v.x},${v.y}`).join(" ")}
+              className="fill-none stroke-slate-400"
+              vectorEffect="non-scaling-stroke"
+            />
+          )}
         </svg>
       )}
       {hasName && (
