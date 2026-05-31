@@ -1,6 +1,7 @@
 import type {
   Fixture,
   FixtureShape,
+  Geometry,
   Guest,
   HallPreset,
   Table,
@@ -8,8 +9,16 @@ import type {
   TableShape,
 } from "@/stores/planner.store"
 import type { Reminder } from "@/stores/reminders.store"
+import type { Json } from "@/lib/supabase.types"
 import { supabase } from "@/lib/supabase"
 import { useGlobalStore } from "@/stores/global.store"
+
+// Geometry's typed shape (object with `vertices` and `closed`) is structurally
+// compatible with `Json` at runtime, but TS rejects the assignment because the
+// supabase-generated `Json` type requires an index signature. This helper
+// localizes the cast so every mutation site doesn't repeat `as unknown as Json`.
+const toJsonOrNull = (g: Geometry | null | undefined): Json | null =>
+  g ? (g as unknown as Json) : null
 
 const getWeddingId = (): string | null => {
   const id = useGlobalStore.getState().weddingId
@@ -71,6 +80,7 @@ export const insertTable = async (table: Table): Promise<boolean> => {
     rotation: table.rotation,
     pos_x: table.position.x,
     pos_y: table.position.y,
+    geometry: toJsonOrNull(table.geometry),
   })
   if (error) {
     log("insertTable", error)
@@ -94,6 +104,7 @@ export const insertTables = async (tables: Array<Table>): Promise<boolean> => {
     rotation: table.rotation,
     pos_x: table.position.x,
     pos_y: table.position.y,
+    geometry: toJsonOrNull(table.geometry),
   }))
 
   const { error } = await supabase.from("tables").insert(rows)
@@ -113,9 +124,15 @@ export const updateTableRow = async (
     width?: number
     height?: number
     rotation?: TableRotation
+    geometry?: Geometry | null
   }
 ): Promise<boolean> => {
-  const { error } = await supabase.from("tables").update(fields).eq("id", id)
+  const { geometry, ...rest } = fields
+  const row =
+    geometry === undefined
+      ? rest
+      : { ...rest, geometry: toJsonOrNull(geometry) }
+  const { error } = await supabase.from("tables").update(row).eq("id", id)
   if (error) {
     log("updateTableRow", error)
     return false
@@ -229,6 +246,7 @@ export const insertFixture = async (fixture: Fixture): Promise<boolean> => {
     rotation: fixture.rotation,
     pos_x: fixture.position.x,
     pos_y: fixture.position.y,
+    geometry: toJsonOrNull(fixture.geometry),
   })
   if (error) {
     log("insertFixture", error)
@@ -245,9 +263,15 @@ export const updateFixtureRow = async (
     width?: number
     height?: number
     rotation?: TableRotation
+    geometry?: Geometry | null
   }
 ): Promise<boolean> => {
-  const { error } = await supabase.from("fixtures").update(fields).eq("id", id)
+  const { geometry, ...rest } = fields
+  const row =
+    geometry === undefined
+      ? rest
+      : { ...rest, geometry: toJsonOrNull(geometry) }
+  const { error } = await supabase.from("fixtures").update(row).eq("id", id)
   if (error) {
     log("updateFixtureRow", error)
     return false

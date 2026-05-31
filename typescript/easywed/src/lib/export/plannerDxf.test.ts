@@ -180,3 +180,72 @@ describe("buildPlannerDxf with options", () => {
     expect(dxf).toContain("12.0 m")
   })
 })
+
+describe("buildPlannerDxf with custom shapes", () => {
+  // Triangle table: bbox 2m × 1m, top-left at app (5, 3). Vertices in local
+  // (top-left origin, Y-down): (0,0) (2,0) (1,1).
+  const TRIANGLE_TABLE: Table = {
+    id: "t-tri",
+    name: "Tri",
+    shape: "custom",
+    capacity: 4,
+    size: { width: 2, height: 1 },
+    rotation: 0,
+    position: { x: 5, y: 3 },
+    geometry: {
+      vertices: [
+        { x: 0, y: 0 },
+        { x: 2, y: 0 },
+        { x: 1, y: 1 },
+      ],
+      closed: true,
+    },
+  }
+
+  it("emits a custom-shape table as a closed LWPOLYLINE with Y-flipped vertices", () => {
+    const dxf = buildPlannerDxf({
+      hall: HALL,
+      tables: [TRIANGLE_TABLE],
+      fixtures: [],
+      guests: [],
+      options: {
+        includeLabels: false,
+        includeDimensions: false,
+        includeCapacity: false,
+      },
+    })
+    // Skip the hall LWPOLYLINE then the triangle is next.
+    const hall = findEntity(dxf, "LWPOLYLINE")
+    const tri = findEntity(dxf, "LWPOLYLINE", hall.end)
+    expect(groupValues(tri.lines, 8)).toEqual(["TABLES"])
+    expect(groupValues(tri.lines, 90)).toEqual(["3"])
+    expect(groupValues(tri.lines, 70)).toEqual(["1"])
+    // World DXF coords: x = px + lx, y = hallH - py - ly with hallH=12, px=5, py=3.
+    //   (0,0) → (5, 9)
+    //   (2,0) → (7, 9)
+    //   (1,1) → (6, 8)
+    expect(groupValues(tri.lines, 10)).toEqual(["5.0", "7.0", "6.0"])
+    expect(groupValues(tri.lines, 20)).toEqual(["9.0", "9.0", "8.0"])
+  })
+
+  it("emits an open polygon when geometry.closed is false", () => {
+    const open: Table = {
+      ...TRIANGLE_TABLE,
+      geometry: { vertices: TRIANGLE_TABLE.geometry!.vertices, closed: false },
+    }
+    const dxf = buildPlannerDxf({
+      hall: HALL,
+      tables: [open],
+      fixtures: [],
+      guests: [],
+      options: {
+        includeLabels: false,
+        includeDimensions: false,
+        includeCapacity: false,
+      },
+    })
+    const hall = findEntity(dxf, "LWPOLYLINE")
+    const poly = findEntity(dxf, "LWPOLYLINE", hall.end)
+    expect(groupValues(poly.lines, 70)).toEqual(["0"])
+  })
+})

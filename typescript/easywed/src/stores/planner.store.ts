@@ -17,9 +17,17 @@ import {
 import { useGlobalStore } from "@/stores/global.store"
 import { useMeasuresStore } from "@/stores/measures.store"
 
-export type TableShape = "round" | "rectangular"
+export type TableShape = "round" | "rectangular" | "custom"
 
-export type FixtureShape = "rectangle" | "circle" | "rounded"
+export type FixtureShape = "rectangle" | "circle" | "rounded" | "polygon"
+
+// Polygon geometry in object-local coordinates (top-left origin, meters).
+// `width`/`height` on the parent Table/Fixture remain the AABB so all
+// drag/clamp/rotation logic continues to work without modification.
+export interface Geometry {
+  vertices: Array<Position>
+  closed: boolean
+}
 
 export interface Fixture {
   id: string
@@ -28,6 +36,7 @@ export interface Fixture {
   size: Size
   rotation: TableRotation
   position: Position
+  geometry?: Geometry
 }
 
 export const DEFAULT_FIXTURE: Omit<Fixture, "id" | "position"> = {
@@ -60,6 +69,7 @@ export interface Table {
   size: Size
   rotation: TableRotation
   position: Position
+  geometry?: Geometry
 }
 
 export const DEFAULT_TABLE: Omit<Table, "id" | "position"> = {

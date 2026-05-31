@@ -38,6 +38,7 @@ export type Database = {
         Row: {
           created_at: string
           deleted_at: string | null
+          geometry: Json | null
           height: number
           id: string
           name: string
@@ -52,6 +53,7 @@ export type Database = {
         Insert: {
           created_at?: string
           deleted_at?: string | null
+          geometry?: Json | null
           height: number
           id: string
           name?: string
@@ -66,6 +68,7 @@ export type Database = {
         Update: {
           created_at?: string
           deleted_at?: string | null
+          geometry?: Json | null
           height?: number
           id?: string
           name?: string
@@ -266,6 +269,7 @@ export type Database = {
           capacity: number
           created_at: string
           deleted_at: string | null
+          geometry: Json | null
           height: number
           id: string
           name: string
@@ -281,6 +285,7 @@ export type Database = {
           capacity: number
           created_at?: string
           deleted_at?: string | null
+          geometry?: Json | null
           height: number
           id: string
           name?: string
@@ -296,6 +301,7 @@ export type Database = {
           capacity?: number
           created_at?: string
           deleted_at?: string | null
+          geometry?: Json | null
           height?: number
           id?: string
           name?: string

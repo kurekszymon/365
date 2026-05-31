@@ -1,5 +1,6 @@
 import type {
   Fixture,
+  Geometry,
   Guest,
   Size,
   Table,
@@ -120,6 +121,37 @@ const emitTables = (b: DxfBuilder, layers: Array<LayerDef>) => {
   b.push(0, "ENDTAB")
   b.push(0, "ENDSEC")
 }
+
+const emitPolygon = (
+  b: DxfBuilder,
+  layer: string,
+  // Vertices in DXF (Y-up) coords, already translated to world space.
+  vertices: Array<{ x: number; y: number }>,
+  closed: boolean
+) => {
+  b.push(0, "LWPOLYLINE")
+  b.push(8, layer)
+  b.push(90, vertices.length)
+  b.push(70, closed ? 1 : 0)
+  for (const v of vertices) {
+    b.push(10, v.x)
+    b.push(20, v.y)
+  }
+}
+
+// Transform an object-local polygon (top-left origin, Y down) to world DXF
+// coordinates (bottom-left origin, Y up). The object's top-left corner in app
+// space is (px, py).
+const polygonToDxf = (
+  hallH: number,
+  px: number,
+  py: number,
+  geometry: Geometry
+): Array<{ x: number; y: number }> =>
+  geometry.vertices.map((v) => ({
+    x: px + v.x,
+    y: hallH - py - v.y,
+  }))
 
 const emitRect = (
   b: DxfBuilder,
@@ -294,6 +326,9 @@ export const buildPlannerDxf = (input: PlannerDxfInput): string => {
       const cx = t.position.x + d / 2
       const cy = hallH - (t.position.y + d / 2)
       emitCircle(b, LAYER_TABLES, cx, cy, d / 2)
+    } else if (t.shape === "custom" && t.geometry) {
+      const verts = polygonToDxf(hallH, t.position.x, t.position.y, t.geometry)
+      emitPolygon(b, LAYER_TABLES, verts, t.geometry.closed)
     } else {
       emitRect(b, LAYER_TABLES, rect.x, rect.y, rect.w, rect.h)
     }
@@ -325,6 +360,9 @@ export const buildPlannerDxf = (input: PlannerDxfInput): string => {
       const cx = f.position.x + d / 2
       const cy = hallH - (f.position.y + d / 2)
       emitCircle(b, LAYER_FIXTURES, cx, cy, d / 2)
+    } else if (f.shape === "polygon" && f.geometry) {
+      const verts = polygonToDxf(hallH, f.position.x, f.position.y, f.geometry)
+      emitPolygon(b, LAYER_FIXTURES, verts, f.geometry.closed)
     } else {
       // "rectangle" and "rounded" both emit an axis-aligned rectangle —
       // DXF has no native "rounded rectangle" primitive at this layer of

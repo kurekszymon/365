@@ -28,11 +28,12 @@ export const TableVisual = ({
   ref,
   ...rest
 }: TableVisualProps) => {
-  const { shape, position, rotation, id, name, capacity } = table
+  const { shape, position, rotation, id, name, capacity, geometry } = table
   const size = getEffectiveSize(table.size, rotation)
   const hasName = name.trim().length > 0
   const guestCountLabel = `${guestsAssigned} / ${capacity}`
   const ariaLabel = hasName ? `${name} — ${guestCountLabel}` : guestCountLabel
+  const isPolygon = shape === "custom" && geometry
 
   const clamped =
     transform && hallBounds
@@ -57,8 +58,10 @@ export const TableVisual = ({
       data-canvas-element-id={id}
       aria-label={ariaLabel}
       className={cn(
-        "absolute flex items-center justify-center border border-emerald-300 bg-emerald-100 text-emerald-800",
-        shape === "round" ? "rounded-full" : "rounded-lg",
+        "absolute flex items-center justify-center text-emerald-800",
+        !isPolygon &&
+          "border border-emerald-300 bg-emerald-100 " +
+            (shape === "round" ? "rounded-full" : "rounded-lg"),
         className
       )}
       style={{
@@ -75,7 +78,21 @@ export const TableVisual = ({
       }}
       {...rest}
     >
-      <div className="flex max-w-full flex-col items-center justify-center px-1 leading-tight">
+      {isPolygon && (
+        <svg
+          className="absolute inset-0 h-full w-full"
+          viewBox={`0 0 ${table.size.width} ${table.size.height}`}
+          preserveAspectRatio="none"
+          aria-hidden
+        >
+          <polygon
+            points={geometry.vertices.map((v) => `${v.x},${v.y}`).join(" ")}
+            className="fill-emerald-100 stroke-emerald-300"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+      )}
+      <div className="relative z-10 flex max-w-full flex-col items-center justify-center px-1 leading-tight">
         {hasName && (
           <span className="max-w-full truncate text-xs font-medium">
             {name}
