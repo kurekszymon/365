@@ -126,7 +126,7 @@ const isAxisAlignedRect = (
 const parseLabel = (raw: string): { name: string; capacity?: number } => {
   // Match a trailing " N/M" (with optional whitespace around the slash),
   // pulling out the M as capacity. Greedy on the leading name part.
-  const slashMatch = raw.match(/^(.*?)\s+(\d+)\s*\/\s*(\d+)\s*$/)
+  const slashMatch = raw.match(/^(.*?)\s*(\d+)\s*\/\s*(\d+)\s*$/)
   if (slashMatch) {
     return { name: slashMatch[1].trim(), capacity: Number(slashMatch[3]) }
   }

@@ -20,7 +20,13 @@ alter table public.tables
 alter table public.tables
   add constraint tables_geometry_required_for_custom
   check (
-    (shape = 'custom' and jsonb_typeof(geometry) = 'object')
+    (
+      shape = 'custom'
+      and jsonb_typeof(geometry) = 'object'
+      and jsonb_typeof(geometry->'vertices') = 'array'
+      and jsonb_array_length(geometry->'vertices') > 0
+      and jsonb_typeof(geometry->'closed') = 'boolean'
+    )
     or (shape <> 'custom')
   );
 
@@ -32,6 +38,12 @@ alter table public.fixtures
 alter table public.fixtures
   add constraint fixtures_geometry_required_for_polygon
   check (
-    (shape = 'polygon' and jsonb_typeof(geometry) = 'object')
+    (
+      shape = 'polygon'
+      and jsonb_typeof(geometry) = 'object'
+      and jsonb_typeof(geometry->'vertices') = 'array'
+      and jsonb_array_length(geometry->'vertices') > 0
+      and jsonb_typeof(geometry->'closed') = 'boolean'
+    )
     or (shape <> 'polygon')
   );

@@ -433,12 +433,12 @@ export type Database = {
       is_wedding_member: { Args: { _wedding_id: string }; Returns: boolean }
       replace_planner_layout: {
         Args: {
-          p_wedding_id: string
+          p_fixtures: Json
+          p_hall_height: number
           p_hall_preset: string
           p_hall_width: number
-          p_hall_height: number
           p_tables: Json
-          p_fixtures: Json
+          p_wedding_id: string
         }
         Returns: undefined
       }

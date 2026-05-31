@@ -65,7 +65,7 @@ begin
     case when t ? 'geometry' and (t->'geometry') is not null and (t->'geometry') <> 'null'::jsonb
          then t->'geometry'
          else null end
-  from jsonb_array_elements(p_tables) as t;
+  from jsonb_array_elements(coalesce(p_tables, '[]'::jsonb)) as t;
 
   -- 4. Insert new fixtures.
   insert into public.fixtures (
@@ -85,7 +85,7 @@ begin
     case when f ? 'geometry' and (f->'geometry') is not null and (f->'geometry') <> 'null'::jsonb
          then f->'geometry'
          else null end
-  from jsonb_array_elements(p_fixtures) as f;
+  from jsonb_array_elements(coalesce(p_fixtures, '[]'::jsonb)) as f;
 end;
 $$;
 
