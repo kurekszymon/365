@@ -33,7 +33,13 @@ export const TableVisual = ({
   const hasName = name.trim().length > 0
   const guestCountLabel = `${guestsAssigned} / ${capacity}`
   const ariaLabel = hasName ? `${name} — ${guestCountLabel}` : guestCountLabel
-  const isPolygon = shape === "custom" && geometry
+  // Defensive guard: `geometry` is JSONB at rest, so a malformed payload
+  // (e.g. {}) would still be truthy and crash when we map over vertices.
+  const isPolygon =
+    shape === "custom" &&
+    geometry != null &&
+    Array.isArray(geometry.vertices) &&
+    geometry.vertices.length > 0
 
   const clamped =
     transform && hallBounds

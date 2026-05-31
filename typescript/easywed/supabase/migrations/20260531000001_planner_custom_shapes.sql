@@ -15,10 +15,12 @@ alter table public.tables
   add constraint tables_shape_check
   check (shape in ('round', 'rectangular', 'custom'));
 
+-- jsonb_typeof guards against `'null'::jsonb` and primitive payloads that
+-- would satisfy `is not null` but carry no usable geometry.
 alter table public.tables
   add constraint tables_geometry_required_for_custom
   check (
-    (shape = 'custom' and geometry is not null)
+    (shape = 'custom' and jsonb_typeof(geometry) = 'object')
     or (shape <> 'custom')
   );
 
@@ -30,6 +32,6 @@ alter table public.fixtures
 alter table public.fixtures
   add constraint fixtures_geometry_required_for_polygon
   check (
-    (shape = 'polygon' and geometry is not null)
+    (shape = 'polygon' and jsonb_typeof(geometry) = 'object')
     or (shape <> 'polygon')
   );

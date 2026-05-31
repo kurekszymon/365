@@ -23,11 +23,20 @@ export interface ImportWarning {
   code:
     | "skipped_arc"
     | "skipped_spline"
+    // Covers both heavy POLYLINE entities and open LWPOLYLINEs — neither can
+    // represent a closed planner shape, so they're counted under one code.
     | "skipped_polyline_open"
-    | "skipped_polyline_open_lw"
     | "skipped_unknown"
+    // No hall outline was found. Non-fatal when paired with `hall_synthesized`
+    // (we wrapped the imported objects); fatal when there's also nothing to
+    // wrap, in which case it's the only warning and preview is null.
     | "no_hall"
+    // Hall dimensions were derived from the AABB of imported objects plus a
+    // fixed padding because the file didn't contain a usable hall outline.
+    | "hall_synthesized"
     | "ambiguous_layer"
+    // The DXF library threw while parsing. `detail` carries the error message.
+    | "parse_error"
   count?: number
   detail?: string
 }
@@ -107,18 +116,19 @@ const isAxisAlignedRect = (
   return xs.size === 2 && ys.size === 2
 }
 
-// Parse "Name 4/8" or "Name 8" capacity hints out of a label. Returns the
-// trimmed name and inferred capacity if present.
+// Parse a "Name seated/capacity" hint out of a label, pulling out the
+// capacity. Only the unambiguous slash form is treated as a capacity: a bare
+// trailing number is left as part of the name, since "Table 12" is far more
+// likely to be a table name than a capacity-12 table. Our own export always
+// emits the slash form (see `tableLabel` in export/plannerDxf.ts), so dropping
+// the bare-number heuristic only affects foreign CAD files — where it was more
+// likely to corrupt a name than to recover a real capacity.
 const parseLabel = (raw: string): { name: string; capacity?: number } => {
-  // Match a trailing " N/M" or " M" (with optional whitespace around the
-  // slash), pulling out the M as capacity. Greedy on the leading name part.
+  // Match a trailing " N/M" (with optional whitespace around the slash),
+  // pulling out the M as capacity. Greedy on the leading name part.
   const slashMatch = raw.match(/^(.*?)\s+(\d+)\s*\/\s*(\d+)\s*$/)
   if (slashMatch) {
     return { name: slashMatch[1].trim(), capacity: Number(slashMatch[3]) }
-  }
-  const trailingMatch = raw.match(/^(.*?)\s+(\d+)\s*$/)
-  if (trailingMatch) {
-    return { name: trailingMatch[1].trim(), capacity: Number(trailingMatch[2]) }
   }
   return { name: raw.trim() }
 }
@@ -204,22 +214,103 @@ export const buildAutoMapping = (layerNames: Array<string>): LayerMapping => {
   return mapping
 }
 
-// Compute hall dimensions from an LWPOLYLINE on the hall layer. Returns null
-// if there isn't exactly one suitable closed rectangle.
+// Hall info recovered from the source file, or synthesized from the AABB of
+// imported objects when no hall outline was present.
+interface HallInfo {
+  width: number
+  height: number
+  // Bottom-left of the hall in DXF world coords — used to anchor the app's
+  // hall at (0, 0).
+  bottomLeftDxfY: number
+  offsetX: number
+  // Whether the recovered outline is an axis-aligned rectangle. Drives the
+  // stored `preset` so a round-tripped rectangle hall comes back as
+  // "rectangle" rather than the catch-all "custom".
+  isRect: boolean
+}
+
+// Compute hall dimensions from the largest closed LWPOLYLINE on the hall
+// layer. Picking the largest (by AABB area) handles drawings that include
+// auxiliary outlines on the same layer — without that we could silently grab
+// a small annotation rectangle drawn before the actual hall outline.
 const extractHallDimensions = (
   hallEntities: Array<RawEntity>
-): { width: number; height: number; bottomLeftDxfY: number } | null => {
+): HallInfo | null => {
+  let best: HallInfo | null = null
+  let bestArea = 0
   for (const e of hallEntities) {
     if (e.type !== "LWPOLYLINE" || !e.closed || !e.vertices) continue
+    if (e.vertices.length < 3) continue
     const box = aabb(e.vertices)
     if (!Number.isFinite(box.minX) || !Number.isFinite(box.minY)) continue
-    return {
-      width: box.maxX - box.minX,
-      height: box.maxY - box.minY,
-      bottomLeftDxfY: box.minY,
+    const width = box.maxX - box.minX
+    const height = box.maxY - box.minY
+    if (width <= 0 || height <= 0) continue
+    const area = width * height
+    if (area > bestArea) {
+      bestArea = area
+      best = {
+        width,
+        height,
+        bottomLeftDxfY: box.minY,
+        offsetX: box.minX,
+        isRect: isAxisAlignedRect(e.vertices),
+      }
     }
   }
-  return null
+  return best
+}
+
+// Padding (meters) added on each side when synthesizing a hall to wrap
+// imported objects. Keeps tables/fixtures from sitting flush against the
+// hall edge after import.
+const FALLBACK_HALL_PADDING = 1
+
+// Wrap all imported objects in a synthesized hall. Returns null when there's
+// nothing to wrap (in which case the caller surfaces `no_hall` as fatal).
+// Hall-layer entities are deliberately excluded: this path runs precisely
+// when the hall layer had no usable outline, so its leftover entities (stray
+// lines, annotations) shouldn't drive the size either. Labels are excluded
+// too — a stray label sitting away from the furniture would inflate the box,
+// and labels are positioned relative to objects we already account for.
+const computeFallbackHall = (
+  byRole: Record<LayerRole, Array<RawEntity>>,
+  padding: number
+): HallInfo | null => {
+  let minX = Infinity
+  let minY = Infinity
+  let maxX = -Infinity
+  let maxY = -Infinity
+  const extend = (x: number, y: number) => {
+    if (x < minX) minX = x
+    if (y < minY) minY = y
+    if (x > maxX) maxX = x
+    if (y > maxY) maxY = y
+  }
+  for (const e of [...byRole.tables, ...byRole.fixtures]) {
+    if (
+      e.type === "CIRCLE" &&
+      typeof e.x === "number" &&
+      typeof e.y === "number" &&
+      typeof e.r === "number"
+    ) {
+      extend(e.x - e.r, e.y - e.r)
+      extend(e.x + e.r, e.y + e.r)
+    } else if (e.vertices && e.vertices.length > 0) {
+      for (const v of e.vertices) extend(v.x, v.y)
+    } else if (typeof e.x === "number" && typeof e.y === "number") {
+      extend(e.x, e.y)
+    }
+  }
+  if (!Number.isFinite(minX)) return null
+  return {
+    width: maxX - minX + padding * 2,
+    height: maxY - minY + padding * 2,
+    bottomLeftDxfY: minY - padding,
+    offsetX: minX - padding,
+    // A synthesized hall is always a plain bounding rectangle.
+    isRect: true,
+  }
 }
 
 interface BuildOpts {
@@ -263,7 +354,7 @@ const buildTablesFromEntities = (
     }
     if (e.type === "LWPOLYLINE" && e.vertices) {
       if (!e.closed) {
-        bumpWarning(warnings, "skipped_polyline_open_lw")
+        bumpWarning(warnings, "skipped_polyline_open")
         continue
       }
       if (isAxisAlignedRect(e.vertices)) {
@@ -349,7 +440,7 @@ const buildFixturesFromEntities = (
     }
     if (e.type === "LWPOLYLINE" && e.vertices) {
       if (!e.closed) {
-        bumpWarning(warnings, "skipped_polyline_open_lw")
+        bumpWarning(warnings, "skipped_polyline_open")
         continue
       }
       if (isAxisAlignedRect(e.vertices)) {
@@ -469,7 +560,7 @@ export const parsePlannerDxf = (
       detectedAsEasywed: false,
       warnings: [
         {
-          code: "skipped_unknown",
+          code: "parse_error",
           detail: err instanceof Error ? err.message : String(err),
         },
       ],
@@ -495,32 +586,31 @@ export const parsePlannerDxf = (
     byRole[role].push(...list)
   }
 
-  // Determine hall geometry. If no hall-role layer or no rectangle there,
-  // we surface a warning and let the wizard reject the import.
-  const hallDims = extractHallDimensions(byRole.hall)
-  if (!hallDims) {
+  // Determine hall geometry. If the hall layer has no usable outline, fall
+  // back to wrapping imported objects in a synthesized hall + padding. Only
+  // when there's also nothing to wrap do we treat `no_hall` as fatal.
+  let hall = extractHallDimensions(byRole.hall)
+  if (!hall) {
     warnings.push({ code: "no_hall" })
-    return {
-      preview: null,
-      layers: layerNames,
-      mapping,
-      detectedAsEasywed,
-      warnings,
+    hall = computeFallbackHall(byRole, FALLBACK_HALL_PADDING)
+    if (!hall) {
+      return {
+        preview: null,
+        layers: layerNames,
+        mapping,
+        detectedAsEasywed,
+        warnings,
+      }
     }
+    warnings.push({ code: "hall_synthesized" })
   }
 
-  // World-to-app offset: anchor the hall outline's bottom-left at (0, 0) in
-  // app space so the imported layout doesn't depend on the file's drawing
-  // origin.
-  const offsetX = Math.min(
-    ...byRole.hall
-      .filter((e) => e.type === "LWPOLYLINE" && e.vertices)
-      .flatMap((e) => e.vertices!.map((v) => v.x))
-  )
+  // World-to-app offset: anchor the hall's bottom-left at (0, 0) in app space
+  // so the imported layout doesn't depend on the file's drawing origin.
   const opts: BuildOpts = {
-    hallH: hallDims.height,
-    offsetX,
-    offsetY: hallDims.bottomLeftDxfY,
+    hallH: hall.height,
+    offsetX: hall.offsetX,
+    offsetY: hall.bottomLeftDxfY,
   }
 
   const labels = buildLabels(opts, byRole.labels)
@@ -535,11 +625,12 @@ export const parsePlannerDxf = (
   return {
     preview: {
       hall: {
-        width: hallDims.width,
-        height: hallDims.height,
-        // Custom preset — imported halls are rarely a clean rectangle in the
-        // app's preset taxonomy, but the outline rectangle is what we store.
-        preset: "custom",
+        width: hall.width,
+        height: hall.height,
+        // A clean axis-aligned outline round-trips back to "rectangle"; any
+        // other polygon outline is stored under the catch-all "custom" preset
+        // (we only persist width/height, so the exact polygon isn't kept).
+        preset: hall.isRect ? "rectangle" : "custom",
       },
       tables,
       fixtures,

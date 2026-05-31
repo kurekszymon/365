@@ -59,14 +59,17 @@ const warningKey = (code: ImportWarning["code"]): string => {
     case "skipped_spline":
       return "import.dxf.warning.skipped_spline"
     case "skipped_polyline_open":
-    case "skipped_polyline_open_lw":
       return "import.dxf.warning.skipped_open"
     case "skipped_unknown":
       return "import.dxf.warning.skipped_unknown"
     case "no_hall":
       return "import.dxf.warning.no_hall"
+    case "hall_synthesized":
+      return "import.dxf.warning.hall_synthesized"
     case "ambiguous_layer":
       return "import.dxf.warning.ambiguous_layer"
+    case "parse_error":
+      return "import.dxf.warning.parse_error"
   }
 }
 
@@ -171,7 +174,10 @@ export const ImportPlannerDxfDialog = () => {
     <Dialog
       open={dialog.opened === "Planner.Import.Dxf"}
       onOpenChange={(open) => {
-        if (!open) onClose()
+        // Block close (overlay click / ESC / X) while the destructive commit
+        // is in flight so we don't risk a state update on an unmounted
+        // component and so the user isn't left wondering whether it landed.
+        if (!open && stage.kind !== "committing") onClose()
       }}
       aria-describedby={undefined}
     >
@@ -190,6 +196,10 @@ export const ImportPlannerDxfDialog = () => {
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0]
+                // Clear the input value so picking the same file again still
+                // fires onChange — otherwise the "Try again" loop is flaky
+                // after a parse error.
+                e.target.value = ""
                 if (file) void onFileChosen(file)
               }}
             />

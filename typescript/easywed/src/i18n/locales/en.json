@@ -247,7 +247,9 @@
   "import.dxf.warning.skipped_unknown_one": "{{count}} unsupported entity skipped",
   "import.dxf.warning.skipped_unknown_other": "{{count}} unsupported entities skipped",
   "import.dxf.warning.no_hall": "No hall outline was found on the selected layers.",
+  "import.dxf.warning.hall_synthesized": "Hall sized to fit imported objects with 1 m padding on each side.",
   "import.dxf.warning.ambiguous_layer": "Multiple layers map to the same role.",
+  "import.dxf.warning.parse_error": "Could not parse the DXF file.",
   "import.dxf.warning.guests_one": "{{count}} guest will be unassigned",
   "import.dxf.warning.guests_other": "{{count}} guests will be unassigned",
 
