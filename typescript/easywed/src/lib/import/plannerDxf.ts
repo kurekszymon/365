@@ -1,4 +1,6 @@
-import { parseString } from "dxf"
+import { denormalise, parseString } from "dxf"
+import { applyTransforms, entityToPolyline } from "./dxfGeometry"
+import type { DxfEntity, DxfTransform } from "./dxfGeometry"
 import type {
   Fixture,
   Geometry,
@@ -12,6 +14,31 @@ export type LayerRole = "hall" | "tables" | "fixtures" | "labels" | "ignore"
 
 export type LayerMapping = Record<string, LayerRole>
 
+// Source units we can scale from. `$INSUNITS` covers more (km, yards, …) but
+// these are the ones a wedding-hall drawing realistically uses; anything else
+// falls back to meters + a `unit_assumed` warning.
+export type DxfUnit = "mm" | "cm" | "m" | "in" | "ft"
+
+// Multiply a source coordinate by this to get meters (the app's unit).
+export const UNIT_SCALE: Record<DxfUnit, number> = {
+  mm: 0.001,
+  cm: 0.01,
+  m: 1,
+  in: 0.0254,
+  ft: 0.3048,
+}
+
+// $INSUNITS integer → our DxfUnit subset. 0 (unitless) and any code we don't
+// model are absent, so a lookup returns `undefined`, which drives the meters
+// fallback. Typed with `| undefined` so that absence is visible to callers.
+const INSUNITS_TO_UNIT: Record<number, DxfUnit | undefined> = {
+  1: "in",
+  2: "ft",
+  4: "mm",
+  5: "cm",
+  6: "m",
+}
+
 export interface ImportPreview {
   hall: { width: number; height: number; preset: HallPreset }
   tables: Array<Table>
@@ -20,8 +47,9 @@ export interface ImportPreview {
 
 export interface ImportWarning {
   // `count` may be omitted when the warning isn't a "X entities skipped" kind.
-  code:
+  code: // An open ARC can't bound a closed shape, so it's dropped.
     | "skipped_arc"
+    // An open (non-closed) SPLINE is dropped; closed splines are tessellated.
     | "skipped_spline"
     // Covers both heavy POLYLINE entities and open LWPOLYLINEs — neither can
     // represent a closed planner shape, so they're counted under one code.
@@ -35,6 +63,9 @@ export interface ImportWarning {
     // fixed padding because the file didn't contain a usable hall outline.
     | "hall_synthesized"
     | "ambiguous_layer"
+    // The file carried no usable `$INSUNITS`, so we assumed meters. The user
+    // can correct this via the unit dropdown in the wizard.
+    | "unit_assumed"
     // The DXF library threw while parsing. `detail` carries the error message.
     | "parse_error"
   count?: number
@@ -51,6 +82,10 @@ export interface ImportResult {
   layers: Array<string>
   mapping: LayerMapping
   detectedAsEasywed: boolean
+  // Unit detected from `$INSUNITS` (null when the file was unitless/unknown),
+  // and the unit actually used for this parse (override → detected → meters).
+  detectedUnit: DxfUnit | null
+  resolvedUnit: DxfUnit
   warnings: Array<ImportWarning>
 }
 
@@ -65,20 +100,45 @@ const EASYWED_LAYERS: Record<string, LayerRole> = {
 
 const DEFAULT_CAPACITY = 8
 
+// Spline tessellation density. The lib default is 25; 16 keeps the persisted
+// jsonb vertex count modest while staying smooth enough at hall scale.
+const SPLINE_SEGMENTS = 16
+
+// Tolerance (fraction of radius) for treating an ELLIPSE / non-uniformly
+// scaled CIRCLE as a true circle rather than a polygon.
+const CIRCLE_RATIO_EPS = 0.02
+
 // dxf's parser produces entity objects with a `type` discriminator + a bag of
-// fields per entity. Rather than wrestle with the (partially-untyped) lib
-// types, we treat the entity stream as `Array<RawEntity>` and narrow ourselves.
-type RawEntity = {
-  type: string
+// fields per entity. `denormalise` additionally attaches a `transforms` stack.
+// Rather than wrestle with the (partially-untyped) lib types, we treat the
+// entity stream as `Array<RawEntity>` and narrow ourselves. `DxfEntity` (from
+// ./dxfGeometry) supplies the geometry fields the tessellation reads; we add
+// the few extra fields this module needs on top.
+type RawEntity = DxfEntity & {
   layer?: string
-  vertices?: Array<{ x: number; y: number }>
-  closed?: boolean
-  x?: number
-  y?: number
-  r?: number
+  flag?: number
   string?: string
-  nominalTextHeight?: number
 } & Record<string, unknown>
+
+// A normalized planner-relevant shape, in scaled world DXF coordinates
+// (meters, Y-up). Produced from raw entities so insert transforms and curves
+// are already resolved before classification.
+type NormShape =
+  | { kind: "circle"; cx: number; cy: number; r: number; layer: string }
+  | {
+      kind: "poly"
+      // Always a closed polygon — open polylines are reported as skips, never
+      // surfaced as shapes.
+      vertices: Array<Position>
+      layer: string
+    }
+  | { kind: "text"; x: number; y: number; text: string; layer: string }
+
+// Either a usable shape, or a skip with an optional warning code. `null` skip
+// code means "drop silently" (e.g. LINE noise, already-expanded INSERT).
+type NormResult = NormShape | { skip: ImportWarning["code"] | null }
+
+const isShape = (r: NormResult): r is NormShape => "kind" in r
 
 // Convert a DXF world point (Y-up, origin at hall bottom-left) to an app point
 // (Y-down, origin at hall top-left).
@@ -105,7 +165,7 @@ const aabb = (
   return { minX, minY, maxX, maxY }
 }
 
-// True for a closed LWPOLYLINE whose 4 vertices form an axis-aligned rectangle
+// True for a closed polygon whose 4 vertices form an axis-aligned rectangle
 // (allowing any rotation order of the 4 corners).
 const isAxisAlignedRect = (
   vertices: Array<{ x: number; y: number }>
@@ -126,16 +186,19 @@ const isAxisAlignedRect = (
 const parseLabel = (raw: string): { name: string; capacity?: number } => {
   // Match a trailing " N/M" (with optional whitespace around the slash),
   // pulling out the M as capacity. Greedy on the leading name part.
-  const slashMatch = raw.match(/^(.*?)\s*(\d+)\s*\/\s*(\d+)\s*$/)
+  const slashMatch = raw.match(/^(.*?)\s+(\d+)\s*\/\s*(\d+)\s*$/)
   if (slashMatch) {
     return { name: slashMatch[1].trim(), capacity: Number(slashMatch[3]) }
   }
   return { name: raw.trim() }
 }
 
-// Match each label to the nearest object whose bbox-center is within a
-// threshold (in meters). Unmatched labels are returned in `unused` for callers
-// that want to drop them or warn.
+// Greedy nearest-label matcher. A label attaches to an object when its point
+// is inside the object's AABB, or within `LABEL_MATCH_THRESHOLD_M` of the
+// center. The inside check matters for large tables, where a centered label
+// can sit well beyond the radius threshold. Threshold is in meters (post-scale).
+export const LABEL_MATCH_THRESHOLD_M = 0.6
+
 interface LabelPoint {
   appX: number
   appY: number
@@ -147,25 +210,41 @@ const matchLabels = <
 >(
   objects: Array<T>,
   labels: Array<LabelPoint>,
-  threshold = 0.6
+  threshold = LABEL_MATCH_THRESHOLD_M
 ): Map<T, LabelPoint> => {
-  // Greedy nearest-neighbour: small N, no need for a kd-tree. Each label can
-  // only attach to one object; once attached, it's consumed.
+  // Small N, no need for a kd-tree. Each label can only attach to one object;
+  // once attached, it's consumed.
   const matches = new Map<T, LabelPoint>()
   const available = [...labels]
   for (const obj of objects) {
-    const cx = obj.position.x + obj.size.width / 2
-    const cy = obj.position.y + obj.size.height / 2
+    const left = obj.position.x
+    const top = obj.position.y
+    const right = left + obj.size.width
+    const bottom = top + obj.size.height
+    const cx = left + obj.size.width / 2
+    const cy = top + obj.size.height / 2
+    // Prefer an inside label over an outside-but-near one; among equals, the
+    // nearest to center wins.
     let bestIdx = -1
-    let bestDist = threshold
+    let bestInside = false
+    let bestDist = Infinity
     for (let i = 0; i < available.length; i++) {
       const lbl = available[i]
-      const dx = lbl.appX - cx
-      const dy = lbl.appY - cy
-      const dist = Math.hypot(dx, dy)
-      if (dist < bestDist) {
-        bestDist = dist
+      const inside =
+        lbl.appX >= left &&
+        lbl.appX <= right &&
+        lbl.appY >= top &&
+        lbl.appY <= bottom
+      const dist = Math.hypot(lbl.appX - cx, lbl.appY - cy)
+      if (!inside && dist > threshold) continue
+      const better =
+        bestIdx === -1 ||
+        (inside && !bestInside) ||
+        (inside === bestInside && dist < bestDist)
+      if (better) {
         bestIdx = i
+        bestInside = inside
+        bestDist = dist
       }
     }
     if (bestIdx >= 0) {
@@ -176,7 +255,7 @@ const matchLabels = <
   return matches
 }
 
-// Group entities by layer name, returning a Map for stable iteration.
+// Group raw entities by layer name, returning a Map for stable iteration.
 const groupByLayer = (
   entities: Array<RawEntity>
 ): Map<string, Array<RawEntity>> => {
@@ -214,8 +293,154 @@ export const buildAutoMapping = (layerNames: Array<string>): LayerMapping => {
   return mapping
 }
 
+// ---------------------------------------------------------------------------
+// Entity normalization
+// ---------------------------------------------------------------------------
+
+const TWO_PI = Math.PI * 2
+
+// Combined absolute scale factors across an insert transform stack. Used to
+// scale a circle's radius and to decide whether a circle stays a circle
+// (uniform scale) or becomes an ellipse-polygon (non-uniform scale).
+const combinedScale = (
+  transforms: Array<DxfTransform>
+): { sx: number; sy: number } => {
+  let sx = 1
+  let sy = 1
+  for (const t of transforms) {
+    if (typeof t.scaleX === "number") sx *= t.scaleX
+    if (typeof t.scaleY === "number") sy *= t.scaleY
+  }
+  return { sx: Math.abs(sx), sy: Math.abs(sy) }
+}
+
+const isUniformScale = (sx: number, sy: number): boolean =>
+  Math.abs(sx - sy) <= CIRCLE_RATIO_EPS * Math.max(sx, sy, 1e-9)
+
+// Drop a trailing vertex coincident with the first. `entityToPolyline` repeats
+// the start point to close LWPOLYLINEs and full ellipses; we store an implicit
+// close, so the duplicate would otherwise inflate the vertex count (and break
+// the 4-vertex rectangle check).
+const stripClosingDuplicate = (verts: Array<Position>): Array<Position> => {
+  if (verts.length < 2) return verts
+  const a = verts[0]
+  const b = verts[verts.length - 1]
+  if (Math.abs(a.x - b.x) < 1e-6 && Math.abs(a.y - b.y) < 1e-6) {
+    return verts.slice(0, -1)
+  }
+  return verts
+}
+
+// Tessellate any curve/polyline entity to a closed polygon in scaled world
+// coords. Returns null when the lib can't produce a usable polyline.
+const polyFromEntity = (e: RawEntity, scale: number): NormShape | null => {
+  const local = entityToPolyline(e, {
+    interpolationsPerSplineSegment: SPLINE_SEGMENTS,
+  })
+  if (local.length === 0) return null
+  const world = applyTransforms(local, e.transforms ?? [])
+  const verts = stripClosingDuplicate(
+    world.map(([x, y]) => ({ x: x * scale, y: y * scale }))
+  )
+  if (verts.length < 3) return null
+  return { kind: "poly", vertices: verts, layer: e.layer ?? "" }
+}
+
+const applyToPoint = (
+  e: RawEntity,
+  x: number,
+  y: number
+): { x: number; y: number } => {
+  const [tx, ty] = applyTransforms([[x, y]], e.transforms ?? [])[0]
+  return { x: tx, y: ty }
+}
+
+const normalizeEntity = (e: RawEntity, scale: number): NormResult => {
+  const layer = e.layer ?? ""
+  switch (e.type) {
+    case "TEXT":
+    case "MTEXT": {
+      if (typeof e.x !== "number" || typeof e.y !== "number") {
+        return { skip: null }
+      }
+      const text = (e.string ?? "").toString().trim()
+      if (!text) return { skip: null }
+      const p = applyToPoint(e, e.x, e.y)
+      return { kind: "text", x: p.x * scale, y: p.y * scale, text, layer }
+    }
+    case "CIRCLE": {
+      if (
+        typeof e.x !== "number" ||
+        typeof e.y !== "number" ||
+        typeof e.r !== "number"
+      ) {
+        return { skip: null }
+      }
+      const { sx, sy } = combinedScale(e.transforms ?? [])
+      // Non-uniform scale squashes the circle into an ellipse: fall back to a
+      // tessellated polygon so the aspect ratio is preserved.
+      if (!isUniformScale(sx, sy)) {
+        return polyFromEntity(e, scale) ?? { skip: null }
+      }
+      const c = applyToPoint(e, e.x, e.y)
+      return {
+        kind: "circle",
+        cx: c.x * scale,
+        cy: c.y * scale,
+        r: e.r * sx * scale,
+        layer,
+      }
+    }
+    case "ELLIPSE": {
+      const start = e.startAngle ?? 0
+      const end = e.endAngle ?? TWO_PI
+      const full =
+        Math.abs(Math.abs(end - start) - TWO_PI) < 1e-3 ||
+        (start === 0 && end === 0)
+      // A partial ellipse is an open arc — can't bound a shape.
+      if (!full) return { skip: "skipped_unknown" }
+      const rx = Math.hypot(e.majorX ?? 0, e.majorY ?? 0)
+      const ry = (e.axisRatio ?? 1) * rx
+      const { sx, sy } = combinedScale(e.transforms ?? [])
+      const nearCircular = rx > 0 && Math.abs(rx - ry) <= CIRCLE_RATIO_EPS * rx
+      if (nearCircular && isUniformScale(sx, sy)) {
+        const c = applyToPoint(e, e.x ?? 0, e.y ?? 0)
+        return {
+          kind: "circle",
+          cx: c.x * scale,
+          cy: c.y * scale,
+          r: rx * sx * scale,
+          layer,
+        }
+      }
+      return polyFromEntity(e, scale) ?? { skip: null }
+    }
+    case "LWPOLYLINE":
+    case "POLYLINE": {
+      if (!e.closed) return { skip: "skipped_polyline_open" }
+      return polyFromEntity(e, scale) ?? { skip: null }
+    }
+    case "SPLINE": {
+      const closed = !!e.closed || ((e.flag ?? 0) & 1) === 1
+      if (!closed) return { skip: "skipped_spline" }
+      return polyFromEntity(e, scale) ?? { skip: null }
+    }
+    case "ARC":
+      return { skip: "skipped_arc" }
+    // Annotation/structural noise, or an INSERT that `denormalise` already
+    // expanded (a leftover means a missing block def, logged by the lib).
+    case "LINE":
+    case "POINT":
+    case "DIMENSION":
+    case "INSERT":
+      return { skip: null }
+    default:
+      return { skip: "skipped_unknown" }
+  }
+}
+
 // Hall info recovered from the source file, or synthesized from the AABB of
-// imported objects when no hall outline was present.
+// imported objects when no hall outline was present. All values in meters.
 interface HallInfo {
   width: number
   height: number
@@ -229,19 +454,17 @@ interface HallInfo {
   isRect: boolean
 }
 
-// Compute hall dimensions from the largest closed LWPOLYLINE on the hall
-// layer. Picking the largest (by AABB area) handles drawings that include
-// auxiliary outlines on the same layer — without that we could silently grab
-// a small annotation rectangle drawn before the actual hall outline.
-const extractHallDimensions = (
-  hallEntities: Array<RawEntity>
-): HallInfo | null => {
+// Compute hall dimensions from the largest closed polygon on the hall layer.
+// Picking the largest (by AABB area) handles drawings that include auxiliary
+// outlines on the same layer — without that we could silently grab a small
+// annotation rectangle drawn before the actual hall outline.
+const extractHallDimensions = (shapes: Array<NormShape>): HallInfo | null => {
   let best: HallInfo | null = null
   let bestArea = 0
-  for (const e of hallEntities) {
-    if (e.type !== "LWPOLYLINE" || !e.closed || !e.vertices) continue
-    if (e.vertices.length < 3) continue
-    const box = aabb(e.vertices)
+  for (const s of shapes) {
+    if (s.kind !== "poly") continue
+    if (s.vertices.length < 3) continue
+    const box = aabb(s.vertices)
     if (!Number.isFinite(box.minX) || !Number.isFinite(box.minY)) continue
     const width = box.maxX - box.minX
     const height = box.maxY - box.minY
@@ -254,7 +477,7 @@ const extractHallDimensions = (
         height,
         bottomLeftDxfY: box.minY,
         offsetX: box.minX,
-        isRect: isAxisAlignedRect(e.vertices),
+        isRect: isAxisAlignedRect(s.vertices),
       }
     }
   }
@@ -264,17 +487,17 @@ const extractHallDimensions = (
 // Padding (meters) added on each side when synthesizing a hall to wrap
 // imported objects. Keeps tables/fixtures from sitting flush against the
 // hall edge after import.
-const FALLBACK_HALL_PADDING = 1
+export const FALLBACK_HALL_PADDING = 1
 
 // Wrap all imported objects in a synthesized hall. Returns null when there's
 // nothing to wrap (in which case the caller surfaces `no_hall` as fatal).
-// Hall-layer entities are deliberately excluded: this path runs precisely
-// when the hall layer had no usable outline, so its leftover entities (stray
-// lines, annotations) shouldn't drive the size either. Labels are excluded
-// too — a stray label sitting away from the furniture would inflate the box,
-// and labels are positioned relative to objects we already account for.
+// Hall-layer shapes are deliberately excluded: this path runs precisely when
+// the hall layer had no usable outline, so its leftover shapes shouldn't drive
+// the size either. Labels are excluded too — a stray label sitting away from
+// the furniture would inflate the box, and labels are positioned relative to
+// objects we already account for.
 const computeFallbackHall = (
-  byRole: Record<LayerRole, Array<RawEntity>>,
+  byRole: Record<LayerRole, Array<NormShape>>,
   padding: number
 ): HallInfo | null => {
   let minX = Infinity
@@ -287,19 +510,12 @@ const computeFallbackHall = (
     if (x > maxX) maxX = x
     if (y > maxY) maxY = y
   }
-  for (const e of [...byRole.tables, ...byRole.fixtures]) {
-    if (
-      e.type === "CIRCLE" &&
-      typeof e.x === "number" &&
-      typeof e.y === "number" &&
-      typeof e.r === "number"
-    ) {
-      extend(e.x - e.r, e.y - e.r)
-      extend(e.x + e.r, e.y + e.r)
-    } else if (e.vertices && e.vertices.length > 0) {
-      for (const v of e.vertices) extend(v.x, v.y)
-    } else if (typeof e.x === "number" && typeof e.y === "number") {
-      extend(e.x, e.y)
+  for (const s of [...byRole.tables, ...byRole.fixtures]) {
+    if (s.kind === "circle") {
+      extend(s.cx - s.r, s.cy - s.r)
+      extend(s.cx + s.r, s.cy + s.r)
+    } else if (s.kind === "poly") {
+      for (const v of s.vertices) extend(v.x, v.y)
     }
   }
   if (!Number.isFinite(minX)) return null
@@ -325,22 +541,37 @@ interface BuildOpts {
 const dxfToAppPoint = (opts: BuildOpts, dx: number, dy: number): Position =>
   toApp(opts.hallH, dx - opts.offsetX, dy - opts.offsetY)
 
-const buildTablesFromEntities = (
+// Convert a closed polygon's world vertices to object-local geometry (top-left
+// origin, Y down) plus its AABB-derived position and size.
+const polyToLocal = (
   opts: BuildOpts,
-  entities: Array<RawEntity>,
-  labels: Array<LabelPoint>,
-  warnings: Array<ImportWarning>
+  vertices: Array<Position>
+): {
+  position: Position
+  size: { width: number; height: number }
+  geometry: Geometry
+} => {
+  const box = aabb(vertices)
+  return {
+    position: dxfToAppPoint(opts, box.minX, box.maxY),
+    size: { width: box.maxX - box.minX, height: box.maxY - box.minY },
+    geometry: {
+      vertices: vertices.map((v) => ({ x: v.x - box.minX, y: box.maxY - v.y })),
+      closed: true,
+    },
+  }
+}
+
+const buildTablesFromShapes = (
+  opts: BuildOpts,
+  shapes: Array<NormShape>,
+  labels: Array<LabelPoint>
 ): Array<Table> => {
   const tables: Array<Table> = []
-  for (const e of entities) {
-    if (
-      e.type === "CIRCLE" &&
-      typeof e.x === "number" &&
-      typeof e.y === "number" &&
-      typeof e.r === "number"
-    ) {
-      const topLeft = dxfToAppPoint(opts, e.x - e.r, e.y + e.r)
-      const diameter = e.r * 2
+  for (const s of shapes) {
+    if (s.kind === "circle") {
+      const topLeft = dxfToAppPoint(opts, s.cx - s.r, s.cy + s.r)
+      const diameter = s.r * 2
       tables.push({
         id: crypto.randomUUID(),
         name: "",
@@ -350,56 +581,33 @@ const buildTablesFromEntities = (
         rotation: 0,
         position: topLeft,
       })
-      continue
-    }
-    if (e.type === "LWPOLYLINE" && e.vertices) {
-      if (!e.closed) {
-        bumpWarning(warnings, "skipped_polyline_open")
-        continue
-      }
-      if (isAxisAlignedRect(e.vertices)) {
-        const box = aabb(e.vertices)
-        const topLeft = dxfToAppPoint(opts, box.minX, box.maxY)
+    } else if (s.kind === "poly") {
+      if (isAxisAlignedRect(s.vertices)) {
+        const box = aabb(s.vertices)
         tables.push({
           id: crypto.randomUUID(),
           name: "",
           shape: "rectangular",
           capacity: DEFAULT_CAPACITY,
-          size: {
-            width: box.maxX - box.minX,
-            height: box.maxY - box.minY,
-          },
+          size: { width: box.maxX - box.minX, height: box.maxY - box.minY },
           rotation: 0,
-          position: topLeft,
+          position: dxfToAppPoint(opts, box.minX, box.maxY),
         })
-        continue
+      } else {
+        const { position, size, geometry } = polyToLocal(opts, s.vertices)
+        tables.push({
+          id: crypto.randomUUID(),
+          name: "",
+          shape: "custom",
+          capacity: DEFAULT_CAPACITY,
+          size,
+          rotation: 0,
+          position,
+          geometry,
+        })
       }
-      // Generic closed polygon → custom shape.
-      const box = aabb(e.vertices)
-      const topLeft = dxfToAppPoint(opts, box.minX, box.maxY)
-      const geometry: Geometry = {
-        vertices: e.vertices.map((v) => ({
-          x: v.x - box.minX,
-          y: box.maxY - v.y,
-        })),
-        closed: true,
-      }
-      tables.push({
-        id: crypto.randomUUID(),
-        name: "",
-        shape: "custom",
-        capacity: DEFAULT_CAPACITY,
-        size: {
-          width: box.maxX - box.minX,
-          height: box.maxY - box.minY,
-        },
-        rotation: 0,
-        position: topLeft,
-        geometry,
-      })
-      continue
     }
-    countSkip(e, warnings)
+    // text shapes on a tables layer carry no object: ignored.
   }
 
   // Attach matching labels.
@@ -412,22 +620,16 @@ const buildTablesFromEntities = (
   return tables
 }
 
-const buildFixturesFromEntities = (
+const buildFixturesFromShapes = (
   opts: BuildOpts,
-  entities: Array<RawEntity>,
-  labels: Array<LabelPoint>,
-  warnings: Array<ImportWarning>
+  shapes: Array<NormShape>,
+  labels: Array<LabelPoint>
 ): Array<Fixture> => {
   const fixtures: Array<Fixture> = []
-  for (const e of entities) {
-    if (
-      e.type === "CIRCLE" &&
-      typeof e.x === "number" &&
-      typeof e.y === "number" &&
-      typeof e.r === "number"
-    ) {
-      const topLeft = dxfToAppPoint(opts, e.x - e.r, e.y + e.r)
-      const diameter = e.r * 2
+  for (const s of shapes) {
+    if (s.kind === "circle") {
+      const topLeft = dxfToAppPoint(opts, s.cx - s.r, s.cy + s.r)
+      const diameter = s.r * 2
       fixtures.push({
         id: crypto.randomUUID(),
         name: "",
@@ -436,53 +638,30 @@ const buildFixturesFromEntities = (
         rotation: 0,
         position: topLeft,
       })
-      continue
-    }
-    if (e.type === "LWPOLYLINE" && e.vertices) {
-      if (!e.closed) {
-        bumpWarning(warnings, "skipped_polyline_open")
-        continue
-      }
-      if (isAxisAlignedRect(e.vertices)) {
-        const box = aabb(e.vertices)
-        const topLeft = dxfToAppPoint(opts, box.minX, box.maxY)
+    } else if (s.kind === "poly") {
+      if (isAxisAlignedRect(s.vertices)) {
+        const box = aabb(s.vertices)
         fixtures.push({
           id: crypto.randomUUID(),
           name: "",
           shape: "rectangle",
-          size: {
-            width: box.maxX - box.minX,
-            height: box.maxY - box.minY,
-          },
+          size: { width: box.maxX - box.minX, height: box.maxY - box.minY },
           rotation: 0,
-          position: topLeft,
+          position: dxfToAppPoint(opts, box.minX, box.maxY),
         })
-        continue
+      } else {
+        const { position, size, geometry } = polyToLocal(opts, s.vertices)
+        fixtures.push({
+          id: crypto.randomUUID(),
+          name: "",
+          shape: "polygon",
+          size,
+          rotation: 0,
+          position,
+          geometry,
+        })
       }
-      const box = aabb(e.vertices)
-      const topLeft = dxfToAppPoint(opts, box.minX, box.maxY)
-      const geometry: Geometry = {
-        vertices: e.vertices.map((v) => ({
-          x: v.x - box.minX,
-          y: box.maxY - v.y,
-        })),
-        closed: true,
-      }
-      fixtures.push({
-        id: crypto.randomUUID(),
-        name: "",
-        shape: "polygon",
-        size: {
-          width: box.maxX - box.minX,
-          height: box.maxY - box.minY,
-        },
-        rotation: 0,
-        position: topLeft,
-        geometry,
-      })
-      continue
     }
-    countSkip(e, warnings)
   }
 
   const matches = matchLabels(fixtures, labels)
@@ -495,20 +674,13 @@ const buildFixturesFromEntities = (
 
 const buildLabels = (
   opts: BuildOpts,
-  entities: Array<RawEntity>
+  shapes: Array<NormShape>
 ): Array<LabelPoint> => {
   const out: Array<LabelPoint> = []
-  for (const e of entities) {
-    if (
-      (e.type === "MTEXT" || e.type === "TEXT") &&
-      typeof e.x === "number" &&
-      typeof e.y === "number"
-    ) {
-      const text = (e.string ?? "").toString().trim()
-      if (!text) continue
-      const pos = dxfToAppPoint(opts, e.x, e.y)
-      out.push({ appX: pos.x, appY: pos.y, text })
-    }
+  for (const s of shapes) {
+    if (s.kind !== "text") continue
+    const pos = dxfToAppPoint(opts, s.x, s.y)
+    out.push({ appX: pos.x, appY: pos.y, text: s.text })
   }
   return out
 }
@@ -522,59 +694,69 @@ const bumpWarning = (
   else warnings.push({ code, count: 1 })
 }
 
-const countSkip = (e: RawEntity, warnings: Array<ImportWarning>) => {
-  switch (e.type) {
-    case "ARC":
-      return bumpWarning(warnings, "skipped_arc")
-    case "SPLINE":
-      return bumpWarning(warnings, "skipped_spline")
-    case "POLYLINE":
-      return bumpWarning(warnings, "skipped_polyline_open")
-    case "DIMENSION":
-    case "LINE":
-    case "POINT":
-    case "TEXT":
-    case "MTEXT":
-      // Silently ignored: handled by other passes or considered annotation
-      // noise that doesn't represent a planner object.
-      return
-    default:
-      return bumpWarning(warnings, "skipped_unknown")
+const detectUnit = (header: unknown): DxfUnit | null => {
+  // Runtime stores the value under `insUnits` (the `@types/dxf` `$INSUNITS`
+  // declaration doesn't match the parser's actual key).
+  const insUnits = (header as { insUnits?: number } | undefined)?.insUnits
+  if (typeof insUnits === "number" && INSUNITS_TO_UNIT[insUnits]) {
+    return INSUNITS_TO_UNIT[insUnits]
   }
+  return null
 }
+
+const failure = (
+  warnings: Array<ImportWarning>,
+  extra?: Partial<ImportResult>
+): ImportResult => ({
+  preview: null,
+  layers: [],
+  mapping: {},
+  detectedAsEasywed: false,
+  detectedUnit: null,
+  resolvedUnit: "m",
+  warnings,
+  ...extra,
+})
 
 export const parsePlannerDxf = (
   content: string,
   // When provided, overrides the auto-detected mapping (step 2 of the wizard).
-  userMapping?: LayerMapping
+  userMapping?: LayerMapping,
+  // When provided, overrides the unit detected from `$INSUNITS`.
+  unitOverride?: DxfUnit
 ): ImportResult => {
   const warnings: Array<ImportWarning> = []
-  let parsed: { entities?: Array<RawEntity> }
+  let parsed: ReturnType<typeof parseString>
+  let entities: Array<RawEntity>
   try {
-    parsed = parseString(content) as { entities?: Array<RawEntity> }
+    parsed = parseString(content)
+    // Expand INSERT/block references into a flat entity stream, baking the
+    // insert transforms onto each entity (read later via `applyTransforms`).
+    entities = denormalise(parsed) as unknown as Array<RawEntity>
   } catch (err) {
-    return {
-      preview: null,
-      layers: [],
-      mapping: {},
-      detectedAsEasywed: false,
-      warnings: [
-        {
-          code: "parse_error",
-          detail: err instanceof Error ? err.message : String(err),
-        },
-      ],
-    }
+    return failure([
+      {
+        code: "parse_error",
+        detail: err instanceof Error ? err.message : String(err),
+      },
+    ])
   }
 
-  const entities = parsed.entities ?? []
+  // Resolve the unit: explicit override → detected → meters (with a warning).
+  const detectedUnit = detectUnit(parsed.header)
+  const resolvedUnit: DxfUnit = unitOverride ?? detectedUnit ?? "m"
+  const scale = UNIT_SCALE[resolvedUnit]
+  if (!unitOverride && !detectedUnit) warnings.push({ code: "unit_assumed" })
+
   const grouped = groupByLayer(entities)
   const layerNames = Array.from(grouped.keys())
   const mapping = userMapping ?? buildAutoMapping(layerNames)
   const detectedAsEasywed = detectEasywedLayers(layerNames)
 
-  // Collect entities per role using the mapping.
-  const byRole: Record<LayerRole, Array<RawEntity>> = {
+  // Normalize entities per role. Entities on ignored layers are dropped
+  // silently; skip warnings only fire for layers the user actually cares
+  // about (hall/tables/fixtures/labels).
+  const byRole: Record<LayerRole, Array<NormShape>> = {
     hall: [],
     tables: [],
     fixtures: [],
@@ -583,7 +765,20 @@ export const parsePlannerDxf = (
   }
   for (const [layer, list] of grouped.entries()) {
     const role = mapping[layer] ?? "ignore"
-    byRole[role].push(...list)
+    if (role === "ignore") continue
+    for (const e of list) {
+      const r = normalizeEntity(e, scale)
+      if (isShape(r)) byRole[role].push(r)
+      else if (r.skip) bumpWarning(warnings, r.skip)
+    }
+  }
+
+  const base = {
+    layers: layerNames,
+    mapping,
+    detectedAsEasywed,
+    detectedUnit,
+    resolvedUnit,
   }
 
   // Determine hall geometry. If the hall layer has no usable outline, fall
@@ -594,13 +789,7 @@ export const parsePlannerDxf = (
     warnings.push({ code: "no_hall" })
     hall = computeFallbackHall(byRole, FALLBACK_HALL_PADDING)
     if (!hall) {
-      return {
-        preview: null,
-        layers: layerNames,
-        mapping,
-        detectedAsEasywed,
-        warnings,
-      }
+      return { preview: null, warnings, ...base }
     }
     warnings.push({ code: "hall_synthesized" })
   }
@@ -614,13 +803,8 @@ export const parsePlannerDxf = (
   }
 
   const labels = buildLabels(opts, byRole.labels)
-  const tables = buildTablesFromEntities(opts, byRole.tables, labels, warnings)
-  const fixtures = buildFixturesFromEntities(
-    opts,
-    byRole.fixtures,
-    labels,
-    warnings
-  )
+  const tables = buildTablesFromShapes(opts, byRole.tables, labels)
+  const fixtures = buildFixturesFromShapes(opts, byRole.fixtures, labels)
 
   return {
     preview: {
@@ -635,9 +819,7 @@ export const parsePlannerDxf = (
       tables,
       fixtures,
     },
-    layers: layerNames,
-    mapping,
-    detectedAsEasywed,
     warnings,
+    ...base,
   }
 }
