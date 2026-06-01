@@ -2,8 +2,8 @@ import { useRef, useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import type {
+  DxfUnit,
   ImportPreview,
-  ImportResult,
   ImportWarning,
   LayerMapping,
   LayerRole,
@@ -26,8 +26,21 @@ import { replacePlannerLayout } from "@/lib/sync/mutations"
 
 type Stage =
   | { kind: "file" }
-  | { kind: "layers"; result: ImportResult; raw: string }
-  | { kind: "preview"; preview: ImportPreview; warnings: Array<ImportWarning> }
+  | {
+      kind: "layers"
+      raw: string
+      layers: Array<string>
+      mapping: LayerMapping
+    }
+  | {
+      kind: "preview"
+      raw: string
+      // Mapping used to produce this preview; undefined for auto-detected
+      // EasyWed exports that skipped the layer-mapping step.
+      mapping?: LayerMapping
+      preview: ImportPreview
+      warnings: Array<ImportWarning>
+    }
   | { kind: "committing" }
   | { kind: "error"; message: string }
 
@@ -52,6 +65,8 @@ const ROLES: Array<LayerRole> = [
   "ignore",
 ]
 
+const UNITS: Array<DxfUnit> = ["mm", "cm", "m", "in", "ft"]
+
 const warningKey = (code: ImportWarning["code"]): string => {
   switch (code) {
     case "skipped_arc":
@@ -68,6 +83,8 @@ const warningKey = (code: ImportWarning["code"]): string => {
       return "import.dxf.warning.hall_synthesized"
     case "ambiguous_layer":
       return "import.dxf.warning.ambiguous_layer"
+    case "unit_assumed":
+      return "import.dxf.warning.unit_assumed"
     case "parse_error":
       return "import.dxf.warning.parse_error"
   }
@@ -77,6 +94,9 @@ export const ImportPlannerDxfDialog = () => {
   const { t } = useTranslation()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [stage, setStage] = useState<Stage>({ kind: "file" })
+  // Source unit applied to the current parse. Seeded from `$INSUNITS` on file
+  // pick, overridable via the dropdown on the preview step.
+  const [unit, setUnit] = useState<DxfUnit>("m")
 
   const dialog = useDialogStore(
     useShallow((state) => ({
@@ -97,11 +117,13 @@ export const ImportPlannerDxfDialog = () => {
   const onFileChosen = async (file: File) => {
     const text = await file.text()
     const result = parsePlannerDxf(text)
+    setUnit(result.resolvedUnit)
     // Auto-skip layer mapping when the file looks like an EasyWed export and
     // we already have a usable preview.
     if (result.preview && result.detectedAsEasywed) {
       setStage({
         kind: "preview",
+        raw: text,
         preview: result.preview,
         warnings: result.warnings,
       })
@@ -112,7 +134,12 @@ export const ImportPlannerDxfDialog = () => {
     // layer to "ignore", so the hall isn't detected yet; the user picks roles
     // in step 2 and we re-parse.
     if (result.layers.length > 0) {
-      setStage({ kind: "layers", result, raw: text })
+      setStage({
+        kind: "layers",
+        raw: text,
+        layers: result.layers,
+        mapping: result.mapping,
+      })
       return
     }
     setStage({
@@ -122,7 +149,7 @@ export const ImportPlannerDxfDialog = () => {
   }
 
   const onLayersConfirmed = (mapping: LayerMapping, raw: string) => {
-    const result = parsePlannerDxf(raw, mapping)
+    const result = parsePlannerDxf(raw, mapping, unit)
     if (!result.preview) {
       setStage({
         kind: "error",
@@ -132,8 +159,21 @@ export const ImportPlannerDxfDialog = () => {
     }
     setStage({
       kind: "preview",
+      raw,
+      mapping,
       preview: result.preview,
       warnings: result.warnings,
+    })
+  }
+
+  // Re-parse with a different source unit and refresh the preview in place.
+  const onUnitChange = (next: DxfUnit) => {
+    setUnit(next)
+    setStage((prev) => {
+      if (prev.kind !== "preview") return prev
+      const result = parsePlannerDxf(prev.raw, prev.mapping, next)
+      if (!result.preview) return prev
+      return { ...prev, preview: result.preview, warnings: result.warnings }
     })
   }
 
@@ -211,8 +251,8 @@ export const ImportPlannerDxfDialog = () => {
 
         {stage.kind === "layers" && (
           <LayerMappingStep
-            layers={stage.result.layers}
-            initial={stage.result.mapping}
+            layers={stage.layers}
+            initial={stage.mapping}
             onCancel={reset}
             onConfirm={(mapping) => onLayersConfirmed(mapping, stage.raw)}
           />
@@ -222,6 +262,8 @@ export const ImportPlannerDxfDialog = () => {
           <PreviewStep
             preview={stage.preview}
             warnings={stage.warnings}
+            unit={unit}
+            onUnitChange={onUnitChange}
             assignedGuests={guests.filter((g) => g.tableId).length}
             onBack={reset}
             onCommit={() => onCommit(stage.preview)}
@@ -310,6 +352,8 @@ const LayerMappingStep = ({
 interface PreviewStepProps {
   preview: ImportPreview
   warnings: Array<ImportWarning>
+  unit: DxfUnit
+  onUnitChange: (unit: DxfUnit) => void
   assignedGuests: number
   onBack: () => void
   onCommit: () => void
@@ -318,6 +362,8 @@ interface PreviewStepProps {
 const PreviewStep = ({
   preview,
   warnings,
+  unit,
+  onUnitChange,
   assignedGuests,
   onBack,
   onCommit,
@@ -325,6 +371,27 @@ const PreviewStep = ({
   const { t } = useTranslation()
   return (
     <div className="flex flex-col gap-3">
+      <Field className="flex-row items-center gap-3">
+        <FieldLabel className="flex-1">{t("import.dxf.unit.label")}</FieldLabel>
+        <FieldContent className="flex-1">
+          <Select
+            value={unit}
+            onValueChange={(v) => onUnitChange(v as DxfUnit)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {UNITS.map((u) => (
+                <SelectItem key={u} value={u}>
+                  {t(`import.dxf.unit.${u}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FieldContent>
+      </Field>
+
       <Field>
         <FieldLabel>{t("import.dxf.preview.summary")}</FieldLabel>
         <FieldContent className="text-sm">

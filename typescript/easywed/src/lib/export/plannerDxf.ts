@@ -142,6 +142,12 @@ const emitPolygon = (
 // Transform an object-local polygon (top-left origin, Y down) to world DXF
 // coordinates (bottom-left origin, Y up). The object's top-left corner in app
 // space is (px, py).
+//
+// NOTE: `rotation` is deliberately NOT applied to the vertices here. This is
+// safe only because custom/polygon shapes are non-rotatable in the UI (their
+// rotation stays 0 — see TablePanelContent/FixturePanelContent, which hide the
+// rotation control for these shapes). If polygons ever become rotatable, bake
+// the rotation into these vertices, or the export will silently drop it.
 const polygonToDxf = (
   hallH: number,
   px: number,
