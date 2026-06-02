@@ -1,7 +1,15 @@
-import { Link, createFileRoute } from "@tanstack/react-router"
+import { Link, createFileRoute, redirect } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
 export const Route = createFileRoute("/wedding/$id/")({
+  // Hub is kept for later; for now we skip it and go straight to the planner.
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: "/wedding/$id/planner",
+      params: { id: params.id },
+      replace: true,
+    })
+  },
   component: WeddingHub,
 })
 
