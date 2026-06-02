@@ -1,5 +1,14 @@
 # EasyWed — Development Log
 
+### 02.06
+
+- omit hub, go straight to seat planner
+- remove navigation to invitations
+
+### 01.06
+
+- extend dxf import for more cad shapes
+
 ### 31.05
 
 - support custom shapes to support import from cad

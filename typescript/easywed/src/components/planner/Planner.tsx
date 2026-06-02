@@ -3,13 +3,11 @@ import { useTranslation } from "react-i18next"
 import {
   LandmarkIcon,
   LayoutPanelLeftIcon,
-  MailIcon,
   PlusIcon,
   UserPlusIcon,
   UsersIcon,
   UtensilsIcon,
 } from "lucide-react"
-import { useNavigate } from "@tanstack/react-router"
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
 import { Canvas } from "./Canvas"
 import { Header } from "./Header"
@@ -42,7 +40,6 @@ import { useOpenHall } from "@/hooks/useOpenHall"
 
 export const Planner = () => {
   const { t } = useTranslation()
-  const navigate = useNavigate()
 
   const openDialog = useDialogStore((state) => state.open)
   const role = useGlobalStore((state) => state.role)
@@ -72,12 +69,6 @@ export const Planner = () => {
   const weddingId = useGlobalStore((state) => state.weddingId)
 
   const openHall = useOpenHall()
-
-  const handleOpenInvitations = () => {
-    if (!weddingId) return
-
-    void navigate({ to: "/wedding/$id/invitations", params: { id: weddingId } })
-  }
 
   const panel = usePanelStore(
     useShallow((state) => ({
@@ -192,14 +183,6 @@ export const Planner = () => {
                   <TooltipContent>{t("members.title")}</TooltipContent>
                 </Tooltip>
               )}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" onClick={handleOpenInvitations}>
-                    <MailIcon />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t("invitations")}</TooltipContent>
-              </Tooltip>
               <ImportHeader />
               <ExportHeader />
             </ButtonGroup>
