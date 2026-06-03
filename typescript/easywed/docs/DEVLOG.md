@@ -1,5 +1,11 @@
 # EasyWed — Development Log
 
+### 03.06
+
+- removed draft invitation feature (5k lines)
+  f08bfd0f0622ab9603afb12d06f9dc9507ab39fe, commit for ref
+- for easywed only go with seatplanner with cad support
+
 ### 02.06
 
 - omit hub, go straight to seat planner
