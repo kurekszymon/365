@@ -5,8 +5,7 @@ import { create } from "zustand"
 type Guests = "Guest.Add" | "Guests.Export.Csv" | "Guests.Export.Pdf"
 type Planner = "Planner.Export.Dxf" | "Planner.Import.Dxf"
 type Weddings = "Wedding.Rename" | "Wedding.Create" | "Wedding.Members"
-type Invitations = "Invitation.Order"
-type Dialog = Weddings | Guests | Planner | Invitations
+type Dialog = Weddings | Guests | Planner
 
 type State = {
   opened: Dialog | null

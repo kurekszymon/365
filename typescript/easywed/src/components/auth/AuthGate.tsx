@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase"
 
 // Routes that render immediately without waiting for session hydration.
 // Auth state still hydrates in the background for opportunistic use.
-const PUBLIC_PATHS = ["/login", "/auth/callback", "/invitations"]
+const PUBLIC_PATHS = ["/login", "/auth/callback"]
 
 // Hydrates the Supabase session into the auth store and re-runs router
 // matches on any auth change. Route-level beforeLoad handlers own the

@@ -36,17 +36,6 @@ function WeddingHub() {
             </p>
           </Link>
 
-          <Link
-            to="/wedding/$id/invitations"
-            params={{ id }}
-            className="rounded-md border bg-card p-4 hover:bg-accent"
-          >
-            <p className="font-medium">{t("wedding.hub.invitations")}</p>
-            <p className="text-sm text-muted-foreground">
-              {t("wedding.hub.invitations_desc")}
-            </p>
-          </Link>
-
           {/* <Link
             to="/wedding/$id/reminders"
             params={{ id }}

@@ -9,7 +9,6 @@ import {
   WeddingMembersDialog,
   WeddingRenameDialog,
 } from "./weddings"
-import { OrderInvitationDialog } from "./invitations/OrderInvitationDialog"
 import { useDialogStore } from "@/stores/dialog.store"
 
 export const DialogManager = () => {
@@ -32,8 +31,6 @@ export const DialogManager = () => {
       return <ExportPlannerDxfDialog />
     case "Planner.Import.Dxf":
       return <ImportPlannerDxfDialog />
-    case "Invitation.Order":
-      return <OrderInvitationDialog />
     default:
       return <></>
   }
