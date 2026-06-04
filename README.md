@@ -76,7 +76,7 @@ key takeways:
 
 ### easywed
 
-wedding planner app to help couples connect with venues and plan seats/invitations
+wedding planner app to help couples and wedding planners plan seats and tables around wedding halls, support CAD import/export.
 
 - tanstack start
 - zustand
