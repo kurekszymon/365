@@ -52,13 +52,10 @@
   "invite.claiming": "Joining wedding...",
   "invite.invalid": "This invitation is invalid or expired.",
 
+  "wedding": "Wedding",
   "wedding.rename": "Rename wedding",
   "wedding.loading": "Loading your wedding...",
   "wedding.load_failed": "Couldn't load this wedding. Please try again.",
-  "wedding.defaults.name": "Our big day",
-  "wedding.create.title": "Let's plan your big day",
-  "wedding.create.title_placeholder": "Alex & Jamie",
-  "wedding.create.date_info": "You can always fill it up later",
 
   "wedding.hub.title": "What would you like to do?",
   "wedding.hub.planner": "Seat Planner",

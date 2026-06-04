@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react"
-import { Link, createFileRoute } from "@tanstack/react-router"
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { supabase } from "@/lib/supabase"
 import { requireAuth } from "@/lib/auth/guards"
 import { useAuthStore } from "@/stores/auth.store"
-import { useDialogStore } from "@/stores/dialog.store"
 import { Button } from "@/components/ui/button"
 import { DialogManager } from "@/components/dialogs/DialogManager"
 
@@ -24,10 +23,11 @@ type WeddingRow = {
 function Home() {
   const { t } = useTranslation()
   const session = useAuthStore((s) => s.session)
-  const openDialog = useDialogStore((s) => s.open)
+  const navigate = useNavigate()
 
   const [weddings, setWeddings] = useState<Array<WeddingRow>>([])
   const [loading, setLoading] = useState(true)
+  const [creating, setCreating] = useState(false)
 
   useEffect(() => {
     if (!session) return
@@ -44,6 +44,29 @@ function Home() {
       })
   }, [session])
 
+  const handleCreate = async () => {
+    if (!session || creating) return
+    setCreating(true)
+    const { data, error } = await supabase
+      .from("weddings")
+      .insert({
+        owner_id: session.user.id,
+        name:
+          weddings.length === 0
+            ? t("wedding")
+            : `${t("wedding")} ${weddings.length}`, // rename to count
+        date: null,
+      })
+      .select("id")
+      .single()
+    setCreating(false)
+    if (error) {
+      console.error(error)
+      return
+    }
+    navigate({ to: "/wedding/$id", params: { id: data.id } })
+  }
+
   return (
     <>
       <DialogManager />
@@ -56,7 +79,7 @@ function Home() {
             </p>
           </div>
 
-          <Button onClick={() => openDialog("Wedding.Create")}>
+          <Button onClick={handleCreate} disabled={creating}>
             {t("common.create")}
           </Button>
 
@@ -78,7 +101,7 @@ function Home() {
                   params={{ id: wedding.id }}
                   className="rounded-md border bg-card p-3 text-sm hover:bg-accent"
                 >
-                  {wedding.name || t("wedding.defaults.name")}
+                  {wedding.name || t("wedding")}
                 </Link>
               ))
             )}

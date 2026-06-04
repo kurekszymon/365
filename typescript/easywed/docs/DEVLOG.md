@@ -1,5 +1,11 @@
 # EasyWed — Development Log
 
+### 04.06
+
+- make wedding creation frictionless: instant creation with auto-naming (Wedding 1, Wedding 2, etc.)
+- remove wedding create dialog — unnecessary modal friction
+- add pencil icon hint to wedding name to indicate inline rename capability
+
 ### 03.06
 
 - removed draft invitation feature (5k lines)
@@ -10,6 +16,8 @@
 
 - omit hub, go straight to seat planner
 - remove navigation to invitations
+
+<!-- cleanup from ai starts here? -->
 
 ### 01.06
 

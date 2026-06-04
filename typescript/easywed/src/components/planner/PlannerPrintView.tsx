@@ -135,9 +135,7 @@ export const PlannerPrintView = () => {
         </span>
 
         <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-3xl font-semibold">
-            {name || t("wedding.defaults.name")}
-          </h1>
+          <h1 className="text-3xl font-semibold">{name || t("wedding")}</h1>
           {weddingDateStr && (
             <p className="text-base text-gray-700">
               {t("export.pdf.wedding_date", { date: weddingDateStr })}
