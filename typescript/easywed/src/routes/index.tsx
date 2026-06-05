@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { supabase } from "@/lib/supabase"
 import { requireAuth } from "@/lib/auth/guards"
 import { useAuthStore } from "@/stores/auth.store"
+import { useDialogStore } from "@/stores/dialog.store"
 import { Button } from "@/components/ui/button"
 import { DialogManager } from "@/components/dialogs/DialogManager"
 
@@ -24,6 +25,8 @@ function Home() {
   const { t } = useTranslation()
   const session = useAuthStore((s) => s.session)
   const navigate = useNavigate()
+
+  const openDialog = useDialogStore((s) => s.open)
 
   const [weddings, setWeddings] = useState<Array<WeddingRow>>([])
   const [loading, setLoading] = useState(true)
@@ -79,9 +82,23 @@ function Home() {
             </p>
           </div>
 
-          <Button onClick={handleCreate} disabled={creating}>
-            {t("common.create")}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              className="flex-1"
+              onClick={handleCreate}
+              disabled={creating}
+            >
+              {t("common.create")}
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => openDialog("Wedding.ImportDxf")}
+              disabled={creating}
+            >
+              {t("weddings.import_dxf")}
+            </Button>
+          </div>
 
           <div className="flex flex-col gap-2">
             {loading ? (
