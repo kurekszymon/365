@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
 import { InfoIcon } from "lucide-react"
@@ -32,15 +33,19 @@ export const HallPanelContent = () => {
   const setGridSpacing = useViewStore((state) => state.setGridSpacing)
   const setGridStyle = useViewStore((state) => state.setGridStyle)
 
+  useEffect(() => () => saveHall(), [saveHall])
+
   const setWidth = (width: number) => {
     const spacing = clampGridSpacing(gridSpacing, width, dimensions.height)
     updateHall(preset, { width, height: dimensions.height })
+    saveHall()
     if (spacing !== gridSpacing) setGridSpacing(spacing)
   }
 
   const setHeight = (height: number) => {
     const spacing = clampGridSpacing(gridSpacing, dimensions.width, height)
     updateHall(preset, { width: dimensions.width, height })
+    saveHall()
     if (spacing !== gridSpacing) setGridSpacing(spacing)
   }
 
@@ -52,7 +57,6 @@ export const HallPanelContent = () => {
           height={dimensions.height}
           setWidth={setWidth}
           setHeight={setHeight}
-          onBlur={saveHall}
         />
       )}
 

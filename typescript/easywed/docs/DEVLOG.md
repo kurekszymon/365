@@ -1,5 +1,11 @@
 # EasyWed — Development Log
 
+### 05.06
+
+- upsert hall on HallPanelContent cleanup
+- upsert hall on dimension change
+- dont upsert hall on blur
+
 ### 04.06
 
 - make wedding creation frictionless: instant creation with auto-naming (Wedding 1, Wedding 2, etc.)
