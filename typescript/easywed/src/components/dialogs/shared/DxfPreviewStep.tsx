@@ -94,8 +94,8 @@ export const DxfPreviewStep = ({
           <FieldLabel>{t("import.dxf.preview.warnings")}</FieldLabel>
           <FieldContent>
             <ul className="list-disc pl-4 text-xs text-muted-foreground">
-              {warnings.map((w, i) => (
-                <li key={i}>
+              {warnings.map((w) => (
+                <li key={w.code}>
                   {t(warningKey(w.code), { count: w.count ?? 0 })}
                 </li>
               ))}
