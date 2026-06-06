@@ -2,29 +2,22 @@ import { useRef, useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
+import { LayerMappingStep } from "./CreateWeddingFromDxfLayerMappingStep.tsx"
+import { PreviewStep } from "./CreateWeddingFromDxfPreviewStep.tsx"
 import type {
   DxfUnit,
   ImportPreview,
   ImportWarning,
   LayerMapping,
-  LayerRole,
 } from "@/lib/import/plannerDxf"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 import { Button } from "@/components/ui/button"
-import { ButtonGroup } from "@/components/ui/button-group"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { useDialogStore } from "@/stores/dialog.store"
 import { useAuthStore } from "@/stores/auth.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { supabase } from "@/lib/supabase"
 import { parsePlannerDxf } from "@/lib/import/plannerDxf"
+import { warningKey } from "@/lib/import/plannerDxfWarningKey"
 import { replacePlannerLayout } from "@/lib/sync/mutations"
 
 type Stage =
@@ -44,39 +37,6 @@ type Stage =
     }
   | { kind: "committing" }
   | { kind: "error"; message: string }
-
-const ROLES: Array<LayerRole> = [
-  "hall",
-  "tables",
-  "fixtures",
-  "labels",
-  "ignore",
-]
-
-const UNITS: Array<DxfUnit> = ["mm", "cm", "m", "in", "ft"]
-
-const warningKey = (code: ImportWarning["code"]): string => {
-  switch (code) {
-    case "skipped_arc":
-      return "import.dxf.warning.skipped_arc"
-    case "skipped_spline":
-      return "import.dxf.warning.skipped_spline"
-    case "skipped_polyline_open":
-      return "import.dxf.warning.skipped_open"
-    case "skipped_unknown":
-      return "import.dxf.warning.skipped_unknown"
-    case "no_hall":
-      return "import.dxf.warning.no_hall"
-    case "hall_synthesized":
-      return "import.dxf.warning.hall_synthesized"
-    case "ambiguous_layer":
-      return "import.dxf.warning.ambiguous_layer"
-    case "unit_assumed":
-      return "import.dxf.warning.unit_assumed"
-    case "parse_error":
-      return "import.dxf.warning.parse_error"
-  }
-}
 
 const formatWarnings = (
   warnings: Array<ImportWarning>,
@@ -195,14 +155,20 @@ export const CreateWeddingFromDxfDialog = () => {
       preview.fixtures
     )
     if (!ok) {
-      await supabase.from("weddings").delete().eq("id", data.id)
+      const { error: rollbackError } = await supabase
+        .from("weddings")
+        .delete()
+        .eq("id", data.id)
+      if (rollbackError) {
+        console.error("[import-dxf] failed to rollback wedding", rollbackError)
+      }
       useGlobalStore.setState({ weddingId: previousWeddingId })
-      setStage({ kind: "error", message: t("import.dxf.commit_failed") })
+      setStage({ kind: "error", message: t("import.dxf.create.failed") })
       return
     }
 
     onClose()
-    void navigate({ to: "/wedding/$id/planner", params: { id: data.id } })
+    await navigate({ to: "/wedding/$id/planner", params: { id: data.id } })
   }
 
   return (
@@ -274,149 +240,5 @@ export const CreateWeddingFromDxfDialog = () => {
         )}
       </DialogContent>
     </Dialog>
-  )
-}
-
-interface LayerMappingStepProps {
-  layers: Array<string>
-  initial: LayerMapping
-  onCancel: () => void
-  onConfirm: (mapping: LayerMapping) => void
-}
-
-const LayerMappingStep = ({
-  layers,
-  initial,
-  onCancel,
-  onConfirm,
-}: LayerMappingStepProps) => {
-  const { t } = useTranslation()
-  const [mapping, setMapping] = useState<LayerMapping>(initial)
-  return (
-    <div className="flex flex-col gap-3">
-      <p className="text-sm text-muted-foreground">
-        {t("import.dxf.step.layers_intro")}
-      </p>
-      <div className="flex flex-col gap-2">
-        {layers.map((layer) => (
-          <Field key={layer} className="flex-row items-center gap-3">
-            <FieldLabel className="flex-1 truncate font-mono text-xs">
-              {layer || t("import.dxf.layer.default")}
-            </FieldLabel>
-            <FieldContent className="flex-1">
-              <Select
-                value={mapping[layer] ?? "ignore"}
-                onValueChange={(v) =>
-                  setMapping((m) => ({ ...m, [layer]: v as LayerRole }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROLES.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {t(`import.dxf.layer.${role}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FieldContent>
-          </Field>
-        ))}
-      </div>
-      <ButtonGroup className="justify-end">
-        <Button variant="outline" onClick={onCancel}>
-          {t("import.dxf.back")}
-        </Button>
-        <Button onClick={() => onConfirm(mapping)}>
-          {t("import.dxf.next")}
-        </Button>
-      </ButtonGroup>
-    </div>
-  )
-}
-
-interface PreviewStepProps {
-  preview: ImportPreview
-  warnings: Array<ImportWarning>
-  unit: DxfUnit
-  onUnitChange: (unit: DxfUnit) => void
-  onBack: () => void
-  onCommit: () => void
-}
-
-const PreviewStep = ({
-  preview,
-  warnings,
-  unit,
-  onUnitChange,
-  onBack,
-  onCommit,
-}: PreviewStepProps) => {
-  const { t } = useTranslation()
-  return (
-    <div className="flex flex-col gap-3">
-      <Field className="flex-row items-center gap-3">
-        <FieldLabel className="flex-1">{t("import.dxf.unit.label")}</FieldLabel>
-        <FieldContent className="flex-1">
-          <Select
-            value={unit}
-            onValueChange={(v) => onUnitChange(v as DxfUnit)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {UNITS.map((u) => (
-                <SelectItem key={u} value={u}>
-                  {t(`import.dxf.unit.${u}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FieldContent>
-      </Field>
-
-      <Field>
-        <FieldLabel>{t("import.dxf.preview.summary")}</FieldLabel>
-        <FieldContent className="text-sm">
-          <p>
-            {t("import.dxf.preview.hall", {
-              width: preview.hall.width.toFixed(2),
-              height: preview.hall.height.toFixed(2),
-            })}
-          </p>
-          <p>
-            {t("import.dxf.preview.counts", {
-              tables: preview.tables.length,
-              fixtures: preview.fixtures.length,
-            })}
-          </p>
-        </FieldContent>
-      </Field>
-
-      {warnings.length > 0 && (
-        <Field>
-          <FieldLabel>{t("import.dxf.preview.warnings")}</FieldLabel>
-          <FieldContent>
-            <ul className="list-disc pl-4 text-xs text-muted-foreground">
-              {warnings.map((w, i) => (
-                <li key={i}>
-                  {t(warningKey(w.code), { count: w.count ?? 0 })}
-                </li>
-              ))}
-            </ul>
-          </FieldContent>
-        </Field>
-      )}
-
-      <ButtonGroup className="justify-end">
-        <Button variant="outline" onClick={onBack}>
-          {t("import.dxf.back")}
-        </Button>
-        <Button onClick={onCommit}>{t("import.dxf.create.commit")}</Button>
-      </ButtonGroup>
-    </div>
   )
 }

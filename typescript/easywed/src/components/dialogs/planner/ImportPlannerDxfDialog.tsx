@@ -74,7 +74,7 @@ const warningKey = (code: ImportWarning["code"]): string => {
     case "skipped_spline":
       return "import.dxf.warning.skipped_spline"
     case "skipped_polyline_open":
-      return "import.dxf.warning.skipped_open"
+      return "import.dxf.warning.skipped_polyline_open"
     case "skipped_unknown":
       return "import.dxf.warning.skipped_unknown"
     case "no_hall":
