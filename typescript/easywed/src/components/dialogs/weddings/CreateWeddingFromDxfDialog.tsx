@@ -1,4 +1,5 @@
 import { useRef } from "react"
+import { useNavigate } from "@tanstack/react-router"
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import type { ImportPreview } from "@/lib/import/plannerDxf"
@@ -8,11 +9,14 @@ import { useDxfImportWizard } from "@/components/dialogs/shared/useDxfImportWiza
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { useDialogStore } from "@/stores/dialog.store"
-import { usePlannerStore } from "@/stores/planner.store"
+import { useAuthStore } from "@/stores/auth.store"
+import { useGlobalStore } from "@/stores/global.store"
+import { supabase } from "@/lib/supabase"
 import { replacePlannerLayout } from "@/lib/sync/mutations"
 
-export const ImportPlannerDxfDialog = () => {
+export const CreateWeddingFromDxfDialog = () => {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const {
     stage,
@@ -32,61 +36,71 @@ export const ImportPlannerDxfDialog = () => {
     }))
   )
 
-  const guests = usePlannerStore((s) => s.guests)
-
   const onClose = () => {
     reset()
     dialog.close()
   }
 
   const onCommit = async (preview: ImportPreview) => {
+    const session = useAuthStore.getState().session
+    if (!session) {
+      setErrorMessage(t("import.dxf.create.failed"))
+      return
+    }
+
     setCommitting()
+
+    const { data, error } = await supabase
+      .from("weddings")
+      .insert({ owner_id: session.user.id, name: t("wedding"), date: null })
+      .select("id")
+      .single()
+
+    if (error) {
+      setErrorMessage(t("import.dxf.create.failed"))
+      return
+    }
+
+    const previousWeddingId = useGlobalStore.getState().weddingId
+    useGlobalStore.setState({ weddingId: data.id })
+
     const ok = await replacePlannerLayout(
       preview.hall,
       preview.tables,
       preview.fixtures
     )
     if (!ok) {
-      setErrorMessage(t("import.dxf.commit_failed"))
+      const { error: rollbackError } = await supabase
+        .from("weddings")
+        .delete()
+        .eq("id", data.id)
+      if (rollbackError) {
+        console.error("[import-dxf] failed to rollback wedding", rollbackError)
+      }
+      useGlobalStore.setState({ weddingId: previousWeddingId })
+      setErrorMessage(t("import.dxf.create.failed"))
       return
     }
-    // Reflect the new layout in the local store immediately so the canvas
-    // updates without waiting for a refetch. Guests whose tables were
-    // removed get unassigned by the FK cascade server-side.
-    usePlannerStore.setState((s) => ({
-      hall: {
-        dimensions: { width: preview.hall.width, height: preview.hall.height },
-        preset: preview.hall.preset,
-      },
-      tables: preview.tables,
-      fixtures: preview.fixtures,
-      guests: s.guests.map((g) =>
-        g.tableId && !preview.tables.some((tbl) => tbl.id === g.tableId)
-          ? { ...g, tableId: null }
-          : g
-      ),
-    }))
+
     onClose()
+    await navigate({ to: "/wedding/$id/planner", params: { id: data.id } })
   }
 
   return (
     <Dialog
-      open={dialog.opened === "Planner.Import.Dxf"}
+      open={dialog.opened === "Wedding.Import.Dxf"}
       onOpenChange={(open) => {
-        // Block close (overlay click / ESC / X) while the destructive commit
-        // is in flight so we don't risk a state update on an unmounted
-        // component and so the user isn't left wondering whether it landed.
         if (!open && stage.kind !== "committing") onClose()
       }}
       aria-describedby={undefined}
     >
       <DialogContent className="sm:max-w-lg" aria-describedby={undefined}>
-        <DialogTitle>{t("import.dxf.title")}</DialogTitle>
+        <DialogTitle>{t("import.dxf.create.title")}</DialogTitle>
 
         {stage.kind === "file" && (
           <div className="flex flex-col gap-3">
             <p className="text-sm text-muted-foreground">
-              {t("import.dxf.intro")}
+              {t("import.dxf.create.intro")}
             </p>
             <input
               ref={fileInputRef}
@@ -95,9 +109,6 @@ export const ImportPlannerDxfDialog = () => {
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0]
-                // Clear the input value so picking the same file again still
-                // fires onChange — otherwise the "Try again" loop is flaky
-                // after a parse error.
                 e.target.value = ""
                 if (file) void onFileChosen(file)
               }}
@@ -123,17 +134,15 @@ export const ImportPlannerDxfDialog = () => {
             warnings={stage.warnings}
             unit={unit}
             onUnitChange={onUnitChange}
-            assignedGuests={guests.filter((g) => g.tableId).length}
             onBack={reset}
             onCommit={() => onCommit(stage.preview)}
-            showDestructiveWarning
-            commitLabelKey="import.dxf.commit"
+            commitLabelKey="import.dxf.create.commit"
           />
         )}
 
         {stage.kind === "committing" && (
           <p className="text-sm text-muted-foreground">
-            {t("import.dxf.committing")}
+            {t("import.dxf.create.committing")}
           </p>
         )}
 
