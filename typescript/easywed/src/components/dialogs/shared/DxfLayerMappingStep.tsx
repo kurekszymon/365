@@ -20,19 +20,19 @@ const ROLES: Array<LayerRole> = [
   "ignore",
 ]
 
-interface LayerMappingStepProps {
+interface DxfLayerMappingStepProps {
   layers: Array<string>
   initial: LayerMapping
   onCancel: () => void
   onConfirm: (mapping: LayerMapping) => void
 }
 
-export const LayerMappingStep = ({
+export const DxfLayerMappingStep = ({
   layers,
   initial,
   onCancel,
   onConfirm,
-}: LayerMappingStepProps) => {
+}: DxfLayerMappingStepProps) => {
   const { t } = useTranslation()
   const [mapping, setMapping] = useState<LayerMapping>(initial)
 

@@ -18,23 +18,29 @@ import {
 
 const UNITS: Array<DxfUnit> = ["mm", "cm", "m", "in", "ft"]
 
-interface PreviewStepProps {
+interface DxfPreviewStepProps {
   preview: ImportPreview
   warnings: Array<ImportWarning>
   unit: DxfUnit
   onUnitChange: (unit: DxfUnit) => void
   onBack: () => void
   onCommit: () => void
+  commitLabelKey: string
+  assignedGuests?: number
+  showDestructiveWarning?: boolean
 }
 
-export const PreviewStep = ({
+export const DxfPreviewStep = ({
   preview,
   warnings,
   unit,
   onUnitChange,
   onBack,
   onCommit,
-}: PreviewStepProps) => {
+  commitLabelKey,
+  assignedGuests,
+  showDestructiveWarning,
+}: DxfPreviewStepProps) => {
   const { t } = useTranslation()
 
   return (
@@ -75,6 +81,11 @@ export const PreviewStep = ({
               fixtures: preview.fixtures.length,
             })}
           </p>
+          {assignedGuests && assignedGuests > 0 ? (
+            <p className="text-amber-600">
+              {t("import.dxf.warning.guests", { count: assignedGuests })}
+            </p>
+          ) : null}
         </FieldContent>
       </Field>
 
@@ -93,11 +104,17 @@ export const PreviewStep = ({
         </Field>
       )}
 
+      {showDestructiveWarning ? (
+        <p className="text-xs text-amber-600">
+          {t("import.dxf.preview.destructive")}
+        </p>
+      ) : null}
+
       <ButtonGroup className="justify-end">
         <Button variant="outline" onClick={onBack}>
           {t("import.dxf.back")}
         </Button>
-        <Button onClick={onCommit}>{t("import.dxf.create.commit")}</Button>
+        <Button onClick={onCommit}>{t(commitLabelKey)}</Button>
       </ButtonGroup>
     </div>
   )
