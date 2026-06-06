@@ -93,7 +93,7 @@ function Home() {
             <Button
               variant="outline"
               className="flex-1"
-              onClick={() => openDialog("Wedding.ImportDxf")}
+              onClick={() => openDialog("Wedding.Import.Dxf")}
               disabled={creating}
             >
               {t("weddings.import_dxf")}

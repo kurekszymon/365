@@ -167,10 +167,13 @@ export const CreateWeddingFromDxfDialog = () => {
   }
 
   const onCommit = async (preview: ImportPreview) => {
-    setStage({ kind: "committing" })
-
     const session = useAuthStore.getState().session
-    if (!session) return
+    if (!session) {
+      setStage({ kind: "error", message: t("import.dxf.create.failed") })
+      return
+    }
+
+    setStage({ kind: "committing" })
 
     const { data, error } = await supabase
       .from("weddings")
@@ -183,6 +186,7 @@ export const CreateWeddingFromDxfDialog = () => {
       return
     }
 
+    const previousWeddingId = useGlobalStore.getState().weddingId
     useGlobalStore.setState({ weddingId: data.id })
 
     const ok = await replacePlannerLayout(
@@ -191,6 +195,8 @@ export const CreateWeddingFromDxfDialog = () => {
       preview.fixtures
     )
     if (!ok) {
+      await supabase.from("weddings").delete().eq("id", data.id)
+      useGlobalStore.setState({ weddingId: previousWeddingId })
       setStage({ kind: "error", message: t("import.dxf.commit_failed") })
       return
     }
@@ -201,7 +207,7 @@ export const CreateWeddingFromDxfDialog = () => {
 
   return (
     <Dialog
-      open={dialog.opened === "Wedding.ImportDxf"}
+      open={dialog.opened === "Wedding.Import.Dxf"}
       onOpenChange={(open) => {
         if (!open && stage.kind !== "committing") onClose()
       }}

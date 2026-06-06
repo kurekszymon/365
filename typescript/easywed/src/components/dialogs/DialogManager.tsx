@@ -19,7 +19,7 @@ export const DialogManager = () => {
       return <WeddingRenameDialog />
     case "Wedding.Members":
       return <WeddingMembersDialog />
-    case "Wedding.ImportDxf":
+    case "Wedding.Import.Dxf":
       return <CreateWeddingFromDxfDialog />
     case "Guest.Add":
       return <AddGuestDialog />
