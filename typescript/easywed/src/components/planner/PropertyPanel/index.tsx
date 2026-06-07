@@ -30,6 +30,8 @@ function usePanelTitle(): string {
       return t("fixtures.add")
     case "fixture.edit":
       return t("fixtures.edit")
+    case "fixtures.placeholder":
+      return t("fixtures")
   }
 }
 
@@ -39,6 +41,7 @@ export const PropertyPanel = () => {
   const close = usePanelStore((state) => state.close)
   const openTableAdd = usePanelStore((state) => state.openTableAdd)
   const openTablesBatchAdd = usePanelStore((state) => state.openTablesBatchAdd)
+  const openFixtureAdd = usePanelStore((state) => state.openFixtureAdd)
   const title = usePanelTitle()
 
   const isOpen = view !== null
@@ -118,6 +121,16 @@ export const PropertyPanel = () => {
                 mode="edit"
                 fixtureId={view.fixtureId}
               />
+            )}
+            {view.kind === "fixtures.placeholder" && (
+              <div className="flex flex-col gap-3">
+                <p className="text-sm text-muted-foreground">
+                  {t("fixtures.select_to_edit")}
+                </p>
+                <Button variant="outline" onClick={() => openFixtureAdd()}>
+                  {t("fixtures.add")}
+                </Button>
+              </div>
             )}
           </div>
         </>

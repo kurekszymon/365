@@ -116,6 +116,7 @@
   "tables.seated_elsewhere.hint": "Przypisanie do tego stołu usunie przypisanie do poprzedniego.",
 
   "fixtures": "Elementy sali",
+  "fixtures.select_to_edit": "Wybierz element na planie, aby go edytować, lub kliknij, aby dodać nowy.",
   "fixtures.add": "Dodaj element",
   "fixtures.add_tooltip": "Stały obiekt w sali — scena, stolik DJ-a, kolumna itp.",
   "fixtures.edit": "Edytuj element",

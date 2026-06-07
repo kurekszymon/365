@@ -112,6 +112,7 @@
   "tables.seated_elsewhere.hint": "Assigning to this table will unassign from the original one.",
 
   "fixtures": "Fixtures",
+  "fixtures.select_to_edit": "Select a fixture on the canvas to edit it, or click to add a new one.",
   "fixtures.add": "Add a fixture",
   "fixtures.add_tooltip": "A fixed object in the venue — stage, DJ booth, column, etc.",
   "fixtures.edit": "Edit fixture",
