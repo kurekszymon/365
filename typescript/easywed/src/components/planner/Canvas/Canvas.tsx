@@ -98,6 +98,20 @@ export const Canvas = () => {
     return () => document.removeEventListener("keydown", handleKeyDown)
   }, [isMeasuring, toggleMeasuring])
 
+  useEffect(() => {
+    if (isMeasuring) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return
+      // Don't hijack Escape from a focused form field (e.g. cancelling an
+      // edit in the PropertyPanel) — that's the field's own concern.
+      const target = e.target as HTMLElement | null
+      if (target?.closest("input, textarea, [contenteditable='true']")) return
+      panel.deselect()
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [isMeasuring, panel])
+
   const {
     width: containerWidth,
     height: containerHeight,

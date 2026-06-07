@@ -7,6 +7,10 @@
 - small style fixees
 - small translation changes from DXF to CAD (.dxf)
 - setting up smtp for new domain
+- remove redundant borders (box shadows) from custom shapes
+- improve deselecting
+  - check for Element instead of HTMLElement for deselct logic (didnt cover custom SVG elements)
+  - improve panning lgic (detect offset so deselecting feels more natural)
 
 ### 06.06
 

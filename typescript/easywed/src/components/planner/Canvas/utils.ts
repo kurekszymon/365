@@ -154,7 +154,7 @@ export type CapturedElement =
 export const findCapturedElement = (
   target: EventTarget | null
 ): CapturedElement | null => {
-  if (!(target instanceof HTMLElement)) {
+  if (!(target instanceof Element)) {
     return null
   }
 

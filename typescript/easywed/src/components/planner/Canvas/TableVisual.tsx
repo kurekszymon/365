@@ -66,7 +66,7 @@ export const TableVisual = ({
       className={cn(
         "absolute flex items-center justify-center text-emerald-800",
         !isPolygon &&
-          "border border-emerald-300 bg-emerald-100 " +
+          "border border-emerald-300 bg-emerald-100 shadow-sm " +
             (shape === "round" ? "rounded-full" : "rounded-lg"),
         className
       )}

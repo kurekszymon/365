@@ -66,7 +66,7 @@ export const FixtureVisual = ({
       aria-label={hasName ? name : "Fixture"}
       className={cn(
         "absolute flex items-center justify-center text-slate-700",
-        !isPolygon && "border border-slate-400 bg-slate-200",
+        !isPolygon && "border border-slate-400 bg-slate-200 shadow-sm",
         !isPolygon && SHAPE_CLASS[shape],
         className
       )}
