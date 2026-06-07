@@ -43,6 +43,49 @@ export const Route = createRootRoute({
       {
         title: "easywed.",
       },
+      {
+        name: "description",
+        content:
+          "easywed. — zaplanuj układ stołów, przypisz gości, stwórz idealny plan sali weselnej.",
+      },
+      {
+        property: "og:type",
+        content: "website",
+      },
+      {
+        property: "og:url",
+        content: "https://easywed.app",
+      },
+      {
+        property: "og:title",
+        content: "easywed.",
+      },
+      {
+        property: "og:description",
+        content:
+          "easywed. — zaplanuj układ stołów, przypisz gości, stwórz idealny plan sali weselnej.",
+      },
+      {
+        property: "og:image",
+        content: "https://easywed.app/logo.png",
+      },
+      {
+        name: "twitter:card",
+        content: "summary_large_image",
+      },
+      {
+        name: "twitter:title",
+        content: "easywed.",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "easywed. — zaplanuj układ stołów, przypisz gości, stwórz idealny plan sali weselnej.",
+      },
+      {
+        name: "twitter:image",
+        content: "https://easywed.app/logo.png",
+      },
     ],
     links: [
       {
@@ -56,7 +99,7 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="pl">
       <head>
         <HeadContent />
       </head>
