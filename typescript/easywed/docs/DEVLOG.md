@@ -1,5 +1,17 @@
 # EasyWed — Development Log
 
+### 06.06
+
+- rename app to `easywed.`
+- created ig page and bought `easywed.app` domain
+- small style fixees
+- small translation changes from DXF to CAD (.dxf)
+- setting up smtp for new domain
+
+### 06.06
+
+- add option to create wedding from dxf file
+
 ### 05.06
 
 - upsert hall on HallPanelContent cleanup

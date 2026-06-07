@@ -11,14 +11,14 @@ export const WeddingName = () => {
 
   return (
     <button
-      className="flex max-w-[140px] items-center gap-1 truncate text-sm font-semibold underline-offset-2 hover:underline sm:max-w-none"
+      className="group flex max-w-[140px] items-center gap-1 truncate text-sm font-semibold underline-offset-2 hover:underline sm:max-w-none"
       onClick={() => {
         openDialog("Wedding.Rename")
       }}
       title={t("wedding.rename")}
     >
       {name}
-      <PencilIcon className="size-3 shrink-0 opacity-40" />
+      <PencilIcon className="size-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-40" />
     </button>
   )
 }
