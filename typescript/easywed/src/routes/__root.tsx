@@ -10,6 +10,7 @@ import appCss from "../styles.css?url"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 import { AuthGate } from "@/components/auth/AuthGate"
+import { ErrorFallback } from "@/components/ErrorFallback"
 
 const options = {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
@@ -32,6 +33,7 @@ function NotFound() {
 
 export const Route = createRootRoute({
   notFoundComponent: NotFound,
+  errorComponent: ErrorFallback,
   head: () => ({
     meta: [
       {
