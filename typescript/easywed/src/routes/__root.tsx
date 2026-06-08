@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next"
 import { PostHogProvider } from "@posthog/react"
 import appCss from "../styles.css?url"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { Toaster } from "@/components/ui/sonner"
 import { AuthGate } from "@/components/auth/AuthGate"
 
 const options = {
@@ -111,6 +112,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <TooltipProvider>
             <AuthGate>{children}</AuthGate>
           </TooltipProvider>
+          <Toaster richColors position="top-right" />
         </PostHogProvider>
 
         <TanStackDevtools

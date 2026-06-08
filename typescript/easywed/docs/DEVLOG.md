@@ -1,6 +1,12 @@
 # EasyWed — Development Log
 
-### 06.06
+### 08.06
+
+- move remote supabase key to .env.production
+- gitignore .env\*
+- add sonner for toasts
+
+### 07.06
 
 - rename app to `easywed.`
 - created ig page and bought `easywed.app` domain
