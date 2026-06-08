@@ -18,6 +18,11 @@
   "errors.404": "404",
   "errors.not_found": "Page not found",
   "errors.go_home": "Go Home",
+  "errors.crashed_title": "Something went wrong",
+  "errors.crashed_desc": "An unexpected error occurred. Try reloading the page.",
+  "errors.reload": "Reload",
+
+  "sync.save_failed": "Couldn't save your changes — they may be lost when you reload.",
 
   "auth.subtitle": "Sign in to continue planning",
   "auth.email": "Email",
@@ -30,6 +35,7 @@
   "auth.or": "or",
   "auth.sign_up_hint": "Fill in the fields above and click \"Create account\" to register.",
   "auth.email_sent": "Check your email — we sent you a confirmation link.",
+  "auth.session_failed": "Couldn't verify your session. Please refresh and try again.",
 
   "members.title": "Members",
   "members.role": "Role",

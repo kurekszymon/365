@@ -18,6 +18,11 @@
   "errors.404": "404",
   "errors.not_found": "Nie znaleziono strony",
   "errors.go_home": "Wróć do strony głównej",
+  "errors.crashed_title": "Coś poszło nie tak",
+  "errors.crashed_desc": "Wystąpił nieoczekiwany błąd. Spróbuj odświeżyć stronę.",
+  "errors.reload": "Odśwież",
+
+  "sync.save_failed": "Nie udało się zapisać zmian — mogą zniknąć po odświeżeniu.",
 
   "auth.subtitle": "Zaloguj się, żeby kontynuować planowanie",
   "auth.email": "Email",
@@ -30,6 +35,7 @@
   "auth.or": "lub",
   "auth.sign_up_hint": "Wypełnij pola powyżej i kliknij \"Załóż konto\", aby się zarejestrować.",
   "auth.email_sent": "Sprawdź skrzynkę — wysłaliśmy Ci link potwierdzający.",
+  "auth.session_failed": "Nie udało się zweryfikować sesji. Odśwież stronę i spróbuj ponownie.",
 
   "members.title": "Członkowie",
   "members.role": "Rola",

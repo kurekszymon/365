@@ -1,7 +1,9 @@
 import { useEffect } from "react"
 import { useRouter, useRouterState } from "@tanstack/react-router"
+import { toast } from "sonner"
 import { useAuthStore } from "@/stores/auth.store"
 import { supabase } from "@/lib/supabase"
+import i18n from "@/i18n"
 
 // Routes that render immediately without waiting for session hydration.
 // Auth state still hydrates in the background for opportunistic use.
@@ -22,7 +24,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     supabase.auth
       .getSession()
       .then(({ data }) => setSession(data.session))
-      .catch((err: unknown) => console.error("[auth] getSession failed", err))
+      .catch((err: unknown) => {
+        console.error("[auth] getSession failed", err)
+        toast.error(i18n.t("auth.session_failed"), { id: "auth-error" })
+      })
       .finally(() => {
         setReady(true)
         void router.invalidate()

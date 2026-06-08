@@ -1,3 +1,4 @@
+import { toast } from "sonner"
 import type {
   Fixture,
   FixtureShape,
@@ -11,6 +12,7 @@ import type {
 import type { Reminder } from "@/stores/reminders.store"
 import type { Json } from "@/lib/supabase.types"
 import { supabase } from "@/lib/supabase"
+import i18n from "@/i18n"
 import { useGlobalStore } from "@/stores/global.store"
 
 // Geometry's typed shape (object with `vertices` and `closed`) is structurally
@@ -29,8 +31,14 @@ const getWeddingId = (): string | null => {
   return id
 }
 
-const log = (label: string, error: unknown) =>
+// Surfaces sync failures to the user. There's no rollback layer, so optimistic
+// state can diverge from the DB on error — the toast at least tells the user
+// their change may not have saved. A fixed toast id collapses a burst of failed
+// mutations (e.g. chained writes) into a single toast instead of spamming.
+const log = (label: string, error: unknown) => {
   console.error(`[sync] ${label}`, error)
+  toast.error(i18n.t("sync.save_failed"), { id: "sync-error" })
+}
 
 export const updateWedding = async (updates: {
   name?: string
