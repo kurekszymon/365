@@ -241,10 +241,11 @@ export const reassignTableGuests = async (
     supabase.from("guests").update({ table_id: null }).eq("table_id", tableId)
   )
   if (guestIds.length === 0) return cleared
-  return run(
+  const assigned = await run(
     "reassignTableGuests assign",
     supabase.from("guests").update({ table_id: tableId }).in("id", guestIds)
   )
+  return cleared && assigned
 }
 
 export const insertReminder = (reminder: Reminder): Promise<boolean> => {
