@@ -43,16 +43,25 @@ const log = (label: string, error: unknown) => {
 // Runs a Supabase write, logs + toasts on failure, and reports success as a
 // boolean. Every mutation funnels through this so they share one contract:
 // `true` = persisted, `false` = failed (or skipped). Callers can chain on `ok`.
+// The try/catch matters: most callers do `void mutation(...)`, so a *rejected*
+// promise (aborted fetch, network drop, thrown error) would otherwise become an
+// unhandled rejection that never surfaces. Catching it keeps the contract — any
+// failure, returned-as-error or thrown, becomes a toast + `false`.
 const run = async <T extends { error: unknown }>(
   label: string,
   query: PromiseLike<T>
 ): Promise<boolean> => {
-  const { error } = await query
-  if (error) {
+  try {
+    const { error } = await query
+    if (error) {
+      log(label, error)
+      return false
+    }
+    return true
+  } catch (error) {
     log(label, error)
     return false
   }
-  return true
 }
 
 // Maps a store Table/Fixture to its DB row (sans wedding_id, which inserts add
