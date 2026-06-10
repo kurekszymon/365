@@ -46,6 +46,7 @@ export function useWeddingMembers(isOpen: boolean) {
   const refresh = useCallback(
     async (signal?: AbortSignal) => {
       if (!weddingId) return
+      const effectiveSignal = signal ?? new AbortController().signal
       const [invitationsRes, membersRes] = await Promise.all([
         supabase
           .from("wedding_invitations")
@@ -54,13 +55,13 @@ export function useWeddingMembers(isOpen: boolean) {
           )
           .eq("wedding_id", weddingId)
           .order("created_at", { ascending: false })
-          .abortSignal(signal ?? new AbortController().signal),
+          .abortSignal(effectiveSignal),
         supabase
           .from("wedding_members")
           .select("user_id, role, created_at")
           .eq("wedding_id", weddingId)
           .order("created_at", { ascending: true })
-          .abortSignal(signal ?? new AbortController().signal),
+          .abortSignal(effectiveSignal),
       ])
 
       if (invitationsRes.error) {
@@ -116,6 +117,7 @@ export function useWeddingMembers(isOpen: boolean) {
 
   const handleRevoke = useCallback(
     async (id: string) => {
+      setError(null)
       const revokedInvitation = invitations.find(
         (invitation) => invitation.id === id
       )
@@ -157,6 +159,7 @@ export function useWeddingMembers(isOpen: boolean) {
         return
       }
 
+      setError(null)
       setMembers((list) =>
         list.filter((item) => item.user_id !== member.user_id)
       )
