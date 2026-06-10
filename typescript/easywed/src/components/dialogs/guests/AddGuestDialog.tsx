@@ -3,6 +3,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import type { Dietary } from "@/stores/planner.store"
 import { usePlannerStore } from "@/stores/planner.store"
+import { usePanelStore } from "@/stores/panel.store"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
@@ -34,6 +35,7 @@ export const AddGuestDialog = () => {
       addGuest: state.addGuest,
     }))
   )
+  const openGuests = usePanelStore((state) => state.openGuests)
 
   return (
     <Dialog
@@ -105,6 +107,7 @@ export const AddGuestDialog = () => {
               tableId: null,
               dietary: dietaryOptions,
             })
+            openGuests()
             dialog.close()
           }}
         >

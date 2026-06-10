@@ -2,6 +2,7 @@
 
 ### 10.06
 
+- navigate to guests panel when adding guest
 - split components into hooks -> members dialog and HallSurface
 
 ### 09.06
