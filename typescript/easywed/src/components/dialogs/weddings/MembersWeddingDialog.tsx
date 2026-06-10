@@ -5,6 +5,7 @@ import { InvitationManager } from "./InvitationManager"
 import { MemberList } from "./MemberList"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -73,9 +74,9 @@ export const WeddingMembersDialog = () => {
         />
 
         <DialogFooter>
-          <Button variant="outline" onClick={close}>
-            {t("common.close")}
-          </Button>
+          <DialogClose asChild>
+            <Button variant="outline">{t("common.close")}</Button>
+          </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>
