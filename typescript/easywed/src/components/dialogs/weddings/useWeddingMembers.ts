@@ -116,7 +116,9 @@ export function useWeddingMembers(isOpen: boolean) {
 
   const handleRevoke = useCallback(
     async (id: string) => {
-      const prev = invitations
+      const revokedInvitation = invitations.find(
+        (invitation) => invitation.id === id
+      )
       setInvitations((list) => list.filter((i) => i.id !== id))
 
       const { error: revokeError } = await supabase
@@ -125,7 +127,19 @@ export function useWeddingMembers(isOpen: boolean) {
         .eq("id", id)
 
       if (revokeError) {
-        setInvitations(prev)
+        setInvitations((list) => {
+          if (
+            !revokedInvitation ||
+            list.some((invitation) => invitation.id === id)
+          ) {
+            return list
+          }
+          return [...list, revokedInvitation].sort(
+            (a, b) =>
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime()
+          )
+        })
         setError(revokeError.message)
       }
     },
@@ -143,7 +157,6 @@ export function useWeddingMembers(isOpen: boolean) {
         return
       }
 
-      const prevMembers = members
       setMembers((list) =>
         list.filter((item) => item.user_id !== member.user_id)
       )
@@ -158,7 +171,16 @@ export function useWeddingMembers(isOpen: boolean) {
         .eq("user_id", member.user_id)
 
       if (memberRes.error) {
-        setMembers(prevMembers)
+        setMembers((list) => {
+          if (list.some((item) => item.user_id === member.user_id)) {
+            return list
+          }
+          return [...list, member].sort(
+            (a, b) =>
+              new Date(a.created_at).getTime() -
+              new Date(b.created_at).getTime()
+          )
+        })
         setError(memberRes.error.message)
         return
       }
@@ -183,7 +205,7 @@ export function useWeddingMembers(isOpen: boolean) {
         setError(inviteRes.error.message)
       }
     },
-    [weddingId, session, members, invitations]
+    [weddingId, session, invitations]
   )
 
   const handleCopy = useCallback(async (invitation: Invitation) => {
@@ -203,6 +225,7 @@ export function useWeddingMembers(isOpen: boolean) {
   }, [])
 
   const reset = useCallback(() => {
+    setSubmitting(false)
     setRole("editor")
     setError(null)
     setCopiedId(null)
