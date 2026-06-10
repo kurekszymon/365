@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "build": "vite build",
+    "deploy:pages": "pnpm run build && pnpm dlx wrangler pages deploy .output/public",
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "eslint",
