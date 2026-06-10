@@ -1,5 +1,13 @@
 # EasyWed — Development Log
 
+### 10.06
+
+- split components into hooks -> members dialog and HallSurface
+
+### 09.06
+
+- split mutations to smaller chunks, add `run` helper to localize error handling
+
 ### 08.06
 
 - move remote supabase key to .env.production
