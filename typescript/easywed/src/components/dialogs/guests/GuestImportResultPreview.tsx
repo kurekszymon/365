@@ -52,7 +52,7 @@ export const GuestImportResultPreview = ({ mapping, guests }: IProps) => {
               <td className="max-w-[12rem] truncate px-2 py-1">{g.name}</td>
               {showTable && (
                 <td className="px-2 py-1">
-                  {g.tableId ? (
+                  {g.tableId && tableNameById.has(g.tableId) ? (
                     tableNameById.get(g.tableId)
                   ) : (
                     <span className="text-muted-foreground">

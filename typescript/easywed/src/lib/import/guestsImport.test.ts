@@ -78,6 +78,10 @@ describe("parseDietary", () => {
     expect(parseDietary("Vegan, paleo, vegan")).toEqual(["vegan"])
   })
 
+  it("matches space-separated 'gluten free' as gluten-free", () => {
+    expect(parseDietary("Gluten Free, vegan")).toEqual(["gluten-free", "vegan"])
+  })
+
   it("returns empty for blank input", () => {
     expect(parseDietary("")).toEqual([])
   })

@@ -104,7 +104,9 @@ export const parseDietary = (cell: string): Array<Dietary> => {
   if (!cell) return []
   const seen = new Set<Dietary>()
   for (const part of cell.split(/[,;/]/)) {
-    const token = normalize(part)
+    // Collapse internal whitespace to a hyphen so "gluten free" matches the
+    // canonical "gluten-free" value (the only multi-word dietary tag).
+    const token = normalize(part).replace(/\s+/g, "-")
     const match = DIETARY_VALUES.find((d) => d === token)
     if (match) seen.add(match)
   }

@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 12.06
+
+- add xlsx / csv import
+
 ### 11.06
 
 - add shareable `/pl` and `/en` landing routes
