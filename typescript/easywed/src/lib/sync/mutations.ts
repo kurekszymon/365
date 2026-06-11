@@ -223,6 +223,27 @@ export const insertGuest = (guest: Guest): Promise<boolean> => {
   )
 }
 
+// Batch-inserts many guests in a single round-trip. Used by the CSV/XLSX
+// import, which builds the whole list locally before persisting it at once.
+export const insertGuests = (guests: Array<Guest>): Promise<boolean> => {
+  if (guests.length === 0) return Promise.resolve(true)
+  const weddingId = getWeddingId()
+  if (!weddingId) return Promise.resolve(false)
+  return run(
+    "insertGuests",
+    supabase.from("guests").insert(
+      guests.map((guest) => ({
+        id: guest.id,
+        wedding_id: weddingId,
+        name: guest.name,
+        dietary: guest.dietary,
+        note: guest.note ?? null,
+        table_id: guest.tableId,
+      }))
+    )
+  )
+}
+
 export const updateGuestTable = (
   guestId: string,
   tableId: string | null

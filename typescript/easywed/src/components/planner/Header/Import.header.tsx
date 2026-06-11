@@ -1,6 +1,12 @@
-import { UploadIcon } from "lucide-react"
+import { FileBoxIcon, FileSpreadsheetIcon, UploadIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Tooltip,
   TooltipContent,
@@ -13,17 +19,27 @@ export const ImportHeader = () => {
   const open = useDialogStore((s) => s.open)
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="outline"
-          onClick={() => open("Planner.Import.Dxf")}
-          aria-label={t("import.dxf.title")}
-        >
-          <UploadIcon />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{t("import.dxf.title")}</TooltipContent>
-    </Tooltip>
+    <DropdownMenu>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" aria-label={t("import")}>
+              <UploadIcon />
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent>{t("import")}</TooltipContent>
+      </Tooltip>
+      <DropdownMenuContent align="end" className="w-auto min-w-0">
+        <DropdownMenuItem onClick={() => open("Guest.Import")}>
+          <FileSpreadsheetIcon />
+          {t("import.format.guests")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => open("Planner.Import.Dxf")}>
+          <FileBoxIcon />
+          {t("import.format.cad")}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

@@ -1,4 +1,3 @@
-import Papa from "papaparse"
 import type { TFunction } from "i18next"
 import type { Guest } from "@/stores/planner.store"
 import { useGlobalStore } from "@/stores/global.store"
@@ -27,6 +26,14 @@ const buildFilename = () => {
 const CSV_INJECTION_LEAD = /^[=+\-@\t\r]/
 const sanitizeCell = (value: string): string =>
   CSV_INJECTION_LEAD.test(value) ? `\t${value}` : value
+
+// RFC 4180 quoting: wrap a cell in double quotes (escaping inner quotes) only
+// when it contains a quote, comma or newline. Replaces papaparse's `unparse`
+// for our one-row-at-a-time emit so we don't carry a CSV lib just for this.
+const csvCell = (value: string): string =>
+  /["\r\n,]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value
+const csvRow = (cells: Array<string>): string =>
+  cells.map(sanitizeCell).map(csvCell).join(",")
 
 // In grouped mode the "table" column is redundant — it's already carried by
 // the section heading — so we drop it from the emitted columns.
@@ -121,7 +128,7 @@ export const exportGuestsCsv = (
   // Grouped: heading rows stay single-cell (no empty-column padding), and each
   // new section after the first is preceded by a blank line so spreadsheets
   // render a visual gap between tables.
-  const emit = (cells: Array<string>) => Papa.unparse([cells.map(sanitizeCell)])
+  const emit = (cells: Array<string>) => csvRow(cells)
 
   const lines: Array<string> = []
   if (formatMode === "flat") lines.push(emit(header))
