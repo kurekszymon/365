@@ -2,6 +2,7 @@ import { create } from "zustand"
 import {
   insertFixture,
   insertGuest,
+  insertGuests,
   insertTable,
   insertTables,
   reassignTableGuests,
@@ -133,6 +134,7 @@ type Action = {
   duplicateTable: (id: string) => string | null
   deleteTable: (id: string) => void
   addGuest: (guest: Omit<Guest, "id">) => void
+  addGuests: (guests: Array<Omit<Guest, "id">>) => void
   updateHall: (
     preset: HallPreset,
     dimensions: { width: number; height: number }
@@ -291,6 +293,15 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
     const newGuest: Guest = { ...guest, id: crypto.randomUUID() }
     set((state) => ({ guests: [...state.guests, newGuest] }))
     void insertGuest(newGuest)
+  },
+  addGuests: (guests) => {
+    if (guests.length === 0) return
+    const newGuests: Array<Guest> = guests.map((g) => ({
+      ...g,
+      id: crypto.randomUUID(),
+    }))
+    set((state) => ({ guests: [...state.guests, ...newGuests] }))
+    void insertGuests(newGuests)
   },
   updateHall: (preset, dimensions) => {
     set((state) => ({ hall: { ...state.hall, preset, dimensions } }))

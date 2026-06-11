@@ -78,6 +78,17 @@ When adding UI strings, add keys to **both** `en.json` and `pl.json`. Polish is 
 
 `src/components/planner/` — split into `Canvas/` (dnd-kit drag surface for tables), `Header/`, `PropertyPanel/` (the edit sidebar). `PropertyPanel/fields/` holds reusable field components (e.g. `GuestAssignmentPicker.tsx`). Drag-and-drop uses `@dnd-kit/core`; table shapes are `round` or `rectangular` with `width/height` (round uses `width` as diameter).
 
+### Dialogs
+
+`src/components/dialogs/` holds modal flows, registered centrally: `dialog.store.ts` holds the currently-open dialog id (e.g. `"Guest.Import"`), `DialogManager.tsx` switches on it to render the right dialog, and each subfolder (`guests/`, `planner/`, `weddings/`, plus `shared/` for cross-flow steps) has an `index` barrel. `DialogManager` is mounted once in `Planner.tsx` and `routes/index.tsx`.
+
+**One component per file.** Keep each file to a single component — split multi-step dialogs into an orchestrator plus a file per step/preview. Examples: the guest CSV/XLSX import (`guests/ImportGuestsDialog.tsx` + `GuestImportMappingStep` + `GuestImportSheetPreview` + `GuestImportResultPreview`, with the wizard state machine in `shared/useGuestImportWizard.ts`) and the DXF import (`shared/useDxfImportWizard.ts` + `DxfLayerMappingStep` + `DxfPreviewStep`).
+
+### Guest list import / export
+
+- **Export** (`src/lib/export/guestsCsv.ts`): two modes — `flat` (one header row, one guest per row) and `grouped` (section headings per table, ragged rows). Only **flat** is re-importable; grouped is a human-readable report. CSV is serialized by hand (small RFC-4180 helper), not a library.
+- **Import** (`src/lib/import/guestsImport.ts`): parses CSV **and** XLSX via **SheetJS**, which is the unmaintained npm `xlsx` replaced by the maintained CDN tarball (`package.json` → `"xlsx": "https://cdn.sheetjs.com/...tgz"`) and **lazy-loaded** inside `parseGuestFile` (`await import("xlsx")`) so it stays out of the main bundle. The CDN build is CJS, so resolve the API defensively (`mod.read ? mod : mod.default`). `buildGuests` matches table names case/diacritic-insensitively (incl. Polish `ł`) against existing tables, else leaves the guest unassigned — it never creates tables. The wizard expects a simple table with a header row; surface that in the UI rather than a generic "couldn't read" error.
+
 ## Reference docs
 
 - `docs/PRD.md` — product requirements. **Marked "AI Generated Content for reference"**; treat as aspirational scope, not ground truth for what's shipped.
