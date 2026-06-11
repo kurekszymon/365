@@ -141,8 +141,13 @@ export const buildGuests = (
 
   // Seats still free per table id, decremented as we assign within this batch.
   const remainingSeats = new Map<string, number>()
+  const seatedByTableId = new Map<string, number>()
+  for (const g of existingGuests) {
+    if (!g.tableId) continue
+    seatedByTableId.set(g.tableId, (seatedByTableId.get(g.tableId) ?? 0) + 1)
+  }
   for (const table of tables) {
-    const seated = existingGuests.filter((g) => g.tableId === table.id).length
+    const seated = seatedByTableId.get(table.id) ?? 0
     remainingSeats.set(table.id, Math.max(0, table.capacity - seated))
   }
 
