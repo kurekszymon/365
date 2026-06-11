@@ -168,6 +168,8 @@
   "guests.import.summary_one": "Ready to import {{count}} guest",
   "guests.import.skipped": "{{count}} rows skipped",
   "guests.import.skipped_one": "{{count}} row skipped",
+  "guests.import.overflowed": "{{count}} guests were left unassigned because their table is already full.",
+  "guests.import.overflowed_one": "{{count}} guest was left unassigned because their table is already full.",
   "guests.import.large_warning": "That's {{count}} guests — adding them may take a moment and they'll be hard to review here. Double-check the columns above first.",
   "guests.import.commit": "Add {{count}} guests",
   "guests.import.commit_one": "Add {{count}} guest",

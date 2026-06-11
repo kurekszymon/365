@@ -23,6 +23,7 @@ type GuestImportStage =
       mapping: ColumnMapping
       guests: Array<Omit<Guest, "id">>
       skipped: number
+      overflowed: number
     }
   | { kind: "committing" }
   | { kind: "error"; message: string }
@@ -72,8 +73,13 @@ export const useGuestImportWizard = ({ t }: { t: Translate }) => {
   const onMappingConfirmed = () => {
     setStage((prev) => {
       if (prev.kind !== "mapping") return prev
-      const { tables } = usePlannerStore.getState()
-      const { guests, skipped } = buildGuests(prev.rows, prev.mapping, tables)
+      const { tables, guests: existingGuests } = usePlannerStore.getState()
+      const { guests, skipped, overflowed } = buildGuests(
+        prev.rows,
+        prev.mapping,
+        tables,
+        existingGuests
+      )
       return {
         kind: "preview",
         headers: prev.headers,
@@ -81,6 +87,7 @@ export const useGuestImportWizard = ({ t }: { t: Translate }) => {
         mapping: prev.mapping,
         guests,
         skipped,
+        overflowed,
       }
     })
   }

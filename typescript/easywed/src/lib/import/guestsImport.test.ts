@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import type { Table } from "@/stores/planner.store"
+import type { Guest, Table } from "@/stores/planner.store"
 import {
   autoDetectMapping,
   buildGuests,
@@ -125,6 +125,29 @@ describe("buildGuests", () => {
     expect(guests).toHaveLength(1)
     expect(guests[0].name).toBe("Dan")
     expect(skipped).toBe(2)
+  })
+
+  it("bumps overflow guests to unassigned when a table is full", () => {
+    const guest = (id: string, tableId: string | null): Guest => ({
+      id,
+      name: id,
+      dietary: [],
+      tableId,
+    })
+    // Head Table has capacity 8 with 7 already seated → 1 free seat.
+    const existing = Array.from({ length: 7 }, (_, i) => guest(`g${i}`, "t1"))
+    const { guests, overflowed } = buildGuests(
+      [
+        ["Anna", "Head Table", "", ""],
+        ["Bob", "Head Table", "", ""],
+        ["Cara", "Head Table", "", ""],
+      ],
+      mapping,
+      TABLES,
+      existing
+    )
+    expect(guests.map((g) => g.tableId)).toEqual(["t1", null, null])
+    expect(overflowed).toBe(2)
   })
 
   it("omits note when unmapped or empty", () => {

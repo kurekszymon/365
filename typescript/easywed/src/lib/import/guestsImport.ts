@@ -116,24 +116,42 @@ export const parseDietary = (cell: string): Array<Dietary> => {
 export interface BuildResult {
   guests: Array<Omit<Guest, "id">>
   skipped: number
+  // How many guests matched a table by name but were left unassigned because
+  // that table was already full (server enforces capacity, so we mirror it).
+  overflowed: number
 }
 
 // Turns parsed rows + a column mapping into ready-to-insert guests. Table names
 // are matched case/diacritic-insensitively against existing tables; unmatched
 // (or unmapped) tables leave the guest unassigned. Rows with a blank name are
 // skipped and counted so the UI can report them.
+//
+// `existingGuests` is the current guest list — needed to honour table capacity:
+// the DB's `enforce_table_capacity` trigger rejects the whole batch if any table
+// would overflow, so we count remaining seats (capacity minus already-seated
+// minus what this import has already assigned) and bump the overflow to
+// unassigned rather than failing the import.
 export const buildGuests = (
   rows: Array<Array<string>>,
   mapping: ColumnMapping,
-  tables: Array<Table>
+  tables: Array<Table>,
+  existingGuests: Array<Guest> = []
 ): BuildResult => {
   const tableIdByName = new Map(tables.map((t) => [normalize(t.name), t.id]))
+
+  // Seats still free per table id, decremented as we assign within this batch.
+  const remainingSeats = new Map<string, number>()
+  for (const table of tables) {
+    const seated = existingGuests.filter((g) => g.tableId === table.id).length
+    remainingSeats.set(table.id, Math.max(0, table.capacity - seated))
+  }
 
   const cell = (row: Array<string>, col: number | null): string =>
     col === null ? "" : (row[col] ?? "")
 
   const guests: Array<Omit<Guest, "id">> = []
   let skipped = 0
+  let overflowed = 0
 
   for (const row of rows) {
     const name = cell(row, mapping.name).trim()
@@ -143,9 +161,22 @@ export const buildGuests = (
     }
 
     const tableName = cell(row, mapping.table).trim()
-    const tableId = tableName
+    const matchedTableId = tableName
       ? (tableIdByName.get(normalize(tableName)) ?? null)
       : null
+
+    // Honour capacity: only seat the guest if the matched table has room left,
+    // otherwise fall back to unassigned and count it as an overflow.
+    let tableId: string | null = null
+    if (matchedTableId !== null) {
+      const free = remainingSeats.get(matchedTableId) ?? 0
+      if (free > 0) {
+        tableId = matchedTableId
+        remainingSeats.set(matchedTableId, free - 1)
+      } else {
+        overflowed++
+      }
+    }
 
     const note = cell(row, mapping.note).trim()
 
@@ -157,5 +188,5 @@ export const buildGuests = (
     })
   }
 
-  return { guests, skipped }
+  return { guests, skipped, overflowed }
 }

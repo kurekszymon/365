@@ -104,6 +104,11 @@ export const ImportGuestsDialog = () => {
               {stage.skipped > 0 &&
                 ` · ${t("guests.import.skipped", { count: stage.skipped })}`}
             </p>
+            {stage.overflowed > 0 && (
+              <p className="text-sm text-amber-600 dark:text-amber-500">
+                {t("guests.import.overflowed", { count: stage.overflowed })}
+              </p>
+            )}
             {stage.guests.length > LARGE_IMPORT_THRESHOLD && (
               <p className="text-sm text-amber-600 dark:text-amber-500">
                 {t("guests.import.large_warning", {
