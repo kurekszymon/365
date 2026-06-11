@@ -9,7 +9,9 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PlRouteImport } from './routes/pl'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as EnRouteImport } from './routes/en'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WeddingIdRouteImport } from './routes/wedding.$id'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
@@ -18,9 +20,19 @@ import { Route as WeddingIdIndexRouteImport } from './routes/wedding.$id/index'
 import { Route as WeddingIdRemindersRouteImport } from './routes/wedding.$id/reminders'
 import { Route as WeddingIdPlannerRouteImport } from './routes/wedding.$id/planner'
 
+const PlRoute = PlRouteImport.update({
+  id: '/pl',
+  path: '/pl',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnRoute = EnRouteImport.update({
+  id: '/en',
+  path: '/en',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -61,7 +73,9 @@ const WeddingIdPlannerRoute = WeddingIdPlannerRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/en': typeof EnRoute
   '/login': typeof LoginRoute
+  '/pl': typeof PlRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
   '/wedding/$id': typeof WeddingIdRouteWithChildren
@@ -71,7 +85,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/en': typeof EnRoute
   '/login': typeof LoginRoute
+  '/pl': typeof PlRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
@@ -81,7 +97,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/en': typeof EnRoute
   '/login': typeof LoginRoute
+  '/pl': typeof PlRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
   '/wedding/$id': typeof WeddingIdRouteWithChildren
@@ -93,7 +111,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/en'
     | '/login'
+    | '/pl'
     | '/auth/callback'
     | '/invite/$token'
     | '/wedding/$id'
@@ -103,7 +123,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/en'
     | '/login'
+    | '/pl'
     | '/auth/callback'
     | '/invite/$token'
     | '/wedding/$id/planner'
@@ -112,7 +134,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/en'
     | '/login'
+    | '/pl'
     | '/auth/callback'
     | '/invite/$token'
     | '/wedding/$id'
@@ -123,7 +147,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EnRoute: typeof EnRoute
   LoginRoute: typeof LoginRoute
+  PlRoute: typeof PlRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   InviteTokenRoute: typeof InviteTokenRoute
   WeddingIdRoute: typeof WeddingIdRouteWithChildren
@@ -131,11 +157,25 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/pl': {
+      id: '/pl'
+      path: '/pl'
+      fullPath: '/pl'
+      preLoaderRoute: typeof PlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/en': {
+      id: '/en'
+      path: '/en'
+      fullPath: '/en'
+      preLoaderRoute: typeof EnRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -208,7 +248,9 @@ const WeddingIdRouteWithChildren = WeddingIdRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EnRoute: EnRoute,
   LoginRoute: LoginRoute,
+  PlRoute: PlRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   InviteTokenRoute: InviteTokenRoute,
   WeddingIdRoute: WeddingIdRouteWithChildren,

@@ -1,12 +1,16 @@
-import "@/i18n"
-
-import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router"
+import {
+  HeadContent,
+  Scripts,
+  createRootRoute,
+  useRouterState,
+} from "@tanstack/react-router"
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 import { TanStackDevtools } from "@tanstack/react-devtools"
 
 import { useTranslation } from "react-i18next"
 import { PostHogProvider } from "@posthog/react"
 import appCss from "../styles.css?url"
+import i18n from "@/i18n"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 import { AuthGate } from "@/components/auth/AuthGate"
@@ -34,75 +38,130 @@ function NotFound() {
 export const Route = createRootRoute({
   notFoundComponent: NotFound,
   errorComponent: ErrorFallback,
-  head: () => ({
-    meta: [
-      {
-        charSet: "utf-8",
-      },
-      {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1",
-      },
-      {
-        title: "easywed.",
-      },
-      {
-        name: "description",
-        content:
-          "easywed. — zaplanuj układ stołów, przypisz gości, stwórz idealny plan sali weselnej.",
-      },
-      {
-        property: "og:type",
-        content: "website",
-      },
-      {
-        property: "og:url",
-        content: "https://easywed.app",
-      },
-      {
-        property: "og:title",
-        content: "easywed.",
-      },
-      {
-        property: "og:description",
-        content:
-          "easywed. — zaplanuj układ stołów, przypisz gości, stwórz idealny plan sali weselnej.",
-      },
-      {
-        property: "og:image",
-        content: "https://easywed.app/logo.png",
-      },
-      {
-        name: "twitter:card",
-        content: "summary_large_image",
-      },
-      {
-        name: "twitter:title",
-        content: "easywed.",
-      },
-      {
-        name: "twitter:description",
-        content:
-          "easywed. — zaplanuj układ stołów, przypisz gości, stwórz idealny plan sali weselnej.",
-      },
-      {
-        name: "twitter:image",
-        content: "https://easywed.app/logo.png",
-      },
-    ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-    ],
-  }),
+  head: () => {
+    const language = i18n.resolvedLanguage === "pl" ? "pl" : "en"
+    const isPolish = language === "pl"
+    const title = i18n.t("seo.title", { lng: language })
+    const description = i18n.t("seo.description", { lng: language })
+
+    return {
+      meta: [
+        {
+          charSet: "utf-8",
+        },
+        {
+          name: "viewport",
+          content: "width=device-width, initial-scale=1",
+        },
+        {
+          title,
+        },
+        {
+          name: "description",
+          content: description,
+        },
+        {
+          property: "og:type",
+          content: "website",
+        },
+        {
+          property: "og:site_name",
+          content: "easywed.",
+        },
+        {
+          property: "og:url",
+          content: "https://easywed.app",
+        },
+        {
+          property: "og:title",
+          content: title,
+        },
+        {
+          property: "og:description",
+          content: description,
+        },
+        {
+          property: "og:locale",
+          content: isPolish ? "pl_PL" : "en_US",
+        },
+        {
+          property: "og:locale:alternate",
+          content: isPolish ? "en_US" : "pl_PL",
+        },
+        {
+          property: "og:image",
+          content: "https://easywed.app/og-image.png",
+        },
+        {
+          property: "og:image:type",
+          content: "image/png",
+        },
+        {
+          property: "og:image:width",
+          content: "1200",
+        },
+        {
+          property: "og:image:height",
+          content: "630",
+        },
+        {
+          property: "og:image:alt",
+          content: "easywed.",
+        },
+        {
+          name: "twitter:card",
+          content: "summary_large_image",
+        },
+        {
+          name: "twitter:title",
+          content: title,
+        },
+        {
+          name: "twitter:description",
+          content: description,
+        },
+        {
+          name: "twitter:image",
+          content: "https://easywed.app/og-image.png",
+        },
+        {
+          name: "twitter:image:alt",
+          content: "easywed.",
+        },
+      ],
+      links: [
+        {
+          rel: "stylesheet",
+          href: appCss,
+        },
+        {
+          rel: "icon",
+          href: "/favicon.ico",
+          sizes: "any",
+        },
+        {
+          rel: "apple-touch-icon",
+          href: "/apple-touch-icon.png",
+        },
+        {
+          rel: "manifest",
+          href: "/manifest.json",
+        },
+      ],
+    }
+  },
   shellComponent: RootDocument,
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  // Derive <html lang> from the path so it's correct in the server-rendered
+  // HTML (matching the per-locale og tags) and updates reactively on client
+  // navigation. Only /en is English; everything else defaults to Polish.
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const lang = pathname === "/en" || pathname.startsWith("/en/") ? "en" : "pl"
+
   return (
-    <html lang="pl">
+    <html lang={lang}>
       <head>
         <HeadContent />
       </head>

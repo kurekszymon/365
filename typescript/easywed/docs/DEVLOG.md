@@ -1,5 +1,12 @@
 # EasyWed — Development Log
 
+### 11.06
+
+- add shareable `/pl` and `/en` landing routes
+- `fallbackLng` -> `pl`
+- derive `<html lang>` from path in root shell (was hardcoded `pl`),
+- `e.` monogram for square icons
+
 ### 10.06
 
 - navigate to guests panel when adding guest
