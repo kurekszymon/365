@@ -4,6 +4,7 @@
 
 - remove rename wedding dialog
 - add inline-edit component
+- add status bar to inform about esc to exit for measurements
 
 ### 12.06
 

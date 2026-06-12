@@ -16,6 +16,7 @@ import { GuestsSeated } from "./Header/GuestsSeated.header"
 import { ImportHeader } from "./Header/Import.header"
 import { PlannerPrintView } from "./PlannerPrintView"
 import { PropertyPanel } from "./PropertyPanel"
+import { StatusBar } from "./StatusBar"
 import type { DragEndEvent } from "@dnd-kit/core"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Button } from "@/components/ui/button"
@@ -86,6 +87,7 @@ export const Planner = () => {
       <DialogManager />
       <PlannerPrintView />
 
+      <StatusBar />
       <div className="flex h-screen w-screen flex-col print:hidden">
         <Header>
           <Header.Title weddingId={weddingId}>
