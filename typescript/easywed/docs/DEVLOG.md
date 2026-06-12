@@ -1,5 +1,10 @@
 # EasyWed — Development Log
 
+### 13.06
+
+- remove rename wedding dialog
+- add inline-edit component
+
 ### 12.06
 
 - add xlsx / csv import
