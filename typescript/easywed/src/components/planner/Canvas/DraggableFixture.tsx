@@ -1,5 +1,5 @@
 import { useDraggable } from "@dnd-kit/core"
-import { CopyIcon, Trash2Icon } from "lucide-react"
+import { CopyIcon, SquarePenIcon, Trash2Icon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { CanvasActionButton } from "./CanvasActionButton"
 import { FixtureVisual } from "./FixtureVisual"
@@ -7,6 +7,7 @@ import type { Fixture } from "@/stores/planner.store"
 import { cn } from "@/lib/utils"
 import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
+import { useIsMobile } from "@/hooks/useMediaQuery"
 
 type DraggableFixtureProps = {
   fixture: Fixture
@@ -23,10 +24,8 @@ export const DraggableFixture = ({
 }: DraggableFixtureProps) => {
   const { t } = useTranslation()
 
-  const isSelected = usePanelStore(
-    (state) =>
-      state.view?.kind === "fixture.edit" && state.view.fixtureId === fixture.id
-  )
+  const isSelected = usePanelStore((state) => state.selectedId === fixture.id)
+  const isMobile = useIsMobile()
 
   const openFixtureEdit = usePanelStore((state) => state.openFixtureEdit)
   const deselectPanel = usePanelStore((state) => state.deselect)
@@ -57,6 +56,16 @@ export const DraggableFixture = ({
           className="absolute -top-8 right-0 flex gap-1"
           onPointerDown={(e) => e.stopPropagation()}
         >
+          {isMobile && (
+            <CanvasActionButton
+              icon={<SquarePenIcon className="size-3.5" />}
+              label={t("fixtures.edit")}
+              onClick={(e) => {
+                e.stopPropagation()
+                openFixtureEdit(fixture.id)
+              }}
+            />
+          )}
           <CanvasActionButton
             icon={<CopyIcon className="size-3.5" />}
             label={t("fixtures.duplicate")}

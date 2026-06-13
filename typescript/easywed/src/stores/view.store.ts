@@ -1,8 +1,8 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
-const ZOOM_MIN = 0.2
-const ZOOM_MAX = 8
+export const ZOOM_MIN = 0.2
+export const ZOOM_MAX = 8
 
 const clampZoom = (zoom: number) => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom))
 

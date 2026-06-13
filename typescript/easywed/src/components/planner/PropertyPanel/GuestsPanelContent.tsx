@@ -8,7 +8,7 @@ import {
   useDroppable,
 } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
-import { FileSpreadsheetIcon, PlusIcon } from "lucide-react"
+import { FileSpreadsheetIcon, GripVerticalIcon, PlusIcon } from "lucide-react"
 import type { Guest } from "@/stores/planner.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useDialogStore } from "@/stores/dialog.store"
@@ -16,17 +16,15 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 const DraggableGuest = ({ guest }: { guest: Guest }) => {
+  const { t } = useTranslation()
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({ id: guest.id, data: { type: "guest" } })
 
   return (
     <div
       ref={setNodeRef}
-      data-vaul-no-drag
-      {...attributes}
-      {...listeners}
       className={cn(
-        "flex cursor-grab items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm active:cursor-grabbing",
+        "flex items-center gap-2 rounded-md border bg-background py-2 pr-3 pl-1 text-sm",
         isDragging && "opacity-40"
       )}
       style={
@@ -35,6 +33,18 @@ const DraggableGuest = ({ guest }: { guest: Guest }) => {
           : undefined
       }
     >
+      {/* Drag handle — listeners live here (not the whole row) so the list can
+          still be scrolled by swiping over a guest in the mobile bottom sheet. */}
+      <button
+        type="button"
+        data-vaul-no-drag
+        aria-label={t("guests.drag")}
+        className="shrink-0 cursor-grab touch-none px-1 text-muted-foreground active:cursor-grabbing"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVerticalIcon className="size-4" />
+      </button>
       <span className="flex-1 truncate">{guest.name}</span>
       {guest.dietary.length > 0 && (
         <span className="shrink-0 text-xs text-muted-foreground">

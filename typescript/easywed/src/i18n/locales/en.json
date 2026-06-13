@@ -153,6 +153,7 @@
   "guests.seated_ratio": "{{seated_count}}/{{count}} guests seated",
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} guest seated",
   "guests.import": "Import guests",
+  "guests.drag": "Drag to assign",
   "guests.import.title": "Import guests from CSV or Excel",
   "guests.import.intro": "Upload a .csv or .xlsx file. We'll detect the columns, let you map them, and preview before adding.",
   "guests.import.choose_file": "Choose CSV or Excel file",

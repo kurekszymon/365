@@ -13,7 +13,12 @@ type ScalePillProps = {
   scale?: number
 }
 
-export const ScalePill = ({ scale, reset, zoomIn, zoomOut }: ScalePillProps) => {
+export const ScalePill = ({
+  scale,
+  reset,
+  zoomIn,
+  zoomOut,
+}: ScalePillProps) => {
   const { t } = useTranslation()
   const viewport = useGlobalStore((state) => state.viewport)
   const currentScale = scale ?? viewport.scale

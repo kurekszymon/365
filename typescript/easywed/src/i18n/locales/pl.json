@@ -157,6 +157,7 @@
   "guests.seated_ratio": "{{seated_count}}/{{count}} gości przy stołach",
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} gość przy stole",
   "guests.import": "Importuj gości",
+  "guests.drag": "Przeciągnij, aby przypisać",
   "guests.import.title": "Importuj gości z pliku CSV lub Excel",
   "guests.import.intro": "Wgraj plik .csv lub .xlsx. Wykryjemy kolumny, pozwolimy je dopasować i pokażemy podgląd przed dodaniem.",
   "guests.import.choose_file": "Wybierz plik CSV lub Excel",

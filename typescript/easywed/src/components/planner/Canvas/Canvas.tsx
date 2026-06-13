@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next"
 import { useEffect, useRef } from "react"
-import { useDndMonitor } from "@dnd-kit/core"
 import { useShallow } from "zustand/react/shallow"
 import {
   DotIcon,
@@ -11,6 +10,7 @@ import {
   SquarePlusIcon,
   TableIcon,
 } from "lucide-react"
+import { usePinch } from "@use-gesture/react"
 import { ScalePill } from "./ScalePill"
 import { DimensionLabel } from "./DimensionLabel"
 import { CanvasContextMenu } from "./CanvasContextMenu"
@@ -19,9 +19,7 @@ import { CanvasEmptyState } from "./CanvasEmptyState"
 import { HallSurface } from "./HallSurface"
 import { findCapturedElement, snapPositionToGrid } from "./utils"
 import { useHallGeometry } from "./useHallGeometry"
-import { usePinchZoom } from "./usePinchZoom"
 import { useCanvasPan } from "./useCanvasPan"
-import { useLongPress } from "./useLongPress"
 import type { HallSurfaceMethods } from "./HallSurface"
 import type { GridStyle, SnapStep } from "@/stores/view.store"
 import {
@@ -34,9 +32,10 @@ import {
   DEFAULT_TABLE,
   usePlannerStore,
 } from "@/stores/planner.store"
-import { useViewStore } from "@/stores/view.store"
+import { ZOOM_MAX, ZOOM_MIN, useViewStore } from "@/stores/view.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { useElementSize } from "@/hooks/useElementSize"
+import { useIsMobile } from "@/hooks/useMediaQuery"
 import { useOpenHall } from "@/hooks/useOpenHall"
 
 const GRID_ICON: Record<GridStyle, React.ReactNode> = {
@@ -59,6 +58,7 @@ export const Canvas = () => {
   const hall = usePlannerStore((state) => state.hall)
 
   const zoom = useViewStore((state) => state.zoom)
+  const setZoom = useViewStore((state) => state.setZoom)
   const pan = useViewStore((state) => state.pan)
   const snapStep = useViewStore((state) => state.snapStep)
   const gridStyle = useViewStore((state) => state.gridStyle)
@@ -74,15 +74,18 @@ export const Canvas = () => {
   const setGridStyle = useViewStore((state) => state.setGridStyle)
 
   const openHall = useOpenHall()
+  const isMobile = useIsMobile()
 
   const addTable = usePlannerStore((state) => state.addTable)
   const addFixture = usePlannerStore((state) => state.addFixture)
   const panel = usePanelStore(
     useShallow((state) => ({
+      selectedId: state.selectedId,
       openHall: state.openHall,
       openTablesBatchAdd: state.openTablesBatchAdd,
       openTableEdit: state.openTableEdit,
       openFixtureEdit: state.openFixtureEdit,
+      select: state.select,
       deselect: state.deselect,
     }))
   )
@@ -119,6 +122,21 @@ export const Canvas = () => {
     element: containerEl,
   } = useElementSize()
 
+  usePinch(
+    ({ offset: [scale] }) => {
+      setZoom(scale)
+    },
+    {
+      target: containerEl ?? undefined,
+      eventOptions: { passive: false },
+      scaleBounds: { min: ZOOM_MIN, max: ZOOM_MAX },
+      // Desktop wheel-zoom requires a modifier so plain scrolling isn't hijacked.
+      modifierKey: ["ctrlKey", "metaKey"],
+      // Read the live zoom at gesture start so the pinch is relative to it.
+      from: () => [zoom, 0],
+    }
+  )
+
   const {
     scaledWidth,
     scaledHeight,
@@ -136,17 +154,10 @@ export const Canvas = () => {
     pan
   )
 
-  usePinchZoom(containerEl)
-
   const { isPanning, onPointerDown, onPointerMove, onPointerUp } = useCanvasPan(
     pan,
     setPan
   )
-  const longPress = useLongPress()
-
-  // A press-and-hold on a table starts a dnd drag (touch sensor delay). Cancel
-  // the long-press context-menu timer so it doesn't also fire mid-drag.
-  useDndMonitor({ onDragStart: () => longPress.cancel() })
 
   const hallSurfaceRef = useRef<HallSurfaceMethods>(null)
 
@@ -228,7 +239,6 @@ export const Canvas = () => {
             return
           }
           pointerMovedRef.current = false
-          longPress.start(e)
           onPointerDown(e)
         }}
         onPointerMove={(e) => {
@@ -238,15 +248,12 @@ export const Canvas = () => {
             return
           }
           if (isPanning) pointerMovedRef.current = true
-          longPress.cancel()
           onPointerMove(e)
         }}
         onPointerUp={(e) => {
-          longPress.cancel()
           onPointerUp(e)
         }}
         onPointerCancel={(e) => {
-          longPress.cancel()
           onPointerUp(e)
         }}
         onClick={(e) => {
@@ -255,6 +262,31 @@ export const Canvas = () => {
           if ((e.target as Element).closest("[data-no-pan]")) return
 
           const captured = findCapturedElement(e.target)
+
+          if (isMobile) {
+            // Touch: first tap selects; tapping the already-selected element opens
+            // its edit drawer. Pointer devices: a click opens edit directly.
+            if (captured?.kind === "table") {
+              if (panel.selectedId === captured.id)
+                panel.openTableEdit(captured.id)
+              else panel.select(captured.id)
+              return
+            }
+            if (captured?.kind === "fixture") {
+              if (panel.selectedId === captured.id)
+                panel.openFixtureEdit(captured.id)
+              else panel.select(captured.id)
+              return
+            }
+            if (captured?.kind === "hall") {
+              // panel.openHall()
+              // passthrough? context menu?
+              return
+            }
+            panel.deselect()
+            return
+          }
+
           if (captured?.kind === "table") {
             panel.openTableEdit(captured.id)
             return

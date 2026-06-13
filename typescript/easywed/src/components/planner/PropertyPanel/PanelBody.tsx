@@ -23,7 +23,11 @@ export const PanelBody = ({ view }: { view: PanelView }) => {
     <>
       {view.kind === "hall" && <HallPanelContent />}
       {view.kind === "table.add" && (
-        <TablePanelContent key="table.add" mode="add" position={view.position} />
+        <TablePanelContent
+          key="table.add"
+          mode="add"
+          position={view.position}
+        />
       )}
       {view.kind === "tables.batch_add" && (
         <TableBatchPanelContent
