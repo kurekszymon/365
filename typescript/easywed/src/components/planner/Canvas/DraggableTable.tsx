@@ -1,6 +1,6 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core"
 import { useCallback } from "react"
-import { CopyIcon, Trash2Icon } from "lucide-react"
+import { CopyIcon, SquarePenIcon, Trash2Icon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { CanvasActionButton } from "./CanvasActionButton"
 import { TableVisual } from "./TableVisual"
@@ -8,7 +8,8 @@ import type { Table } from "@/stores/planner.store"
 import { cn } from "@/lib/utils"
 
 import { usePlannerStore } from "@/stores/planner.store"
-import { selectSelectedTableId, usePanelStore } from "@/stores/panel.store"
+import { usePanelStore } from "@/stores/panel.store"
+import { useIsMobile } from "@/hooks/useMediaQuery"
 
 type DraggableTableProps = {
   table: Table
@@ -28,9 +29,8 @@ export const DraggableTable = ({
   isDraggingGuest,
 }: DraggableTableProps) => {
   const { t } = useTranslation()
-  const isSelected = usePanelStore(
-    (state) => selectSelectedTableId(state) === table.id
-  )
+  const isSelected = usePanelStore((state) => state.selectedId === table.id)
+  const isMobile = useIsMobile()
 
   const openTableEdit = usePanelStore((state) => state.openTableEdit)
   const deselectPanel = usePanelStore((state) => state.deselect)
@@ -83,6 +83,16 @@ export const DraggableTable = ({
           className="absolute -top-8 right-0 flex gap-1"
           onPointerDown={(e) => e.stopPropagation()}
         >
+          {isMobile && (
+            <CanvasActionButton
+              icon={<SquarePenIcon className="size-3.5" />}
+              label={t("tables.edit")}
+              onClick={(e) => {
+                e.stopPropagation()
+                openTableEdit(table.id)
+              }}
+            />
+          )}
           <CanvasActionButton
             icon={<CopyIcon className="size-3.5" />}
             label={t("tables.duplicate")}

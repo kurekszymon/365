@@ -47,6 +47,10 @@ export const Planner = () => {
     (state) => state.assignGuestToTable
   )
 
+  // Distance-based activation (mouse + touch) so dragging starts the moment you
+  // move — no hold delay. Touch hold-without-moving is reserved for the canvas
+  // long-press (select → edit) and the guest list uses a drag handle so the
+  // bottom sheet still scrolls.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   )

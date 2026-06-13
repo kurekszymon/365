@@ -14,6 +14,10 @@ export type PanelView =
 
 type State = {
   view: PanelView | null
+  // The canvas element (table/fixture) showing its selection ring + action
+  // buttons. Decoupled from `view` so touch can tap-to-select without opening
+  // the edit sheet (long-press opens edit). Desktop edit sets both.
+  selectedId: string | null
 }
 
 type Action = {
@@ -26,45 +30,52 @@ type Action = {
   openFixtureAdd: (position?: Position) => void
   openFixtureEdit: (fixtureId: string) => void
   openFixturesPlaceholder: () => void
+  select: (id: string | null) => void
   close: () => void
   deselect: () => void
 }
 
 export const usePanelStore = create<State & Action>((set) => ({
   view: null,
+  selectedId: null,
 
-  openHall: () => set({ view: { kind: "hall" } }),
-  openTableAdd: (position) => set({ view: { kind: "table.add", position } }),
+  openHall: () => set({ view: { kind: "hall" }, selectedId: null }),
+  openTableAdd: (position) =>
+    set({ view: { kind: "table.add", position }, selectedId: null }),
   openTablesBatchAdd: (position) =>
-    set({ view: { kind: "tables.batch_add", position } }),
-  openTableEdit: (tableId) => set({ view: { kind: "table.edit", tableId } }),
-  openTablesPlaceholder: () => set({ view: { kind: "tables.placeholder" } }),
-  openGuests: () => set({ view: { kind: "guests" } }),
+    set({ view: { kind: "tables.batch_add", position }, selectedId: null }),
+  openTableEdit: (tableId) =>
+    set({ view: { kind: "table.edit", tableId }, selectedId: tableId }),
+  openTablesPlaceholder: () =>
+    set({ view: { kind: "tables.placeholder" }, selectedId: null }),
+  openGuests: () => set({ view: { kind: "guests" }, selectedId: null }),
   openFixtureAdd: (position) =>
-    set({ view: { kind: "fixture.add", position } }),
+    set({ view: { kind: "fixture.add", position }, selectedId: null }),
   openFixtureEdit: (fixtureId) =>
-    set({ view: { kind: "fixture.edit", fixtureId } }),
+    set({ view: { kind: "fixture.edit", fixtureId }, selectedId: fixtureId }),
   openFixturesPlaceholder: () =>
-    set({ view: { kind: "fixtures.placeholder" } }),
-  close: () => set({ view: null }),
+    set({ view: { kind: "fixtures.placeholder" }, selectedId: null }),
+  select: (id) => set({ selectedId: id }),
+  close: () => set({ view: null, selectedId: null }),
   deselect: () =>
     set((state) => {
-      if (!state.view) return state
+      const next = { selectedId: null }
+      if (!state.view) return next
       switch (state.view.kind) {
         case "hall":
-          return { view: null }
+          return { ...next, view: null }
         case "table.add":
         case "tables.batch_add":
         case "table.edit":
-          return { view: { kind: "tables.placeholder" } }
+          return { ...next, view: { kind: "tables.placeholder" } }
         case "tables.placeholder":
         case "guests":
-          return state
+          return next
         case "fixture.add":
         case "fixture.edit":
-          return { view: { kind: "fixtures.placeholder" } }
+          return { ...next, view: { kind: "fixtures.placeholder" } }
         case "fixtures.placeholder":
-          return state
+          return next
       }
     }),
 }))

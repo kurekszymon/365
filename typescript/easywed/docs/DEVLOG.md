@@ -7,6 +7,7 @@
 - add status bar to inform about esc to exit for measurements
 - add unified preview table component with show more button. use it across guests import
 - add click through statusbar
+- improve drag and touch interactions
 
 ### 12.06
 

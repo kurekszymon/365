@@ -15,8 +15,18 @@ export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
     clientY: number
     pan: Position
   } | null>(null)
+  // Track concurrent pointers so a two-finger pinch (handled by usePinchZoom)
+  // doesn't also drag the canvas around.
+  const activePointers = useRef(new Set<number>())
 
   function onPointerDown(e: React.PointerEvent) {
+    activePointers.current.add(e.pointerId)
+    // A second pointer means a pinch is starting — abort any nascent pan.
+    if (activePointers.current.size > 1) {
+      startRef.current = null
+      setIsPanning(false)
+      return
+    }
     if (e.button !== 0 || !e.isPrimary) return
     if (
       (e.target as HTMLElement).closest(
@@ -29,6 +39,7 @@ export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
   }
 
   function onPointerMove(e: React.PointerEvent) {
+    if (activePointers.current.size > 1) return
     const start = startRef.current
     if (!start) return
 
@@ -43,7 +54,8 @@ export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
     setPan({ x: start.pan.x + dx, y: start.pan.y + dy })
   }
 
-  function onPointerUp() {
+  function onPointerUp(e?: React.PointerEvent) {
+    if (e) activePointers.current.delete(e.pointerId)
     if (!startRef.current) return
 
     startRef.current = null

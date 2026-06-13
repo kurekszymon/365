@@ -15,6 +15,7 @@ import { useViewStore } from "@/stores/view.store"
 import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
 import { useMeasuresStore } from "@/stores/measures.store"
 import { Route } from "@/routes/wedding.$id/planner"
+import { useIsMobile } from "@/hooks/useMediaQuery"
 
 export interface HallSurfaceMethods {
   handleMeasureDown: (xM: number, yM: number, shiftKey: boolean) => void
@@ -47,6 +48,7 @@ export const HallSurface = ({
   gridSpacing = 1,
   ref,
 }: HallSurfaceProps) => {
+  const isMobile = useIsMobile()
   const { setNodeRef: setDropRef } = useDroppable({
     // droppable data { type: "hall" } so the shared onDragEnd in Planner.tsx ignores guest drops on the background
     id: "hall-identifier",
@@ -153,7 +155,9 @@ export const HallSurface = ({
 
   return (
     <>
-      {isMeasuring && <StatusBar isMeasureStarted={!!pendingPoint} />}
+      {!isMobile && isMeasuring && (
+        <StatusBar isMeasureStarted={!!pendingPoint} />
+      )}
       <HallBackground
         ref={setDropRef}
         hallWidth={width}
