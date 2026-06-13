@@ -281,7 +281,6 @@ export const Canvas = () => {
             if (captured?.kind === "hall") {
               // panel.openHall()
               // passthrough? context menu?
-              return
             }
             panel.deselect()
             return
