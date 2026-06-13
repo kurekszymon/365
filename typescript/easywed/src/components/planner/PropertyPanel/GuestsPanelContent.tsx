@@ -8,6 +8,7 @@ import {
   useDroppable,
 } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
+import { FileSpreadsheetIcon, PlusIcon } from "lucide-react"
 import type { Guest } from "@/stores/planner.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useDialogStore } from "@/stores/dialog.store"
@@ -147,7 +148,12 @@ export const GuestsPanelContent = () => {
       <div className="flex flex-col gap-3">
         <p className="text-sm text-muted-foreground">{t("guests.none")}</p>
         <Button variant="outline" onClick={() => openDialog("Guest.Add")}>
+          <PlusIcon />
           {t("guests.add")}
+        </Button>
+        <Button variant="outline" onClick={() => openDialog("Guest.Import")}>
+          <FileSpreadsheetIcon />
+          {t("guests.import")}
         </Button>
       </div>
     )
@@ -166,9 +172,16 @@ export const GuestsPanelContent = () => {
   return (
     <>
       <div className="flex flex-col gap-4">
-        <Button variant="outline" onClick={() => openDialog("Guest.Add")}>
-          {t("guests.add")}
-        </Button>
+        <div className="sticky flex flex-col gap-2">
+          <Button variant="outline" onClick={() => openDialog("Guest.Add")}>
+            <PlusIcon />
+            {t("guests.add")}
+          </Button>
+          <Button variant="outline" onClick={() => openDialog("Guest.Import")}>
+            <FileSpreadsheetIcon />
+            {t("guests.import")}
+          </Button>
+        </div>
         {sections.map((section) => {
           const droppableId =
             section.id !== null

@@ -18,6 +18,7 @@
   "common.auto": "Auto",
   "common.close": "Zamknij",
   "common.meters": "{{count}} m",
+  "common.show_more": "+{{count}} więcej wierszy",
 
   "errors.404": "404",
   "errors.not_found": "Nie znaleziono strony",
