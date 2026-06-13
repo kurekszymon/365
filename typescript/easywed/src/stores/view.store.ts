@@ -2,7 +2,9 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
 const ZOOM_MIN = 0.2
-const ZOOM_MAX = 4
+const ZOOM_MAX = 8
+
+const clampZoom = (zoom: number) => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom))
 
 export type SnapStep = 0.1 | 0.25 | 0.5 | 1 | "off"
 export type GridStyle = "dots" | "grid" | "off"
@@ -22,6 +24,7 @@ type State = {
 type Action = {
   resetZoomAndPan: () => void
   stepZoom: (direction: 1 | -1) => void
+  setZoom: (zoom: number) => void
   setPan: (pan: { x: number; y: number }) => void
   setSnapStep: (step: SnapStep) => void
   setGridStyle: (style: GridStyle) => void
@@ -46,14 +49,9 @@ export const useViewStore = create<State & Action>()(
           // ref: https://gamedev.net/forums/topic/666225-equation-for-zooming/
           // Math.exp is the inverse of Math.log, so it's converting to log-space, applying the zoom delta, then converting back.
           // modify the direction (+ or -) to control zoom in vs zoom out
-          zoom: Math.max(
-            ZOOM_MIN,
-            Math.min(
-              ZOOM_MAX,
-              Math.exp(Math.log(state.zoom) + direction * 0.08)
-            )
-          ),
+          zoom: clampZoom(Math.exp(Math.log(state.zoom) + direction * 0.08)),
         })),
+      setZoom: (zoom) => set({ zoom: clampZoom(zoom) }),
       setPan: (pan) => set({ pan }),
       setSnapStep: (step) => set({ snapStep: step }),
       setGridStyle: (style) => set({ gridStyle: style }),

@@ -221,6 +221,8 @@
   "canvas.snap.off": "Wyłączone",
   "canvas.snap.tooltip": "Stoły wyrównują się do tej odległości po upuszczeniu",
   "canvas.scale.tooltip": "Kliknij, aby zresetować zoom",
+  "canvas.zoom.in": "Powiększ",
+  "canvas.zoom.out": "Pomniejsz",
 
   "measure.tool": "Mierzenie",
   "measure.tooltip": "Włącz narzędzie mierzenia — kliknij dwa punkty na sali, aby zmierzyć odległość",

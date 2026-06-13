@@ -224,6 +224,8 @@ export const MeasureOverlay = ({
                 aria-label={t("measure.delete")}
                 data-no-pan
               >
+                {/* Enlarged transparent hit area for touch (visible glyph stays small) */}
+                <circle cx={deleteX} cy={deleteY} r={16} fill="transparent" />
                 <circle
                   cx={deleteX}
                   cy={deleteY}

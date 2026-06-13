@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next"
 import { useEffect, useRef } from "react"
+import { useDndMonitor } from "@dnd-kit/core"
 import { useShallow } from "zustand/react/shallow"
 import {
   DotIcon,
@@ -18,7 +19,7 @@ import { CanvasEmptyState } from "./CanvasEmptyState"
 import { HallSurface } from "./HallSurface"
 import { findCapturedElement, snapPositionToGrid } from "./utils"
 import { useHallGeometry } from "./useHallGeometry"
-import { useCanvasZoom } from "./useCanvasZoom"
+import { usePinchZoom } from "./usePinchZoom"
 import { useCanvasPan } from "./useCanvasPan"
 import { useLongPress } from "./useLongPress"
 import type { HallSurfaceMethods } from "./HallSurface"
@@ -135,13 +136,17 @@ export const Canvas = () => {
     pan
   )
 
-  useCanvasZoom(containerEl, stepZoom)
+  usePinchZoom(containerEl)
 
   const { isPanning, onPointerDown, onPointerMove, onPointerUp } = useCanvasPan(
     pan,
     setPan
   )
   const longPress = useLongPress()
+
+  // A press-and-hold on a table starts a dnd drag (touch sensor delay). Cancel
+  // the long-press context-menu timer so it doesn't also fire mid-drag.
+  useDndMonitor({ onDragStart: () => longPress.cancel() })
 
   const hallSurfaceRef = useRef<HallSurfaceMethods>(null)
 
@@ -204,7 +209,7 @@ export const Canvas = () => {
     >
       <div
         ref={containerRef}
-        className="relative min-h-0 flex-1 overflow-hidden bg-gradient-to-br from-slate-100 via-zinc-50 to-emerald-50/70"
+        className="relative min-h-0 flex-1 touch-none overflow-hidden bg-gradient-to-br from-slate-100 via-zinc-50 to-emerald-50/70"
         style={{
           cursor: isMeasuring ? "crosshair" : isPanning ? "grabbing" : "grab",
         }}
@@ -236,13 +241,13 @@ export const Canvas = () => {
           longPress.cancel()
           onPointerMove(e)
         }}
-        onPointerUp={() => {
+        onPointerUp={(e) => {
           longPress.cancel()
-          onPointerUp()
+          onPointerUp(e)
         }}
-        onPointerCancel={() => {
+        onPointerCancel={(e) => {
           longPress.cancel()
-          onPointerUp()
+          onPointerUp(e)
         }}
         onClick={(e) => {
           if (pointerMovedRef.current) return
@@ -267,7 +272,7 @@ export const Canvas = () => {
       >
         <div
           data-no-pan
-          className="absolute top-3 right-3 z-20 flex items-center gap-2"
+          className="absolute top-3 right-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center justify-end gap-2"
         >
           <Tooltip>
             {/* TODO extract to a seperate component */}
@@ -275,7 +280,7 @@ export const Canvas = () => {
               <div className="flex items-center rounded-md border bg-background/80 text-[10px] text-muted-foreground backdrop-blur-sm">
                 <button
                   type="button"
-                  className="cursor-pointer px-1.5 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                  className="cursor-pointer px-1.5 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 max-md:px-2.5 max-md:py-2"
                   disabled={SNAP_STEPS.indexOf(snapStep) === 0}
                   onClick={() =>
                     setSnapStep(SNAP_STEPS[SNAP_STEPS.indexOf(snapStep) - 1])
@@ -290,7 +295,7 @@ export const Canvas = () => {
                 </span>
                 <button
                   type="button"
-                  className="cursor-pointer px-1.5 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                  className="cursor-pointer px-1.5 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 max-md:px-2.5 max-md:py-2"
                   disabled={
                     SNAP_STEPS.indexOf(snapStep) === SNAP_STEPS.length - 1
                   }
@@ -311,7 +316,7 @@ export const Canvas = () => {
             <TooltipTrigger asChild>
               <div
                 onClick={cycleGridStyle}
-                className="flex w-[3.5rem] cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-sm"
+                className="flex w-[3.5rem] cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-sm max-md:py-2"
               >
                 {GRID_ICON[gridStyle]}
                 {t(`canvas.grid.${gridStyle}`)}
@@ -327,7 +332,7 @@ export const Canvas = () => {
               <button
                 type="button"
                 data-no-pan
-                className={`flex cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] backdrop-blur-sm ${
+                className={`flex cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] backdrop-blur-sm max-md:py-2 ${
                   isMeasuring
                     ? "border-teal-500 bg-teal-50 text-teal-700"
                     : "text-muted-foreground hover:text-foreground"
@@ -350,7 +355,7 @@ export const Canvas = () => {
                 <button
                   type="button"
                   data-no-pan
-                  className="flex cursor-pointer items-center gap-1.5 rounded-md border border-teal-500 bg-teal-50 px-2 py-1 text-[10px] text-teal-700 backdrop-blur-sm"
+                  className="flex cursor-pointer items-center gap-1.5 rounded-md border border-teal-500 bg-teal-50 px-2 py-1 text-[10px] text-teal-700 backdrop-blur-sm max-md:py-2"
                   onClick={() =>
                     setMeasureMode(
                       measureMode === "center" ? "border" : "center"
@@ -366,7 +371,12 @@ export const Canvas = () => {
             </Tooltip>
           )}
 
-          <ScalePill reset={resetZoomAndPan} scale={zoom} />
+          <ScalePill
+            reset={resetZoomAndPan}
+            scale={zoom}
+            zoomIn={() => stepZoom(1)}
+            zoomOut={() => stepZoom(-1)}
+          />
         </div>
 
         <DimensionLabel

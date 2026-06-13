@@ -22,6 +22,7 @@ const DraggableGuest = ({ guest }: { guest: Guest }) => {
   return (
     <div
       ref={setNodeRef}
+      data-vaul-no-drag
       {...attributes}
       {...listeners}
       className={cn(

@@ -8,7 +8,13 @@ import {
   UsersIcon,
   UtensilsIcon,
 } from "lucide-react"
-import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
+import {
+  DndContext,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core"
 import { Canvas } from "./Canvas"
 import { Header } from "./Header"
 import { ExportHeader } from "./Header/Export.header"
@@ -48,7 +54,13 @@ export const Planner = () => {
   )
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    // Mouse: a small drag distance starts the drag immediately.
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    // Touch: require a short hold so a swipe scrolls the guest list / pans the
+    // canvas, while a press-and-move drags a guest or table.
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 6 },
+    })
   )
 
   const handleDragEnd = (e: DragEndEvent) => {
