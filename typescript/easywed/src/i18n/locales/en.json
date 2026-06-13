@@ -218,6 +218,7 @@
   "measure.mode.border": "Border",
   "measure.mode.tooltip": "Snap to object center or nearest edge when clicking on a table or fixture",
   "measure.statusbar": "Click on the hall to place a measurement point",
+  "measure.statusbar_drop": "Click again to drop the end point",
   "statusbar.esc_to_exit": "Esc to exit",
 
   "export": "Export",

@@ -230,6 +230,7 @@
   "measure.mode.border": "Krawędź",
   "measure.mode.tooltip": "Przyciągaj do środka lub najbliższej krawędzi stołu lub elementu",
   "measure.statusbar": "Kliknij na sali, aby umieścić punkt pomiaru",
+  "measure.statusbar_drop": "Kliknij ponownie, aby ustawić punkt końcowy",
   "statusbar.esc_to_exit": "Esc aby wyjść",
 
   "export": "Eksport",
