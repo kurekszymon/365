@@ -1,6 +1,7 @@
 import { useDroppable } from "@dnd-kit/core"
 import { useImperativeHandle, useMemo } from "react"
 import { useShallow } from "zustand/react/shallow"
+import { StatusBar } from "../StatusBar"
 import { DraggableTable } from "./DraggableTable"
 import { DraggableFixture } from "./DraggableFixture"
 import { HallBackground } from "./HallBackground"
@@ -151,53 +152,56 @@ export const HallSurface = ({
   )
 
   return (
-    <HallBackground
-      ref={setDropRef}
-      hallWidth={width}
-      hallHeight={height}
-      ppm={ppm}
-      gridStyle={gridStyle}
-      gridSpacing={gridSpacing}
-      zoom={zoom}
-      className="absolute z-10 shadow-md ring-2 ring-emerald-400"
-      style={{ left, top }}
-    >
-      {canvasTables.map((ct) => (
-        <DraggableTable
-          key={ct.id}
-          table={ct}
-          guestsAssigned={assignedGuestsByTableId.get(ct.id) ?? 0}
-          hallWidth={hallDimensions.width}
-          hallHeight={hallDimensions.height}
-          ppm={ppm}
-          isDraggingGuest={isDraggingGuest}
-        />
-      ))}
-      {canvasFixtures.map((cf) => (
-        <DraggableFixture
-          key={cf.id}
-          fixture={cf}
-          hallWidth={hallDimensions.width}
-          hallHeight={hallDimensions.height}
-          ppm={ppm}
-        />
-      ))}
-
-      {/* Measurement annotations — always rendered so saved lines are visible */}
-      <MeasureOverlay
-        measurements={measurements}
+    <>
+      {isMeasuring && <StatusBar isMeasureStarted={!!pendingPoint} />}
+      <HallBackground
+        ref={setDropRef}
+        hallWidth={width}
+        hallHeight={height}
         ppm={ppm}
-        hallWidthPx={width}
-        hallHeightPx={height}
-        pendingPoint={isMeasuring ? pendingPoint : null}
-        cursorPos={isMeasuring ? cursorPos : null}
-        onDelete={(id) => deleteMeasurement(weddingId, id)}
-        activeDrag={activeDrag}
-        resolvePoint={resolvePoint}
-        onEndpointUpdate={(measurementId, pointKey, point) =>
-          updateMeasurementPoint(weddingId, measurementId, pointKey, point)
-        }
-      />
-    </HallBackground>
+        gridStyle={gridStyle}
+        gridSpacing={gridSpacing}
+        zoom={zoom}
+        className="absolute z-10 shadow-md ring-2 ring-emerald-400"
+        style={{ left, top }}
+      >
+        {canvasTables.map((ct) => (
+          <DraggableTable
+            key={ct.id}
+            table={ct}
+            guestsAssigned={assignedGuestsByTableId.get(ct.id) ?? 0}
+            hallWidth={hallDimensions.width}
+            hallHeight={hallDimensions.height}
+            ppm={ppm}
+            isDraggingGuest={isDraggingGuest}
+          />
+        ))}
+        {canvasFixtures.map((cf) => (
+          <DraggableFixture
+            key={cf.id}
+            fixture={cf}
+            hallWidth={hallDimensions.width}
+            hallHeight={hallDimensions.height}
+            ppm={ppm}
+          />
+        ))}
+
+        {/* Measurement annotations — always rendered so saved lines are visible */}
+        <MeasureOverlay
+          measurements={measurements}
+          ppm={ppm}
+          hallWidthPx={width}
+          hallHeightPx={height}
+          pendingPoint={isMeasuring ? pendingPoint : null}
+          cursorPos={isMeasuring ? cursorPos : null}
+          onDelete={(id) => deleteMeasurement(weddingId, id)}
+          activeDrag={activeDrag}
+          resolvePoint={resolvePoint}
+          onEndpointUpdate={(measurementId, pointKey, point) =>
+            updateMeasurementPoint(weddingId, measurementId, pointKey, point)
+          }
+        />
+      </HallBackground>
+    </>
   )
 }
