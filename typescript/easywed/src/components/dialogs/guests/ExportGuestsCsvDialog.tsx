@@ -3,7 +3,13 @@ import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import { PreviewGuestsTable } from "./PreviewGuestsTable"
 import type { FormatMode, GuestField } from "@/lib/export/guestsCsv"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import {
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog"
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 import { Button } from "@/components/ui/button"
 import { useDialogStore } from "@/stores/dialog.store"
@@ -40,71 +46,77 @@ export const ExportGuestsCsvDialog = () => {
   const hasExportableColumn = effectiveFields(selected, formatMode).length > 0
 
   return (
-    <Dialog
+    <ResponsiveDialog
       open={dialog.opened === "Guests.Export.Csv"}
       onOpenChange={(open) => {
         if (!open) dialog.close()
       }}
-      aria-describedby={undefined}
     >
-      <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
-        <DialogTitle>{t("export.csv.title")}</DialogTitle>
-        <Field>
-          <FieldLabel>{t("export.csv.format")}</FieldLabel>
-          <FieldContent className="flex-row flex-wrap gap-1.5">
-            {FORMAT_MODES.map((mode) => (
-              <Button
-                key={mode}
-                variant={formatMode === mode ? "default" : "outline"}
-                className="rounded-full"
-                onClick={() => setFormatMode(mode)}
-              >
-                {t(`export.csv.format.${mode}`)}
-              </Button>
-            ))}
-          </FieldContent>
-        </Field>
-        <Field>
-          <FieldLabel>{t("export.csv.fields")}</FieldLabel>
-          <FieldContent className="flex-row flex-wrap gap-1.5">
-            {GUEST_FIELDS.map((field) => {
-              const disabled = field === "table" && tableDisabled
-              return (
+      <ResponsiveDialogContent
+        className="sm:max-w-md"
+        aria-describedby={undefined}
+      >
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t("export.csv.title")}</ResponsiveDialogTitle>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogBody>
+          <Field>
+            <FieldLabel>{t("export.csv.format")}</FieldLabel>
+            <FieldContent className="flex-row flex-wrap gap-1.5">
+              {FORMAT_MODES.map((mode) => (
                 <Button
-                  key={field}
-                  variant={selected.includes(field) ? "default" : "outline"}
+                  key={mode}
+                  variant={formatMode === mode ? "default" : "outline"}
                   className="rounded-full"
-                  disabled={disabled}
-                  title={
-                    disabled ? t("export.csv.table_disabled_hint") : undefined
-                  }
-                  onClick={() => toggle(field)}
+                  onClick={() => setFormatMode(mode)}
                 >
-                  {t(`export.col.${field}`)}
+                  {t(`export.csv.format.${mode}`)}
                 </Button>
-              )
-            })}
-          </FieldContent>
-        </Field>
-        <Field>
-          <FieldLabel>{t("export.csv.preview")}</FieldLabel>
-          <FieldContent>
-            <PreviewGuestsTable
-              fields={orderedSelected}
-              formatMode={formatMode}
-            />
-          </FieldContent>
-        </Field>
-        <Button
-          disabled={!hasExportableColumn}
-          onClick={() => {
-            exportGuestsCsv(orderedSelected, formatMode, t)
-            dialog.close()
-          }}
-        >
-          {t("export.csv.download")}
-        </Button>
-      </DialogContent>
-    </Dialog>
+              ))}
+            </FieldContent>
+          </Field>
+          <Field>
+            <FieldLabel>{t("export.csv.fields")}</FieldLabel>
+            <FieldContent className="flex-row flex-wrap gap-1.5">
+              {GUEST_FIELDS.map((field) => {
+                const disabled = field === "table" && tableDisabled
+                return (
+                  <Button
+                    key={field}
+                    variant={selected.includes(field) ? "default" : "outline"}
+                    className="rounded-full"
+                    disabled={disabled}
+                    title={
+                      disabled ? t("export.csv.table_disabled_hint") : undefined
+                    }
+                    onClick={() => toggle(field)}
+                  >
+                    {t(`export.col.${field}`)}
+                  </Button>
+                )
+              })}
+            </FieldContent>
+          </Field>
+          <Field>
+            <FieldLabel>{t("export.csv.preview")}</FieldLabel>
+            <FieldContent>
+              <PreviewGuestsTable
+                fields={orderedSelected}
+                formatMode={formatMode}
+              />
+            </FieldContent>
+          </Field>
+          <Button
+            disabled={!hasExportableColumn}
+            onClick={() => {
+              exportGuestsCsv(orderedSelected, formatMode, t)
+              dialog.close()
+            }}
+          >
+            {t("export.csv.download")}
+          </Button>
+        </ResponsiveDialogBody>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }

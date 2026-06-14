@@ -2,7 +2,13 @@ import { useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import type { GuestField } from "@/lib/export/guestsCsv"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import {
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog"
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 import { Button } from "@/components/ui/button"
 import { useDialogStore } from "@/stores/dialog.store"
@@ -35,40 +41,46 @@ export const ExportGuestsPdfDialog = () => {
   const canExport = orderedSelected.includes("name")
 
   return (
-    <Dialog
+    <ResponsiveDialog
       open={dialog.opened === "Guests.Export.Pdf"}
       onOpenChange={(open) => {
         if (!open) dialog.close()
       }}
-      aria-describedby={undefined}
     >
-      <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
-        <DialogTitle>{t("export.pdf.title")}</DialogTitle>
-        <Field>
-          <FieldLabel>{t("export.pdf.fields")}</FieldLabel>
-          <FieldContent className="flex-row flex-wrap gap-1.5">
-            {PICKABLE_FIELDS.map((field) => (
-              <Button
-                key={field}
-                variant={selected.includes(field) ? "default" : "outline"}
-                className="rounded-full"
-                onClick={() => toggle(field)}
-              >
-                {t(`export.col.${field}`)}
-              </Button>
-            ))}
-          </FieldContent>
-        </Field>
-        <Button
-          disabled={!canExport}
-          onClick={() => {
-            dialog.close()
-            triggerPdfExport(orderedSelected)
-          }}
-        >
-          {t("export.pdf.download")}
-        </Button>
-      </DialogContent>
-    </Dialog>
+      <ResponsiveDialogContent
+        className="sm:max-w-md"
+        aria-describedby={undefined}
+      >
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t("export.pdf.title")}</ResponsiveDialogTitle>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogBody>
+          <Field>
+            <FieldLabel>{t("export.pdf.fields")}</FieldLabel>
+            <FieldContent className="flex-row flex-wrap gap-1.5">
+              {PICKABLE_FIELDS.map((field) => (
+                <Button
+                  key={field}
+                  variant={selected.includes(field) ? "default" : "outline"}
+                  className="rounded-full"
+                  onClick={() => toggle(field)}
+                >
+                  {t(`export.col.${field}`)}
+                </Button>
+              ))}
+            </FieldContent>
+          </Field>
+          <Button
+            disabled={!canExport}
+            onClick={() => {
+              dialog.close()
+              triggerPdfExport(orderedSelected)
+            }}
+          >
+            {t("export.pdf.download")}
+          </Button>
+        </ResponsiveDialogBody>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }

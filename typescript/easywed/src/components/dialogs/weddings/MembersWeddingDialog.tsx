@@ -4,13 +4,14 @@ import { useWeddingMembers } from "./useWeddingMembers"
 import { InvitationManager } from "./InvitationManager"
 import { MemberList } from "./MemberList"
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogClose,
+  ResponsiveDialogContent,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog"
 import { Button } from "@/components/ui/button"
 
 import { useDialogStore } from "@/stores/dialog.store"
@@ -40,7 +41,7 @@ export const WeddingMembersDialog = () => {
   } = useWeddingMembers(isOpen)
 
   return (
-    <Dialog
+    <ResponsiveDialog
       open={isOpen}
       onOpenChange={(next) => {
         if (!next) {
@@ -49,36 +50,41 @@ export const WeddingMembersDialog = () => {
         }
       }}
     >
-      <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
-        <DialogHeader>
-          <DialogTitle>{t("members.title")}</DialogTitle>
-        </DialogHeader>
+      <ResponsiveDialogContent
+        className="sm:max-w-md"
+        aria-describedby={undefined}
+      >
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t("members.title")}</ResponsiveDialogTitle>
+        </ResponsiveDialogHeader>
 
-        <InvitationManager
-          role={role}
-          setRole={setRole}
-          submitting={submitting}
-          error={error}
-          pending={pending}
-          copiedId={copiedId}
-          fallbackUrl={fallbackUrl}
-          onCreate={handleCreate}
-          onRevoke={handleRevoke}
-          onCopy={handleCopy}
-        />
+        <ResponsiveDialogBody>
+          <InvitationManager
+            role={role}
+            setRole={setRole}
+            submitting={submitting}
+            error={error}
+            pending={pending}
+            copiedId={copiedId}
+            fallbackUrl={fallbackUrl}
+            onCreate={handleCreate}
+            onRevoke={handleRevoke}
+            onCopy={handleCopy}
+          />
 
-        <MemberList
-          members={members}
-          currentUserId={currentUserId}
-          onRemoveAccess={handleRemoveAccess}
-        />
+          <MemberList
+            members={members}
+            currentUserId={currentUserId}
+            onRemoveAccess={handleRemoveAccess}
+          />
+        </ResponsiveDialogBody>
 
-        <DialogFooter>
-          <DialogClose asChild>
+        <ResponsiveDialogFooter>
+          <ResponsiveDialogClose asChild>
             <Button variant="outline">{t("common.close")}</Button>
-          </DialogClose>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </ResponsiveDialogClose>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }

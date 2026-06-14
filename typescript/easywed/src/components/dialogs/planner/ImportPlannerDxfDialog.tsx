@@ -5,7 +5,13 @@ import type { ImportPreview } from "@/lib/import/plannerDxf"
 import { DxfLayerMappingStep } from "@/components/dialogs/shared/DxfLayerMappingStep"
 import { DxfPreviewStep } from "@/components/dialogs/shared/DxfPreviewStep"
 import { useDxfImportWizard } from "@/components/dialogs/shared/useDxfImportWizard"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import {
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog"
 import { Button } from "@/components/ui/button"
 import { useDialogStore } from "@/stores/dialog.store"
 import { usePlannerStore } from "@/stores/planner.store"
@@ -70,7 +76,7 @@ export const ImportPlannerDxfDialog = () => {
   }
 
   return (
-    <Dialog
+    <ResponsiveDialog
       open={dialog.opened === "Planner.Import.Dxf"}
       onOpenChange={(open) => {
         // Block close (overlay click / ESC / X) while the destructive commit
@@ -78,74 +84,80 @@ export const ImportPlannerDxfDialog = () => {
         // component and so the user isn't left wondering whether it landed.
         if (!open && stage.kind !== "committing") onClose()
       }}
-      aria-describedby={undefined}
+      dismissible={stage.kind !== "committing"}
     >
-      <DialogContent className="sm:max-w-lg" aria-describedby={undefined}>
-        <DialogTitle>{t("import.dxf.title")}</DialogTitle>
+      <ResponsiveDialogContent
+        className="sm:max-w-lg"
+        aria-describedby={undefined}
+      >
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t("import.dxf.title")}</ResponsiveDialogTitle>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogBody>
+          {stage.kind === "file" && (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-muted-foreground">
+                {t("import.dxf.intro")}
+              </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".dxf"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  // Clear the input value so picking the same file again still
+                  // fires onChange — otherwise the "Try again" loop is flaky
+                  // after a parse error.
+                  e.target.value = ""
+                  if (file) void onFileChosen(file)
+                }}
+              />
+              <Button onClick={() => fileInputRef.current?.click()}>
+                {t("import.dxf.choose_file")}
+              </Button>
+            </div>
+          )}
 
-        {stage.kind === "file" && (
-          <div className="flex flex-col gap-3">
-            <p className="text-sm text-muted-foreground">
-              {t("import.dxf.intro")}
-            </p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".dxf"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0]
-                // Clear the input value so picking the same file again still
-                // fires onChange — otherwise the "Try again" loop is flaky
-                // after a parse error.
-                e.target.value = ""
-                if (file) void onFileChosen(file)
-              }}
+          {stage.kind === "layers" && (
+            <DxfLayerMappingStep
+              layers={stage.layers}
+              initial={stage.mapping}
+              onCancel={reset}
+              onConfirm={(mapping) => onLayersConfirmed(mapping, stage.raw)}
             />
-            <Button onClick={() => fileInputRef.current?.click()}>
-              {t("import.dxf.choose_file")}
-            </Button>
-          </div>
-        )}
+          )}
 
-        {stage.kind === "layers" && (
-          <DxfLayerMappingStep
-            layers={stage.layers}
-            initial={stage.mapping}
-            onCancel={reset}
-            onConfirm={(mapping) => onLayersConfirmed(mapping, stage.raw)}
-          />
-        )}
+          {stage.kind === "preview" && (
+            <DxfPreviewStep
+              preview={stage.preview}
+              warnings={stage.warnings}
+              unit={unit}
+              onUnitChange={onUnitChange}
+              assignedGuests={guests.filter((g) => g.tableId).length}
+              onBack={reset}
+              onCommit={() => onCommit(stage.preview)}
+              showDestructiveWarning
+              commitLabelKey="import.dxf.commit"
+            />
+          )}
 
-        {stage.kind === "preview" && (
-          <DxfPreviewStep
-            preview={stage.preview}
-            warnings={stage.warnings}
-            unit={unit}
-            onUnitChange={onUnitChange}
-            assignedGuests={guests.filter((g) => g.tableId).length}
-            onBack={reset}
-            onCommit={() => onCommit(stage.preview)}
-            showDestructiveWarning
-            commitLabelKey="import.dxf.commit"
-          />
-        )}
+          {stage.kind === "committing" && (
+            <p className="text-sm text-muted-foreground">
+              {t("import.dxf.committing")}
+            </p>
+          )}
 
-        {stage.kind === "committing" && (
-          <p className="text-sm text-muted-foreground">
-            {t("import.dxf.committing")}
-          </p>
-        )}
-
-        {stage.kind === "error" && (
-          <div className="flex flex-col gap-3">
-            <p className="text-sm text-destructive">{stage.message}</p>
-            <Button variant="outline" onClick={reset}>
-              {t("import.dxf.try_again")}
-            </Button>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+          {stage.kind === "error" && (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-destructive">{stage.message}</p>
+              <Button variant="outline" onClick={reset}>
+                {t("import.dxf.try_again")}
+              </Button>
+            </div>
+          )}
+        </ResponsiveDialogBody>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }

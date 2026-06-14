@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 14.06
+
+- use credenza pattern for dialogs (render drawer for mobile)
+
 ### 13.06
 
 - remove rename wedding dialog

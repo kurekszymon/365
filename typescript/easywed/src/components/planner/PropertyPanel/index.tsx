@@ -51,7 +51,7 @@ export const PropertyPanel = () => {
   if (isMobile) {
     return (
       <Drawer open={isOpen} onOpenChange={(open) => !open && close()}>
-        <DrawerContent>
+        <DrawerContent aria-describedby={undefined}>
           <DrawerHeader className="flex flex-row items-center justify-between">
             <DrawerTitle>{title}</DrawerTitle>
             <button
