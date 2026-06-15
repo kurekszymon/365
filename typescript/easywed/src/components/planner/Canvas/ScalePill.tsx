@@ -24,7 +24,7 @@ export const ScalePill = ({
   const currentScale = scale ?? viewport.scale
 
   return (
-    <div className="flex items-center rounded-md border bg-background/80 text-[10px] text-muted-foreground tabular-nums backdrop-blur-sm">
+    <div className="flex shrink-0 items-center rounded-md border bg-background/80 text-[10px] text-muted-foreground tabular-nums backdrop-blur-sm">
       <button
         type="button"
         aria-label={t("canvas.zoom.out")}

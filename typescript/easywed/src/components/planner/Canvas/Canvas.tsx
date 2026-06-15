@@ -303,12 +303,12 @@ export const Canvas = () => {
       >
         <div
           data-no-pan
-          className="absolute top-3 right-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center justify-end gap-2"
+          className="absolute top-3 right-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-nowrap items-center justify-end gap-2"
         >
           <Tooltip>
             {/* TODO extract to a seperate component */}
             <TooltipTrigger asChild>
-              <div className="flex items-center rounded-md border bg-background/80 text-[10px] text-muted-foreground backdrop-blur-sm">
+              <div className="flex shrink-0 items-center rounded-md border bg-background/80 text-[10px] text-muted-foreground backdrop-blur-sm">
                 <button
                   type="button"
                   className="cursor-pointer px-1.5 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 max-md:px-2.5 max-md:py-2"
@@ -347,10 +347,12 @@ export const Canvas = () => {
             <TooltipTrigger asChild>
               <div
                 onClick={cycleGridStyle}
-                className="flex w-[3.5rem] cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-sm max-md:py-2"
+                className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-sm max-md:py-2"
               >
                 {GRID_ICON[gridStyle]}
-                {t(`canvas.grid.${gridStyle}`)}
+                <span className="max-md:hidden">
+                  {t(`canvas.grid.${gridStyle}`)}
+                </span>
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
@@ -363,7 +365,7 @@ export const Canvas = () => {
               <button
                 type="button"
                 data-no-pan
-                className={`flex cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] backdrop-blur-sm max-md:py-2 ${
+                className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] backdrop-blur-sm max-md:py-2 ${
                   isMeasuring
                     ? "border-teal-500 bg-teal-50 text-teal-700"
                     : "text-muted-foreground hover:text-foreground"
@@ -372,7 +374,7 @@ export const Canvas = () => {
                 aria-pressed={isMeasuring}
               >
                 <RulerIcon className="size-3.5" />
-                {t("measure.tool")}
+                <span className="max-md:hidden">{t("measure.tool")}</span>
               </button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
@@ -386,7 +388,7 @@ export const Canvas = () => {
                 <button
                   type="button"
                   data-no-pan
-                  className="flex cursor-pointer items-center gap-1.5 rounded-md border border-teal-500 bg-teal-50 px-2 py-1 text-[10px] text-teal-700 backdrop-blur-sm max-md:py-2"
+                  className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-teal-500 bg-teal-50 px-2 py-1 text-[10px] text-teal-700 backdrop-blur-sm max-md:py-2"
                   onClick={() =>
                     setMeasureMode(
                       measureMode === "center" ? "border" : "center"
