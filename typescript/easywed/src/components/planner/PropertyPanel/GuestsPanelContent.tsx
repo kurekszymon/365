@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react"
+import { createPortal } from "react-dom"
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
 import {
@@ -216,13 +217,19 @@ export const GuestsPanelContent = () => {
         })}
       </div>
 
-      <DragOverlay>
-        {activeGuest && (
-          <div className="flex cursor-grabbing items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm shadow-lg">
-            <span className="flex-1 truncate">{activeGuest.name}</span>
-          </div>
-        )}
-      </DragOverlay>
+      {createPortal(
+        // Portal to body so the overlay's position:fixed is relative to the
+        //  viewport, not the vaul drawer's transform on mobile (which otherwise
+        // offsets the drag preview from the finger).
+        <DragOverlay>
+          {activeGuest && (
+            <div className="flex cursor-grabbing items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm shadow-lg">
+              <span className="flex-1 truncate">{activeGuest.name}</span>
+            </div>
+          )}
+        </DragOverlay>,
+        document.body
+      )}
     </>
   )
 }

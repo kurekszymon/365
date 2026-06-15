@@ -4,6 +4,7 @@
 
 - fixing ui bugs - overflowing labels/controls
 - dont drag when measuring
+- fix drag in GuestDrawer
 
 ### 14.06
 
