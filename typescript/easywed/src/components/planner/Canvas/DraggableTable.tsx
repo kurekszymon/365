@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 
 import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
+import { useViewStore } from "@/stores/view.store"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 
 type DraggableTableProps = {
@@ -31,6 +32,10 @@ export const DraggableTable = ({
   const { t } = useTranslation()
   const isSelected = usePanelStore((state) => state.selectedId === table.id)
   const isMobile = useIsMobile()
+  // While measuring, the canvas owns the pointer: tapping a table snaps the
+  // measurement to it. Keep dnd-kit out of the way so a tap can't both drag the
+  // table and drop a measurement point at the same time.
+  const isMeasuring = useViewStore((state) => state.isMeasuring)
 
   const openTableEdit = usePanelStore((state) => state.openTableEdit)
   const deselectPanel = usePanelStore((state) => state.deselect)
@@ -45,6 +50,7 @@ export const DraggableTable = ({
   } = useDraggable({
     id: table.id,
     data: { type: "table-drag" },
+    disabled: isMeasuring,
   })
 
   const { setNodeRef: setDropRef, isOver } = useDroppable({

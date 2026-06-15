@@ -1,5 +1,10 @@
 # EasyWed — Development Log
 
+### 15.06
+
+- fixing ui bugs - overflowing labels/controls
+- dont drag when measuring
+
 ### 14.06
 
 - use credenza pattern for dialogs (render drawer for mobile)

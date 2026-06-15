@@ -7,6 +7,7 @@ import type { Fixture } from "@/stores/planner.store"
 import { cn } from "@/lib/utils"
 import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
+import { useViewStore } from "@/stores/view.store"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 
 type DraggableFixtureProps = {
@@ -26,6 +27,10 @@ export const DraggableFixture = ({
 
   const isSelected = usePanelStore((state) => state.selectedId === fixture.id)
   const isMobile = useIsMobile()
+  // While measuring, the canvas owns the pointer (tapping a fixture snaps the
+  // measurement to it), so keep dnd-kit disabled to avoid a tap both dragging
+  // the fixture and dropping a measurement point.
+  const isMeasuring = useViewStore((state) => state.isMeasuring)
 
   const openFixtureEdit = usePanelStore((state) => state.openFixtureEdit)
   const deselectPanel = usePanelStore((state) => state.deselect)
@@ -35,6 +40,7 @@ export const DraggableFixture = ({
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: fixture.id,
     data: { type: "fixture-drag" },
+    disabled: isMeasuring,
   })
 
   return (
