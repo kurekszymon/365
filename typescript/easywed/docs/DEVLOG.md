@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 16.06
+
+- clamp measurements to hall, don't allow out of bounds measurements
+
 ### 15.06
 
 - fixing ui bugs - overflowing labels/controls

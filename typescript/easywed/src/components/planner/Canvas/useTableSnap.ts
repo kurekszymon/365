@@ -1,7 +1,7 @@
 import { useDndMonitor } from "@dnd-kit/core"
 import { useState } from "react"
 import { useShallow } from "zustand/react/shallow"
-import { clampToHall, snapPositionToGrid } from "./utils"
+import { clamp, clampToHall, snapPositionToGrid } from "./utils"
 import type { Fixture, Table } from "@/stores/planner.store"
 import type { SnapStep } from "@/stores/view.store"
 import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
@@ -59,15 +59,37 @@ export function useTableSnap({
     },
 
     onDragMove: (e) => {
-      if (
-        e.active.data.current?.type === "table-drag" ||
-        e.active.data.current?.type === "fixture-drag"
-      ) {
-        setActiveDrag({
-          id: String(e.active.id),
-          dx: e.delta.x / ppm,
-          dy: e.delta.y / ppm,
-        })
+      const type = e.active.data.current?.type
+      if (type === "table-drag" || type === "fixture-drag") {
+        const id = String(e.active.id)
+        const obj =
+          type === "table-drag"
+            ? canvasTables.find((ct) => ct.id === id)
+            : type === "fixture-drag"
+              ? canvasFixtures.find((cf) => cf.id === id)
+              : undefined
+
+        let dx = e.delta.x / ppm
+        let dy = e.delta.y / ppm
+        // Clamp the live delta to keep the object inside the hall, matching the
+        // clamp in TableVisual and the clampToHall on drop. Otherwise the
+        // measurement endpoints following this delta would drift out of bounds
+        // while the object visually stops at the wall.
+        if (obj) {
+          const size = getEffectiveSize(obj.size, obj.rotation)
+          dx = clamp(
+            dx,
+            -obj.position.x,
+            hallDimensions.width - size.width - obj.position.x
+          )
+          dy = clamp(
+            dy,
+            -obj.position.y,
+            hallDimensions.height - size.height - obj.position.y
+          )
+        }
+
+        setActiveDrag({ id, dx, dy })
       }
     },
 

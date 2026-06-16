@@ -78,7 +78,7 @@ export const MeasureOverlay = ({
   }
 
   const handleEndpointPointerDown = (
-    e: React.PointerEvent<SVGCircleElement>,
+    e: React.PointerEvent<SVGElement>,
     measurementId: string,
     pointKey: "a" | "b"
   ) => {
@@ -90,9 +90,7 @@ export const MeasureOverlay = ({
     setDragLivePos(resolvePoint(coords.xM, coords.yM))
   }
 
-  const handleEndpointPointerMove = (
-    e: React.PointerEvent<SVGCircleElement>
-  ) => {
+  const handleEndpointPointerMove = (e: React.PointerEvent<SVGElement>) => {
     if (!dragging) return
     const coords = getSVGCoords(e)
     if (!coords) return
@@ -156,13 +154,9 @@ export const MeasureOverlay = ({
               opacity={0.85}
             />
 
-            {/* Endpoint dots — draggable in measure mode */}
-            <circle
-              cx={ax}
-              cy={ay}
-              r={isDraggingA ? 6 : 4}
-              fill="#0d9488"
-              opacity={0.9}
+            {/* Endpoint dots — draggable in measure mode. The visible dot stays
+                small; an enlarged transparent circle widens the grab target. */}
+            <g
               data-no-pan
               style={{
                 pointerEvents: "auto",
@@ -172,13 +166,17 @@ export const MeasureOverlay = ({
               onPointerMove={handleEndpointPointerMove}
               onPointerUp={handleEndpointPointerUp}
               onPointerCancel={handleEndpointPointerCancel}
-            />
-            <circle
-              cx={bx}
-              cy={by}
-              r={isDraggingB ? 6 : 4}
-              fill="#0d9488"
-              opacity={0.9}
+            >
+              <circle cx={ax} cy={ay} r={16} fill="transparent" />
+              <circle
+                cx={ax}
+                cy={ay}
+                r={isDraggingA ? 8 : 6}
+                fill="#0d9488"
+                opacity={0.9}
+              />
+            </g>
+            <g
               data-no-pan
               style={{
                 pointerEvents: "auto",
@@ -188,7 +186,16 @@ export const MeasureOverlay = ({
               onPointerMove={handleEndpointPointerMove}
               onPointerUp={handleEndpointPointerUp}
               onPointerCancel={handleEndpointPointerCancel}
-            />
+            >
+              <circle cx={bx} cy={by} r={16} fill="transparent" />
+              <circle
+                cx={bx}
+                cy={by}
+                r={isDraggingB ? 8 : 6}
+                fill="#0d9488"
+                opacity={0.9}
+              />
+            </g>
 
             {/* Label background + text */}
             <rect

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import {
+  clamp,
   nearestCircleBorder,
   nearestRectBorder,
   rectBorderTowards,
@@ -122,7 +123,14 @@ export function useMeasureTool({
   }, [isMeasuring])
 
   const resolvePoint = useCallback(
-    (xM: number, yM: number): MeasurementPoint => {
+    (rawXM: number, rawYM: number): MeasurementPoint => {
+      // Keep every resolved point inside the hall. Clamping up front (rather
+      // than only the free-point fallback) also stops the wall-snap branch
+      // below from returning an out-of-bounds coordinate when the cursor sits
+      // outside a corner — there dLeft/dTop go negative and would otherwise
+      // win the nearest-wall test with an unclamped sibling coordinate.
+      const xM = clamp(rawXM, 0, hallDimensions.width)
+      const yM = clamp(rawYM, 0, hallDimensions.height)
       for (const table of canvasTables) {
         const s = getEffectiveSize(table.size, table.rotation)
         const h = table.shape === "round" ? s.width : s.height
