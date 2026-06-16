@@ -4,7 +4,7 @@ import { CopyIcon, SquarePenIcon, Trash2Icon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { CanvasActionButton } from "./CanvasActionButton"
 import { TableVisual } from "./TableVisual"
-import type { Table } from "@/stores/planner.store"
+import type { Guest, Table } from "@/stores/planner.store"
 import { cn } from "@/lib/utils"
 
 import { usePlannerStore } from "@/stores/planner.store"
@@ -19,6 +19,8 @@ type DraggableTableProps = {
   hallHeight: number
   ppm: number
   isDraggingGuest?: boolean
+  seatGuests?: Array<Guest>
+  showSeats?: boolean
 }
 
 export const DraggableTable = ({
@@ -28,6 +30,8 @@ export const DraggableTable = ({
   hallHeight,
   ppm,
   isDraggingGuest,
+  seatGuests,
+  showSeats,
 }: DraggableTableProps) => {
   const { t } = useTranslation()
   const isSelected = usePanelStore((state) => state.selectedId === table.id)
@@ -74,6 +78,8 @@ export const DraggableTable = ({
       ppm={ppm}
       transform={transform}
       hallBounds={{ width: hallWidth, height: hallHeight }}
+      seatGuests={seatGuests}
+      showSeats={showSeats}
       className={cn(
         "z-10 cursor-grab touch-none active:cursor-grabbing",
         isSelected &&

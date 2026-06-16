@@ -64,16 +64,16 @@ export const HallSurface = ({
     }))
   )
 
-  const assignedGuestsByTableId = useMemo(() => {
-    const counts = new Map<string, number>()
+  const guestsByTableId = useMemo(() => {
+    const byTable = new Map<string, Array<(typeof guests)[number]>>()
     for (const table of tables) {
-      counts.set(table.id, 0)
+      byTable.set(table.id, [])
     }
     for (const guest of guests) {
       if (!guest.tableId) continue
-      counts.set(guest.tableId, (counts.get(guest.tableId) ?? 0) + 1)
+      byTable.get(guest.tableId)?.push(guest)
     }
-    return counts
+    return byTable
   }, [tables, guests])
 
   const canvasTables = useMemo(
@@ -106,6 +106,7 @@ export const HallSurface = ({
 
   const isMeasuring = useViewStore((state) => state.isMeasuring)
   const measureMode = useViewStore((state) => state.measureMode)
+  const showSeats = useViewStore((state) => state.showSeats)
   const weddingId = Route.useParams().id
 
   const { deleteMeasurement, updateMeasurementPoint, byWedding } =
@@ -173,11 +174,13 @@ export const HallSurface = ({
           <DraggableTable
             key={ct.id}
             table={ct}
-            guestsAssigned={assignedGuestsByTableId.get(ct.id) ?? 0}
+            guestsAssigned={guestsByTableId.get(ct.id)?.length ?? 0}
             hallWidth={hallDimensions.width}
             hallHeight={hallDimensions.height}
             ppm={ppm}
             isDraggingGuest={isDraggingGuest}
+            seatGuests={guestsByTableId.get(ct.id) ?? []}
+            showSeats={showSeats}
           />
         ))}
         {canvasFixtures.map((cf) => (

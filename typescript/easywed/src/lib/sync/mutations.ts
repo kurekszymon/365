@@ -5,6 +5,7 @@ import type {
   Geometry,
   Guest,
   HallPreset,
+  Seat,
   Table,
   TableRotation,
   TableShape,
@@ -78,6 +79,7 @@ const tableRow = (t: Table) => ({
   pos_x: t.position.x,
   pos_y: t.position.y,
   geometry: toJsonOrNull(t.geometry),
+  seats: (t.seats ?? []) as unknown as Json,
 })
 
 const fixtureRow = (f: Fixture) => ({
@@ -198,6 +200,18 @@ export const updateTablePos = (
   y: number
 ): Promise<boolean> => updatePos("tables", id, x, y)
 
+export const updateTableSeats = (
+  id: string,
+  seats: Array<Seat>
+): Promise<boolean> =>
+  run(
+    "updateTableSeats",
+    supabase
+      .from("tables")
+      .update({ seats: seats as unknown as Json })
+      .eq("id", id)
+  )
+
 export const softDeleteTable = async (id: string): Promise<boolean> => {
   // Unassign this table's guests first (best-effort), then mark it deleted.
   await run(
@@ -251,6 +265,21 @@ export const updateGuestTable = (
   run(
     "updateGuestTable",
     supabase.from("guests").update({ table_id: tableId }).eq("id", guestId)
+  )
+
+// Pins (or clears) a guest's specific seat. Writes table_id alongside seat_id so
+// seating and unseating stay consistent in one round-trip.
+export const updateGuestSeat = (
+  guestId: string,
+  tableId: string | null,
+  seatId: string | null
+): Promise<boolean> =>
+  run(
+    "updateGuestSeat",
+    supabase
+      .from("guests")
+      .update({ table_id: tableId, seat_id: seatId })
+      .eq("id", guestId)
   )
 
 export const reassignTableGuests = async (

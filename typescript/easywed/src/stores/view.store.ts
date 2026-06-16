@@ -19,6 +19,7 @@ type State = {
   gridSpacing: GridSpacing
   isMeasuring: boolean
   measureMode: MeasureMode
+  showSeats: boolean
 }
 
 type Action = {
@@ -31,6 +32,7 @@ type Action = {
   setGridSpacing: (spacing: GridSpacing) => void
   toggleMeasuring: () => void
   setMeasureMode: (mode: MeasureMode) => void
+  toggleSeats: () => void
 }
 
 export const useViewStore = create<State & Action>()(
@@ -43,6 +45,7 @@ export const useViewStore = create<State & Action>()(
       gridSpacing: 1,
       isMeasuring: false,
       measureMode: "center",
+      showSeats: false,
       resetZoomAndPan: () => set({ zoom: 1, pan: { x: 0, y: 0 } }),
       stepZoom: (direction) =>
         set((state) => ({
@@ -59,6 +62,7 @@ export const useViewStore = create<State & Action>()(
       toggleMeasuring: () =>
         set((state) => ({ isMeasuring: !state.isMeasuring })),
       setMeasureMode: (mode) => set({ measureMode: mode }),
+      toggleSeats: () => set((state) => ({ showSeats: !state.showSeats })),
     }),
     { name: "easywed.view" }
   )
