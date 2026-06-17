@@ -184,7 +184,10 @@ export const GuestsPanelContent = () => {
   return (
     <>
       <div className="flex flex-col gap-4">
-        <div className="sticky flex flex-col gap-2">
+        {/* The before/after bands extend the background 1rem up and down so the
+            scroll container's top padding and the gap-4 below don't let guest
+            rows peek through as they scroll under the sticky buttons. */}
+        <div className="sticky top-0 z-10 flex flex-col gap-2 bg-background before:pointer-events-none before:absolute before:inset-x-0 before:-top-4 before:h-4 before:bg-background after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-4 after:h-4 after:bg-background">
           <Button variant="outline" onClick={() => openDialog("Guest.Add")}>
             <PlusIcon />
             {t("guests.add")}

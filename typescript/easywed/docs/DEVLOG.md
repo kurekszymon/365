@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 17.06
+
+- make add guest / import guests sticky positioned
+
 ### 16.06
 
 - clamp measurements to hall, don't allow out of bounds measurements
