@@ -16,6 +16,7 @@ import { GuestsSeated } from "./Header/GuestsSeated.header"
 import { ImportHeader } from "./Header/Import.header"
 import { PlannerPrintView } from "./PlannerPrintView"
 import { PropertyPanel } from "./PropertyPanel"
+import { ThemeSwitcher } from "./Header/ThemeSwitcher"
 import type { DragEndEvent } from "@dnd-kit/core"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Button } from "@/components/ui/button"
@@ -190,6 +191,7 @@ export const Planner = () => {
               <ImportHeader />
               <ExportHeader />
             </ButtonGroup>
+            <ThemeSwitcher />
           </div>
         </Header>
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>

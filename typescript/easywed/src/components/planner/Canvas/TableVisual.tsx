@@ -64,9 +64,9 @@ export const TableVisual = ({
       data-canvas-element-id={id}
       aria-label={ariaLabel}
       className={cn(
-        "absolute flex items-center justify-center text-emerald-800",
+        "absolute flex items-center justify-center text-planner-table-foreground",
         !isPolygon &&
-          "border border-emerald-300 bg-emerald-100 shadow-sm " +
+          "border border-planner-table-border bg-planner-table shadow-sm " +
             (shape === "round" ? "rounded-full" : "rounded-lg"),
         className
       )}
@@ -94,13 +94,13 @@ export const TableVisual = ({
           {geometry.closed ? (
             <polygon
               points={geometry.vertices.map((v) => `${v.x},${v.y}`).join(" ")}
-              className="fill-emerald-100 stroke-emerald-300"
+              className="fill-planner-table stroke-planner-table-border"
               vectorEffect="non-scaling-stroke"
             />
           ) : (
             <polyline
               points={geometry.vertices.map((v) => `${v.x},${v.y}`).join(" ")}
-              className="fill-none stroke-emerald-300"
+              className="fill-none stroke-planner-table-border"
               vectorEffect="non-scaling-stroke"
             />
           )}
@@ -108,11 +108,11 @@ export const TableVisual = ({
       )}
       <div className="relative z-10 flex max-w-full flex-col items-center justify-center px-1 leading-tight">
         {hasName && (
-          <span className="max-w-full truncate text-xs font-medium">
+          <span className="max-w-full truncate font-heading text-xs font-semibold">
             {name}
           </span>
         )}
-        <span className="max-w-full truncate text-[10px] text-emerald-700">
+        <span className="max-w-full truncate text-[10px] text-planner-table-foreground/75 tabular-nums">
           {guestCountLabel}
         </span>
       </div>

@@ -166,7 +166,7 @@ export const HallSurface = ({
         gridStyle={gridStyle}
         gridSpacing={gridSpacing}
         zoom={zoom}
-        className="absolute z-10 shadow-md ring-2 ring-emerald-400"
+        className="absolute z-10 shadow-sm ring-1 ring-planner-hall/70"
         style={{ left, top }}
       >
         {canvasTables.map((ct) => (

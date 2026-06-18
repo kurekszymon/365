@@ -38,7 +38,10 @@ export const gridBackground = (
   style: GridStyle,
   zoom: number
 ): CSSProperties => {
-  const color = `rgb(156 163 175 / ${zoom})`
+  // Softer, lighter grid so the hall reads as delicate ruled paper rather than
+  // a heavy technical grid. Alpha is capped at zoom 1 then halved, and still
+  // fades out as you zoom away.
+  const color = `rgb(148 163 184 / ${Math.min(zoom, 1) * 0.5})`
   if (style === "dots")
     return {
       backgroundImage: `radial-gradient(circle, ${color} 1px, transparent 1px)`,

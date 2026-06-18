@@ -9,7 +9,7 @@ export const WeddingName = () => {
     <InlineEdit
       value={name ?? ""}
       onSave={setName}
-      className="max-w-[120px] text-sm font-semibold"
+      className="max-w-[150px] font-heading text-base font-semibold"
     />
   )
 }
