@@ -53,7 +53,7 @@ export const PropertyPanel = () => {
       <Drawer open={isOpen} onOpenChange={(open) => !open && close()}>
         <DrawerContent aria-describedby={undefined}>
           <DrawerHeader className="flex flex-row items-center justify-between">
-            <DrawerTitle>{title}</DrawerTitle>
+            <DrawerTitle className="font-heading text-lg">{title}</DrawerTitle>
             <button
               type="button"
               onClick={close}
@@ -81,7 +81,9 @@ export const PropertyPanel = () => {
       {view && (
         <>
           <div className="flex items-center justify-between border-b px-4 py-3">
-            <span className="text-sm font-medium">{title}</span>
+            <span className="font-heading text-base font-semibold">
+              {title}
+            </span>
             <button
               type="button"
               onClick={close}

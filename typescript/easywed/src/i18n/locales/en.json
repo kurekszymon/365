@@ -184,6 +184,11 @@
 
   "planner.actions": "Add / Configure",
 
+  "theme.label": "Theme",
+  "theme.blush": "Blush & Gold",
+  "theme.sage": "Sage & Botanical",
+  "theme.editorial": "Cream & Ink",
+
   "hall": "Hall",
   "hall.configure": "Configure wedding hall",
   "hall.configure_short": "Configure Hall",

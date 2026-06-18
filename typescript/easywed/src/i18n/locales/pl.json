@@ -196,6 +196,11 @@
 
   "planner.actions": "Dodaj / Konfiguruj",
 
+  "theme.label": "Motyw",
+  "theme.blush": "Róż i złoto",
+  "theme.sage": "Szałwia i botanika",
+  "theme.editorial": "Krem i atrament",
+
   "hall": "Sala",
   "hall.configure": "Skonfiguruj salę weselną",
   "hall.configure_short": "Skonfiguruj Salę",

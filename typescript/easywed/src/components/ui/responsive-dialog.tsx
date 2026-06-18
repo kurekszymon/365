@@ -133,11 +133,18 @@ function ResponsiveDialogBody({
   return <>{children}</>
 }
 
-function ResponsiveDialogTitle(
-  props: React.ComponentProps<typeof DialogTitle>
-) {
+function ResponsiveDialogTitle({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogTitle>) {
   const isDrawer = useIsDrawer()
-  return isDrawer ? <DrawerTitle {...props} /> : <DialogTitle {...props} />
+  // Serif title across every dialog/drawer for a warmer, more editorial feel.
+  const classes = cn("font-heading text-lg", className)
+  return isDrawer ? (
+    <DrawerTitle className={classes} {...props} />
+  ) : (
+    <DialogTitle className={classes} {...props} />
+  )
 }
 
 function ResponsiveDialogDescription(

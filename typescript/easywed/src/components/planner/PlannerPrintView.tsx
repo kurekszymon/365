@@ -160,7 +160,7 @@ export const PlannerPrintView = () => {
           ppm={ppm}
           gridStyle={gridStyle}
           gridSpacing={gridSpacing}
-          className="overflow-hidden border border-emerald-400"
+          className="overflow-hidden border border-planner-hall"
         >
           {clampedTables.map((tbl) => (
             <TableVisual

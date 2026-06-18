@@ -15,6 +15,7 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 import { AuthGate } from "@/components/auth/AuthGate"
 import { ErrorFallback } from "@/components/ErrorFallback"
+import { DEFAULT_THEME } from "@/stores/theme.store"
 
 const options = {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
@@ -162,7 +163,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const lang = pathname === "/en" || pathname.startsWith("/en/") ? "en" : "pl"
 
   return (
-    <html lang={lang}>
+    <html lang={lang} data-theme={DEFAULT_THEME}>
       <head>
         <HeadContent />
       </head>

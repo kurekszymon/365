@@ -76,7 +76,8 @@ export const DraggableTable = ({
       hallBounds={{ width: hallWidth, height: hallHeight }}
       className={cn(
         "z-10 cursor-grab touch-none active:cursor-grabbing",
-        isSelected && "ring-2 ring-emerald-600 ring-offset-2",
+        isSelected &&
+          "ring-2 ring-planner-selected ring-offset-2 ring-offset-background",
         isDraggingGuest &&
           isOver &&
           "border-blue-300 bg-blue-50 ring-2 ring-blue-500 ring-offset-2"

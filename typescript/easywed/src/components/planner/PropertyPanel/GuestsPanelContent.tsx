@@ -79,7 +79,7 @@ const TableSection = ({
         className={cn(
           "min-h-10 rounded-md border-2 border-dashed p-1.5 transition-colors",
           isOver
-            ? "border-emerald-400 bg-emerald-50"
+            ? "border-planner-hall bg-planner-soft"
             : "border-transparent bg-muted/40"
         )}
       >

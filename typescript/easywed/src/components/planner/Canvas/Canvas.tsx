@@ -220,7 +220,7 @@ export const Canvas = () => {
     >
       <div
         ref={containerRef}
-        className="relative min-h-0 flex-1 touch-none overflow-hidden bg-gradient-to-br from-slate-100 via-zinc-50 to-emerald-50/70"
+        className="relative min-h-0 flex-1 touch-none overflow-hidden bg-background bg-gradient-to-br from-muted/60 via-background to-planner-soft/50"
         style={{
           cursor: isMeasuring ? "crosshair" : isPanning ? "grabbing" : "grab",
         }}
@@ -367,7 +367,7 @@ export const Canvas = () => {
                 data-no-pan
                 className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] backdrop-blur-sm max-md:py-2 ${
                   isMeasuring
-                    ? "border-teal-500 bg-teal-50 text-teal-700"
+                    ? "border-planner-selected bg-planner-soft text-planner-selected"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
                 onClick={toggleMeasuring}
@@ -388,7 +388,7 @@ export const Canvas = () => {
                 <button
                   type="button"
                   data-no-pan
-                  className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-teal-500 bg-teal-50 px-2 py-1 text-[10px] text-teal-700 backdrop-blur-sm max-md:py-2"
+                  className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-planner-selected bg-planner-soft px-2 py-1 text-[10px] text-planner-selected backdrop-blur-sm max-md:py-2"
                   onClick={() =>
                     setMeasureMode(
                       measureMode === "center" ? "border" : "center"

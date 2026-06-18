@@ -30,7 +30,7 @@ const HorizontalDimensionLabel = ({
     >
       <span className="h-px w-3" />
       <span className="h-px flex-1" />
-      <span className="px-2 text-xs font-medium text-emerald-700 tabular-nums">
+      <span className="px-2 text-xs font-medium text-planner-hall tabular-nums">
         {t("common.meters", { count: value })}
       </span>
       <span className="h-px flex-1" />
@@ -57,7 +57,7 @@ const VerticalDimensionLabel = ({
     >
       <span className="h-3 w-px" />
       <span className="w-px flex-1" />
-      <span className="-rotate-90 px-2 text-xs font-medium whitespace-nowrap text-emerald-700 tabular-nums">
+      <span className="-rotate-90 px-2 text-xs font-medium whitespace-nowrap text-planner-hall tabular-nums">
         {t("common.meters", { count: value })}
       </span>
       <span className="w-px flex-1" />

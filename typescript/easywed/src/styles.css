@@ -2,12 +2,23 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
+@import "@fontsource/playfair-display/500.css";
+@import "@fontsource/playfair-display/600.css";
+@import "@fontsource/playfair-display/700.css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-heading: var(--font-sans);
+    --font-heading: 'Playfair Display', Georgia, serif;
     --font-sans: 'Inter Variable', sans-serif;
+    /* Planner-specific accents — themed per palette below so the hall/tables
+       recolor with the rest of the app instead of hardcoding emerald. */
+    --color-planner-hall: var(--planner-hall);
+    --color-planner-table: var(--planner-table);
+    --color-planner-table-border: var(--planner-table-border);
+    --color-planner-table-foreground: var(--planner-table-foreground);
+    --color-planner-selected: var(--planner-selected);
+    --color-planner-soft: var(--planner-soft);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -48,39 +59,139 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Radius is shared across themes; only the color tokens change per palette. */
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
     --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Blush & Gold — warm cream, dusty rose, soft gold. The default palette.
+   ──────────────────────────────────────────────────────────────────────── */
+:root,
+[data-theme="blush"] {
+    --background: oklch(0.963 0.013 70);
+    --foreground: oklch(0.26 0.022 40);
+    --card: oklch(0.995 0.006 75);
+    --card-foreground: oklch(0.26 0.022 40);
+    --popover: oklch(0.995 0.006 75);
+    --popover-foreground: oklch(0.26 0.022 40);
+    --primary: oklch(0.52 0.115 14);
+    --primary-foreground: oklch(0.98 0.01 75);
+    --secondary: oklch(0.92 0.038 25);
+    --secondary-foreground: oklch(0.36 0.06 18);
+    --muted: oklch(0.95 0.014 55);
+    --muted-foreground: oklch(0.53 0.025 40);
+    --accent: oklch(0.92 0.032 24);
+    --accent-foreground: oklch(0.38 0.07 16);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.9 0.014 50);
+    --input: oklch(0.9 0.014 50);
+    --ring: oklch(0.72 0.085 75);
+    --chart-1: oklch(0.7 0.1 20);
+    --chart-2: oklch(0.72 0.09 75);
+    --chart-3: oklch(0.55 0.08 30);
+    --chart-4: oklch(0.45 0.1 14);
+    --chart-5: oklch(0.35 0.07 16);
+    --sidebar: oklch(0.985 0.009 72);
+    --sidebar-foreground: oklch(0.26 0.022 40);
+    --sidebar-primary: oklch(0.52 0.115 14);
+    --sidebar-primary-foreground: oklch(0.98 0.01 75);
+    --sidebar-accent: oklch(0.92 0.032 24);
+    --sidebar-accent-foreground: oklch(0.38 0.07 16);
+    --sidebar-border: oklch(0.9 0.014 50);
+    --sidebar-ring: oklch(0.72 0.085 75);
+    --planner-hall: oklch(0.62 0.11 14);
+    --planner-table: oklch(0.93 0.035 20);
+    --planner-table-border: oklch(0.82 0.062 17);
+    --planner-table-foreground: oklch(0.42 0.09 15);
+    --planner-selected: oklch(0.58 0.13 12);
+    --planner-soft: oklch(0.95 0.025 22);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Sage & Botanical — warm ivory, eucalyptus sage, terracotta accent.
+   ──────────────────────────────────────────────────────────────────────── */
+[data-theme="sage"] {
+    --background: oklch(0.963 0.012 115);
+    --foreground: oklch(0.27 0.028 150);
+    --card: oklch(0.995 0.005 110);
+    --card-foreground: oklch(0.27 0.028 150);
+    --popover: oklch(0.995 0.005 110);
+    --popover-foreground: oklch(0.27 0.028 150);
+    --primary: oklch(0.48 0.062 150);
+    --primary-foreground: oklch(0.98 0.012 110);
+    --secondary: oklch(0.915 0.038 145);
+    --secondary-foreground: oklch(0.33 0.04 150);
+    --muted: oklch(0.95 0.013 125);
+    --muted-foreground: oklch(0.5 0.022 150);
+    --accent: oklch(0.9 0.042 55);
+    --accent-foreground: oklch(0.46 0.1 48);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.9 0.014 135);
+    --input: oklch(0.9 0.014 135);
+    --ring: oklch(0.6 0.07 150);
+    --chart-1: oklch(0.6 0.08 150);
+    --chart-2: oklch(0.6 0.1 48);
+    --chart-3: oklch(0.5 0.06 150);
+    --chart-4: oklch(0.45 0.09 48);
+    --chart-5: oklch(0.38 0.07 150);
+    --sidebar: oklch(0.985 0.008 112);
+    --sidebar-foreground: oklch(0.27 0.028 150);
+    --sidebar-primary: oklch(0.48 0.062 150);
+    --sidebar-primary-foreground: oklch(0.98 0.012 110);
+    --sidebar-accent: oklch(0.9 0.042 55);
+    --sidebar-accent-foreground: oklch(0.46 0.1 48);
+    --sidebar-border: oklch(0.9 0.014 135);
+    --sidebar-ring: oklch(0.6 0.07 150);
+    --planner-hall: oklch(0.58 0.08 150);
+    --planner-table: oklch(0.92 0.04 145);
+    --planner-table-border: oklch(0.78 0.06 148);
+    --planner-table-foreground: oklch(0.38 0.07 150);
+    --planner-selected: oklch(0.55 0.12 48);
+    --planner-soft: oklch(0.95 0.03 140);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Editorial Cream & Ink — warm cream, near-black ink, restrained plum.
+   ──────────────────────────────────────────────────────────────────────── */
+[data-theme="editorial"] {
+    --background: oklch(0.953 0.012 85);
+    --foreground: oklch(0.2 0.012 60);
+    --card: oklch(0.992 0.005 85);
+    --card-foreground: oklch(0.2 0.012 60);
+    --popover: oklch(0.992 0.005 85);
+    --popover-foreground: oklch(0.2 0.012 60);
+    --primary: oklch(0.24 0.014 60);
+    --primary-foreground: oklch(0.97 0.01 85);
+    --secondary: oklch(0.925 0.018 80);
+    --secondary-foreground: oklch(0.24 0.014 60);
+    --muted: oklch(0.94 0.011 80);
+    --muted-foreground: oklch(0.48 0.015 60);
+    --accent: oklch(0.92 0.03 330);
+    --accent-foreground: oklch(0.42 0.1 330);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.89 0.009 75);
+    --input: oklch(0.89 0.009 75);
+    --ring: oklch(0.5 0.1 330);
+    --chart-1: oklch(0.5 0.1 330);
+    --chart-2: oklch(0.4 0.02 60);
+    --chart-3: oklch(0.55 0.08 330);
+    --chart-4: oklch(0.35 0.015 60);
+    --chart-5: oklch(0.6 0.06 330);
+    --sidebar: oklch(0.98 0.007 85);
+    --sidebar-foreground: oklch(0.2 0.012 60);
+    --sidebar-primary: oklch(0.24 0.014 60);
+    --sidebar-primary-foreground: oklch(0.97 0.01 85);
+    --sidebar-accent: oklch(0.92 0.03 330);
+    --sidebar-accent-foreground: oklch(0.42 0.1 330);
+    --sidebar-border: oklch(0.89 0.009 75);
+    --sidebar-ring: oklch(0.5 0.1 330);
+    --planner-hall: oklch(0.4 0.018 60);
+    --planner-table: oklch(0.93 0.012 85);
+    --planner-table-border: oklch(0.78 0.015 70);
+    --planner-table-foreground: oklch(0.3 0.015 60);
+    --planner-selected: oklch(0.5 0.11 330);
+    --planner-soft: oklch(0.94 0.025 330);
 }
 
 .dark {
