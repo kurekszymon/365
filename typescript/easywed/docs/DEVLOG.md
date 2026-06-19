@@ -1,5 +1,13 @@
 # EasyWed — Development Log
 
+### 19.06
+
+- match server theme, single source of truth for themes
+
+### 18.06
+
+- add some basic themes to the app, use themes across.
+
 ### 17.06
 
 - make add guest / import guests sticky positioned

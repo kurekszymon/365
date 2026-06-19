@@ -7,6 +7,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 import { TanStackDevtools } from "@tanstack/react-devtools"
 
+import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { PostHogProvider } from "@posthog/react"
 import appCss from "../styles.css?url"
@@ -15,7 +16,7 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 import { AuthGate } from "@/components/auth/AuthGate"
 import { ErrorFallback } from "@/components/ErrorFallback"
-import { DEFAULT_THEME } from "@/stores/theme.store"
+import { useThemeStore } from "@/stores/theme.store"
 
 const options = {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
@@ -162,8 +163,16 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const lang = pathname === "/en" || pathname.startsWith("/en/") ? "en" : "pl"
 
+  // React is the single source of truth for the theme attribute. The server and
+  // first client render use the store's default (matching SSR); rehydrating from
+  // localStorage after mount swaps to the saved theme.
+  const theme = useThemeStore((s) => s.theme)
+  useEffect(() => {
+    void useThemeStore.persist.rehydrate()
+  }, [])
+
   return (
-    <html lang={lang} data-theme={DEFAULT_THEME}>
+    <html lang={lang} data-theme={theme}>
       <head>
         <HeadContent />
       </head>
