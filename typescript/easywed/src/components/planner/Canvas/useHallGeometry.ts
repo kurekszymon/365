@@ -1,8 +1,22 @@
-import { useMemo } from "react"
+import { useCallback, useMemo } from "react"
 import type { Position } from "@/stores/planner.store"
 
 const PIXELS_PER_METER = 40
 const VIEWPORT_MARGIN = 48
+// Gutter kept between the hall and the viewport edge when clamping pan, so the
+// whole hall (and its dimension labels) stays comfortably visible rather than
+// sitting flush against the edge.
+const PAN_PADDING = 48
+
+// Max pan offset on one axis. The hall is centered at offset 0; when it's larger
+// than the viewport it may pan until its edge sits PAN_PADDING inside (so the
+// edge stays visible), when smaller it stays within the rect keeping the gap.
+function axisMaxPan(scaled: number, container: number) {
+  const overflow = scaled - container
+  return overflow >= 0
+    ? overflow / 2 + PAN_PADDING
+    : Math.max(0, -overflow / 2 - PAN_PADDING)
+}
 
 type HallDimensions = { width: number; height: number }
 
@@ -58,6 +72,20 @@ export function useHallGeometry(
     )
   }
 
+  // Constrain pan so the hall always stays within the visible canvas rect, with
+  // a PAN_PADDING gutter to the edge (see axisMaxPan).
+  const clampPan = useCallback(
+    (p: Position): Position => {
+      const maxX = axisMaxPan(scaledWidth, containerWidth)
+      const maxY = axisMaxPan(scaledHeight, containerHeight)
+      return {
+        x: Math.max(-maxX, Math.min(maxX, p.x)),
+        y: Math.max(-maxY, Math.min(maxY, p.y)),
+      }
+    },
+    [scaledWidth, scaledHeight, containerWidth, containerHeight]
+  )
+
   return {
     scaledWidth,
     scaledHeight,
@@ -66,5 +94,6 @@ export function useHallGeometry(
     ppm,
     viewportToHall,
     isInHallBounds,
+    clampPan,
   }
 }

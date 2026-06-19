@@ -145,6 +145,7 @@ export const Canvas = () => {
     ppm,
     viewportToHall,
     isInHallBounds,
+    clampPan,
   } = useHallGeometry(
     containerEl,
     containerWidth,
@@ -156,8 +157,16 @@ export const Canvas = () => {
 
   const { isPanning, onPointerDown, onPointerMove, onPointerUp } = useCanvasPan(
     pan,
-    setPan
+    (p) => setPan(clampPan(p))
   )
+
+  // Re-clamp the existing pan whenever the allowed range can shrink (zoom out,
+  // container resize, hall resize) so a previously-valid pan can't leave the
+  // hall stranded off-screen.
+  useEffect(() => {
+    const next = clampPan(pan)
+    if (next.x !== pan.x || next.y !== pan.y) setPan(next)
+  }, [clampPan, pan, setPan])
 
   const hallSurfaceRef = useRef<HallSurfaceMethods>(null)
 
