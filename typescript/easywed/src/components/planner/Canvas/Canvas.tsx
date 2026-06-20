@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next"
 import { useEffect, useRef } from "react"
 import { useShallow } from "zustand/react/shallow"
 import {
+  ArmchairIcon,
   DotIcon,
   Grid2x2XIcon,
   Grid3x3Icon,
@@ -68,6 +69,8 @@ export const Canvas = () => {
   const resetZoomAndPan = useViewStore((state) => state.resetZoomAndPan)
   const isMeasuring = useViewStore((state) => state.isMeasuring)
   const toggleMeasuring = useViewStore((state) => state.toggleMeasuring)
+  const showSeats = useViewStore((state) => state.showSeats)
+  const toggleSeats = useViewStore((state) => state.toggleSeats)
   const measureMode = useViewStore((state) => state.measureMode)
   const setMeasureMode = useViewStore((state) => state.setMeasureMode)
   const setSnapStep = useViewStore((state) => state.setSnapStep)
@@ -389,6 +392,26 @@ export const Canvas = () => {
             <TooltipContent side="bottom">
               {t("measure.tooltip")}
             </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                data-no-pan
+                className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] backdrop-blur-sm max-md:py-2 ${
+                  showSeats
+                    ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={toggleSeats}
+                aria-pressed={showSeats}
+              >
+                <ArmchairIcon className="size-3.5" />
+                <span className="max-md:hidden">{t("seats.toggle")}</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t("seats.tooltip")}</TooltipContent>
           </Tooltip>
 
           {isMeasuring && (

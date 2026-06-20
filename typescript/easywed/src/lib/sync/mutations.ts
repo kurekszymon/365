@@ -5,6 +5,7 @@ import type {
   Geometry,
   Guest,
   HallPreset,
+  Seat,
   Table,
   TableRotation,
   TableShape,
@@ -78,6 +79,7 @@ const tableRow = (t: Table) => ({
   pos_x: t.position.x,
   pos_y: t.position.y,
   geometry: toJsonOrNull(t.geometry),
+  seats: (t.seats ?? []) as unknown as Json,
 })
 
 const fixtureRow = (f: Fixture) => ({
@@ -198,11 +200,29 @@ export const updateTablePos = (
   y: number
 ): Promise<boolean> => updatePos("tables", id, x, y)
 
+export const updateTableSeats = (
+  id: string,
+  seats: Array<Seat>
+): Promise<boolean> =>
+  run(
+    "updateTableSeats",
+    supabase
+      .from("tables")
+      .update({ seats: seats as unknown as Json })
+      .eq("id", id)
+  )
+
 export const softDeleteTable = async (id: string): Promise<boolean> => {
   // Unassign this table's guests first (best-effort), then mark it deleted.
+  // Clear seat_id alongside table_id: the guests_seat_requires_table CHECK
+  // forbids a non-null seat_id without a table_id, so dropping table_id while
+  // leaving a pin would make the whole update fail once seats are assigned.
   await run(
     "softDeleteTable unassign",
-    supabase.from("guests").update({ table_id: null }).eq("table_id", id)
+    supabase
+      .from("guests")
+      .update({ table_id: null, seat_id: null })
+      .eq("table_id", id)
   )
   return markDeleted("tables", id)
 }
@@ -219,6 +239,7 @@ export const insertGuest = (guest: Guest): Promise<boolean> => {
       dietary: guest.dietary,
       note: guest.note ?? null,
       table_id: guest.tableId,
+      seat_id: guest.seatId ?? null,
     })
   )
 }
@@ -239,32 +260,52 @@ export const insertGuests = (guests: Array<Guest>): Promise<boolean> => {
         dietary: guest.dietary,
         note: guest.note ?? null,
         table_id: guest.tableId,
+        seat_id: guest.seatId ?? null,
       }))
     )
   )
 }
 
-export const updateGuestTable = (
+// Pins (or clears) a guest's specific seat. Writes table_id alongside seat_id so
+// seating and unseating stay consistent in one round-trip. Also the single path
+// for plain table (re)assignment — seat_id must move with table_id, since the
+// index-based seat ids aren't table-specific and a stale value would mis-pin.
+export const updateGuestSeat = (
   guestId: string,
-  tableId: string | null
+  tableId: string | null,
+  seatId: string | null
 ): Promise<boolean> =>
   run(
-    "updateGuestTable",
-    supabase.from("guests").update({ table_id: tableId }).eq("id", guestId)
+    "updateGuestSeat",
+    supabase
+      .from("guests")
+      .update({ table_id: tableId, seat_id: seatId })
+      .eq("id", guestId)
   )
 
 export const reassignTableGuests = async (
   tableId: string,
   guestIds: Array<string>
 ): Promise<boolean> => {
+  // Clear seat_id alongside table_id in both steps: seat ids are index-based and
+  // not table-specific, so a guest removed from (or moved into) this table must
+  // not keep a stale pin that would re-seat them at the wrong table on reload.
+  // Callers that want to preserve specific pins (saveTable) re-persist seatIds
+  // per guest after this resolves.
   const cleared = await run(
     "reassignTableGuests unassign",
-    supabase.from("guests").update({ table_id: null }).eq("table_id", tableId)
+    supabase
+      .from("guests")
+      .update({ table_id: null, seat_id: null })
+      .eq("table_id", tableId)
   )
   if (guestIds.length === 0) return cleared
   const assigned = await run(
     "reassignTableGuests assign",
-    supabase.from("guests").update({ table_id: tableId }).in("id", guestIds)
+    supabase
+      .from("guests")
+      .update({ table_id: tableId, seat_id: null })
+      .in("id", guestIds)
   )
   return cleared && assigned
 }

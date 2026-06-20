@@ -98,6 +98,7 @@ export type Database = {
           id: string
           name: string
           note: string | null
+          seat_id: string | null
           table_id: string | null
           updated_at: string
           wedding_id: string
@@ -109,6 +110,7 @@ export type Database = {
           id: string
           name?: string
           note?: string | null
+          seat_id?: string | null
           table_id?: string | null
           updated_at?: string
           wedding_id: string
@@ -120,6 +122,7 @@ export type Database = {
           id?: string
           name?: string
           note?: string | null
+          seat_id?: string | null
           table_id?: string | null
           updated_at?: string
           wedding_id?: string
@@ -276,6 +279,7 @@ export type Database = {
           pos_x: number
           pos_y: number
           rotation: number
+          seats: Json
           shape: string
           updated_at: string
           wedding_id: string
@@ -292,6 +296,7 @@ export type Database = {
           pos_x: number
           pos_y: number
           rotation?: number
+          seats?: Json
           shape: string
           updated_at?: string
           wedding_id: string
@@ -308,6 +313,7 @@ export type Database = {
           pos_x?: number
           pos_y?: number
           rotation?: number
+          seats?: Json
           shape?: string
           updated_at?: string
           wedding_id?: string

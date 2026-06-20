@@ -10,9 +10,10 @@ import {
   softDeleteTable,
   updateFixturePos,
   updateFixtureRow,
-  updateGuestTable,
+  updateGuestSeat,
   updateTablePos,
   updateTableRow,
+  updateTableSeats,
   upsertHall,
 } from "@/lib/sync/mutations"
 import { useGlobalStore } from "@/stores/global.store"
@@ -62,6 +63,16 @@ export interface Size {
   height: number
 }
 
+// A manually-positioned seat. `x`/`y` are table-local meters (top-left origin,
+// same convention as Geometry vertices). Only seats the user has dragged are
+// stored; the rest fall back to the auto layout (see seatLayout.ts). `id` is
+// deterministic by index — `seat-${i}` — so guest.seatId references stay stable.
+export interface Seat {
+  id: string
+  x: number
+  y: number
+}
+
 export interface Table {
   id: string
   name: string
@@ -71,6 +82,7 @@ export interface Table {
   rotation: TableRotation
   position: Position
   geometry?: Geometry
+  seats?: Array<Seat>
 }
 
 export const DEFAULT_TABLE: Omit<Table, "id" | "position"> = {
@@ -98,7 +110,19 @@ export interface Guest {
   name: string
   dietary: Array<Dietary>
   tableId: string | null
+  // Specific seat at `tableId` (e.g. "seat-3"), or null to fill the next free
+  // seat in order. Always null when `tableId` is null.
+  seatId?: string | null
   note?: string
+}
+
+// Stable, index-derived seat id. Default (never-dragged) seats use these so a
+// guest can be pinned to a seat before the table's `seats` array is materialized.
+export const seatIdForIndex = (index: number) => `seat-${index}`
+
+export const seatIndexFromId = (seatId: string): number | null => {
+  const match = /^seat-(\d+)$/.exec(seatId)
+  return match ? Number(match[1]) : null
 }
 
 type State = {
@@ -141,6 +165,14 @@ type Action = {
   ) => void
   saveHall: () => void
   assignGuestToTable: (guestId: string, tableId: string | null) => void
+  assignGuestToSeat: (
+    guestId: string,
+    tableId: string,
+    seatId: string,
+    occupantId: string | null
+  ) => void
+  clearSeat: (guestId: string) => void
+  moveSeat: (tableId: string, seatId: string, x: number, y: number) => void
   updateTablePosition: (id: string, x: number, y: number) => void
   addFixture: (
     fixture: Omit<Fixture, "id" | "position">,
@@ -226,15 +258,30 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
   },
   updateTable: (id, table, guestIds = []) => {
     set((state) => ({
-      tables: state.tables.map((t) =>
-        t.id === id ? { ...t, ...table, position: t.position } : t
-      ),
+      tables: state.tables.map((t) => {
+        if (t.id !== id) return t
+        // Seat position overrides are stored in the displayed (rotation-adjusted)
+        // frame, so a rotation change reinterprets them in the swapped axes and
+        // the pinned seats jump. Drop them and fall back to the auto layout for
+        // the new orientation (same stance as capacity-shrink pruning).
+        const rotationChanged = table.rotation !== t.rotation
+        return {
+          ...t,
+          ...table,
+          position: t.position,
+          seats: rotationChanged ? [] : t.seats,
+        }
+      }),
       guests: state.guests.map((guest) => {
         if (guestIds.includes(guest.id)) {
-          return { ...guest, tableId: id }
+          // Newly added here lose any prior seat; ones already at this table
+          // keep theirs.
+          return guest.tableId === id
+            ? { ...guest, tableId: id }
+            : { ...guest, tableId: id, seatId: null }
         }
         if (guest.tableId === id) {
-          return { ...guest, tableId: null }
+          return { ...guest, tableId: null, seatId: null }
         }
         return guest
       }),
@@ -246,9 +293,40 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
 
     if (!table) return
 
-    const guestIds = state.guests
-      .filter((g) => g.tableId === id)
-      .map((g) => g.id)
+    // Capacity may have shrunk: unseat guests pinned to a now-out-of-range seat
+    // and drop the matching position overrides before persisting.
+    const orphanedGuests = state.guests.filter((g) => {
+      if (g.tableId !== id || !g.seatId) return false
+      const seatIndex = seatIndexFromId(g.seatId)
+      return seatIndex !== null && seatIndex >= table.capacity
+    })
+    const prunedSeats = (table.seats ?? []).filter((s) => {
+      const seatIndex = seatIndexFromId(s.id)
+      return seatIndex === null || seatIndex < table.capacity
+    })
+
+    if (
+      orphanedGuests.length > 0 ||
+      prunedSeats.length !== (table.seats ?? []).length
+    ) {
+      const orphanIds = new Set(orphanedGuests.map((g) => g.id))
+      set((s) => ({
+        tables: s.tables.map((t) =>
+          t.id === id ? { ...t, seats: prunedSeats } : t
+        ),
+        guests: s.guests.map((g) =>
+          orphanIds.has(g.id) ? { ...g, seatId: null } : g
+        ),
+      }))
+      for (const g of orphanedGuests) void updateGuestSeat(g.id, id, null)
+    }
+
+    // Reconcile seat overrides to the DB on every save. They're cleared on a
+    // rotation change (updateTable) and pruned on capacity shrink (above) —
+    // neither is detectable from the persisted row, so persist unconditionally.
+    void updateTableSeats(id, prunedSeats)
+
+    const assignedGuests = get().guests.filter((g) => g.tableId === id)
 
     void updateTableRow(id, {
       name: table.name,
@@ -258,7 +336,21 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
       height: table.size.height,
       rotation: table.rotation,
     }).then((ok) => {
-      if (ok) void reassignTableGuests(id, guestIds)
+      if (!ok) return
+      void reassignTableGuests(
+        id,
+        assignedGuests.map((g) => g.id)
+      ).then((reassigned) => {
+        if (!reassigned) return
+        // reassignTableGuests writes only table_id; persist each assigned guest's
+        // current seatId too. Otherwise a guest moved in from another table keeps
+        // its old seat_id in the DB and — since seat ids are index-based, not
+        // table-specific — gets wrongly re-pinned to that seat on reload. Writing
+        // null where the store has no pin is what clears that stale value.
+        for (const g of assignedGuests) {
+          void updateGuestSeat(g.id, id, g.seatId ?? null)
+        }
+      })
     })
   },
   duplicateTable: (id) => {
@@ -281,7 +373,7 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
     set((state) => ({
       tables: state.tables.filter((t) => t.id !== id),
       guests: state.guests.map((g) =>
-        g.tableId === id ? { ...g, tableId: null } : g
+        g.tableId === id ? { ...g, tableId: null, seatId: null } : g
       ),
     }))
     void softDeleteTable(id)
@@ -325,9 +417,100 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
       if (assignedCount >= table.capacity) return
     }
     set((s) => ({
-      guests: s.guests.map((g) => (g.id === guestId ? { ...g, tableId } : g)),
+      guests: s.guests.map((g) =>
+        g.id === guestId ? { ...g, tableId, seatId: null } : g
+      ),
     }))
-    void updateGuestTable(guestId, tableId)
+    // Clear seat_id alongside table_id. Seat ids are index-based (seat-0, …) and
+    // not table-specific, so a stale seat_id would wrongly re-pin the guest to the
+    // same-index seat at the new table after a reload.
+    void updateGuestSeat(guestId, tableId, null)
+  },
+  assignGuestToSeat: (guestId, tableId, seatId, occupantId) => {
+    const state = get()
+    const table = state.tables.find((t) => t.id === tableId)
+    const guest = state.guests.find((g) => g.id === guestId)
+    if (!table || !guest) return
+
+    // The occupant is resolved by the view (it may be an order-fill guest with a
+    // null seatId, which the store can't infer on its own), so trust the id the
+    // caller passes rather than matching on seatId here.
+    const occupant =
+      occupantId && occupantId !== guestId
+        ? (state.guests.find((g) => g.id === occupantId) ?? null)
+        : null
+    const guestAlreadyHere = guest.tableId === tableId
+    const currentCount = state.guests.filter(
+      (g) => g.tableId === tableId
+    ).length
+
+    // Bringing in a guest from outside a full table: the displaced occupant
+    // leaves the table to make room (replace). Otherwise a seat frees up
+    // (guest was already here, or the table has room), so the occupant just
+    // loses their pin and stays as an order-fill.
+    const tableIsFull = currentCount >= table.capacity
+    if (!guestAlreadyHere && tableIsFull && !occupant) return
+    const occupantLeavesTable =
+      occupant != null && !guestAlreadyHere && tableIsFull
+
+    set((s) => ({
+      guests: s.guests.map((g) => {
+        if (g.id === guestId) return { ...g, tableId, seatId }
+        if (occupant && g.id === occupant.id)
+          return occupantLeavesTable
+            ? { ...g, tableId: null, seatId: null }
+            : { ...g, seatId: null }
+        return g
+      }),
+    }))
+    // The DB enforces table capacity on table_id and uniqueness on (table_id,
+    // seat_id), so the displaced occupant MUST be persisted before the incoming
+    // guest — otherwise seating the new guest while the occupant still holds the
+    // seat (or the table is still full) trips one of those server-side guards.
+    // Chain so the guest write only fires once the occupant write has landed.
+    const persistGuest = () => updateGuestSeat(guestId, tableId, seatId)
+    // Order-fill occupants already have table_id set and seat_id null, so only
+    // write when something actually changed.
+    const occupantWrite =
+      occupant == null
+        ? null
+        : occupantLeavesTable
+          ? updateGuestSeat(occupant.id, null, null)
+          : occupant.seatId != null
+            ? updateGuestSeat(occupant.id, tableId, null)
+            : null
+    if (occupantWrite)
+      void occupantWrite.then((ok) => {
+        if (ok) void persistGuest()
+      })
+    else void persistGuest()
+  },
+  clearSeat: (guestId) => {
+    const guest = get().guests.find((g) => g.id === guestId)
+    if (!guest) return
+    // Only unpin: the guest stays at the same table as an order-fill (they'll
+    // refill the next free seat). Removing them from the table is a separate
+    // action (assignGuestToTable(id, null) / the PropertyPanel picker).
+    set((s) => ({
+      guests: s.guests.map((g) =>
+        g.id === guestId ? { ...g, seatId: null } : g
+      ),
+    }))
+    void updateGuestSeat(guestId, guest.tableId ?? null, null)
+  },
+  moveSeat: (tableId, seatId, x, y) => {
+    set((state) => ({
+      tables: state.tables.map((t) => {
+        if (t.id !== tableId) return t
+        const seats = t.seats ?? []
+        const next = seats.some((s) => s.id === seatId)
+          ? seats.map((s) => (s.id === seatId ? { ...s, x, y } : s))
+          : [...seats, { id: seatId, x, y }]
+        return { ...t, seats: next }
+      }),
+    }))
+    const seats = get().tables.find((t) => t.id === tableId)?.seats ?? []
+    void updateTableSeats(tableId, seats)
   },
   updateTablePosition: (id, x, y) => {
     set((state) => ({

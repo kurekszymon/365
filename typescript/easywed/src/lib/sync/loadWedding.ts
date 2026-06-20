@@ -5,6 +5,7 @@ import type {
   Geometry,
   Guest,
   HallPreset,
+  Seat,
   Table,
   TableRotation,
   TableShape,
@@ -46,7 +47,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     supabase
       .from("tables")
       .select(
-        "id, name, shape, capacity, width, height, rotation, pos_x, pos_y, geometry"
+        "id, name, shape, capacity, width, height, rotation, pos_x, pos_y, geometry, seats"
       )
       .eq("wedding_id", id)
       .is("deleted_at", null)
@@ -54,7 +55,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
 
     supabase
       .from("guests")
-      .select("id, name, dietary, note, table_id")
+      .select("id, name, dietary, note, table_id, seat_id")
       .eq("wedding_id", id)
       .is("deleted_at", null)
       .abortSignal(signal),
@@ -109,6 +110,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     rotation: t.rotation as TableRotation,
     position: { x: Number(t.pos_x), y: Number(t.pos_y) },
     ...(t.geometry ? { geometry: t.geometry as unknown as Geometry } : {}),
+    seats: (t.seats as unknown as Array<Seat> | null) ?? [],
   }))
 
   const guests: Array<Guest> = guestsRes.data.map((g) => ({
@@ -116,6 +118,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     name: g.name,
     dietary: g.dietary as Array<Dietary>,
     tableId: g.table_id,
+    seatId: g.seat_id,
     note: g.note ?? undefined,
   }))
 

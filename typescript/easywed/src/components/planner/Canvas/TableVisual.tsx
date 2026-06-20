@@ -1,6 +1,7 @@
 import { clamp } from "./utils"
+import { TableSeats } from "./TableSeats"
 import type { ComponentProps } from "react"
-import type { Table } from "@/stores/planner.store"
+import type { Guest, Table } from "@/stores/planner.store"
 import { cn } from "@/lib/utils"
 import { getEffectiveSize } from "@/stores/planner.store"
 
@@ -14,6 +15,10 @@ type TableVisualProps = {
   // within the hall. Passed by the canvas during a drag; omitted in print.
   transform?: Translate | null
   hallBounds?: { width: number; height: number }
+  // When `showSeats` is set, render seat markers (filled from `seatGuests`)
+  // around the table. Off by default so print and other callers are unaffected.
+  seatGuests?: Array<Guest>
+  showSeats?: boolean
 } & ComponentProps<"div">
 
 export const TableVisual = ({
@@ -22,6 +27,8 @@ export const TableVisual = ({
   ppm,
   transform,
   hallBounds,
+  seatGuests,
+  showSeats,
   className,
   style,
   children,
@@ -116,6 +123,18 @@ export const TableVisual = ({
           {guestCountLabel}
         </span>
       </div>
+      {showSeats && seatGuests && (
+        <TableSeats
+          tableId={id}
+          shape={shape}
+          widthM={size.width}
+          heightM={shape === "round" ? size.width : size.height}
+          capacity={capacity}
+          guests={seatGuests}
+          overrides={table.seats ?? []}
+          ppm={ppm}
+        />
+      )}
       {children}
     </div>
   )

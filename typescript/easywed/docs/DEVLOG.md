@@ -1,5 +1,11 @@
 # EasyWed — Development Log
 
+### 20.06
+
+- improve seat assignment, drag follows table, doesn't go over specified margin.
+- fix clearing seat
+- group seat assignment popover - at this table / somewhere else / unassigned
+
 ### 19.06
 
 - match server theme, single source of truth for themes
@@ -14,6 +20,7 @@
 
 ### 16.06
 
+- initial version of seat assignments
 - clamp measurements to hall, don't allow out of bounds measurements
 
 ### 15.06
