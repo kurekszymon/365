@@ -258,9 +258,20 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
   },
   updateTable: (id, table, guestIds = []) => {
     set((state) => ({
-      tables: state.tables.map((t) =>
-        t.id === id ? { ...t, ...table, position: t.position } : t
-      ),
+      tables: state.tables.map((t) => {
+        if (t.id !== id) return t
+        // Seat position overrides are stored in the displayed (rotation-adjusted)
+        // frame, so a rotation change reinterprets them in the swapped axes and
+        // the pinned seats jump. Drop them and fall back to the auto layout for
+        // the new orientation (same stance as capacity-shrink pruning).
+        const rotationChanged = table.rotation !== t.rotation
+        return {
+          ...t,
+          ...table,
+          position: t.position,
+          seats: rotationChanged ? [] : t.seats,
+        }
+      }),
       guests: state.guests.map((guest) => {
         if (guestIds.includes(guest.id)) {
           // Newly added here lose any prior seat; ones already at this table
@@ -308,8 +319,12 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
         ),
       }))
       for (const g of orphanedGuests) void updateGuestSeat(g.id, id, null)
-      void updateTableSeats(id, prunedSeats)
     }
+
+    // Reconcile seat overrides to the DB on every save. They're cleared on a
+    // rotation change (updateTable) and pruned on capacity shrink (above) —
+    // neither is detectable from the persisted row, so persist unconditionally.
+    void updateTableSeats(id, prunedSeats)
 
     const assignedGuests = get().guests.filter((g) => g.tableId === id)
 

@@ -1,7 +1,11 @@
 import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { clamp } from "./utils"
-import { constrainSeatPosition, effectiveSeats } from "./seatLayout"
+import {
+  constrainSeatPosition,
+  effectiveSeats,
+  resolveSeatOccupants,
+} from "./seatLayout"
 import { SeatAssignPopover } from "./SeatAssignPopover"
 import type {
   KeyboardEvent as ReactKeyboardEvent,
@@ -68,21 +72,7 @@ export const TableSeats = ({
   const placed = effectiveSeats(shape, widthM, heightM, capacity, overrides)
   if (placed.length === 0) return null
 
-  // Resolve who sits where: explicit seatId pins first, then guests with no seat
-  // fill remaining seats in order (matches the table-picker / drag-to-table flow).
-  const placedIds = new Set(placed.map((p) => p.id))
-  const occupantBySeat = new Map<string, Guest>()
-  const orderFill: Array<Guest> = []
-  for (const g of guests) {
-    if (g.seatId && placedIds.has(g.seatId)) occupantBySeat.set(g.seatId, g)
-    else orderFill.push(g)
-  }
-  let fillIndex = 0
-  for (const p of placed) {
-    if (occupantBySeat.has(p.id)) continue
-    if (fillIndex < orderFill.length)
-      occupantBySeat.set(p.id, orderFill[fillIndex++])
-  }
+  const occupantBySeat = resolveSeatOccupants(placed, guests)
 
   const seatPx = clamp(ppm * 0.34, 12, 22)
   const showInitials = seatPx >= 14

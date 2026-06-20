@@ -28,4 +28,4 @@ alter table public.guests
 -- seat; the second write fails loudly instead of silently double-booking.
 create unique index guests_unique_seat_per_table
   on public.guests (table_id, seat_id)
-  where seat_id is not null;
+  where seat_id is not null and deleted_at is null;

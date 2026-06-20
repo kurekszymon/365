@@ -233,6 +233,7 @@ export const insertGuest = (guest: Guest): Promise<boolean> => {
       dietary: guest.dietary,
       note: guest.note ?? null,
       table_id: guest.tableId,
+      seat_id: guest.seatId ?? null,
     })
   )
 }
@@ -253,6 +254,7 @@ export const insertGuests = (guests: Array<Guest>): Promise<boolean> => {
         dietary: guest.dietary,
         note: guest.note ?? null,
         table_id: guest.tableId,
+        seat_id: guest.seatId ?? null,
       }))
     )
   )
