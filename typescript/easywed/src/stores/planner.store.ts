@@ -311,9 +311,7 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
       void updateTableSeats(id, prunedSeats)
     }
 
-    const guestIds = get()
-      .guests.filter((g) => g.tableId === id)
-      .map((g) => g.id)
+    const assignedGuests = get().guests.filter((g) => g.tableId === id)
 
     void updateTableRow(id, {
       name: table.name,
@@ -323,7 +321,21 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
       height: table.size.height,
       rotation: table.rotation,
     }).then((ok) => {
-      if (ok) void reassignTableGuests(id, guestIds)
+      if (!ok) return
+      void reassignTableGuests(
+        id,
+        assignedGuests.map((g) => g.id)
+      ).then((reassigned) => {
+        if (!reassigned) return
+        // reassignTableGuests writes only table_id; persist each assigned guest's
+        // current seatId too. Otherwise a guest moved in from another table keeps
+        // its old seat_id in the DB and — since seat ids are index-based, not
+        // table-specific — gets wrongly re-pinned to that seat on reload. Writing
+        // null where the store has no pin is what clears that stale value.
+        for (const g of assignedGuests) {
+          void updateGuestSeat(g.id, id, g.seatId ?? null)
+        }
+      })
     })
   },
   duplicateTable: (id) => {
