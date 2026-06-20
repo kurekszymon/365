@@ -214,9 +214,15 @@ export const updateTableSeats = (
 
 export const softDeleteTable = async (id: string): Promise<boolean> => {
   // Unassign this table's guests first (best-effort), then mark it deleted.
+  // Clear seat_id alongside table_id: the guests_seat_requires_table CHECK
+  // forbids a non-null seat_id without a table_id, so dropping table_id while
+  // leaving a pin would make the whole update fail once seats are assigned.
   await run(
     "softDeleteTable unassign",
-    supabase.from("guests").update({ table_id: null }).eq("table_id", id)
+    supabase
+      .from("guests")
+      .update({ table_id: null, seat_id: null })
+      .eq("table_id", id)
   )
   return markDeleted("tables", id)
 }
