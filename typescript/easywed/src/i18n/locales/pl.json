@@ -236,6 +236,7 @@
   "seats.toggle": "Miejsca",
   "seats.tooltip": "Pokaż gości jako miejsca wokół stołów",
   "seats.clear": "Zwolnij miejsce",
+  "seats.empty": "Wolne miejsce",
   "measure.overlay_label": "Pomiary",
   "measure.mode.center": "Środek",
   "measure.mode.border": "Krawędź",

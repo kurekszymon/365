@@ -1,8 +1,10 @@
 import { useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { clamp } from "./utils"
 import { constrainSeatPosition, effectiveSeats } from "./seatLayout"
 import { SeatAssignPopover } from "./SeatAssignPopover"
 import type {
+  KeyboardEvent as ReactKeyboardEvent,
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
 } from "react"
@@ -54,6 +56,7 @@ export const TableSeats = ({
   overrides,
   ppm,
 }: TableSeatsProps) => {
+  const { t } = useTranslation()
   const isMeasuring = useViewStore((state) => state.isMeasuring)
   const moveSeat = usePlannerStore((state) => state.moveSeat)
   const [drag, setDrag] = useState<DragState | null>(null)
@@ -136,6 +139,13 @@ export const TableSeats = ({
       setDrag(null)
     }
 
+  // If the pointer stream is canceled (e.g. the OS steals it, a gesture aborts),
+  // pointerup never fires — reset so the seat doesn't get stuck mid-drag.
+  const onPointerCancel = () => {
+    setDrag(null)
+    draggedRef.current = false
+  }
+
   const onClick = (e: ReactMouseEvent) => {
     // Don't let the seat click bubble up and select the table.
     e.stopPropagation()
@@ -143,6 +153,15 @@ export const TableSeats = ({
     if (draggedRef.current) {
       e.preventDefault()
       draggedRef.current = false
+    }
+  }
+
+  // The seat is a div (role="button"), so Enter/Space don't synthesize a click
+  // the way they would on a native button — open the assign popover ourselves.
+  const onKeyDown = (seatId: string) => (e: ReactKeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault()
+      setOpenSeatId((current) => (current === seatId ? null : seatId))
     }
   }
 
@@ -170,14 +189,16 @@ export const TableSeats = ({
           <div
             data-no-pan
             role="button"
-            tabIndex={-1}
-            aria-label={guest ? guest.name : undefined}
+            tabIndex={isMeasuring ? -1 : 0}
+            aria-label={guest ? guest.name : t("seats.empty")}
             title={guest ? guest.name : undefined}
             onPointerDown={isMeasuring ? undefined : onPointerDown(seat.id)}
             onPointerMove={isMeasuring ? undefined : onPointerMove(seat.id)}
             onPointerUp={
               isMeasuring ? undefined : onPointerUp(seat.id, seat.x, seat.y)
             }
+            onPointerCancel={isMeasuring ? undefined : onPointerCancel}
+            onKeyDown={isMeasuring ? undefined : onKeyDown(seat.id)}
             onClick={isMeasuring ? undefined : onClick}
             className={cn(
               "absolute flex items-center justify-center rounded-full font-medium select-none",

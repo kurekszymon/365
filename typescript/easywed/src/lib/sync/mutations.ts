@@ -258,17 +258,10 @@ export const insertGuests = (guests: Array<Guest>): Promise<boolean> => {
   )
 }
 
-export const updateGuestTable = (
-  guestId: string,
-  tableId: string | null
-): Promise<boolean> =>
-  run(
-    "updateGuestTable",
-    supabase.from("guests").update({ table_id: tableId }).eq("id", guestId)
-  )
-
 // Pins (or clears) a guest's specific seat. Writes table_id alongside seat_id so
-// seating and unseating stay consistent in one round-trip.
+// seating and unseating stay consistent in one round-trip. Also the single path
+// for plain table (re)assignment — seat_id must move with table_id, since the
+// index-based seat ids aren't table-specific and a stale value would mis-pin.
 export const updateGuestSeat = (
   guestId: string,
   tableId: string | null,

@@ -11,7 +11,6 @@ import {
   updateFixturePos,
   updateFixtureRow,
   updateGuestSeat,
-  updateGuestTable,
   updateTablePos,
   updateTableRow,
   updateTableSeats,
@@ -395,7 +394,10 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
         g.id === guestId ? { ...g, tableId, seatId: null } : g
       ),
     }))
-    void updateGuestTable(guestId, tableId)
+    // Clear seat_id alongside table_id. Seat ids are index-based (seat-0, …) and
+    // not table-specific, so a stale seat_id would wrongly re-pin the guest to the
+    // same-index seat at the new table after a reload.
+    void updateGuestSeat(guestId, tableId, null)
   },
   assignGuestToSeat: (guestId, tableId, seatId, occupantId) => {
     const state = get()

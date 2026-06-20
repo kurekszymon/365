@@ -224,6 +224,7 @@
   "seats.toggle": "Seats",
   "seats.tooltip": "Show guests as seats around each table",
   "seats.clear": "Clear seat",
+  "seats.empty": "Empty seat",
   "measure.overlay_label": "Measurements",
   "measure.mode.center": "Center",
   "measure.mode.border": "Border",
