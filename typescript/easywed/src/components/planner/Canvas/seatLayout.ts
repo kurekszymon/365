@@ -75,6 +75,67 @@ export function computeSeatPositions(
 // Default gap (meters) between a table edge and the seat center.
 export const SEAT_OFFSET_M = 0.3
 
+// How close to / far from the table edge a manually dragged seat may sit. Keeps
+// seats off the tabletop (min) and tethered to their table (max), so a stray
+// drag can't fling a chair across the hall.
+export const SEAT_MIN_OFFSET_M = 0.1
+export const SEAT_MAX_OFFSET_M = 0.6
+
+const clampN = (value: number, lo: number, hi: number) =>
+  Math.max(lo, Math.min(hi, value))
+
+// Constrain a freely dragged seat center (table-local meters) to a band hugging
+// the table's outside edge: it may slide along the perimeter but stays between
+// `minOffsetM` and `maxOffsetM` from the nearest edge, and never on the table.
+export function constrainSeatPosition(
+  shape: TableShape,
+  widthM: number,
+  heightM: number,
+  x: number,
+  y: number,
+  minOffsetM: number = SEAT_MIN_OFFSET_M,
+  maxOffsetM: number = SEAT_MAX_OFFSET_M
+): SeatSlot {
+  if (shape === "round") {
+    const r = widthM / 2
+    const dx = x - r
+    const dy = y - r
+    const dist = Math.hypot(dx, dy)
+    const target = clampN(dist, r + minOffsetM, r + maxOffsetM)
+    // Dropped dead-center: no direction to push, default to the top.
+    if (dist < 1e-6) return { x: r, y: r - target }
+    const k = target / dist
+    return { x: r + dx * k, y: r + dy * k }
+  }
+
+  if (shape === "rectangular") {
+    const nx = clampN(x, 0, widthM)
+    const ny = clampN(y, 0, heightM)
+    const inside = nx === x && ny === y
+    if (inside) {
+      // Dragged onto the tabletop: eject across the nearest edge.
+      const dLeft = x
+      const dRight = widthM - x
+      const dTop = y
+      const dBottom = heightM - y
+      const min = Math.min(dLeft, dRight, dTop, dBottom)
+      if (min === dLeft) return { x: -minOffsetM, y }
+      if (min === dRight) return { x: widthM + minOffsetM, y }
+      if (min === dTop) return { x, y: -minOffsetM }
+      return { x, y: heightM + minOffsetM }
+    }
+    // Outside: keep the perimeter contact point, clamp the outward distance.
+    const dx = x - nx
+    const dy = y - ny
+    const dist = Math.hypot(dx, dy)
+    const target = clampN(dist, minOffsetM, maxOffsetM)
+    const k = dist < 1e-6 ? 0 : target / dist
+    return { x: nx + dx * k, y: ny + dy * k }
+  }
+
+  return { x, y }
+}
+
 // Merge the auto layout with the table's stored position overrides, keyed by the
 // deterministic `seat-${i}` id. Inputs/outputs are in **meters** (effective,
 // rotation-adjusted footprint; round tables use width as diameter).

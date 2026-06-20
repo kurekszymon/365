@@ -1,5 +1,10 @@
 # EasyWed — Development Log
 
+### 20.06
+
+- imrpove seat assignment, drag follows table, doesnt go over specified margin.
+- fix clearing seat
+
 ### 19.06
 
 - match server theme, single source of truth for themes
@@ -14,6 +19,7 @@
 
 ### 16.06
 
+- initial version of seat assignments
 - clamp measurements to hall, don't allow out of bounds measurements
 
 ### 15.06

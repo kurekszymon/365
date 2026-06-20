@@ -64,7 +64,7 @@ export const SeatAssignPopover = ({
   }
 
   const assign = (guestId: string) => {
-    assignGuestToSeat(guestId, tableId, seatId)
+    assignGuestToSeat(guestId, tableId, seatId, occupantId)
     onOpenChange(false)
   }
 
@@ -94,7 +94,7 @@ export const SeatAssignPopover = ({
             variant="outline"
             className="w-full justify-start gap-1.5 text-muted-foreground"
             onClick={() => {
-              clearSeat(tableId, seatId)
+              if (occupantId) clearSeat(occupantId)
               onOpenChange(false)
             }}
           >

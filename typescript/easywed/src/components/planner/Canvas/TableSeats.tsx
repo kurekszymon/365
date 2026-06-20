@@ -1,6 +1,6 @@
 import { useRef, useState } from "react"
 import { clamp } from "./utils"
-import { effectiveSeats } from "./seatLayout"
+import { constrainSeatPosition, effectiveSeats } from "./seatLayout"
 import { SeatAssignPopover } from "./SeatAssignPopover"
 import type {
   MouseEvent as ReactMouseEvent,
@@ -107,10 +107,12 @@ export const TableSeats = ({
     const dy = e.clientY - drag.startY
     const moved = Math.hypot(dx, dy) > DRAG_THRESHOLD
     // Only capture once it's a real drag, so a plain click still reaches the
-    // popover trigger.
+    // popover trigger. Close any open assign popover — the canvas is too busy to
+    // drag a seat and keep the menu up.
     if (moved && !drag.moved) {
       e.currentTarget.setPointerCapture(e.pointerId)
       draggedRef.current = true
+      setOpenSeatId(null)
     }
     setDrag({ ...drag, dx, dy, moved: drag.moved || moved })
   }
@@ -122,7 +124,14 @@ export const TableSeats = ({
       if (drag.moved) {
         if (e.currentTarget.hasPointerCapture(e.pointerId))
           e.currentTarget.releasePointerCapture(e.pointerId)
-        moveSeat(tableId, seatId, baseX + drag.dx / ppm, baseY + drag.dy / ppm)
+        const c = constrainSeatPosition(
+          shape,
+          widthM,
+          heightM,
+          baseX + drag.dx / ppm,
+          baseY + drag.dy / ppm
+        )
+        moveSeat(tableId, seatId, c.x, c.y)
       }
       setDrag(null)
     }
@@ -143,8 +152,19 @@ export const TableSeats = ({
         const guest = occupantBySeat.get(seat.id) ?? null
         const occupied = guest != null
         const isDragging = drag?.seatId === seat.id
-        const left = seat.x * ppm + (isDragging ? drag.dx : 0)
-        const top = seat.y * ppm + (isDragging ? drag.dy : 0)
+        // While dragging, preview the constrained position (band hugging the
+        // table edge) so the seat can't visually land on or far from the table.
+        const previewed = isDragging
+          ? constrainSeatPosition(
+              shape,
+              widthM,
+              heightM,
+              seat.x + drag.dx / ppm,
+              seat.y + drag.dy / ppm
+            )
+          : seat
+        const left = previewed.x * ppm
+        const top = previewed.y * ppm
 
         const marker = (
           <div

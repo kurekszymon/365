@@ -166,8 +166,13 @@ type Action = {
   ) => void
   saveHall: () => void
   assignGuestToTable: (guestId: string, tableId: string | null) => void
-  assignGuestToSeat: (guestId: string, tableId: string, seatId: string) => void
-  clearSeat: (tableId: string, seatId: string) => void
+  assignGuestToSeat: (
+    guestId: string,
+    tableId: string,
+    seatId: string,
+    occupantId: string | null
+  ) => void
+  clearSeat: (guestId: string) => void
   moveSeat: (tableId: string, seatId: string, x: number, y: number) => void
   updateTablePosition: (id: string, x: number, y: number) => void
   addFixture: (
@@ -392,16 +397,19 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
     }))
     void updateGuestTable(guestId, tableId)
   },
-  assignGuestToSeat: (guestId, tableId, seatId) => {
+  assignGuestToSeat: (guestId, tableId, seatId, occupantId) => {
     const state = get()
     const table = state.tables.find((t) => t.id === tableId)
     const guest = state.guests.find((g) => g.id === guestId)
     if (!table || !guest) return
 
+    // The occupant is resolved by the view (it may be an order-fill guest with a
+    // null seatId, which the store can't infer on its own), so trust the id the
+    // caller passes rather than matching on seatId here.
     const occupant =
-      state.guests.find(
-        (g) => g.id !== guestId && g.tableId === tableId && g.seatId === seatId
-      ) ?? null
+      occupantId && occupantId !== guestId
+        ? (state.guests.find((g) => g.id === occupantId) ?? null)
+        : null
     const guestAlreadyHere = guest.tableId === tableId
     const currentCount = state.guests.filter(
       (g) => g.tableId === tableId
@@ -427,25 +435,23 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
       }),
     }))
     void updateGuestSeat(guestId, tableId, seatId)
-    if (occupant)
-      void updateGuestSeat(
-        occupant.id,
-        occupantLeavesTable ? null : tableId,
-        null
-      )
+    if (occupant) {
+      // Order-fill occupants already have table_id set and seat_id null, so only
+      // write when something actually changed.
+      if (occupantLeavesTable) void updateGuestSeat(occupant.id, null, null)
+      else if (occupant.seatId != null)
+        void updateGuestSeat(occupant.id, tableId, null)
+    }
   },
-  clearSeat: (tableId, seatId) => {
-    const state = get()
-    const guest = state.guests.find(
-      (g) => g.tableId === tableId && g.seatId === seatId
-    )
+  clearSeat: (guestId) => {
+    const guest = get().guests.find((g) => g.id === guestId)
     if (!guest) return
     set((s) => ({
       guests: s.guests.map((g) =>
-        g.id === guest.id ? { ...g, tableId: null, seatId: null } : g
+        g.id === guestId ? { ...g, tableId: null, seatId: null } : g
       ),
     }))
-    void updateGuestSeat(guest.id, null, null)
+    void updateGuestSeat(guestId, null, null)
   },
   moveSeat: (tableId, seatId, x, y) => {
     set((state) => ({

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest"
-import { computeSeatPositions, effectiveSeats } from "./seatLayout"
+import {
+  SEAT_MAX_OFFSET_M,
+  SEAT_MIN_OFFSET_M,
+  computeSeatPositions,
+  constrainSeatPosition,
+  effectiveSeats,
+} from "./seatLayout"
 
 describe("computeSeatPositions", () => {
   it("returns one slot per seat for round tables", () => {
@@ -94,5 +100,49 @@ describe("effectiveSeats", () => {
 
   it("returns no seats for custom tables", () => {
     expect(effectiveSeats("custom", 2, 2, 8)).toEqual([])
+  })
+})
+
+describe("constrainSeatPosition", () => {
+  const dist = (x: number, y: number, cx: number, cy: number) =>
+    Math.hypot(x - cx, y - cy)
+
+  it("keeps a round seat within the min/max ring, preserving direction", () => {
+    const r = 1 // 2m diameter round table
+    // Far to the right → reeled back to the max ring, still due right.
+    const far = constrainSeatPosition("round", 2, 2, 10, r)
+    expect(dist(far.x, far.y, r, r)).toBeCloseTo(r + SEAT_MAX_OFFSET_M)
+    expect(far.y).toBeCloseTo(r)
+    expect(far.x).toBeGreaterThan(r)
+  })
+
+  it("ejects a round seat dropped on the tabletop", () => {
+    const r = 1
+    const onTable = constrainSeatPosition("round", 2, 2, r + 0.05, r)
+    expect(dist(onTable.x, onTable.y, r, r)).toBeCloseTo(r + SEAT_MIN_OFFSET_M)
+  })
+
+  it("pushes a round seat dropped dead-center to the top", () => {
+    const r = 1
+    const center = constrainSeatPosition("round", 2, 2, r, r)
+    expect(center.x).toBeCloseTo(r)
+    expect(center.y).toBeCloseTo(r - (r + SEAT_MIN_OFFSET_M))
+  })
+
+  it("ejects a rectangular seat dragged onto the tabletop", () => {
+    // 4x2 table, point near the top edge inside → pushed just above the top.
+    const out = constrainSeatPosition("rectangular", 4, 2, 2, 0.3)
+    expect(out.x).toBeCloseTo(2)
+    expect(out.y).toBeCloseTo(-SEAT_MIN_OFFSET_M)
+  })
+
+  it("reels a far rectangular seat back to the max offset", () => {
+    const out = constrainSeatPosition("rectangular", 4, 2, 2, -5)
+    expect(out.x).toBeCloseTo(2)
+    expect(out.y).toBeCloseTo(-SEAT_MAX_OFFSET_M)
+  })
+
+  it("leaves custom tables unconstrained", () => {
+    expect(constrainSeatPosition("custom", 2, 2, 9, 9)).toEqual({ x: 9, y: 9 })
   })
 })
