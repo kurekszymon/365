@@ -448,24 +448,40 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
         return g
       }),
     }))
-    void updateGuestSeat(guestId, tableId, seatId)
-    if (occupant) {
-      // Order-fill occupants already have table_id set and seat_id null, so only
-      // write when something actually changed.
-      if (occupantLeavesTable) void updateGuestSeat(occupant.id, null, null)
-      else if (occupant.seatId != null)
-        void updateGuestSeat(occupant.id, tableId, null)
-    }
+    // The DB enforces table capacity on table_id and uniqueness on (table_id,
+    // seat_id), so the displaced occupant MUST be persisted before the incoming
+    // guest — otherwise seating the new guest while the occupant still holds the
+    // seat (or the table is still full) trips one of those server-side guards.
+    // Chain so the guest write only fires once the occupant write has landed.
+    const persistGuest = () => updateGuestSeat(guestId, tableId, seatId)
+    // Order-fill occupants already have table_id set and seat_id null, so only
+    // write when something actually changed.
+    const occupantWrite =
+      occupant == null
+        ? null
+        : occupantLeavesTable
+          ? updateGuestSeat(occupant.id, null, null)
+          : occupant.seatId != null
+            ? updateGuestSeat(occupant.id, tableId, null)
+            : null
+    if (occupantWrite)
+      void occupantWrite.then((ok) => {
+        if (ok) void persistGuest()
+      })
+    else void persistGuest()
   },
   clearSeat: (guestId) => {
     const guest = get().guests.find((g) => g.id === guestId)
     if (!guest) return
+    // Only unpin: the guest stays at the same table as an order-fill (they'll
+    // refill the next free seat). Removing them from the table is a separate
+    // action (assignGuestToTable(id, null) / the PropertyPanel picker).
     set((s) => ({
       guests: s.guests.map((g) =>
-        g.id === guestId ? { ...g, tableId: null, seatId: null } : g
+        g.id === guestId ? { ...g, seatId: null } : g
       ),
     }))
-    void updateGuestSeat(guestId, null, null)
+    void updateGuestSeat(guestId, guest.tableId ?? null, null)
   },
   moveSeat: (tableId, seatId, x, y) => {
     set((state) => ({

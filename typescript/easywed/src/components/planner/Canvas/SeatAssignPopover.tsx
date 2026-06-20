@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { XIcon } from "lucide-react"
 import type { ReactNode, WheelEvent } from "react"
+import type { Guest } from "@/stores/planner.store"
 import {
   Popover,
   PopoverContent,
@@ -41,21 +42,34 @@ export const SeatAssignPopover = ({
   const clearSeat = usePlannerStore((state) => state.clearSeat)
 
   const normalizedQuery = searchQuery.trim().toLowerCase()
-  const filteredGuests = useMemo(
-    () =>
-      guests
-        .filter((g) => g.name.toLowerCase().includes(normalizedQuery))
-        .sort((a, b) => {
-          const aElsewhere = a.tableId != null && a.tableId !== tableId
-          const bElsewhere = b.tableId != null && b.tableId !== tableId
-          if (aElsewhere !== bElsewhere) return aElsewhere ? 1 : -1
-          return a.name.localeCompare(b.name)
-        }),
-    [guests, normalizedQuery, tableId]
-  )
+  // Three groups, most-relevant first: guests already at this table (seatless
+  // ones first — the natural candidates), then unassigned guests, then guests
+  // seated at another table (the amber "moves them" affordance).
+  const groups = useMemo(() => {
+    const atTable: Array<Guest> = []
+    const unassigned: Array<Guest> = []
+    const elsewhere: Array<Guest> = []
+    for (const g of guests) {
+      if (!g.name.toLowerCase().includes(normalizedQuery)) continue
+      if (g.tableId === tableId) atTable.push(g)
+      else if (g.tableId == null) unassigned.push(g)
+      else elsewhere.push(g)
+    }
+    atTable.sort((a, b) => {
+      const aSeated = a.seatId != null
+      const bSeated = b.seatId != null
+      if (aSeated !== bSeated) return aSeated ? 1 : -1
+      return a.name.localeCompare(b.name)
+    })
+    unassigned.sort((a, b) => a.name.localeCompare(b.name))
+    elsewhere.sort((a, b) => a.name.localeCompare(b.name))
+    return { atTable, unassigned, elsewhere }
+  }, [guests, normalizedQuery, tableId])
 
   const hasGuests = guests.length > 0
-  const hasFiltered = filteredGuests.length > 0
+  const hasFiltered =
+    groups.atTable.length + groups.unassigned.length + groups.elsewhere.length >
+    0
 
   const handleListWheel = (e: WheelEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -67,6 +81,52 @@ export const SeatAssignPopover = ({
     assignGuestToSeat(guestId, tableId, seatId, occupantId)
     onOpenChange(false)
   }
+
+  const renderGuest = (guest: Guest, elsewhere: boolean) => {
+    const isOccupant = guest.id === occupantId
+    return (
+      <Button
+        key={guest.id}
+        type="button"
+        size="sm"
+        variant={isOccupant ? "default" : "outline"}
+        className={cn(
+          "w-full justify-start",
+          elsewhere &&
+            "border-amber-300/80 bg-amber-50/70 text-amber-900 hover:bg-amber-100/70 dark:border-amber-700/70 dark:bg-amber-950/20 dark:text-amber-200"
+        )}
+        onClick={() => assign(guest.id)}
+      >
+        <span className="truncate">{guest.name}</span>
+      </Button>
+    )
+  }
+
+  const sections: Array<{
+    key: string
+    label: string
+    items: Array<Guest>
+    elsewhere: boolean
+  }> = [
+    {
+      key: "table",
+      label: t("seats.group_table"),
+      items: groups.atTable,
+      elsewhere: false,
+    },
+    {
+      key: "unassigned",
+      label: t("seats.group_unassigned"),
+      items: groups.unassigned,
+      elsewhere: false,
+    },
+    {
+      key: "elsewhere",
+      label: t("seats.group_elsewhere"),
+      items: groups.elsewhere,
+      elsewhere: true,
+    },
+  ]
 
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
@@ -118,30 +178,21 @@ export const SeatAssignPopover = ({
         {hasFiltered && (
           <div
             ref={listRef}
-            className="max-h-52 space-y-1 overflow-y-auto overscroll-contain pr-1"
+            className="max-h-52 space-y-2 overflow-y-auto overscroll-contain pr-1"
             onWheel={handleListWheel}
           >
-            {filteredGuests.map((guest) => {
-              const isOccupant = guest.id === occupantId
-              const seatedElsewhere =
-                guest.tableId != null && guest.tableId !== tableId
-              return (
-                <Button
-                  key={guest.id}
-                  type="button"
-                  size="sm"
-                  variant={isOccupant ? "default" : "outline"}
-                  className={cn(
-                    "w-full justify-start",
-                    seatedElsewhere &&
-                      "border-amber-300/80 bg-amber-50/70 text-amber-900 hover:bg-amber-100/70 dark:border-amber-700/70 dark:bg-amber-950/20 dark:text-amber-200"
+            {sections
+              .filter((section) => section.items.length > 0)
+              .map((section) => (
+                <div key={section.key} className="space-y-1">
+                  <p className="px-1 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+                    {section.label}
+                  </p>
+                  {section.items.map((guest) =>
+                    renderGuest(guest, section.elsewhere)
                   )}
-                  onClick={() => assign(guest.id)}
-                >
-                  <span className="truncate">{guest.name}</span>
-                </Button>
-              )
-            })}
+                </div>
+              ))}
           </div>
         )}
       </PopoverContent>

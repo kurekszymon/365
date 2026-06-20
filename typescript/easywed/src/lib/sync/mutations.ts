@@ -279,14 +279,25 @@ export const reassignTableGuests = async (
   tableId: string,
   guestIds: Array<string>
 ): Promise<boolean> => {
+  // Clear seat_id alongside table_id in both steps: seat ids are index-based and
+  // not table-specific, so a guest removed from (or moved into) this table must
+  // not keep a stale pin that would re-seat them at the wrong table on reload.
+  // Callers that want to preserve specific pins (saveTable) re-persist seatIds
+  // per guest after this resolves.
   const cleared = await run(
     "reassignTableGuests unassign",
-    supabase.from("guests").update({ table_id: null }).eq("table_id", tableId)
+    supabase
+      .from("guests")
+      .update({ table_id: null, seat_id: null })
+      .eq("table_id", tableId)
   )
   if (guestIds.length === 0) return cleared
   const assigned = await run(
     "reassignTableGuests assign",
-    supabase.from("guests").update({ table_id: tableId }).in("id", guestIds)
+    supabase
+      .from("guests")
+      .update({ table_id: tableId, seat_id: null })
+      .in("id", guestIds)
   )
   return cleared && assigned
 }

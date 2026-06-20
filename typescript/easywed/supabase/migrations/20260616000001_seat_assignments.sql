@@ -14,3 +14,18 @@ alter table public.tables
 
 alter table public.guests
   add column seat_id text;
+
+-- A seat only means something while the guest is at a table: a non-null seat_id
+-- requires a non-null table_id. (updateGuestSeat always writes both columns
+-- together, so the client never trips this — it's a guard against stray rows.)
+alter table public.guests
+  add constraint guests_seat_requires_table
+  check (seat_id is null or table_id is not null);
+
+-- At most one guest may be pinned to a given seat of a given table. Partial so
+-- the many guests with seat_id null (order-fill) don't collide. This is the
+-- backstop for concurrent edits where two clients could otherwise pin the same
+-- seat; the second write fails loudly instead of silently double-booking.
+create unique index guests_unique_seat_per_table
+  on public.guests (table_id, seat_id)
+  where seat_id is not null;

@@ -2,8 +2,9 @@
 
 ### 20.06
 
-- imrpove seat assignment, drag follows table, doesnt go over specified margin.
+- improve seat assignment, drag follows table, doesn't go over specified margin.
 - fix clearing seat
+- group seat assignment popover - at this table / somewhere else / unassigned
 
 ### 19.06
 
