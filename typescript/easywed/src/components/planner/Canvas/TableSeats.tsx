@@ -84,6 +84,12 @@ export const TableSeats = ({
     // the Radix trigger — so we don't open it manually here.
     e.stopPropagation()
     draggedRef.current = false
+    // Capture immediately, not on the first threshold-crossing move. Seat
+    // markers are tiny, so a quick flick onto the table can leave the marker
+    // before any pointermove fires on it — without early capture the move/up
+    // events route to the table underneath instead, stranding the drag state
+    // (it never gets cleared) and leaking a click that opens the table editor.
+    e.currentTarget.setPointerCapture(e.pointerId)
     setDrag({
       seatId,
       startX: e.clientX,
@@ -99,11 +105,11 @@ export const TableSeats = ({
     const dx = e.clientX - drag.startX
     const dy = e.clientY - drag.startY
     const moved = Math.hypot(dx, dy) > DRAG_THRESHOLD
-    // Only capture once it's a real drag, so a plain click still reaches the
-    // popover trigger. Close any open assign popover — the canvas is too busy to
-    // drag a seat and keep the menu up.
+    // Mark as a real drag once past the threshold so the trailing click is
+    // swallowed (a plain click still reaches the popover trigger). Close any
+    // open assign popover — the canvas is too busy to drag a seat and keep the
+    // menu up. Pointer capture is already established in onPointerDown.
     if (moved && !drag.moved) {
-      e.currentTarget.setPointerCapture(e.pointerId)
       draggedRef.current = true
       setOpenSeatId(null)
     }
@@ -114,9 +120,9 @@ export const TableSeats = ({
     (seatId: string, baseX: number, baseY: number) =>
     (e: ReactPointerEvent) => {
       if (!drag || drag.seatId !== seatId) return
+      if (e.currentTarget.hasPointerCapture(e.pointerId))
+        e.currentTarget.releasePointerCapture(e.pointerId)
       if (drag.moved) {
-        if (e.currentTarget.hasPointerCapture(e.pointerId))
-          e.currentTarget.releasePointerCapture(e.pointerId)
         const c = constrainSeatPosition(
           shape,
           widthM,
