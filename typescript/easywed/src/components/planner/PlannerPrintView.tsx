@@ -131,7 +131,7 @@ export const PlannerPrintView = () => {
     >
       <section className="relative flex flex-col items-center justify-center gap-6 p-6 print:min-h-[190mm]">
         <span className="text-7xl font-bold tracking-widest text-gray-800">
-          EZWED
+          easywed.
         </span>
 
         <div className="flex flex-col items-center gap-1 text-center">

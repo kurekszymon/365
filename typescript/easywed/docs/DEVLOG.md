@@ -1,5 +1,10 @@
 # EasyWed — Development Log
 
+### 21.06
+
+- capture pointer in TableSeats on pointer down to avoid bugs with miscalculated pointer position
+- replace EZWED wwith easywed. in planner view
+
 ### 20.06
 
 - improve seat assignment, drag follows table, doesn't go over specified margin.
