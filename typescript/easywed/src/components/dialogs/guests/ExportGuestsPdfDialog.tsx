@@ -11,8 +11,10 @@ import {
 } from "@/components/ui/responsive-dialog"
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
 import { useDialogStore } from "@/stores/dialog.store"
 import { DEFAULT_PRINT_FIELDS } from "@/stores/print.store"
+import { useViewStore } from "@/stores/view.store"
 import { GUEST_FIELDS } from "@/lib/export/guestsCsv"
 import { triggerPdfExport } from "@/lib/export/guestsPdf"
 
@@ -23,6 +25,11 @@ export const ExportGuestsPdfDialog = () => {
   const { t } = useTranslation()
   const [selected, setSelected] =
     useState<Array<GuestField>>(DEFAULT_PRINT_FIELDS)
+  // Mirror the planner's current seat visibility as the default.
+  const [includeSeats, setIncludeSeats] = useState(
+    () => useViewStore.getState().showSeats
+  )
+  const [seatsShowEmpty, setSeatsShowEmpty] = useState(true)
 
   const dialog = useDialogStore(
     useShallow((state) => ({
@@ -70,11 +77,44 @@ export const ExportGuestsPdfDialog = () => {
               ))}
             </FieldContent>
           </Field>
+          <Field orientation="horizontal">
+            <FieldLabel htmlFor="include-seats">
+              {t("export.pdf.include_seats")}
+            </FieldLabel>
+            <Switch
+              id="include-seats"
+              checked={includeSeats}
+              onCheckedChange={setIncludeSeats}
+            />
+          </Field>
+          {includeSeats && (
+            <Field>
+              <FieldContent className="flex-row flex-wrap gap-1.5">
+                <Button
+                  variant={seatsShowEmpty ? "default" : "outline"}
+                  className="rounded-full"
+                  onClick={() => setSeatsShowEmpty(true)}
+                >
+                  {t("export.pdf.seats_all")}
+                </Button>
+                <Button
+                  variant={!seatsShowEmpty ? "default" : "outline"}
+                  className="rounded-full"
+                  onClick={() => setSeatsShowEmpty(false)}
+                >
+                  {t("export.pdf.seats_occupied")}
+                </Button>
+              </FieldContent>
+            </Field>
+          )}
           <Button
             disabled={!canExport}
             onClick={() => {
               dialog.close()
-              triggerPdfExport(orderedSelected)
+              triggerPdfExport(orderedSelected, {
+                includeSeats,
+                seatsShowEmpty,
+              })
             }}
           >
             {t("export.pdf.download")}

@@ -40,6 +40,12 @@ export const PlannerPrintView = () => {
   const { t, i18n } = useTranslation()
 
   const fields = usePrintStore((s) => s.fields)
+  const { includeSeats, seatsShowEmpty } = usePrintStore(
+    useShallow((s) => ({
+      includeSeats: s.includeSeats,
+      seatsShowEmpty: s.seatsShowEmpty,
+    }))
+  )
 
   const { name, date } = useGlobalStore(
     useShallow((s) => ({ name: s.name, date: s.date }))
@@ -117,6 +123,20 @@ export const PlannerPrintView = () => {
     [tables, guests]
   )
 
+  // Guests grouped by tableId for seat rendering. TableSeats resolves seatId
+  // pinning vs order-fill internally, so we just hand it every guest at the table.
+  const seatGuestsByTable = useMemo(() => {
+    const m = new Map<string, Array<Guest>>()
+    if (!includeSeats) return m
+    for (const g of guests) {
+      if (!g.tableId) continue
+      const arr = m.get(g.tableId)
+      if (arr) arr.push(g)
+      else m.set(g.tableId, [g])
+    }
+    return m
+  }, [guests, includeSeats])
+
   const unassignedLabel = t("export.unassigned")
 
   const generatedStr = new Date().toLocaleDateString(i18n.language)
@@ -168,6 +188,11 @@ export const PlannerPrintView = () => {
               table={tbl}
               guestsAssigned={assignedCounts.get(tbl.id) ?? 0}
               ppm={ppm}
+              showSeats={includeSeats}
+              seatGuests={
+                includeSeats ? (seatGuestsByTable.get(tbl.id) ?? []) : undefined
+              }
+              showEmpty={seatsShowEmpty}
             />
           ))}
           {clampedFixtures.map((fix) => (
