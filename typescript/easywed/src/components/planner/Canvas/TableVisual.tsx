@@ -19,6 +19,8 @@ type TableVisualProps = {
   // around the table. Off by default so print and other callers are unaffected.
   seatGuests?: Array<Guest>
   showSeats?: boolean
+  // Forwarded to TableSeats; when false, empty seats are hidden (print "occupied only").
+  showEmpty?: boolean
 } & ComponentProps<"div">
 
 export const TableVisual = ({
@@ -29,6 +31,7 @@ export const TableVisual = ({
   hallBounds,
   seatGuests,
   showSeats,
+  showEmpty,
   className,
   style,
   children,
@@ -133,6 +136,7 @@ export const TableVisual = ({
           guests={seatGuests}
           overrides={table.seats ?? []}
           ppm={ppm}
+          showEmpty={showEmpty}
         />
       )}
       {children}

@@ -15,6 +15,7 @@ import { ExportHeader } from "./Header/Export.header"
 import { GuestsSeated } from "./Header/GuestsSeated.header"
 import { ImportHeader } from "./Header/Import.header"
 import { PlannerPrintView } from "./PlannerPrintView"
+import { usePrintShortcut } from "./usePrintShortcut"
 import { PropertyPanel } from "./PropertyPanel"
 import { ThemeSwitcher } from "./Header/ThemeSwitcher"
 import type { DragEndEvent } from "@dnd-kit/core"
@@ -41,6 +42,8 @@ import { useOpenHall } from "@/hooks/useOpenHall"
 
 export const Planner = () => {
   const { t } = useTranslation()
+
+  usePrintShortcut()
 
   const openDialog = useDialogStore((state) => state.open)
   const role = useGlobalStore((state) => state.role)

@@ -27,6 +27,9 @@ type TableSeatsProps = {
   guests: Array<Guest>
   overrides: Array<Seat>
   ppm: number
+  // When false, empty (unoccupied) seat positions are not rendered. Defaults to
+  // true so the canvas is unaffected; used by the print view's "occupied only" mode.
+  showEmpty?: boolean
 }
 
 type DragState = {
@@ -59,6 +62,7 @@ export const TableSeats = ({
   guests,
   overrides,
   ppm,
+  showEmpty = true,
 }: TableSeatsProps) => {
   const { t } = useTranslation()
   const isMeasuring = useViewStore((state) => state.isMeasuring)
@@ -166,6 +170,7 @@ export const TableSeats = ({
       {placed.map((seat) => {
         const guest = occupantBySeat.get(seat.id) ?? null
         const occupied = guest != null
+        if (!showEmpty && !occupied) return null
         const isDragging = drag?.seatId === seat.id
         // While dragging, preview the constrained position (band hugging the
         // table edge) so the seat can't visually land on or far from the table.
