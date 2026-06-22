@@ -6,6 +6,7 @@ import { TableVisual } from "./Canvas/TableVisual"
 import { FixtureVisual } from "./Canvas/FixtureVisual"
 import { MeasureOverlay } from "./Canvas/MeasureOverlay"
 import { clampToHall } from "./Canvas/utils"
+import { SEAT_MAX_OFFSET_M } from "./Canvas/seatLayout"
 import type { Guest } from "@/stores/planner.store"
 import type { GuestField } from "@/lib/export/guestsCsv"
 import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
@@ -14,6 +15,7 @@ import { usePrintStore } from "@/stores/print.store"
 import { useViewStore } from "@/stores/view.store"
 import { useMeasuresStore } from "@/stores/measures.store"
 import { groupGuestsByTable } from "@/lib/export/guests"
+import { cn } from "@/lib/utils"
 
 // TODO: only planner is printable - other pages would be blank
 // A4 landscape minus 10mm margins ≈ 277mm × 190mm.
@@ -40,12 +42,15 @@ export const PlannerPrintView = () => {
   const { t, i18n } = useTranslation()
 
   const fields = usePrintStore((s) => s.fields)
-  const { includeSeats, seatsShowEmpty } = usePrintStore(
-    useShallow((s) => ({
-      includeSeats: s.includeSeats,
-      seatsShowEmpty: s.seatsShowEmpty,
-    }))
-  )
+  const { includeSeats, seatsShowEmpty, includeGrid, fitToContent } =
+    usePrintStore(
+      useShallow((s) => ({
+        includeSeats: s.includeSeats,
+        seatsShowEmpty: s.seatsShowEmpty,
+        includeGrid: s.includeGrid,
+        fitToContent: s.fitToContent,
+      }))
+    )
 
   const { name, date } = useGlobalStore(
     useShallow((s) => ({ name: s.name, date: s.date }))
@@ -80,16 +85,6 @@ export const PlannerPrintView = () => {
     return m
   }, [tables, guests])
 
-  const ppm = useMemo(() => {
-    if (hall.width <= 0 || hall.height <= 0) return 40
-    return Math.floor(
-      Math.min(
-        (PRINT_AREA_PX.width - SECTION_PADDING_PX) / hall.width,
-        (PRINT_AREA_PX.height - SECTION_PADDING_PX) / hall.height
-      )
-    )
-  }, [hall.width, hall.height])
-
   const clampedTables = useMemo(
     () =>
       tables.map((table) => ({
@@ -117,6 +112,69 @@ export const PlannerPrintView = () => {
       })),
     [fixtures, hall]
   )
+
+  // Tightest rect (meters) around the placed tables + fixtures, padded so seat
+  // markers (which sit outside the table edge) aren't clipped. Falls back to the
+  // full hall when there's nothing to frame. Used only in fit-to-content mode.
+  const contentBounds = useMemo(() => {
+    let minX = Infinity
+    let minY = Infinity
+    let maxX = -Infinity
+    let maxY = -Infinity
+    const add = (x: number, y: number, w: number, h: number) => {
+      minX = Math.min(minX, x)
+      minY = Math.min(minY, y)
+      maxX = Math.max(maxX, x + w)
+      maxY = Math.max(maxY, y + h)
+    }
+    for (const tbl of clampedTables) {
+      const s = getEffectiveSize(tbl.size, tbl.rotation)
+      add(
+        tbl.position.x,
+        tbl.position.y,
+        s.width,
+        tbl.shape === "round" ? s.width : s.height
+      )
+    }
+    for (const fix of clampedFixtures) {
+      const s = getEffectiveSize(fix.size, fix.rotation)
+      add(fix.position.x, fix.position.y, s.width, s.height)
+    }
+    if (!Number.isFinite(minX)) {
+      return { x: 0, y: 0, width: hall.width, height: hall.height }
+    }
+    const pad = includeSeats ? SEAT_MAX_OFFSET_M + 0.4 : 0.4
+    return {
+      x: minX - pad,
+      y: minY - pad,
+      width: maxX - minX + pad * 2,
+      height: maxY - minY + pad * 2,
+    }
+  }, [clampedTables, clampedFixtures, includeSeats, hall.width, hall.height])
+
+  // Scale (px per meter) and origin offset. In fit mode we frame the content
+  // bbox; otherwise the full hall (origin 0,0) as before.
+  const { ppm, originX, originY, viewWidth, viewHeight } = useMemo(() => {
+    const frame = fitToContent
+      ? contentBounds
+      : { x: 0, y: 0, width: hall.width, height: hall.height }
+    const fit =
+      frame.width <= 0 || frame.height <= 0
+        ? 40
+        : Math.floor(
+            Math.min(
+              (PRINT_AREA_PX.width - SECTION_PADDING_PX) / frame.width,
+              (PRINT_AREA_PX.height - SECTION_PADDING_PX) / frame.height
+            )
+          )
+    return {
+      ppm: fit,
+      originX: frame.x,
+      originY: frame.y,
+      viewWidth: frame.width,
+      viewHeight: frame.height,
+    }
+  }, [fitToContent, contentBounds, hall.width, hall.height])
 
   const { groups, unassigned } = useMemo(
     () => groupGuestsByTable(tables, guests),
@@ -175,17 +233,29 @@ export const PlannerPrintView = () => {
 
       <section className="flex items-center justify-center p-6 print:min-h-[190mm] print:break-before-page print:break-inside-avoid">
         <HallBackground
-          hallWidth={hall.width * ppm}
-          hallHeight={hall.height * ppm}
+          hallWidth={viewWidth * ppm}
+          hallHeight={viewHeight * ppm}
           ppm={ppm}
-          gridStyle={gridStyle}
+          gridStyle={includeGrid ? gridStyle : "off"}
           gridSpacing={gridSpacing}
-          className="overflow-hidden border border-planner-hall"
+          className={cn(
+            fitToContent ? "overflow-visible" : "overflow-hidden",
+            // The hall outline only frames the full hall; cropping (fit) drops it.
+            includeGrid && !fitToContent && "border border-planner-hall",
+            // Without the grid, render bare — no paper background, no border.
+            !includeGrid && "bg-transparent"
+          )}
         >
           {clampedTables.map((tbl) => (
             <TableVisual
               key={tbl.id}
-              table={tbl}
+              table={{
+                ...tbl,
+                position: {
+                  x: tbl.position.x - originX,
+                  y: tbl.position.y - originY,
+                },
+              }}
               guestsAssigned={assignedCounts.get(tbl.id) ?? 0}
               ppm={ppm}
               showSeats={includeSeats}
@@ -196,20 +266,32 @@ export const PlannerPrintView = () => {
             />
           ))}
           {clampedFixtures.map((fix) => (
-            <FixtureVisual key={fix.id} fixture={fix} ppm={ppm} />
+            <FixtureVisual
+              key={fix.id}
+              fixture={{
+                ...fix,
+                position: {
+                  x: fix.position.x - originX,
+                  y: fix.position.y - originY,
+                },
+              }}
+              ppm={ppm}
+            />
           ))}
-          <MeasureOverlay
-            measurements={measurements}
-            ppm={ppm}
-            hallWidthPx={hall.width * ppm}
-            hallHeightPx={hall.height * ppm}
-            // mandatory props
-            pendingPoint={null}
-            cursorPos={null}
-            activeDrag={null}
-            resolvePoint={(x, y) => ({ x, y })}
-            onEndpointUpdate={() => {}}
-          />
+          {!fitToContent && (
+            <MeasureOverlay
+              measurements={measurements}
+              ppm={ppm}
+              hallWidthPx={hall.width * ppm}
+              hallHeightPx={hall.height * ppm}
+              // mandatory props
+              pendingPoint={null}
+              cursorPos={null}
+              activeDrag={null}
+              resolvePoint={(x, y) => ({ x, y })}
+              onEndpointUpdate={() => {}}
+            />
+          )}
         </HallBackground>
       </section>
 

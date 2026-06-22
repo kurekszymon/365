@@ -16,9 +16,14 @@ export const usePrintShortcut = () => {
       ) {
         e.preventDefault()
         flushSync(() => {
+          const view = useViewStore.getState()
           usePrintStore.getState().setSeatOptions({
-            includeSeats: useViewStore.getState().showSeats,
+            includeSeats: view.showSeats,
             seatsShowEmpty: true,
+          })
+          usePrintStore.getState().setLayoutOptions({
+            includeGrid: view.gridStyle !== "off",
+            fitToContent: false,
           })
         })
         window.print()

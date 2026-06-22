@@ -275,6 +275,8 @@
   "export.pdf.include_seats": "Dołącz rozmieszczenie miejsc",
   "export.pdf.seats_all": "Wszystkie miejsca",
   "export.pdf.seats_occupied": "Tylko zajęte",
+  "export.pdf.include_grid": "Pokaż siatkę",
+  "export.pdf.fit_to_page": "Dopasuj do strony",
   "export.pdf.download": "Pobierz PDF",
   "export.pdf.wedding_date": "Data ślubu: {{date}}",
   "export.pdf.generated_on": "Wygenerowano {{date}}",
