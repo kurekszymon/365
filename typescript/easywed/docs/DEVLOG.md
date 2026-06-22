@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 22.06
+
+- add fit to page / remove grid in pdf export
+
 ### 21.06
 
 - capture pointer in TableSeats on pointer down to avoid bugs with miscalculated pointer position

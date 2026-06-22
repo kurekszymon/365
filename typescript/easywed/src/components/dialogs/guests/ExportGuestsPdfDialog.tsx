@@ -30,6 +30,11 @@ export const ExportGuestsPdfDialog = () => {
     () => useViewStore.getState().showSeats
   )
   const [seatsShowEmpty, setSeatsShowEmpty] = useState(true)
+  // Mirror the planner's grid; fit-to-page is off by default (full hall).
+  const [includeGrid, setIncludeGrid] = useState(
+    () => useViewStore.getState().gridStyle !== "off"
+  )
+  const [fitToContent, setFitToContent] = useState(false)
 
   const dialog = useDialogStore(
     useShallow((state) => ({
@@ -107,6 +112,26 @@ export const ExportGuestsPdfDialog = () => {
               </FieldContent>
             </Field>
           )}
+          <Field orientation="horizontal">
+            <FieldLabel htmlFor="include-grid">
+              {t("export.pdf.include_grid")}
+            </FieldLabel>
+            <Switch
+              id="include-grid"
+              checked={includeGrid}
+              onCheckedChange={setIncludeGrid}
+            />
+          </Field>
+          <Field orientation="horizontal">
+            <FieldLabel htmlFor="fit-to-page">
+              {t("export.pdf.fit_to_page")}
+            </FieldLabel>
+            <Switch
+              id="fit-to-page"
+              checked={fitToContent}
+              onCheckedChange={setFitToContent}
+            />
+          </Field>
           <Button
             disabled={!canExport}
             onClick={() => {
@@ -114,6 +139,8 @@ export const ExportGuestsPdfDialog = () => {
               triggerPdfExport(orderedSelected, {
                 includeSeats,
                 seatsShowEmpty,
+                includeGrid,
+                fitToContent,
               })
             }}
           >

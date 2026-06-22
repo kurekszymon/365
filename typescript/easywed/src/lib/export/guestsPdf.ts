@@ -5,18 +5,36 @@ import { usePrintStore } from "@/stores/print.store"
 export { groupGuestsByTable } from "./guests"
 export type { TableGroup } from "./guests"
 
+type PdfExportOptions = {
+  includeSeats: boolean
+  seatsShowEmpty: boolean
+  includeGrid: boolean
+  fitToContent: boolean
+}
+
+const DEFAULT_OPTIONS: PdfExportOptions = {
+  includeSeats: false,
+  seatsShowEmpty: true,
+  includeGrid: true,
+  fitToContent: false,
+}
+
 export const triggerPdfExport = (
   fields: Array<GuestField>,
-  seats: { includeSeats: boolean; seatsShowEmpty: boolean } = {
-    includeSeats: false,
-    seatsShowEmpty: true,
-  }
+  options: PdfExportOptions = DEFAULT_OPTIONS
 ) => {
   // flushSync forces React to commit the store updates before window.print()
   // https:// react.dev/reference/react-dom/flushSync#usage
   flushSync(() => {
     usePrintStore.getState().setFields(fields)
-    usePrintStore.getState().setSeatOptions(seats)
+    usePrintStore.getState().setSeatOptions({
+      includeSeats: options.includeSeats,
+      seatsShowEmpty: options.seatsShowEmpty,
+    })
+    usePrintStore.getState().setLayoutOptions({
+      includeGrid: options.includeGrid,
+      fitToContent: options.fitToContent,
+    })
   })
   window.print()
 }
