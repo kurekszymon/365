@@ -3,6 +3,7 @@
 ### 23.06
 
 - added "show hall outline" switch in pdf export drawer
+- prevent context menu when target != hall
 
 ### 22.06
 

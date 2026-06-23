@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { findCapturedElement } from "./utils"
 import type { PropsWithChildren, ReactNode } from "react"
 import type { Position } from "@/stores/planner.store"
 import { cn } from "@/lib/utils"
@@ -42,6 +43,12 @@ export const CanvasContextMenu = ({
       <ContextMenuTrigger
         asChild
         onContextMenu={(e) => {
+          // On touch, a long-press while dragging a table fires contextmenu on
+          // the table — suppress the menu unless the target is the hall surface.
+          if (findCapturedElement(e.target)?.kind !== "hall") {
+            e.preventDefault()
+            return
+          }
           setCapturedPos({ x: e.clientX, y: e.clientY })
           setInHall(isInHallBounds(e.clientX, e.clientY))
         }}
