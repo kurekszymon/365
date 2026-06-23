@@ -23,6 +23,7 @@ export const usePrintShortcut = () => {
           })
           usePrintStore.getState().setLayoutOptions({
             includeGrid: view.gridStyle !== "off",
+            showHallOutline: true,
             fitToContent: false,
           })
         })

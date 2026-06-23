@@ -30,10 +30,11 @@ export const ExportGuestsPdfDialog = () => {
     () => useViewStore.getState().showSeats
   )
   const [seatsShowEmpty, setSeatsShowEmpty] = useState(true)
-  // Mirror the planner's grid; fit-to-page is off by default (full hall).
+  // Mirror the planner's grid; outline on and fit-to-page off by default.
   const [includeGrid, setIncludeGrid] = useState(
     () => useViewStore.getState().gridStyle !== "off"
   )
+  const [showHallOutline, setShowHallOutline] = useState(true)
   const [fitToContent, setFitToContent] = useState(false)
 
   const dialog = useDialogStore(
@@ -123,6 +124,16 @@ export const ExportGuestsPdfDialog = () => {
             />
           </Field>
           <Field orientation="horizontal">
+            <FieldLabel htmlFor="show-hall-outline">
+              {t("export.pdf.show_hall_outline")}
+            </FieldLabel>
+            <Switch
+              id="show-hall-outline"
+              checked={showHallOutline}
+              onCheckedChange={setShowHallOutline}
+            />
+          </Field>
+          <Field orientation="horizontal">
             <FieldLabel htmlFor="fit-to-page">
               {t("export.pdf.fit_to_page")}
             </FieldLabel>
@@ -140,6 +151,7 @@ export const ExportGuestsPdfDialog = () => {
                 includeSeats,
                 seatsShowEmpty,
                 includeGrid,
+                showHallOutline,
                 fitToContent,
               })
             }}

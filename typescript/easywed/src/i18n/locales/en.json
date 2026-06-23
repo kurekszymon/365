@@ -264,6 +264,7 @@
   "export.pdf.seats_all": "All seats",
   "export.pdf.seats_occupied": "Occupied only",
   "export.pdf.include_grid": "Show grid",
+  "export.pdf.show_hall_outline": "Show hall outline",
   "export.pdf.fit_to_page": "Fit to page",
   "export.pdf.download": "Download PDF",
   "export.pdf.wedding_date": "Wedding date: {{date}}",

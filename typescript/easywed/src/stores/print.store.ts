@@ -9,6 +9,9 @@ type State = {
   seatsShowEmpty: boolean
   // Whether the printed hall renders grid lines.
   includeGrid: boolean
+  // Whether to draw the hall outline + paper background; off renders the tables
+  // bare (transparent, no border).
+  showHallOutline: boolean
   // When set, the hall is zoomed to the bounding box of tables + seats (fit to
   // page) instead of rendering the full hall with its empty margins.
   fitToContent: boolean
@@ -22,6 +25,7 @@ type Action = {
   }) => void
   setLayoutOptions: (opts: {
     includeGrid?: boolean
+    showHallOutline?: boolean
     fitToContent?: boolean
   }) => void
 }
@@ -33,6 +37,7 @@ export const usePrintStore = create<State & Action>((set) => ({
   includeSeats: false,
   seatsShowEmpty: true,
   includeGrid: true,
+  showHallOutline: true,
   fitToContent: false,
 
   setFields: (fields) => set({ fields }),
@@ -41,9 +46,10 @@ export const usePrintStore = create<State & Action>((set) => ({
       includeSeats,
       seatsShowEmpty: seatsShowEmpty ?? state.seatsShowEmpty,
     })),
-  setLayoutOptions: ({ includeGrid, fitToContent }) =>
+  setLayoutOptions: ({ includeGrid, showHallOutline, fitToContent }) =>
     set((state) => ({
       includeGrid: includeGrid ?? state.includeGrid,
+      showHallOutline: showHallOutline ?? state.showHallOutline,
       fitToContent: fitToContent ?? state.fitToContent,
     })),
 }))

@@ -9,6 +9,7 @@ type PdfExportOptions = {
   includeSeats: boolean
   seatsShowEmpty: boolean
   includeGrid: boolean
+  showHallOutline: boolean
   fitToContent: boolean
 }
 
@@ -16,6 +17,7 @@ const DEFAULT_OPTIONS: PdfExportOptions = {
   includeSeats: false,
   seatsShowEmpty: true,
   includeGrid: true,
+  showHallOutline: true,
   fitToContent: false,
 }
 
@@ -33,6 +35,7 @@ export const triggerPdfExport = (
     })
     usePrintStore.getState().setLayoutOptions({
       includeGrid: options.includeGrid,
+      showHallOutline: options.showHallOutline,
       fitToContent: options.fitToContent,
     })
   })

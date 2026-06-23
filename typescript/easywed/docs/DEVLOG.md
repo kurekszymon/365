@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 23.06
+
+- added "show hall outline" switch in pdf export drawer
+
 ### 22.06
 
 - add fit to page / remove grid in pdf export

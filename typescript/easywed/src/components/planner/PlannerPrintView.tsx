@@ -42,15 +42,21 @@ export const PlannerPrintView = () => {
   const { t, i18n } = useTranslation()
 
   const fields = usePrintStore((s) => s.fields)
-  const { includeSeats, seatsShowEmpty, includeGrid, fitToContent } =
-    usePrintStore(
-      useShallow((s) => ({
-        includeSeats: s.includeSeats,
-        seatsShowEmpty: s.seatsShowEmpty,
-        includeGrid: s.includeGrid,
-        fitToContent: s.fitToContent,
-      }))
-    )
+  const {
+    includeSeats,
+    seatsShowEmpty,
+    includeGrid,
+    showHallOutline,
+    fitToContent,
+  } = usePrintStore(
+    useShallow((s) => ({
+      includeSeats: s.includeSeats,
+      seatsShowEmpty: s.seatsShowEmpty,
+      includeGrid: s.includeGrid,
+      showHallOutline: s.showHallOutline,
+      fitToContent: s.fitToContent,
+    }))
+  )
 
   const { name, date } = useGlobalStore(
     useShallow((s) => ({ name: s.name, date: s.date }))
@@ -241,9 +247,9 @@ export const PlannerPrintView = () => {
           className={cn(
             fitToContent ? "overflow-visible" : "overflow-hidden",
             // The hall outline only frames the full hall; cropping (fit) drops it.
-            includeGrid && !fitToContent && "border border-planner-hall",
-            // Without the grid, render bare — no paper background, no border.
-            !includeGrid && "bg-transparent"
+            showHallOutline && !fitToContent && "border border-planner-hall",
+            // Without the outline, render bare — no paper background, no border.
+            !showHallOutline && "bg-transparent"
           )}
         >
           {clampedTables.map((tbl) => (
