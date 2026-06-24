@@ -288,6 +288,8 @@
   "import.dxf.create.failed": "Failed to create the wedding. Please try again.",
   "import.dxf.create.committing": "Creating wedding…",
   "import.dxf.choose_file": "Choose CAD (.dxf) file",
+  "import.dxf.drop_here": "Drag a CAD (.dxf) file here or click to browse",
+  "import.dxf.invalid_file": "That doesn't look like a .dxf file. Please drop a CAD (.dxf) file.",
   "import.dxf.next": "Next",
   "import.dxf.back": "Back",
   "import.dxf.commit": "Replace current layout",

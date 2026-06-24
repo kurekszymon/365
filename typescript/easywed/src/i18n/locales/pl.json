@@ -300,6 +300,8 @@
   "import.dxf.create.failed": "Nie udało się utworzyć wesela. Spróbuj ponownie.",
   "import.dxf.create.committing": "Tworzenie wesela…",
   "import.dxf.choose_file": "Wybierz plik CAD (.dxf)",
+  "import.dxf.drop_here": "Przeciągnij tutaj plik CAD (.dxf) lub kliknij, aby wybrać",
+  "import.dxf.invalid_file": "To nie wygląda na plik .dxf. Przeciągnij plik CAD (.dxf).",
   "import.dxf.next": "Dalej",
   "import.dxf.back": "Wstecz",
   "import.dxf.commit": "Zastąp obecny układ",

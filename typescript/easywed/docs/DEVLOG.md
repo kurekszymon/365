@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 24.06
+
+- add dropzone to import dxf dialogs
+
 ### 23.06
 
 - added "show hall outline" switch in pdf export drawer
