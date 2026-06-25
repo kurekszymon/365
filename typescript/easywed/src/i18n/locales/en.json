@@ -157,6 +157,8 @@
   "guests.import.title": "Import guests from CSV or Excel",
   "guests.import.intro": "Upload a .csv or .xlsx file. We'll detect the columns, let you map them, and preview before adding.",
   "guests.import.choose_file": "Choose CSV or Excel file",
+  "guests.import.drop_here": "Drag a .csv or .xlsx file here or click to browse",
+  "guests.import.invalid_file": "That doesn't look like a .csv or .xlsx file. Please drop a CSV or Excel file.",
   "guests.import.map_columns": "Match each field to a column from your file.",
   "guests.import.col.name": "Name",
   "guests.import.col.table": "Table",

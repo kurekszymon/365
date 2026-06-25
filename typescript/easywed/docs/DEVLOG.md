@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 25.06
+
+- unify dropzone compoonent, use it across import guests and import dxf
+
 ### 24.06
 
 - add dropzone to import dxf dialogs

@@ -161,6 +161,8 @@
   "guests.import.title": "Importuj gości z pliku CSV lub Excel",
   "guests.import.intro": "Wgraj plik .csv lub .xlsx. Wykryjemy kolumny, pozwolimy je dopasować i pokażemy podgląd przed dodaniem.",
   "guests.import.choose_file": "Wybierz plik CSV lub Excel",
+  "guests.import.drop_here": "Przeciągnij tutaj plik .csv lub .xlsx lub kliknij, aby wybrać",
+  "guests.import.invalid_file": "To nie wygląda na plik .csv ani .xlsx. Przeciągnij plik CSV lub Excel.",
   "guests.import.map_columns": "Dopasuj każde pole do kolumny z Twojego pliku.",
   "guests.import.col.name": "Imię",
   "guests.import.col.table": "Stół",

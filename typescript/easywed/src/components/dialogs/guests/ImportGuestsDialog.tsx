@@ -1,7 +1,7 @@
-import { useRef } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import type { Guest } from "@/stores/planner.store"
+import { FileDropZone } from "@/components/dialogs/shared/FileDropZone"
 import { useGuestImportWizard } from "@/components/dialogs/shared/useGuestImportWizard"
 import { GuestImportMappingStep } from "@/components/dialogs/guests/GuestImportMappingStep"
 import { GuestImportResultPreview } from "@/components/dialogs/guests/GuestImportResultPreview"
@@ -23,7 +23,6 @@ const LARGE_IMPORT_THRESHOLD = 1000
 
 export const ImportGuestsDialog = () => {
   const { t } = useTranslation()
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const {
     stage,
     reset,
@@ -81,21 +80,16 @@ export const ImportGuestsDialog = () => {
               <p className="text-sm text-muted-foreground">
                 {t("guests.import.intro")}
               </p>
-              <input
-                ref={fileInputRef}
-                type="file"
+              <FileDropZone
                 accept=".csv,.xlsx"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  // Reset so picking the same file after an error re-fires onChange.
-                  e.target.value = ""
-                  if (file) void onFileChosen(file)
-                }}
+                extensions={[".csv", ".xlsx"]}
+                label={t("guests.import.drop_here")}
+                hint={t("guests.import.choose_file")}
+                onFile={(file) => void onFileChosen(file)}
+                onInvalidFile={() =>
+                  setErrorMessage(t("guests.import.invalid_file"))
+                }
               />
-              <Button onClick={() => fileInputRef.current?.click()}>
-                {t("guests.import.choose_file")}
-              </Button>
             </div>
           )}
 

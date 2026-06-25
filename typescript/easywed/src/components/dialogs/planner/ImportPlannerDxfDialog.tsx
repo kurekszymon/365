@@ -1,9 +1,9 @@
-import { useRef, useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import type { ImportPreview } from "@/lib/import/plannerDxf"
 import { DxfLayerMappingStep } from "@/components/dialogs/shared/DxfLayerMappingStep"
 import { DxfPreviewStep } from "@/components/dialogs/shared/DxfPreviewStep"
+import { FileDropZone } from "@/components/dialogs/shared/FileDropZone"
 import { useDxfImportWizard } from "@/components/dialogs/shared/useDxfImportWizard"
 import {
   ResponsiveDialog,
@@ -19,8 +19,6 @@ import { replacePlannerLayout } from "@/lib/sync/mutations"
 
 export const ImportPlannerDxfDialog = () => {
   const { t } = useTranslation()
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
   const {
     stage,
     unit,
@@ -44,18 +42,6 @@ export const ImportPlannerDxfDialog = () => {
   const onClose = () => {
     reset()
     dialog.close()
-  }
-
-  const onDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-    if (e.dataTransfer.files.length === 0) return
-    const file = e.dataTransfer.files[0]
-    if (!file.name.toLowerCase().endsWith(".dxf")) {
-      setErrorMessage(t("import.dxf.invalid_file"))
-      return
-    }
-    void onFileChosen(file)
   }
 
   const onCommit = async (preview: ImportPreview) => {
@@ -112,42 +98,16 @@ export const ImportPlannerDxfDialog = () => {
               <p className="text-sm text-muted-foreground">
                 {t("import.dxf.intro")}
               </p>
-              <input
-                ref={fileInputRef}
-                type="file"
+              <FileDropZone
                 accept=".dxf"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  // Clear the input value so picking the same file again still
-                  // fires onChange — otherwise the "Try again" loop is flaky
-                  // after a parse error.
-                  e.target.value = ""
-                  if (file) void onFileChosen(file)
-                }}
+                extensions={[".dxf"]}
+                label={t("import.dxf.drop_here")}
+                hint={t("import.dxf.choose_file")}
+                onFile={(file) => void onFileChosen(file)}
+                onInvalidFile={() =>
+                  setErrorMessage(t("import.dxf.invalid_file"))
+                }
               />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => {
-                  e.preventDefault()
-                  setIsDragging(true)
-                }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={onDrop}
-                className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
-                  isDragging
-                    ? "border-primary bg-primary/5"
-                    : "border-input hover:border-primary/50"
-                }`}
-              >
-                <span className="text-sm font-medium">
-                  {t("import.dxf.drop_here")}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {t("import.dxf.choose_file")}
-                </span>
-              </button>
             </div>
           )}
 
