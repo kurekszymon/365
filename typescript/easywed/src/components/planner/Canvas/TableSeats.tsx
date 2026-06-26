@@ -78,7 +78,7 @@ export const TableSeats = ({
 
   const occupantBySeat = resolveSeatOccupants(placed, guests)
 
-  const seatPx = clamp(ppm * 0.34, 12, 22)
+  const seatPx = clamp(ppm * 0.34, 12, 44)
   const showInitials = seatPx >= 14
 
   const onPointerDown = (seatId: string) => (e: ReactPointerEvent) => {
