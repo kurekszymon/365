@@ -36,6 +36,12 @@ export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
       return
 
     startRef.current = { clientX: e.clientX, clientY: e.clientY, pan }
+    // Capture the pointer so move/up keep firing even when it leaves the
+    // (overflow-hidden) canvas bounds. Without this, releasing outside the
+    // container never fires pointerup — the pan stays "stuck" and resumes from
+    // a stale start when the pointer re-enters. setPan already clamps, so the
+    // hall stays pinned to its last valid position.
+    e.currentTarget.setPointerCapture(e.pointerId)
   }
 
   function onPointerMove(e: React.PointerEvent) {

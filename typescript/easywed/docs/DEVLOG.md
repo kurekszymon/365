@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 26.06
+
+- fix canvas pan - allow dropping out of bounds and clamp hall
+
 ### 25.06
 
 - unify dropzone compoonent, use it across import guests and import dxf
