@@ -215,7 +215,9 @@
   "canvas.grid.spacing_tooltip": "Controls how far apart grid lines are drawn in the hall",
 
   "canvas.snap.off": "Off",
+  "canvas.snap.label": "Snap distance",
   "canvas.snap.tooltip": "Tables snap to this distance when dropped",
+  "canvas.view_section": "View",
   "canvas.scale.tooltip": "Click to reset zoom",
   "canvas.zoom.in": "Zoom in",
   "canvas.zoom.out": "Zoom out",

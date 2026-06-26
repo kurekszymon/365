@@ -227,7 +227,9 @@
   "canvas.grid.spacing_tooltip": "Określa odległość między liniami siatki w sali",
 
   "canvas.snap.off": "Wyłączone",
+  "canvas.snap.label": "Odległość przyciągania",
   "canvas.snap.tooltip": "Stoły wyrównują się do tej odległości po upuszczeniu",
+  "canvas.view_section": "Widok",
   "canvas.scale.tooltip": "Kliknij, aby zresetować zoom",
   "canvas.zoom.in": "Powiększ",
   "canvas.zoom.out": "Pomniejsz",

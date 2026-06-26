@@ -3,6 +3,8 @@
 ### 26.06
 
 - fix canvas pan - allow dropping out of bounds and clamp hall
+- make seats bigger when zoomed in
+- added view controls - measure/seats/grid style/grid snap to canvas context menu
 
 ### 25.06
 

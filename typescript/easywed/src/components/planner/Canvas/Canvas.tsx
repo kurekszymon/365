@@ -16,6 +16,7 @@ import { ScalePill } from "./ScalePill"
 import { DimensionLabel } from "./DimensionLabel"
 import { CanvasContextMenu } from "./CanvasContextMenu"
 import { CanvasContextMenuItem } from "./CanvasContextMenuItem"
+import { CanvasViewMenu } from "./CanvasViewMenu"
 import { CanvasEmptyState } from "./CanvasEmptyState"
 import { HallSurface } from "./HallSurface"
 import { findCapturedElement, snapPositionToGrid } from "./utils"
@@ -28,6 +29,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import {
+  ContextMenuLabel,
+  ContextMenuSeparator,
+} from "@/components/ui/context-menu"
 import {
   DEFAULT_FIXTURE,
   DEFAULT_TABLE,
@@ -226,6 +231,10 @@ export const Canvas = () => {
               <LayoutPanelLeftIcon className="size-4" />
               {t("fixtures.add")}
             </CanvasContextMenuItem>
+
+            <ContextMenuSeparator />
+            <ContextMenuLabel>{t("canvas.view_section")}</ContextMenuLabel>
+            <CanvasViewMenu />
           </>
         )
       }}
