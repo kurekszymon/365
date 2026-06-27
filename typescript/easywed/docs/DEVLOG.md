@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 27.06
+
+- support clipboard for tables/fixtures (allow copy paste)
+
 ### 26.06
 
 - fix canvas pan - allow dropping out of bounds and clamp hall

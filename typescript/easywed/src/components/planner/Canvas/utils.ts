@@ -68,6 +68,11 @@ export const clamp = (value: number, min: number, max: number) => {
   return Math.max(min, Math.min(max, value))
 }
 
+// Diameter (px) of a seat marker at a given pixels-per-meter. Scales with zoom
+// but stays legible/tappable at the extremes. Shared by the seat renderer and
+// anything that needs to clear the seat ring (e.g. the table toolbar offset).
+export const seatSizePx = (ppm: number) => clamp(ppm * 0.34, 12, 44)
+
 export const clampToHall = (
   pos: Position,
   tableSize: Size,

@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { findCapturedElement } from "./utils"
+import type { CapturedElement } from "./utils"
 import type { PropsWithChildren, ReactNode } from "react"
 import type { Position } from "@/stores/planner.store"
 import { cn } from "@/lib/utils"
@@ -8,10 +9,13 @@ import {
   ContextMenuContent,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
+import { useIsMobile } from "@/hooks/useMediaQuery"
 
 type RenderItemsArgs = {
   position: Position
   inHall: boolean
+  // The canvas element the menu was opened on (kind "hall" when on empty hall).
+  target: CapturedElement
 }
 
 interface Props {
@@ -26,11 +30,13 @@ export const CanvasContextMenu = ({
   isInHallBounds,
   renderItems,
 }: PropsWithChildren<Props>) => {
+  const isMobile = useIsMobile()
   const [capturedPos, setCapturedPos] = useState<{ x: number; y: number }>({
     x: 0,
     y: 0,
   })
   const [inHall, setInHall] = useState(false)
+  const [target, setTarget] = useState<CapturedElement>({ kind: "hall" })
   // hack to render at correct position
   const [contentKey, setContentKey] = useState(0)
 
@@ -43,14 +49,18 @@ export const CanvasContextMenu = ({
       <ContextMenuTrigger
         asChild
         onContextMenu={(e) => {
+          const captured = findCapturedElement(e.target)
           // On touch, a long-press while dragging a table fires contextmenu on
-          // the table — suppress the menu unless the target is the hall surface.
-          if (findCapturedElement(e.target)?.kind !== "hall") {
+          // the table — so on mobile keep the menu suppressed for elements (the
+          // on-canvas action buttons cover copy/delete there). With a mouse,
+          // right-clicking a table/fixture opens the menu with copy actions.
+          if (!captured || (captured.kind !== "hall" && isMobile)) {
             e.preventDefault()
             return
           }
           setCapturedPos({ x: e.clientX, y: e.clientY })
           setInHall(isInHallBounds(e.clientX, e.clientY))
+          setTarget(captured)
         }}
       >
         {children}
@@ -68,6 +78,7 @@ export const CanvasContextMenu = ({
         {renderItems({
           position: viewportToHall(capturedPos.x, capturedPos.y),
           inHall,
+          target,
         })}
       </ContextMenuContent>
     </ContextMenu>

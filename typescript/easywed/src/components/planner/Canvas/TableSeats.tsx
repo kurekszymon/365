@@ -1,6 +1,6 @@
 import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { clamp } from "./utils"
+import { seatSizePx } from "./utils"
 import {
   constrainSeatPosition,
   effectiveSeats,
@@ -78,7 +78,7 @@ export const TableSeats = ({
 
   const occupantBySeat = resolveSeatOccupants(placed, guests)
 
-  const seatPx = clamp(ppm * 0.34, 12, 44)
+  const seatPx = seatSizePx(ppm)
   const showInitials = seatPx >= 14
 
   const onPointerDown = (seatId: string) => (e: ReactPointerEvent) => {
