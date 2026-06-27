@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react"
 import { useShallow } from "zustand/react/shallow"
 import {
   ArmchairIcon,
+  ClipboardPasteIcon,
   DotIcon,
   Grid2x2XIcon,
   Grid3x3Icon,
@@ -22,6 +23,7 @@ import { HallSurface } from "./HallSurface"
 import { findCapturedElement, snapPositionToGrid } from "./utils"
 import { useHallGeometry } from "./useHallGeometry"
 import { useCanvasPan } from "./useCanvasPan"
+import { useCanvasClipboard } from "./useCanvasClipboard"
 import type { HallSurfaceMethods } from "./HallSurface"
 import type { GridStyle, SnapStep } from "@/stores/view.store"
 import {
@@ -40,6 +42,7 @@ import {
 } from "@/stores/planner.store"
 import { ZOOM_MAX, ZOOM_MIN, useViewStore } from "@/stores/view.store"
 import { usePanelStore } from "@/stores/panel.store"
+import { useClipboardStore } from "@/stores/clipboard.store"
 import { useElementSize } from "@/hooks/useElementSize"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 import { useOpenHall } from "@/hooks/useOpenHall"
@@ -98,7 +101,13 @@ export const Canvas = () => {
     }))
   )
 
+  const { copySelected, paste } = useCanvasClipboard()
+  const hasClipboard = useClipboardStore((state) => state.item !== null)
+
   const pointerMovedRef = useRef(false)
+  // Last pointer position over the canvas (client coords), so ⌘V can paste under
+  // the cursor even though the keyboard event itself carries no position.
+  const pointerClientRef = useRef<{ x: number; y: number } | null>(null)
 
   useEffect(() => {
     if (!isMeasuring) return
@@ -176,6 +185,46 @@ export const Canvas = () => {
     if (next.x !== pan.x || next.y !== pan.y) setPan(next)
   }, [clampPan, pan, setPan])
 
+  // ⌘/Ctrl+C copies the selected table/fixture; ⌘/Ctrl+V pastes it under the
+  // cursor (or hall centre if the pointer hasn't been over the canvas). Disabled
+  // while measuring, and ignored when a form field is focused.
+  useEffect(() => {
+    if (isMeasuring) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.altKey) return
+      const target = e.target as HTMLElement | null
+      if (target?.closest("input, textarea, [contenteditable='true']")) return
+
+      const key = e.key.toLowerCase()
+      if (key === "c") {
+        copySelected()
+      } else if (key === "v") {
+        e.preventDefault()
+        const client = pointerClientRef.current
+        const raw = client
+          ? viewportToHall(client.x, client.y)
+          : { x: hall.dimensions.width / 2, y: hall.dimensions.height / 2 }
+        const clamped = {
+          x: Math.max(0, Math.min(raw.x, hall.dimensions.width)),
+          y: Math.max(0, Math.min(raw.y, hall.dimensions.height)),
+        }
+        paste(
+          snapStep === "off" ? clamped : snapPositionToGrid(clamped, snapStep)
+        )
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [
+    isMeasuring,
+    copySelected,
+    paste,
+    viewportToHall,
+    snapStep,
+    hall.dimensions.width,
+    hall.dimensions.height,
+  ])
+
   const hallSurfaceRef = useRef<HallSurfaceMethods>(null)
 
   const toHallCoords = (clientX: number, clientY: number) => {
@@ -231,6 +280,15 @@ export const Canvas = () => {
               <LayoutPanelLeftIcon className="size-4" />
               {t("fixtures.add")}
             </CanvasContextMenuItem>
+            {hasClipboard && (
+              <CanvasContextMenuItem
+                disabled={!inHall}
+                onSelect={() => paste(snapped)}
+              >
+                <ClipboardPasteIcon className="size-4" />
+                {t("canvas.paste")}
+              </CanvasContextMenuItem>
+            )}
 
             <ContextMenuSeparator />
             <ContextMenuLabel>{t("canvas.view_section")}</ContextMenuLabel>
@@ -263,6 +321,7 @@ export const Canvas = () => {
           onPointerDown(e)
         }}
         onPointerMove={(e) => {
+          pointerClientRef.current = { x: e.clientX, y: e.clientY }
           if (isMeasuring) {
             const { x, y } = toHallCoords(e.clientX, e.clientY)
             hallSurfaceRef.current?.handleMeasureMove(x, y, e.shiftKey)

@@ -1,14 +1,22 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core"
 import { useCallback } from "react"
-import { CopyIcon, SquarePenIcon, Trash2Icon } from "lucide-react"
+import {
+  ClipboardCopyIcon,
+  CopyIcon,
+  SquarePenIcon,
+  Trash2Icon,
+} from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { CanvasActionButton } from "./CanvasActionButton"
 import { TableVisual } from "./TableVisual"
+import { seatSizePx } from "./utils"
+import { SEAT_OFFSET_M } from "./seatLayout"
 import type { Guest, Table } from "@/stores/planner.store"
 import { cn } from "@/lib/utils"
 
 import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
+import { useClipboardStore } from "@/stores/clipboard.store"
 import { useViewStore } from "@/stores/view.store"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 
@@ -45,6 +53,7 @@ export const DraggableTable = ({
   const deselectPanel = usePanelStore((state) => state.deselect)
   const duplicateTable = usePlannerStore((state) => state.duplicateTable)
   const deleteTable = usePlannerStore((state) => state.deleteTable)
+  const copyToClipboard = useClipboardStore((state) => state.copy)
 
   const {
     attributes,
@@ -93,7 +102,15 @@ export const DraggableTable = ({
     >
       {isSelected && (
         <div
-          className="absolute -top-8 right-0 flex gap-1"
+          className="absolute left-1/2 flex -translate-x-1/2 gap-1"
+          // The toolbar normally sits 2rem above the table. When seats are shown
+          // the top row sits SEAT_OFFSET_M above the edge plus half a marker —
+          // lift the toolbar by that protrusion so it clears the seat ring.
+          style={{
+            top: showSeats
+              ? `calc(-2rem - ${SEAT_OFFSET_M * ppm + seatSizePx(ppm) / 2}px)`
+              : "-2rem",
+          }}
           onPointerDown={(e) => e.stopPropagation()}
         >
           {isMobile && (
@@ -106,6 +123,14 @@ export const DraggableTable = ({
               }}
             />
           )}
+          <CanvasActionButton
+            icon={<ClipboardCopyIcon className="size-3.5" />}
+            label={t("tables.copy")}
+            onClick={(e) => {
+              e.stopPropagation()
+              copyToClipboard({ kind: "table", table })
+            }}
+          />
           <CanvasActionButton
             icon={<CopyIcon className="size-3.5" />}
             label={t("tables.duplicate")}
