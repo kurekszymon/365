@@ -1,4 +1,5 @@
 import { useCallback } from "react"
+import type { CapturedElement } from "./utils"
 import type { Position } from "@/stores/planner.store"
 import { useClipboardStore } from "@/stores/clipboard.store"
 import { usePlannerStore } from "@/stores/planner.store"
@@ -10,23 +11,39 @@ import { usePanelStore } from "@/stores/panel.store"
 export const useCanvasClipboard = () => {
   const copy = useClipboardStore((state) => state.copy)
 
+  // Snapshot a table/fixture by id into the clipboard. Ids are unique across
+  // both lists, so we don't need the caller to tell us which kind it is.
+  const copyId = useCallback(
+    (id: string) => {
+      const { tables, fixtures } = usePlannerStore.getState()
+      const table = tables.find((t) => t.id === id)
+      if (table) {
+        copy({ kind: "table", table })
+        return true
+      }
+      const fixture = fixtures.find((f) => f.id === id)
+      if (fixture) {
+        copy({ kind: "fixture", fixture })
+        return true
+      }
+      return false
+    },
+    [copy]
+  )
+
   const copySelected = useCallback(() => {
     const selectedId = usePanelStore.getState().selectedId
-    if (!selectedId) return false
-    const { tables, fixtures } = usePlannerStore.getState()
+    return selectedId ? copyId(selectedId) : false
+  }, [copyId])
 
-    const table = tables.find((t) => t.id === selectedId)
-    if (table) {
-      copy({ kind: "table", table })
-      return true
-    }
-    const fixture = fixtures.find((f) => f.id === selectedId)
-    if (fixture) {
-      copy({ kind: "fixture", fixture })
-      return true
-    }
-    return false
-  }, [copy])
+  // Copy the element a context menu was opened on (ignores the hall).
+  const copyTarget = useCallback(
+    (target: CapturedElement) => {
+      if (target.kind === "hall") return
+      copyId(target.id)
+    },
+    [copyId]
+  )
 
   const paste = useCallback((position: Position) => {
     const item = useClipboardStore.getState().item
@@ -44,5 +61,5 @@ export const useCanvasClipboard = () => {
     }
   }, [])
 
-  return { copySelected, paste }
+  return { copySelected, copyTarget, paste }
 }

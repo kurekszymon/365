@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react"
 import { useShallow } from "zustand/react/shallow"
 import {
   ArmchairIcon,
+  ClipboardCopyIcon,
   ClipboardPasteIcon,
   DotIcon,
   Grid2x2XIcon,
@@ -101,7 +102,7 @@ export const Canvas = () => {
     }))
   )
 
-  const { copySelected, paste } = useCanvasClipboard()
+  const { copySelected, copyTarget, paste } = useCanvasClipboard()
   const clipboardItem = useClipboardStore((state) => state.item)
 
   const pointerMovedRef = useRef(false)
@@ -247,12 +248,36 @@ export const Canvas = () => {
     <CanvasContextMenu
       viewportToHall={viewportToHall}
       isInHallBounds={isInHallBounds}
-      renderItems={({ position, inHall }) => {
+      renderItems={({ position, inHall, target }) => {
         const snapped =
           snapStep === "off" ? position : snapPositionToGrid(position, snapStep)
 
         return (
           <>
+            {(target.kind !== "hall" || clipboardItem) && (
+              <>
+                {target.kind !== "hall" && (
+                  <CanvasContextMenuItem onSelect={() => copyTarget(target)}>
+                    <ClipboardCopyIcon className="size-4" />
+                    {target.kind === "table"
+                      ? t("tables.copy")
+                      : t("fixtures.copy")}
+                  </CanvasContextMenuItem>
+                )}
+                {clipboardItem && (
+                  <CanvasContextMenuItem
+                    disabled={!inHall}
+                    onSelect={() => paste(snapped)}
+                  >
+                    <ClipboardPasteIcon className="size-4" />
+                    {clipboardItem.kind === "table"
+                      ? t("canvas.paste_table")
+                      : t("canvas.paste_fixture")}
+                  </CanvasContextMenuItem>
+                )}
+                <ContextMenuSeparator />
+              </>
+            )}
             <CanvasContextMenuItem
               disabled={!inHall}
               onSelect={() => {
@@ -280,17 +305,6 @@ export const Canvas = () => {
               <LayoutPanelLeftIcon className="size-4" />
               {t("fixtures.add")}
             </CanvasContextMenuItem>
-            {clipboardItem && (
-              <CanvasContextMenuItem
-                disabled={!inHall}
-                onSelect={() => paste(snapped)}
-              >
-                <ClipboardPasteIcon className="size-4" />
-                {clipboardItem.kind === "table"
-                  ? t("canvas.paste_table")
-                  : t("canvas.paste_fixture")}
-              </CanvasContextMenuItem>
-            )}
 
             <ContextMenuSeparator />
             <ContextMenuLabel>{t("canvas.view_section")}</ContextMenuLabel>
