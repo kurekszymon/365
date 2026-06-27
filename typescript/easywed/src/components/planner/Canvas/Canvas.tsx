@@ -102,7 +102,7 @@ export const Canvas = () => {
   )
 
   const { copySelected, paste } = useCanvasClipboard()
-  const hasClipboard = useClipboardStore((state) => state.item !== null)
+  const clipboardItem = useClipboardStore((state) => state.item)
 
   const pointerMovedRef = useRef(false)
   // Last pointer position over the canvas (client coords), so ⌘V can paste under
@@ -280,13 +280,15 @@ export const Canvas = () => {
               <LayoutPanelLeftIcon className="size-4" />
               {t("fixtures.add")}
             </CanvasContextMenuItem>
-            {hasClipboard && (
+            {clipboardItem && (
               <CanvasContextMenuItem
                 disabled={!inHall}
                 onSelect={() => paste(snapped)}
               >
                 <ClipboardPasteIcon className="size-4" />
-                {t("canvas.paste")}
+                {clipboardItem.kind === "table"
+                  ? t("canvas.paste_table")
+                  : t("canvas.paste_fixture")}
               </CanvasContextMenuItem>
             )}
 
