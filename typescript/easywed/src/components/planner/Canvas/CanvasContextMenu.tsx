@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useDndContext } from "@dnd-kit/core"
 import { findCapturedElement } from "./utils"
 import type { CapturedElement } from "./utils"
 import type { PropsWithChildren, ReactNode } from "react"
@@ -9,7 +10,6 @@ import {
   ContextMenuContent,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
-import { useIsMobile } from "@/hooks/useMediaQuery"
 
 type RenderItemsArgs = {
   position: Position
@@ -30,7 +30,10 @@ export const CanvasContextMenu = ({
   isInHallBounds,
   renderItems,
 }: PropsWithChildren<Props>) => {
-  const isMobile = useIsMobile()
+  // Non-null while a table/fixture is being dragged (PointerSensor past its 8px
+  // threshold). A long-press can fire `contextmenu` mid-drag — especially on
+  // touch — so we use this to suppress the menu only then, not on all touches.
+  const { active } = useDndContext()
   const [capturedPos, setCapturedPos] = useState<{ x: number; y: number }>({
     x: 0,
     y: 0,
@@ -50,11 +53,10 @@ export const CanvasContextMenu = ({
         asChild
         onContextMenu={(e) => {
           const captured = findCapturedElement(e.target)
-          // On touch, a long-press while dragging a table fires contextmenu on
-          // the table — so on mobile keep the menu suppressed for elements (the
-          // on-canvas action buttons cover copy/delete there). With a mouse,
-          // right-clicking a table/fixture opens the menu with copy actions.
-          if (!captured || (captured.kind !== "hall" && isMobile)) {
+          // Suppress the menu only while a drag is in progress (a long-press can
+          // fire contextmenu mid-drag). Otherwise right-clicking / long-pressing
+          // a table/fixture opens the menu with its copy actions.
+          if (!captured || active) {
             e.preventDefault()
             return
           }

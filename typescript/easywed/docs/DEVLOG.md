@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 28.06
+
+- better guards on mobile (use dndcontext instead of `isMobile` text)
+
 ### 27.06
 
 - support clipboard for tables/fixtures (allow copy paste)
