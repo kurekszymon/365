@@ -392,12 +392,12 @@
   "assistant.setup.step_3": "Wybierz identyfikator modelu, zapisz i zacznij rozmowę.",
   "assistant.setup.get_key": "Pobierz klucz OpenRouter",
   "assistant.setup.security_note": "Twój klucz jest przechowywany wyłącznie w pamięci lokalnej tej przeglądarki i wysyłany bezpośrednio do wybranego dostawcy. Nie używaj tego na współdzielonym komputerze.",
-  "assistant.setup.ollama_title": "Użyj lokalnego modelu (Ollama)",
-  "assistant.setup.ollama_intro": "Uruchom model na własnym komputerze — za darmo i prywatnie, bez klucza.",
-  "assistant.setup.ollama_step_1": "Zainstaluj Ollamę i pobierz model obsługujący narzędzia, np. „ollama pull llama3.1”.",
-  "assistant.setup.ollama_step_2": "Użyj adresu http://localhost:11434/v1, dowolnej wartości jako klucza oraz nazwy modelu (np. llama3.1).",
-  "assistant.setup.ollama_step_3": "Zapisz i zacznij rozmowę. Mniejsze lokalne modele słabiej trzymają się instrukcji niż modele w chmurze.",
-  "assistant.setup.ollama_cors": "Ważne: przeglądarka połączy się z Ollamą tylko, gdy zezwolisz na origin tej strony. Uruchom Ollamę z ustawioną zmienną OLLAMA_ORIGINS=\"*\" (lub adresem aplikacji) i zrestartuj ją.",
-  "assistant.setup.ollama_fill": "Wstaw domyślne ustawienia Ollama",
-  "assistant.setup.ollama_models": "Przeglądaj modele obsługujące narzędzia"
+  "assistant.setup.llamacpp_title": "Użyj lokalnego modelu (llama.cpp)",
+  "assistant.setup.llamacpp_intro": "Uruchom model na własnym komputerze z serwerem llama.cpp — za darmo i prywatnie, bez klucza.",
+  "assistant.setup.llamacpp_step_1": "Zainstaluj llama.cpp (gotowy plik binarny lub zbuduj ze źródeł).",
+  "assistant.setup.llamacpp_step_2": "Uruchom serwer z modelem obsługującym narzędzia i flagą --jinja, np. „llama-server -hf <model> --jinja”.",
+  "assistant.setup.llamacpp_step_3": "Użyj adresu http://localhost:8080/v1, dowolnej wartości jako klucza oraz dowolnej nazwy modelu. Zapisz i zacznij rozmowę.",
+  "assistant.setup.llamacpp_jinja": "Ważne: wywoływanie narzędzi działa tylko, gdy uruchomisz serwer z flagą --jinja i użyjesz modelu, którego szablon czatu obsługuje narzędzia. Bez tego asystent niczego nie doda ani nie przesunie.",
+  "assistant.setup.llamacpp_fill": "Wstaw domyślne ustawienia llama.cpp",
+  "assistant.setup.llamacpp_models": "Przeczytaj przewodnik po wywoływaniu funkcji"
 }

@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware"
 
 // Bring-your-own-key LLM settings. The customer supplies their own
 // OpenAI-compatible endpoint + key + model id, so the same code path works with
-// OpenRouter (recommended default), OpenAI, Azure, a local Ollama, etc.
+// OpenRouter (recommended default), OpenAI, Azure, a local llama.cpp server, etc.
 //
 // Stored in localStorage via `persist` (matching the `easywed.*` convention in
 // theme.store.ts). `skipHydration` defers the read until RootDocument triggers
@@ -19,13 +19,15 @@ export const AI_STORAGE_KEY = "easywed.ai"
 export const DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 export const DEFAULT_MODEL = "anthropic/claude-sonnet-4-6"
 
-// Quick-fill values for a local Ollama server. Ollama exposes an
-// OpenAI-compatible API at /v1 and ignores the key, but the key field must be
+// Quick-fill values for a local llama.cpp server (`llama-server`). It exposes an
+// OpenAI-compatible API at /v1 (default port 8080) and ignores both the key and
+// the model id (it serves whatever model was loaded), but the key field must be
 // non-empty for the settings to count as configured, so we send a placeholder.
-// The model must be one that supports tool calling (e.g. llama3.1, qwen2.5).
-export const OLLAMA_BASE_URL = "http://localhost:11434/v1"
-export const OLLAMA_API_KEY = "ollama"
-export const OLLAMA_MODEL = "llama3.1"
+// Tool calling requires the server to be started with `--jinja` and a model
+// whose chat template supports tools.
+export const LLAMACPP_BASE_URL = "http://localhost:8080/v1"
+export const LLAMACPP_API_KEY = "no-key"
+export const LLAMACPP_MODEL = "local-model"
 
 export interface AiSettings {
   baseUrl: string

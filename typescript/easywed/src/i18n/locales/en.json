@@ -375,12 +375,12 @@
   "assistant.setup.step_3": "Pick a model id, then save and start chatting.",
   "assistant.setup.get_key": "Get an OpenRouter key",
   "assistant.setup.security_note": "Your key is stored in this browser's local storage only and is sent directly to your chosen provider. Don't use this on a shared computer.",
-  "assistant.setup.ollama_title": "Use a local model (Ollama)",
-  "assistant.setup.ollama_intro": "Run a model on your own machine — free and private, no key needed.",
-  "assistant.setup.ollama_step_1": "Install Ollama, then pull a tool-capable model, e.g. run \"ollama pull llama3.1\".",
-  "assistant.setup.ollama_step_2": "Use base URL http://localhost:11434/v1, any value for the key, and the model name (e.g. llama3.1).",
-  "assistant.setup.ollama_step_3": "Save and start chatting. Smaller local models follow instructions less reliably than hosted ones.",
-  "assistant.setup.ollama_cors": "Important: the browser can only reach Ollama if you allow this site's origin. Start Ollama with OLLAMA_ORIGINS=\"*\" (or your app's URL) set in its environment, then restart it.",
-  "assistant.setup.ollama_fill": "Fill in Ollama defaults",
-  "assistant.setup.ollama_models": "Browse models that support tools"
+  "assistant.setup.llamacpp_title": "Use a local model (llama.cpp)",
+  "assistant.setup.llamacpp_intro": "Run a model on your own machine with llama.cpp's server — free and private, no key needed.",
+  "assistant.setup.llamacpp_step_1": "Install llama.cpp (a prebuilt binary or built from source).",
+  "assistant.setup.llamacpp_step_2": "Start the server with a tool-capable model and the --jinja flag, e.g. run \"llama-server -hf <model> --jinja\".",
+  "assistant.setup.llamacpp_step_3": "Use base URL http://localhost:8080/v1, any value for the key, and any model name. Save and start chatting.",
+  "assistant.setup.llamacpp_jinja": "Important: tool calling only works if you start the server with --jinja and use a model whose chat template supports tools. Without it the assistant can't add or move anything.",
+  "assistant.setup.llamacpp_fill": "Fill in llama.cpp defaults",
+  "assistant.setup.llamacpp_models": "Read the function-calling guide"
 }
