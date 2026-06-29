@@ -240,6 +240,14 @@
     }
 }
 
+/* While panning the canvas, force the grabbing cursor over everything (incl.
+   the overlay toolbar buttons, which set their own cursor) so it doesn't flip
+   to a pointer as the drag passes over them. */
+body.is-panning,
+body.is-panning * {
+  cursor: grabbing !important;
+}
+
 /* https://developers.google.com/identity/branding-guidelines */
 .gsi-material-button {
   -moz-user-select: none;

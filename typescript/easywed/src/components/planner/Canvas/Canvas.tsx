@@ -173,9 +173,8 @@ export const Canvas = () => {
     pan
   )
 
-  const { isPanning, onPointerDown, onPointerMove, onPointerUp } = useCanvasPan(
-    pan,
-    (p) => setPan(clampPan(p))
+  const { isPanning, onPointerDown, onPointerUp } = useCanvasPan(pan, (p) =>
+    setPan(clampPan(p))
   )
 
   // Re-clamp the existing pan whenever the allowed range can shrink (zoom out,
@@ -344,7 +343,6 @@ export const Canvas = () => {
             return
           }
           if (isPanning) pointerMovedRef.current = true
-          onPointerMove(e)
         }}
         onPointerUp={(e) => {
           onPointerUp(e)

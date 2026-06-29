@@ -1,5 +1,9 @@
 # EasyWed — Development Log
 
+### 29.06
+
+- track drag outside of canvas so it feels less snappy.
+
 ### 28.06
 
 - better guards on mobile (use dndcontext instead of `isMobile` text)
