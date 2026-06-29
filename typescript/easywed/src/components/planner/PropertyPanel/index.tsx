@@ -34,6 +34,8 @@ function usePanelTitle(view: PanelView | null): string {
       return t("fixtures.edit")
     case "fixtures.placeholder":
       return t("fixtures")
+    case "ai_chat":
+      return t("assistant.title")
   }
 }
 
@@ -45,6 +47,11 @@ export const PropertyPanel = () => {
   const isMobile = useIsMobile()
 
   const isOpen = view !== null
+  // The AI chat owns its own vertical layout (scrolling transcript + pinned
+  // composer) and wants more room, so it opts out of the default padded,
+  // auto-scrolling content wrapper and uses a wider sidebar.
+  const isChat = view?.kind === "ai_chat"
+  const body = view ? <PanelBody view={view} /> : null
 
   // On phones the side panel would crush the canvas, so render the same content
   // in a bottom sheet that overlays the canvas instead.
@@ -63,9 +70,15 @@ export const PropertyPanel = () => {
               <XIcon className="size-5" />
             </button>
           </DrawerHeader>
-          <div className="flex-1 overflow-y-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-            {view && <PanelBody view={view} />}
-          </div>
+          {isChat ? (
+            <div className="flex h-[70vh] flex-col pb-[env(safe-area-inset-bottom)]">
+              {body}
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+              {body}
+            </div>
+          )}
         </DrawerContent>
       </Drawer>
     )
@@ -75,7 +88,7 @@ export const PropertyPanel = () => {
     <div
       className={cn(
         "flex shrink-0 flex-col border-l bg-background transition-all duration-200",
-        isOpen ? "w-80" : "w-0 overflow-hidden border-l-0"
+        isOpen ? (isChat ? "w-96" : "w-80") : "w-0 overflow-hidden border-l-0"
       )}
     >
       {view && (
@@ -94,9 +107,11 @@ export const PropertyPanel = () => {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4">
-            <PanelBody view={view} />
-          </div>
+          {isChat ? (
+            <div className="flex min-h-0 flex-1 flex-col">{body}</div>
+          ) : (
+            <div className="flex-1 overflow-y-auto p-4">{body}</div>
+          )}
         </>
       )}
     </div>

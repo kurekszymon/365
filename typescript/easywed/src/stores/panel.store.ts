@@ -11,6 +11,7 @@ export type PanelView =
   | { kind: "fixture.add"; position?: Position }
   | { kind: "fixture.edit"; fixtureId: string }
   | { kind: "fixtures.placeholder" }
+  | { kind: "ai_chat" }
 
 type State = {
   view: PanelView | null
@@ -30,6 +31,7 @@ type Action = {
   openFixtureAdd: (position?: Position) => void
   openFixtureEdit: (fixtureId: string) => void
   openFixturesPlaceholder: () => void
+  openAiChat: () => void
   select: (id: string | null) => void
   close: () => void
   deselect: () => void
@@ -55,6 +57,7 @@ export const usePanelStore = create<State & Action>((set) => ({
     set({ view: { kind: "fixture.edit", fixtureId }, selectedId: fixtureId }),
   openFixturesPlaceholder: () =>
     set({ view: { kind: "fixtures.placeholder" }, selectedId: null }),
+  openAiChat: () => set({ view: { kind: "ai_chat" }, selectedId: null }),
   select: (id) => set({ selectedId: id }),
   close: () => set({ view: null, selectedId: null }),
   deselect: () =>
@@ -70,6 +73,7 @@ export const usePanelStore = create<State & Action>((set) => ({
           return { ...next, view: { kind: "tables.placeholder" } }
         case "tables.placeholder":
         case "guests":
+        case "ai_chat":
           return next
         case "fixture.add":
         case "fixture.edit":

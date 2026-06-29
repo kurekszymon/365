@@ -4,6 +4,7 @@ import { TablePanelContent } from "./TablePanelContent"
 import { TableBatchPanelContent } from "./TableBatchPanelContent"
 import { GuestsPanelContent } from "./GuestsPanelContent"
 import { FixturePanelContent } from "./FixturePanelContent"
+import { AiChatPanelContent } from "./AiChatPanelContent"
 import type { PanelView } from "@/stores/panel.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { Button } from "@/components/ui/button"
@@ -82,6 +83,7 @@ export const PanelBody = ({ view }: { view: PanelView }) => {
           </Button>
         </div>
       )}
+      {view.kind === "ai_chat" && <AiChatPanelContent />}
     </>
   )
 }
