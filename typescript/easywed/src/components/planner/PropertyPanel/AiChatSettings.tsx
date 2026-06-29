@@ -2,7 +2,14 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
 import { ExternalLinkIcon } from "lucide-react"
-import { DEFAULT_BASE_URL, DEFAULT_MODEL, useAiStore } from "@/stores/ai.store"
+import {
+  DEFAULT_BASE_URL,
+  DEFAULT_MODEL,
+  OLLAMA_API_KEY,
+  OLLAMA_BASE_URL,
+  OLLAMA_MODEL,
+  useAiStore,
+} from "@/stores/ai.store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -120,6 +127,42 @@ export const AiChatSettings = ({ onSaved }: { onSaved?: () => void }) => {
         <p className="mt-1 text-xs text-muted-foreground">
           {t("assistant.setup.security_note")}
         </p>
+      </div>
+
+      <div className="flex flex-col gap-2 rounded-lg border bg-muted/40 p-3 text-sm">
+        <p className="font-medium">{t("assistant.setup.ollama_title")}</p>
+        <p className="text-muted-foreground">
+          {t("assistant.setup.ollama_intro")}
+        </p>
+        <ol className="ml-4 list-decimal space-y-1 text-muted-foreground">
+          <li>{t("assistant.setup.ollama_step_1")}</li>
+          <li>{t("assistant.setup.ollama_step_2")}</li>
+          <li>{t("assistant.setup.ollama_step_3")}</li>
+        </ol>
+        <p className="rounded-md bg-amber-500/10 px-2 py-1.5 text-xs text-muted-foreground">
+          {t("assistant.setup.ollama_cors")}
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="self-start"
+          onClick={() => {
+            setDraftBaseUrl(OLLAMA_BASE_URL)
+            setDraftApiKey(OLLAMA_API_KEY)
+            setDraftModel(OLLAMA_MODEL)
+          }}
+        >
+          {t("assistant.setup.ollama_fill")}
+        </Button>
+        <a
+          href="https://ollama.com/search?c=tools"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 text-primary underline underline-offset-4"
+        >
+          {t("assistant.setup.ollama_models")}
+          <ExternalLinkIcon className="size-3.5" />
+        </a>
       </div>
     </div>
   )

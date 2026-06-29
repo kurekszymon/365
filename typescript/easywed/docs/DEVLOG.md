@@ -2,6 +2,8 @@
 
 ### 29.06
 
+- draft ai assistant
+
 - track drag outside of canvas so it feels less snappy.
 
 ### 28.06

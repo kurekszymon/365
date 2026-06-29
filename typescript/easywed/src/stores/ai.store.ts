@@ -19,6 +19,14 @@ export const AI_STORAGE_KEY = "easywed.ai"
 export const DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 export const DEFAULT_MODEL = "anthropic/claude-sonnet-4-6"
 
+// Quick-fill values for a local Ollama server. Ollama exposes an
+// OpenAI-compatible API at /v1 and ignores the key, but the key field must be
+// non-empty for the settings to count as configured, so we send a placeholder.
+// The model must be one that supports tool calling (e.g. llama3.1, qwen2.5).
+export const OLLAMA_BASE_URL = "http://localhost:11434/v1"
+export const OLLAMA_API_KEY = "ollama"
+export const OLLAMA_MODEL = "llama3.1"
+
 export interface AiSettings {
   baseUrl: string
   apiKey: string
