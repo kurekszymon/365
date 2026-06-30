@@ -78,3 +78,20 @@ export const isInsecureRemote = (url: string): boolean => {
   }
   return parsed.protocol === "http:" && !LOCAL_HOSTS.has(parsed.hostname)
 }
+
+// The two setup flows the settings UI offers: a hosted OpenAI-compatible
+// endpoint (OpenRouter by default) vs. a local llama.cpp server.
+export type AiProvider = "openrouter" | "local"
+
+// Classify a base URL into a provider so the settings UI can default its
+// toggle to match whatever is currently saved. A local host => the llama.cpp
+// flow; anything else (including an unparseable/empty URL) => OpenRouter.
+export const detectProvider = (url: string): AiProvider => {
+  try {
+    return LOCAL_HOSTS.has(new URL(url.trim()).hostname)
+      ? "local"
+      : "openrouter"
+  } catch {
+    return "openrouter"
+  }
+}

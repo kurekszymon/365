@@ -382,6 +382,7 @@
   "assistant.setup.llamacpp_step_2": "Start the server with a tool-capable model and the --jinja flag, e.g. run \"llama-server -hf <model> --jinja\".",
   "assistant.setup.llamacpp_step_3": "Use base URL http://localhost:8080/v1, any value for the key, and any model name. Save and start chatting.",
   "assistant.setup.llamacpp_jinja": "Important: tool calling only works if you start the server with --jinja and use a model whose chat template supports tools. Without it the assistant can't add or move anything.",
-  "assistant.setup.llamacpp_fill": "Fill in llama.cpp defaults",
-  "assistant.setup.llamacpp_models": "Read the function-calling guide"
+  "assistant.setup.llamacpp_models": "Read the function-calling guide",
+  "assistant.setup.provider_openrouter": "OpenRouter",
+  "assistant.setup.provider_local": "Local (llama.cpp)"
 }
