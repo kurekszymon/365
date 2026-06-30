@@ -380,10 +380,12 @@
   "assistant.setup.llamacpp_title": "Use a local model (llama.cpp)",
   "assistant.setup.llamacpp_intro": "Run a model on your own machine with llama.cpp's server — free and private, no key needed.",
   "assistant.setup.llamacpp_step_1": "Install llama.cpp (a prebuilt binary or built from source).",
-  "assistant.setup.llamacpp_step_2": "Start the server with a tool-capable model and the --jinja flag, e.g. run \"llama-server -hf <model> --jinja\".",
+  "assistant.setup.llamacpp_step_2": "Start the server with a model that supports tool calling, e.g. run \"llama-server -hf <model>\".",
   "assistant.setup.llamacpp_step_3": "Use base URL http://localhost:8080/v1, any value for the key, and any model name. Save and start chatting.",
-  "assistant.setup.llamacpp_jinja": "Important: tool calling only works if you start the server with --jinja and use a model whose chat template supports tools. Without it the assistant can't add or move anything.",
+  "assistant.setup.llamacpp_jinja": "Important: the assistant can only add or move things if your model supports tool calling. If tools aren't being called, restart the server with the --jinja flag so llama.cpp uses the model's own chat template.",
   "assistant.setup.llamacpp_models": "Read the function-calling guide",
   "assistant.setup.provider_openrouter": "OpenRouter",
-  "assistant.setup.provider_local": "Local (llama.cpp)"
+  "assistant.setup.provider_local": "Local (llama.cpp)",
+  "assistant.setup.provider_local_dev_only": "The local llama.cpp option is only available in development.",
+  "assistant.setup.dev_only_badge": "dev"
 }

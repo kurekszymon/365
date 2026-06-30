@@ -27,7 +27,7 @@ export const DEFAULT_MODEL = "qwen/qwen3.5-flash-02-23"
 // whose chat template supports tools.
 export const LLAMACPP_BASE_URL = "http://localhost:8080/v1"
 export const LLAMACPP_API_KEY = "no-key"
-export const LLAMACPP_MODEL = "local-model"
+export const LLAMACPP_MODEL = "qwen/qwen3.5-flash-02-2"
 
 export interface AiSettings {
   baseUrl: string

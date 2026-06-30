@@ -397,10 +397,12 @@
   "assistant.setup.llamacpp_title": "Użyj lokalnego modelu (llama.cpp)",
   "assistant.setup.llamacpp_intro": "Uruchom model na własnym komputerze z serwerem llama.cpp — za darmo i prywatnie, bez klucza.",
   "assistant.setup.llamacpp_step_1": "Zainstaluj llama.cpp (gotowy plik binarny lub zbuduj ze źródeł).",
-  "assistant.setup.llamacpp_step_2": "Uruchom serwer z modelem obsługującym narzędzia i flagą --jinja, np. „llama-server -hf <model> --jinja”.",
+  "assistant.setup.llamacpp_step_2": "Uruchom serwer z modelem obsługującym narzędzia, np. „llama-server -hf <model>”.",
   "assistant.setup.llamacpp_step_3": "Użyj adresu http://localhost:8080/v1, dowolnej wartości jako klucza oraz dowolnej nazwy modelu. Zapisz i zacznij rozmowę.",
-  "assistant.setup.llamacpp_jinja": "Ważne: wywoływanie narzędzi działa tylko, gdy uruchomisz serwer z flagą --jinja i użyjesz modelu, którego szablon czatu obsługuje narzędzia. Bez tego asystent niczego nie doda ani nie przesunie.",
+  "assistant.setup.llamacpp_jinja": "Ważne: asystent doda lub przesunie coś tylko, jeśli Twój model obsługuje wywoływanie narzędzi. Jeśli narzędzia nie są wywoływane, uruchom serwer ponownie z flagą --jinja, aby llama.cpp użył własnego szablonu czatu modelu.",
   "assistant.setup.llamacpp_models": "Przeczytaj przewodnik po wywoływaniu funkcji",
   "assistant.setup.provider_openrouter": "OpenRouter",
-  "assistant.setup.provider_local": "Lokalnie (llama.cpp)"
+  "assistant.setup.provider_local": "Lokalnie (llama.cpp)",
+  "assistant.setup.provider_local_dev_only": "Opcja lokalnego llama.cpp jest dostępna tylko w trybie deweloperskim.",
+  "assistant.setup.dev_only_badge": "dev"
 }

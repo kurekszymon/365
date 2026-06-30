@@ -113,19 +113,23 @@ export const AiChatSettings = ({
           )}
         </Field>
 
-        <Field>
-          <FieldLabel htmlFor="ai-api-key">{t("assistant.api_key")}</FieldLabel>
-          <Input
-            id="ai-api-key"
-            type="password"
-            value={draftApiKey}
-            onChange={(e) => setDraftApiKey(e.target.value)}
-            placeholder="sk-..."
-            autoComplete="off"
-            spellCheck={false}
-          />
-          <FieldDescription>{t("assistant.api_key_hint")}</FieldDescription>
-        </Field>
+        {mode !== "local" && (
+          <Field>
+            <FieldLabel htmlFor="ai-api-key">
+              {t("assistant.api_key")}
+            </FieldLabel>
+            <Input
+              id="ai-api-key"
+              type="password"
+              value={draftApiKey}
+              onChange={(e) => setDraftApiKey(e.target.value)}
+              placeholder="sk-..."
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <FieldDescription>{t("assistant.api_key_hint")}</FieldDescription>
+          </Field>
+        )}
 
         <Field>
           <FieldLabel htmlFor="ai-model">{t("assistant.model")}</FieldLabel>

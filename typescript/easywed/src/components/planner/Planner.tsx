@@ -179,7 +179,11 @@ export const Planner = () => {
                 <PlusIcon />
               </Button>
             </ButtonGroup>
-            <Button variant="outline" onClick={() => panel.openAiChat()}>
+            <Button
+              variant="outline"
+              onClick={() => panel.openAiChat()}
+              aria-label={t("assistant.title")}
+            >
               <SparklesIcon />
               <span className="hidden md:inline">{t("assistant.title")}</span>
             </Button>
