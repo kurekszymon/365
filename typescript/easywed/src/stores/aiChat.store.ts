@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { toast } from "sonner"
 import type { ModelMessage } from "ai"
+import type { ToolResult } from "@/lib/ai/tools"
 import { runAgent } from "@/lib/ai/runAgent"
 import i18n from "@/i18n"
 
@@ -57,6 +58,14 @@ const uid = () => crypto.randomUUID()
 // The confirm currently shown to the user is the head of the queue.
 export const selectPendingConfirm = (state: State): PendingConfirm | null =>
   state.confirmQueue[0] ?? null
+
+// Maps a tool result's discriminant to the chip's visual status. `satisfies`
+// keeps this exhaustive — adding a ToolResult variant forces an entry here.
+const TOOL_CHIP_STATUS = {
+  ok: "done",
+  not_found: "done",
+  cancelled: "cancelled",
+} satisfies Record<ToolResult["status"], ToolChipStatus>
 
 export const useAiChatStore = create<State & Action>((set, get) => {
   const patchAssistant = (
@@ -133,8 +142,8 @@ export const useAiChatStore = create<State & Action>((set, get) => {
               settleTool(
                 assistantId,
                 id,
-                result.toLowerCase().includes("cancel") ? "cancelled" : "done",
-                result
+                TOOL_CHIP_STATUS[result.status],
+                result.message
               ),
             onToolError: (id, error) =>
               settleTool(assistantId, id, "error", error),

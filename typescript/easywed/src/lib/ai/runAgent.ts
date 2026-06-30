@@ -2,12 +2,13 @@ import { stepCountIs, streamText } from "ai"
 import { createModel } from "./provider"
 import { buildSystemPrompt } from "./systemPrompt"
 import { tools } from "./tools"
+import type { ToolResult } from "./tools"
 import type { ModelMessage } from "ai"
 
 export interface RunAgentCallbacks {
   onTextDelta: (delta: string) => void
   onToolCall: (call: { id: string; toolName: string; input: unknown }) => void
-  onToolResult: (id: string, result: string) => void
+  onToolResult: (id: string, result: ToolResult) => void
   onToolError: (id: string, error: string) => void
 }
 
@@ -43,7 +44,12 @@ export const runAgent = async (params: {
         })
         break
       case "tool-result":
-        params.callbacks.onToolResult(part.toolCallId, String(part.output))
+        // Every tool's execute returns a ToolResult; the SDK types the part
+        // output loosely, so assert it back to the union at this boundary.
+        params.callbacks.onToolResult(
+          part.toolCallId,
+          part.output as ToolResult
+        )
         break
       case "tool-error":
         params.callbacks.onToolError(part.toolCallId, String(part.error))
