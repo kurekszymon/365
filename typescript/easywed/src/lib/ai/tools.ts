@@ -14,6 +14,7 @@ import {
 import { getSizeForShape } from "@/components/planner/PropertyPanel/fields/utils"
 import { clampToHall } from "@/components/planner/Canvas/utils"
 import { useAiChatStore } from "@/stores/aiChat.store"
+import i18n from "@/i18n"
 
 const normalizeRotation = (rotation: number | undefined): TableRotation =>
   rotation === 90 ? 90 : 0
@@ -42,12 +43,17 @@ const clampPosition = (
 const fmt = (n: number) => n.toFixed(1)
 
 // User-facing label for a tool result. Ids are internal-only (the chip subtitle
-// shows these strings verbatim), so we refer to objects by name, falling back to
-// a generic "the <shape> table/fixture" when unnamed.
+// shows these strings verbatim to the user), so we refer to objects by name,
+// falling back to a localized "the <shape> table/fixture" when unnamed. The
+// shape picks the variant via i18next `context` (…label.table_round, etc.).
 const tableLabel = (t: { name: string; shape: TableShape }) =>
-  t.name.trim() ? `"${t.name}"` : `the ${t.shape} table`
+  t.name.trim()
+    ? i18n.t("assistant.tool.label.named", { name: t.name.trim() })
+    : i18n.t("assistant.tool.label.table", { context: t.shape })
 const fixtureLabel = (f: { name: string; shape: FixtureShape }) =>
-  f.name.trim() ? `"${f.name}"` : `the ${f.shape} fixture`
+  f.name.trim()
+    ? i18n.t("assistant.tool.label.named", { name: f.name.trim() })
+    : i18n.t("assistant.tool.label.fixture", { context: f.shape })
 
 // Every tool returns this discriminated union so the UI can branch on `status`
 // (a machine flag) instead of sniffing the prose. `message` is the
@@ -168,7 +174,11 @@ export const tools = {
         pos
       )
       return ok(
-        `Added ${tableLabel({ name: input.name ?? "", shape })} at (${fmt(pos.x)}, ${fmt(pos.y)}).`
+        i18n.t("assistant.tool.result.table_added", {
+          label: tableLabel({ name: input.name ?? "", shape }),
+          x: fmt(pos.x),
+          y: fmt(pos.y),
+        })
       )
     },
   }),
@@ -183,11 +193,15 @@ export const tools = {
     execute: ({ id, x, y }) => {
       const planner = usePlannerStore.getState()
       const table = planner.tables.find((t) => t.id === id)
-      if (!table) return notFound(`That table no longer exists.`)
+      if (!table) return notFound(i18n.t("assistant.tool.result.table_missing"))
       const pos = clampPosition(x, y, table.size, table.rotation)
       planner.updateTablePosition(id, pos.x, pos.y)
       return ok(
-        `Moved ${tableLabel(table)} to (${fmt(pos.x)}, ${fmt(pos.y)}).`
+        i18n.t("assistant.tool.result.table_moved", {
+          label: tableLabel(table),
+          x: fmt(pos.x),
+          y: fmt(pos.y),
+        })
       )
     },
   }),
@@ -211,7 +225,7 @@ export const tools = {
     execute: (input) => {
       const planner = usePlannerStore.getState()
       const table = planner.tables.find((t) => t.id === input.id)
-      if (!table) return notFound(`That table no longer exists.`)
+      if (!table) return notFound(i18n.t("assistant.tool.result.table_missing"))
       const assignedIds = planner.guests
         .filter((g) => g.tableId === input.id)
         .map((g) => g.id)
@@ -221,7 +235,11 @@ export const tools = {
       if (input.capacity != null && input.capacity < assignedIds.length)
         return {
           status: "cancelled",
-          message: `Can't set capacity to ${input.capacity}: ${assignedIds.length} guest(s) are seated at ${tableLabel(table)}. Unassign some first.`,
+          message: i18n.t("assistant.tool.result.capacity_too_small", {
+            count: assignedIds.length,
+            capacity: input.capacity,
+            label: tableLabel(table),
+          }),
         }
       const shape = input.shape ?? table.shape
       const rotation =
@@ -251,7 +269,9 @@ export const tools = {
       )
       planner.saveTable(input.id)
       return ok(
-        `Updated ${tableLabel({ name: input.name ?? table.name, shape })}.`
+        i18n.t("assistant.tool.result.table_updated", {
+          label: tableLabel({ name: input.name ?? table.name, shape }),
+        })
       )
     },
   }),
@@ -267,20 +287,27 @@ export const tools = {
     execute: async ({ id }): Promise<ToolResult> => {
       const planner = usePlannerStore.getState()
       const table = planner.tables.find((t) => t.id === id)
-      if (!table) return notFound(`That table no longer exists.`)
+      if (!table) return notFound(i18n.t("assistant.tool.result.table_missing"))
       const approved = await useAiChatStore
         .getState()
         .requestConfirm(
           "delete_table",
-          table.name || `the ${table.shape} table`
+          table.name ||
+            i18n.t("assistant.tool.label.table", { context: table.shape })
         )
       if (!approved)
         return {
           status: "cancelled",
-          message: `Deletion of ${tableLabel(table)} was cancelled by the user.`,
+          message: i18n.t("assistant.tool.result.table_delete_cancelled", {
+            label: tableLabel(table),
+          }),
         }
       planner.deleteTable(id)
-      return ok(`Deleted ${tableLabel(table)}.`)
+      return ok(
+        i18n.t("assistant.tool.result.table_deleted", {
+          label: tableLabel(table),
+        })
+      )
     },
   }),
 
@@ -320,7 +347,11 @@ export const tools = {
       const pos = clampPosition(input.x ?? 0, input.y ?? 0, size, rotation)
       planner.addFixture({ name: input.name ?? "", shape, size, rotation }, pos)
       return ok(
-        `Added ${fixtureLabel({ name: input.name ?? "", shape })} at (${fmt(pos.x)}, ${fmt(pos.y)}).`
+        i18n.t("assistant.tool.result.fixture_added", {
+          label: fixtureLabel({ name: input.name ?? "", shape }),
+          x: fmt(pos.x),
+          y: fmt(pos.y),
+        })
       )
     },
   }),
@@ -336,11 +367,16 @@ export const tools = {
     execute: ({ id, x, y }) => {
       const planner = usePlannerStore.getState()
       const fixture = planner.fixtures.find((f) => f.id === id)
-      if (!fixture) return notFound(`That fixture no longer exists.`)
+      if (!fixture)
+        return notFound(i18n.t("assistant.tool.result.fixture_missing"))
       const pos = clampPosition(x, y, fixture.size, fixture.rotation)
       planner.updateFixturePosition(id, pos.x, pos.y)
       return ok(
-        `Moved ${fixtureLabel(fixture)} to (${fmt(pos.x)}, ${fmt(pos.y)}).`
+        i18n.t("assistant.tool.result.fixture_moved", {
+          label: fixtureLabel(fixture),
+          x: fmt(pos.x),
+          y: fmt(pos.y),
+        })
       )
     },
   }),
@@ -366,7 +402,8 @@ export const tools = {
     execute: (input) => {
       const planner = usePlannerStore.getState()
       const fixture = planner.fixtures.find((f) => f.id === input.id)
-      if (!fixture) return notFound(`That fixture no longer exists.`)
+      if (!fixture)
+        return notFound(i18n.t("assistant.tool.result.fixture_missing"))
       const shape = input.shape ?? fixture.shape
       const rotation =
         shape === "circle"
@@ -386,7 +423,9 @@ export const tools = {
       })
       planner.saveFixture(input.id)
       return ok(
-        `Updated ${fixtureLabel({ name: input.name ?? fixture.name, shape })}.`
+        i18n.t("assistant.tool.result.fixture_updated", {
+          label: fixtureLabel({ name: input.name ?? fixture.name, shape }),
+        })
       )
     },
   }),
@@ -402,20 +441,28 @@ export const tools = {
     execute: async ({ id }): Promise<ToolResult> => {
       const planner = usePlannerStore.getState()
       const fixture = planner.fixtures.find((f) => f.id === id)
-      if (!fixture) return notFound(`That fixture no longer exists.`)
+      if (!fixture)
+        return notFound(i18n.t("assistant.tool.result.fixture_missing"))
       const approved = await useAiChatStore
         .getState()
         .requestConfirm(
           "delete_fixture",
-          fixture.name || `the ${fixture.shape} fixture`
+          fixture.name ||
+            i18n.t("assistant.tool.label.fixture", { context: fixture.shape })
         )
       if (!approved)
         return {
           status: "cancelled",
-          message: `Deletion of ${fixtureLabel(fixture)} was cancelled by the user.`,
+          message: i18n.t("assistant.tool.result.fixture_delete_cancelled", {
+            label: fixtureLabel(fixture),
+          }),
         }
       planner.deleteFixture(id)
-      return ok(`Deleted ${fixtureLabel(fixture)}.`)
+      return ok(
+        i18n.t("assistant.tool.result.fixture_deleted", {
+          label: fixtureLabel(fixture),
+        })
+      )
     },
   }),
 }

@@ -181,7 +181,20 @@ export const useAiChatStore = create<State & Action>((set, get) => {
         }))
         // An abort (clear / unmount) is intentional — stay silent, don't toast.
         if (controller.signal.aborted) {
-          set({ status: "idle" })
+          // Drop the assistant placeholder if nothing streamed yet; otherwise it
+          // lingers with empty text and no chips and renders as a perpetual
+          // "thinking" spinner. Keep it when partial text/tools exist — that's
+          // real (now-cancelled) output worth showing.
+          set((state) => ({
+            messages: state.messages.filter(
+              (m) =>
+                m.id !== assistantId ||
+                m.role !== "assistant" ||
+                m.text.length > 0 ||
+                m.tools.length > 0
+            ),
+            status: "idle",
+          }))
           return
         }
         const message = error instanceof Error ? error.message : String(error)
