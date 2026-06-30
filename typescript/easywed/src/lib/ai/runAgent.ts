@@ -2,6 +2,7 @@ import { stepCountIs, streamText } from "ai"
 import { createModel } from "./provider"
 import { buildSystemPrompt } from "./systemPrompt"
 import { tools } from "./tools"
+import { trimHistory } from "./trimHistory"
 import type { ToolResult } from "./tools"
 import type { ModelMessage } from "ai"
 
@@ -25,7 +26,7 @@ export const runAgent = async (params: {
   const result = streamText({
     model: createModel(),
     system: buildSystemPrompt(),
-    messages: params.history,
+    messages: trimHistory(params.history),
     tools,
     stopWhen: stepCountIs(8),
     abortSignal: params.abortSignal,
