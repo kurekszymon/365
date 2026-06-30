@@ -8,6 +8,7 @@ import {
   LLAMACPP_API_KEY,
   LLAMACPP_BASE_URL,
   LLAMACPP_MODEL,
+  isInsecureRemote,
   useAiStore,
 } from "@/stores/ai.store"
 import { Button } from "@/components/ui/button"
@@ -74,6 +75,11 @@ export const AiChatSettings = ({ onSaved }: { onSaved?: () => void }) => {
             spellCheck={false}
           />
           <FieldDescription>{t("assistant.base_url_hint")}</FieldDescription>
+          {isInsecureRemote(draftBaseUrl) && (
+            <p className="rounded-md bg-amber-500/10 px-2 py-1.5 text-xs text-amber-700 dark:text-amber-500">
+              {t("assistant.setup.insecure_url")}
+            </p>
+          )}
         </Field>
 
         <Field>

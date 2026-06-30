@@ -63,3 +63,18 @@ export const selectIsConfigured = (state: State): boolean =>
   state.apiKey.trim().length > 0 &&
   state.baseUrl.trim().length > 0 &&
   state.model.trim().length > 0
+
+// True when the URL would send the API key over plain (unencrypted) http to a
+// non-local host. Localhost http is fine (that's how llama.cpp / Ollama run);
+// a remote http endpoint leaks the key on the wire, so we warn about it.
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"])
+
+export const isInsecureRemote = (url: string): boolean => {
+  let parsed: URL
+  try {
+    parsed = new URL(url.trim())
+  } catch {
+    return false
+  }
+  return parsed.protocol === "http:" && !LOCAL_HOSTS.has(parsed.hostname)
+}

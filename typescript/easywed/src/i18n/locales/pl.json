@@ -392,6 +392,7 @@
   "assistant.setup.step_3": "Wybierz identyfikator modelu, zapisz i zacznij rozmowę.",
   "assistant.setup.get_key": "Pobierz klucz OpenRouter",
   "assistant.setup.security_note": "Twój klucz jest przechowywany wyłącznie w pamięci lokalnej tej przeglądarki i wysyłany bezpośrednio do wybranego dostawcy. Nie używaj tego na współdzielonym komputerze.",
+  "assistant.setup.insecure_url": "To jest nieszyfrowany adres (http) — Twój klucz zostanie wysłany jawnym tekstem. Używaj http tylko dla serwera lokalnego.",
   "assistant.setup.llamacpp_title": "Użyj lokalnego modelu (llama.cpp)",
   "assistant.setup.llamacpp_intro": "Uruchom model na własnym komputerze z serwerem llama.cpp — za darmo i prywatnie, bez klucza.",
   "assistant.setup.llamacpp_step_1": "Zainstaluj llama.cpp (gotowy plik binarny lub zbuduj ze źródeł).",

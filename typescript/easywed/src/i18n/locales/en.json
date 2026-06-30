@@ -375,6 +375,7 @@
   "assistant.setup.step_3": "Pick a model id, then save and start chatting.",
   "assistant.setup.get_key": "Get an OpenRouter key",
   "assistant.setup.security_note": "Your key is stored in this browser's local storage only and is sent directly to your chosen provider. Don't use this on a shared computer.",
+  "assistant.setup.insecure_url": "This is an unencrypted (http) address — your key will be sent in plain text. Only use http for a local server.",
   "assistant.setup.llamacpp_title": "Use a local model (llama.cpp)",
   "assistant.setup.llamacpp_intro": "Run a model on your own machine with llama.cpp's server — free and private, no key needed.",
   "assistant.setup.llamacpp_step_1": "Install llama.cpp (a prebuilt binary or built from source).",

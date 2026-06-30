@@ -2,6 +2,10 @@
 
 ### 30.06
 
+- use structured tool result
+- notify about unsafe http
+- trim history sent to ai
+- guard update table to limit guests number in the table
 - dont show settings button if ai is not configured
 - use queue for pending confirmations instead of single value
 
