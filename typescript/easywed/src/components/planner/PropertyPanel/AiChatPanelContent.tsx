@@ -33,15 +33,16 @@ export const AiChatPanelContent = () => {
             <Trash2Icon />
           </Button>
         )}
-        <Button
-          variant={showSettings ? "secondary" : "ghost"}
-          size="icon-sm"
-          onClick={() => setSettingsOpen((open) => !open)}
-          disabled={!isConfigured}
-          aria-label={t("assistant.settings")}
-        >
-          <SettingsIcon />
-        </Button>
+        {isConfigured && (
+          <Button
+            variant={showSettings ? "secondary" : "ghost"}
+            size="icon-sm"
+            onClick={() => setSettingsOpen((open) => !open)}
+            aria-label={t("assistant.settings")}
+          >
+            <SettingsIcon />
+          </Button>
+        )}
       </div>
 
       {showSettings ? (
