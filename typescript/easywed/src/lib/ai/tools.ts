@@ -202,6 +202,18 @@ export const tools = {
       const planner = usePlannerStore.getState()
       const table = planner.tables.find((t) => t.id === input.id)
       if (!table) return notFound(`No table found with id ${input.id}.`)
+      // Hard guard: the DB capacity trigger would reject a shrink below the
+      // seated count, but mutations only console.error, so the optimistic store
+      // would silently diverge. Refuse it here instead.
+      if (input.capacity != null) {
+        const assigned = planner.guests.filter(
+          (g) => g.tableId === input.id
+        ).length
+        if (input.capacity < assigned)
+          return ok(
+            `Can't set capacity to ${input.capacity}: ${assigned} guest(s) are seated at table ${input.id}. Unassign some first.`
+          )
+      }
       const shape = input.shape ?? table.shape
       const rotation =
         shape === "round"

@@ -5,7 +5,7 @@ import { usePlannerStore } from "@/stores/planner.store"
 // top-left origin: x grows right, y grows down. An object's position is its
 // top-left corner.
 export const buildSystemPrompt = (): string => {
-  const { hall, tables, fixtures } = usePlannerStore.getState()
+  const { hall, tables, fixtures, guests } = usePlannerStore.getState()
 
   const snapshot = {
     hall: hall.dimensions,
@@ -14,6 +14,7 @@ export const buildSystemPrompt = (): string => {
       name: t.name,
       shape: t.shape,
       capacity: t.capacity,
+      assigned: guests.filter((g) => g.tableId === t.id).length,
       size: t.size,
       rotation: t.rotation,
       position: t.position,
@@ -42,7 +43,9 @@ COORDINATE SYSTEM
 
 SHAPES
 - Tables: "round" (uses width as diameter; height is ignored and rotation is forced to 0),
-  "rectangular", or "custom". Tables have a "capacity" (number of seats).
+  "rectangular", or "custom". Tables have a "capacity" (number of seats) and "assigned"
+  (how many guests are currently seated there). Never set a table's capacity below its
+  "assigned" count — those guests would have nowhere to sit.
 - Fixtures are non-seating elements (stage, dance floor, bar, DJ, etc.): "rectangle",
   "circle" (uses width as diameter, rotation forced to 0), "rounded", or "polygon".
   Fixtures have NO capacity.
