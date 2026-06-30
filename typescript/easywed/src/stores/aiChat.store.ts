@@ -34,7 +34,10 @@ type State = {
   history: Array<ModelMessage>
   status: ChatStatus
   error: string | null
-  pendingConfirm: PendingConfirm | null
+  // FIFO of destructive ops awaiting confirmation. A queue (not a single slot)
+  // because the model can fire multiple delete tools in one step, which the SDK
+  // executes concurrently — each gets its own pending entry, resolved in order.
+  confirmQueue: Array<PendingConfirm>
 }
 
 type Action = {
@@ -45,6 +48,10 @@ type Action = {
 }
 
 const uid = () => crypto.randomUUID()
+
+// The confirm currently shown to the user is the head of the queue.
+export const selectPendingConfirm = (state: State): PendingConfirm | null =>
+  state.confirmQueue[0] ?? null
 
 export const useAiChatStore = create<State & Action>((set, get) => {
   const patchAssistant = (
@@ -75,7 +82,7 @@ export const useAiChatStore = create<State & Action>((set, get) => {
     history: [],
     status: "idle",
     error: null,
-    pendingConfirm: null,
+    confirmQueue: [],
 
     send: async (text) => {
       const trimmed = text.trim()
@@ -128,12 +135,9 @@ export const useAiChatStore = create<State & Action>((set, get) => {
           status: "idle",
         }))
       } catch (error) {
-        // Unblock any dangling confirmation so the awaited execute settles.
-        const pending = get().pendingConfirm
-        if (pending) {
-          pending.resolve(false)
-          set({ pendingConfirm: null })
-        }
+        // Unblock every dangling confirmation so each awaited execute settles.
+        for (const pending of get().confirmQueue) pending.resolve(false)
+        set({ confirmQueue: [] })
         const message = error instanceof Error ? error.message : String(error)
         set({ status: "error", error: message })
         toast.error(i18n.t("assistant.error"), { description: message })
@@ -141,27 +145,32 @@ export const useAiChatStore = create<State & Action>((set, get) => {
     },
 
     clear: () => {
-      const pending = get().pendingConfirm
-      if (pending) pending.resolve(false)
+      for (const pending of get().confirmQueue) pending.resolve(false)
       set({
         messages: [],
         history: [],
         status: "idle",
         error: null,
-        pendingConfirm: null,
+        confirmQueue: [],
       })
     },
 
     requestConfirm: (toolName, label) =>
       new Promise<boolean>((resolve) => {
-        set({ pendingConfirm: { id: uid(), toolName, label, resolve } })
+        set((state) => ({
+          confirmQueue: [
+            ...state.confirmQueue,
+            { id: uid(), toolName, label, resolve },
+          ],
+        }))
       }),
 
     resolveConfirm: (approved) => {
-      const pending = get().pendingConfirm
-      if (!pending) return
-      pending.resolve(approved)
-      set({ pendingConfirm: null })
+      const queue = get().confirmQueue
+      if (queue.length === 0) return
+      const [head, ...rest] = queue
+      head.resolve(approved)
+      set({ confirmQueue: rest })
     },
   }
 })

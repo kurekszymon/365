@@ -9,7 +9,7 @@ import {
   XIcon,
 } from "lucide-react"
 import type { ChatMessage, ToolChip } from "@/stores/aiChat.store"
-import { useAiChatStore } from "@/stores/aiChat.store"
+import { selectPendingConfirm, useAiChatStore } from "@/stores/aiChat.store"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -80,7 +80,7 @@ const MessageBubble = ({ message }: { message: ChatMessage }) => {
 
 const ConfirmRow = () => {
   const { t } = useTranslation()
-  const pendingConfirm = useAiChatStore((state) => state.pendingConfirm)
+  const pendingConfirm = useAiChatStore(selectPendingConfirm)
   const resolveConfirm = useAiChatStore((state) => state.resolveConfirm)
   if (!pendingConfirm) return null
   return (
@@ -111,7 +111,7 @@ const ConfirmRow = () => {
 export const AiMessageList = () => {
   const { t } = useTranslation()
   const messages = useAiChatStore((state) => state.messages)
-  const pendingConfirm = useAiChatStore((state) => state.pendingConfirm)
+  const pendingConfirm = useAiChatStore(selectPendingConfirm)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {

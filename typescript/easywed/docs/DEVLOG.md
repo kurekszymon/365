@@ -1,5 +1,10 @@
 # EasyWed — Development Log
 
+### 30.06
+
+- dont show settings button if ai is not configured
+- use queue for pending confirmations instead of single value
+
 ### 29.06
 
 - draft ai assistant
