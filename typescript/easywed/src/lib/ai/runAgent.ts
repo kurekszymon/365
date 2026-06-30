@@ -19,6 +19,7 @@ export interface RunAgentCallbacks {
 export const runAgent = async (params: {
   history: Array<ModelMessage>
   callbacks: RunAgentCallbacks
+  abortSignal?: AbortSignal
 }): Promise<Array<ModelMessage>> => {
   const result = streamText({
     model: createModel(),
@@ -26,6 +27,7 @@ export const runAgent = async (params: {
     messages: params.history,
     tools,
     stopWhen: stepCountIs(8),
+    abortSignal: params.abortSignal,
   })
 
   for await (const part of result.fullStream) {

@@ -38,11 +38,16 @@ type State = {
   // because the model can fire multiple delete tools in one step, which the SDK
   // executes concurrently — each gets its own pending entry, resolved in order.
   confirmQueue: Array<PendingConfirm>
+  // Aborts the in-flight turn. Held so clear()/unmount can stop a stream that
+  // would otherwise keep mutating the planner after the user moved on.
+  abortController: AbortController | null
 }
 
 type Action = {
   send: (text: string) => Promise<void>
   clear: () => void
+  // Stop the current turn without wiping the conversation (used on unmount).
+  abort: () => void
   requestConfirm: (toolName: string, label: string) => Promise<boolean>
   resolveConfirm: (approved: boolean) => void
 }
@@ -83,6 +88,7 @@ export const useAiChatStore = create<State & Action>((set, get) => {
     status: "idle",
     error: null,
     confirmQueue: [],
+    abortController: null,
 
     send: async (text) => {
       const trimmed = text.trim()
@@ -94,6 +100,8 @@ export const useAiChatStore = create<State & Action>((set, get) => {
         { role: "user", content: trimmed },
       ]
 
+      const controller = new AbortController()
+
       set((state) => ({
         messages: [
           ...state.messages,
@@ -103,11 +111,13 @@ export const useAiChatStore = create<State & Action>((set, get) => {
         history: nextHistory,
         status: "streaming",
         error: null,
+        abortController: controller,
       }))
 
       try {
         const responseMessages = await runAgent({
           history: nextHistory,
+          abortSignal: controller.signal,
           callbacks: {
             onTextDelta: (delta) =>
               patchAssistant(assistantId, (m) => ({
@@ -138,21 +148,34 @@ export const useAiChatStore = create<State & Action>((set, get) => {
         // Unblock every dangling confirmation so each awaited execute settles.
         for (const pending of get().confirmQueue) pending.resolve(false)
         set({ confirmQueue: [] })
+        // An abort (clear / unmount) is intentional — stay silent, don't toast.
+        if (controller.signal.aborted) {
+          set({ status: "idle" })
+          return
+        }
         const message = error instanceof Error ? error.message : String(error)
         set({ status: "error", error: message })
         toast.error(i18n.t("assistant.error"), { description: message })
+      } finally {
+        // Drop the controller only if it's still ours (a newer turn may own it).
+        if (get().abortController === controller) set({ abortController: null })
       }
     },
 
     clear: () => {
-      for (const pending of get().confirmQueue) pending.resolve(false)
+      get().abort()
       set({
         messages: [],
         history: [],
         status: "idle",
         error: null,
-        confirmQueue: [],
       })
+    },
+
+    abort: () => {
+      get().abortController?.abort()
+      for (const pending of get().confirmQueue) pending.resolve(false)
+      set({ confirmQueue: [], status: "idle", abortController: null })
     },
 
     requestConfirm: (toolName, label) =>

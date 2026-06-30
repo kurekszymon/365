@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { SettingsIcon, Trash2Icon } from "lucide-react"
 import { AiChatSettings } from "./AiChatSettings"
@@ -19,6 +19,11 @@ export const AiChatPanelContent = () => {
   // "no key → settings" rule always true without a render cascade.
   const [settingsOpen, setSettingsOpen] = useState(false)
   const showSettings = settingsOpen || !isConfigured
+
+  // Leaving the panel (view change / close) aborts any in-flight turn so it
+  // can't keep mutating the planner in the background. Toggling settings does
+  // not unmount this component, so it won't interrupt a running stream.
+  useEffect(() => () => useAiChatStore.getState().abort(), [])
 
   return (
     <div className="flex h-full flex-col">
