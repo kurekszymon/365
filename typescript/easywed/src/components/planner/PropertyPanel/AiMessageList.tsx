@@ -68,11 +68,21 @@ const MessageBubble = ({ message }: { message: ChatMessage }) => {
           ))}
         </div>
       )}
-      {!message.text && message.tools.length === 0 && (
-        <div className="flex items-center gap-2 px-1 py-2 text-sm text-muted-foreground">
-          <Loader2Icon className="size-4 animate-spin" />
-          {t("assistant.thinking")}
+      {message.error ? (
+        <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+          <AlertCircleIcon className="mt-0.5 size-4 shrink-0" />
+          <span className="min-w-0 break-words">
+            {t("assistant.errored", { message: message.error })}
+          </span>
         </div>
+      ) : (
+        !message.text &&
+        message.tools.length === 0 && (
+          <div className="flex items-center gap-2 px-1 py-2 text-sm text-muted-foreground">
+            <Loader2Icon className="size-4 animate-spin" />
+            {t("assistant.thinking")}
+          </div>
+        )
       )}
     </div>
   )

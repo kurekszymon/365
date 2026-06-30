@@ -19,7 +19,15 @@ export interface ToolChip {
 
 export type ChatMessage =
   | { id: string; role: "user"; text: string }
-  | { id: string; role: "assistant"; text: string; tools: Array<ToolChip> }
+  | {
+      id: string
+      role: "assistant"
+      text: string
+      tools: Array<ToolChip>
+      // Set when the turn failed; rendered in place of the "thinking" spinner so
+      // an errored turn doesn't appear to hang forever.
+      error?: string
+    }
 
 export interface PendingConfirm {
   id: string
@@ -177,6 +185,9 @@ export const useAiChatStore = create<State & Action>((set, get) => {
           return
         }
         const message = error instanceof Error ? error.message : String(error)
+        // Surface the failure on the assistant bubble itself so the turn shows
+        // "model errored: …" instead of a perpetual thinking spinner.
+        patchAssistant(assistantId, (m) => ({ ...m, error: message }))
         set({ status: "error", error: message })
         toast.error(i18n.t("assistant.error"), { description: message })
       } finally {

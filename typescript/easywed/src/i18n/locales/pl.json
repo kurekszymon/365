@@ -366,6 +366,7 @@
   "assistant.empty": "Asystent AI do planowania",
   "assistant.empty_hint": "Spróbuj: „Dodaj okrągły stół na 10 osób w lewym górnym rogu”.",
   "assistant.error": "Asystent napotkał problem",
+  "assistant.errored": "Błąd: {{message}}",
   "assistant.confirm_delete": "Usunąć „{{name}}”? Tej operacji nie można cofnąć.",
   "assistant.confirm": "Usuń",
   "assistant.cancel": "Anuluj",

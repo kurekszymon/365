@@ -349,6 +349,7 @@
   "assistant.empty": "AI planning assistant",
   "assistant.empty_hint": "Try: \"Add a round table for 10 in the top-left corner\".",
   "assistant.error": "The assistant ran into a problem",
+  "assistant.errored": "Error: {{message}}",
   "assistant.confirm_delete": "Delete \"{{name}}\"? This can't be undone.",
   "assistant.confirm": "Delete",
   "assistant.cancel": "Cancel",
