@@ -168,7 +168,7 @@ export const tools = {
         pos
       )
       return ok(
-        `Added ${shape} table ${tableLabel({ name: input.name ?? "", shape })} at (${fmt(pos.x)}, ${fmt(pos.y)}).`
+        `Added ${tableLabel({ name: input.name ?? "", shape })} at (${fmt(pos.x)}, ${fmt(pos.y)}).`
       )
     },
   }),
@@ -187,7 +187,7 @@ export const tools = {
       const pos = clampPosition(x, y, table.size, table.rotation)
       planner.updateTablePosition(id, pos.x, pos.y)
       return ok(
-        `Moved table ${tableLabel(table)} to (${fmt(pos.x)}, ${fmt(pos.y)}).`
+        `Moved ${tableLabel(table)} to (${fmt(pos.x)}, ${fmt(pos.y)}).`
       )
     },
   }),
@@ -221,7 +221,7 @@ export const tools = {
       if (input.capacity != null && input.capacity < assignedIds.length)
         return {
           status: "cancelled",
-          message: `Can't set capacity to ${input.capacity}: ${assignedIds.length} guest(s) are seated at table ${tableLabel(table)}. Unassign some first.`,
+          message: `Can't set capacity to ${input.capacity}: ${assignedIds.length} guest(s) are seated at ${tableLabel(table)}. Unassign some first.`,
         }
       const shape = input.shape ?? table.shape
       const rotation =
@@ -251,7 +251,7 @@ export const tools = {
       )
       planner.saveTable(input.id)
       return ok(
-        `Updated table ${tableLabel({ name: input.name ?? table.name, shape })}.`
+        `Updated ${tableLabel({ name: input.name ?? table.name, shape })}.`
       )
     },
   }),
@@ -277,10 +277,10 @@ export const tools = {
       if (!approved)
         return {
           status: "cancelled",
-          message: `Deletion of table ${tableLabel(table)} was cancelled by the user.`,
+          message: `Deletion of ${tableLabel(table)} was cancelled by the user.`,
         }
       planner.deleteTable(id)
-      return ok(`Deleted table ${tableLabel(table)}.`)
+      return ok(`Deleted ${tableLabel(table)}.`)
     },
   }),
 
@@ -320,7 +320,7 @@ export const tools = {
       const pos = clampPosition(input.x ?? 0, input.y ?? 0, size, rotation)
       planner.addFixture({ name: input.name ?? "", shape, size, rotation }, pos)
       return ok(
-        `Added ${shape} fixture ${fixtureLabel({ name: input.name ?? "", shape })} at (${fmt(pos.x)}, ${fmt(pos.y)}).`
+        `Added ${fixtureLabel({ name: input.name ?? "", shape })} at (${fmt(pos.x)}, ${fmt(pos.y)}).`
       )
     },
   }),
@@ -340,7 +340,7 @@ export const tools = {
       const pos = clampPosition(x, y, fixture.size, fixture.rotation)
       planner.updateFixturePosition(id, pos.x, pos.y)
       return ok(
-        `Moved fixture ${fixtureLabel(fixture)} to (${fmt(pos.x)}, ${fmt(pos.y)}).`
+        `Moved ${fixtureLabel(fixture)} to (${fmt(pos.x)}, ${fmt(pos.y)}).`
       )
     },
   }),
@@ -386,7 +386,7 @@ export const tools = {
       })
       planner.saveFixture(input.id)
       return ok(
-        `Updated fixture ${fixtureLabel({ name: input.name ?? fixture.name, shape })}.`
+        `Updated ${fixtureLabel({ name: input.name ?? fixture.name, shape })}.`
       )
     },
   }),
@@ -412,10 +412,10 @@ export const tools = {
       if (!approved)
         return {
           status: "cancelled",
-          message: `Deletion of fixture ${fixtureLabel(fixture)} was cancelled by the user.`,
+          message: `Deletion of ${fixtureLabel(fixture)} was cancelled by the user.`,
         }
       planner.deleteFixture(id)
-      return ok(`Deleted fixture ${fixtureLabel(fixture)}.`)
+      return ok(`Deleted ${fixtureLabel(fixture)}.`)
     },
   }),
 }
