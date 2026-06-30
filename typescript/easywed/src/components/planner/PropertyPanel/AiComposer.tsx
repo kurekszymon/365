@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { SendHorizonalIcon } from "lucide-react"
+import { SendHorizontalIcon } from "lucide-react"
 import { useAiChatStore } from "@/stores/aiChat.store"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -43,7 +43,7 @@ export const AiComposer = () => {
         disabled={!canSend}
         aria-label={t("assistant.send")}
       >
-        <SendHorizonalIcon />
+        <SendHorizontalIcon />
       </Button>
     </div>
   )

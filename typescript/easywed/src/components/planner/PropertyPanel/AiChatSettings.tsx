@@ -118,7 +118,7 @@ export const AiChatSettings = ({ onSaved }: { onSaved?: () => void }) => {
         <a
           href="https://openrouter.ai/keys"
           target="_blank"
-          rel="noreferrer"
+          rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-primary underline underline-offset-4"
         >
           {t("assistant.setup.get_key")}
@@ -157,7 +157,7 @@ export const AiChatSettings = ({ onSaved }: { onSaved?: () => void }) => {
         <a
           href="https://github.com/ggml-org/llama.cpp/blob/master/docs/function-calling.md"
           target="_blank"
-          rel="noreferrer"
+          rel="noreferrer noopener"
           className="inline-flex items-center gap-1 text-primary underline underline-offset-4"
         >
           {t("assistant.setup.llamacpp_models")}
