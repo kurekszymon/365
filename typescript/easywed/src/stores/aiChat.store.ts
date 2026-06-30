@@ -111,13 +111,15 @@ export const useAiChatStore = create<State & Action>((set, get) => {
 
       const controller = new AbortController()
 
+      // Commit history only on success (below). If the turn aborts or errors,
+      // the canonical history stays on its last complete turn instead of ending
+      // on a dangling user message that would double up on the next send.
       set((state) => ({
         messages: [
           ...state.messages,
           { id: uid(), role: "user", text: trimmed },
           { id: assistantId, role: "assistant", text: "", tools: [] },
         ],
-        history: nextHistory,
         status: "streaming",
         error: null,
         abortController: controller,
@@ -150,13 +152,25 @@ export const useAiChatStore = create<State & Action>((set, get) => {
           },
         })
         set((state) => ({
-          history: [...state.history, ...responseMessages],
+          history: [
+            ...state.history,
+            { role: "user", content: trimmed },
+            ...responseMessages,
+          ],
           status: "idle",
         }))
       } catch (error) {
         // Unblock every dangling confirmation so each awaited execute settles.
         for (const pending of get().confirmQueue) pending.resolve(false)
         set({ confirmQueue: [] })
+        // The stream stopped; any tool chip still spinning will never receive a
+        // result/error event, so settle them rather than spin forever.
+        patchAssistant(assistantId, (m) => ({
+          ...m,
+          tools: m.tools.map((chip) =>
+            chip.status === "running" ? { ...chip, status: "cancelled" } : chip
+          ),
+        }))
         // An abort (clear / unmount) is intentional — stay silent, don't toast.
         if (controller.signal.aborted) {
           set({ status: "idle" })

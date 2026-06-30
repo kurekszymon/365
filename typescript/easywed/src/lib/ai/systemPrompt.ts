@@ -42,8 +42,8 @@ COORDINATE SYSTEM
   inside these bounds. Positions are clamped to fit, so you can place near an edge safely.
 
 SHAPES
-- Tables: "round" (uses width as diameter; height is ignored and rotation is forced to 0),
-  "rectangular", or "custom". Tables have a "capacity" (number of seats) and "assigned"
+- Tables: "round" (uses width as diameter; height is ignored and rotation is forced to 0)
+  or "rectangular". Tables have a "capacity" (number of seats) and "assigned"
   (how many guests are currently seated there). Never set a table's capacity below its
   "assigned" count — those guests would have nowhere to sit.
 - Fixtures are non-seating elements (stage, dance floor, bar, DJ, etc.): "rectangle",

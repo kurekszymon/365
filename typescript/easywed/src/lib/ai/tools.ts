@@ -124,7 +124,7 @@ export const tools = {
           type: "string",
           description: "Display name, e.g. 'Head Table'.",
         },
-        shape: { type: "string", enum: ["round", "rectangular", "custom"] },
+        shape: { type: "string", enum: ["round", "rectangular"] },
         capacity: { type: "number", description: "Number of seats." },
         width: {
           type: "number",
@@ -190,7 +190,7 @@ export const tools = {
       properties: {
         id: { type: "string" },
         name: { type: "string" },
-        shape: { type: "string", enum: ["round", "rectangular", "custom"] },
+        shape: { type: "string", enum: ["round", "rectangular"] },
         capacity: { type: "number" },
         width: { type: "number" },
         height: { type: "number" },
@@ -202,19 +202,17 @@ export const tools = {
       const planner = usePlannerStore.getState()
       const table = planner.tables.find((t) => t.id === input.id)
       if (!table) return notFound(`No table found with id ${input.id}.`)
+      const assignedIds = planner.guests
+        .filter((g) => g.tableId === input.id)
+        .map((g) => g.id)
       // Hard guard: the DB capacity trigger would reject a shrink below the
       // seated count, but mutations only console.error, so the optimistic store
       // would silently diverge. Refuse it here instead.
-      if (input.capacity != null) {
-        const assigned = planner.guests.filter(
-          (g) => g.tableId === input.id
-        ).length
-        if (input.capacity < assigned)
-          return {
-            status: "cancelled",
-            message: `Can't set capacity to ${input.capacity}: ${assigned} guest(s) are seated at table ${input.id}. Unassign some first.`,
-          }
-      }
+      if (input.capacity != null && input.capacity < assignedIds.length)
+        return {
+          status: "cancelled",
+          message: `Can't set capacity to ${input.capacity}: ${assignedIds.length} guest(s) are seated at table ${input.id}. Unassign some first.`,
+        }
       const shape = input.shape ?? table.shape
       const rotation =
         shape === "round"
@@ -225,15 +223,22 @@ export const tools = {
         input.width ?? table.size.width,
         input.height ?? table.size.height
       )
-      planner.updateTable(input.id, {
-        name: input.name ?? table.name,
-        shape,
-        capacity: input.capacity ?? table.capacity,
-        size,
-        rotation,
-        geometry: table.geometry,
-        seats: table.seats,
-      })
+      // Pass the current occupants as the authoritative guest list. updateTable
+      // treats a missing list as "no guests" and would unassign everyone seated
+      // here (TablePanelContent passes assignedGuestIds for the same reason).
+      planner.updateTable(
+        input.id,
+        {
+          name: input.name ?? table.name,
+          shape,
+          capacity: input.capacity ?? table.capacity,
+          size,
+          rotation,
+          geometry: table.geometry,
+          seats: table.seats,
+        },
+        assignedIds
+      )
       planner.saveTable(input.id)
       return ok(`Updated table ${input.id}.`)
     },
