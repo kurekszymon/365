@@ -17,7 +17,7 @@ import { persist } from "zustand/middleware"
 export const AI_STORAGE_KEY = "easywed.ai"
 
 export const DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
-export const DEFAULT_MODEL = "anthropic/claude-sonnet-4-6"
+export const DEFAULT_MODEL = "qwen/qwen3.5-flash-02-23"
 
 // Quick-fill values for a local llama.cpp server (`llama-server`). It exposes an
 // OpenAI-compatible API at /v1 (default port 8080) and ignores both the key and

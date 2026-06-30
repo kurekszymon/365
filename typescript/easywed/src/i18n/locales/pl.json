@@ -375,7 +375,7 @@
   "assistant.api_key": "Klucz API",
   "assistant.api_key_hint": "Twój własny klucz. Przechowywany tylko w tej przeglądarce.",
   "assistant.model": "Model",
-  "assistant.model_hint": "np. anthropic/claude-sonnet-4-6, openai/gpt-4o, google/gemini-2.5-pro.",
+  "assistant.model_hint": "np. qwen/qwen3.5-flash-02-23, anthropic/claude-sonnet-4-6, openai/gpt-4o.",
   "assistant.tool.add_table": "Dodaj stół",
   "assistant.tool.move_table": "Przesuń stół",
   "assistant.tool.update_table": "Zmień stół",

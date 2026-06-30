@@ -358,7 +358,7 @@
   "assistant.api_key": "API key",
   "assistant.api_key_hint": "Your own key. Stored only in this browser.",
   "assistant.model": "Model",
-  "assistant.model_hint": "e.g. anthropic/claude-sonnet-4-6, openai/gpt-4o, google/gemini-2.5-pro.",
+  "assistant.model_hint": "e.g. qwen/qwen3.5-flash-02-23, anthropic/claude-sonnet-4-6, openai/gpt-4o.",
   "assistant.tool.add_table": "Add table",
   "assistant.tool.move_table": "Move table",
   "assistant.tool.update_table": "Update table",
