@@ -34,6 +34,11 @@ export const AiChatPanelContent = () => {
   const [modeOverride, setModeOverride] = useState<AiProvider | null>(null)
   const mode = modeOverride ?? detectProvider(baseUrl)
 
+  // The local (llama.cpp) provider talks to http://localhost, which only works
+  // when the dev server runs on the same machine — disable it in production
+  // builds until we ship a proper local-bridge story.
+  const isDev = import.meta.env.DEV
+
   // Leaving the panel (view change / close) aborts any in-flight turn so it
   // can't keep mutating the planner in the background. Toggling settings does
   // not unmount this component, so it won't interrupt a running stream.
@@ -44,17 +49,31 @@ export const AiChatPanelContent = () => {
       <div className="flex items-center gap-1 border-b px-2 py-1.5">
         {showSettings && (
           <ButtonGroup>
-            {(["openrouter", "local"] as Array<AiProvider>).map((option) => (
-              <Button
-                key={option}
-                type="button"
-                size="xs"
-                variant={mode === option ? "default" : "outline"}
-                onClick={() => setModeOverride(option)}
-              >
-                {t(`assistant.setup.provider_${option}`)}
-              </Button>
-            ))}
+            {(["openrouter", "local"] as Array<AiProvider>).map((option) => {
+              const devOnly = option === "local" && !isDev
+              return (
+                <Button
+                  key={option}
+                  type="button"
+                  size="xs"
+                  variant={mode === option ? "default" : "outline"}
+                  disabled={devOnly}
+                  title={
+                    devOnly
+                      ? t("assistant.setup.provider_local_dev_only")
+                      : undefined
+                  }
+                  onClick={() => setModeOverride(option)}
+                >
+                  {t(`assistant.setup.provider_${option}`)}
+                  {devOnly && (
+                    <span className="ml-1 text-[10px] text-muted-foreground uppercase">
+                      {t("assistant.setup.dev_only_badge")}
+                    </span>
+                  )}
+                </Button>
+              )
+            })}
           </ButtonGroup>
         )}
         <div className="ml-auto flex items-center gap-1">
