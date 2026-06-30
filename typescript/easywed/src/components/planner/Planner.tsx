@@ -4,6 +4,7 @@ import {
   LandmarkIcon,
   LayoutPanelLeftIcon,
   PlusIcon,
+  SparklesIcon,
   UserPlusIcon,
   UsersIcon,
   UtensilsIcon,
@@ -86,6 +87,7 @@ export const Planner = () => {
       openTablesPlaceholder: state.openTablesPlaceholder,
       openFixtureAdd: state.openFixtureAdd,
       openGuests: state.openGuests,
+      openAiChat: state.openAiChat,
     }))
   )
 
@@ -177,6 +179,14 @@ export const Planner = () => {
                 <PlusIcon />
               </Button>
             </ButtonGroup>
+            <Button
+              variant="outline"
+              onClick={() => panel.openAiChat()}
+              aria-label={t("assistant.title")}
+            >
+              <SparklesIcon />
+              <span className="hidden md:inline">{t("assistant.title")}</span>
+            </Button>
             <ButtonGroup>
               {role === "owner" && (
                 <Tooltip>

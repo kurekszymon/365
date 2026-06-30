@@ -17,6 +17,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { AuthGate } from "@/components/auth/AuthGate"
 import { ErrorFallback } from "@/components/ErrorFallback"
 import { useThemeStore } from "@/stores/theme.store"
+import { useAiStore } from "@/stores/ai.store"
 
 const options = {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
@@ -169,6 +170,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const theme = useThemeStore((s) => s.theme)
   useEffect(() => {
     void useThemeStore.persist.rehydrate()
+    // BYO-key AI settings are also persisted with skipHydration, so read them
+    // from localStorage after mount alongside the theme.
+    void useAiStore.persist.rehydrate()
   }, [])
 
   return (
