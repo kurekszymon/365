@@ -41,6 +41,14 @@ const clampPosition = (
 
 const fmt = (n: number) => n.toFixed(1)
 
+// User-facing label for a tool result. Ids are internal-only (the chip subtitle
+// shows these strings verbatim), so we refer to objects by name, falling back to
+// a generic "the <shape> table/fixture" when unnamed.
+const tableLabel = (t: { name: string; shape: TableShape }) =>
+  t.name.trim() ? `"${t.name}"` : `the ${t.shape} table`
+const fixtureLabel = (f: { name: string; shape: FixtureShape }) =>
+  f.name.trim() ? `"${f.name}"` : `the ${f.shape} fixture`
+
 // Every tool returns this discriminated union so the UI can branch on `status`
 // (a machine flag) instead of sniffing the prose. `message` is the
 // model/human-readable text fed back into the conversation either way.
@@ -116,7 +124,7 @@ const positionProps = {
 export const tools = {
   add_table: tool({
     description:
-      "Add a new table to the hall. Returns the new table's id. Position is the top-left corner in meters.",
+      "Add a new table to the hall. Position is the top-left corner in meters.",
     inputSchema: jsonSchema<AddTableInput>({
       type: "object",
       properties: {
@@ -148,7 +156,7 @@ export const tools = {
         input.height ?? DEFAULT_TABLE.size.height
       )
       const pos = clampPosition(input.x ?? 0, input.y ?? 0, size, rotation)
-      const id = planner.addTable(
+      planner.addTable(
         {
           name: input.name ?? "",
           shape,
@@ -160,7 +168,7 @@ export const tools = {
         pos
       )
       return ok(
-        `Added ${shape} table "${input.name ?? ""}" (id ${id}) at (${fmt(pos.x)}, ${fmt(pos.y)}).`
+        `Added ${shape} table ${tableLabel({ name: input.name ?? "", shape })} at (${fmt(pos.x)}, ${fmt(pos.y)}).`
       )
     },
   }),
@@ -175,10 +183,12 @@ export const tools = {
     execute: ({ id, x, y }) => {
       const planner = usePlannerStore.getState()
       const table = planner.tables.find((t) => t.id === id)
-      if (!table) return notFound(`No table found with id ${id}.`)
+      if (!table) return notFound(`That table no longer exists.`)
       const pos = clampPosition(x, y, table.size, table.rotation)
       planner.updateTablePosition(id, pos.x, pos.y)
-      return ok(`Moved table ${id} to (${fmt(pos.x)}, ${fmt(pos.y)}).`)
+      return ok(
+        `Moved table ${tableLabel(table)} to (${fmt(pos.x)}, ${fmt(pos.y)}).`
+      )
     },
   }),
 
@@ -201,7 +211,7 @@ export const tools = {
     execute: (input) => {
       const planner = usePlannerStore.getState()
       const table = planner.tables.find((t) => t.id === input.id)
-      if (!table) return notFound(`No table found with id ${input.id}.`)
+      if (!table) return notFound(`That table no longer exists.`)
       const assignedIds = planner.guests
         .filter((g) => g.tableId === input.id)
         .map((g) => g.id)
@@ -211,7 +221,7 @@ export const tools = {
       if (input.capacity != null && input.capacity < assignedIds.length)
         return {
           status: "cancelled",
-          message: `Can't set capacity to ${input.capacity}: ${assignedIds.length} guest(s) are seated at table ${input.id}. Unassign some first.`,
+          message: `Can't set capacity to ${input.capacity}: ${assignedIds.length} guest(s) are seated at table ${tableLabel(table)}. Unassign some first.`,
         }
       const shape = input.shape ?? table.shape
       const rotation =
@@ -240,7 +250,9 @@ export const tools = {
         assignedIds
       )
       planner.saveTable(input.id)
-      return ok(`Updated table ${input.id}.`)
+      return ok(
+        `Updated table ${tableLabel({ name: input.name ?? table.name, shape })}.`
+      )
     },
   }),
 
@@ -255,23 +267,26 @@ export const tools = {
     execute: async ({ id }): Promise<ToolResult> => {
       const planner = usePlannerStore.getState()
       const table = planner.tables.find((t) => t.id === id)
-      if (!table) return notFound(`No table found with id ${id}.`)
+      if (!table) return notFound(`That table no longer exists.`)
       const approved = await useAiChatStore
         .getState()
-        .requestConfirm("delete_table", table.name || `table ${id}`)
+        .requestConfirm(
+          "delete_table",
+          table.name || `the ${table.shape} table`
+        )
       if (!approved)
         return {
           status: "cancelled",
-          message: `Deletion of table ${id} was cancelled by the user.`,
+          message: `Deletion of table ${tableLabel(table)} was cancelled by the user.`,
         }
       planner.deleteTable(id)
-      return ok(`Deleted table ${id}.`)
+      return ok(`Deleted table ${tableLabel(table)}.`)
     },
   }),
 
   add_fixture: tool({
     description:
-      "Add a non-seating fixture (stage, dance floor, bar, etc.). Returns the new fixture's id. Position is the top-left corner in meters.",
+      "Add a non-seating fixture (stage, dance floor, bar, etc.). Position is the top-left corner in meters.",
     inputSchema: jsonSchema<AddFixtureInput>({
       type: "object",
       properties: {
@@ -303,12 +318,9 @@ export const tools = {
         input.height ?? DEFAULT_FIXTURE.size.height
       )
       const pos = clampPosition(input.x ?? 0, input.y ?? 0, size, rotation)
-      const id = planner.addFixture(
-        { name: input.name ?? "", shape, size, rotation },
-        pos
-      )
+      planner.addFixture({ name: input.name ?? "", shape, size, rotation }, pos)
       return ok(
-        `Added ${shape} fixture "${input.name ?? ""}" (id ${id}) at (${fmt(pos.x)}, ${fmt(pos.y)}).`
+        `Added ${shape} fixture ${fixtureLabel({ name: input.name ?? "", shape })} at (${fmt(pos.x)}, ${fmt(pos.y)}).`
       )
     },
   }),
@@ -324,10 +336,12 @@ export const tools = {
     execute: ({ id, x, y }) => {
       const planner = usePlannerStore.getState()
       const fixture = planner.fixtures.find((f) => f.id === id)
-      if (!fixture) return notFound(`No fixture found with id ${id}.`)
+      if (!fixture) return notFound(`That fixture no longer exists.`)
       const pos = clampPosition(x, y, fixture.size, fixture.rotation)
       planner.updateFixturePosition(id, pos.x, pos.y)
-      return ok(`Moved fixture ${id} to (${fmt(pos.x)}, ${fmt(pos.y)}).`)
+      return ok(
+        `Moved fixture ${fixtureLabel(fixture)} to (${fmt(pos.x)}, ${fmt(pos.y)}).`
+      )
     },
   }),
 
@@ -352,7 +366,7 @@ export const tools = {
     execute: (input) => {
       const planner = usePlannerStore.getState()
       const fixture = planner.fixtures.find((f) => f.id === input.id)
-      if (!fixture) return notFound(`No fixture found with id ${input.id}.`)
+      if (!fixture) return notFound(`That fixture no longer exists.`)
       const shape = input.shape ?? fixture.shape
       const rotation =
         shape === "circle"
@@ -371,7 +385,9 @@ export const tools = {
         geometry: fixture.geometry,
       })
       planner.saveFixture(input.id)
-      return ok(`Updated fixture ${input.id}.`)
+      return ok(
+        `Updated fixture ${fixtureLabel({ name: input.name ?? fixture.name, shape })}.`
+      )
     },
   }),
 
@@ -386,17 +402,20 @@ export const tools = {
     execute: async ({ id }): Promise<ToolResult> => {
       const planner = usePlannerStore.getState()
       const fixture = planner.fixtures.find((f) => f.id === id)
-      if (!fixture) return notFound(`No fixture found with id ${id}.`)
+      if (!fixture) return notFound(`That fixture no longer exists.`)
       const approved = await useAiChatStore
         .getState()
-        .requestConfirm("delete_fixture", fixture.name || `fixture ${id}`)
+        .requestConfirm(
+          "delete_fixture",
+          fixture.name || `the ${fixture.shape} fixture`
+        )
       if (!approved)
         return {
           status: "cancelled",
-          message: `Deletion of fixture ${id} was cancelled by the user.`,
+          message: `Deletion of fixture ${fixtureLabel(fixture)} was cancelled by the user.`,
         }
       planner.deleteFixture(id)
-      return ok(`Deleted fixture ${id}.`)
+      return ok(`Deleted fixture ${fixtureLabel(fixture)}.`)
     },
   }),
 }
