@@ -159,6 +159,10 @@ export const useAiChatStore = create<State & Action>((set, get) => {
               settleTool(assistantId, id, "error", error),
           },
         })
+        // The turn may have finished in the same tick the user cleared/aborted.
+        // If so the abort raced past this success path; committing now would
+        // resurrect the conversation the user just wiped. Bail before mutating.
+        if (controller.signal.aborted) return
         set((state) => ({
           history: [
             ...state.history,

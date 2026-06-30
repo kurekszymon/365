@@ -124,8 +124,14 @@ export const AiMessageList = () => {
   const pendingConfirm = useAiChatStore(selectPendingConfirm)
   const bottomRef = useRef<HTMLDivElement>(null)
 
+  // Streaming emits a new `messages` array per text delta, so this effect can
+  // fire many times per frame. Coalesce into a single scroll per animation
+  // frame to follow the stream without thrashing layout on every token.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: "end" })
+    const frame = requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({ block: "end" })
+    })
+    return () => cancelAnimationFrame(frame)
   }, [messages, pendingConfirm])
 
   if (messages.length === 0) {
