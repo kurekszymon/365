@@ -210,9 +210,10 @@ export const tools = {
           (g) => g.tableId === input.id
         ).length
         if (input.capacity < assigned)
-          return ok(
-            `Can't set capacity to ${input.capacity}: ${assigned} guest(s) are seated at table ${input.id}. Unassign some first.`
-          )
+          return {
+            status: "cancelled",
+            message: `Can't set capacity to ${input.capacity}: ${assigned} guest(s) are seated at table ${input.id}. Unassign some first.`,
+          }
       }
       const shape = input.shape ?? table.shape
       const rotation =
