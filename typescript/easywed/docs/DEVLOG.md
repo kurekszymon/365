@@ -1,5 +1,10 @@
 # EasyWed — Development Log
 
+### 01.07
+
+- trim names provided by ai
+- reclamp objects to hall after updating them
+
 ### 30.06
 
 - use structured tool result
