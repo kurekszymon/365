@@ -1,4 +1,6 @@
 import { create } from "zustand"
+import { persist } from "zustand/middleware"
+import { PLANNER_STORAGE_KEY, localPlannerStorage } from "@/lib/localWedding"
 import {
   insertFixture,
   insertGuest,
@@ -185,17 +187,26 @@ type Action = {
   updateFixturePosition: (id: string, x: number, y: number) => void
 }
 
-export const usePlannerStore = create<State & Action>((set, get) => ({
+export const DEFAULT_HALL: State["hall"] = {
+  dimensions: {
+    width: 20,
+    height: 12,
+  },
+  preset: undefined,
+}
+
+const createPlannerStore = (
+  set: (
+    partial:
+      | Partial<State & Action>
+      | ((state: State & Action) => Partial<State & Action>)
+  ) => void,
+  get: () => State & Action
+): State & Action => ({
   tables: [],
   guests: [],
   fixtures: [],
-  hall: {
-    dimensions: {
-      width: 20,
-      height: 12,
-    },
-    preset: undefined,
-  },
+  hall: DEFAULT_HALL,
 
   addTable: (table, guestIds = [], position) => {
     const tableId = crypto.randomUUID()
@@ -583,4 +594,12 @@ export const usePlannerStore = create<State & Action>((set, get) => ({
     }))
     void updateFixturePos(id, x, y)
   },
-}))
+})
+
+export const usePlannerStore = create<State & Action>()(
+  persist(createPlannerStore, {
+    name: PLANNER_STORAGE_KEY,
+    skipHydration: true,
+    storage: localPlannerStorage,
+  })
+)

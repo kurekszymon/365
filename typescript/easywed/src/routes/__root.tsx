@@ -15,6 +15,7 @@ import i18n from "@/i18n"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 import { AuthGate } from "@/components/auth/AuthGate"
+import { LocalWeddingMigrationPrompt } from "@/components/auth/LocalWeddingMigrationPrompt"
 import { ErrorFallback } from "@/components/ErrorFallback"
 import { useThemeStore } from "@/stores/theme.store"
 import { useAiStore } from "@/stores/ai.store"
@@ -187,6 +188,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         >
           <TooltipProvider>
             <AuthGate>{children}</AuthGate>
+            <LocalWeddingMigrationPrompt />
           </TooltipProvider>
           <Toaster richColors position="top-right" />
         </PostHogProvider>
