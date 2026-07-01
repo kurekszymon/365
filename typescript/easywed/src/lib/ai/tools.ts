@@ -164,7 +164,7 @@ export const tools = {
       const pos = clampPosition(input.x ?? 0, input.y ?? 0, size, rotation)
       planner.addTable(
         {
-          name: input.name ?? "",
+          name: input.name?.trim() ?? "",
           shape,
           capacity: input.capacity ?? DEFAULT_TABLE.capacity,
           size,
@@ -257,7 +257,7 @@ export const tools = {
       planner.updateTable(
         input.id,
         {
-          name: input.name ?? table.name,
+          name: input.name?.trim() ?? table.name,
           shape,
           capacity: input.capacity ?? table.capacity,
           size,
@@ -267,6 +267,17 @@ export const tools = {
         },
         assignedIds
       )
+      // updateTable keeps the existing position untouched, but a size/rotation
+      // change can push it outside the hall bounds (especially near an edge) —
+      // re-clamp and persist the corrected position if it moved.
+      const pos = clampPosition(
+        table.position.x,
+        table.position.y,
+        size,
+        rotation
+      )
+      if (pos.x !== table.position.x || pos.y !== table.position.y)
+        planner.updateTablePosition(input.id, pos.x, pos.y)
       planner.saveTable(input.id)
       return ok(
         i18n.t("assistant.tool.result.table_updated", {
@@ -292,7 +303,7 @@ export const tools = {
         .getState()
         .requestConfirm(
           "delete_table",
-          table.name ||
+          table.name.trim() ||
             i18n.t("assistant.tool.label.table", { context: table.shape })
         )
       if (!approved)
@@ -345,7 +356,10 @@ export const tools = {
         input.height ?? DEFAULT_FIXTURE.size.height
       )
       const pos = clampPosition(input.x ?? 0, input.y ?? 0, size, rotation)
-      planner.addFixture({ name: input.name ?? "", shape, size, rotation }, pos)
+      planner.addFixture(
+        { name: input.name?.trim() ?? "", shape, size, rotation },
+        pos
+      )
       return ok(
         i18n.t("assistant.tool.result.fixture_added", {
           label: fixtureLabel({ name: input.name ?? "", shape }),
@@ -415,12 +429,23 @@ export const tools = {
         input.height ?? fixture.size.height
       )
       planner.updateFixture(input.id, {
-        name: input.name ?? fixture.name,
+        name: input.name?.trim() ?? fixture.name,
         shape,
         size,
         rotation,
         geometry: fixture.geometry,
       })
+      // updateFixture keeps the existing position untouched, but a size/rotation
+      // change can push it outside the hall bounds (especially near an edge) —
+      // re-clamp and persist the corrected position if it moved.
+      const pos = clampPosition(
+        fixture.position.x,
+        fixture.position.y,
+        size,
+        rotation
+      )
+      if (pos.x !== fixture.position.x || pos.y !== fixture.position.y)
+        planner.updateFixturePosition(input.id, pos.x, pos.y)
       planner.saveFixture(input.id)
       return ok(
         i18n.t("assistant.tool.result.fixture_updated", {
@@ -447,7 +472,7 @@ export const tools = {
         .getState()
         .requestConfirm(
           "delete_fixture",
-          fixture.name ||
+          fixture.name.trim() ||
             i18n.t("assistant.tool.label.fixture", { context: fixture.shape })
         )
       if (!approved)
