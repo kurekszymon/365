@@ -7,7 +7,13 @@ import i18n from "@/i18n"
 
 // Routes that render immediately without waiting for session hydration.
 // Auth state still hydrates in the background for opportunistic use.
-const PUBLIC_PATHS = ["/login", "/auth/callback", "/pl", "/en"]
+const PUBLIC_PATHS = [
+  "/login",
+  "/auth/callback",
+  "/pl",
+  "/en",
+  "/wedding/local",
+]
 
 // Hydrates the Supabase session into the auth store and re-runs router
 // matches on any auth change. Route-level beforeLoad handlers own the

@@ -4,6 +4,7 @@ import type { Json } from "@/lib/supabase.types"
 import { supabase } from "@/lib/supabase"
 import i18n from "@/i18n"
 import { useGlobalStore } from "@/stores/global.store"
+import { isLocalWedding } from "@/lib/localWedding"
 
 // Geometry's typed shape (object with `vertices` and `closed`) is structurally
 // compatible with `Json` at runtime, but TS rejects the assignment because the
@@ -41,6 +42,12 @@ export const run = async <T extends { error: unknown }>(
   label: string,
   query: PromiseLike<T>
 ): Promise<boolean> => {
+  // Guests plan against a device-local wedding with no Supabase row behind
+  // it. `query` is a lazy Postgrest thenable, so returning before it's
+  // awaited means no request is ever sent — every mutation funnels through
+  // here, so this single check covers row-scoped mutations that never call
+  // getWeddingId() too (position/seat/soft-delete writes).
+  if (isLocalWedding(useGlobalStore.getState().weddingId)) return false
   try {
     const { error } = await query
     if (error) {
