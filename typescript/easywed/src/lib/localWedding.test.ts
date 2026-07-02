@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   GLOBAL_STORAGE_KEY,
   LOCAL_WEDDING_ID,
@@ -165,5 +165,33 @@ describe("clearLocalWeddingStorage", () => {
     clearLocalWeddingStorage()
     expect(localStorage.getItem(PLANNER_STORAGE_KEY)).toBeNull()
     expect(localStorage.getItem(GLOBAL_STORAGE_KEY)).toBeNull()
+  })
+})
+
+describe("storage access degrades to a no-op instead of throwing", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("clearLocalWeddingStorage doesn't throw when removeItem throws", () => {
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {
+      throw new DOMException("blocked", "SecurityError")
+    })
+    expect(() => clearLocalWeddingStorage()).not.toThrow()
+  })
+
+  it("createLocalGatedStorage doesn't throw when the underlying calls throw", () => {
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new DOMException("blocked", "SecurityError")
+    })
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("blocked", "SecurityError")
+    })
+    registerActiveWeddingIdGetter(() => LOCAL_WEDDING_ID)
+    const storage = createLocalGatedStorage()
+
+    expect(() => storage.getItem("k")).not.toThrow()
+    expect(storage.getItem("k")).toBeNull()
+    expect(() => storage.setItem("k", "v")).not.toThrow()
   })
 })

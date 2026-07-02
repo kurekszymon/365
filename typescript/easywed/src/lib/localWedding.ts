@@ -26,19 +26,50 @@ export const registerActiveWeddingIdGetter = (
   getActiveWeddingId = getter
 }
 
+// localStorage is unavailable during SSR and can throw even when present
+// (privacy mode, blocked storage, quota exceeded). These treat it as an
+// optional cache: unavailable/throwing storage degrades to a no-op instead
+// of crashing the app.
+const safeGetItem = (key: string): string | null => {
+  if (typeof localStorage === "undefined") return null
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+const safeSetItem = (key: string, value: string): void => {
+  if (typeof localStorage === "undefined") return
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // storage blocked/full — guest mode just won't persist this write.
+  }
+}
+
+const safeRemoveItem = (key: string): void => {
+  if (typeof localStorage === "undefined") return
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    // see safeSetItem
+  }
+}
+
 // Gates writes so the planner/global stores only ever persist to localStorage
 // while the local wedding is the active one — editing a cloud wedding (same
 // store instances) must never leak into these keys. Reads always pass
 // through.
 export const createLocalGatedStorage = (): StateStorage => ({
-  getItem: (name) => localStorage.getItem(name),
+  getItem: (name) => safeGetItem(name),
   setItem: (name, value) => {
     if (!isLocalWedding(getActiveWeddingId())) return
-    localStorage.setItem(name, value)
+    safeSetItem(name, value)
   },
   removeItem: (name) => {
     if (!isLocalWedding(getActiveWeddingId())) return
-    localStorage.removeItem(name)
+    safeRemoveItem(name)
   },
 })
 
@@ -73,8 +104,7 @@ export interface LocalGlobalSnapshot {
 }
 
 const readPersistedState = <T>(key: string): T | null => {
-  if (typeof localStorage === "undefined") return null
-  const raw = localStorage.getItem(key)
+  const raw = safeGetItem(key)
   if (!raw) return null
   try {
     const parsed = JSON.parse(raw) as { state?: T }
@@ -149,6 +179,6 @@ export const hasLocalWeddingData = (): boolean => {
 }
 
 export const clearLocalWeddingStorage = (): void => {
-  localStorage.removeItem(PLANNER_STORAGE_KEY)
-  localStorage.removeItem(GLOBAL_STORAGE_KEY)
+  safeRemoveItem(PLANNER_STORAGE_KEY)
+  safeRemoveItem(GLOBAL_STORAGE_KEY)
 }
