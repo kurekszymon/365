@@ -2,16 +2,12 @@ import { useEffect, useState } from "react"
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { supabase } from "@/lib/supabase"
-import { requireAuth } from "@/lib/auth/guards"
 import { useAuthStore } from "@/stores/auth.store"
 import { useDialogStore } from "@/stores/dialog.store"
 import { Button } from "@/components/ui/button"
 import { DialogManager } from "@/components/dialogs/DialogManager"
 
 export const Route = createFileRoute("/")({
-  beforeLoad: () => {
-    requireAuth("/")
-  },
   component: Home,
 })
 
@@ -24,6 +20,7 @@ type WeddingRow = {
 function Home() {
   const { t } = useTranslation()
   const session = useAuthStore((s) => s.session)
+  const isReady = useAuthStore((s) => s.isReady)
   const navigate = useNavigate()
 
   const openDialog = useDialogStore((s) => s.open)
@@ -68,6 +65,37 @@ function Home() {
       return
     }
     navigate({ to: "/wedding/$id", params: { id: data.id } })
+  }
+
+  // Wait for the first getSession() to resolve before deciding which landing
+  // to show — otherwise an already-authenticated user reloading "/" would
+  // flash this signed-out screen before flipping to their dashboard below.
+  if (!isReady) return null
+
+  if (!session) {
+    return (
+      <div className="flex min-h-svh flex-col items-center justify-center p-6">
+        <div className="flex w-full max-w-md flex-col gap-6">
+          <div className="text-center">
+            <h1 className="font-heading text-4xl font-bold tracking-tight">
+              easywed.
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {t("weddings.subtitle")}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Button asChild>
+              <Link to="/wedding/local">{t("guest_mode.start_planning")}</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/login">{t("auth.sign_in")}</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -13,10 +13,13 @@ import { Route as PlRouteImport } from './routes/pl'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as EnRouteImport } from './routes/en'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WeddingLocalRouteImport } from './routes/wedding.local'
 import { Route as WeddingIdRouteImport } from './routes/wedding.$id'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as WeddingLocalIndexRouteImport } from './routes/wedding.local/index'
 import { Route as WeddingIdIndexRouteImport } from './routes/wedding.$id/index'
+import { Route as WeddingLocalPlannerRouteImport } from './routes/wedding.local/planner'
 import { Route as WeddingIdRemindersRouteImport } from './routes/wedding.$id/reminders'
 import { Route as WeddingIdPlannerRouteImport } from './routes/wedding.$id/planner'
 
@@ -40,6 +43,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WeddingLocalRoute = WeddingLocalRouteImport.update({
+  id: '/wedding/local',
+  path: '/wedding/local',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WeddingIdRoute = WeddingIdRouteImport.update({
   id: '/wedding/$id',
   path: '/wedding/$id',
@@ -55,10 +63,20 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WeddingLocalIndexRoute = WeddingLocalIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WeddingLocalRoute,
+} as any)
 const WeddingIdIndexRoute = WeddingIdIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => WeddingIdRoute,
+} as any)
+const WeddingLocalPlannerRoute = WeddingLocalPlannerRouteImport.update({
+  id: '/planner',
+  path: '/planner',
+  getParentRoute: () => WeddingLocalRoute,
 } as any)
 const WeddingIdRemindersRoute = WeddingIdRemindersRouteImport.update({
   id: '/reminders',
@@ -79,9 +97,12 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
   '/wedding/$id': typeof WeddingIdRouteWithChildren
+  '/wedding/local': typeof WeddingLocalRouteWithChildren
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
   '/wedding/$id/reminders': typeof WeddingIdRemindersRoute
+  '/wedding/local/planner': typeof WeddingLocalPlannerRoute
   '/wedding/$id/': typeof WeddingIdIndexRoute
+  '/wedding/local/': typeof WeddingLocalIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -92,7 +113,9 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
   '/wedding/$id/reminders': typeof WeddingIdRemindersRoute
+  '/wedding/local/planner': typeof WeddingLocalPlannerRoute
   '/wedding/$id': typeof WeddingIdIndexRoute
+  '/wedding/local': typeof WeddingLocalIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -103,9 +126,12 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/invite/$token': typeof InviteTokenRoute
   '/wedding/$id': typeof WeddingIdRouteWithChildren
+  '/wedding/local': typeof WeddingLocalRouteWithChildren
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
   '/wedding/$id/reminders': typeof WeddingIdRemindersRoute
+  '/wedding/local/planner': typeof WeddingLocalPlannerRoute
   '/wedding/$id/': typeof WeddingIdIndexRoute
+  '/wedding/local/': typeof WeddingLocalIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -117,9 +143,12 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/invite/$token'
     | '/wedding/$id'
+    | '/wedding/local'
     | '/wedding/$id/planner'
     | '/wedding/$id/reminders'
+    | '/wedding/local/planner'
     | '/wedding/$id/'
+    | '/wedding/local/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -130,7 +159,9 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/wedding/$id/planner'
     | '/wedding/$id/reminders'
+    | '/wedding/local/planner'
     | '/wedding/$id'
+    | '/wedding/local'
   id:
     | '__root__'
     | '/'
@@ -140,9 +171,12 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/invite/$token'
     | '/wedding/$id'
+    | '/wedding/local'
     | '/wedding/$id/planner'
     | '/wedding/$id/reminders'
+    | '/wedding/local/planner'
     | '/wedding/$id/'
+    | '/wedding/local/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -153,6 +187,7 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   InviteTokenRoute: typeof InviteTokenRoute
   WeddingIdRoute: typeof WeddingIdRouteWithChildren
+  WeddingLocalRoute: typeof WeddingLocalRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -185,6 +220,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/wedding/local': {
+      id: '/wedding/local'
+      path: '/wedding/local'
+      fullPath: '/wedding/local'
+      preLoaderRoute: typeof WeddingLocalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/wedding/$id': {
       id: '/wedding/$id'
       path: '/wedding/$id'
@@ -206,12 +248,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/wedding/local/': {
+      id: '/wedding/local/'
+      path: '/'
+      fullPath: '/wedding/local/'
+      preLoaderRoute: typeof WeddingLocalIndexRouteImport
+      parentRoute: typeof WeddingLocalRoute
+    }
     '/wedding/$id/': {
       id: '/wedding/$id/'
       path: '/'
       fullPath: '/wedding/$id/'
       preLoaderRoute: typeof WeddingIdIndexRouteImport
       parentRoute: typeof WeddingIdRoute
+    }
+    '/wedding/local/planner': {
+      id: '/wedding/local/planner'
+      path: '/planner'
+      fullPath: '/wedding/local/planner'
+      preLoaderRoute: typeof WeddingLocalPlannerRouteImport
+      parentRoute: typeof WeddingLocalRoute
     }
     '/wedding/$id/reminders': {
       id: '/wedding/$id/reminders'
@@ -246,6 +302,20 @@ const WeddingIdRouteWithChildren = WeddingIdRoute._addFileChildren(
   WeddingIdRouteChildren,
 )
 
+interface WeddingLocalRouteChildren {
+  WeddingLocalPlannerRoute: typeof WeddingLocalPlannerRoute
+  WeddingLocalIndexRoute: typeof WeddingLocalIndexRoute
+}
+
+const WeddingLocalRouteChildren: WeddingLocalRouteChildren = {
+  WeddingLocalPlannerRoute: WeddingLocalPlannerRoute,
+  WeddingLocalIndexRoute: WeddingLocalIndexRoute,
+}
+
+const WeddingLocalRouteWithChildren = WeddingLocalRoute._addFileChildren(
+  WeddingLocalRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   EnRoute: EnRoute,
@@ -254,6 +324,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   InviteTokenRoute: InviteTokenRoute,
   WeddingIdRoute: WeddingIdRouteWithChildren,
+  WeddingLocalRoute: WeddingLocalRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

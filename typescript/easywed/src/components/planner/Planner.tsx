@@ -19,7 +19,9 @@ import { PlannerPrintView } from "./PlannerPrintView"
 import { usePrintShortcut } from "./usePrintShortcut"
 import { PropertyPanel } from "./PropertyPanel"
 import { ThemeSwitcher } from "./Header/ThemeSwitcher"
+import { GuestModeBanner } from "./GuestModeBanner"
 import type { DragEndEvent } from "@dnd-kit/core"
+import { isLocalWedding } from "@/lib/localWedding"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Button } from "@/components/ui/button"
 import {
@@ -97,6 +99,7 @@ export const Planner = () => {
       <PlannerPrintView />
 
       <div className="flex h-screen w-screen flex-col print:hidden">
+        <GuestModeBanner />
         <Header>
           <Header.Title weddingId={weddingId}>
             <Header.WeddingName />
@@ -188,7 +191,7 @@ export const Planner = () => {
               <span className="hidden md:inline">{t("assistant.title")}</span>
             </Button>
             <ButtonGroup>
-              {role === "owner" && (
+              {role === "owner" && !isLocalWedding(weddingId) && (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button

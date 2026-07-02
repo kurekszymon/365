@@ -14,7 +14,7 @@ import type { GridSpacing, GridStyle, SnapStep } from "@/stores/view.store"
 import { useViewStore } from "@/stores/view.store"
 import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
 import { useMeasuresStore } from "@/stores/measures.store"
-import { Route } from "@/routes/wedding.$id/planner"
+import { useGlobalStore } from "@/stores/global.store"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 
 export interface HallSurfaceMethods {
@@ -107,7 +107,7 @@ export const HallSurface = ({
   const isMeasuring = useViewStore((state) => state.isMeasuring)
   const measureMode = useViewStore((state) => state.measureMode)
   const showSeats = useViewStore((state) => state.showSeats)
-  const weddingId = Route.useParams().id
+  const weddingId = useGlobalStore((state) => state.weddingId)
 
   const { deleteMeasurement, updateMeasurementPoint, byWedding } =
     useMeasuresStore(
@@ -201,10 +201,11 @@ export const HallSurface = ({
           hallHeightPx={height}
           pendingPoint={isMeasuring ? pendingPoint : null}
           cursorPos={isMeasuring ? cursorPos : null}
-          onDelete={(id) => deleteMeasurement(weddingId, id)}
+          onDelete={(id) => weddingId && deleteMeasurement(weddingId, id)}
           activeDrag={activeDrag}
           resolvePoint={resolvePoint}
           onEndpointUpdate={(measurementId, pointKey, point) =>
+            weddingId &&
             updateMeasurementPoint(weddingId, measurementId, pointKey, point)
           }
         />
