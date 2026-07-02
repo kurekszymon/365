@@ -17,6 +17,13 @@ beforeEach(() => {
   localStorage.clear()
 })
 
+// registerActiveWeddingIdGetter mutates module-level state in localWedding.ts
+// (not per-test state), so a getter registered by one test would otherwise
+// leak into every test that runs after it in this worker.
+afterEach(() => {
+  registerActiveWeddingIdGetter(() => undefined)
+})
+
 describe("isLocalWedding", () => {
   it("is true only for the local sentinel", () => {
     expect(isLocalWedding(LOCAL_WEDDING_ID)).toBe(true)

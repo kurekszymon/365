@@ -7,6 +7,11 @@ import { useGlobalStore } from "@/stores/global.store"
 describe("run", () => {
   afterEach(() => {
     useGlobalStore.setState({ weddingId: undefined })
+    // useGlobalStore is a persisted store — setting weddingId to the local
+    // sentinel above triggers the gated storage to actually write to
+    // localStorage (see localWedding.ts's createLocalGatedStorage). Clear it
+    // so that write doesn't leak into other test files sharing this worker.
+    localStorage.clear()
   })
 
   it("resolves true and never invokes the query for a local wedding", async () => {

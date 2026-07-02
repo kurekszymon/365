@@ -79,17 +79,28 @@ export const MigrateLocalWeddingDialog = ({
 
     // Tables can only be added once a hall preset is chosen, so a preset-less
     // snapshot has no layout to migrate — skip straight to guests.
-    const layoutOk = planner.hall.preset
-      ? await replacePlannerLayout(
-          {
-            preset: planner.hall.preset,
-            width: planner.hall.dimensions.width,
-            height: planner.hall.dimensions.height,
-          },
-          planner.tables,
-          planner.fixtures
-        )
-      : true
+    // replacePlannerLayout maps over planner.tables/fixtures synchronously
+    // before it ever awaits a request, so a malformed locally-persisted row
+    // (e.g. missing `size`) throws synchronously rather than resolving
+    // false — catch it here too so it still hits the rollback + error stage
+    // below instead of leaving the dialog stuck on "committing".
+    let layoutOk: boolean
+    try {
+      layoutOk = planner.hall.preset
+        ? await replacePlannerLayout(
+            {
+              preset: planner.hall.preset,
+              width: planner.hall.dimensions.width,
+              height: planner.hall.dimensions.height,
+            },
+            planner.tables,
+            planner.fixtures
+          )
+        : true
+    } catch (err) {
+      console.error("[guest-mode] failed to migrate layout", err)
+      layoutOk = false
+    }
 
     if (!layoutOk) {
       const { error: rollbackError } = await supabase
@@ -109,9 +120,19 @@ export const MigrateLocalWeddingDialog = ({
 
     // Guests aren't covered by replacePlannerLayout's RPC. A failure here
     // isn't rolled back — the layout is real and worth keeping — it's
-    // surfaced as a toast after navigating instead.
-    const guestsOk =
-      planner.guests.length === 0 || (await insertGuests(planner.guests))
+    // surfaced as a toast after navigating instead. Same synchronous-throw
+    // risk as replacePlannerLayout above (malformed locally-persisted guest
+    // rows) — catch it so the flow still completes (navigate + toast)
+    // instead of rejecting onConfirm() silently.
+    let guestsOk = true
+    if (planner.guests.length > 0) {
+      try {
+        guestsOk = await insertGuests(planner.guests)
+      } catch (err) {
+        console.error("[guest-mode] failed to migrate guests", err)
+        guestsOk = false
+      }
+    }
 
     clearLocalWeddingStorage()
     onClose()
