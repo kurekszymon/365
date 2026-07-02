@@ -84,12 +84,46 @@ const readPersistedState = <T>(key: string): T | null => {
   }
 }
 
+const isValidHallDimensions = (
+  value: unknown
+): value is { width: number; height: number } =>
+  typeof value === "object" &&
+  value !== null &&
+  typeof (value as { width?: unknown }).width === "number" &&
+  typeof (value as { height?: unknown }).height === "number"
+
+// Guards against a corrupted/malformed persisted snapshot (e.g. hand-edited
+// localStorage, or a schema change from an older app version) crashing a
+// consumer like MigrateLocalWeddingDialog, which reads planner.hall.dimensions.*
+// directly.
+const isValidPlannerSnapshot = (
+  value: unknown
+): value is LocalPlannerSnapshot => {
+  if (typeof value !== "object" || value === null) return false
+  const v = value as {
+    tables?: unknown
+    guests?: unknown
+    fixtures?: unknown
+    hall?: unknown
+  }
+  return (
+    Array.isArray(v.tables) &&
+    Array.isArray(v.guests) &&
+    Array.isArray(v.fixtures) &&
+    typeof v.hall === "object" &&
+    v.hall !== null &&
+    isValidHallDimensions((v.hall as { dimensions?: unknown }).dimensions)
+  )
+}
+
 // Reads the raw persisted snapshot directly, bypassing the live stores
 // entirely. Rehydrating the live planner/global stores just to inspect them
 // would clobber an actively-loaded cloud wedding if the user signs in from a
 // different tab/route — this must stay decoupled from in-memory state.
-export const readLocalPlannerSnapshot = (): LocalPlannerSnapshot | null =>
-  readPersistedState<LocalPlannerSnapshot>(PLANNER_STORAGE_KEY)
+export const readLocalPlannerSnapshot = (): LocalPlannerSnapshot | null => {
+  const state = readPersistedState<LocalPlannerSnapshot>(PLANNER_STORAGE_KEY)
+  return isValidPlannerSnapshot(state) ? state : null
+}
 
 export const readLocalGlobalSnapshot = (): LocalGlobalSnapshot | null => {
   const state = readPersistedState<{ name?: string; date?: string }>(

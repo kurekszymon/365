@@ -1,9 +1,19 @@
 # EasyWed — Development Log
 
+### 02.07
+
+- fix gitignore excluding wedding.local route files from git
+- fix local mutations reporting false failures on guest import/dxf
+- fix local snapshot rehydrate clobbering existing local data
+- validate local snapshot shape before migrating to cloud
+- render landing page instantly for guests instead of blank screen
+
 ### 01.07
 
 - trim names provided by ai
 - reclamp objects to hall after updating them
+- add local-first guest mode: plan without login, data stays in browser
+- migrate local wedding to a cloud wedding on sign in
 
 ### 30.06
 

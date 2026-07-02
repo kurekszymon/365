@@ -69,7 +69,12 @@ describe("readLocalPlannerSnapshot / readLocalGlobalSnapshot", () => {
     localStorage.setItem(
       PLANNER_STORAGE_KEY,
       JSON.stringify({
-        state: { tables: [{ id: "t1" }], guests: [], fixtures: [] },
+        state: {
+          tables: [{ id: "t1" }],
+          guests: [],
+          fixtures: [],
+          hall: { dimensions: { width: 20, height: 12 } },
+        },
         version: 0,
       })
     )
@@ -88,6 +93,31 @@ describe("readLocalPlannerSnapshot / readLocalGlobalSnapshot", () => {
     expect(global?.name).toBe("Our Wedding")
     expect(global?.date).toBeInstanceOf(Date)
   })
+
+  it("returns null when the persisted hall shape is missing or malformed", () => {
+    localStorage.setItem(
+      PLANNER_STORAGE_KEY,
+      JSON.stringify({
+        state: { tables: [{ id: "t1" }], guests: [], fixtures: [] },
+        version: 0,
+      })
+    )
+    expect(readLocalPlannerSnapshot()).toBeNull()
+
+    localStorage.setItem(
+      PLANNER_STORAGE_KEY,
+      JSON.stringify({
+        state: {
+          tables: [],
+          guests: [],
+          fixtures: [],
+          hall: { dimensions: { width: "20", height: 12 } },
+        },
+        version: 0,
+      })
+    )
+    expect(readLocalPlannerSnapshot()).toBeNull()
+  })
 })
 
 describe("hasLocalWeddingData", () => {
@@ -99,7 +129,12 @@ describe("hasLocalWeddingData", () => {
     localStorage.setItem(
       PLANNER_STORAGE_KEY,
       JSON.stringify({
-        state: { tables: [{ id: "t1" }], guests: [], fixtures: [] },
+        state: {
+          tables: [{ id: "t1" }],
+          guests: [],
+          fixtures: [],
+          hall: { dimensions: { width: 20, height: 12 } },
+        },
         version: 0,
       })
     )

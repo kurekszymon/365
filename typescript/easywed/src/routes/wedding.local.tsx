@@ -21,6 +21,11 @@ function LocalWeddingLayout() {
 
     // Reset in-memory state before rehydrating so a cloud wedding left over
     // from a client-side nav (no full reload) can't leak into the guest view.
+    // Crucially, weddingId stays whatever it was (not yet the local sentinel)
+    // through this reset and the rehydrate below: the gated storage only
+    // writes while weddingId is local, so flipping it first would make this
+    // reset itself persist and overwrite the real local snapshot before
+    // rehydrate ever gets to read it back.
     usePlannerStore.setState({
       tables: [],
       guests: [],
@@ -28,7 +33,6 @@ function LocalWeddingLayout() {
       hall: DEFAULT_HALL,
     })
     useGlobalStore.setState({
-      weddingId: LOCAL_WEDDING_ID,
       role: "owner",
       name: undefined,
       date: undefined,
@@ -38,7 +42,10 @@ function LocalWeddingLayout() {
       usePlannerStore.persist.rehydrate(),
       useGlobalStore.persist.rehydrate(),
     ]).then(() => {
-      if (!cancelled) setResolved(true)
+      if (cancelled) return
+      // Only now does the local sentinel go live, so subsequent edits persist.
+      useGlobalStore.setState({ weddingId: LOCAL_WEDDING_ID })
+      setResolved(true)
     })
 
     return () => {
