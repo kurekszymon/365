@@ -19,13 +19,18 @@ function LocalWeddingLayout() {
   useEffect(() => {
     let cancelled = false
 
-    // Reset in-memory state before rehydrating so a cloud wedding left over
-    // from a client-side nav (no full reload) can't leak into the guest view.
-    // Crucially, weddingId stays whatever it was (not yet the local sentinel)
-    // through this reset and the rehydrate below: the gated storage only
-    // writes while weddingId is local, so flipping it first would make this
-    // reset itself persist and overwrite the real local snapshot before
-    // rehydrate ever gets to read it back.
+    // Force the local-storage gate off before resetting in-memory state,
+    // regardless of what weddingId was already active — including a prior
+    // guest session revisited via client-side nav, where it'd already be the
+    // local sentinel. Otherwise the reset below would itself persist and
+    // wipe the real local snapshot before rehydrate() gets to read it back.
+    if (useGlobalStore.getState().weddingId === LOCAL_WEDDING_ID) {
+      useGlobalStore.setState({ weddingId: undefined })
+    }
+
+    // Reset in-memory state before rehydrating so a cloud wedding (or the
+    // previous guest session) left over from a client-side nav can't leak
+    // into this render.
     usePlannerStore.setState({
       tables: [],
       guests: [],
