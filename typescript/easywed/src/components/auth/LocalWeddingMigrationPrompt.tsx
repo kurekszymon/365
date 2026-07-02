@@ -1,12 +1,11 @@
-import { useEffect, useRef, useState } from "react"
-import type { Session } from "@supabase/supabase-js"
+import { useEffect, useState } from "react"
 import { MigrateLocalWeddingDialog } from "@/components/dialogs/weddings"
 import {
   hasLocalWeddingData,
   readLocalGlobalSnapshot,
   readLocalPlannerSnapshot,
 } from "@/lib/localWedding"
-import { useAuthStore } from "@/stores/auth.store"
+import { supabase } from "@/lib/supabase"
 import { DEFAULT_HALL } from "@/stores/planner.store"
 
 const DISMISSED_KEY = "easywed.guest_migration_dismissed"
@@ -31,22 +30,26 @@ const markDismissed = (): void => {
 }
 
 // Root-level (not route-scoped) so it fires regardless of where sign-in
-// happens: /login, /auth/callback, or a second tab. Watches for a
-// null -> non-null session transition and, if there's local wedding data
-// worth keeping, offers to migrate it into a new cloud wedding.
+// happens: /login, /auth/callback, or a second tab. Listens for Supabase's
+// own SIGNED_IN event — distinct from INITIAL_SESSION (session restored on
+// page load) — so an already-authenticated user reloading the app with
+// stale local data lying around doesn't get re-prompted on every visit.
+// AuthGate makes the same SIGNED_IN/SIGNED_OUT distinction for its own
+// router.invalidate() call.
 export function LocalWeddingMigrationPrompt() {
-  const session = useAuthStore((s) => s.session)
-  const previousSession = useRef<Session | null>(null)
   const [promptOpen, setPromptOpen] = useState(false)
 
   useEffect(() => {
-    const justSignedIn = !previousSession.current && session
-    previousSession.current = session
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" && !wasDismissed() && hasLocalWeddingData()) {
+        setPromptOpen(true)
+      }
+    })
 
-    if (justSignedIn && !wasDismissed() && hasLocalWeddingData()) {
-      setPromptOpen(true)
-    }
-  }, [session])
+    return () => subscription.unsubscribe()
+  }, [])
 
   if (!promptOpen) return null
 

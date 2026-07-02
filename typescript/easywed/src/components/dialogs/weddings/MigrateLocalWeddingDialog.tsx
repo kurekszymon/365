@@ -141,10 +141,9 @@ export const MigrateLocalWeddingDialog = ({
                 {t("guest_mode.migrate.body")}
               </p>
               <p className="text-sm">
-                {t("guest_mode.migrate.summary", {
-                  tables: planner.tables.length,
-                  guests: planner.guests.length,
-                })}
+                {t("tables.count", { count: planner.tables.length })}
+                {" · "}
+                {t("guests.count", { count: planner.guests.length })}
               </p>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={onClose}>

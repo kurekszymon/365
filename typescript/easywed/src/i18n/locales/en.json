@@ -46,7 +46,6 @@
   "guest_mode.banner": "You're planning as a guest. Your changes are stored only on this device — they won't be available on other devices or if you clear your browser data.",
   "guest_mode.migrate.title": "Save your wedding to your account?",
   "guest_mode.migrate.body": "You have a wedding plan stored on this device. Sign-in succeeded — add it to your account so it's backed up and available on other devices.",
-  "guest_mode.migrate.summary": "{{tables}} tables · {{guests}} guests",
   "guest_mode.migrate.confirm": "Save to my account",
   "guest_mode.migrate.committing": "Saving…",
   "guest_mode.migrate.failed": "Couldn't save your local wedding. Please try again.",
@@ -154,6 +153,8 @@
   "fixtures.dimensions_oob": "Fixture of this size wouldn't fit in this hall",
 
   "guests": "Guests",
+  "guests.count": "{{count}} guests",
+  "guests.count_one": "{{count}} guest",
   "guests.add": "Add a guest",
   "guests.add.name": "Name",
   "guests.add.name_placeholder": "John Doe",

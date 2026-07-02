@@ -20,6 +20,7 @@ type WeddingRow = {
 function Home() {
   const { t } = useTranslation()
   const session = useAuthStore((s) => s.session)
+  const isReady = useAuthStore((s) => s.isReady)
   const navigate = useNavigate()
 
   const openDialog = useDialogStore((s) => s.open)
@@ -65,6 +66,11 @@ function Home() {
     }
     navigate({ to: "/wedding/$id", params: { id: data.id } })
   }
+
+  // Wait for the first getSession() to resolve before deciding which landing
+  // to show — otherwise an already-authenticated user reloading "/" would
+  // flash this signed-out screen before flipping to their dashboard below.
+  if (!isReady) return null
 
   if (!session) {
     return (
