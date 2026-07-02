@@ -7,6 +7,7 @@ import {
   readLocalPlannerSnapshot,
 } from "@/lib/localWedding"
 import { useAuthStore } from "@/stores/auth.store"
+import { DEFAULT_HALL } from "@/stores/planner.store"
 
 const DISMISSED_KEY = "easywed.guest_migration_dismissed"
 
@@ -34,9 +35,17 @@ export function LocalWeddingMigrationPrompt() {
 
   if (!promptOpen) return null
 
-  const planner = readLocalPlannerSnapshot()
+  // hasLocalWeddingData() can be true from name/date alone, with no planner
+  // storage key ever written (e.g. a guest who only set a wedding name) —
+  // fall back to an empty snapshot instead of bailing, so the dialog still
+  // renders (with an honest "0 tables · 0 guests" summary).
+  const planner = readLocalPlannerSnapshot() ?? {
+    tables: [],
+    guests: [],
+    fixtures: [],
+    hall: DEFAULT_HALL,
+  }
   const global = readLocalGlobalSnapshot()
-  if (!planner) return null
 
   const close = () => {
     sessionStorage.setItem(DISMISSED_KEY, "1")
