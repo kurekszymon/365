@@ -57,7 +57,14 @@ export const MigrateLocalWeddingDialog = ({
       .insert({
         owner_id: session.user.id,
         name: global.name?.trim() || t("wedding"),
-        date: global.date ? global.date.toISOString().slice(0, 10) : null,
+        // global.date comes from localStorage (readLocalGlobalSnapshot
+        // already filters out unparsable strings) — re-checking here too
+        // since guest-mode data is explicitly treated as potentially
+        // corrupted, and toISOString() throws on an Invalid Date.
+        date:
+          global.date && !Number.isNaN(global.date.getTime())
+            ? global.date.toISOString().slice(0, 10)
+            : null,
       })
       .select("id")
       .single()

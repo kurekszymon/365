@@ -13,10 +13,17 @@ describe("run", () => {
     useGlobalStore.setState({ weddingId: LOCAL_WEDDING_ID })
 
     let invoked = false
-    const query = {
-      then: () => {
+    // A spec-compliant thenable (accepts the resolve/reject callbacks and
+    // returns a real promise) rather than a stub `then` that ignores its
+    // arguments — so this test would still fail correctly (a rejected
+    // promise) instead of relying on a synchronous throw if the local-gate
+    // check in run() were ever accidentally removed.
+    const query: PromiseLike<{ error: unknown }> = {
+      then: (onfulfilled, onrejected) => {
         invoked = true
-        throw new Error("should not be awaited for a local wedding")
+        return Promise.reject(
+          new Error("should not be awaited for a local wedding")
+        ).then(onfulfilled, onrejected)
       },
     }
 

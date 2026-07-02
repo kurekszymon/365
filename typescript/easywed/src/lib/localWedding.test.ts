@@ -94,6 +94,20 @@ describe("readLocalPlannerSnapshot / readLocalGlobalSnapshot", () => {
     expect(global?.date).toBeInstanceOf(Date)
   })
 
+  it("drops an unparsable global.date instead of returning an Invalid Date", () => {
+    localStorage.setItem(
+      GLOBAL_STORAGE_KEY,
+      JSON.stringify({
+        state: { name: "Our Wedding", date: "not-a-date" },
+        version: 0,
+      })
+    )
+
+    const global = readLocalGlobalSnapshot()
+    expect(global?.name).toBe("Our Wedding")
+    expect(global?.date).toBeUndefined()
+  })
+
   it("returns null when the persisted hall shape is missing or malformed", () => {
     localStorage.setItem(
       PLANNER_STORAGE_KEY,

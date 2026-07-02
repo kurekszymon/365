@@ -77,14 +77,24 @@ export const localPlannerStorage = createJSONStorage(() =>
   createLocalGatedStorage()
 )
 
+// A malformed/hand-edited persisted date string must not become an Invalid
+// Date — downstream code (MigrateLocalWeddingDialog, PlannerPrintView) calls
+// .toISOString()/date formatting on global.store's `date`, which throws for
+// an Invalid Date. Returning undefined here drops the key entirely (both as
+// a JSON.parse reviver and as a plain value).
+const parseValidDate = (value: unknown): Date | undefined => {
+  if (typeof value !== "string") return undefined
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? undefined : date
+}
+
 // global.store's `date` field is a real `Date` instance elsewhere in the app
 // (see loadWedding.ts, PlannerPrintView.tsx). Plain JSON round-trips it to a
 // string, so revive it back on read.
 export const localGlobalStorage = createJSONStorage(
   () => createLocalGatedStorage(),
   {
-    reviver: (key, value) =>
-      key === "date" && typeof value === "string" ? new Date(value) : value,
+    reviver: (key, value) => (key === "date" ? parseValidDate(value) : value),
   }
 )
 
@@ -162,7 +172,7 @@ export const readLocalGlobalSnapshot = (): LocalGlobalSnapshot | null => {
   if (!state) return null
   return {
     name: state.name,
-    date: state.date ? new Date(state.date) : undefined,
+    date: parseValidDate(state.date),
   }
 }
 

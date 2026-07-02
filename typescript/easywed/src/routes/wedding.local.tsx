@@ -46,12 +46,19 @@ function LocalWeddingLayout() {
     void Promise.all([
       usePlannerStore.persist.rehydrate(),
       useGlobalStore.persist.rehydrate(),
-    ]).then(() => {
-      if (cancelled) return
-      // Only now does the local sentinel go live, so subsequent edits persist.
-      useGlobalStore.setState({ weddingId: LOCAL_WEDDING_ID })
-      setResolved(true)
-    })
+    ])
+      .catch((err: unknown) => {
+        // A read/parse failure here (e.g. corrupted localStorage) must not
+        // leave the guest stuck on the loading screen forever — fall back to
+        // the already-reset empty state above and let them start fresh.
+        console.error("[guest-mode] failed to rehydrate local wedding", err)
+      })
+      .then(() => {
+        if (cancelled) return
+        // Only now does the local sentinel go live, so subsequent edits persist.
+        useGlobalStore.setState({ weddingId: LOCAL_WEDDING_ID })
+        setResolved(true)
+      })
 
     return () => {
       cancelled = true
