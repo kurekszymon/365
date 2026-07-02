@@ -11,6 +11,25 @@ import { DEFAULT_HALL } from "@/stores/planner.store"
 
 const DISMISSED_KEY = "easywed.guest_migration_dismissed"
 
+// sessionStorage can throw (privacy mode, blocked storage) — treat it as an
+// optional cache: a failed read means "not dismissed" (worst case the prompt
+// re-appears), a failed write is just a best-effort dismissal.
+const wasDismissed = (): boolean => {
+  try {
+    return Boolean(sessionStorage.getItem(DISMISSED_KEY))
+  } catch {
+    return false
+  }
+}
+
+const markDismissed = (): void => {
+  try {
+    sessionStorage.setItem(DISMISSED_KEY, "1")
+  } catch {
+    // best-effort — see wasDismissed
+  }
+}
+
 // Root-level (not route-scoped) so it fires regardless of where sign-in
 // happens: /login, /auth/callback, or a second tab. Watches for a
 // null -> non-null session transition and, if there's local wedding data
@@ -24,11 +43,7 @@ export function LocalWeddingMigrationPrompt() {
     const justSignedIn = !previousSession.current && session
     previousSession.current = session
 
-    if (
-      justSignedIn &&
-      !sessionStorage.getItem(DISMISSED_KEY) &&
-      hasLocalWeddingData()
-    ) {
+    if (justSignedIn && !wasDismissed() && hasLocalWeddingData()) {
       setPromptOpen(true)
     }
   }, [session])
@@ -48,7 +63,7 @@ export function LocalWeddingMigrationPrompt() {
   const global = readLocalGlobalSnapshot()
 
   const close = () => {
-    sessionStorage.setItem(DISMISSED_KEY, "1")
+    markDismissed()
     setPromptOpen(false)
   }
 
