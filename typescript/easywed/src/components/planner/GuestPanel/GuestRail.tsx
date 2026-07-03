@@ -1,6 +1,8 @@
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { ChevronLeftIcon, ChevronRightIcon, UsersIcon } from "lucide-react"
 import { GuestListContent } from "./GuestListContent"
+import type { TransitionEvent } from "react"
 import { Badge } from "@/components/ui/badge"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useGuestPanelStore } from "@/stores/guestPanel.store"
@@ -19,12 +21,32 @@ export const GuestRail = () => {
   const guests = usePlannerStore((state) => state.guests)
   const unseatedCount = guests.filter((g) => !g.tableId).length
 
+  // `GuestListContent` (search/filter state, a row per guest) is comparatively
+  // heavy — reflowing it on every frame of the width transition is what made
+  // expanding this feel slow. Mount it only once the panel has actually
+  // reached its final width, so the animation itself only repaints an empty
+  // panel; collapsing drops it immediately instead of reflowing it while
+  // shrinking. Adjusted during render (React's documented alternative to an
+  // effect for "reset state when a prop changes") rather than in a
+  // useEffect, which would call setState after commit instead of before paint.
+  const [showContent, setShowContent] = useState(expanded)
+  const [prevExpanded, setPrevExpanded] = useState(expanded)
+  if (expanded !== prevExpanded) {
+    setPrevExpanded(expanded)
+    if (!expanded) setShowContent(false)
+  }
+
+  const handleTransitionEnd = (e: TransitionEvent<HTMLDivElement>) => {
+    if (e.propertyName === "width" && expanded) setShowContent(true)
+  }
+
   return (
     <div
       className={cn(
-        "flex shrink-0 flex-col border-r bg-background transition-all duration-200",
+        "flex shrink-0 flex-col border-r bg-background transition-[width] duration-200",
         expanded ? "w-[460px]" : "w-[60px]"
       )}
+      onTransitionEnd={handleTransitionEnd}
     >
       {expanded ? (
         <>
@@ -42,7 +64,7 @@ export const GuestRail = () => {
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-4">
-            <GuestListContent />
+            {showContent && <GuestListContent />}
           </div>
         </>
       ) : (

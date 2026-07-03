@@ -23,10 +23,14 @@ export const buildSystemPrompt = (): string => {
       `- ${i18n.t(p.labelKey)}: shape=${p.shape}, capacity=${p.capacity}, size=${p.size.width}x${p.size.height} m`
   ).join("\n")
 
-  const fixturePresetsList = FIXTURE_PRESETS.map(
-    (p) =>
-      `- ${i18n.t(p.labelKey)}: shape=${p.shape}, size=${p.size.width}x${p.size.height} m`
-  ).join("\n")
+  // "Custom" is a UI-only shortcut to the fixture add form (no fixed size/shape
+  // of its own) — not a real preset, so it's excluded from what the model sees.
+  const fixturePresetsList = FIXTURE_PRESETS.filter((p) => !p.custom)
+    .map(
+      (p) =>
+        `- ${i18n.t(p.labelKey)}: shape=${p.shape}, size=${p.size.width}x${p.size.height} m`
+    )
+    .join("\n")
 
   const snapshot = {
     hall: hall.dimensions,

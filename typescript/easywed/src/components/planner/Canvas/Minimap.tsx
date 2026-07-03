@@ -88,7 +88,7 @@ export const Minimap = ({
     >
       <div
         ref={boxRef}
-        className="relative h-full w-full cursor-pointer rounded-[5px] border border-dashed border-planner-table-border"
+        className="relative h-full w-full cursor-pointer"
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture(e.pointerId)
           navigateTo(e.clientX, e.clientY)
@@ -98,6 +98,20 @@ export const Minimap = ({
           navigateTo(e.clientX, e.clientY)
         }}
       >
+        {/* Outlines the hall's own scaled rect, not the padded box around it —
+            when the aspect ratios differ (the common case), the hall is
+            letterboxed inside the box via offsetX/offsetY. Drawing the border
+            on the full box instead would leave a gap between this outline and
+            the viewport rect below even when panned flush to a hall edge. */}
+        <div
+          className="pointer-events-none absolute rounded-[5px] border border-dashed border-planner-table-border"
+          style={{
+            left: offsetX,
+            top: offsetY,
+            width: hallDimensions.width * scale,
+            height: hallDimensions.height * scale,
+          }}
+        />
         {tables.map((table) => (
           <div
             key={table.id}

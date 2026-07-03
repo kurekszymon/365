@@ -45,8 +45,8 @@ export type FixtureIcon =
   | "dance_floor"
   | "bar"
   | "dj_booth"
-  | "cake"
   | "entrance"
+  | "custom"
 
 export type FixturePreset = {
   key: string
@@ -54,6 +54,9 @@ export type FixturePreset = {
   size: Size
   labelKey: string
   icon: FixtureIcon
+  // "Custom" has no sensible single default size/shape — tapping it opens the
+  // full fixture add form instead of inserting this preset directly.
+  custom?: boolean
 }
 
 export const FIXTURE_PRESETS: Array<FixturePreset> = [
@@ -86,17 +89,18 @@ export const FIXTURE_PRESETS: Array<FixturePreset> = [
     icon: "dj_booth",
   },
   {
-    key: "cake",
-    shape: "circle",
-    size: { width: 1, height: 1 },
-    labelKey: "fixtures.preset.cake",
-    icon: "cake",
-  },
-  {
     key: "entrance",
     shape: "rounded",
     size: { width: 1, height: 0.3 },
     labelKey: "fixtures.preset.entrance",
     icon: "entrance",
+  },
+  {
+    key: "custom",
+    shape: "rectangle",
+    size: { width: 1, height: 1 },
+    labelKey: "fixtures.preset.custom",
+    icon: "custom",
+    custom: true,
   },
 ]

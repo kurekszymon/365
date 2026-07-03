@@ -2,12 +2,12 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
 import {
-  CakeIcon,
   Disc3Icon,
   LogInIcon,
   MartiniIcon,
   Music2Icon,
   PresentationIcon,
+  ShapesIcon,
 } from "lucide-react"
 import { clampToHall } from "../Canvas/utils"
 import { AddCard } from "./AddCard"
@@ -21,13 +21,13 @@ import { ButtonGroup } from "@/components/ui/button-group"
 
 type Category = "tables" | "fixtures"
 
-const FIXTURE_ICONS: Record<FixtureIcon, typeof CakeIcon> = {
+const FIXTURE_ICONS: Record<FixtureIcon, typeof ShapesIcon> = {
   stage: PresentationIcon,
   dance_floor: Music2Icon,
   bar: MartiniIcon,
   dj_booth: Disc3Icon,
-  cake: CakeIcon,
   entrance: LogInIcon,
+  custom: ShapesIcon,
 }
 
 // "Dodaj do sali" visual-card picker: segmented Stoły/Elementy sali filter +
@@ -48,6 +48,7 @@ export const AddHubContent = () => {
   )
   const openTableEdit = usePanelStore((state) => state.openTableEdit)
   const openFixtureEdit = usePanelStore((state) => state.openFixtureEdit)
+  const openFixtureAdd = usePanelStore((state) => state.openFixtureAdd)
 
   const centerPosition = (size: Size) =>
     clampToHall(
@@ -76,6 +77,10 @@ export const AddHubContent = () => {
   }
 
   const insertFixturePreset = (preset: FixturePreset) => {
+    if (preset.custom) {
+      openFixtureAdd(centerPosition(preset.size))
+      return
+    }
     const fixtureId = addFixture(
       {
         name: t(preset.labelKey),

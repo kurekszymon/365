@@ -155,10 +155,6 @@ export const Planner = () => {
                 </Tooltip>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="outline" onClick={() => openDialog("Guest.Add")}>
-              <UserPlusIcon />
-              <span className="hidden md:inline">{t("guests.add")}</span>
-            </Button>
             <Button
               variant="outline"
               onClick={() => panel.openAiChat()}

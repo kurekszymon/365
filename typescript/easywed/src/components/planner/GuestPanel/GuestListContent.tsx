@@ -10,14 +10,49 @@ import {
 import { getInitials } from "../Canvas/utils"
 import { SeatingProgress } from "./SeatingProgress"
 import { SeatAssignSheet } from "./SeatAssignSheet"
-import type { Guest } from "@/stores/planner.store"
+import type { ReactNode } from "react"
+import type { Dietary, Guest } from "@/stores/planner.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useDialogStore } from "@/stores/dialog.store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ButtonGroup } from "@/components/ui/button-group"
+import { cn } from "@/lib/utils"
 
-type Filter = "all" | "unseated" | "dietary"
+type Filter = "all" | "unseated" | Dietary
+
+const ALL_DIETARY: Array<Dietary> = [
+  "vegetarian",
+  "vegan",
+  "gluten-free",
+  "halal",
+  "kosher",
+]
+
+// One chip in the scrollable filter row — All/Unseated plus one per dietary
+// category actually in use, replacing the old single "Dieta" toggle so a diner
+// can filter down to (say) just the vegan guests instead of "has any diet".
+const FilterChip = ({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: ReactNode
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={cn(
+      "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors",
+      active
+        ? "bg-primary text-primary-foreground"
+        : "bg-muted text-muted-foreground hover:bg-muted/70"
+    )}
+  >
+    {children}
+  </button>
+)
 
 /**
  * Guests-first list: search + filter chips + seating progress, replacing the
@@ -44,10 +79,28 @@ export const GuestListContent = () => {
   const seatedCount = guests.filter((g) => g.tableId).length
   const unseatedCount = guests.length - seatedCount
 
+  const dietaryCounts = useMemo(() => {
+    const counts = new Map<Dietary, number>()
+    for (const guest of guests) {
+      for (const d of guest.dietary) {
+        counts.set(d, (counts.get(d) ?? 0) + 1)
+      }
+    }
+    return counts
+  }, [guests])
+  const activeDietaryFilters = ALL_DIETARY.filter(
+    (d) => (dietaryCounts.get(d) ?? 0) > 0
+  )
+
   const normalizedQuery = searchQuery.trim().toLowerCase()
   const filteredGuests = guests.filter((guest) => {
     if (filter === "unseated" && guest.tableId) return false
-    if (filter === "dietary" && guest.dietary.length === 0) return false
+    if (
+      filter !== "all" &&
+      filter !== "unseated" &&
+      !guest.dietary.includes(filter)
+    )
+      return false
     if (normalizedQuery && !guest.name.toLowerCase().includes(normalizedQuery))
       return false
     return true
@@ -96,35 +149,29 @@ export const GuestListContent = () => {
           />
         </div>
 
-        <ButtonGroup className="w-full">
-          <Button
-            type="button"
-            size="xs"
-            className="flex-1"
-            variant={filter === "all" ? "default" : "outline"}
+        <div className="flex gap-2 overflow-x-auto pb-0.5">
+          <FilterChip
+            active={filter === "all"}
             onClick={() => setFilter("all")}
           >
             {t("guests.filter.all", { count: guests.length })}
-          </Button>
-          <Button
-            type="button"
-            size="xs"
-            className="flex-1"
-            variant={filter === "unseated" ? "default" : "outline"}
+          </FilterChip>
+          <FilterChip
+            active={filter === "unseated"}
             onClick={() => setFilter("unseated")}
           >
             {t("guests.filter.unseated", { count: unseatedCount })}
-          </Button>
-          <Button
-            type="button"
-            size="xs"
-            className="flex-1"
-            variant={filter === "dietary" ? "default" : "outline"}
-            onClick={() => setFilter("dietary")}
-          >
-            {t("guests.filter.dietary")}
-          </Button>
-        </ButtonGroup>
+          </FilterChip>
+          {activeDietaryFilters.map((d) => (
+            <FilterChip
+              key={d}
+              active={filter === d}
+              onClick={() => setFilter(d)}
+            >
+              {t(`guests.dietary.${d}`)} ({dietaryCounts.get(d)})
+            </FilterChip>
+          ))}
+        </div>
 
         <div className="flex gap-2">
           <Button
