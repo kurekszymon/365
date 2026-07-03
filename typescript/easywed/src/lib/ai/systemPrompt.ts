@@ -5,26 +5,28 @@ import {
 import { usePlannerStore } from "@/stores/planner.store"
 import i18n from "@/i18n"
 
-// Mirrors the "Dodaj do sali" visual-card picker's own presets (see
-// addPresets.ts) so tables/fixtures the assistant creates by free-form request
-// look consistent with what the user could tap to insert by hand. Built from
-// the same constants — never hand-copy these numbers, they'd drift.
-const tablePresetsList = TABLE_PRESETS.map(
-  (p) =>
-    `- ${i18n.t(p.labelKey)}: shape=${p.shape}, capacity=${p.capacity}, size=${p.size.width}x${p.size.height} m`
-).join("\n")
-
-const fixturePresetsList = FIXTURE_PRESETS.map(
-  (p) =>
-    `- ${i18n.t(p.labelKey)}: shape=${p.shape}, size=${p.size.width}x${p.size.height} m`
-).join("\n")
-
 // Builds the system prompt fresh on every user turn so the model always sees the
 // current layout (ids, names, positions). All coordinates are meters with a
 // top-left origin: x grows right, y grows down. An object's position is its
 // top-left corner.
 export const buildSystemPrompt = (): string => {
   const { hall, tables, fixtures, guests } = usePlannerStore.getState()
+
+  // Mirrors the "Dodaj do sali" visual-card picker's own presets (see
+  // addPresets.ts) so tables/fixtures the assistant creates by free-form
+  // request look consistent with what the user could tap to insert by hand.
+  // Built from the same constants (never hand-copy these numbers, they'd
+  // drift) and recomputed on every call — i18n.t must run here, not at module
+  // load, so it always reflects the current locale even if it changes mid-session.
+  const tablePresetsList = TABLE_PRESETS.map(
+    (p) =>
+      `- ${i18n.t(p.labelKey)}: shape=${p.shape}, capacity=${p.capacity}, size=${p.size.width}x${p.size.height} m`
+  ).join("\n")
+
+  const fixturePresetsList = FIXTURE_PRESETS.map(
+    (p) =>
+      `- ${i18n.t(p.labelKey)}: shape=${p.shape}, size=${p.size.width}x${p.size.height} m`
+  ).join("\n")
 
   const snapshot = {
     hall: hall.dimensions,

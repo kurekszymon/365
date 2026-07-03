@@ -47,14 +47,16 @@ export const SeatAssignSheet = ({
     }))
   )
 
+  // Excludes the guest being (re)seated so their own current table isn't
+  // shown as full because of the seat they're about to vacate.
   const guestCountByTable = useMemo(() => {
     const counts = new Map<string, number>()
     for (const g of guests) {
-      if (!g.tableId) continue
+      if (!g.tableId || g.id === guest?.id) continue
       counts.set(g.tableId, (counts.get(g.tableId) ?? 0) + 1)
     }
     return counts
-  }, [guests])
+  }, [guests, guest?.id])
 
   const selectedTable = tables.find((table) => table.id === tableId) ?? null
 
