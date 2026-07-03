@@ -26,8 +26,6 @@ function usePanelTitle(view: PanelView | null): string {
       return t("tables.edit")
     case "tables.placeholder":
       return t("tables")
-    case "guests":
-      return t("guests")
     case "fixture.add":
       return t("fixtures.add")
     case "fixture.edit":

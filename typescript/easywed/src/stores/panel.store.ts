@@ -7,7 +7,6 @@ export type PanelView =
   | { kind: "tables.batch_add"; position?: Position }
   | { kind: "table.edit"; tableId: string }
   | { kind: "tables.placeholder" }
-  | { kind: "guests" }
   | { kind: "fixture.add"; position?: Position }
   | { kind: "fixture.edit"; fixtureId: string }
   | { kind: "fixtures.placeholder" }
@@ -27,7 +26,6 @@ type Action = {
   openTablesBatchAdd: (position?: Position) => void
   openTableEdit: (tableId: string) => void
   openTablesPlaceholder: () => void
-  openGuests: () => void
   openFixtureAdd: (position?: Position) => void
   openFixtureEdit: (fixtureId: string) => void
   openFixturesPlaceholder: () => void
@@ -50,7 +48,6 @@ export const usePanelStore = create<State & Action>((set) => ({
     set({ view: { kind: "table.edit", tableId }, selectedId: tableId }),
   openTablesPlaceholder: () =>
     set({ view: { kind: "tables.placeholder" }, selectedId: null }),
-  openGuests: () => set({ view: { kind: "guests" }, selectedId: null }),
   openFixtureAdd: (position) =>
     set({ view: { kind: "fixture.add", position }, selectedId: null }),
   openFixtureEdit: (fixtureId) =>
@@ -72,7 +69,6 @@ export const usePanelStore = create<State & Action>((set) => ({
         case "table.edit":
           return { ...next, view: { kind: "tables.placeholder" } }
         case "tables.placeholder":
-        case "guests":
         case "ai_chat":
           return next
         case "fixture.add":

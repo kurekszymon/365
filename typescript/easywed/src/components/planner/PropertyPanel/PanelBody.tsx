@@ -2,7 +2,6 @@ import { useTranslation } from "react-i18next"
 import { HallPanelContent } from "./HallPanelContent"
 import { TablePanelContent } from "./TablePanelContent"
 import { TableBatchPanelContent } from "./TableBatchPanelContent"
-import { GuestsPanelContent } from "./GuestsPanelContent"
 import { FixturePanelContent } from "./FixturePanelContent"
 import { AiChatPanelContent } from "./AiChatPanelContent"
 import type { PanelView } from "@/stores/panel.store"
@@ -58,7 +57,6 @@ export const PanelBody = ({ view }: { view: PanelView }) => {
           </div>
         </div>
       )}
-      {view.kind === "guests" && <GuestsPanelContent />}
       {view.kind === "fixture.add" && (
         <FixturePanelContent
           key="fixture.add"

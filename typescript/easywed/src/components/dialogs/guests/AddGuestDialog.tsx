@@ -3,7 +3,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import type { Dietary } from "@/stores/planner.store"
 import { usePlannerStore } from "@/stores/planner.store"
-import { usePanelStore } from "@/stores/panel.store"
+import { useGuestPanelStore } from "@/stores/guestPanel.store"
 import {
   ResponsiveDialog,
   ResponsiveDialogBody,
@@ -41,7 +41,9 @@ export const AddGuestDialog = () => {
       addGuest: state.addGuest,
     }))
   )
-  const openGuests = usePanelStore((state) => state.openGuests)
+  const setGuestPanelExpanded = useGuestPanelStore(
+    (state) => state.setExpanded
+  )
 
   return (
     <ResponsiveDialog
@@ -118,7 +120,7 @@ export const AddGuestDialog = () => {
                 tableId: null,
                 dietary: dietaryOptions,
               })
-              openGuests()
+              setGuestPanelExpanded(true)
               dialog.close()
             }}
           >

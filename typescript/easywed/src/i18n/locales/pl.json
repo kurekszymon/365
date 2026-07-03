@@ -169,6 +169,8 @@
   "guests.add.note_placeholder": "np. uczulony na orzechy, lubi ostre jedzenie, itp.",
   "guests.none": "Brak gości.",
   "guests.unassigned": "Nieprzypisani",
+  "guests.expand": "Rozwiń listę gości",
+  "guests.collapse": "Zwiń listę gości",
   "guests.seated_ratio": "{{seated_count}}/{{count}} gości przy stołach",
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} gość przy stole",
   "guests.import": "Importuj gości",

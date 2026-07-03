@@ -6,11 +6,11 @@ import {
   PlusIcon,
   SparklesIcon,
   UserPlusIcon,
-  UsersIcon,
   UtensilsIcon,
 } from "lucide-react"
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
 import { Canvas } from "./Canvas"
+import { GuestRail } from "./GuestPanel"
 import { Header } from "./Header"
 import { ExportHeader } from "./Header/Export.header"
 import { GuestsSeated } from "./Header/GuestsSeated.header"
@@ -42,6 +42,7 @@ import { useGlobalStore } from "@/stores/global.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { useOpenHall } from "@/hooks/useOpenHall"
+import { useIsMobile } from "@/hooks/useMediaQuery"
 
 export const Planner = () => {
   const { t } = useTranslation()
@@ -80,6 +81,7 @@ export const Planner = () => {
   const weddingId = useGlobalStore((state) => state.weddingId)
 
   const openHall = useOpenHall()
+  const isMobile = useIsMobile()
 
   const panel = usePanelStore(
     useShallow((state) => ({
@@ -88,7 +90,6 @@ export const Planner = () => {
       openTableEdit: state.openTableEdit,
       openTablesPlaceholder: state.openTablesPlaceholder,
       openFixtureAdd: state.openFixtureAdd,
-      openGuests: state.openGuests,
       openAiChat: state.openAiChat,
     }))
   )
@@ -173,15 +174,10 @@ export const Planner = () => {
                 </Tooltip>
               </DropdownMenuContent>
             </DropdownMenu>
-            <ButtonGroup>
-              <Button variant="outline" onClick={() => panel.openGuests()}>
-                <UsersIcon />
-                <span className="hidden md:inline">{t("guests")}</span>
-              </Button>
-              <Button variant="outline" onClick={() => openDialog("Guest.Add")}>
-                <PlusIcon />
-              </Button>
-            </ButtonGroup>
+            <Button variant="outline" onClick={() => openDialog("Guest.Add")}>
+              <UserPlusIcon />
+              <span className="hidden md:inline">{t("guests.add")}</span>
+            </Button>
             <Button
               variant="outline"
               onClick={() => panel.openAiChat()}
@@ -212,6 +208,7 @@ export const Planner = () => {
         </Header>
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
           <div className="flex min-h-0 flex-1 overflow-hidden">
+            {!isMobile && <GuestRail />}
             <Canvas />
             <PropertyPanel />
           </div>

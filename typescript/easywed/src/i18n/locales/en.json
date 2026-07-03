@@ -163,6 +163,8 @@
   "guests.add.note_placeholder": "e.g. allergic to nuts, loves spicy food, etc.",
   "guests.none": "No guests added yet.",
   "guests.unassigned": "Unassigned",
+  "guests.expand": "Expand guest list",
+  "guests.collapse": "Collapse guest list",
   "guests.seated_ratio": "{{seated_count}}/{{count}} guests seated",
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} guest seated",
   "guests.import": "Import guests",
