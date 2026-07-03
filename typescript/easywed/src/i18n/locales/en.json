@@ -391,6 +391,8 @@
   "assistant.settings": "Settings",
   "assistant.clear": "Clear conversation",
   "assistant.thinking": "Thinking...",
+  "assistant.suggestion.balance_tables": "Balance the tables",
+  "assistant.suggestion.seat_unassigned": "Seat everyone unassigned",
   "assistant.empty": "AI planning assistant",
   "assistant.empty_hint": "Try: \"Add a round table for 10 in the top-left corner\".",
   "assistant.error": "The assistant ran into a problem",

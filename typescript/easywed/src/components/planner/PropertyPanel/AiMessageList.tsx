@@ -49,7 +49,7 @@ const MessageBubble = ({ message }: { message: ChatMessage }) => {
   const { t } = useTranslation()
   if (message.role === "user") {
     return (
-      <div className="ml-auto max-w-[85%] rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground">
+      <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-primary px-3.5 py-2.5 text-sm text-primary-foreground">
         {message.text}
       </div>
     )
@@ -57,7 +57,7 @@ const MessageBubble = ({ message }: { message: ChatMessage }) => {
   return (
     <div className="mr-auto flex max-w-[90%] flex-col gap-2">
       {message.text && (
-        <div className="rounded-lg bg-muted px-3 py-2 text-sm whitespace-pre-wrap">
+        <div className="rounded-2xl rounded-bl-md bg-secondary px-3.5 py-2.5 text-sm whitespace-pre-wrap text-secondary-foreground">
           {message.text}
         </div>
       )}
@@ -88,13 +88,16 @@ const MessageBubble = ({ message }: { message: ChatMessage }) => {
   )
 }
 
+// Reskinned as a proposal card (mirrors the mockup's two-flex-1-button
+// footer inside the assistant's own bubble), but keeps its actual semantics —
+// this confirms a destructive tool call (delete), not a neutral AI proposal.
 const ConfirmRow = () => {
   const { t } = useTranslation()
   const pendingConfirm = useAiChatStore(selectPendingConfirm)
   const resolveConfirm = useAiChatStore((state) => state.resolveConfirm)
   if (!pendingConfirm) return null
   return (
-    <div className="mr-auto flex w-full max-w-[90%] flex-col gap-2 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2.5">
+    <div className="mr-auto flex w-full max-w-[90%] flex-col gap-3 rounded-2xl rounded-bl-md border border-destructive/40 bg-destructive/5 px-3.5 py-3">
       <p className="text-sm">
         {t("assistant.confirm_delete", { name: pendingConfirm.label })}
       </p>
@@ -102,6 +105,7 @@ const ConfirmRow = () => {
         <Button
           size="sm"
           variant="destructive"
+          className="flex-1 rounded-xl font-bold"
           onClick={() => resolveConfirm(true)}
         >
           {t("assistant.confirm")}
@@ -109,6 +113,7 @@ const ConfirmRow = () => {
         <Button
           size="sm"
           variant="outline"
+          className="flex-1 rounded-xl font-bold"
           onClick={() => resolveConfirm(false)}
         >
           {t("assistant.cancel")}

@@ -410,6 +410,8 @@
   "assistant.settings": "Ustawienia",
   "assistant.clear": "Wyczyść rozmowę",
   "assistant.thinking": "Myślę...",
+  "assistant.suggestion.balance_tables": "Zrównoważ stoły",
+  "assistant.suggestion.seat_unassigned": "Rozsadź nieprzypisanych",
   "assistant.empty": "Asystent AI do planowania",
   "assistant.empty_hint": "Spróbuj: „Dodaj okrągły stół na 10 osób w lewym górnym rogu”.",
   "assistant.error": "Asystent napotkał problem",
