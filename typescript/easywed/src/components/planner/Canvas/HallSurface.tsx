@@ -1,4 +1,3 @@
-import { useDroppable } from "@dnd-kit/core"
 import { useImperativeHandle, useMemo } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { StatusBar } from "../StatusBar"
@@ -49,11 +48,6 @@ export const HallSurface = ({
   ref,
 }: HallSurfaceProps) => {
   const isMobile = useIsMobile()
-  const { setNodeRef: setDropRef } = useDroppable({
-    // droppable data { type: "hall" } so the shared onDragEnd in Planner.tsx ignores guest drops on the background
-    id: "hall-identifier",
-    data: { type: "hall" },
-  })
 
   const { tables, guests, fixtures, hallDimensions } = usePlannerStore(
     useShallow((state) => ({
@@ -119,7 +113,7 @@ export const HallSurface = ({
     )
   const measurements = weddingId ? (byWedding[weddingId] ?? []) : []
 
-  const { activeDrag, isDraggingGuest } = useTableSnap({
+  const { activeDrag } = useTableSnap({
     canvasTables,
     canvasFixtures,
     ppm,
@@ -160,7 +154,6 @@ export const HallSurface = ({
         <StatusBar isMeasureStarted={!!pendingPoint} />
       )}
       <HallBackground
-        ref={setDropRef}
         hallWidth={width}
         hallHeight={height}
         ppm={ppm}
@@ -178,7 +171,6 @@ export const HallSurface = ({
             hallWidth={hallDimensions.width}
             hallHeight={hallDimensions.height}
             ppm={ppm}
-            isDraggingGuest={isDraggingGuest}
             seatGuests={guestsByTableId.get(ct.id) ?? []}
             showSeats={showSeats}
           />

@@ -20,7 +20,7 @@ interface UseTableSnapParams {
  * Subscribes to the shared dnd-kit drag lifecycle and, on drop of a table or
  * fixture, snaps the new position to the grid, clamps it inside the hall, and
  * persists it (dragging measurement endpoints along with the object). Returns
- * the live drag offset (for the overlay) and whether a guest is being dragged.
+ * the live drag offset (for the overlay).
  */
 export function useTableSnap({
   canvasTables,
@@ -40,7 +40,6 @@ export function useTableSnap({
     (state) => state.shiftMeasurementPoints
   )
 
-  const [isDraggingGuest, setIsDraggingGuest] = useState(false)
   const [activeDrag, setActiveDrag] = useState<{
     id: string
     dx: number
@@ -49,7 +48,6 @@ export function useTableSnap({
 
   useDndMonitor({
     onDragStart: ({ active }) => {
-      setIsDraggingGuest(active.data.current?.type === "guest")
       if (
         active.data.current?.type === "table-drag" ||
         active.data.current?.type === "fixture-drag"
@@ -158,14 +156,11 @@ export function useTableSnap({
           }
         }
       }
-
-      setIsDraggingGuest(false)
     },
     onDragCancel: () => {
       setActiveDrag(null)
-      setIsDraggingGuest(false)
     },
   })
 
-  return { activeDrag, isDraggingGuest }
+  return { activeDrag }
 }

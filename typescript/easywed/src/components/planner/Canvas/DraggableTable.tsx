@@ -1,5 +1,4 @@
-import { useDraggable, useDroppable } from "@dnd-kit/core"
-import { useCallback } from "react"
+import { useDraggable } from "@dnd-kit/core"
 import {
   ClipboardCopyIcon,
   CopyIcon,
@@ -26,7 +25,6 @@ type DraggableTableProps = {
   hallWidth: number
   hallHeight: number
   ppm: number
-  isDraggingGuest?: boolean
   seatGuests?: Array<Guest>
   showSeats?: boolean
 }
@@ -37,7 +35,6 @@ export const DraggableTable = ({
   hallWidth,
   hallHeight,
   ppm,
-  isDraggingGuest,
   seatGuests,
   showSeats,
 }: DraggableTableProps) => {
@@ -66,22 +63,9 @@ export const DraggableTable = ({
     disabled: isMeasuring,
   })
 
-  const { setNodeRef: setDropRef, isOver } = useDroppable({
-    id: `table-drop-${table.id}`,
-    data: { type: "table", tableId: table.id },
-  })
-
-  const setRef = useCallback(
-    (el: HTMLDivElement | null) => {
-      setDragRef(el)
-      setDropRef(el)
-    },
-    [setDragRef, setDropRef]
-  )
-
   return (
     <TableVisual
-      ref={setRef}
+      ref={setDragRef}
       table={table}
       guestsAssigned={guestsAssigned}
       ppm={ppm}
@@ -91,10 +75,7 @@ export const DraggableTable = ({
       showSeats={showSeats}
       className={cn(
         "z-10 cursor-grab touch-none active:cursor-grabbing",
-        isSelected && "planner-selected-glow",
-        isDraggingGuest &&
-          isOver &&
-          "border-blue-300 bg-blue-50 ring-2 ring-blue-500 ring-offset-2"
+        isSelected && "planner-selected-glow"
       )}
       {...listeners}
       {...attributes}

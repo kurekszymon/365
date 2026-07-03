@@ -20,7 +20,6 @@ import { usePrintShortcut } from "./usePrintShortcut"
 import { PropertyPanel } from "./PropertyPanel"
 import { ThemeSwitcher } from "./Header/ThemeSwitcher"
 import { GuestModeBanner } from "./GuestModeBanner"
-import type { DragEndEvent } from "@dnd-kit/core"
 import { isLocalWedding } from "@/lib/localWedding"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Button } from "@/components/ui/button"
@@ -51,31 +50,13 @@ export const Planner = () => {
 
   const openDialog = useDialogStore((state) => state.open)
   const role = useGlobalStore((state) => state.role)
-  const assignGuestToTable = usePlannerStore(
-    (state) => state.assignGuestToTable
-  )
 
   // Distance-based activation (mouse + touch) so dragging starts the moment you
   // move — no hold delay. Touch hold-without-moving is reserved for the canvas
-  // long-press (select → edit) and the guest list uses a drag handle so the
-  // bottom sheet still scrolls.
+  // long-press (select → edit).
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   )
-
-  const handleDragEnd = (e: DragEndEvent) => {
-    if (e.active.data.current?.type !== "guest") return
-    const overData = e.over?.data.current
-
-    if (overData?.type === "table") {
-      const { tableId } = overData
-      if (typeof tableId !== "string") return
-
-      assignGuestToTable(String(e.active.id), tableId)
-    } else if (overData?.type === "unassigned") {
-      assignGuestToTable(String(e.active.id), null)
-    }
-  }
 
   const preset = usePlannerStore((state) => state.hall.preset)
   const weddingId = useGlobalStore((state) => state.weddingId)
@@ -206,7 +187,7 @@ export const Planner = () => {
             <ThemeSwitcher />
           </div>
         </Header>
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors}>
           <div className="flex min-h-0 flex-1 overflow-hidden">
             {!isMobile && <GuestRail />}
             <Canvas />

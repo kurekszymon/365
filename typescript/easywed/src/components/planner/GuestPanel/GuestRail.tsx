@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
 import { ChevronLeftIcon, ChevronRightIcon, UsersIcon } from "lucide-react"
-import { GuestsPanelContent } from "../PropertyPanel/GuestsPanelContent"
+import { GuestListContent } from "./GuestListContent"
 import { Badge } from "@/components/ui/badge"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useGuestPanelStore } from "@/stores/guestPanel.store"
@@ -10,8 +10,7 @@ import { cn } from "@/lib/utils"
  * Desktop-only collapsed guest rail: a ~60px icon strip that expands to a
  * ~460px panel. Replaces the old header "Goście" button as the sole desktop
  * entry point to the guest list (see `GuestPanel/GuestPeekBar` for the mobile
- * equivalent). Expanded content is the existing `GuestsPanelContent` for now —
- * it's rebuilt into a search/filter/progress list in a later phase.
+ * equivalent).
  */
 export const GuestRail = () => {
   const { t } = useTranslation()
@@ -43,7 +42,7 @@ export const GuestRail = () => {
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-4">
-            <GuestsPanelContent />
+            <GuestListContent />
           </div>
         </>
       ) : (

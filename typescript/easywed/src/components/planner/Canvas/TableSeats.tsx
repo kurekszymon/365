@@ -1,6 +1,6 @@
 import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { seatSizePx } from "./utils"
+import { getInitials, seatSizePx } from "./utils"
 import {
   constrainSeatPosition,
   effectiveSeats,
@@ -42,16 +42,6 @@ type DragState = {
 }
 
 const DRAG_THRESHOLD = 4
-
-const getInitials = (name: string) => {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return "•"
-  return parts
-    .slice(0, 2)
-    .map((p) => p[0])
-    .join("")
-    .toUpperCase()
-}
 
 export const TableSeats = ({
   tableId,

@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
 import { ChevronDownIcon, ChevronUpIcon, UsersIcon } from "lucide-react"
-import { GuestsPanelContent } from "../PropertyPanel/GuestsPanelContent"
+import { GuestListContent } from "./GuestListContent"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useGuestPanelStore } from "@/stores/guestPanel.store"
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer"
@@ -12,8 +12,7 @@ const PEEK_SNAP_POINT = "116px"
  * bottom sheet with two detents (a compact summary peek, and the full guest
  * list). A separate `Drawer` instance from `PropertyPanel`'s mobile drawer,
  * which keeps handling table/fixture/hall/AI edit sheets independently — the
- * two stack visually. Expanded content is the existing `GuestsPanelContent`
- * for now (rebuilt into a search/filter/progress list in a later phase).
+ * two stack visually.
  */
 export const GuestPeekBar = () => {
   const { t } = useTranslation()
@@ -73,7 +72,7 @@ export const GuestPeekBar = () => {
         </button>
         {expanded && (
           <div className="flex-1 overflow-y-auto border-t px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
-            <GuestsPanelContent />
+            <GuestListContent />
           </div>
         )}
       </DrawerContent>
