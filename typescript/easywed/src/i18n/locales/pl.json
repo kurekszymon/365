@@ -173,6 +173,7 @@
   "guests.collapse": "Zwiń listę gości",
   "guests.seated_ratio": "{{seated_count}}/{{count}} gości przy stołach",
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} gość przy stole",
+  "guests.unseated_count": "{{count}} bez miejsca",
   "guests.import": "Importuj gości",
   "guests.drag": "Przeciągnij, aby przypisać",
   "guests.import.title": "Importuj gości z pliku CSV lub Excel",
@@ -221,6 +222,7 @@
   "theme.editorial": "Krem i atrament",
 
   "hall": "Sala",
+  "hall.plan_title": "Plan sali",
   "hall.configure": "Skonfiguruj salę weselną",
   "hall.configure_short": "Skonfiguruj Salę",
   "hall.empty_state": "Kliknij, aby zacząć od skonfigurowania sali",
@@ -229,6 +231,7 @@
   "hall.preset.l-shape": "Kształt L",
   "hall.preset.u-shape": "Kształt U",
   "hall.preset.custom": "Niestandardowy",
+  "hall.add_hub.title": "Dodaj do sali",
 
   "reminders.title": "Przypomnienia",
   "reminders.navigate": "Przejdź do przypomnień",

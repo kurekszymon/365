@@ -10,7 +10,7 @@ import {
 } from "lucide-react"
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
 import { Canvas } from "./Canvas"
-import { GuestRail } from "./GuestPanel"
+import { GuestPeekBar, GuestRail } from "./GuestPanel"
 import { Header } from "./Header"
 import { ExportHeader } from "./Header/Export.header"
 import { GuestsSeated } from "./Header/GuestsSeated.header"
@@ -212,6 +212,7 @@ export const Planner = () => {
             <Canvas />
             <PropertyPanel />
           </div>
+          {isMobile && <GuestPeekBar />}
         </DndContext>
       </div>
     </>

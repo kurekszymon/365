@@ -41,9 +41,7 @@ export const AddGuestDialog = () => {
       addGuest: state.addGuest,
     }))
   )
-  const setGuestPanelExpanded = useGuestPanelStore(
-    (state) => state.setExpanded
-  )
+  const setGuestPanelExpanded = useGuestPanelStore((state) => state.setExpanded)
 
   return (
     <ResponsiveDialog

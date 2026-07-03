@@ -167,6 +167,7 @@
   "guests.collapse": "Collapse guest list",
   "guests.seated_ratio": "{{seated_count}}/{{count}} guests seated",
   "guests.seated_ratio_one": "{{seated_count}}/{{count}} guest seated",
+  "guests.unseated_count": "{{count}} unseated",
   "guests.import": "Import guests",
   "guests.drag": "Drag to assign",
   "guests.import.title": "Import guests from CSV or Excel",
@@ -207,6 +208,7 @@
   "theme.editorial": "Cream & Ink",
 
   "hall": "Hall",
+  "hall.plan_title": "Floor plan",
   "hall.configure": "Configure wedding hall",
   "hall.configure_short": "Configure Hall",
   "hall.empty_state": "Click to start by configuring the hall",
@@ -215,6 +217,7 @@
   "hall.preset.l-shape": "L-shape",
   "hall.preset.u-shape": "U-shape",
   "hall.preset.custom": "Custom",
+  "hall.add_hub.title": "Add to room",
 
   "reminders.title": "Reminders",
   "reminders.navigate": "Navigate to Reminders",

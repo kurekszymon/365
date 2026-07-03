@@ -16,6 +16,9 @@ import {
 import { usePinch } from "@use-gesture/react"
 import { ScalePill } from "./ScalePill"
 import { Minimap } from "./Minimap"
+import { MobilePlanHeader } from "./MobilePlanHeader"
+import { MobileZoomControl } from "./MobileZoomControl"
+import { AddFab } from "./AddFab"
 import { DimensionLabel } from "./DimensionLabel"
 import { CanvasContextMenu } from "./CanvasContextMenu"
 import { CanvasContextMenuItem } from "./CanvasContextMenuItem"
@@ -396,165 +399,186 @@ export const Canvas = () => {
           panel.deselect()
         }}
       >
-        <div
-          data-no-pan
-          className="absolute top-3 right-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-nowrap items-center justify-end gap-2"
-        >
-          <Tooltip>
-            {/* TODO extract to a seperate component */}
-            <TooltipTrigger asChild>
-              <div className="flex shrink-0 items-center rounded-md border bg-background/80 text-[10px] text-muted-foreground backdrop-blur-sm">
-                <button
-                  type="button"
-                  className="cursor-pointer px-1.5 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 max-md:px-2.5 max-md:py-2"
-                  disabled={SNAP_STEPS.indexOf(snapStep) === 0}
-                  onClick={() =>
-                    setSnapStep(SNAP_STEPS[SNAP_STEPS.indexOf(snapStep) - 1])
-                  }
-                >
-                  −
-                </button>
-                <span className="w-[2.5rem] text-center">
-                  {snapStep === "off"
-                    ? t("canvas.snap.off")
-                    : t("common.meters", { count: snapStep })}
-                </span>
-                <button
-                  type="button"
-                  className="cursor-pointer px-1.5 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 max-md:px-2.5 max-md:py-2"
-                  disabled={
-                    SNAP_STEPS.indexOf(snapStep) === SNAP_STEPS.length - 1
-                  }
-                  onClick={() =>
-                    setSnapStep(SNAP_STEPS[SNAP_STEPS.indexOf(snapStep) + 1])
-                  }
-                >
-                  +
-                </button>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {t("canvas.snap.tooltip")}
-            </TooltipContent>
-          </Tooltip>
+        {isMobile && (
+          <>
+            <MobilePlanHeader />
+            <MobileZoomControl
+              zoomIn={() => stepZoom(1)}
+              zoomOut={() => stepZoom(-1)}
+            />
+            <AddFab />
+          </>
+        )}
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div
-                onClick={cycleGridStyle}
-                className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-sm max-md:py-2"
-              >
-                {GRID_ICON[gridStyle]}
-                <span className="max-md:hidden">
-                  {t(`canvas.grid.${gridStyle}`)}
-                </span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {t("canvas.grid.style")}
-            </TooltipContent>
-          </Tooltip>
+        {!isMobile && (
+          <>
+            <div
+              data-no-pan
+              className="absolute top-3 right-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-nowrap items-center justify-end gap-2"
+            >
+              <Tooltip>
+                {/* TODO extract to a seperate component */}
+                <TooltipTrigger asChild>
+                  <div className="flex shrink-0 items-center rounded-md border bg-background/80 text-[10px] text-muted-foreground backdrop-blur-sm">
+                    <button
+                      type="button"
+                      className="cursor-pointer px-1.5 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 max-md:px-2.5 max-md:py-2"
+                      disabled={SNAP_STEPS.indexOf(snapStep) === 0}
+                      onClick={() =>
+                        setSnapStep(
+                          SNAP_STEPS[SNAP_STEPS.indexOf(snapStep) - 1]
+                        )
+                      }
+                    >
+                      −
+                    </button>
+                    <span className="w-[2.5rem] text-center">
+                      {snapStep === "off"
+                        ? t("canvas.snap.off")
+                        : t("common.meters", { count: snapStep })}
+                    </span>
+                    <button
+                      type="button"
+                      className="cursor-pointer px-1.5 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 max-md:px-2.5 max-md:py-2"
+                      disabled={
+                        SNAP_STEPS.indexOf(snapStep) === SNAP_STEPS.length - 1
+                      }
+                      onClick={() =>
+                        setSnapStep(
+                          SNAP_STEPS[SNAP_STEPS.indexOf(snapStep) + 1]
+                        )
+                      }
+                    >
+                      +
+                    </button>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {t("canvas.snap.tooltip")}
+                </TooltipContent>
+              </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                data-no-pan
-                className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] backdrop-blur-sm max-md:py-2 ${
-                  isMeasuring
-                    ? "border-planner-selected bg-planner-soft text-planner-selected"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                onClick={toggleMeasuring}
-                aria-pressed={isMeasuring}
-              >
-                <RulerIcon className="size-3.5" />
-                <span className="max-md:hidden">{t("measure.tool")}</span>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {t("measure.tooltip")}
-            </TooltipContent>
-          </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    onClick={cycleGridStyle}
+                    className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-sm max-md:py-2"
+                  >
+                    {GRID_ICON[gridStyle]}
+                    <span className="max-md:hidden">
+                      {t(`canvas.grid.${gridStyle}`)}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {t("canvas.grid.style")}
+                </TooltipContent>
+              </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                data-no-pan
-                className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] backdrop-blur-sm max-md:py-2 ${
-                  showSeats
-                    ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                onClick={toggleSeats}
-                aria-pressed={showSeats}
-              >
-                <ArmchairIcon className="size-3.5" />
-                <span className="max-md:hidden">{t("seats.toggle")}</span>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">{t("seats.tooltip")}</TooltipContent>
-          </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    data-no-pan
+                    className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] backdrop-blur-sm max-md:py-2 ${
+                      isMeasuring
+                        ? "border-planner-selected bg-planner-soft text-planner-selected"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    onClick={toggleMeasuring}
+                    aria-pressed={isMeasuring}
+                  >
+                    <RulerIcon className="size-3.5" />
+                    <span className="max-md:hidden">{t("measure.tool")}</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {t("measure.tooltip")}
+                </TooltipContent>
+              </Tooltip>
 
-          {isMeasuring && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  data-no-pan
-                  className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-planner-selected bg-planner-soft px-2 py-1 text-[10px] text-planner-selected backdrop-blur-sm max-md:py-2"
-                  onClick={() =>
-                    setMeasureMode(
-                      measureMode === "center" ? "border" : "center"
-                    )
-                  }
-                >
-                  {t(`measure.mode.${measureMode}`)}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                {t("measure.mode.tooltip")}
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    data-no-pan
+                    className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] backdrop-blur-sm max-md:py-2 ${
+                      showSeats
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    onClick={toggleSeats}
+                    aria-pressed={showSeats}
+                  >
+                    <ArmchairIcon className="size-3.5" />
+                    <span className="max-md:hidden">{t("seats.toggle")}</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {t("seats.tooltip")}
+                </TooltipContent>
+              </Tooltip>
 
-        <div data-no-pan className="absolute bottom-4 left-4 z-20">
-          <ScalePill
-            reset={resetZoomAndPan}
-            scale={zoom}
-            zoomIn={() => stepZoom(1)}
-            zoomOut={() => stepZoom(-1)}
-          />
-        </div>
+              {isMeasuring && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      data-no-pan
+                      className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-planner-selected bg-planner-soft px-2 py-1 text-[10px] text-planner-selected backdrop-blur-sm max-md:py-2"
+                      onClick={() =>
+                        setMeasureMode(
+                          measureMode === "center" ? "border" : "center"
+                        )
+                      }
+                    >
+                      {t(`measure.mode.${measureMode}`)}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {t("measure.mode.tooltip")}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
 
-        <Minimap
-          hallDimensions={hall.dimensions}
-          selectedId={panel.selectedId}
-          hallLeft={hallLeft}
-          hallTop={hallTop}
-          ppm={ppm}
-          containerWidth={containerWidth}
-          containerHeight={containerHeight}
-          onNavigate={(p) => setPan(clampPan(p))}
-        />
+            <div data-no-pan className="absolute bottom-4 left-4 z-20">
+              <ScalePill
+                reset={resetZoomAndPan}
+                scale={zoom}
+                zoomIn={() => stepZoom(1)}
+                zoomOut={() => stepZoom(-1)}
+              />
+            </div>
 
-        <DimensionLabel
-          orientation="horizontal"
-          value={hall.dimensions.width}
-          left={hallLeft}
-          top={hallTop - 28}
-          span={scaledWidth}
-        />
+            <Minimap
+              hallDimensions={hall.dimensions}
+              selectedId={panel.selectedId}
+              hallLeft={hallLeft}
+              hallTop={hallTop}
+              ppm={ppm}
+              containerWidth={containerWidth}
+              containerHeight={containerHeight}
+              onNavigate={(p) => setPan(clampPan(p))}
+            />
 
-        <DimensionLabel
-          orientation="vertical"
-          value={hall.dimensions.height}
-          left={hallLeft - 52}
-          top={hallTop}
-          span={scaledHeight}
-        />
+            <DimensionLabel
+              orientation="horizontal"
+              value={hall.dimensions.width}
+              left={hallLeft}
+              top={hallTop - 28}
+              span={scaledWidth}
+            />
+
+            <DimensionLabel
+              orientation="vertical"
+              value={hall.dimensions.height}
+              left={hallLeft - 52}
+              top={hallTop}
+              span={scaledHeight}
+            />
+          </>
+        )}
 
         <HallSurface
           ref={hallSurfaceRef}
