@@ -9,6 +9,8 @@ import {
 } from "lucide-react"
 import { getInitials } from "../Canvas/utils"
 import { SeatingProgress } from "./SeatingProgress"
+import { SeatAssignSheet } from "./SeatAssignSheet"
+import type { Guest } from "@/stores/planner.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useDialogStore } from "@/stores/dialog.store"
 import { Button } from "@/components/ui/button"
@@ -20,13 +22,14 @@ type Filter = "all" | "unseated" | "dietary"
 /**
  * Guests-first list: search + filter chips + seating progress, replacing the
  * old drag-and-drop reassignment view. Shared by the desktop `GuestRail` and
- * mobile `GuestPeekBar`. Tapping a row will open the seat-assign flow in a
- * later phase — for now rows are informational only.
+ * mobile `GuestPeekBar`. Tapping a row opens `SeatAssignSheet` (table → seat
+ * picker) for that guest.
  */
 export const GuestListContent = () => {
   const { t } = useTranslation()
   const [searchQuery, setSearchQuery] = useState("")
   const [filter, setFilter] = useState<Filter>("all")
+  const [assigningGuest, setAssigningGuest] = useState<Guest | null>(null)
 
   const { guests, tables } = usePlannerStore(
     useShallow((state) => ({ guests: state.guests, tables: state.tables }))
@@ -152,9 +155,11 @@ export const GuestListContent = () => {
           {filteredGuests.map((guest) => {
             const seatedAt = seatedTableLabel(guest)
             return (
-              <div
+              <button
                 key={guest.id}
-                className="flex items-center gap-3 rounded-2xl border p-3"
+                type="button"
+                onClick={() => setAssigningGuest(guest)}
+                className="flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition-colors hover:bg-accent/50"
               >
                 <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
                   {getInitials(guest.name)}
@@ -172,11 +177,18 @@ export const GuestListContent = () => {
                     </span>
                   )}
                 </div>
-              </div>
+              </button>
             )
           })}
         </div>
       )}
+
+      <SeatAssignSheet
+        guest={assigningGuest}
+        onOpenChange={(open) => {
+          if (!open) setAssigningGuest(null)
+        }}
+      />
     </div>
   )
 }

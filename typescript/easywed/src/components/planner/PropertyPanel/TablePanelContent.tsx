@@ -8,6 +8,7 @@ import { TableRotationField } from "./fields/TableRotationField"
 import { RectangularTable } from "./fields/TableRectDimensionsField"
 import { RoundTable } from "./fields/TableRoundDimensionsField"
 import { GuestAssignmentPicker } from "./fields/GuestAssignmentPicker"
+import { TableSeatList } from "./fields/TableSeatList"
 import { getSizeForShape, isDimensionsValidForShape } from "./fields/utils"
 import type { Position } from "@/stores/planner.store"
 import {
@@ -225,6 +226,10 @@ export const TablePanelContent = (props: Props) => {
           updateAndCommit({ assignedGuestIds })
         }
       />
+
+      {props.mode === "edit" && (
+        <TableSeatList tableId={props.tableId} capacity={form.capacity} />
+      )}
 
       {props.mode === "add" && (
         <Button onClick={handleAddSubmit} disabled={!canSubmit}>

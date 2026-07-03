@@ -159,6 +159,19 @@ export function effectiveSeats(
   })
 }
 
+// Order-based seat ids with no real geometry (x/y are unused placeholders) —
+// for list-style seat pickers (GuestPanel's SeatAssignSheet, the table edit
+// form's seat list) where only occupancy bookkeeping matters, not screen
+// position. Unlike `effectiveSeats`, this works for `custom` polygon tables
+// too, whose auto layout `computeSeatPositions` deliberately leaves empty.
+export function seatSlotsForCapacity(capacity: number): Array<PlacedSeat> {
+  return Array.from({ length: capacity }, (_, i) => ({
+    id: seatIdForIndex(i),
+    x: 0,
+    y: 0,
+  }))
+}
+
 // Resolve which guest sits in each placed seat: guests with an explicit `seatId`
 // matching a placed seat take it; the rest (order-fill — `seatId` null) fill the
 // still-empty seats in list order. This mirrors the table-picker / drag-to-table
