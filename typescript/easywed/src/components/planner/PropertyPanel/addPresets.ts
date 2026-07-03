@@ -54,8 +54,8 @@ export type FixturePreset = {
   size: Size
   labelKey: string
   icon: FixtureIcon
-  // "Custom" has no sensible single default size/shape — tapping it opens the
-  // full fixture add form instead of inserting this preset directly.
+  // "Custom" is a blank starting point — inserted without a preset name so
+  // the edit view opens ready for the user to shape it.
   custom?: boolean
 }
 

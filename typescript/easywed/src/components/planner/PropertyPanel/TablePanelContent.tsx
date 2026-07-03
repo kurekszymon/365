@@ -10,38 +10,19 @@ import { RoundTable } from "./fields/TableRoundDimensionsField"
 import { GuestAssignmentPicker } from "./fields/GuestAssignmentPicker"
 import { TableSeatList } from "./fields/TableSeatList"
 import { getSizeForShape, isDimensionsValidForShape } from "./fields/utils"
-import type { Position } from "@/stores/planner.store"
-import {
-  DEFAULT_TABLE,
-  getEffectiveSize,
-  usePlannerStore,
-} from "@/stores/planner.store"
-import { usePanelStore } from "@/stores/panel.store"
-import { Button } from "@/components/ui/button"
+import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
 
-const INITIAL_FORM = {
-  name: DEFAULT_TABLE.name,
-  shape: DEFAULT_TABLE.shape,
-  capacity: DEFAULT_TABLE.capacity,
-  width: DEFAULT_TABLE.size.width,
-  height: DEFAULT_TABLE.size.height,
-  rotation: DEFAULT_TABLE.rotation,
-  assignedGuestIds: [] as Array<string>,
-}
-
-type Props =
-  | { mode: "add"; position?: Position }
-  | { mode: "edit"; tableId: string }
-
-export const TablePanelContent = (props: Props) => {
+/**
+ * Edit form for one table. Add flows don't come through here anymore — new
+ * tables are inserted directly from a preset (add hub, canvas context menu)
+ * and then routed to this edit view.
+ */
+export const TablePanelContent = ({ tableId }: { tableId: string }) => {
   const { t } = useTranslation()
 
-  const tableId = props.mode === "edit" && props.tableId
-
-  const { hallDimensions, addTable, updateTable, saveTable } = usePlannerStore(
+  const { hallDimensions, updateTable, saveTable } = usePlannerStore(
     useShallow((state) => ({
       hallDimensions: state.hall.dimensions,
-      addTable: state.addTable,
       updateTable: state.updateTable,
       saveTable: state.saveTable,
     }))
@@ -57,23 +38,20 @@ export const TablePanelContent = (props: Props) => {
     )
   )
 
-  const openTableEdit = usePanelStore((state) => state.openTableEdit)
-
   const [form, setForm] = useState(() => {
-    if (props.mode === "edit" && editedTable) {
-      const visible = getEffectiveSize(editedTable.size, editedTable.rotation)
+    const visible = editedTable
+      ? getEffectiveSize(editedTable.size, editedTable.rotation)
+      : { width: 0, height: 0 }
 
-      return {
-        name: editedTable.name,
-        shape: editedTable.shape,
-        capacity: editedTable.capacity,
-        width: visible.width,
-        height: visible.height,
-        rotation: editedTable.rotation,
-        assignedGuestIds: editedAssignedGuestIds,
-      }
+    return {
+      name: editedTable?.name ?? "",
+      shape: editedTable?.shape ?? "rectangular",
+      capacity: editedTable?.capacity ?? 0,
+      width: visible.width,
+      height: visible.height,
+      rotation: editedTable?.rotation ?? 0,
+      assignedGuestIds: editedAssignedGuestIds,
     }
-    return INITIAL_FORM
   })
 
   const { width: hallMaxWidth, height: hallMaxHeight } = hallDimensions
@@ -95,8 +73,6 @@ export const TablePanelContent = (props: Props) => {
     return true
   }
 
-  const canSubmit = isValid(form)
-
   // form.width/height represent the *visible* rectangle. Storage is the
   // canonical, unrotated size — so at rotation=90 we swap before persisting.
   const toStoredSize = (f: typeof form) => {
@@ -107,9 +83,9 @@ export const TablePanelContent = (props: Props) => {
   }
 
   const applyToStore = (f: typeof form) => {
-    if (props.mode !== "edit" || !isValid(f)) return
+    if (!isValid(f)) return
     updateTable(
-      props.tableId,
+      tableId,
       {
         name: f.name.trim(),
         shape: f.shape,
@@ -121,10 +97,7 @@ export const TablePanelContent = (props: Props) => {
     )
   }
 
-  const persist = () => {
-    if (props.mode !== "edit") return
-    saveTable(props.tableId)
-  }
+  const persist = () => saveTable(tableId)
 
   const update = (partial: Partial<typeof form>) => {
     const next = { ...form, ...partial }
@@ -135,22 +108,6 @@ export const TablePanelContent = (props: Props) => {
   const updateAndCommit = (partial: Partial<typeof form>) => {
     update(partial)
     persist()
-  }
-
-  const handleAddSubmit = () => {
-    if (!canSubmit) return
-    const newId = addTable(
-      {
-        name: form.name.trim(),
-        shape: form.shape,
-        capacity: form.capacity,
-        size: toStoredSize(form),
-        rotation: form.shape === "round" ? 0 : form.rotation,
-      },
-      assignedWithinCapacity,
-      props.mode === "add" ? props.position : undefined
-    )
-    openTableEdit(newId)
   }
 
   const isCustom = form.shape === "custom"
@@ -219,7 +176,7 @@ export const TablePanelContent = (props: Props) => {
       />
 
       <GuestAssignmentPicker
-        tableId={props.mode === "edit" ? props.tableId : null}
+        tableId={tableId}
         capacity={form.capacity}
         assignedGuestIds={assignedWithinCapacity}
         onAssignedGuestIdsChange={(assignedGuestIds) =>
@@ -227,15 +184,7 @@ export const TablePanelContent = (props: Props) => {
         }
       />
 
-      {props.mode === "edit" && (
-        <TableSeatList tableId={props.tableId} capacity={form.capacity} />
-      )}
-
-      {props.mode === "add" && (
-        <Button onClick={handleAddSubmit} disabled={!canSubmit}>
-          {t("tables.add")}
-        </Button>
-      )}
+      <TableSeatList tableId={tableId} capacity={form.capacity} />
     </div>
   )
 }

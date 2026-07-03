@@ -19,7 +19,17 @@ import { usePanelStore } from "@/stores/panel.store"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
 
-type Category = "tables" | "fixtures"
+export type AddHubCategory = "tables" | "fixtures"
+
+type Props = {
+  // Seeds the Stoły/Elementy sali segmented filter — the desktop
+  // `Sidebar/AddEntityDialog` opens pre-filtered to the list it was launched
+  // from; the mobile add-hub sheet passes nothing and defaults to tables.
+  initialCategory?: AddHubCategory
+  // Fires once a preset has been inserted and routed to its edit view, so a
+  // wrapping dialog can close itself out of the way.
+  onInserted?: () => void
+}
 
 const FIXTURE_ICONS: Record<FixtureIcon, typeof ShapesIcon> = {
   stage: PresentationIcon,
@@ -35,9 +45,12 @@ const FIXTURE_ICONS: Record<FixtureIcon, typeof ShapesIcon> = {
 // routes straight to its edit view — same short-circuit already used by the
 // canvas's paste-at-cursor and right-click "Add table" flows, no intermediate
 // add-form step.
-export const AddHubContent = () => {
+export const AddHubContent = ({
+  initialCategory = "tables",
+  onInserted,
+}: Props) => {
   const { t } = useTranslation()
-  const [category, setCategory] = useState<Category>("tables")
+  const [category, setCategory] = useState<AddHubCategory>(initialCategory)
 
   const { hallDimensions, addTable, addFixture } = usePlannerStore(
     useShallow((state) => ({
@@ -48,7 +61,6 @@ export const AddHubContent = () => {
   )
   const openTableEdit = usePanelStore((state) => state.openTableEdit)
   const openFixtureEdit = usePanelStore((state) => state.openFixtureEdit)
-  const openFixtureAdd = usePanelStore((state) => state.openFixtureAdd)
 
   const centerPosition = (size: Size) =>
     clampToHall(
@@ -74,16 +86,16 @@ export const AddHubContent = () => {
       centerPosition(preset.size)
     )
     openTableEdit(tableId)
+    onInserted?.()
   }
 
   const insertFixturePreset = (preset: FixturePreset) => {
-    if (preset.custom) {
-      openFixtureAdd(centerPosition(preset.size))
-      return
-    }
+    // The "custom" card carries no name — it drops a blank fixture and lets
+    // the edit view do the shaping, same insert-then-edit shortcut as every
+    // other card (there is no separate add form anymore).
     const fixtureId = addFixture(
       {
-        name: t(preset.labelKey),
+        name: preset.custom ? "" : t(preset.labelKey),
         shape: preset.shape,
         size: preset.size,
         rotation: 0,
@@ -91,6 +103,7 @@ export const AddHubContent = () => {
       centerPosition(preset.size)
     )
     openFixtureEdit(fixtureId)
+    onInserted?.()
   }
 
   return (

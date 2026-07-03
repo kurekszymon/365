@@ -160,8 +160,11 @@ export const HallSurface = ({
         gridStyle={gridStyle}
         gridSpacing={gridSpacing}
         zoom={zoom}
-        className="absolute z-10 shadow-sm ring-1 ring-planner-hall/70"
-        style={{ left, top }}
+        className="absolute top-0 left-0 z-10 shadow-sm ring-1 ring-planner-hall/70"
+        // transform instead of left/top: panning moves this every frame, and a
+        // left/top change relayouts the whole hall subtree per frame while a
+        // translate only recomposites it.
+        style={{ transform: `translate3d(${left}px, ${top}px, 0)` }}
       >
         {canvasTables.map((ct) => (
           <DraggableTable

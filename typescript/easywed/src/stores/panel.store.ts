@@ -3,13 +3,9 @@ import type { Position } from "./planner.store"
 
 export type PanelView =
   | { kind: "hall" }
-  | { kind: "table.add"; position?: Position }
   | { kind: "tables.batch_add"; position?: Position }
   | { kind: "table.edit"; tableId: string }
-  | { kind: "tables.placeholder" }
-  | { kind: "fixture.add"; position?: Position }
   | { kind: "fixture.edit"; fixtureId: string }
-  | { kind: "fixtures.placeholder" }
   | { kind: "add_hub" }
   | { kind: "ai_chat" }
 
@@ -23,13 +19,9 @@ type State = {
 
 type Action = {
   openHall: () => void
-  openTableAdd: (position?: Position) => void
   openTablesBatchAdd: (position?: Position) => void
   openTableEdit: (tableId: string) => void
-  openTablesPlaceholder: () => void
-  openFixtureAdd: (position?: Position) => void
   openFixtureEdit: (fixtureId: string) => void
-  openFixturesPlaceholder: () => void
   openAddHub: () => void
   openAiChat: () => void
   select: (id: string | null) => void
@@ -42,20 +34,12 @@ export const usePanelStore = create<State & Action>((set) => ({
   selectedId: null,
 
   openHall: () => set({ view: { kind: "hall" }, selectedId: null }),
-  openTableAdd: (position) =>
-    set({ view: { kind: "table.add", position }, selectedId: null }),
   openTablesBatchAdd: (position) =>
     set({ view: { kind: "tables.batch_add", position }, selectedId: null }),
   openTableEdit: (tableId) =>
     set({ view: { kind: "table.edit", tableId }, selectedId: tableId }),
-  openTablesPlaceholder: () =>
-    set({ view: { kind: "tables.placeholder" }, selectedId: null }),
-  openFixtureAdd: (position) =>
-    set({ view: { kind: "fixture.add", position }, selectedId: null }),
   openFixtureEdit: (fixtureId) =>
     set({ view: { kind: "fixture.edit", fixtureId }, selectedId: fixtureId }),
-  openFixturesPlaceholder: () =>
-    set({ view: { kind: "fixtures.placeholder" }, selectedId: null }),
   openAddHub: () => set({ view: { kind: "add_hub" }, selectedId: null }),
   openAiChat: () => set({ view: { kind: "ai_chat" }, selectedId: null }),
   select: (id) => set({ selectedId: id }),
@@ -65,20 +49,15 @@ export const usePanelStore = create<State & Action>((set) => ({
       const next = { selectedId: null }
       if (!state.view) return next
       switch (state.view.kind) {
+        // Clicking the canvas background closes any open form; the add hub and
+        // the AI chat stay open — deselecting is orthogonal to them.
         case "hall":
-          return { ...next, view: null }
-        case "table.add":
         case "tables.batch_add":
         case "table.edit":
-          return { ...next, view: { kind: "tables.placeholder" } }
-        case "tables.placeholder":
+        case "fixture.edit":
+          return { ...next, view: null }
         case "add_hub":
         case "ai_chat":
-          return next
-        case "fixture.add":
-        case "fixture.edit":
-          return { ...next, view: { kind: "fixtures.placeholder" } }
-        case "fixtures.placeholder":
           return next
       }
     }),

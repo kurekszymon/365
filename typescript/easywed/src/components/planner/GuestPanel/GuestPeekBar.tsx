@@ -7,7 +7,8 @@ import { useGuestPanelStore } from "@/stores/guestPanel.store"
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer"
 
 /**
- * Mobile counterpart of the desktop `GuestRail`. vaul's `Root` is built around
+ * Mobile counterpart of the desktop sidebar's Guests tab
+ * (`Sidebar/SidebarRail`). vaul's `Root` is built around
  * an explicit closed→open transition — that's what drives its initial
  * snap-point measurement — so keeping a single Drawer permanently `open` with
  * custom snap points (the previous approach here) skipped that transition and

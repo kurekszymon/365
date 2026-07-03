@@ -1,3 +1,4 @@
+import { memo } from "react"
 import { useDraggable } from "@dnd-kit/core"
 import {
   ClipboardCopyIcon,
@@ -23,7 +24,7 @@ type DraggableFixtureProps = {
   ppm: number
 }
 
-export const DraggableFixture = ({
+const DraggableFixtureBase = ({
   fixture,
   hallWidth,
   hallHeight,
@@ -111,3 +112,7 @@ export const DraggableFixture = ({
     </FixtureVisual>
   )
 }
+
+// Memoized for the same reason as `DraggableTable`: `HallSurface` re-renders
+// every pan/zoom frame with referentially-stable props here.
+export const DraggableFixture = memo(DraggableFixtureBase)

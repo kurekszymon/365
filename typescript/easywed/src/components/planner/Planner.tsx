@@ -1,16 +1,10 @@
-import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
-import {
-  LandmarkIcon,
-  LayoutPanelLeftIcon,
-  PlusIcon,
-  SparklesIcon,
-  UserPlusIcon,
-  UtensilsIcon,
-} from "lucide-react"
+import { LandmarkIcon, SparklesIcon, UserPlusIcon } from "lucide-react"
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
 import { Canvas } from "./Canvas"
-import { GuestPeekBar, GuestRail } from "./GuestPanel"
+import { GuestPeekBar } from "./GuestPanel"
+import { SidebarRail } from "./Sidebar/SidebarRail"
+import { EntityEditDialog } from "./Sidebar/EntityEditDialog"
 import { Header } from "./Header"
 import { ExportHeader } from "./Header/Export.header"
 import { GuestsSeated } from "./Header/GuestsSeated.header"
@@ -24,13 +18,6 @@ import { isLocalWedding } from "@/lib/localWedding"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Button } from "@/components/ui/button"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -38,8 +25,8 @@ import {
 import { DialogManager } from "@/components/dialogs/DialogManager"
 import { useDialogStore } from "@/stores/dialog.store"
 import { useGlobalStore } from "@/stores/global.store"
-import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
+import { useSidebarStore } from "@/stores/sidebar.store"
 import { useOpenHall } from "@/hooks/useOpenHall"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 
@@ -58,22 +45,13 @@ export const Planner = () => {
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   )
 
-  const preset = usePlannerStore((state) => state.hall.preset)
   const weddingId = useGlobalStore((state) => state.weddingId)
 
   const openHall = useOpenHall()
   const isMobile = useIsMobile()
 
-  const panel = usePanelStore(
-    useShallow((state) => ({
-      openTableAdd: state.openTableAdd,
-      openTablesBatchAdd: state.openTablesBatchAdd,
-      openTableEdit: state.openTableEdit,
-      openTablesPlaceholder: state.openTablesPlaceholder,
-      openFixtureAdd: state.openFixtureAdd,
-      openAiChat: state.openAiChat,
-    }))
-  )
+  const openAiChat = usePanelStore((state) => state.openAiChat)
+  const openSidebarTab = useSidebarStore((state) => state.openTab)
 
   return (
     <>
@@ -91,73 +69,21 @@ export const Planner = () => {
             </Header.Nav>
           </Header.Title>
           <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <PlusIcon />
-                  <span className="hidden md:inline">
-                    {t("planner.actions")}
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-auto min-w-52">
-                <DropdownMenuItem onClick={openHall}>
-                  <LandmarkIcon />
-                  {t("hall.configure_short")}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  disabled={!preset}
-                  onClick={() => {
-                    if (!preset) return
-                    panel.openTablesPlaceholder()
-                  }}
-                >
-                  <UtensilsIcon />
-                  {t("tables")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  inset
-                  disabled={!preset}
-                  onClick={() => {
-                    if (!preset) return
-                    panel.openTableAdd()
-                  }}
-                >
-                  {t("tables.add")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  inset
-                  disabled={!preset}
-                  onClick={() => {
-                    if (!preset) return
-                    panel.openTablesBatchAdd()
-                  }}
-                >
-                  {t("tables.add_batch")}
-                </DropdownMenuItem>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenuItem
-                      disabled={!preset}
-                      onClick={() => {
-                        if (!preset) return
-                        panel.openFixtureAdd()
-                      }}
-                    >
-                      <LayoutPanelLeftIcon />
-                      {t("fixtures.add")}
-                    </DropdownMenuItem>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">
-                    {t("fixtures.add_tooltip")}
-                  </TooltipContent>
-                </Tooltip>
-              </DropdownMenuContent>
-            </DropdownMenu>
             <Button
               variant="outline"
-              onClick={() => panel.openAiChat()}
+              onClick={openHall}
+              aria-label={t("hall.configure_short")}
+            >
+              <LandmarkIcon />
+              <span className="hidden md:inline">
+                {t("hall.configure_short")}
+              </span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                isMobile ? openAiChat() : openSidebarTab("ai_chat")
+              }
               aria-label={t("assistant.title")}
             >
               <SparklesIcon />
@@ -185,10 +111,11 @@ export const Planner = () => {
         </Header>
         <DndContext sensors={sensors}>
           <div className="flex min-h-0 flex-1 overflow-hidden">
-            {!isMobile && <GuestRail />}
+            {!isMobile && <SidebarRail />}
             <Canvas />
-            <PropertyPanel />
+            {isMobile && <PropertyPanel />}
           </div>
+          {!isMobile && <EntityEditDialog />}
           {isMobile && <GuestPeekBar />}
         </DndContext>
       </div>

@@ -1,8 +1,9 @@
 import { create } from "zustand"
 
 type State = {
-  // Whether the guest rail (desktop) / peek bar (mobile) is showing its full
-  // list rather than just its collapsed summary. Deliberately separate from
+  // Whether the mobile guest peek bar is showing its full list rather than
+  // just its collapsed summary. Mobile-only since the unified desktop rail
+  // took over (see `sidebar.store`). Deliberately separate from
   // `panel.store`'s `view` — guest-panel visibility is orthogonal to which
   // table/fixture/AI panel view is currently open.
   expanded: boolean

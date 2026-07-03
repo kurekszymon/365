@@ -1,3 +1,4 @@
+import { memo } from "react"
 import { useDraggable } from "@dnd-kit/core"
 import {
   ClipboardCopyIcon,
@@ -29,7 +30,7 @@ type DraggableTableProps = {
   showSeats?: boolean
 }
 
-export const DraggableTable = ({
+const DraggableTableBase = ({
   table,
   guestsAssigned,
   hallWidth,
@@ -135,3 +136,9 @@ export const DraggableTable = ({
     </TableVisual>
   )
 }
+
+// Memoized: `HallSurface` re-renders on every pan/zoom frame, and its props
+// here (memoized table objects, ppm, guest arrays) are referentially stable
+// during a pan — without memo every table and its seats would reconcile per
+// frame. Store subscriptions (selection, drag state) still re-render as usual.
+export const DraggableTable = memo(DraggableTableBase)

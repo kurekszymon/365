@@ -57,9 +57,11 @@ export const Minimap = ({
   const clippedRight = clamp(visibleRightM, 0, hallDimensions.width)
   const clippedBottom = clamp(visibleBottomM, 0, hallDimensions.height)
 
+  // translate instead of left/top — this rect moves on every pan frame, and a
+  // transform update doesn't trigger layout (width/height only change while
+  // the viewport edge crosses a hall edge).
   const viewportRect = {
-    left: offsetX + clippedLeft * scale,
-    top: offsetY + clippedTop * scale,
+    transform: `translate3d(${offsetX + clippedLeft * scale}px, ${offsetY + clippedTop * scale}px, 0)`,
     width: Math.max(0, (clippedRight - clippedLeft) * scale),
     height: Math.max(0, (clippedBottom - clippedTop) * scale),
   }
@@ -142,7 +144,7 @@ export const Minimap = ({
           />
         ))}
         <div
-          className="absolute rounded-[3px] border-[1.5px] border-primary bg-primary/10"
+          className="absolute top-0 left-0 rounded-[3px] border-[1.5px] border-primary bg-primary/10"
           style={viewportRect}
         />
       </div>
