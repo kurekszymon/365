@@ -3,6 +3,7 @@ import { HallPanelContent } from "./HallPanelContent"
 import { TablePanelContent } from "./TablePanelContent"
 import { TableBatchPanelContent } from "./TableBatchPanelContent"
 import { FixturePanelContent } from "./FixturePanelContent"
+import { AddHubContent } from "./AddHubContent"
 import { AiChatPanelContent } from "./AiChatPanelContent"
 import type { PanelView } from "@/stores/panel.store"
 import { usePanelStore } from "@/stores/panel.store"
@@ -81,6 +82,7 @@ export const PanelBody = ({ view }: { view: PanelView }) => {
           </Button>
         </div>
       )}
+      {view.kind === "add_hub" && <AddHubContent />}
       {view.kind === "ai_chat" && <AiChatPanelContent />}
     </>
   )

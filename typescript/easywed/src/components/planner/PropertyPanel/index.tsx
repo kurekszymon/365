@@ -11,6 +11,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 function usePanelTitle(view: PanelView | null): string {
   const { t } = useTranslation()
@@ -32,6 +33,8 @@ function usePanelTitle(view: PanelView | null): string {
       return t("fixtures.edit")
     case "fixtures.placeholder":
       return t("fixtures")
+    case "add_hub":
+      return t("hall.add_hub.title")
     case "ai_chat":
       return t("assistant.title")
   }
@@ -41,6 +44,8 @@ export const PropertyPanel = () => {
   const { t } = useTranslation()
   const view = usePanelStore((state) => state.view)
   const close = usePanelStore((state) => state.close)
+  const openAddHub = usePanelStore((state) => state.openAddHub)
+  const openAiChat = usePanelStore((state) => state.openAiChat)
   const title = usePanelTitle(view)
   const isMobile = useIsMobile()
 
@@ -49,6 +54,10 @@ export const PropertyPanel = () => {
   // composer) and wants more room, so it opts out of the default padded,
   // auto-scrolling content wrapper and uses a wider sidebar.
   const isChat = view?.kind === "ai_chat"
+  // On desktop, "Dodaj" and "Asystent AI" are siblings of one hub panel
+  // switched via tabs (mirrors the mockup's permanent sidebar tabs); on mobile
+  // they're reached separately (FAB / header sparkle icon) so no tabs there.
+  const isHub = isChat || view?.kind === "add_hub"
   const body = view ? <PanelBody view={view} /> : null
 
   // On phones the side panel would crush the canvas, so render the same content
@@ -86,19 +95,36 @@ export const PropertyPanel = () => {
     <div
       className={cn(
         "flex shrink-0 flex-col border-l bg-background transition-all duration-200",
-        isOpen ? (isChat ? "w-96" : "w-80") : "w-0 overflow-hidden border-l-0"
+        isOpen ? (isHub ? "w-96" : "w-80") : "w-0 overflow-hidden border-l-0"
       )}
     >
       {view && (
         <>
-          <div className="flex items-center justify-between border-b px-4 py-3">
-            <span className="font-heading text-base font-semibold">
-              {title}
-            </span>
+          <div className="flex items-center justify-between gap-2 border-b px-4 py-3">
+            {isHub ? (
+              <Tabs
+                value={isChat ? "chat" : "add"}
+                onValueChange={(v) =>
+                  v === "chat" ? openAiChat() : openAddHub()
+                }
+                className="flex-1"
+              >
+                <TabsList className="w-full">
+                  <TabsTrigger value="add">
+                    {t("hall.add_hub.title")}
+                  </TabsTrigger>
+                  <TabsTrigger value="chat">{t("assistant.title")}</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            ) : (
+              <span className="font-heading text-base font-semibold">
+                {title}
+              </span>
+            )}
             <button
               type="button"
               onClick={close}
-              className="rounded-sm text-muted-foreground hover:text-foreground"
+              className="shrink-0 rounded-sm text-muted-foreground hover:text-foreground"
               aria-label={t("common.close")}
             >
               <XIcon className="size-4" />
