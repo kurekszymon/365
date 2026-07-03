@@ -1,4 +1,8 @@
-# EasyWed — Development Log
+# easywed. — Development Log
+
+### 03.07
+
+- use `easywed.` name in login screen
 
 ### 02.07
 

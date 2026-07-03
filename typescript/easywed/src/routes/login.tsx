@@ -94,7 +94,7 @@ function Login() {
     <div className="flex min-h-svh items-center justify-center p-6">
       <div className="flex w-full max-w-sm flex-col gap-5 rounded-xl border bg-background p-6 shadow-sm">
         <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold">EasyWed</h1>
+          <h1 className="text-xl font-semibold">easywed.</h1>
           <p className="text-sm text-muted-foreground">{t("auth.subtitle")}</p>
         </div>
 
