@@ -59,7 +59,7 @@ export const DraggableFixture = ({
       hallBounds={{ width: hallWidth, height: hallHeight }}
       className={cn(
         "z-10 cursor-grab touch-none active:cursor-grabbing",
-        isSelected && "ring-2 ring-slate-600 ring-offset-2"
+        isSelected && "planner-selected-glow"
       )}
       {...listeners}
       {...attributes}

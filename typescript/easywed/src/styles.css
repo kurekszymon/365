@@ -248,6 +248,14 @@ body.is-panning * {
   cursor: grabbing !important;
 }
 
+/* Soft selection glow for the currently-selected table/fixture on the canvas —
+   a tinted halo instead of a hard ring, so nearby selections don't read as
+   harsh outlines against the hall grid. */
+@utility planner-selected-glow {
+  border-color: var(--planner-selected);
+  box-shadow: 0 0 0 5px color-mix(in oklch, var(--planner-selected) 18%, transparent);
+}
+
 /* https://developers.google.com/identity/branding-guidelines */
 .gsi-material-button {
   -moz-user-select: none;

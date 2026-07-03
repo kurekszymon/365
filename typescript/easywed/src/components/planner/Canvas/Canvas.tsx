@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { usePinch } from "@use-gesture/react"
 import { ScalePill } from "./ScalePill"
+import { Minimap } from "./Minimap"
 import { DimensionLabel } from "./DimensionLabel"
 import { CanvasContextMenu } from "./CanvasContextMenu"
 import { CanvasContextMenuItem } from "./CanvasContextMenuItem"
@@ -517,7 +518,9 @@ export const Canvas = () => {
               </TooltipContent>
             </Tooltip>
           )}
+        </div>
 
+        <div data-no-pan className="absolute bottom-4 left-4 z-20">
           <ScalePill
             reset={resetZoomAndPan}
             scale={zoom}
@@ -525,6 +528,17 @@ export const Canvas = () => {
             zoomOut={() => stepZoom(-1)}
           />
         </div>
+
+        <Minimap
+          hallDimensions={hall.dimensions}
+          selectedId={panel.selectedId}
+          hallLeft={hallLeft}
+          hallTop={hallTop}
+          ppm={ppm}
+          containerWidth={containerWidth}
+          containerHeight={containerHeight}
+          onNavigate={(p) => setPan(clampPan(p))}
+        />
 
         <DimensionLabel
           orientation="horizontal"
