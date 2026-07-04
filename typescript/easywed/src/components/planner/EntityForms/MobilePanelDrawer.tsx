@@ -16,7 +16,7 @@ import {
  * `Sidebar/EntityEditDialog` / `Sidebar/SidebarRail` instead — this component
  * is only mounted below the `md` breakpoint (see `Planner.tsx`).
  */
-export const PropertyPanel = () => {
+export const MobilePanelDrawer = () => {
   const { t } = useTranslation()
   const view = usePanelStore((state) => state.view)
   const close = usePanelStore((state) => state.close)

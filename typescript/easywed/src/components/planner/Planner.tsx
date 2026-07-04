@@ -11,7 +11,7 @@ import { GuestsSeated } from "./Header/GuestsSeated.header"
 import { ImportHeader } from "./Header/Import.header"
 import { PlannerPrintView } from "./PlannerPrintView"
 import { usePrintShortcut } from "./usePrintShortcut"
-import { PropertyPanel } from "./PropertyPanel"
+import { MobilePanelDrawer } from "./EntityForms/MobilePanelDrawer"
 import { ThemeSwitcher } from "./Header/ThemeSwitcher"
 import { GuestModeBanner } from "./GuestModeBanner"
 import { isLocalWedding } from "@/lib/localWedding"
@@ -112,7 +112,7 @@ export const Planner = () => {
           <div className="flex min-h-0 flex-1 overflow-hidden">
             {!isMobile && <SidebarRail />}
             <Canvas />
-            {isMobile && <PropertyPanel />}
+            {isMobile && <MobilePanelDrawer />}
           </div>
           {!isMobile && <EntityEditDialog />}
           {isMobile && <MobileTabBar />}

@@ -11,7 +11,7 @@ import {
   getEffectiveSize,
   usePlannerStore,
 } from "@/stores/planner.store"
-import { getSizeForShape } from "@/components/planner/PropertyPanel/fields/utils"
+import { getSizeForShape } from "@/components/planner/EntityForms/fields/utils"
 import { clampToHall } from "@/components/planner/Canvas/utils"
 import { useAiChatStore } from "@/stores/aiChat.store"
 import i18n from "@/i18n"

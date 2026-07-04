@@ -97,7 +97,7 @@ export const Canvas = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return
       // Don't hijack Escape from a focused form field (e.g. cancelling an
-      // edit in the PropertyPanel) — that's the field's own concern.
+      // edit in a panel form) — that's the field's own concern.
       const target = e.target as HTMLElement | null
       if (target?.closest("input, textarea, [contenteditable='true']")) return
       panel.deselect()

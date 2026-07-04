@@ -1,7 +1,7 @@
 import {
   FIXTURE_PRESETS,
   TABLE_PRESETS,
-} from "@/components/planner/PropertyPanel/addPresets"
+} from "@/components/planner/EntityForms/addPresets"
 import { usePlannerStore } from "@/stores/planner.store"
 import i18n from "@/i18n"
 

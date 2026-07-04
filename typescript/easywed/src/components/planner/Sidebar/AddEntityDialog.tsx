@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
-import { AddHubContent } from "../PropertyPanel/AddHubContent"
-import type { AddHubCategory } from "../PropertyPanel/AddHubContent"
+import { AddHubContent } from "../EntityForms/AddHubContent"
+import type { AddHubCategory } from "../EntityForms/AddHubContent"
 import {
   Dialog,
   DialogContent,

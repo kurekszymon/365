@@ -9,7 +9,7 @@ import type { PanelView } from "@/stores/panel.store"
 /**
  * The inner content of a panel view, switched on its kind. Layout-agnostic so
  * it can render inside both the desktop `Sidebar/EntityEditDialog` and the
- * mobile bottom drawer (see `PropertyPanel/index.tsx`).
+ * mobile bottom drawer (see `MobilePanelDrawer.tsx`).
  */
 export const PanelBody = ({ view }: { view: PanelView }) => (
   <>

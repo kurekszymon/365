@@ -1,5 +1,5 @@
-import { PanelBody } from "../PropertyPanel/PanelBody"
-import { usePanelTitle } from "../PropertyPanel/usePanelTitle"
+import { PanelBody } from "../EntityForms/PanelBody"
+import { usePanelTitle } from "../EntityForms/usePanelTitle"
 import type { PanelView } from "@/stores/panel.store"
 import { usePanelStore } from "@/stores/panel.store"
 import {

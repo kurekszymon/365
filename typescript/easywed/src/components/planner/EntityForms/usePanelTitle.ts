@@ -3,7 +3,7 @@ import type { PanelView } from "@/stores/panel.store"
 
 /**
  * Human title for a panel view — shared by the mobile bottom drawer
- * (`PropertyPanel/index.tsx`) and the desktop `Sidebar/EntityEditDialog` so
+ * (`MobilePanelDrawer`) and the desktop `Sidebar/EntityEditDialog` so
  * the two surfaces can't drift apart.
  */
 export function usePanelTitle(view: PanelView | null): string {
