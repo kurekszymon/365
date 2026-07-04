@@ -34,6 +34,11 @@ export const EntityEditDialog = () => {
   const dialogView = view && DIALOG_KINDS.has(view.kind) ? view : null
   const title = usePanelTitle(dialogView)
 
+  // The table form is the tall one (config + guest picker + a row per seat);
+  // give it a wider dialog so it can lay those out in two columns instead of
+  // one very long scroll. The rest stay compact.
+  const wide = dialogView?.kind === "table.edit"
+
   return (
     <Dialog
       open={dialogView !== null}
@@ -41,7 +46,10 @@ export const EntityEditDialog = () => {
         if (!open) close()
       }}
     >
-      <DialogContent aria-describedby={undefined}>
+      <DialogContent
+        aria-describedby={undefined}
+        className={wide ? "sm:max-w-3xl" : "sm:max-w-md"}
+      >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>

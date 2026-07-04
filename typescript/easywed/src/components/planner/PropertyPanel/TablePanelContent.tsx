@@ -133,58 +133,69 @@ export const TablePanelContent = ({ tableId }: { tableId: string }) => {
     )
 
   return (
-    <div className="flex flex-col gap-4">
-      <TableNameField
-        value={form.name}
-        onChange={(name) => update({ name })}
-        onBlur={persist}
-      />
-
-      {isCustom ? (
-        <p className="text-xs text-muted-foreground">
-          {t("tables.shape.custom_readonly")}
-        </p>
-      ) : (
-        <>
-          <TableShapeField
-            value={form.shape}
-            onChange={(shape) => updateAndCommit({ shape })}
+    // Two columns once there's room (the wide desktop dialog) — table config on
+    // the left, guest assignment + per-seat list on the right — so the form
+    // reads wider than tall instead of one long scroll. The narrow mobile
+    // drawer keeps its container below the `@xl` threshold, so it stays single
+    // column.
+    <div className="@container">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-4 @xl:grid-cols-2">
+        <div className="flex flex-col gap-4">
+          <TableNameField
+            value={form.name}
+            onChange={(name) => update({ name })}
+            onBlur={persist}
           />
 
-          {shapeFields}
+          {isCustom ? (
+            <p className="text-xs text-muted-foreground">
+              {t("tables.shape.custom_readonly")}
+            </p>
+          ) : (
+            <>
+              <TableShapeField
+                value={form.shape}
+                onChange={(shape) => updateAndCommit({ shape })}
+              />
 
-          {form.shape === "rectangular" && (
-            <TableRotationField
-              value={form.rotation}
-              onChange={(rotation) => {
-                if (rotation === form.rotation) return
-                updateAndCommit({
-                  rotation,
-                  width: form.height,
-                  height: form.width,
-                })
-              }}
-            />
+              {shapeFields}
+
+              {form.shape === "rectangular" && (
+                <TableRotationField
+                  value={form.rotation}
+                  onChange={(rotation) => {
+                    if (rotation === form.rotation) return
+                    updateAndCommit({
+                      rotation,
+                      width: form.height,
+                      height: form.width,
+                    })
+                  }}
+                />
+              )}
+            </>
           )}
-        </>
-      )}
 
-      <TableCapacityField
-        value={form.capacity}
-        onChange={(capacity) => update({ capacity })}
-        onBlur={persist}
-      />
+          <TableCapacityField
+            value={form.capacity}
+            onChange={(capacity) => update({ capacity })}
+            onBlur={persist}
+          />
+        </div>
 
-      <GuestAssignmentPicker
-        tableId={tableId}
-        capacity={form.capacity}
-        assignedGuestIds={assignedWithinCapacity}
-        onAssignedGuestIdsChange={(assignedGuestIds) =>
-          updateAndCommit({ assignedGuestIds })
-        }
-      />
+        <div className="flex flex-col gap-4">
+          <GuestAssignmentPicker
+            tableId={tableId}
+            capacity={form.capacity}
+            assignedGuestIds={assignedWithinCapacity}
+            onAssignedGuestIdsChange={(assignedGuestIds) =>
+              updateAndCommit({ assignedGuestIds })
+            }
+          />
 
-      <TableSeatList tableId={tableId} capacity={form.capacity} />
+          <TableSeatList tableId={tableId} capacity={form.capacity} />
+        </div>
+      </div>
     </div>
   )
 }
