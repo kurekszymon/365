@@ -1,22 +1,17 @@
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
-import { LayoutPanelLeftIcon, UsersIcon, UtensilsIcon } from "lucide-react"
 import { useShallow } from "zustand/react/shallow"
 import { GuestListContent } from "../GuestPanel/GuestListContent"
-import { TableListContent } from "./TableListContent"
-import { FixtureListContent } from "./FixtureListContent"
+import { EntityListContent } from "./EntityListContent"
+import { TabBadgeIcon } from "./TabBadgeIcon"
+import { useTabBadgeCounts } from "./tabs"
 import type { MobileListTab } from "@/stores/mobilePanel.store"
 import { useMobilePanelStore } from "@/stores/mobilePanel.store"
-import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer"
 import { cn } from "@/lib/utils"
 
-const TABS: Array<{ tab: MobileListTab; icon: typeof UsersIcon }> = [
-  { tab: "guests", icon: UsersIcon },
-  { tab: "tables", icon: UtensilsIcon },
-  { tab: "fixtures", icon: LayoutPanelLeftIcon },
-]
+const TABS: Array<MobileListTab> = ["guests", "tables", "fixtures"]
 
 /**
  * Mobile counterpart of the desktop `Sidebar/SidebarRail`: a fixed bottom bar
@@ -35,14 +30,6 @@ export const MobileTabBar = () => {
       close: state.close,
     }))
   )
-  const { guests, tables, fixtures } = usePlannerStore(
-    useShallow((state) => ({
-      guests: state.guests,
-      tables: state.tables,
-      fixtures: state.fixtures,
-    }))
-  )
-
   // When a panel view opens (tapping a list row → edit form, the add hub, the
   // AI chat), it renders in `PropertyPanel`'s drawer — close this list drawer
   // so the two don't stack.
@@ -51,37 +38,25 @@ export const MobileTabBar = () => {
     if (panelView) close()
   }, [panelView, close])
 
-  const unseatedCount = guests.filter((g) => !g.tableId).length
-  const badgeCount: Record<MobileListTab, number> = {
-    guests: unseatedCount,
-    tables: tables.length,
-    fixtures: fixtures.length,
-  }
+  const badgeCount = useTabBadgeCounts()
 
   const listContent: Record<MobileListTab, React.ReactNode> = {
     guests: <GuestListContent />,
-    tables: <TableListContent />,
-    fixtures: <FixtureListContent />,
+    tables: <EntityListContent kind="tables" />,
+    fixtures: <EntityListContent kind="fixtures" />,
   }
 
   return (
     <>
       <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 rounded-t-3xl border-t bg-background pb-[env(safe-area-inset-bottom)] shadow-[0_-14px_30px_-22px_rgba(40,60,45,0.4)]">
-        {TABS.map(({ tab, icon: Icon }) => (
+        {TABS.map((tab) => (
           <button
             key={tab}
             type="button"
             onClick={() => open(tab)}
             className="flex flex-col items-center gap-1 py-3 text-muted-foreground"
           >
-            <span className="relative flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Icon className="size-[19px]" />
-              {badgeCount[tab] > 0 && (
-                <span className="absolute -top-1 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
-                  {badgeCount[tab]}
-                </span>
-              )}
-            </span>
+            <TabBadgeIcon tab={tab} badgeCount={badgeCount[tab]} />
             <span className="text-[11px] font-semibold">{t(tab)}</span>
           </button>
         ))}
@@ -99,7 +74,7 @@ export const MobileTabBar = () => {
             {activeTab ? t(activeTab) : ""}
           </DrawerTitle>
           <div className="grid grid-cols-3 gap-2 px-4 pt-4 pb-4">
-            {TABS.map(({ tab }) => (
+            {TABS.map((tab) => (
               <button
                 key={tab}
                 type="button"

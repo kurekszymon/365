@@ -1,30 +1,16 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  LayoutPanelLeftIcon,
-  SparklesIcon,
-  UsersIcon,
-  UtensilsIcon,
-} from "lucide-react"
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { useShallow } from "zustand/react/shallow"
 import { GuestListContent } from "../GuestPanel/GuestListContent"
 import { AiChatPanelContent } from "../PropertyPanel/AiChatPanelContent"
-import { TableListContent } from "./TableListContent"
-import { FixtureListContent } from "./FixtureListContent"
+import { EntityListContent } from "./EntityListContent"
+import { TabBadgeIcon } from "./TabBadgeIcon"
+import { useTabBadgeCounts } from "./tabs"
 import type { TransitionEvent } from "react"
 import type { SidebarTab } from "@/stores/sidebar.store"
 import { useSidebarStore } from "@/stores/sidebar.store"
-import { usePlannerStore } from "@/stores/planner.store"
 import { cn } from "@/lib/utils"
-
-const TAB_ICONS: Record<SidebarTab, typeof UsersIcon> = {
-  guests: UsersIcon,
-  tables: UtensilsIcon,
-  fixtures: LayoutPanelLeftIcon,
-  ai_chat: SparklesIcon,
-}
 
 const TAB_ORDER: Array<SidebarTab> = ["guests", "tables", "fixtures", "ai_chat"]
 
@@ -46,21 +32,7 @@ export const SidebarRail = () => {
       setExpanded: state.setExpanded,
     }))
   )
-  const { guests, tables, fixtures } = usePlannerStore(
-    useShallow((state) => ({
-      guests: state.guests,
-      tables: state.tables,
-      fixtures: state.fixtures,
-    }))
-  )
-  // Guests badge counts those still without a seat (the actionable number);
-  // tables/fixtures badges are plain totals. `ai_chat` never badges.
-  const badgeCount: Record<SidebarTab, number> = {
-    guests: guests.filter((g) => !g.tableId).length,
-    tables: tables.length,
-    fixtures: fixtures.length,
-    ai_chat: 0,
-  }
+  const badgeCount = useTabBadgeCounts()
 
   // The panel is an overlay animated via `translate` (see below), so mounting
   // its content no longer reflows the canvas — mount immediately on expand so
@@ -95,8 +67,8 @@ export const SidebarRail = () => {
   const isChat = activeTab === "ai_chat"
   const content = {
     guests: <GuestListContent />,
-    tables: <TableListContent />,
-    fixtures: <FixtureListContent />,
+    tables: <EntityListContent kind="tables" />,
+    fixtures: <EntityListContent kind="fixtures" />,
     ai_chat: <AiChatPanelContent />,
   }[activeTab]
 
@@ -123,7 +95,6 @@ export const SidebarRail = () => {
           )}
         </button>
         {TAB_ORDER.map((tab) => {
-          const Icon = TAB_ICONS[tab]
           const isActive = expanded && activeTab === tab
           return (
             <button
@@ -134,21 +105,11 @@ export const SidebarRail = () => {
               aria-pressed={isActive}
               className="flex w-full cursor-pointer flex-col items-center gap-1"
             >
-              <span
-                className={cn(
-                  "relative flex size-9 items-center justify-center rounded-full",
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-primary/10 text-primary"
-                )}
-              >
-                <Icon className="size-[19px]" />
-                {badgeCount[tab] > 0 && (
-                  <span className="absolute -top-1 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
-                    {badgeCount[tab]}
-                  </span>
-                )}
-              </span>
+              <TabBadgeIcon
+                tab={tab}
+                badgeCount={badgeCount[tab]}
+                active={isActive}
+              />
               <span className="px-0.5 text-center text-[10px] leading-tight font-bold text-muted-foreground">
                 {tabLabel(tab)}
               </span>
