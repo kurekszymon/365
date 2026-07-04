@@ -10,12 +10,17 @@ const PAN_PADDING = 48
 
 // Max pan offset on one axis. The hall is centered at offset 0; when it's larger
 // than the viewport it may pan until its edge sits PAN_PADDING inside (so the
-// edge stays visible), when smaller it stays within the rect keeping the gap.
+// edge stays visible).
 function axisMaxPan(scaled: number, container: number) {
   const overflow = scaled - container
-  return overflow >= 0
-    ? overflow / 2 + PAN_PADDING
-    : Math.max(0, -overflow / 2 - PAN_PADDING)
+  if (overflow >= 0) return overflow / 2 + PAN_PADDING
+  // Hall smaller than the viewport on this axis: allow it to slide until an
+  // edge reaches the viewport edge. Previously this subtracted PAN_PADDING,
+  // which exactly cancelled the fit margin on the axis the base scale is
+  // constrained by (VIEWPORT_MARGIN === PAN_PADDING), pinning that axis to a
+  // zero range — e.g. a hall that fits the height of a phone couldn't be
+  // panned vertically at all, only horizontally.
+  return -overflow / 2
 }
 
 type HallDimensions = { width: number; height: number }
@@ -86,6 +91,40 @@ export function useHallGeometry(
     [scaledWidth, scaledHeight, containerWidth, containerHeight]
   )
 
+  // The pan that, at `newZoom`, keeps the hall point currently under `focal`
+  // (client coords; defaults to the container centre) pinned in place. Without
+  // this, zooming always grows the hall from its centre, so the spot you're
+  // looking at slides away — the "clumsy" feeling. Returns a clamped pan.
+  function zoomToPan(
+    newZoom: number,
+    focal?: { x: number; y: number }
+  ): Position {
+    const rect = containerEl?.getBoundingClientRect()
+    const fx = focal ? focal.x - (rect?.left ?? 0) : containerWidth / 2
+    const fy = focal ? focal.y - (rect?.top ?? 0) : containerHeight / 2
+
+    // Hall-space point (metres) currently under the focal.
+    const mX = ppm > 0 ? (fx - hallLeft) / ppm : 0
+    const mY = ppm > 0 ? (fy - hallTop) / ppm : 0
+
+    const newScale = baseScale * newZoom
+    const newScaledWidth = hallWidth * newScale
+    const newScaledHeight = hallHeight * newScale
+    const newPpm = PIXELS_PER_METER * newScale
+
+    // Invert hallLeft = (container - scaledWidth) / 2 + pan for the new zoom,
+    // requiring fx === newHallLeft + mX * newPpm.
+    const rawX = fx - mX * newPpm - (containerWidth - newScaledWidth) / 2
+    const rawY = fy - mY * newPpm - (containerHeight - newScaledHeight) / 2
+
+    const maxX = axisMaxPan(newScaledWidth, containerWidth)
+    const maxY = axisMaxPan(newScaledHeight, containerHeight)
+    return {
+      x: Math.max(-maxX, Math.min(maxX, rawX)),
+      y: Math.max(-maxY, Math.min(maxY, rawY)),
+    }
+  }
+
   return {
     scaledWidth,
     scaledHeight,
@@ -95,5 +134,6 @@ export function useHallGeometry(
     viewportToHall,
     isInHallBounds,
     clampPan,
+    zoomToPan,
   }
 }

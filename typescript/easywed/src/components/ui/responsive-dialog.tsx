@@ -73,7 +73,7 @@ function ResponsiveDialogContent({
 }
 
 // On mobile the header is pinned at the top of the sheet and grows a close
-// button, matching the planner's PropertyPanel drawer.
+// button, matching the planner's MobilePanelDrawer.
 function ResponsiveDialogHeader({
   className,
   children,

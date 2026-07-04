@@ -12,6 +12,14 @@ type DimensionLabelProps = {
 
 type BaseDimensionLabelProps = Omit<DimensionLabelProps, "orientation">
 
+// Positioned with a translate instead of left/top: these labels track the
+// hall during pan/zoom, and transform updates skip per-frame layout (see the
+// same trick on HallSurface's HallBackground).
+const positionStyle = (left?: number, top?: number) =>
+  left !== undefined || top !== undefined
+    ? { transform: `translate3d(${left ?? 0}px, ${top ?? 0}px, 0)` }
+    : undefined
+
 const HorizontalDimensionLabel = ({
   value,
   span,
@@ -23,10 +31,10 @@ const HorizontalDimensionLabel = ({
   return (
     <div
       className={cn(
-        "pointer-events-none absolute z-20 flex items-center",
+        "pointer-events-none absolute top-0 left-0 z-20 flex items-center",
         className
       )}
-      style={{ left, top, width: span }}
+      style={{ ...positionStyle(left, top), width: span }}
     >
       <span className="h-px w-3" />
       <span className="h-px flex-1" />
@@ -50,10 +58,10 @@ const VerticalDimensionLabel = ({
   return (
     <div
       className={cn(
-        "pointer-events-none absolute z-20 flex flex-col items-center",
+        "pointer-events-none absolute top-0 left-0 z-20 flex flex-col items-center",
         className
       )}
-      style={{ left, top, height: span }}
+      style={{ ...positionStyle(left, top), height: span }}
     >
       <span className="h-3 w-px" />
       <span className="w-px flex-1" />

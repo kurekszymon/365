@@ -68,6 +68,18 @@ export const clamp = (value: number, min: number, max: number) => {
   return Math.max(min, Math.min(max, value))
 }
 
+// Up to 2 initials from a guest's name, for avatar-circle labels (seat markers,
+// guest list rows, assign pickers).
+export const getInitials = (name: string) => {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return "•"
+  return parts
+    .slice(0, 2)
+    .map((p) => p[0])
+    .join("")
+    .toUpperCase()
+}
+
 // Diameter (px) of a seat marker at a given pixels-per-meter. Scales with zoom
 // but stays legible/tappable at the extremes. Shared by the seat renderer and
 // anything that needs to clear the seat ring (e.g. the table toolbar offset).
@@ -153,6 +165,11 @@ export const nearestCircleBorder = (
   if (len === 0) return { x: cx + r, y: cy }
   return { x: cx + (dx / len) * r, y: cy + (dy / len) * r }
 }
+
+// True when the event target sits inside a canvas overlay (toolbar, minimap,
+// FAB, seat markers…) that opts out of pan/tap handling via `data-no-pan`.
+export const isNoPan = (target: EventTarget | null): boolean =>
+  target instanceof Element && target.closest("[data-no-pan]") !== null
 
 export type CapturedElement =
   | { kind: "table"; id: string }

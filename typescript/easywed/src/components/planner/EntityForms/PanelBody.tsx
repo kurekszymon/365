@@ -1,0 +1,35 @@
+import { HallPanelContent } from "./HallPanelContent"
+import { TablePanelContent } from "./TablePanelContent"
+import { TableBatchPanelContent } from "./TableBatchPanelContent"
+import { FixturePanelContent } from "./FixturePanelContent"
+import { AddHubContent } from "./AddHubContent"
+import { AiChatPanelContent } from "./AiChatPanelContent"
+import type { PanelView } from "@/stores/panel.store"
+
+/**
+ * The inner content of a panel view, switched on its kind. Layout-agnostic so
+ * it can render inside both the desktop `Sidebar/EntityEditDialog` and the
+ * mobile bottom drawer (see `MobilePanelDrawer.tsx`).
+ */
+export const PanelBody = ({ view }: { view: PanelView }) => (
+  <>
+    {view.kind === "hall" && <HallPanelContent />}
+    {view.kind === "tables.batch_add" && (
+      <TableBatchPanelContent key="tables.batch_add" position={view.position} />
+    )}
+    {view.kind === "table.edit" && (
+      <TablePanelContent
+        key={`table.edit.${view.tableId}`}
+        tableId={view.tableId}
+      />
+    )}
+    {view.kind === "fixture.edit" && (
+      <FixturePanelContent
+        key={`fixture.edit.${view.fixtureId}`}
+        fixtureId={view.fixtureId}
+      />
+    )}
+    {view.kind === "add_hub" && <AddHubContent />}
+    {view.kind === "ai_chat" && <AiChatPanelContent />}
+  </>
+)

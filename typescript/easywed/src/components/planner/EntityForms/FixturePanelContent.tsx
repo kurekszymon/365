@@ -4,66 +4,47 @@ import { useShallow } from "zustand/react/shallow"
 import { TableNameField } from "./fields/TableNameField"
 import { TableRotationField } from "./fields/TableRotationField"
 import { RectangularTable } from "./fields/TableRectDimensionsField"
-import type { FixtureShape, Position } from "@/stores/planner.store"
+import type { FixtureShape } from "@/stores/planner.store"
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
-import { usePanelStore } from "@/stores/panel.store"
 import {
   DEFAULT_FIXTURE,
   getEffectiveSize,
   usePlannerStore,
 } from "@/stores/planner.store"
 
-const INITIAL_FORM = {
-  name: DEFAULT_FIXTURE.name,
-  shape: DEFAULT_FIXTURE.shape,
-  width: DEFAULT_FIXTURE.size.width,
-  height: DEFAULT_FIXTURE.size.height,
-  rotation: DEFAULT_FIXTURE.rotation,
-}
-
-type Props =
-  | { mode: "add"; position?: Position }
-  | { mode: "edit"; fixtureId: string }
-
-export const FixturePanelContent = (props: Props) => {
+/**
+ * Edit form for one fixture. Add flows don't come through here anymore — new
+ * fixtures are inserted directly (add hub presets, canvas context menu) and
+ * then routed to this edit view.
+ */
+export const FixturePanelContent = ({ fixtureId }: { fixtureId: string }) => {
   const { t } = useTranslation()
 
-  const fixtureId = props.mode === "edit" && props.fixtureId
-
-  const { hallDimensions, addFixture, updateFixture, saveFixture } =
-    usePlannerStore(
-      useShallow((state) => ({
-        hallDimensions: state.hall.dimensions,
-        addFixture: state.addFixture,
-        updateFixture: state.updateFixture,
-        saveFixture: state.saveFixture,
-      }))
-    )
+  const { hallDimensions, updateFixture, saveFixture } = usePlannerStore(
+    useShallow((state) => ({
+      hallDimensions: state.hall.dimensions,
+      updateFixture: state.updateFixture,
+      saveFixture: state.saveFixture,
+    }))
+  )
 
   const editedFixture = usePlannerStore((state) =>
     state.fixtures.find((f) => f.id === fixtureId)
   )
 
-  const openFixtureEdit = usePanelStore((state) => state.openFixtureEdit)
-
   const [form, setForm] = useState(() => {
-    if (props.mode === "edit" && editedFixture) {
-      const visible = getEffectiveSize(
-        editedFixture.size,
-        editedFixture.rotation
-      )
-      return {
-        name: editedFixture.name,
-        shape: editedFixture.shape,
-        width: visible.width,
-        height: visible.height,
-        rotation: editedFixture.rotation,
-      }
+    const source = editedFixture ?? DEFAULT_FIXTURE
+    const visible = getEffectiveSize(source.size, source.rotation)
+    return {
+      name: source.name,
+      shape: source.shape,
+      width: visible.width,
+      height: visible.height,
+      rotation: source.rotation,
     }
-    return INITIAL_FORM
   })
 
   const { width: hallMaxWidth, height: hallMaxHeight } = hallDimensions
@@ -92,8 +73,8 @@ export const FixturePanelContent = (props: Props) => {
   }
 
   const applyToStore = (f: typeof form) => {
-    if (props.mode !== "edit" || !isDimensionsValid(f)) return
-    updateFixture(props.fixtureId, {
+    if (!isDimensionsValid(f)) return
+    updateFixture(fixtureId, {
       name: f.name.trim(),
       shape: f.shape,
       size: toStoredSize(f),
@@ -101,10 +82,7 @@ export const FixturePanelContent = (props: Props) => {
     })
   }
 
-  const persist = () => {
-    if (props.mode !== "edit") return
-    saveFixture(props.fixtureId)
-  }
+  const persist = () => saveFixture(fixtureId)
 
   const update = (partial: Partial<typeof form>) => {
     const next = { ...form, ...partial }
@@ -115,24 +93,6 @@ export const FixturePanelContent = (props: Props) => {
   const updateAndCommit = (partial: Partial<typeof form>) => {
     update(partial)
     persist()
-  }
-
-  const canSubmit = isDimensionsValid(form)
-
-  const handleAddSubmit = () => {
-    if (props.mode !== "add" || !canSubmit) return
-
-    const newId = addFixture(
-      {
-        name: form.name.trim(),
-        shape: form.shape,
-        size: toStoredSize(form),
-        rotation: form.shape === "circle" ? 0 : form.rotation,
-      },
-      props.position
-    )
-
-    openFixtureEdit(newId)
   }
 
   return (
@@ -226,12 +186,6 @@ export const FixturePanelContent = (props: Props) => {
             />
           )}
         </>
-      )}
-
-      {props.mode === "add" && (
-        <Button onClick={handleAddSubmit} disabled={!canSubmit}>
-          {t("fixtures.add")}
-        </Button>
       )}
     </div>
   )

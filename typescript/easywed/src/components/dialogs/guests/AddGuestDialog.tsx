@@ -3,7 +3,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import type { Dietary } from "@/stores/planner.store"
 import { usePlannerStore } from "@/stores/planner.store"
-import { usePanelStore } from "@/stores/panel.store"
+import { useEntityListStore } from "@/stores/entityList.store"
 import {
   ResponsiveDialog,
   ResponsiveDialogBody,
@@ -41,7 +41,7 @@ export const AddGuestDialog = () => {
       addGuest: state.addGuest,
     }))
   )
-  const openGuests = usePanelStore((state) => state.openGuests)
+  const openGuestList = useEntityListStore((state) => state.openTab)
 
   return (
     <ResponsiveDialog
@@ -118,7 +118,10 @@ export const AddGuestDialog = () => {
                 tableId: null,
                 dietary: dietaryOptions,
               })
-              openGuests()
+              // Reveal the new guest in the entity-list panel — the desktop
+              // rail and the mobile drawer share the store, so one call covers
+              // whichever surface this platform renders.
+              openGuestList("guests")
               dialog.close()
             }}
           >

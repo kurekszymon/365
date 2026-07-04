@@ -1,5 +1,5 @@
-import { useDraggable, useDroppable } from "@dnd-kit/core"
-import { useCallback } from "react"
+import { memo } from "react"
+import { useDraggable } from "@dnd-kit/core"
 import {
   ClipboardCopyIcon,
   CopyIcon,
@@ -26,18 +26,16 @@ type DraggableTableProps = {
   hallWidth: number
   hallHeight: number
   ppm: number
-  isDraggingGuest?: boolean
   seatGuests?: Array<Guest>
   showSeats?: boolean
 }
 
-export const DraggableTable = ({
+const DraggableTableBase = ({
   table,
   guestsAssigned,
   hallWidth,
   hallHeight,
   ppm,
-  isDraggingGuest,
   seatGuests,
   showSeats,
 }: DraggableTableProps) => {
@@ -66,22 +64,9 @@ export const DraggableTable = ({
     disabled: isMeasuring,
   })
 
-  const { setNodeRef: setDropRef, isOver } = useDroppable({
-    id: `table-drop-${table.id}`,
-    data: { type: "table", tableId: table.id },
-  })
-
-  const setRef = useCallback(
-    (el: HTMLDivElement | null) => {
-      setDragRef(el)
-      setDropRef(el)
-    },
-    [setDragRef, setDropRef]
-  )
-
   return (
     <TableVisual
-      ref={setRef}
+      ref={setDragRef}
       table={table}
       guestsAssigned={guestsAssigned}
       ppm={ppm}
@@ -91,11 +76,7 @@ export const DraggableTable = ({
       showSeats={showSeats}
       className={cn(
         "z-10 cursor-grab touch-none active:cursor-grabbing",
-        isSelected &&
-          "ring-2 ring-planner-selected ring-offset-2 ring-offset-background",
-        isDraggingGuest &&
-          isOver &&
-          "border-blue-300 bg-blue-50 ring-2 ring-blue-500 ring-offset-2"
+        isSelected && "planner-selected-glow"
       )}
       {...listeners}
       {...attributes}
@@ -155,3 +136,9 @@ export const DraggableTable = ({
     </TableVisual>
   )
 }
+
+// Memoized: `HallSurface` re-renders on every pan/zoom frame, and its props
+// here (memoized table objects, ppm, guest arrays) are referentially stable
+// during a pan — without memo every table and its seats would reconcile per
+// frame. Store subscriptions (selection, drag state) still re-render as usual.
+export const DraggableTable = memo(DraggableTableBase)

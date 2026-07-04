@@ -166,7 +166,6 @@ type Action = {
     dimensions: { width: number; height: number }
   ) => void
   saveHall: () => void
-  assignGuestToTable: (guestId: string, tableId: string | null) => void
   assignGuestToSeat: (
     guestId: string,
     tableId: string,
@@ -417,26 +416,6 @@ const createPlannerStore = (
 
     void upsertHall(hall.preset, hall.dimensions.width, hall.dimensions.height)
   },
-  assignGuestToTable: (guestId, tableId) => {
-    const state = get()
-    if (tableId !== null) {
-      const table = state.tables.find((t) => t.id === tableId)
-      if (!table) return
-      const assignedCount = state.guests.filter(
-        (g) => g.tableId === tableId && g.id !== guestId
-      ).length
-      if (assignedCount >= table.capacity) return
-    }
-    set((s) => ({
-      guests: s.guests.map((g) =>
-        g.id === guestId ? { ...g, tableId, seatId: null } : g
-      ),
-    }))
-    // Clear seat_id alongside table_id. Seat ids are index-based (seat-0, …) and
-    // not table-specific, so a stale seat_id would wrongly re-pin the guest to the
-    // same-index seat at the new table after a reload.
-    void updateGuestSeat(guestId, tableId, null)
-  },
   assignGuestToSeat: (guestId, tableId, seatId, occupantId) => {
     const state = get()
     const table = state.tables.find((t) => t.id === tableId)
@@ -500,8 +479,8 @@ const createPlannerStore = (
     const guest = get().guests.find((g) => g.id === guestId)
     if (!guest) return
     // Only unpin: the guest stays at the same table as an order-fill (they'll
-    // refill the next free seat). Removing them from the table is a separate
-    // action (assignGuestToTable(id, null) / the PropertyPanel picker).
+    // refill the next free seat). Removing them from the table entirely is a
+    // separate path (the table edit form's guest picker / saveTable).
     set((s) => ({
       guests: s.guests.map((g) =>
         g.id === guestId ? { ...g, seatId: null } : g

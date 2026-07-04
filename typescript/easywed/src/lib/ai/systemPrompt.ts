@@ -1,4 +1,9 @@
+import {
+  FIXTURE_PRESETS,
+  TABLE_PRESETS,
+} from "@/components/planner/EntityForms/addPresets"
 import { usePlannerStore } from "@/stores/planner.store"
+import i18n from "@/i18n"
 
 // Builds the system prompt fresh on every user turn so the model always sees the
 // current layout (ids, names, positions). All coordinates are meters with a
@@ -6,6 +11,26 @@ import { usePlannerStore } from "@/stores/planner.store"
 // top-left corner.
 export const buildSystemPrompt = (): string => {
   const { hall, tables, fixtures, guests } = usePlannerStore.getState()
+
+  // Mirrors the "Dodaj do sali" visual-card picker's own presets (see
+  // addPresets.ts) so tables/fixtures the assistant creates by free-form
+  // request look consistent with what the user could tap to insert by hand.
+  // Built from the same constants (never hand-copy these numbers, they'd
+  // drift) and recomputed on every call — i18n.t must run here, not at module
+  // load, so it always reflects the current locale even if it changes mid-session.
+  const tablePresetsList = TABLE_PRESETS.map(
+    (p) =>
+      `- ${i18n.t(p.labelKey)}: shape=${p.shape}, capacity=${p.capacity}, size=${p.size.width}x${p.size.height} m`
+  ).join("\n")
+
+  // "Custom" is a UI-only shortcut to the fixture add form (no fixed size/shape
+  // of its own) — not a real preset, so it's excluded from what the model sees.
+  const fixturePresetsList = FIXTURE_PRESETS.filter((p) => !p.custom)
+    .map(
+      (p) =>
+        `- ${i18n.t(p.labelKey)}: shape=${p.shape}, size=${p.size.width}x${p.size.height} m`
+    )
+    .join("\n")
 
   const snapshot = {
     hall: hall.dimensions,
@@ -50,6 +75,19 @@ SHAPES
   "circle" (uses width as diameter, rotation forced to 0), "rounded", or "polygon".
   Fixtures have NO capacity.
 
+STANDARD PRESETS
+The app's own "Dodaj do sali" picker lets the user tap-insert these canonical items.
+Default to matching sizes/capacity/shape when the user is vague, so anything you add
+looks consistent with what they could have inserted by hand — deviate only when the
+user gives explicit numbers.
+Tables:
+${tablePresetsList}
+Fixtures — also use these exact names (in the user's language) when they ask generically
+for one of these ("dodaj parkiet", "add a stage"), so it reads the same as a hand-inserted one:
+${fixturePresetsList}
+Note: "Owalny/Oval" has no distinct database shape — it's inserted as a "rectangular" table
+sized wide and shallow; only its picker-card preview looks oval.
+
 RULES
 - You make EVERY change by calling a tool. Never claim a change is done without calling
   its tool, and never output the layout, a JSON document, or a code block — if you catch
@@ -62,8 +100,9 @@ RULES
 - Prefer additive and edit actions. To delete, call the delete tool — the user will be
   asked to confirm before it happens (there is no undo in the app). Briefly say what you
   intend to delete before calling it.
-- When the user is vague about size/capacity, use sensible defaults (a round table seats
-  ~8-10; a rectangular table is ~2 m x 1 m). Lay out multiple tables without overlapping.
+- When the user is vague about size/capacity, use the STANDARD PRESETS above (e.g. a
+  generic round table is Round 8, a generic rectangular one is Rectangular 6). Lay out
+  multiple tables without overlapping.
 - After making changes, give a short, friendly summary in plain language — no ids, no
   coordinates, no JSON. Reply in the user's language (Polish or English).
 

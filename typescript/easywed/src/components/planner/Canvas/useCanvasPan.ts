@@ -43,6 +43,18 @@ export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
     const { signal } = controller
     abortRef.current = controller
 
+    // pointermove fires at the device rate (500+Hz on some mice) while React
+    // can only paint once per frame — committing every event just queues
+    // wasted renders and makes the pan feel sluggish. Coalesce: remember the
+    // latest position and flush at most one setPan per animation frame.
+    let rafId = 0
+    let pending: Position | null = null
+    const flush = () => {
+      rafId = 0
+      if (pending) setPan(pending)
+      pending = null
+    }
+
     const onMove = (ev: PointerEvent) => {
       // A mouse released outside the window never delivers pointerup here, so
       // the drag would otherwise stay live (and leak its listener on the next
@@ -64,7 +76,8 @@ export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
       }
       // Tracking from the start keeps the offset absolute, so dragging past the
       // clamp limit and back follows the cursor without drift.
-      setPan({ x: startPan.x + dx, y: startPan.y + dy })
+      pending = { x: startPan.x + dx, y: startPan.y + dy }
+      if (!rafId) rafId = requestAnimationFrame(flush)
     }
     const release = (ev: PointerEvent) => {
       pointers.current.delete(ev.pointerId)
@@ -83,6 +96,10 @@ export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
     // One teardown for every way the drag can end (release, pinch, unmount):
     // aborting the controller removes the listeners and runs this.
     signal.addEventListener("abort", () => {
+      // Land on the exact release position instead of dropping the last
+      // coalesced move on the floor.
+      if (rafId) cancelAnimationFrame(rafId)
+      flush()
       abortRef.current = null
       document.body.style.userSelect = ""
       document.body.classList.remove("is-panning")

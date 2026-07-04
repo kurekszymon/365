@@ -1,0 +1,241 @@
+import { useMemo, useState } from "react"
+import { useTranslation } from "react-i18next"
+import { useShallow } from "zustand/react/shallow"
+import {
+  CheckIcon,
+  FileSpreadsheetIcon,
+  PlusIcon,
+  SearchIcon,
+} from "lucide-react"
+import { getInitials } from "../Canvas/utils"
+import { SeatingProgress } from "./SeatingProgress"
+import { SeatAssignSheet } from "./SeatAssignSheet"
+import type { ReactNode } from "react"
+import type { Dietary, Guest } from "@/stores/planner.store"
+import { usePlannerStore } from "@/stores/planner.store"
+import { useDialogStore } from "@/stores/dialog.store"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
+
+type Filter = "all" | "unseated" | Dietary
+
+const ALL_DIETARY: Array<Dietary> = [
+  "vegetarian",
+  "vegan",
+  "gluten-free",
+  "halal",
+  "kosher",
+]
+
+// One chip in the scrollable filter row — All/Unseated plus one per dietary
+// category actually in use, replacing the old single "Dieta" toggle so a diner
+// can filter down to (say) just the vegan guests instead of "has any diet".
+const FilterChip = ({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: ReactNode
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={cn(
+      "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors",
+      active
+        ? "bg-primary text-primary-foreground"
+        : "bg-muted text-muted-foreground hover:bg-muted/70"
+    )}
+  >
+    {children}
+  </button>
+)
+
+/**
+ * Guests-first list: search + filter chips + seating progress, replacing the
+ * old drag-and-drop reassignment view. Shared by the desktop
+ * `Sidebar/SidebarRail` (Guests tab) and mobile `Sidebar/MobileTabBar`. Tapping a row
+ * opens `SeatAssignSheet` (table → seat picker) for that guest.
+ */
+export const GuestListContent = () => {
+  const { t } = useTranslation()
+  const [searchQuery, setSearchQuery] = useState("")
+  const [filter, setFilter] = useState<Filter>("all")
+  const [assigningGuest, setAssigningGuest] = useState<Guest | null>(null)
+
+  const { guests, tables } = usePlannerStore(
+    useShallow((state) => ({ guests: state.guests, tables: state.tables }))
+  )
+  const openDialog = useDialogStore((state) => state.open)
+
+  const tableById = useMemo(
+    () => new Map(tables.map((table, index) => [table.id, { table, index }])),
+    [tables]
+  )
+
+  const seatedCount = guests.filter((g) => g.tableId).length
+  const unseatedCount = guests.length - seatedCount
+
+  const dietaryCounts = useMemo(() => {
+    const counts = new Map<Dietary, number>()
+    for (const guest of guests) {
+      for (const d of guest.dietary) {
+        counts.set(d, (counts.get(d) ?? 0) + 1)
+      }
+    }
+    return counts
+  }, [guests])
+  const activeDietaryFilters = ALL_DIETARY.filter(
+    (d) => (dietaryCounts.get(d) ?? 0) > 0
+  )
+
+  const normalizedQuery = searchQuery.trim().toLowerCase()
+  const filteredGuests = guests.filter((guest) => {
+    if (filter === "unseated" && guest.tableId) return false
+    if (
+      filter !== "all" &&
+      filter !== "unseated" &&
+      !guest.dietary.includes(filter)
+    )
+      return false
+    if (normalizedQuery && !guest.name.toLowerCase().includes(normalizedQuery))
+      return false
+    return true
+  })
+
+  const seatedTableLabel = (guest: (typeof guests)[number]) => {
+    if (!guest.tableId) return null
+    const entry = tableById.get(guest.tableId)
+    if (!entry) return null
+    return (
+      entry.table.name.trim() ||
+      t("tables.unnamed_index", { index: entry.index + 1 })
+    )
+  }
+
+  if (guests.length === 0) {
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-muted-foreground">{t("guests.none")}</p>
+        <Button variant="outline" onClick={() => openDialog("Guest.Add")}>
+          <PlusIcon />
+          {t("guests.add")}
+        </Button>
+        <Button variant="outline" onClick={() => openDialog("Guest.Import")}>
+          <FileSpreadsheetIcon />
+          {t("guests.import")}
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Sticky controls: progress, search, filters, add/import — kept above the
+          scrolling list so they stay reachable in a long guest list. */}
+      <div className="sticky top-0 z-10 flex flex-col gap-3 bg-background before:pointer-events-none before:absolute before:inset-x-0 before:-top-4 before:h-4 before:bg-background after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-4 after:h-4 after:bg-background">
+        <SeatingProgress seated={seatedCount} total={guests.length} />
+
+        <div className="relative">
+          <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t("guests.search_placeholder")}
+            className="w-full rounded-md border pl-8"
+          />
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto pb-0.5">
+          <FilterChip
+            active={filter === "all"}
+            onClick={() => setFilter("all")}
+          >
+            {t("guests.filter.all", { count: guests.length })}
+          </FilterChip>
+          <FilterChip
+            active={filter === "unseated"}
+            onClick={() => setFilter("unseated")}
+          >
+            {t("guests.filter.unseated", { count: unseatedCount })}
+          </FilterChip>
+          {activeDietaryFilters.map((d) => (
+            <FilterChip
+              key={d}
+              active={filter === d}
+              onClick={() => setFilter(d)}
+            >
+              {t(`guests.dietary.${d}`)} ({dietaryCounts.get(d)})
+            </FilterChip>
+          ))}
+        </div>
+
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => openDialog("Guest.Add")}
+          >
+            <PlusIcon />
+            {t("guests.add")}
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => openDialog("Guest.Import")}
+          >
+            <FileSpreadsheetIcon />
+            {t("guests.import")}
+          </Button>
+        </div>
+      </div>
+
+      {filteredGuests.length === 0 ? (
+        <p className="py-6 text-center text-sm text-muted-foreground">
+          {t("guests.no_match")}
+        </p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {filteredGuests.map((guest) => {
+            const seatedAt = seatedTableLabel(guest)
+            return (
+              <button
+                key={guest.id}
+                type="button"
+                onClick={() => setAssigningGuest(guest)}
+                className="flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition-colors hover:bg-accent/50"
+              >
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                  {getInitials(guest.name)}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{guest.name}</p>
+                  {seatedAt ? (
+                    <p className="mt-0.5 flex items-center gap-1 text-xs font-medium text-primary">
+                      <CheckIcon className="size-3" />
+                      {t("guests.status.seated_at", { table: seatedAt })}
+                    </p>
+                  ) : (
+                    <span className="mt-1 inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold text-accent-foreground">
+                      {t("guests.status.unseated")}
+                    </span>
+                  )}
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      <SeatAssignSheet
+        guest={assigningGuest}
+        onOpenChange={(open) => {
+          if (!open) setAssigningGuest(null)
+        }}
+      />
+    </div>
+  )
+}

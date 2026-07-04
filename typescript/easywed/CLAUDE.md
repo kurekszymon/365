@@ -34,11 +34,11 @@ TanStack Start (not plain Vite+React) + React 19 + TypeScript. File-based routin
 
 The app uses a specific pattern that spans three files and is easy to miss:
 
-1. **Zustand stores** (`src/stores/*.ts`) hold the client state. `planner.store.ts` (tables/guests/hall), `reminders.store.ts`, `global.store.ts` (current `weddingId`), `auth.store.ts`, plus UI stores (`dialog`, `panel`, `view`).
+1. **Zustand stores** (`src/stores/*.ts`) hold the client state. `planner.store.ts` (tables/guests/hall), `reminders.store.ts`, `global.store.ts` (current `weddingId`), `auth.store.ts`, plus UI stores (`dialog`, `panel`, `view`, `entityList`).
 2. **`src/lib/sync/loadWedding.ts`** hydrates the planner/reminders stores from Supabase in one parallel `Promise.all` call, given a wedding id. Called from `src/routes/wedding.$id.tsx` with an `AbortController`.
 3. **`src/lib/sync/mutations.ts`** exports per-action functions (`insertTable`, `updateGuestTable`, `upsertHall`, …). Store actions optimistically update Zustand state first, then fire-and-forget the matching mutation (`void insertTable(...)`). The mutations currently only `console.error` on failure — there is no toast/rollback layer, so optimistic state can diverge from the DB on error. Keep this in mind when adding new mutations.
 
-**`updateX` vs `saveX` split:** For tables and fixtures, `updateTable`/`updateFixture` are **local-only** state updates used for live preview while the user edits in the PropertyPanel. `saveTable`/`saveFixture` are the ones that call mutations and persist to Supabase. Do not treat the missing mutation call in `updateX` as a bug — it is by design.
+**`updateX` vs `saveX` split:** For tables and fixtures, `updateTable`/`updateFixture` are **local-only** state updates used for live preview while the user edits in an entity form. `saveTable`/`saveFixture` are the ones that call mutations and persist to Supabase. Do not treat the missing mutation call in `updateX` as a bug — it is by design.
 
 `global.store.ts` holds the current `weddingId`. Mutations read it via `getWeddingId()` to scope inserts; if none is loaded, they no-op with a warning.
 
@@ -76,7 +76,7 @@ When adding UI strings, add keys to **both** `en.json` and `pl.json`. Polish is 
 
 ### Planner (the main feature)
 
-`src/components/planner/` — split into `Canvas/` (dnd-kit drag surface for tables), `Header/`, `PropertyPanel/` (the edit sidebar). `PropertyPanel/fields/` holds reusable field components (e.g. `GuestAssignmentPicker.tsx`). Drag-and-drop uses `@dnd-kit/core`; table shapes are `round` or `rectangular` with `width/height` (round uses `width` as diameter).
+`src/components/planner/` — split into `Canvas/` (dnd-kit drag surface for tables), `Header/`, `Sidebar/` (desktop rail + mobile bottom tab bar + entity list contents + add/edit dialogs), `Guests/` (guest list, seat-assign sheet, seating progress), and `EntityForms/` (the table/fixture/hall form contents, the add hub, the AI chat, and the mobile `MobilePanelDrawer` that hosts them; `EntityForms/fields/` holds reusable field components, e.g. `GuestAssignmentPicker.tsx`). The same form content renders in `Sidebar/EntityEditDialog` on desktop and `MobilePanelDrawer` on mobile via the shared `PanelBody`. Drag-and-drop uses `@dnd-kit/core`; table shapes are `round` or `rectangular` with `width/height` (round uses `width` as diameter).
 
 ### Dialogs
 

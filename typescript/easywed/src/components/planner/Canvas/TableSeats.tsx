@@ -1,6 +1,6 @@
 import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { seatSizePx } from "./utils"
+import { getInitials, seatSizePx } from "./utils"
 import {
   constrainSeatPosition,
   effectiveSeats,
@@ -42,16 +42,6 @@ type DragState = {
 }
 
 const DRAG_THRESHOLD = 4
-
-const getInitials = (name: string) => {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return "•"
-  return parts
-    .slice(0, 2)
-    .map((p) => p[0])
-    .join("")
-    .toUpperCase()
-}
 
 export const TableSeats = ({
   tableId,
@@ -206,9 +196,9 @@ export const TableSeats = ({
               !isMeasuring &&
                 "pointer-events-auto cursor-grab touch-none active:cursor-grabbing",
               occupied
-                ? "border border-emerald-600 bg-emerald-500 text-white shadow-sm"
-                : "border border-emerald-300/70 bg-white/60 text-emerald-700",
-              isDragging && "z-30 ring-2 ring-emerald-500"
+                ? "border border-seat-filled-border bg-seat-filled text-white shadow-sm"
+                : "border border-seat-empty-border bg-seat-empty text-white",
+              isDragging && "z-30 ring-2 ring-seat-filled"
             )}
             style={{
               left: left - seatPx / 2,
