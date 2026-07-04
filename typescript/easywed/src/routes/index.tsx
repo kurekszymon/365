@@ -18,7 +18,10 @@ type WeddingRow = {
 }
 
 function Home() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  // The marketing landing is language-pinned (/pl, /en) — link the wordmark
+  // to the one matching the current UI language.
+  const landingPath = i18n.resolvedLanguage === "pl" ? "/pl" : "/en"
   const session = useAuthStore((s) => s.session)
   const isReady = useAuthStore((s) => s.isReady)
   const navigate = useNavigate()
@@ -78,7 +81,7 @@ function Home() {
         <div className="flex w-full max-w-md flex-col gap-6">
           <div className="text-center">
             <h1 className="font-heading text-4xl font-bold tracking-tight">
-              easywed.
+              <Link to={landingPath}>easywed.</Link>
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
               {t("weddings.subtitle")}
@@ -105,7 +108,7 @@ function Home() {
         <div className="flex w-full max-w-md flex-col gap-6">
           <div className="text-center">
             <h1 className="font-heading text-4xl font-bold tracking-tight">
-              easywed.
+              <Link to={landingPath}>easywed.</Link>
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
               {t("weddings.subtitle")}
