@@ -1,5 +1,32 @@
 # easywed. — Development Log
 
+### 05.07
+
+- mobile: lift zoom controls + add-FAB above the bottom tab bar (were hidden under it), size planner with `dvh` so it respects the android url bar
+- mobile: scroll the focused field into view when the android keyboard covers it in the entity drawer
+- mobile: confirm entity edits with a checkmark instead of an `x` — same close, clearer intent when adding from the FAB
+- send `/` to `/pl` or `/en` by detected language, move the wedding dashboard to `/app`
+
+### 04.07
+
+**seating planner redesign — cleanup**
+
+- zoom & pan improvements, badge counts on sidebar rail, smoother open animation
+- align dialog widths
+- remove ai assistant from the top toolbar, use logo colors for seats
+- fix assigned-guest state not persisting (+ typo / comment fixes)
+- extract `CanvasToolbar`, drop dead code
+- deduplicate badge counts + entity lists (shared `EntityListContent` / `TabBadgeIcon` / `tabs.ts`)
+- merge `sidebar.store` + `mobilePanel.store` → `entityList.store`
+- rename `PropertyPanel` → `EntityForms`, `GuestPanel` → `Guests`, panel index → `MobilePanelDrawer`
+
+**landing pages**
+
+- add proper `/pl` and `/en` landing (hero / features / steps / cta / planner preview) + privacy policy (`/pl/privacy`, `/en/privacy`)
+- add landing page redirect
+- fix planner preview colors
+- update logos + favicon
+
 ### 03.07
 
 - use `easywed.` name in login screen
