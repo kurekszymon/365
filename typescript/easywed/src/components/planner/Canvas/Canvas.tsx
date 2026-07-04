@@ -2,14 +2,9 @@ import { useTranslation } from "react-i18next"
 import { useEffect, useRef } from "react"
 import { useShallow } from "zustand/react/shallow"
 import {
-  ArmchairIcon,
   ClipboardCopyIcon,
   ClipboardPasteIcon,
-  DotIcon,
-  Grid2x2XIcon,
-  Grid3x3Icon,
   LayoutPanelLeftIcon,
-  RulerIcon,
   SquarePlusIcon,
   TableIcon,
 } from "lucide-react"
@@ -21,20 +16,15 @@ import { AddFab } from "./AddFab"
 import { DimensionLabel } from "./DimensionLabel"
 import { CanvasContextMenu } from "./CanvasContextMenu"
 import { CanvasContextMenuItem } from "./CanvasContextMenuItem"
+import { CanvasToolbar } from "./CanvasToolbar"
 import { CanvasViewMenu } from "./CanvasViewMenu"
 import { CanvasEmptyState } from "./CanvasEmptyState"
 import { HallSurface } from "./HallSurface"
-import { findCapturedElement, snapPositionToGrid } from "./utils"
+import { findCapturedElement, isNoPan, snapPositionToGrid } from "./utils"
 import { useHallGeometry } from "./useHallGeometry"
 import { useCanvasPan } from "./useCanvasPan"
 import { useCanvasClipboard } from "./useCanvasClipboard"
 import type { HallSurfaceMethods } from "./HallSurface"
-import type { GridStyle, SnapStep } from "@/stores/view.store"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import {
   ContextMenuLabel,
   ContextMenuSeparator,
@@ -50,20 +40,6 @@ import { useClipboardStore } from "@/stores/clipboard.store"
 import { useElementSize } from "@/hooks/useElementSize"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 import { useOpenHall } from "@/hooks/useOpenHall"
-
-const GRID_ICON: Record<GridStyle, React.ReactNode> = {
-  dots: <DotIcon className="size-3.5" />,
-  grid: <Grid3x3Icon className="size-3.5" />,
-  off: <Grid2x2XIcon className="size-3.5" />,
-}
-
-const NEXT_GRID_STYLE: Record<GridStyle, GridStyle> = {
-  dots: "off",
-  grid: "dots",
-  off: "grid",
-}
-
-const SNAP_STEPS: Array<SnapStep> = ["off", 0.1, 0.25, 0.5, 1]
 
 export const Canvas = () => {
   const { t } = useTranslation()
@@ -81,12 +57,6 @@ export const Canvas = () => {
   const resetZoomAndPan = useViewStore((state) => state.resetZoomAndPan)
   const isMeasuring = useViewStore((state) => state.isMeasuring)
   const toggleMeasuring = useViewStore((state) => state.toggleMeasuring)
-  const showSeats = useViewStore((state) => state.showSeats)
-  const toggleSeats = useViewStore((state) => state.toggleSeats)
-  const measureMode = useViewStore((state) => state.measureMode)
-  const setMeasureMode = useViewStore((state) => state.setMeasureMode)
-  const setSnapStep = useViewStore((state) => state.setSnapStep)
-  const setGridStyle = useViewStore((state) => state.setGridStyle)
 
   const openHall = useOpenHall()
   const isMobile = useIsMobile()
@@ -242,8 +212,6 @@ export const Canvas = () => {
     }
   }
 
-  const cycleGridStyle = () => setGridStyle(NEXT_GRID_STYLE[gridStyle])
-
   // The minimap only earns its space when the whole hall isn't already framed:
   // once it's been panned off-centre, or zoomed until it overflows the viewport
   // on either axis. A fully-visible, centred hall needs no navigator.
@@ -333,8 +301,7 @@ export const Canvas = () => {
           cursor: isMeasuring ? "crosshair" : isPanning ? "grabbing" : "grab",
         }}
         onPointerDown={(e) => {
-          // TODO move to util, use sth else than data-no-pan
-          if ((e.target as Element).closest("[data-no-pan]")) return
+          if (isNoPan(e.target)) return
           if (isMeasuring) {
             if (
               !hallSurfaceRef.current?.hasPendingPoint &&
@@ -367,7 +334,7 @@ export const Canvas = () => {
         onClick={(e) => {
           if (pointerMovedRef.current) return
           if (isMeasuring) return
-          if ((e.target as Element).closest("[data-no-pan]")) return
+          if (isNoPan(e.target)) return
 
           const captured = findCapturedElement(e.target)
 
@@ -386,10 +353,8 @@ export const Canvas = () => {
               else panel.select(captured.id)
               return
             }
-            if (captured?.kind === "hall") {
-              // panel.openHall()
-              // passthrough? context menu?
-            }
+            // Hall taps fall through to deselect: on mobile the hall config is
+            // reached via the header button, not by tapping the floor.
             panel.deselect()
             return
           }
@@ -421,135 +386,7 @@ export const Canvas = () => {
 
         {!isMobile && (
           <>
-            <div
-              data-no-pan
-              className="absolute top-3 right-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-nowrap items-center justify-end gap-2"
-            >
-              <Tooltip>
-                {/* TODO extract to a seperate component */}
-                <TooltipTrigger asChild>
-                  <div className="flex shrink-0 items-center rounded-md border bg-background/80 text-[10px] text-muted-foreground backdrop-blur-sm">
-                    <button
-                      type="button"
-                      className="cursor-pointer px-1.5 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 max-md:px-2.5 max-md:py-2"
-                      disabled={SNAP_STEPS.indexOf(snapStep) === 0}
-                      onClick={() =>
-                        setSnapStep(
-                          SNAP_STEPS[SNAP_STEPS.indexOf(snapStep) - 1]
-                        )
-                      }
-                    >
-                      −
-                    </button>
-                    <span className="w-[2.5rem] text-center">
-                      {snapStep === "off"
-                        ? t("canvas.snap.off")
-                        : t("common.meters", { count: snapStep })}
-                    </span>
-                    <button
-                      type="button"
-                      className="cursor-pointer px-1.5 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 max-md:px-2.5 max-md:py-2"
-                      disabled={
-                        SNAP_STEPS.indexOf(snapStep) === SNAP_STEPS.length - 1
-                      }
-                      onClick={() =>
-                        setSnapStep(
-                          SNAP_STEPS[SNAP_STEPS.indexOf(snapStep) + 1]
-                        )
-                      }
-                    >
-                      +
-                    </button>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  {t("canvas.snap.tooltip")}
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div
-                    onClick={cycleGridStyle}
-                    className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-sm max-md:py-2"
-                  >
-                    {GRID_ICON[gridStyle]}
-                    <span className="max-md:hidden">
-                      {t(`canvas.grid.${gridStyle}`)}
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  {t("canvas.grid.style")}
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    data-no-pan
-                    className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] backdrop-blur-sm max-md:py-2 ${
-                      isMeasuring
-                        ? "border-planner-selected bg-planner-soft text-planner-selected"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                    onClick={toggleMeasuring}
-                    aria-pressed={isMeasuring}
-                  >
-                    <RulerIcon className="size-3.5" />
-                    <span className="max-md:hidden">{t("measure.tool")}</span>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  {t("measure.tooltip")}
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    data-no-pan
-                    className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] backdrop-blur-sm max-md:py-2 ${
-                      showSeats
-                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                    onClick={toggleSeats}
-                    aria-pressed={showSeats}
-                  >
-                    <ArmchairIcon className="size-3.5" />
-                    <span className="max-md:hidden">{t("seats.toggle")}</span>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  {t("seats.tooltip")}
-                </TooltipContent>
-              </Tooltip>
-
-              {isMeasuring && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      data-no-pan
-                      className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-planner-selected bg-planner-soft px-2 py-1 text-[10px] text-planner-selected backdrop-blur-sm max-md:py-2"
-                      onClick={() =>
-                        setMeasureMode(
-                          measureMode === "center" ? "border" : "center"
-                        )
-                      }
-                    >
-                      {t(`measure.mode.${measureMode}`)}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    {t("measure.mode.tooltip")}
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </div>
+            <CanvasToolbar />
 
             <div data-no-pan className="absolute bottom-4 left-4 z-20">
               <ScalePill

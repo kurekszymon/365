@@ -166,6 +166,11 @@ export const nearestCircleBorder = (
   return { x: cx + (dx / len) * r, y: cy + (dy / len) * r }
 }
 
+// True when the event target sits inside a canvas overlay (toolbar, minimap,
+// FAB, seat markers…) that opts out of pan/tap handling via `data-no-pan`.
+export const isNoPan = (target: EventTarget | null): boolean =>
+  target instanceof Element && target.closest("[data-no-pan]") !== null
+
 export type CapturedElement =
   | { kind: "table"; id: string }
   | { kind: "fixture"; id: string }
