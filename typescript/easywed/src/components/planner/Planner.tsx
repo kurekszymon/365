@@ -26,7 +26,6 @@ import { DialogManager } from "@/components/dialogs/DialogManager"
 import { useDialogStore } from "@/stores/dialog.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { usePanelStore } from "@/stores/panel.store"
-import { useSidebarStore } from "@/stores/sidebar.store"
 import { useOpenHall } from "@/hooks/useOpenHall"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 
@@ -51,7 +50,6 @@ export const Planner = () => {
   const isMobile = useIsMobile()
 
   const openAiChat = usePanelStore((state) => state.openAiChat)
-  const openSidebarTab = useSidebarStore((state) => state.openTab)
 
   return (
     <>
@@ -79,16 +77,17 @@ export const Planner = () => {
                 {t("hall.configure_short")}
               </span>
             </Button>
-            <Button
-              variant="outline"
-              onClick={() =>
-                isMobile ? openAiChat() : openSidebarTab("ai_chat")
-              }
-              aria-label={t("assistant.title")}
-            >
-              <SparklesIcon />
-              <span className="hidden md:inline">{t("assistant.title")}</span>
-            </Button>
+            {/* Mobile only: on desktop the assistant lives in the sidebar
+                rail's "Asystent AI" tab, so the header shortcut is redundant. */}
+            {isMobile && (
+              <Button
+                variant="outline"
+                onClick={() => openAiChat()}
+                aria-label={t("assistant.title")}
+              >
+                <SparklesIcon />
+              </Button>
+            )}
             <ButtonGroup>
               {role === "owner" && !isLocalWedding(weddingId) && (
                 <Tooltip>
