@@ -4,9 +4,9 @@ export type SidebarTab = "guests" | "tables" | "fixtures" | "ai_chat"
 
 type State = {
   // Desktop-only unified rail (see `planner/Sidebar/SidebarRail`). Deliberately
-  // separate from `guestPanel.store` (which keeps driving the mobile
-  // `GuestPeekBar`) and from `panel.store`'s `view` — which entity list the
-  // rail shows is orthogonal to which edit form is currently open.
+  // separate from `mobilePanel.store` (which drives the mobile `MobileTabBar`)
+  // and from `panel.store`'s `view` — which entity list the rail shows is
+  // orthogonal to which edit form is currently open.
   expanded: boolean
   activeTab: SidebarTab
 }

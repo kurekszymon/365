@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next"
 import { LandmarkIcon, SparklesIcon, UserPlusIcon } from "lucide-react"
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
 import { Canvas } from "./Canvas"
-import { GuestPeekBar } from "./GuestPanel"
+import { MobileTabBar } from "./Sidebar/MobileTabBar"
 import { SidebarRail } from "./Sidebar/SidebarRail"
 import { EntityEditDialog } from "./Sidebar/EntityEditDialog"
 import { Header } from "./Header"
@@ -68,7 +68,7 @@ export const Planner = () => {
               {/* <RemindersPreview /> */}
             </Header.Nav>
           </Header.Title>
-          <div className="flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-2">
             <Button
               variant="outline"
               onClick={openHall}
@@ -116,7 +116,7 @@ export const Planner = () => {
             {isMobile && <PropertyPanel />}
           </div>
           {!isMobile && <EntityEditDialog />}
-          {isMobile && <GuestPeekBar />}
+          {isMobile && <MobileTabBar />}
         </DndContext>
       </div>
     </>

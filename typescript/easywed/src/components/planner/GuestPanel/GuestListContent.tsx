@@ -57,7 +57,7 @@ const FilterChip = ({
 /**
  * Guests-first list: search + filter chips + seating progress, replacing the
  * old drag-and-drop reassignment view. Shared by the desktop
- * `Sidebar/SidebarRail` (Guests tab) and mobile `GuestPeekBar`. Tapping a row
+ * `Sidebar/SidebarRail` (Guests tab) and mobile `Sidebar/MobileTabBar`. Tapping a row
  * opens `SeatAssignSheet` (table → seat picker) for that guest.
  */
 export const GuestListContent = () => {

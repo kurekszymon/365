@@ -45,27 +45,44 @@ export const SidebarRail = () => {
       setExpanded: state.setExpanded,
     }))
   )
-  const guests = usePlannerStore((state) => state.guests)
-  const unseatedCount = guests.filter((g) => !g.tableId).length
+  const { guests, tables, fixtures } = usePlannerStore(
+    useShallow((state) => ({
+      guests: state.guests,
+      tables: state.tables,
+      fixtures: state.fixtures,
+    }))
+  )
+  // Guests badge counts those still without a seat (the actionable number);
+  // tables/fixtures badges are plain totals. `ai_chat` never badges.
+  const badgeCount: Record<SidebarTab, number> = {
+    guests: guests.filter((g) => !g.tableId).length,
+    tables: tables.length,
+    fixtures: fixtures.length,
+    ai_chat: 0,
+  }
 
-  // The tab contents (guest list with search/filter state, the AI chat) are
-  // comparatively heavy — reflowing them on every frame of the width
-  // transition made expanding feel slow. Mount the active content only once
-  // the panel has reached its final width, so the animation itself only
-  // repaints an empty panel; collapsing drops it immediately instead of
-  // reflowing it while shrinking. Adjusted during render (React's documented
-  // alternative to an effect for "reset state when a prop changes") rather
-  // than in a useEffect, which would call setState after commit instead of
-  // before paint.
+  // The panel is an overlay animated via `translate` (see below), so mounting
+  // its content no longer reflows the canvas — mount immediately on expand so
+  // the panel is never empty, then keep it mounted through the slide-out and
+  // drop it once that finishes (an empty off-screen panel). `showContent` is
+  // adjusted during render (React's documented alternative to an effect for
+  // "reset state when a prop changes") so it's correct before the first paint.
   const [showContent, setShowContent] = useState(expanded)
   const [prevExpanded, setPrevExpanded] = useState(expanded)
   if (expanded !== prevExpanded) {
     setPrevExpanded(expanded)
-    if (!expanded) setShowContent(false)
+    if (expanded) setShowContent(true)
   }
 
   const handleTransitionEnd = (e: TransitionEvent<HTMLDivElement>) => {
-    if (e.propertyName === "width" && expanded) setShowContent(true)
+    // Tailwind v4 animates the standalone `translate` property, so the slide
+    // reports `propertyName: "translate"` (not "transform"); accept either.
+    if (
+      !expanded &&
+      (e.propertyName === "translate" || e.propertyName === "transform")
+    ) {
+      setShowContent(false)
+    }
   }
 
   const tabLabel = (tab: SidebarTab) =>
@@ -83,13 +100,14 @@ export const SidebarRail = () => {
   }[activeTab]
 
   return (
-    <div
-      className={cn(
-        "flex shrink-0 border-r bg-background transition-[width] duration-200",
-        expanded ? "w-[460px]" : "w-[60px]"
-      )}
-      onTransitionEnd={handleTransitionEnd}
-    >
+    // The rail's own footprint is always the 60px strip; the content column is
+    // an absolutely-positioned overlay that slides in over the canvas via a
+    // `transform` transition. Animating `width` here instead would resize the
+    // flex-sibling canvas every frame — whose ResizeObserver then recomputes
+    // hall geometry and re-renders the whole surface per frame, which is what
+    // made expanding feel sluggish. A transform only composites; the canvas
+    // never relayouts.
+    <div className="relative z-30 flex w-[60px] shrink-0 border-r bg-background">
       <div className="flex w-[60px] shrink-0 flex-col items-center gap-4 py-4">
         <button
           type="button"
@@ -124,9 +142,9 @@ export const SidebarRail = () => {
                 )}
               >
                 <Icon className="size-[19px]" />
-                {tab === "guests" && unseatedCount > 0 && (
+                {badgeCount[tab] > 0 && (
                   <span className="absolute -top-1 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
-                    {unseatedCount}
+                    {badgeCount[tab]}
                   </span>
                 )}
               </span>
@@ -138,29 +156,38 @@ export const SidebarRail = () => {
         })}
       </div>
 
-      {expanded && (
-        <div className="flex min-w-0 flex-1 flex-col border-l">
-          <div className="flex items-center justify-between border-b px-4 py-3">
-            <span className="font-heading text-base font-semibold">
-              {tabLabel(activeTab)}
-            </span>
-            <button
-              type="button"
-              onClick={() => setExpanded(false)}
-              aria-label={t("sidebar.collapse")}
-              className="rounded-sm text-muted-foreground hover:text-foreground"
-            >
-              <ChevronLeftIcon className="size-4" />
-            </button>
-          </div>
-          {showContent &&
-            (isChat ? (
-              <div className="flex min-h-0 flex-1 flex-col">{content}</div>
-            ) : (
-              <div className="flex-1 overflow-y-auto p-4">{content}</div>
-            ))}
+      <div
+        onTransitionEnd={handleTransitionEnd}
+        className={cn(
+          "absolute top-0 bottom-0 left-full flex w-[400px] flex-col border-r bg-background shadow-[8px_0_24px_-16px_rgba(40,60,45,0.45)] transition-transform duration-200",
+          expanded
+            ? "translate-x-0"
+            : // Slide fully off the left edge (own width + the strip) and drop
+              // pointer events so the collapsed panel can't intercept canvas
+              // clicks from behind the strip.
+              "pointer-events-none -translate-x-[calc(100%+60px)]"
+        )}
+      >
+        <div className="flex items-center justify-between border-b px-4 py-3">
+          <span className="font-heading text-base font-semibold">
+            {tabLabel(activeTab)}
+          </span>
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            aria-label={t("sidebar.collapse")}
+            className="rounded-sm text-muted-foreground hover:text-foreground"
+          >
+            <ChevronLeftIcon className="size-4" />
+          </button>
         </div>
-      )}
+        {showContent &&
+          (isChat ? (
+            <div className="flex min-h-0 flex-1 flex-col">{content}</div>
+          ) : (
+            <div className="flex-1 overflow-y-auto p-4">{content}</div>
+          ))}
+      </div>
     </div>
   )
 }

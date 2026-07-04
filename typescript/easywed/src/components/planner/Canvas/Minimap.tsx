@@ -90,7 +90,7 @@ export const Minimap = ({
     >
       <div
         ref={boxRef}
-        className="relative h-full w-full cursor-pointer"
+        className="relative h-full w-full cursor-pointer overflow-hidden"
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture(e.pointerId)
           navigateTo(e.clientX, e.clientY)
@@ -114,35 +114,46 @@ export const Minimap = ({
             height: hallDimensions.height * scale,
           }}
         />
-        {tables.map((table) => (
-          <div
-            key={table.id}
-            className={
-              "absolute rounded-full " +
-              (table.id === selectedId
-                ? "bg-planner-selected"
-                : "bg-planner-table-border")
-            }
-            style={{
-              width: DOT_SIZE,
-              height: DOT_SIZE,
-              left: offsetX + table.position.x * scale - DOT_SIZE / 2,
-              top: offsetY + table.position.y * scale - DOT_SIZE / 2,
-            }}
-          />
-        ))}
-        {fixtures.map((fixture) => (
-          <div
-            key={fixture.id}
-            className="absolute rounded-[2px] bg-planner-table-border"
-            style={{
-              width: DOT_SIZE - 1,
-              height: DOT_SIZE - 1,
-              left: offsetX + fixture.position.x * scale - (DOT_SIZE - 1) / 2,
-              top: offsetY + fixture.position.y * scale - (DOT_SIZE - 1) / 2,
-            }}
-          />
-        ))}
+        {tables.map((table) => {
+          // Tables placed outside the (possibly resized) hall are clamped to
+          // its bounds here — same as the main canvas — so a stray dot can't
+          // render outside the minimap box.
+          const x = clamp(table.position.x, 0, hallDimensions.width)
+          const y = clamp(table.position.y, 0, hallDimensions.height)
+          return (
+            <div
+              key={table.id}
+              className={
+                "absolute rounded-full " +
+                (table.id === selectedId
+                  ? "bg-planner-selected"
+                  : "bg-planner-table-border")
+              }
+              style={{
+                width: DOT_SIZE,
+                height: DOT_SIZE,
+                left: offsetX + x * scale - DOT_SIZE / 2,
+                top: offsetY + y * scale - DOT_SIZE / 2,
+              }}
+            />
+          )
+        })}
+        {fixtures.map((fixture) => {
+          const x = clamp(fixture.position.x, 0, hallDimensions.width)
+          const y = clamp(fixture.position.y, 0, hallDimensions.height)
+          return (
+            <div
+              key={fixture.id}
+              className="absolute rounded-[2px] bg-planner-table-border"
+              style={{
+                width: DOT_SIZE - 1,
+                height: DOT_SIZE - 1,
+                left: offsetX + x * scale - (DOT_SIZE - 1) / 2,
+                top: offsetY + y * scale - (DOT_SIZE - 1) / 2,
+              }}
+            />
+          )
+        })}
         <div
           className="absolute top-0 left-0 rounded-[3px] border-[1.5px] border-primary bg-primary/10"
           style={viewportRect}

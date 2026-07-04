@@ -16,7 +16,6 @@ import {
 import { usePinch } from "@use-gesture/react"
 import { ScalePill } from "./ScalePill"
 import { Minimap } from "./Minimap"
-import { MobilePlanHeader } from "./MobilePlanHeader"
 import { MobileZoomControl } from "./MobileZoomControl"
 import { AddFab } from "./AddFab"
 import { DimensionLabel } from "./DimensionLabel"
@@ -144,8 +143,30 @@ export const Canvas = () => {
     element: containerEl,
   } = useElementSize()
 
+  const {
+    scaledWidth,
+    scaledHeight,
+    hallLeft,
+    hallTop,
+    ppm,
+    viewportToHall,
+    isInHallBounds,
+    clampPan,
+    zoomToPan,
+  } = useHallGeometry(
+    containerEl,
+    containerWidth,
+    containerHeight,
+    hall.dimensions,
+    zoom,
+    pan
+  )
+
   usePinch(
-    ({ offset: [scale] }) => {
+    ({ offset: [scale], origin }) => {
+      // Keep the point under the pinch/cursor focal pinned while zooming, then
+      // apply the new zoom. Pan first so both land in the same batched render.
+      setPan(zoomToPan(scale, { x: origin[0], y: origin[1] }))
       setZoom(scale)
     },
     {
@@ -157,24 +178,6 @@ export const Canvas = () => {
       // Read the live zoom at gesture start so the pinch is relative to it.
       from: () => [zoom, 0],
     }
-  )
-
-  const {
-    scaledWidth,
-    scaledHeight,
-    hallLeft,
-    hallTop,
-    ppm,
-    viewportToHall,
-    isInHallBounds,
-    clampPan,
-  } = useHallGeometry(
-    containerEl,
-    containerWidth,
-    containerHeight,
-    hall.dimensions,
-    zoom,
-    pan
   )
 
   const { isPanning, onPointerDown, onPointerUp } = useCanvasPan(pan, (p) =>
@@ -240,6 +243,13 @@ export const Canvas = () => {
   }
 
   const cycleGridStyle = () => setGridStyle(NEXT_GRID_STYLE[gridStyle])
+
+  // The minimap only earns its space when the whole hall isn't already framed:
+  // once it's been panned off-centre, or zoomed until it overflows the viewport
+  // on either axis. A fully-visible, centred hall needs no navigator.
+  const hallOverflows =
+    scaledWidth > containerWidth + 1 || scaledHeight > containerHeight + 1
+  const showMinimap = hallOverflows || pan.x !== 0 || pan.y !== 0
 
   if (!hall.preset) {
     return (
@@ -401,7 +411,6 @@ export const Canvas = () => {
       >
         {isMobile && (
           <>
-            <MobilePlanHeader />
             <MobileZoomControl
               zoomIn={() => stepZoom(1)}
               zoomOut={() => stepZoom(-1)}
@@ -551,16 +560,18 @@ export const Canvas = () => {
               />
             </div>
 
-            <Minimap
-              hallDimensions={hall.dimensions}
-              selectedId={panel.selectedId}
-              hallLeft={hallLeft}
-              hallTop={hallTop}
-              ppm={ppm}
-              containerWidth={containerWidth}
-              containerHeight={containerHeight}
-              onNavigate={(p) => setPan(clampPan(p))}
-            />
+            {showMinimap && (
+              <Minimap
+                hallDimensions={hall.dimensions}
+                selectedId={panel.selectedId}
+                hallLeft={hallLeft}
+                hallTop={hallTop}
+                ppm={ppm}
+                containerWidth={containerWidth}
+                containerHeight={containerHeight}
+                onNavigate={(p) => setPan(clampPan(p))}
+              />
+            )}
 
             <DimensionLabel
               orientation="horizontal"

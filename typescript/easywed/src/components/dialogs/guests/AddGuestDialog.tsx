@@ -3,7 +3,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import type { Dietary } from "@/stores/planner.store"
 import { usePlannerStore } from "@/stores/planner.store"
-import { useGuestPanelStore } from "@/stores/guestPanel.store"
+import { useMobilePanelStore } from "@/stores/mobilePanel.store"
 import { useSidebarStore } from "@/stores/sidebar.store"
 import {
   ResponsiveDialog,
@@ -42,7 +42,7 @@ export const AddGuestDialog = () => {
       addGuest: state.addGuest,
     }))
   )
-  const setGuestPanelExpanded = useGuestPanelStore((state) => state.setExpanded)
+  const openMobileList = useMobilePanelStore((state) => state.open)
   const openSidebarTab = useSidebarStore((state) => state.openTab)
 
   return (
@@ -121,10 +121,10 @@ export const AddGuestDialog = () => {
                 dietary: dietaryOptions,
               })
               // Reveal the new guest in whichever surface this platform uses:
-              // the mobile peek bar and the desktop sidebar rail each ignore
-              // the other's store, so setting both is a harmless no-op on the
+              // the mobile bottom bar and the desktop sidebar rail each ignore
+              // the other's store, so opening both is a harmless no-op on the
               // inactive one.
-              setGuestPanelExpanded(true)
+              openMobileList("guests")
               openSidebarTab("guests")
               dialog.close()
             }}
