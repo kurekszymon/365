@@ -56,7 +56,7 @@ export const Planner = () => {
       <DialogManager />
       <PlannerPrintView />
 
-      <div className="flex h-screen w-screen flex-col print:hidden">
+      <div className="flex h-[100dvh] w-screen flex-col print:hidden">
         <GuestModeBanner />
         <Header>
           <Header.Title weddingId={weddingId}>

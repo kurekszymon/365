@@ -85,6 +85,7 @@
   "common.coming_soon": "Coming soon",
   "common.auto": "Auto",
   "common.close": "Close",
+  "common.done": "Done",
   "common.back": "Back",
   "common.meters": "{{count}} m",
   "common.show_more": "+{{count}} more rows",

@@ -16,7 +16,7 @@ export const MobileZoomControl = ({
   return (
     <div
       data-no-pan
-      className="absolute bottom-24 left-4 z-20 flex flex-col rounded-full border bg-card shadow-[0_8px_20px_-12px_rgba(40,60,45,0.4)]"
+      className="absolute bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] left-4 z-20 flex flex-col rounded-full border bg-card shadow-[0_8px_20px_-12px_rgba(40,60,45,0.4)]"
     >
       <button
         type="button"
