@@ -50,7 +50,6 @@ export const TablePanelContent = ({ tableId }: { tableId: string }) => {
       width: visible.width,
       height: visible.height,
       rotation: editedTable?.rotation ?? 0,
-      assignedGuestIds: editedAssignedGuestIds,
     }
   })
 
@@ -60,7 +59,7 @@ export const TablePanelContent = ({ tableId }: { tableId: string }) => {
   const isRoundOutOfBounds =
     form.width > hallMaxWidth || form.width > hallMaxHeight
 
-  const assignedWithinCapacity = form.assignedGuestIds.slice(0, form.capacity)
+  const assignedWithinCapacity = editedAssignedGuestIds.slice(0, form.capacity)
 
   const isValid = (f: typeof form) => {
     if (!isDimensionsValidForShape(f.shape, f.width, f.height)) return false
@@ -82,7 +81,15 @@ export const TablePanelContent = ({ tableId }: { tableId: string }) => {
       : { width: f.width, height: f.height }
   }
 
-  const applyToStore = (f: typeof form) => {
+  // Guest membership is read live from the store (its default) rather than
+  // cached in form state: TableSeatList and the seat popovers reassign guests
+  // through the store directly, so a cached list would go stale and clobber
+  // those newer assignments on the next attribute edit. Only the guest picker —
+  // which *is* the thing changing the assignment — passes an explicit list.
+  const applyToStore = (
+    f: typeof form,
+    assignedGuestIds: Array<string> = editedAssignedGuestIds
+  ) => {
     if (!isValid(f)) return
     updateTable(
       tableId,
@@ -93,7 +100,7 @@ export const TablePanelContent = ({ tableId }: { tableId: string }) => {
         size: toStoredSize(f),
         rotation: f.shape === "round" ? 0 : f.rotation,
       },
-      f.assignedGuestIds.slice(0, f.capacity)
+      assignedGuestIds.slice(0, f.capacity)
     )
   }
 
@@ -188,9 +195,10 @@ export const TablePanelContent = ({ tableId }: { tableId: string }) => {
             tableId={tableId}
             capacity={form.capacity}
             assignedGuestIds={assignedWithinCapacity}
-            onAssignedGuestIdsChange={(assignedGuestIds) =>
-              updateAndCommit({ assignedGuestIds })
-            }
+            onAssignedGuestIdsChange={(assignedGuestIds) => {
+              applyToStore(form, assignedGuestIds)
+              persist()
+            }}
           />
 
           <TableSeatList tableId={tableId} capacity={form.capacity} />

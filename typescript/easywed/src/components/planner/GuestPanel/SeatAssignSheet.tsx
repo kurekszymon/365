@@ -22,7 +22,8 @@ import {
 
 type SeatAssignSheetProps = {
   // Non-null opens the sheet for this guest; the sheet's own step (table list
-  // vs. seat grid) is local state, reset whenever a new guest opens it.
+  // vs. seat grid) is local state, reset on close (and via the back button), so
+  // each open starts on the table list.
   guest: Guest | null
   onOpenChange: (open: boolean) => void
 }

@@ -29,11 +29,12 @@ const TAB_ICONS: Record<SidebarTab, typeof UsersIcon> = {
 const TAB_ORDER: Array<SidebarTab> = ["guests", "tables", "fixtures", "ai_chat"]
 
 /**
- * Desktop-only unified sidebar (supersedes the old `GuestPanel/GuestRail`):
- * a ~60px icon strip — Guests / Tables / Fixtures / Asystent AI — plus a
- * content column that expands next to it. The strip stays visible while
- * expanded so switching tabs never requires collapsing first; clicking the
- * active tab's icon toggles the panel closed.
+ * Desktop-only unified sidebar: a ~60px icon strip — Guests / Tables /
+ * Fixtures / Asystent AI — plus a content column that slides in over the
+ * canvas as an overlay (see the return for why it overlays rather than
+ * pushing). The strip stays visible while expanded so switching tabs never
+ * requires collapsing first; clicking the active tab's icon toggles the panel
+ * closed.
  */
 export const SidebarRail = () => {
   const { t } = useTranslation()
@@ -101,12 +102,12 @@ export const SidebarRail = () => {
 
   return (
     // The rail's own footprint is always the 60px strip; the content column is
-    // an absolutely-positioned overlay that slides in over the canvas via a
-    // `transform` transition. Animating `width` here instead would resize the
-    // flex-sibling canvas every frame — whose ResizeObserver then recomputes
-    // hall geometry and re-renders the whole surface per frame, which is what
-    // made expanding feel sluggish. A transform only composites; the canvas
-    // never relayouts.
+    // an absolutely-positioned overlay that slides in over the canvas by
+    // animating `translate` (the `transition-transform` group). Animating
+    // `width` here instead would resize the flex-sibling canvas every frame —
+    // whose ResizeObserver then recomputes hall geometry and re-renders the
+    // whole surface per frame, which is what made expanding feel sluggish. A
+    // translate only composites; the canvas never relayouts.
     <div className="relative z-30 flex w-[60px] shrink-0 border-r bg-background">
       <div className="flex w-[60px] shrink-0 flex-col items-center gap-4 py-4">
         <button
