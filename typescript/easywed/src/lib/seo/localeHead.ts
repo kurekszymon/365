@@ -23,7 +23,7 @@ export function localeHead(lang: Lang, page?: Page) {
     lng: lang,
   })
   const alt: Lang = lang === "pl" ? "en" : "pl"
-  const suffix = page ? `/${page.path}` : ""
+  const suffix = page ? `/${page.path.replace(/^\/+/, "")}` : ""
 
   return {
     meta: [

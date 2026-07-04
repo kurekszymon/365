@@ -40,7 +40,7 @@ export function PrivacyPolicy({ lang }: { lang: Lang }) {
             to={lang === "pl" ? "/pl" : "/en"}
             className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            <ArrowLeft className="size-4" />
+            <ArrowLeft className="size-4" aria-hidden="true" />
             {t("privacy.back", { lng: lang })}
           </Link>
           <Link to="/" className="font-heading text-lg font-semibold">

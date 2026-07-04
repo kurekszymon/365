@@ -83,7 +83,9 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
             >
               {t("landing.footer.privacy", { lng: lang })}
             </Link>
-            <span>© {new Date().getFullYear()} easywed.</span>
+            <span suppressHydrationWarning>
+              © {new Date().getUTCFullYear()} easywed.
+            </span>
           </nav>
         </div>
       </footer>
