@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { LocaleLanding } from "@/components/LocaleLanding"
+import { LocaleLanding } from "@/components/landing/LocaleLanding"
 import { localeHead } from "@/lib/seo/localeHead"
 
 export const Route = createFileRoute("/en")({
