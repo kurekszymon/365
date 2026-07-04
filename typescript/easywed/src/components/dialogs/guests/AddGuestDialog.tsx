@@ -3,8 +3,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import type { Dietary } from "@/stores/planner.store"
 import { usePlannerStore } from "@/stores/planner.store"
-import { useMobilePanelStore } from "@/stores/mobilePanel.store"
-import { useSidebarStore } from "@/stores/sidebar.store"
+import { useEntityListStore } from "@/stores/entityList.store"
 import {
   ResponsiveDialog,
   ResponsiveDialogBody,
@@ -42,8 +41,7 @@ export const AddGuestDialog = () => {
       addGuest: state.addGuest,
     }))
   )
-  const openMobileList = useMobilePanelStore((state) => state.open)
-  const openSidebarTab = useSidebarStore((state) => state.openTab)
+  const openGuestList = useEntityListStore((state) => state.openTab)
 
   return (
     <ResponsiveDialog
@@ -120,12 +118,10 @@ export const AddGuestDialog = () => {
                 tableId: null,
                 dietary: dietaryOptions,
               })
-              // Reveal the new guest in whichever surface this platform uses:
-              // the mobile bottom bar and the desktop sidebar rail each ignore
-              // the other's store, so opening both is a harmless no-op on the
-              // inactive one.
-              openMobileList("guests")
-              openSidebarTab("guests")
+              // Reveal the new guest in the entity-list panel — the desktop
+              // rail and the mobile drawer share the store, so one call covers
+              // whichever surface this platform renders.
+              openGuestList("guests")
               dialog.close()
             }}
           >

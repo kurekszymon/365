@@ -8,11 +8,16 @@ import { EntityListContent } from "./EntityListContent"
 import { TabBadgeIcon } from "./TabBadgeIcon"
 import { useTabBadgeCounts } from "./tabs"
 import type { TransitionEvent } from "react"
-import type { SidebarTab } from "@/stores/sidebar.store"
-import { useSidebarStore } from "@/stores/sidebar.store"
+import type { EntityListTab } from "@/stores/entityList.store"
+import { useEntityListStore } from "@/stores/entityList.store"
 import { cn } from "@/lib/utils"
 
-const TAB_ORDER: Array<SidebarTab> = ["guests", "tables", "fixtures", "ai_chat"]
+const TAB_ORDER: Array<EntityListTab> = [
+  "guests",
+  "tables",
+  "fixtures",
+  "ai_chat",
+]
 
 /**
  * Desktop-only unified sidebar: a ~60px icon strip — Guests / Tables /
@@ -24,12 +29,13 @@ const TAB_ORDER: Array<SidebarTab> = ["guests", "tables", "fixtures", "ai_chat"]
  */
 export const SidebarRail = () => {
   const { t } = useTranslation()
-  const { expanded, activeTab, openTab, setExpanded } = useSidebarStore(
+  const { expanded, activeTab, openTab, close, toggle } = useEntityListStore(
     useShallow((state) => ({
-      expanded: state.expanded,
+      expanded: state.isOpen,
       activeTab: state.activeTab,
       openTab: state.openTab,
-      setExpanded: state.setExpanded,
+      close: state.close,
+      toggle: state.toggle,
     }))
   )
   const badgeCount = useTabBadgeCounts()
@@ -58,7 +64,7 @@ export const SidebarRail = () => {
     }
   }
 
-  const tabLabel = (tab: SidebarTab) =>
+  const tabLabel = (tab: EntityListTab) =>
     tab === "ai_chat" ? t("assistant.title") : t(tab)
 
   // The AI chat owns its own vertical layout (scrolling transcript + pinned
@@ -84,7 +90,7 @@ export const SidebarRail = () => {
       <div className="flex w-[60px] shrink-0 flex-col items-center gap-4 py-4">
         <button
           type="button"
-          onClick={() => setExpanded(!expanded)}
+          onClick={toggle}
           aria-label={t(expanded ? "sidebar.collapse" : "sidebar.expand")}
           className="flex size-9 cursor-pointer items-center justify-center rounded-[11px] bg-secondary text-secondary-foreground hover:bg-secondary/80"
         >
@@ -100,7 +106,7 @@ export const SidebarRail = () => {
             <button
               key={tab}
               type="button"
-              onClick={() => (isActive ? setExpanded(false) : openTab(tab))}
+              onClick={() => (isActive ? close() : openTab(tab))}
               aria-label={tabLabel(tab)}
               aria-pressed={isActive}
               className="flex w-full cursor-pointer flex-col items-center gap-1"
@@ -136,7 +142,7 @@ export const SidebarRail = () => {
           </span>
           <button
             type="button"
-            onClick={() => setExpanded(false)}
+            onClick={close}
             aria-label={t("sidebar.collapse")}
             className="rounded-sm text-muted-foreground hover:text-foreground"
           >

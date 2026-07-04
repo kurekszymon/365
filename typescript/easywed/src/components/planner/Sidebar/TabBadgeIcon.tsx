@@ -1,9 +1,9 @@
 import { TAB_ICONS } from "./tabs"
-import type { SidebarTab } from "@/stores/sidebar.store"
+import type { EntityListTab } from "@/stores/entityList.store"
 import { cn } from "@/lib/utils"
 
 type TabBadgeIconProps = {
-  tab: SidebarTab
+  tab: EntityListTab
   badgeCount: number
   // Desktop rail inverts the circle for the active tab; the mobile bar has no
   // per-tab active state, so it never passes this.

@@ -5,8 +5,8 @@ import { GuestListContent } from "../GuestPanel/GuestListContent"
 import { EntityListContent } from "./EntityListContent"
 import { TabBadgeIcon } from "./TabBadgeIcon"
 import { useTabBadgeCounts } from "./tabs"
-import type { MobileListTab } from "@/stores/mobilePanel.store"
-import { useMobilePanelStore } from "@/stores/mobilePanel.store"
+import type { MobileListTab } from "@/stores/entityList.store"
+import { useEntityListStore } from "@/stores/entityList.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer"
 import { cn } from "@/lib/utils"
@@ -23,13 +23,17 @@ const TABS: Array<MobileListTab> = ["guests", "tables", "fixtures"]
  */
 export const MobileTabBar = () => {
   const { t } = useTranslation()
-  const { activeTab, open, close } = useMobilePanelStore(
+  const { isOpen, activeTab, openTab, close } = useEntityListStore(
     useShallow((state) => ({
+      isOpen: state.isOpen,
       activeTab: state.activeTab,
-      open: state.open,
+      openTab: state.openTab,
       close: state.close,
     }))
   )
+  // `ai_chat` is desktop-only; if the shared store still points at it (e.g.
+  // after a desktop → mobile resize) fall back to the default list tab.
+  const listTab: MobileListTab = activeTab === "ai_chat" ? "guests" : activeTab
   // When a panel view opens (tapping a list row → edit form, the add hub, the
   // AI chat), it renders in `PropertyPanel`'s drawer — close this list drawer
   // so the two don't stack.
@@ -53,7 +57,7 @@ export const MobileTabBar = () => {
           <button
             key={tab}
             type="button"
-            onClick={() => open(tab)}
+            onClick={() => openTab(tab)}
             className="flex flex-col items-center gap-1 py-3 text-muted-foreground"
           >
             <TabBadgeIcon tab={tab} badgeCount={badgeCount[tab]} />
@@ -62,26 +66,21 @@ export const MobileTabBar = () => {
         ))}
       </nav>
 
-      <Drawer
-        open={activeTab !== null}
-        onOpenChange={(isOpen) => !isOpen && close()}
-      >
+      <Drawer open={isOpen} onOpenChange={(open) => !open && close()}>
         <DrawerContent
           aria-describedby={undefined}
           className="max-h-[88dvh] gap-0"
         >
-          <DrawerTitle className="sr-only">
-            {activeTab ? t(activeTab) : ""}
-          </DrawerTitle>
+          <DrawerTitle className="sr-only">{t(listTab)}</DrawerTitle>
           <div className="grid grid-cols-3 gap-2 px-4 pt-4 pb-4">
             {TABS.map((tab) => (
               <button
                 key={tab}
                 type="button"
-                onClick={() => open(tab)}
+                onClick={() => openTab(tab)}
                 className={cn(
                   "rounded-full py-2 text-sm font-semibold transition-colors",
-                  activeTab === tab
+                  listTab === tab
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground"
                 )}
@@ -91,7 +90,7 @@ export const MobileTabBar = () => {
             ))}
           </div>
           <div className="flex-1 overflow-y-auto border-t px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-            {activeTab && listContent[activeTab]}
+            {listContent[listTab]}
           </div>
         </DrawerContent>
       </Drawer>
