@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+import { CheckIcon } from "lucide-react"
 import { PanelBody } from "../EntityForms/PanelBody"
 import { usePanelTitle } from "../EntityForms/usePanelTitle"
 import type { PanelView } from "@/stores/panel.store"
@@ -28,6 +30,7 @@ const DIALOG_KINDS: ReadonlySet<PanelView["kind"]> = new Set([
  * surface the form renders in differs per platform.
  */
 export const EntityEditDialog = () => {
+  const { t } = useTranslation()
   const view = usePanelStore((state) => state.view)
   const close = usePanelStore((state) => state.close)
 
@@ -48,10 +51,22 @@ export const EntityEditDialog = () => {
     >
       <DialogContent
         aria-describedby={undefined}
+        showCloseButton={false}
         className={wide ? "sm:max-w-3xl" : "sm:max-w-md"}
       >
-        <DialogHeader>
+        {/* Every view this dialog hosts (hall/table/fixture/batch) applies its
+            edits live, so dismissing it is a "done" confirmation. Mirror the
+            mobile drawer's checkmark affordance instead of the neutral X. */}
+        <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle>{title}</DialogTitle>
+          <button
+            type="button"
+            onClick={close}
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
+            aria-label={t("common.done")}
+          >
+            <CheckIcon className="size-5" />
+          </button>
         </DialogHeader>
         {dialogView && <PanelBody view={dialogView} />}
       </DialogContent>

@@ -1,5 +1,9 @@
 # easywed. — Development Log
 
+### 06.07
+
+- use confirm icon button instead of X for dialogs acknowledgment
+
 ### 05.07
 
 - mobile: lift zoom controls + add-FAB above the bottom tab bar (were hidden under it), size planner with `dvh` so it respects the android url bar
