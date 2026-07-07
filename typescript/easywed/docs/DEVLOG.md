@@ -1,5 +1,10 @@
 # easywed. — Development Log
 
+### 07.07
+
+- add edit-guest dialog (name / dietary / note), reachable via a pencil on each guest row — shares fields with add-guest via `GuestFormFields`, persists through new `updateGuest` store action + `updateGuestDetails` mutation
+- guest list: clear the search after seating a searched guest, add an `x` clear button to the search input
+
 ### 06.07
 
 - use confirm icon button instead of X for dialogs acknowledgment
