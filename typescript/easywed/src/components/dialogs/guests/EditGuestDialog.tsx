@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next"
 import { GuestFormFields } from "./GuestFormFields"
 import type { GuestFormValues } from "./GuestFormFields"
 import { usePlannerStore } from "@/stores/planner.store"
-import { useEntityListStore } from "@/stores/entityList.store"
 import {
   ResponsiveDialog,
   ResponsiveDialogBody,
@@ -15,33 +14,50 @@ import {
 import { Button } from "@/components/ui/button"
 import { useDialogStore } from "@/stores/dialog.store"
 
-const EMPTY_GUEST: GuestFormValues = { name: "", dietary: [], note: "" }
-
-export const AddGuestDialog = () => {
+export const EditGuestDialog = () => {
   const { t } = useTranslation()
-  const [form, setForm] = useState<GuestFormValues>(EMPTY_GUEST)
 
   const dialog = useDialogStore(
     useShallow((state) => ({
       opened: state.opened,
+      guestId: state.payload.guestId,
       close: state.close,
-      open: state.open,
     }))
   )
-  const planner = usePlannerStore(
+  const { guests, updateGuest } = usePlannerStore(
     useShallow((state) => ({
-      addGuest: state.addGuest,
+      guests: state.guests,
+      updateGuest: state.updateGuest,
     }))
   )
-  const openGuestList = useEntityListStore((state) => state.openTab)
+
+  const guest = guests.find((g) => g.id === dialog.guestId) ?? null
+
+  const [form, setForm] = useState<GuestFormValues>({
+    name: "",
+    dietary: [],
+    note: "",
+  })
+  // Reload the form whenever the dialog targets a different guest (React's
+  // documented "reset state when a prop changes" pattern) so it's populated
+  // before the first paint rather than via an effect.
+  const [prevGuestId, setPrevGuestId] = useState<string | null>(null)
+  if (guest && guest.id !== prevGuestId) {
+    setPrevGuestId(guest.id)
+    setForm({
+      name: guest.name,
+      dietary: guest.dietary,
+      note: guest.note ?? "",
+    })
+  }
 
   return (
     <ResponsiveDialog
-      open={dialog.opened === "Guest.Add"}
+      open={dialog.opened === "Guest.Edit" && guest != null}
       onOpenChange={(open) => {
         if (!open) {
           dialog.close()
-          setForm(EMPTY_GUEST)
+          setPrevGuestId(null)
         }
       }}
     >
@@ -50,25 +66,21 @@ export const AddGuestDialog = () => {
         aria-describedby={undefined}
       >
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>{t("guests.add")}</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>{t("guests.edit")}</ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
         <ResponsiveDialogBody>
           <GuestFormFields value={form} onChange={setForm} />
           <Button
             disabled={!form.name.trim()}
             onClick={() => {
-              planner.addGuest({
+              if (!guest) return
+              updateGuest(guest.id, {
                 name: form.name.trim(),
                 note: form.note.trim(),
-                tableId: null,
                 dietary: form.dietary,
               })
-              // Reveal the new guest in the entity-list panel — the desktop
-              // rail and the mobile drawer share the store, so one call covers
-              // whichever surface this platform renders.
-              openGuestList("guests")
               dialog.close()
-              setForm(EMPTY_GUEST)
+              setPrevGuestId(null)
             }}
           >
             {t("common.save")}

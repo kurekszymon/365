@@ -41,6 +41,24 @@ export const insertGuests = (guests: Array<Guest>): Promise<boolean> => {
   )
 }
 
+// Persists a guest's editable details (name, dietary, note). Seat/table
+// assignment is handled separately by `updateGuestSeat`, so this never touches
+// table_id/seat_id.
+export const updateGuestDetails = (
+  guest: Pick<Guest, "id" | "name" | "dietary" | "note">
+): Promise<boolean> =>
+  run(
+    "updateGuestDetails",
+    supabase
+      .from("guests")
+      .update({
+        name: guest.name,
+        dietary: guest.dietary,
+        note: guest.note ?? null,
+      })
+      .eq("id", guest.id)
+  )
+
 // Pins (or clears) a guest's specific seat. Writes table_id alongside seat_id so
 // seating and unseating stay consistent in one round-trip. Also the single path
 // for plain table (re)assignment — seat_id must move with table_id, since the

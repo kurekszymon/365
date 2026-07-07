@@ -4,8 +4,10 @@ import { useShallow } from "zustand/react/shallow"
 import {
   CheckIcon,
   FileSpreadsheetIcon,
+  PencilIcon,
   PlusIcon,
   SearchIcon,
+  XIcon,
 } from "lucide-react"
 import { getInitials } from "../Canvas/utils"
 import { SeatingProgress } from "./SeatingProgress"
@@ -145,8 +147,18 @@ export const GuestListContent = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t("guests.search_placeholder")}
-            className="w-full rounded-md border pl-8"
+            className="w-full rounded-md border pr-8 pl-8"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              aria-label={t("common.clear")}
+              className="absolute top-1/2 right-2 flex size-5 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <XIcon className="size-3.5" />
+            </button>
+          )}
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-0.5">
@@ -202,29 +214,45 @@ export const GuestListContent = () => {
           {filteredGuests.map((guest) => {
             const seatedAt = seatedTableLabel(guest)
             return (
-              <button
+              <div
                 key={guest.id}
-                type="button"
-                onClick={() => setAssigningGuest(guest)}
-                className="flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition-colors hover:bg-accent/50"
+                className="flex items-center gap-1 rounded-2xl border pr-2 transition-colors hover:bg-accent/50"
               >
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                  {getInitials(guest.name)}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{guest.name}</p>
-                  {seatedAt ? (
-                    <p className="mt-0.5 flex items-center gap-1 text-xs font-medium text-primary">
-                      <CheckIcon className="size-3" />
-                      {t("guests.status.seated_at", { table: seatedAt })}
+                <button
+                  type="button"
+                  onClick={() => setAssigningGuest(guest)}
+                  className="flex min-w-0 flex-1 items-center gap-3 p-3 text-left"
+                >
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                    {getInitials(guest.name)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">
+                      {guest.name}
                     </p>
-                  ) : (
-                    <span className="mt-1 inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold text-accent-foreground">
-                      {t("guests.status.unseated")}
-                    </span>
-                  )}
-                </div>
-              </button>
+                    {seatedAt ? (
+                      <p className="mt-0.5 flex items-center gap-1 text-xs font-medium text-primary">
+                        <CheckIcon className="size-3" />
+                        {t("guests.status.seated_at", { table: seatedAt })}
+                      </p>
+                    ) : (
+                      <span className="mt-1 inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold text-accent-foreground">
+                        {t("guests.status.unseated")}
+                      </span>
+                    )}
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    openDialog("Guest.Edit", { guestId: guest.id })
+                  }
+                  aria-label={t("guests.edit")}
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  <PencilIcon className="size-4" />
+                </button>
+              </div>
             )
           })}
         </div>
@@ -232,6 +260,7 @@ export const GuestListContent = () => {
 
       <SeatAssignSheet
         guest={assigningGuest}
+        onAssigned={() => setSearchQuery("")}
         onOpenChange={(open) => {
           if (!open) setAssigningGuest(null)
         }}

@@ -26,6 +26,9 @@ type SeatAssignSheetProps = {
   // each open starts on the table list.
   guest: Guest | null
   onOpenChange: (open: boolean) => void
+  // Fired after a guest is actually seated (not on a plain close/cancel), so the
+  // list can e.g. clear its search now that the searched-for guest is placed.
+  onAssigned?: () => void
 }
 
 // Guest-first counterpart to `Canvas/SeatAssignPopover`: tap a guest row in the
@@ -35,6 +38,7 @@ type SeatAssignSheetProps = {
 export const SeatAssignSheet = ({
   guest,
   onOpenChange,
+  onAssigned,
 }: SeatAssignSheetProps) => {
   const { t } = useTranslation()
   const [tableId, setTableId] = useState<string | null>(null)
@@ -86,6 +90,7 @@ export const SeatAssignSheet = ({
   const confirm = () => {
     if (!guest || !tableId || !seatId) return
     assignGuestToSeat(guest.id, tableId, seatId, null)
+    onAssigned?.()
     close()
   }
 

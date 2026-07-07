@@ -12,6 +12,7 @@ import {
   softDeleteTable,
   updateFixturePos,
   updateFixtureRow,
+  updateGuestDetails,
   updateGuestSeat,
   updateTablePos,
   updateTableRow,
@@ -161,6 +162,11 @@ type Action = {
   deleteTable: (id: string) => void
   addGuest: (guest: Omit<Guest, "id">) => void
   addGuests: (guests: Array<Omit<Guest, "id">>) => Promise<boolean>
+  // Edits a guest's details (name/dietary/note); seating is left untouched.
+  updateGuest: (
+    id: string,
+    details: Pick<Guest, "name" | "dietary" | "note">
+  ) => void
   updateHall: (
     preset: HallPreset,
     dimensions: { width: number; height: number }
@@ -406,6 +412,12 @@ const createPlannerStore = (
     // Optimistic state is already applied; the returned promise lets the caller
     // surface a persistence failure (no rollback — consistent with the store).
     return insertGuests(newGuests)
+  },
+  updateGuest: (id, details) => {
+    set((state) => ({
+      guests: state.guests.map((g) => (g.id === id ? { ...g, ...details } : g)),
+    }))
+    void updateGuestDetails({ id, ...details })
   },
   updateHall: (preset, dimensions) => {
     set((state) => ({ hall: { ...state.hall, preset, dimensions } }))
