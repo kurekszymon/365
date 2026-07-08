@@ -5,6 +5,7 @@ import {
   ClipboardCopyIcon,
   ClipboardPasteIcon,
   LayoutPanelLeftIcon,
+  PencilIcon,
   SquarePlusIcon,
   TableIcon,
 } from "lucide-react"
@@ -237,6 +238,22 @@ export const Canvas = () => {
           <>
             {(target.kind !== "hall" || clipboardItem) && (
               <>
+                {target.kind === "table" && (
+                  <CanvasContextMenuItem
+                    onSelect={() => panel.openTableEdit(target.id)}
+                  >
+                    <PencilIcon className="size-4" />
+                    {t("tables.edit")}
+                  </CanvasContextMenuItem>
+                )}
+                {target.kind === "fixture" && (
+                  <CanvasContextMenuItem
+                    onSelect={() => panel.openFixtureEdit(target.id)}
+                  >
+                    <PencilIcon className="size-4" />
+                    {t("fixtures.edit")}
+                  </CanvasContextMenuItem>
+                )}
                 {target.kind !== "hall" && (
                   <CanvasContextMenuItem onSelect={() => copyTarget(target)}>
                     <ClipboardCopyIcon className="size-4" />
@@ -359,12 +376,10 @@ export const Canvas = () => {
             return
           }
 
-          if (captured?.kind === "table") {
-            panel.openTableEdit(captured.id)
-            return
-          }
-          if (captured?.kind === "fixture") {
-            panel.openFixtureEdit(captured.id)
+          // A click selects; editing is reached via the element's edit icon or
+          // the right-click context menu, not by clicking the element directly.
+          if (captured?.kind === "table" || captured?.kind === "fixture") {
+            panel.select(captured.id)
             return
           }
           // Clicking the hall floor deselects; the hall config is reached via

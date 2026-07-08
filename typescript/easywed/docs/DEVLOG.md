@@ -2,6 +2,8 @@
 
 ### 08.07
 
+- dont open edit table/fixture on click, but select
+- add edit table/fixture in contextmenu
 - dont open hall configure on hall click
 - redirect to /app after logging in
 - add option to login with enter
