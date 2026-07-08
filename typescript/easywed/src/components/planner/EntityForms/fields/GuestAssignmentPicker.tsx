@@ -134,12 +134,12 @@ export const GuestAssignmentPicker = ({
             <Button
               type="button"
               variant="outline"
-              className="w-full cursor-pointer justify-start rounded-md border px-2.5 font-normal"
+              className="w-full cursor-pointer justify-start overflow-hidden rounded-md border px-2.5 font-normal"
             >
               {selectedGuestsValue ? (
-                selectedGuestsValue
+                <span className="truncate">{selectedGuestsValue}</span>
               ) : (
-                <span className="text-muted-foreground">
+                <span className="truncate text-muted-foreground">
                   {t("tables.guests_pick")}
                 </span>
               )}

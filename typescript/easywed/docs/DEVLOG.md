@@ -2,6 +2,7 @@
 
 ### 09.07
 
+- fix overflow in guest assignment picker
 - add delete table/fixutre from canvas context menu
 - add option to soft delete guests
 

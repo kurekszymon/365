@@ -147,7 +147,7 @@ export const TablePanelContent = ({ tableId }: { tableId: string }) => {
     // column.
     <div className="@container">
       <div className="grid grid-cols-1 gap-x-6 gap-y-4 @xl:grid-cols-2">
-        <div className="flex flex-col gap-4">
+        <div className="flex min-w-0 flex-col gap-4">
           <TableNameField
             value={form.name}
             onChange={(name) => update({ name })}
@@ -190,7 +190,7 @@ export const TablePanelContent = ({ tableId }: { tableId: string }) => {
           />
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex min-w-0 flex-col gap-4">
           <GuestAssignmentPicker
             tableId={tableId}
             capacity={form.capacity}
