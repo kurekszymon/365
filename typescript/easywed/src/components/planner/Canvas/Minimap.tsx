@@ -5,10 +5,19 @@ import { usePlannerStore } from "@/stores/planner.store"
 
 const BOX_WIDTH = 120
 const BOX_HEIGHT = 84
-const BOX_PADDING = 8
-const INNER_WIDTH = BOX_WIDTH - BOX_PADDING * 2
-const INNER_HEIGHT = BOX_HEIGHT - BOX_PADDING * 2
+// The card has a 1px border + p-2 (8px) padding, so its inner (overflow-hidden)
+// content box is 2px smaller on each axis than BOX - 2*padding. The drawable
+// area is that inner box.
+const CARD_BORDER = 1
+const CARD_PADDING = 8
+const DRAW_WIDTH = BOX_WIDTH - 2 * (CARD_BORDER + CARD_PADDING)
+const DRAW_HEIGHT = BOX_HEIGHT - 2 * (CARD_BORDER + CARD_PADDING)
 const DOT_SIZE = 8
+// Reserve half a dot on every side so markers sitting on the hall's edge stay
+// fully inside the drawable area instead of being clipped by overflow-hidden.
+const DOT_MARGIN = DOT_SIZE / 2
+const INNER_WIDTH = DRAW_WIDTH - 2 * DOT_MARGIN
+const INNER_HEIGHT = DRAW_HEIGHT - 2 * DOT_MARGIN
 
 type MinimapProps = {
   hallDimensions: { width: number; height: number }
@@ -41,8 +50,8 @@ export const Minimap = ({
     INNER_WIDTH / hallDimensions.width,
     INNER_HEIGHT / hallDimensions.height
   )
-  const offsetX = (INNER_WIDTH - hallDimensions.width * scale) / 2
-  const offsetY = (INNER_HEIGHT - hallDimensions.height * scale) / 2
+  const offsetX = DOT_MARGIN + (INNER_WIDTH - hallDimensions.width * scale) / 2
+  const offsetY = DOT_MARGIN + (INNER_HEIGHT - hallDimensions.height * scale) / 2
 
   // Visible viewport rect, in hall-space meters, clipped to the hall bounds —
   // mirrors the geometry `useHallGeometry` already computes for the main canvas,
