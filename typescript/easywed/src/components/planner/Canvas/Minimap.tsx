@@ -6,18 +6,13 @@ import { usePlannerStore } from "@/stores/planner.store"
 const BOX_WIDTH = 120
 const BOX_HEIGHT = 84
 // The card has a 1px border + p-2 (8px) padding, so its inner (overflow-hidden)
-// content box is 2px smaller on each axis than BOX - 2*padding. The drawable
-// area is that inner box.
+// content box is 2px smaller on each axis than BOX - 2*padding. The hall is
+// letterboxed to fill this drawable area.
 const CARD_BORDER = 1
 const CARD_PADDING = 8
-const DRAW_WIDTH = BOX_WIDTH - 2 * (CARD_BORDER + CARD_PADDING)
-const DRAW_HEIGHT = BOX_HEIGHT - 2 * (CARD_BORDER + CARD_PADDING)
+const INNER_WIDTH = BOX_WIDTH - 2 * (CARD_BORDER + CARD_PADDING)
+const INNER_HEIGHT = BOX_HEIGHT - 2 * (CARD_BORDER + CARD_PADDING)
 const DOT_SIZE = 8
-// Reserve half a dot on every side so markers sitting on the hall's edge stay
-// fully inside the drawable area instead of being clipped by overflow-hidden.
-const DOT_MARGIN = DOT_SIZE / 2
-const INNER_WIDTH = DRAW_WIDTH - 2 * DOT_MARGIN
-const INNER_HEIGHT = DRAW_HEIGHT - 2 * DOT_MARGIN
 
 type MinimapProps = {
   hallDimensions: { width: number; height: number }
@@ -50,8 +45,18 @@ export const Minimap = ({
     INNER_WIDTH / hallDimensions.width,
     INNER_HEIGHT / hallDimensions.height
   )
-  const offsetX = DOT_MARGIN + (INNER_WIDTH - hallDimensions.width * scale) / 2
-  const offsetY = DOT_MARGIN + (INNER_HEIGHT - hallDimensions.height * scale) / 2
+  const hallScaledWidth = hallDimensions.width * scale
+  const hallScaledHeight = hallDimensions.height * scale
+  const offsetX = (INNER_WIDTH - hallScaledWidth) / 2
+  const offsetY = (INNER_HEIGHT - hallScaledHeight) / 2
+
+  // Place a marker of the given size, keeping its whole footprint inside the
+  // hall outline: a table pushed flush against a wall would otherwise render
+  // centred on the border and poke out past it, which reads as a clipped dot.
+  const dotLeft = (x: number, size: number) =>
+    clamp(offsetX + x * scale - size / 2, offsetX, offsetX + hallScaledWidth - size)
+  const dotTop = (y: number, size: number) =>
+    clamp(offsetY + y * scale - size / 2, offsetY, offsetY + hallScaledHeight - size)
 
   // Visible viewport rect, in hall-space meters, clipped to the hall bounds —
   // mirrors the geometry `useHallGeometry` already computes for the main canvas,
@@ -141,8 +146,8 @@ export const Minimap = ({
               style={{
                 width: DOT_SIZE,
                 height: DOT_SIZE,
-                left: offsetX + x * scale - DOT_SIZE / 2,
-                top: offsetY + y * scale - DOT_SIZE / 2,
+                left: dotLeft(x, DOT_SIZE),
+                top: dotTop(y, DOT_SIZE),
               }}
             />
           )
@@ -157,8 +162,8 @@ export const Minimap = ({
               style={{
                 width: DOT_SIZE - 1,
                 height: DOT_SIZE - 1,
-                left: offsetX + x * scale - (DOT_SIZE - 1) / 2,
-                top: offsetY + y * scale - (DOT_SIZE - 1) / 2,
+                left: dotLeft(x, DOT_SIZE - 1),
+                top: dotTop(y, DOT_SIZE - 1),
               }}
             />
           )
