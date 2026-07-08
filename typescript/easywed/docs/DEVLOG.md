@@ -2,6 +2,8 @@
 
 ### 08.07
 
+- dont open hall configure on hall click
+- redirect to /app after logging in
 - add option to login with enter
 
 ### 07.07
