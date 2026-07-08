@@ -249,6 +249,7 @@
   "guests.count_many": "{{count}} gości",
   "guests.add": "Dodaj gościa",
   "guests.edit": "Edytuj gościa",
+  "guests.delete": "Usuń gościa",
   "guests.add.name": "Imię",
   "guests.add.name_placeholder": "Jan Kowalski",
   "guests.add.dietary_preferences": "Preferencje żywieniowe",

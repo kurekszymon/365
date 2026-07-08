@@ -2,6 +2,8 @@
 
 ### 08.07
 
+- add option to soft delete guests
+- fix minimap geometry
 - fix clear seat
 - dont open edit table/fixture on click, but select
 - add edit table/fixture in contextmenu

@@ -41,6 +41,17 @@ export const insertGuests = (guests: Array<Guest>): Promise<boolean> => {
   )
 }
 
+// Soft-deletes a guest (loadWedding filters on `deleted_at is null`), so they
+// drop off the list without breaking any historical references.
+export const softDeleteGuest = (id: string): Promise<boolean> =>
+  run(
+    "softDeleteGuest",
+    supabase
+      .from("guests")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id)
+  )
+
 // Persists a guest's editable details (name, dietary, note). Seat/table
 // assignment is handled separately by `updateGuestSeat`, so this never touches
 // table_id/seat_id.

@@ -7,6 +7,7 @@ import {
   PencilIcon,
   PlusIcon,
   SearchIcon,
+  Trash2Icon,
   XIcon,
 } from "lucide-react"
 import { getInitials } from "../Canvas/utils"
@@ -71,6 +72,7 @@ export const GuestListContent = () => {
   const { guests, tables } = usePlannerStore(
     useShallow((state) => ({ guests: state.guests, tables: state.tables }))
   )
+  const deleteGuest = usePlannerStore((state) => state.deleteGuest)
   const openDialog = useDialogStore((state) => state.open)
 
   const tableById = useMemo(
@@ -251,6 +253,14 @@ export const GuestListContent = () => {
                   className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                 >
                   <PencilIcon className="size-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => deleteGuest(guest.id)}
+                  aria-label={t("guests.delete")}
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2Icon className="size-4" />
                 </button>
               </div>
             )

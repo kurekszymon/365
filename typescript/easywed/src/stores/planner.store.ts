@@ -9,6 +9,7 @@ import {
   insertTables,
   reassignTableGuests,
   softDeleteFixture,
+  softDeleteGuest,
   softDeleteTable,
   updateFixturePos,
   updateFixtureRow,
@@ -167,6 +168,7 @@ type Action = {
     id: string,
     details: Pick<Guest, "name" | "dietary" | "note">
   ) => void
+  deleteGuest: (id: string) => void
   updateHall: (
     preset: HallPreset,
     dimensions: { width: number; height: number }
@@ -418,6 +420,12 @@ const createPlannerStore = (
       guests: state.guests.map((g) => (g.id === id ? { ...g, ...details } : g)),
     }))
     void updateGuestDetails({ id, ...details })
+  },
+  deleteGuest: (id) => {
+    set((state) => ({
+      guests: state.guests.filter((g) => g.id !== id),
+    }))
+    void softDeleteGuest(id)
   },
   updateHall: (preset, dimensions) => {
     set((state) => ({ hall: { ...state.hall, preset, dimensions } }))
