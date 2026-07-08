@@ -1,5 +1,9 @@
 # easywed. — Development Log
 
+### 08.07
+
+- add option to login with enter
+
 ### 07.07
 
 - add edit-guest dialog (name / dietary / note), reachable via a pencil on each guest row — shares fields with add-guest via `GuestFormFields`, persists through new `updateGuest` store action + `updateGuestDetails` mutation

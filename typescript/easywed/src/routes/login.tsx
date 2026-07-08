@@ -90,6 +90,13 @@ function Login() {
   const isLoading = status.kind === "loading"
   const canSubmit = email.length > 0 && password.length > 0 && !isLoading
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (canSubmit) {
+      void signIn()
+    }
+  }
+
   return (
     <div className="flex min-h-svh items-center justify-center p-6">
       <div className="flex w-full max-w-sm flex-col gap-5 rounded-xl border bg-background p-6 shadow-sm">
@@ -108,7 +115,7 @@ function Login() {
           <div className="h-px flex-1 bg-border" />
         </div>
 
-        <div className="flex flex-col gap-3">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="email">{t("auth.email")}</Label>
             <Input
@@ -129,20 +136,25 @@ function Login() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-        </div>
 
-        <p className="text-xs text-muted-foreground">
-          {t("auth.sign_up_hint")}
-        </p>
+          <p className="text-xs text-muted-foreground">
+            {t("auth.sign_up_hint")}
+          </p>
 
-        <div className="flex flex-col gap-2">
-          <Button onClick={signIn} disabled={!canSubmit}>
-            {t("auth.sign_in")}
-          </Button>
-          <Button variant="outline" onClick={signUp} disabled={!canSubmit}>
-            {t("auth.sign_up")}
-          </Button>
-        </div>
+          <div className="flex flex-col gap-2">
+            <Button type="submit" disabled={!canSubmit}>
+              {t("auth.sign_in")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={signUp}
+              disabled={!canSubmit}
+            >
+              {t("auth.sign_up")}
+            </Button>
+          </div>
+        </form>
 
         {status.kind === "success" && (
           <p className="text-sm text-green-600">{t("auth.email_sent")}</p>
