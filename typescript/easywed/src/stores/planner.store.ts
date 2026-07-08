@@ -490,15 +490,15 @@ const createPlannerStore = (
   clearSeat: (guestId) => {
     const guest = get().guests.find((g) => g.id === guestId)
     if (!guest) return
-    // Only unpin: the guest stays at the same table as an order-fill (they'll
-    // refill the next free seat). Removing them from the table entirely is a
-    // separate path (the table edit form's guest picker / saveTable).
+    // Free the seat: remove the guest from the table entirely. Merely nulling
+    // seatId would leave them assigned to the table as an order-fill, so they'd
+    // immediately refill the seat and the seat would never actually empty.
     set((s) => ({
       guests: s.guests.map((g) =>
-        g.id === guestId ? { ...g, seatId: null } : g
+        g.id === guestId ? { ...g, tableId: null, seatId: null } : g
       ),
     }))
-    void updateGuestSeat(guestId, guest.tableId ?? null, null)
+    void updateGuestSeat(guestId, null, null)
   },
   moveSeat: (tableId, seatId, x, y) => {
     set((state) => ({

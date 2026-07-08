@@ -2,6 +2,7 @@
 
 ### 08.07
 
+- fix clear seat
 - dont open edit table/fixture on click, but select
 - add edit table/fixture in contextmenu
 - dont open hall configure on hall click
