@@ -367,10 +367,8 @@ export const Canvas = () => {
             panel.openFixtureEdit(captured.id)
             return
           }
-          if (captured?.kind === "hall") {
-            panel.openHall()
-            return
-          }
+          // Clicking the hall floor deselects; the hall config is reached via
+          // the toolbar button, not by clicking the floor.
           panel.deselect()
         }}
       >
