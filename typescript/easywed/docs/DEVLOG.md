@@ -1,8 +1,12 @@
 # easywed. — Development Log
 
+### 09.07
+
+- add delete table/fixutre from canvas context menu
+- add option to soft delete guests
+
 ### 08.07
 
-- add option to soft delete guests
 - fix minimap geometry
 - fix clear seat
 - dont open edit table/fixture on click, but select

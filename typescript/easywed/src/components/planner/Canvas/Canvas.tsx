@@ -8,6 +8,7 @@ import {
   PencilIcon,
   SquarePlusIcon,
   TableIcon,
+  Trash2Icon,
 } from "lucide-react"
 import { usePinch } from "@use-gesture/react"
 import { ScalePill } from "./ScalePill"
@@ -64,6 +65,8 @@ export const Canvas = () => {
 
   const addTable = usePlannerStore((state) => state.addTable)
   const addFixture = usePlannerStore((state) => state.addFixture)
+  const deleteTable = usePlannerStore((state) => state.deleteTable)
+  const deleteFixture = usePlannerStore((state) => state.deleteFixture)
   const panel = usePanelStore(
     useShallow((state) => ({
       selectedId: state.selectedId,
@@ -260,6 +263,30 @@ export const Canvas = () => {
                     {target.kind === "table"
                       ? t("tables.copy")
                       : t("fixtures.copy")}
+                  </CanvasContextMenuItem>
+                )}
+                {target.kind === "table" && (
+                  <CanvasContextMenuItem
+                    className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                    onSelect={() => {
+                      if (panel.selectedId === target.id) panel.deselect()
+                      deleteTable(target.id)
+                    }}
+                  >
+                    <Trash2Icon className="size-4" />
+                    {t("tables.delete")}
+                  </CanvasContextMenuItem>
+                )}
+                {target.kind === "fixture" && (
+                  <CanvasContextMenuItem
+                    className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                    onSelect={() => {
+                      if (panel.selectedId === target.id) panel.deselect()
+                      deleteFixture(target.id)
+                    }}
+                  >
+                    <Trash2Icon className="size-4" />
+                    {t("fixtures.delete")}
                   </CanvasContextMenuItem>
                 )}
                 {clipboardItem && (
