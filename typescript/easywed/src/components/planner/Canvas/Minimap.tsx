@@ -5,11 +5,11 @@ import { usePlannerStore } from "@/stores/planner.store"
 
 const BOX_WIDTH = 120
 const BOX_HEIGHT = 84
-// The card has a 1px border + p-2 (8px) padding, so its inner (overflow-hidden)
+// The card has a 1px border + p-1 (4px) padding, so its inner (overflow-hidden)
 // content box is 2px smaller on each axis than BOX - 2*padding. The hall is
 // letterboxed to fill this drawable area.
 const CARD_BORDER = 1
-const CARD_PADDING = 8
+const CARD_PADDING = 4
 const INNER_WIDTH = BOX_WIDTH - 2 * (CARD_BORDER + CARD_PADDING)
 const INNER_HEIGHT = BOX_HEIGHT - 2 * (CARD_BORDER + CARD_PADDING)
 const DOT_SIZE = 8
@@ -99,7 +99,7 @@ export const Minimap = ({
   return (
     <div
       data-no-pan
-      className="absolute right-4 bottom-4 z-20 rounded-[10px] border bg-card p-2 shadow-[0_8px_20px_-12px_rgba(40,60,45,0.4)]"
+      className="absolute right-4 bottom-4 z-20 rounded-[10px] border bg-card p-1 shadow-[0_8px_20px_-12px_rgba(40,60,45,0.4)]"
       style={{ width: BOX_WIDTH, height: BOX_HEIGHT }}
     >
       <div
