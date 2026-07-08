@@ -79,6 +79,7 @@ export const SeatAssignPopover = ({
 
   const assign = (guestId: string) => {
     assignGuestToSeat(guestId, tableId, seatId, occupantId)
+    setSearchQuery("")
     onOpenChange(false)
   }
 
@@ -155,6 +156,7 @@ export const SeatAssignPopover = ({
             className="w-full justify-start gap-1.5 text-muted-foreground"
             onClick={() => {
               if (occupantId) clearSeat(occupantId)
+              setSearchQuery("")
               onOpenChange(false)
             }}
           >
