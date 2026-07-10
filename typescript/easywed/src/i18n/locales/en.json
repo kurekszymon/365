@@ -104,6 +104,7 @@
   "auth.email": "Email",
   "auth.password": "Password",
   "auth.sign_in": "Sign in",
+  "auth.go_to_app": "Go to the app",
   "auth.sign_up": "Create account",
   "auth.sign_out": "Sign out",
   "auth.signing_you_in": "Signing you in...",

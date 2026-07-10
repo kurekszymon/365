@@ -1,5 +1,9 @@
 # easywed. — Development Log
 
+### 10.07
+
+- add Go to the app when user is signed in on LocaleLanding
+
 ### 09.07
 
 - fix overflow in guest assignment picker

@@ -6,6 +6,7 @@ import { LandingFeatures } from "./LandingFeatures"
 import { LandingSteps } from "./LandingSteps"
 import { LandingCta } from "./LandingCta"
 import { Button } from "@/components/ui/button"
+import { useAuthStore } from "@/stores/auth.store"
 import i18n from "@/i18n"
 
 export type Lang = "pl" | "en"
@@ -18,6 +19,10 @@ export type Lang = "pl" | "en"
 // is owned by the root shell (derived from the path).
 export function LocaleLanding({ lang }: { lang: Lang }) {
   const { t } = useTranslation()
+  // Session hydrates client-side (null on the server), so both server and the
+  // first client render show "Sign in" — the label flips after hydration once
+  // an authenticated session is known, keeping SSR/hydration output stable.
+  const isSignedIn = useAuthStore((s) => s.isReady && s.session !== null)
 
   useEffect(() => {
     void i18n.changeLanguage(lang)
@@ -55,7 +60,11 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
               </Link>
             </nav>
             <Button asChild variant="outline" size="sm">
-              <Link to="/login">{t("auth.sign_in", { lng: lang })}</Link>
+              {isSignedIn ? (
+                <Link to="/app">{t("auth.go_to_app", { lng: lang })}</Link>
+              ) : (
+                <Link to="/login">{t("auth.sign_in", { lng: lang })}</Link>
+              )}
             </Button>
           </div>
         </div>
