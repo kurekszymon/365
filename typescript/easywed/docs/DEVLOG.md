@@ -2,6 +2,7 @@
 
 ### 10.07
 
+- add dietary badges in sidebar/guest list
 - open edit entity on double click
 - add Go to the app when user is signed in on LocaleLanding
 

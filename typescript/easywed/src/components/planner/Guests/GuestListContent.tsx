@@ -242,6 +242,18 @@ export const GuestListContent = () => {
                         {t("guests.status.unseated")}
                       </span>
                     )}
+                    {guest.dietary.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {guest.dietary.map((d) => (
+                          <span
+                            key={d}
+                            className="inline-flex items-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                          >
+                            {t(`guests.dietary.${d}`)}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </button>
                 <button
