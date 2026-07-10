@@ -2,6 +2,7 @@
 
 ### 10.07
 
+- open edit entity on double click
 - add Go to the app when user is signed in on LocaleLanding
 
 ### 09.07

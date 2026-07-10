@@ -324,7 +324,7 @@
 
   "hall": "Sala",
   "hall.configure": "Skonfiguruj salę weselną",
-  "hall.configure_short": "Skonfiguruj Salę",
+  "hall.configure_short": "Skonfiguruj salę",
   "hall.empty_state": "Kliknij, aby zacząć od skonfigurowania sali",
   "hall.shape": "Kształt sali",
   "hall.preset.rectangle": "Prostokąt",

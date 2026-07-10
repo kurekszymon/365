@@ -382,35 +382,23 @@ export const Canvas = () => {
 
           const captured = findCapturedElement(e.target)
 
-          if (isMobile) {
-            // Touch: first tap selects; tapping the already-selected element opens
-            // its edit drawer. Pointer devices: a click opens edit directly.
-            if (captured?.kind === "table") {
-              if (panel.selectedId === captured.id)
-                panel.openTableEdit(captured.id)
-              else panel.select(captured.id)
-              return
-            }
-            if (captured?.kind === "fixture") {
-              if (panel.selectedId === captured.id)
-                panel.openFixtureEdit(captured.id)
-              else panel.select(captured.id)
-              return
-            }
-            // Hall taps fall through to deselect: on mobile the hall config is
-            // reached via the header button, not by tapping the floor.
-            panel.deselect()
+          // First click selects; clicking the already-selected element opens its
+          // edit panel/drawer. (Editing is also reachable via the right-click
+          // context menu.) Same flow on touch and pointer devices.
+          if (captured?.kind === "table") {
+            if (panel.selectedId === captured.id)
+              panel.openTableEdit(captured.id)
+            else panel.select(captured.id)
             return
           }
-
-          // A click selects; editing is reached via the element's edit icon or
-          // the right-click context menu, not by clicking the element directly.
-          if (captured?.kind === "table" || captured?.kind === "fixture") {
-            panel.select(captured.id)
+          if (captured?.kind === "fixture") {
+            if (panel.selectedId === captured.id)
+              panel.openFixtureEdit(captured.id)
+            else panel.select(captured.id)
             return
           }
           // Clicking the hall floor deselects; the hall config is reached via
-          // the toolbar button, not by clicking the floor.
+          // the toolbar/header button, not by clicking the floor.
           panel.deselect()
         }}
       >

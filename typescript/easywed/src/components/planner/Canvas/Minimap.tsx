@@ -54,9 +54,17 @@ export const Minimap = ({
   // hall outline: a table pushed flush against a wall would otherwise render
   // centred on the border and poke out past it, which reads as a clipped dot.
   const dotLeft = (x: number, size: number) =>
-    clamp(offsetX + x * scale - size / 2, offsetX, offsetX + hallScaledWidth - size)
+    clamp(
+      offsetX + x * scale - size / 2,
+      offsetX,
+      offsetX + hallScaledWidth - size
+    )
   const dotTop = (y: number, size: number) =>
-    clamp(offsetY + y * scale - size / 2, offsetY, offsetY + hallScaledHeight - size)
+    clamp(
+      offsetY + y * scale - size / 2,
+      offsetY,
+      offsetY + hallScaledHeight - size
+    )
 
   // Visible viewport rect, in hall-space meters, clipped to the hall bounds —
   // mirrors the geometry `useHallGeometry` already computes for the main canvas,
