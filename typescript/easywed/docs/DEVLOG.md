@@ -1,5 +1,9 @@
 # easywed. — Development Log
 
+### 11.07
+
+- refine strings on landing page
+
 ### 10.07
 
 - add dietary badges in sidebar/guest list
