@@ -61,7 +61,7 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
             </nav>
             <Button asChild variant="outline" size="sm">
               {isSignedIn ? (
-                <Link to="/app">{t("auth.go_to_app", { lng: lang })}</Link>
+                <Link to="/home">{t("auth.go_to_app", { lng: lang })}</Link>
               ) : (
                 <Link to="/login">{t("auth.sign_in", { lng: lang })}</Link>
               )}

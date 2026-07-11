@@ -21,7 +21,7 @@ export function LandingHero({ lang }: { lang: Lang }) {
         </p>
         <div className="flex flex-wrap gap-3">
           <Button asChild size="lg">
-            <Link to="/app">{t("landing.cta", { lng: lang })}</Link>
+            <Link to="/home">{t("landing.cta", { lng: lang })}</Link>
           </Button>
           <Button asChild size="lg" variant="outline">
             <Link to="/wedding/local">

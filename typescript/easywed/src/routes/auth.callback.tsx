@@ -31,7 +31,7 @@ function AuthCallback() {
       })
       return
     }
-    navigate({ to: sanitizeNextPath(next) ?? "/app", replace: true })
+    navigate({ to: sanitizeNextPath(next) ?? "/home", replace: true })
   }, [isReady, session, next, navigate])
 
   return (

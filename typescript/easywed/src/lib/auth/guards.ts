@@ -28,7 +28,7 @@ export const redirectAuthedAwayFromLogin = (next?: unknown) => {
   if (!isReady || !session) return
 
   throw redirect({
-    to: sanitizeNextPath(next) ?? "/app",
+    to: sanitizeNextPath(next) ?? "/home",
     replace: true,
   })
 }

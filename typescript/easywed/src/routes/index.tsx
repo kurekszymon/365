@@ -3,7 +3,7 @@ import i18n from "@/i18n"
 
 // The root path is a language dispatcher: it sends visitors to the
 // language-pinned marketing landing (/pl or /en) based on the detected UI
-// language. The actual app dashboard lives at /app.
+// language. The actual app dashboard lives at /home.
 export const Route = createFileRoute("/")({
   beforeLoad: () => {
     // Language detection reads the browser (navigator / localStorage), which

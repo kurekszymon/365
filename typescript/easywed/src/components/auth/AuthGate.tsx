@@ -9,7 +9,7 @@ import i18n from "@/i18n"
 // Auth state still hydrates in the background for opportunistic use.
 const PUBLIC_PATHS = [
   "/",
-  "/app",
+  "/home",
   "/login",
   "/auth/callback",
   "/pl",

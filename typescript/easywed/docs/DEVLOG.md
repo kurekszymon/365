@@ -2,6 +2,7 @@
 
 ### 11.07
 
+- rename /app -> /home
 - refine strings on landing page
 
 ### 10.07

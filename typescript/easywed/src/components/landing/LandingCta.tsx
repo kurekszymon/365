@@ -17,7 +17,7 @@ export function LandingCta({ lang }: { lang: Lang }) {
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <Button asChild size="lg" variant="secondary">
-            <Link to="/app">{t("landing.cta", { lng: lang })}</Link>
+            <Link to="/home">{t("landing.cta", { lng: lang })}</Link>
           </Button>
           <Button
             asChild

@@ -33,7 +33,7 @@ const BackButton = (props: { weddingId?: string }) => {
 
   return (
     <Link
-      to="/app"
+      to="/home"
       title={t("planner.back")}
       aria-label={t("planner.back")}
       className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"

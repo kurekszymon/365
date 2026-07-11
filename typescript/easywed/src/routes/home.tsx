@@ -7,7 +7,7 @@ import { useDialogStore } from "@/stores/dialog.store"
 import { Button } from "@/components/ui/button"
 import { DialogManager } from "@/components/dialogs/DialogManager"
 
-export const Route = createFileRoute("/app")({
+export const Route = createFileRoute("/home")({
   component: Home,
 })
 
