@@ -2,6 +2,7 @@
 
 ### 13.07
 
+- add pencil icon to indicate editability of inline-edit component
 - remove GuestSeated component from header - it's in sidebar rail now
 
 ### 12.07

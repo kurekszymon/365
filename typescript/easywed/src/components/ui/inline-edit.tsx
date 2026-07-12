@@ -1,3 +1,4 @@
+import { PencilIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 
@@ -51,10 +52,14 @@ export const InlineEdit = ({ value, onSave, className }: InlineEditProps) => {
 
   return (
     <button
-      className={cn("truncate underline-offset-2 hover:underline", className)}
+      className={cn(
+        "group inline-flex cursor-pointer items-center gap-1 underline-offset-2 hover:underline",
+        className
+      )}
       onClick={startEditing}
     >
-      {value}
+      <span className="truncate">{value}</span>
+      <PencilIcon className="size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-60" />
     </button>
   )
 }
