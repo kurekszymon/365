@@ -20,8 +20,25 @@ import { useDialogStore } from "@/stores/dialog.store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { normalize } from "@/lib/import/guestsImport"
 
 type Filter = "all" | "unseated" | Dietary
+
+// True if every char of `needle` appears in `haystack` in order (a classic
+// fuzzy subsequence match), so "vgn" still finds "vegan" and a dropped letter
+// in a name doesn't hide the guest. Both sides are expected pre-normalized.
+const isSubsequence = (needle: string, haystack: string): boolean => {
+  let i = 0
+  for (const ch of haystack) {
+    if (i < needle.length && ch === needle[i]) i += 1
+  }
+  return i === needle.length
+}
+
+// Each whitespace-separated query token must fuzzily match the haystack, so
+// "ann veg" matches a vegan guest named Anna regardless of token order.
+const fuzzyMatch = (query: string, haystack: string): boolean =>
+  query.split(/\s+/).every((token) => token === "" || isSubsequence(token, haystack))
 
 const ALL_DIETARY: Array<Dietary> = [
   "vegetarian",
@@ -96,7 +113,18 @@ export const GuestListContent = () => {
     (d) => (dietaryCounts.get(d) ?? 0) > 0
   )
 
-  const normalizedQuery = searchQuery.trim().toLowerCase()
+  // Fold the name plus each dietary preference — both the raw key ("vegan")
+  // and its translated label ("Wegańska") — into one normalized blob so a
+  // fuzzy query can hit any of them.
+  const guestHaystack = (guest: Guest) =>
+    normalize(
+      [
+        guest.name,
+        ...guest.dietary.flatMap((d) => [d, t(`guests.dietary.${d}`)]),
+      ].join(" ")
+    )
+
+  const normalizedQuery = normalize(searchQuery)
   const filteredGuests = guests.filter((guest) => {
     if (filter === "unseated" && guest.tableId) return false
     if (
@@ -105,7 +133,7 @@ export const GuestListContent = () => {
       !guest.dietary.includes(filter)
     )
       return false
-    if (normalizedQuery && !guest.name.toLowerCase().includes(normalizedQuery))
+    if (normalizedQuery && !fuzzyMatch(normalizedQuery, guestHaystack(guest)))
       return false
     return true
   })

@@ -1,5 +1,9 @@
 # easywed. — Development Log
 
+### 12.07
+
+- add fuzzy search to GuestListContent
+
 ### 11.07
 
 - rename /app -> /home
