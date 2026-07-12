@@ -7,7 +7,6 @@ import { SidebarRail } from "./Sidebar/SidebarRail"
 import { EntityEditDialog } from "./Sidebar/EntityEditDialog"
 import { Header } from "./Header"
 import { ExportHeader } from "./Header/Export.header"
-import { GuestsSeated } from "./Header/GuestsSeated.header"
 import { ImportHeader } from "./Header/Import.header"
 import { PlannerPrintView } from "./PlannerPrintView"
 import { usePrintShortcut } from "./usePrintShortcut"
@@ -61,10 +60,6 @@ export const Planner = () => {
         <Header>
           <Header.Title weddingId={weddingId}>
             <Header.WeddingName />
-            <Header.Nav>
-              <GuestsSeated />
-              {/* <RemindersPreview /> */}
-            </Header.Nav>
           </Header.Title>
           <div className="ml-auto flex items-center gap-2">
             <Button

@@ -1,5 +1,9 @@
 # easywed. — Development Log
 
+### 13.07
+
+- remove GuestSeated component from header - it's in sidebar rail now
+
 ### 12.07
 
 - add fuzzy search to GuestListContent

@@ -38,7 +38,9 @@ const isSubsequence = (needle: string, haystack: string): boolean => {
 // Each whitespace-separated query token must fuzzily match the haystack, so
 // "ann veg" matches a vegan guest named Anna regardless of token order.
 const fuzzyMatch = (query: string, haystack: string): boolean =>
-  query.split(/\s+/).every((token) => token === "" || isSubsequence(token, haystack))
+  query
+    .split(/\s+/)
+    .every((token) => token === "" || isSubsequence(token, haystack))
 
 const ALL_DIETARY: Array<Dietary> = [
   "vegetarian",
