@@ -25,6 +25,7 @@ import { HallSurface } from "./HallSurface"
 import { findCapturedElement, isNoPan, snapPositionToGrid } from "./utils"
 import { useHallGeometry } from "./useHallGeometry"
 import { useCanvasPan } from "./useCanvasPan"
+import { useCanvasWheelPan } from "./useCanvasWheelPan"
 import { useCanvasClipboard } from "./useCanvasClipboard"
 import type { HallSurfaceMethods } from "./HallSurface"
 import {
@@ -156,6 +157,13 @@ export const Canvas = () => {
 
   const { isPanning, onPointerDown, onPointerUp } = useCanvasPan(pan, (p) =>
     setPan(clampPan(p))
+  )
+
+  // Two-finger trackpad / wheel panning, alongside the pointer-drag pan above.
+  useCanvasWheelPan(
+    containerEl,
+    () => pan,
+    (p) => setPan(clampPan(p))
   )
 
   // Re-clamp the existing pan whenever the allowed range can shrink (zoom out,
