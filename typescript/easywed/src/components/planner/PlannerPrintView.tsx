@@ -7,6 +7,7 @@ import { FixtureVisual } from "./Canvas/FixtureVisual"
 import { MeasureOverlay } from "./Canvas/MeasureOverlay"
 import { clampToHall } from "./Canvas/utils"
 import { SEAT_MAX_OFFSET_M } from "./Canvas/seatLayout"
+import type { TFunction } from "i18next"
 import type { Guest } from "@/stores/planner.store"
 import type { GuestField } from "@/lib/export/guestsCsv"
 import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
@@ -27,12 +28,16 @@ const SECTION_PADDING_PX = 48
 
 // The "table" column is never passed here (grouping carries it), so only the
 // other three fields are handled.
-const renderGuestFields = (g: Guest, fields: Array<GuestField>) => {
+const renderGuestFields = (
+  g: Guest,
+  fields: Array<GuestField>,
+  t: TFunction
+) => {
   const parts: Array<string> = []
   for (const f of fields) {
     if (f === "name") parts.push(g.name)
     else if (f === "dietary" && g.dietary.length > 0)
-      parts.push(g.dietary.join(", "))
+      parts.push(g.dietary.map((d) => t(`guests.dietary.${d}`)).join(", "))
     else if (f === "note" && g.note) parts.push(g.note)
   }
   return parts
@@ -321,7 +326,7 @@ export const PlannerPrintView = () => {
               ) : (
                 <ol className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
                   {tableGuests.map((g, idx) => {
-                    const parts = renderGuestFields(g, fields)
+                    const parts = renderGuestFields(g, fields, t)
                     return (
                       <li key={g.id} className="flex gap-1">
                         <span className="w-5 shrink-0 text-right text-gray-500">
@@ -346,7 +351,7 @@ export const PlannerPrintView = () => {
               </h3>
               <ol className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
                 {unassigned.map((g, idx) => {
-                  const parts = renderGuestFields(g, fields)
+                  const parts = renderGuestFields(g, fields, t)
                   return (
                     <li key={g.id} className="flex gap-1">
                       <span className="w-5 shrink-0 text-right text-gray-500">
