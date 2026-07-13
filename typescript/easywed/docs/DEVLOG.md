@@ -2,6 +2,7 @@
 
 ### 13.07
 
+- add table preview into table edit dialog
 - display selected guest first in seat popover
 - use wheel pan on canvas
 - improve pan boundaries

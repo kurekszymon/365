@@ -9,6 +9,7 @@ import { RectangularTable } from "./fields/TableRectDimensionsField"
 import { RoundTable } from "./fields/TableRoundDimensionsField"
 import { GuestAssignmentPicker } from "./fields/GuestAssignmentPicker"
 import { TableSeatList } from "./fields/TableSeatList"
+import { TableSeatMap } from "./fields/TableSeatMap"
 import { getSizeForShape, isDimensionsValidForShape } from "./fields/utils"
 import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
 
@@ -187,6 +188,14 @@ export const TablePanelContent = ({ tableId }: { tableId: string }) => {
             value={form.capacity}
             onChange={(capacity) => update({ capacity })}
             onBlur={persist}
+          />
+
+          <TableSeatMap
+            tableId={tableId}
+            shape={form.shape}
+            widthM={form.width}
+            heightM={form.shape === "round" ? form.width : form.height}
+            capacity={form.capacity}
           />
         </div>
 
