@@ -200,6 +200,7 @@
   "tables.guests_capacity_reached": "Osiągnięto pojemność stołu",
   "tables.guests_capacity_exceeded": "Wybrani goście przekraczają pojemność stołu",
   "tables.guests_none": "Brak gości do przypisania",
+  "tables.seat_order_hint": "Goście dodani bez wybranego miejsca zajmują wolne miejsca według numeracji (1, 2, 3…). Przydzielaj konkretne miejsca od góry, aby numeracja pozostała przewidywalna.",
   "tables.seat_list_title": "Miejsca",
   "tables.seat_assign_button": "+ Przypisz",
   "tables.capacity_count": "{{count}} miejsc",

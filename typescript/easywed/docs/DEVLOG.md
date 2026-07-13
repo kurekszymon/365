@@ -2,6 +2,7 @@
 
 ### 13.07
 
+- add tooltip explaining guest assignment'
 - add table preview into table edit dialog
 - display selected guest first in seat popover
 - use wheel pan on canvas

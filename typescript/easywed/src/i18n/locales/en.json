@@ -199,6 +199,7 @@
   "tables.guests_capacity_exceeded": "Selected guests exceed table capacity",
   "tables.guests_none": "No guests to assign yet",
   "tables.seat_list_title": "Seats",
+  "tables.seat_order_hint": "Guests added without a chosen seat fill the free seats in numerical order (1, 2, 3…). Pin specific seats from the top down so the numbering stays predictable.",
   "tables.seat_assign_button": "+ Assign",
   "tables.capacity_count": "{{count}} seats",
   "tables.capacity_count_one": "{{count}} seat",

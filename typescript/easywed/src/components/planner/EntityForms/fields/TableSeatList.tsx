@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { InfoIcon } from "lucide-react"
 import { getInitials } from "../../Canvas/utils"
 import { SeatAssignPopover } from "../../Canvas/SeatAssignPopover"
 import {
@@ -8,6 +9,11 @@ import {
 } from "../../Canvas/seatLayout"
 import { usePlannerStore } from "@/stores/planner.store"
 import { Button } from "@/components/ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 type TableSeatListProps = {
   tableId: string
@@ -36,7 +42,20 @@ export const TableSeatList = ({ tableId, capacity }: TableSeatListProps) => {
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-sm font-medium">{t("tables.seat_list_title")}</p>
+      <div className="flex items-center gap-1.5">
+        <p className="text-sm font-medium">{t("tables.seat_list_title")}</p>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex items-center text-muted-foreground">
+              <InfoIcon className="size-3.5" aria-hidden />
+              <span className="sr-only">{t("tables.seat_order_hint")}</span>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-64">
+            {t("tables.seat_order_hint")}
+          </TooltipContent>
+        </Tooltip>
+      </div>
       <div className="flex flex-col gap-1.5">
         {placed.map((seat, index) => {
           const guest = occupantBySeat.get(seat.id) ?? null
