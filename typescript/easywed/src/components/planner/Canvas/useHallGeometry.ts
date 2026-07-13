@@ -8,19 +8,34 @@ const VIEWPORT_MARGIN = 48
 // sitting flush against the edge.
 const PAN_PADDING = 48
 
-// Max pan offset on one axis. The hall is centered at offset 0; when it's larger
-// than the viewport it may pan until its edge sits PAN_PADDING inside (so the
-// edge stays visible).
-function axisMaxPan(scaled: number, container: number) {
+// Start-side (top/left) gutters reserved when the hall fits the viewport, so the
+// dimension labels that sit just outside the hall's top and left edges (the
+// vertical label at hallLeft - 52, the horizontal one at hallTop - 28) stay
+// on-screen instead of sliding under the viewport edge when panned to the limit.
+const LABEL_GUTTER_X = 64
+const LABEL_GUTTER_Y = 36
+
+// Allowed pan range on one axis. The hall is centered at offset 0.
+//
+// When the hall is larger than the viewport it may pan symmetrically until
+// either edge sits PAN_PADDING inside the opposite viewport edge (so the edge
+// stays visible). When it's smaller, it may slide until its far (right/bottom)
+// edge reaches the viewport edge, but the near (top/left) side stops
+// `startGutter` short so the dimension labels there remain visible. Passing
+// startGutter = 0 restores a plain edge-to-edge slide.
+function axisPanBounds(scaled: number, container: number, startGutter: number) {
   const overflow = scaled - container
-  if (overflow >= 0) return overflow / 2 + PAN_PADDING
-  // Hall smaller than the viewport on this axis: allow it to slide until an
-  // edge reaches the viewport edge. Previously this subtracted PAN_PADDING,
-  // which exactly cancelled the fit margin on the axis the base scale is
-  // constrained by (VIEWPORT_MARGIN === PAN_PADDING), pinning that axis to a
-  // zero range — e.g. a hall that fits the height of a phone couldn't be
-  // panned vertically at all, only horizontally.
-  return -overflow / 2
+  if (overflow >= 0) {
+    const m = overflow / 2 + PAN_PADDING
+    return { min: -m, max: m }
+  }
+  // Hall smaller than the viewport on this axis. `center` is the distance from
+  // the viewport edge to the hall edge at pan 0 (= hallLeft/hallTop then).
+  // Previously the near side used -center too (mirroring `max`), which let the
+  // labelled edge slide flush to the viewport edge and clipped the labels.
+  const center = -overflow / 2
+  const max = center
+  return { min: Math.min(startGutter - center, max), max }
 }
 
 type HallDimensions = { width: number; height: number }
@@ -78,14 +93,18 @@ export function useHallGeometry(
   }
 
   // Constrain pan so the hall always stays within the visible canvas rect, with
-  // a PAN_PADDING gutter to the edge (see axisMaxPan).
+  // a PAN_PADDING gutter to the edge (see axisPanBounds).
   const clampPan = useCallback(
     (p: Position): Position => {
-      const maxX = axisMaxPan(scaledWidth, containerWidth)
-      const maxY = axisMaxPan(scaledHeight, containerHeight)
+      const boundsX = axisPanBounds(scaledWidth, containerWidth, LABEL_GUTTER_X)
+      const boundsY = axisPanBounds(
+        scaledHeight,
+        containerHeight,
+        LABEL_GUTTER_Y
+      )
       return {
-        x: Math.max(-maxX, Math.min(maxX, p.x)),
-        y: Math.max(-maxY, Math.min(maxY, p.y)),
+        x: Math.max(boundsX.min, Math.min(boundsX.max, p.x)),
+        y: Math.max(boundsY.min, Math.min(boundsY.max, p.y)),
       }
     },
     [scaledWidth, scaledHeight, containerWidth, containerHeight]
@@ -117,11 +136,19 @@ export function useHallGeometry(
     const rawX = fx - mX * newPpm - (containerWidth - newScaledWidth) / 2
     const rawY = fy - mY * newPpm - (containerHeight - newScaledHeight) / 2
 
-    const maxX = axisMaxPan(newScaledWidth, containerWidth)
-    const maxY = axisMaxPan(newScaledHeight, containerHeight)
+    const boundsX = axisPanBounds(
+      newScaledWidth,
+      containerWidth,
+      LABEL_GUTTER_X
+    )
+    const boundsY = axisPanBounds(
+      newScaledHeight,
+      containerHeight,
+      LABEL_GUTTER_Y
+    )
     return {
-      x: Math.max(-maxX, Math.min(maxX, rawX)),
-      y: Math.max(-maxY, Math.min(maxY, rawY)),
+      x: Math.max(boundsX.min, Math.min(boundsX.max, rawX)),
+      y: Math.max(boundsY.min, Math.min(boundsY.max, rawY)),
     }
   }
 

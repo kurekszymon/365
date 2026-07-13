@@ -3,7 +3,7 @@
 ### 13.07
 
 - use wheel pan on canvas
--
+- improve pan boundaries
 - add pencil icon to indicate editability of inline-edit component
 - remove GuestSeated component from header - it's in sidebar rail now
 
