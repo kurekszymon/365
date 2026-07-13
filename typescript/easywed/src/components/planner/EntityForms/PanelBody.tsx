@@ -10,8 +10,17 @@ import type { PanelView } from "@/stores/panel.store"
  * The inner content of a panel view, switched on its kind. Layout-agnostic so
  * it can render inside both the desktop `Sidebar/EntityEditDialog` and the
  * mobile bottom drawer (see `MobilePanelDrawer.tsx`).
+ *
+ * `fillHeight` opts the table form into the desktop dialog's fixed-height,
+ * scroll-only-the-list layout; the mobile drawer leaves it off (natural flow).
  */
-export const PanelBody = ({ view }: { view: PanelView }) => (
+export const PanelBody = ({
+  view,
+  fillHeight = false,
+}: {
+  view: PanelView
+  fillHeight?: boolean
+}) => (
   <>
     {view.kind === "hall" && <HallPanelContent />}
     {view.kind === "tables.batch_add" && (
@@ -21,6 +30,7 @@ export const PanelBody = ({ view }: { view: PanelView }) => (
       <TablePanelContent
         key={`table.edit.${view.tableId}`}
         tableId={view.tableId}
+        fillHeight={fillHeight}
       />
     )}
     {view.kind === "fixture.edit" && (

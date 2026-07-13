@@ -2,6 +2,8 @@
 
 ### 13.07
 
+- center preview, make only right hand side of edit table scrollable (on desktop)
+- fix localization of dietary preferences in print
 - add tooltip explaining guest assignment'
 - add table preview into table edit dialog
 - display selected guest first in seat popover

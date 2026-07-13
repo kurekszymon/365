@@ -23,8 +23,10 @@ export const RectangularTable = ({
 }: RectangularTableProps) => {
   const { t } = useTranslation()
 
+  // Width and height share one row so the form stays short — the table edit
+  // dialog needs the reclaimed vertical space for the seat preview below.
   return (
-    <>
+    <div className="grid grid-cols-2 gap-3">
       <Field>
         <FieldLabel>{t("common.width")}</FieldLabel>
         <FieldContent>
@@ -64,6 +66,6 @@ export const RectangularTable = ({
           )}
         </FieldContent>
       </Field>
-    </>
+    </div>
   )
 }

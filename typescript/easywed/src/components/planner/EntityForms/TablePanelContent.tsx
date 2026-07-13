@@ -12,13 +12,23 @@ import { TableSeatList } from "./fields/TableSeatList"
 import { TableSeatMap } from "./fields/TableSeatMap"
 import { getSizeForShape, isDimensionsValidForShape } from "./fields/utils"
 import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
+import { cn } from "@/lib/utils"
 
 /**
  * Edit form for one table. Add flows don't come through here anymore — new
  * tables are inserted directly from a preset (add hub, canvas context menu)
  * and then routed to this edit view.
+ *
+ * `fillHeight` (desktop dialog only): fill a fixed-height shell — center the
+ * preview in the left column's leftover space and scroll only the seat list.
  */
-export const TablePanelContent = ({ tableId }: { tableId: string }) => {
+export const TablePanelContent = ({
+  tableId,
+  fillHeight = false,
+}: {
+  tableId: string
+  fillHeight?: boolean
+}) => {
   const { t } = useTranslation()
 
   const { hallDimensions, updateTable, saveTable } = usePlannerStore(
@@ -146,9 +156,19 @@ export const TablePanelContent = ({ tableId }: { tableId: string }) => {
     // reads wider than tall instead of one long scroll. The narrow mobile
     // drawer keeps its container below the `@xl` threshold, so it stays single
     // column.
-    <div className="@container">
-      <div className="grid grid-cols-1 gap-x-6 gap-y-4 @xl:grid-cols-2">
-        <div className="flex min-w-0 flex-col gap-4">
+    <div className={cn("@container", fillHeight && "h-full")}>
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-x-6 gap-y-4 @xl:grid-cols-2",
+          fillHeight && "@xl:h-full @xl:min-h-0"
+        )}
+      >
+        <div
+          className={cn(
+            "flex min-w-0 flex-col gap-4",
+            fillHeight && "@xl:min-h-0"
+          )}
+        >
           <TableNameField
             value={form.name}
             onChange={(name) => update({ name })}
@@ -190,16 +210,31 @@ export const TablePanelContent = ({ tableId }: { tableId: string }) => {
             onBlur={persist}
           />
 
-          <TableSeatMap
-            tableId={tableId}
-            shape={form.shape}
-            widthM={form.width}
-            heightM={form.shape === "round" ? form.width : form.height}
-            capacity={form.capacity}
-          />
+          {/* Center the preview in whatever vertical space the config fields
+              leave, so it sits in the middle of the column rather than jammed
+              under the capacity field. */}
+          <div
+            className={cn(
+              fillHeight &&
+                "@xl:flex @xl:min-h-0 @xl:flex-1 @xl:items-center @xl:justify-center"
+            )}
+          >
+            <TableSeatMap
+              tableId={tableId}
+              shape={form.shape}
+              widthM={form.width}
+              heightM={form.shape === "round" ? form.width : form.height}
+              capacity={form.capacity}
+            />
+          </div>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-4">
+        <div
+          className={cn(
+            "flex min-w-0 flex-col gap-4",
+            fillHeight && "@xl:min-h-0"
+          )}
+        >
           <GuestAssignmentPicker
             tableId={tableId}
             capacity={form.capacity}
@@ -210,7 +245,11 @@ export const TablePanelContent = ({ tableId }: { tableId: string }) => {
             }}
           />
 
-          <TableSeatList tableId={tableId} capacity={form.capacity} />
+          <TableSeatList
+            tableId={tableId}
+            capacity={form.capacity}
+            fillHeight={fillHeight}
+          />
         </div>
       </div>
     </div>

@@ -14,10 +14,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { cn } from "@/lib/utils"
 
 type TableSeatListProps = {
   tableId: string
   capacity: number
+  // When true (desktop dialog), fill the available height and scroll only the
+  // seat rows, keeping the title pinned. Off = natural flow (mobile drawer).
+  fillHeight?: boolean
 }
 
 // Numbered seat list for the table edit form's "Szczegóły stołu" sub-view.
@@ -25,7 +29,11 @@ type TableSeatListProps = {
 // the canvas's seat markers) rather than a third assign UI. Seat ids are
 // order-based only (no geometry), so this also works for `custom` polygon
 // tables, which have no auto seat layout on the canvas.
-export const TableSeatList = ({ tableId, capacity }: TableSeatListProps) => {
+export const TableSeatList = ({
+  tableId,
+  capacity,
+  fillHeight = false,
+}: TableSeatListProps) => {
   const { t } = useTranslation()
   const [openSeatId, setOpenSeatId] = useState<string | null>(null)
   const guests = usePlannerStore((state) => state.guests)
@@ -41,7 +49,12 @@ export const TableSeatList = ({ tableId, capacity }: TableSeatListProps) => {
   if (capacity <= 0) return null
 
   return (
-    <div className="flex flex-col gap-2">
+    <div
+      className={cn(
+        "flex flex-col gap-2",
+        fillHeight && "@xl:min-h-0 @xl:flex-1"
+      )}
+    >
       <div className="flex items-center gap-1.5">
         <p className="text-sm font-medium">{t("tables.seat_list_title")}</p>
         <Tooltip>
@@ -56,7 +69,12 @@ export const TableSeatList = ({ tableId, capacity }: TableSeatListProps) => {
           </TooltipContent>
         </Tooltip>
       </div>
-      <div className="flex flex-col gap-1.5">
+      <div
+        className={cn(
+          "flex flex-col gap-1.5",
+          fillHeight && "@xl:min-h-0 @xl:flex-1 @xl:overflow-y-auto @xl:pr-1"
+        )}
+      >
         {placed.map((seat, index) => {
           const guest = occupantBySeat.get(seat.id) ?? null
           return (

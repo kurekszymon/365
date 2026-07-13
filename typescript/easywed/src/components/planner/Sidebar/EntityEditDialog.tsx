@@ -52,7 +52,15 @@ export const EntityEditDialog = () => {
       <DialogContent
         aria-describedby={undefined}
         showCloseButton={false}
-        className={wide ? "sm:max-w-3xl" : "sm:max-w-md"}
+        // The table form gets a fixed-height, non-scrolling shell: the form
+        // fills it and scrolls only its own seat list (see TablePanelContent),
+        // so the table preview can center in the left column's leftover space.
+        // Other views stay compact and scroll as a whole.
+        className={
+          wide
+            ? "flex h-[80vh] flex-col overflow-hidden sm:max-w-3xl"
+            : "sm:max-w-md"
+        }
       >
         {/* Every view this dialog hosts (hall/table/fixture/batch) applies its
             edits live, so dismissing it is a "done" confirmation. Mirror the
@@ -68,7 +76,14 @@ export const EntityEditDialog = () => {
             <CheckIcon className="size-5" />
           </button>
         </DialogHeader>
-        {dialogView && <PanelBody view={dialogView} />}
+        {dialogView &&
+          (wide ? (
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <PanelBody view={dialogView} fillHeight />
+            </div>
+          ) : (
+            <PanelBody view={dialogView} />
+          ))}
       </DialogContent>
     </Dialog>
   )
