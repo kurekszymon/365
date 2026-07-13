@@ -42,16 +42,19 @@ export const SeatAssignPopover = ({
   const clearSeat = usePlannerStore((state) => state.clearSeat)
 
   const normalizedQuery = searchQuery.trim().toLowerCase()
-  // Three groups, most-relevant first: guests already at this table (seatless
-  // ones first — the natural candidates), then unassigned guests, then guests
-  // seated at another table (the amber "moves them" affordance).
+  // The seat's current occupant leads the list (own section), then guests
+  // already at this table (seatless ones first — the natural candidates), then
+  // unassigned guests, then guests seated at another table (the amber "moves
+  // them" affordance).
   const groups = useMemo(() => {
+    const selected: Array<Guest> = []
     const atTable: Array<Guest> = []
     const unassigned: Array<Guest> = []
     const elsewhere: Array<Guest> = []
     for (const g of guests) {
       if (!g.name.toLowerCase().includes(normalizedQuery)) continue
-      if (g.tableId === tableId) atTable.push(g)
+      if (g.id === occupantId) selected.push(g)
+      else if (g.tableId === tableId) atTable.push(g)
       else if (g.tableId == null) unassigned.push(g)
       else elsewhere.push(g)
     }
@@ -63,12 +66,15 @@ export const SeatAssignPopover = ({
     })
     unassigned.sort((a, b) => a.name.localeCompare(b.name))
     elsewhere.sort((a, b) => a.name.localeCompare(b.name))
-    return { atTable, unassigned, elsewhere }
-  }, [guests, normalizedQuery, tableId])
+    return { selected, atTable, unassigned, elsewhere }
+  }, [guests, normalizedQuery, tableId, occupantId])
 
   const hasGuests = guests.length > 0
   const hasFiltered =
-    groups.atTable.length + groups.unassigned.length + groups.elsewhere.length >
+    groups.selected.length +
+      groups.atTable.length +
+      groups.unassigned.length +
+      groups.elsewhere.length >
     0
 
   const handleListWheel = (e: WheelEvent<HTMLDivElement>) => {
@@ -109,6 +115,12 @@ export const SeatAssignPopover = ({
     items: Array<Guest>
     elsewhere: boolean
   }> = [
+    {
+      key: "selected",
+      label: t("seats.group_selected"),
+      items: groups.selected,
+      elsewhere: false,
+    },
     {
       key: "table",
       label: t("seats.group_table"),

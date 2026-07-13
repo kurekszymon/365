@@ -2,6 +2,7 @@
 
 ### 13.07
 
+- display selected guest first in seat popover
 - use wheel pan on canvas
 - improve pan boundaries
 - add pencil icon to indicate editability of inline-edit component

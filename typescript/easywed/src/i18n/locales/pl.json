@@ -369,6 +369,7 @@
   "seats.current": "Obecne",
   "seats.numbered": "Miejsce {{n}}",
   "seats.assign_at": "Posadź na miejscu {{n}}",
+  "seats.group_selected": "Aktualnie na tym miejscu",
   "seats.group_table": "Przy tym stole",
   "seats.group_unassigned": "Bez stołu",
   "seats.group_elsewhere": "Przy innym stole",
