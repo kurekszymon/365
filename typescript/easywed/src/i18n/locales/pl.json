@@ -146,6 +146,7 @@
 
   "wedding": "Wesele",
   "wedding.rename": "Zmień nazwę wesela",
+  "wedding.default_local_name": "Twoje wesele",
   "wedding.loading": "Wczytywanie wesela...",
   "wedding.load_failed": "Nie udało się wczytać wesela. Spróbuj ponownie.",
 
@@ -338,6 +339,7 @@
   "hall.add_hub.fixtures_tab": "Elementy sali",
 
   "reminders.title": "Przypomnienia",
+  "reminders.empty": "Brak przypomnień",
   "reminders.navigate": "Przejdź do przypomnień",
   "reminders.create.title": "Utwórzcie przypomnienie",
   "reminders.create.content_placeholder": "o czym myślicie",

@@ -1,5 +1,9 @@
 # easywed. — Development Log
 
+### 14.07
+
+- restore reminders preview, align for local wedding
+
 ### 13.07
 
 - center preview, make only right hand side of edit table scrollable (on desktop)

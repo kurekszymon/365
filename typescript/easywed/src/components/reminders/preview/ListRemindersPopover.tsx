@@ -8,10 +8,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { Route } from "@/routes/wedding.$id"
+import { useGlobalStore } from "@/stores/global.store"
+import { isLocalWedding } from "@/lib/localWedding"
 
 export const ListRemindersPopover = () => {
-  const { id } = Route.useParams()
+  // weddingId comes from the global store rather than route params so this
+  // renders under both /wedding/$id/planner and /wedding/local/planner. The
+  // local wedding has no reminders subroute, so the "open reminders" link is
+  // hidden there.
+  const weddingId = useGlobalStore((state) => state.weddingId)
 
   const { t } = useTranslation()
 
@@ -25,12 +30,14 @@ export const ListRemindersPopover = () => {
       </PopoverTrigger>
       <PopoverContent className="w-64" align="start">
         <ReminderList />
-        <Button variant={"link"}>
-          <Link to="/wedding/$id/reminders" params={{ id }}>
-            {t("reminders.navigate")}
-          </Link>
-          <ExternalLinkIcon />
-        </Button>
+        {weddingId && !isLocalWedding(weddingId) && (
+          <Button variant={"link"}>
+            <Link to="/wedding/$id/reminders" params={{ id: weddingId }}>
+              {t("reminders.navigate")}
+            </Link>
+            <ExternalLinkIcon />
+          </Button>
+        )}
       </PopoverContent>
     </Popover>
   )

@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { updateWedding } from "@/lib/sync/mutations"
+import i18n from "@/i18n"
 import {
   GLOBAL_STORAGE_KEY,
   localGlobalStorage,
@@ -77,6 +78,17 @@ export const useGlobalStore = create<State & Action>()(
       // / loadWedding.ts) and viewport is already persisted per-wedding by
       // view.store.ts.
       partialize: (state) => ({ name: state.name, date: state.date }),
+      // rehydrate() is only ever called for the local wedding (skipHydration is
+      // true and wedding.local.tsx is the sole caller), so this merge runs
+      // exclusively in guest mode. Give a first-time guest with no persisted
+      // name a friendly, still-editable default instead of a blank header.
+      merge: (persisted, current) => {
+        const merged = { ...current, ...(persisted as Partial<State>) }
+        if (!merged.name?.trim()) {
+          merged.name = i18n.t("wedding.default_local_name")
+        }
+        return merged
+      },
     }
   )
 )
