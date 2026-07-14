@@ -36,7 +36,7 @@ function WeddingHub() {
             </p>
           </Link>
 
-          {/* <Link
+          <Link
             to="/wedding/$id/reminders"
             params={{ id }}
             className="rounded-md border bg-card p-4 hover:bg-accent"
@@ -45,7 +45,7 @@ function WeddingHub() {
             <p className="text-sm text-muted-foreground">
               {t("wedding.hub.reminders_desc")}
             </p>
-          </Link> */}
+          </Link>
         </div>
       </div>
     </div>

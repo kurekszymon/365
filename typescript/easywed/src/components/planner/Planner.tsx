@@ -13,6 +13,7 @@ import { usePrintShortcut } from "./usePrintShortcut"
 import { MobilePanelDrawer } from "./EntityForms/MobilePanelDrawer"
 import { ThemeSwitcher } from "./Header/ThemeSwitcher"
 import { GuestModeBanner } from "./GuestModeBanner"
+import { RemindersPreview } from "@/components/reminders/preview/RemindersPreview"
 import { isLocalWedding } from "@/lib/localWedding"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Button } from "@/components/ui/button"
@@ -62,6 +63,7 @@ export const Planner = () => {
             <Header.WeddingName />
           </Header.Title>
           <div className="ml-auto flex items-center gap-2">
+            <RemindersPreview />
             <Button
               variant="outline"
               onClick={openHall}
