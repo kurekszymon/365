@@ -33,8 +33,9 @@ export function useWeddingMemberEmails(): Array<MemberEmail> {
           return
         }
         // setState only after awaiting the fetch — an external-data sync.
+        // `data` can be null even without an error; default to an empty list.
         setMembers(
-          data.map((m) => ({
+          (data ?? []).map((m) => ({
             userId: m.user_id,
             email: m.email,
             role: m.role,

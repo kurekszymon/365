@@ -28,4 +28,5 @@ as $$
     and public.is_wedding_member(_wedding_id);
 $$;
 
+revoke all on function public.wedding_member_emails(uuid) from public;
 grant execute on function public.wedding_member_emails(uuid) to authenticated;
