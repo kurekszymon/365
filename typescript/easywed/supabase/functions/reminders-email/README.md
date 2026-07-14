@@ -24,7 +24,7 @@ The caller's JWT is forwarded, so all DB access runs under RLS — no service-ro
 ```bash
 # supabase/functions/.env  (gitignored)
 echo 'RESEND_API_KEY=re_...' >> supabase/functions/.env
-echo 'RESEND_FROM=onboarding@resend.dev' >> supabase/functions/.env
+# RESEND_FROM is optional locally — it defaults to onboarding@resend.dev.
 
 supabase functions serve reminders-email --env-file supabase/functions/.env
 ```

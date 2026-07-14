@@ -18,14 +18,15 @@ export const RecipientEmailInput = ({
 }) => {
   const { t } = useTranslation()
   const listId = useId()
+  const inputId = useId()
 
   return (
     <Field>
-      <FieldLabel htmlFor="reminder-recipient">
+      <FieldLabel htmlFor={inputId}>
         {t("reminders.recipient.label")}
       </FieldLabel>
       <Input
-        id="reminder-recipient"
+        id={inputId}
         type="email"
         list={members.length > 0 ? listId : undefined}
         value={value}

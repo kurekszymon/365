@@ -35,8 +35,11 @@ const json = (body: unknown, status = 200): Response =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   })
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"))
-const FROM = Deno.env.get("RESEND_FROM") ?? "reminders@mail.easywed.app"
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")
+const resend = new Resend(RESEND_API_KEY)
+// Falls back to Resend's always-verified test sender so local setup works with
+// no domain configured (matches README).
+const FROM = Deno.env.get("RESEND_FROM") ?? "onboarding@resend.dev"
 
 const subjectFor = (text: string, locale: ReminderLocale): string => {
   const firstLine = text.split("\n")[0].trim()
@@ -49,6 +52,13 @@ const subjectFor = (text: string, locale: ReminderLocale): string => {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
+  }
+
+  if (!RESEND_API_KEY) {
+    return json(
+      { error: "Email service is not configured (RESEND_API_KEY is unset)" },
+      500
+    )
   }
 
   const authHeader = req.headers.get("Authorization")
@@ -97,7 +107,10 @@ Deno.serve(async (req) => {
   try {
     if (action === "cancel") {
       if (reminder.scheduled_email_id) {
-        await resend.emails.cancel(reminder.scheduled_email_id)
+        const { error } = await resend.emails.cancel(reminder.scheduled_email_id)
+        // Surface the failure instead of marking the reminder canceled while the
+        // scheduled email is still live in Resend (would fire later).
+        if (error) throw error
       }
       patch.email_status = "canceled"
       patch.scheduled_email_id = null
@@ -128,8 +141,11 @@ Deno.serve(async (req) => {
       patch.email_status = "scheduled"
     } else {
       // action === "send": deliver now; drop any pending scheduled copy first.
+      // Fail if the cancel doesn't succeed — otherwise the scheduled copy could
+      // still fire later and the recipient gets the reminder twice.
       if (reminder.scheduled_email_id) {
-        await resend.emails.cancel(reminder.scheduled_email_id).catch(() => {})
+        const { error } = await resend.emails.cancel(reminder.scheduled_email_id)
+        if (error) throw error
       }
       const { data, error } = await resend.emails.send({
         from: FROM,

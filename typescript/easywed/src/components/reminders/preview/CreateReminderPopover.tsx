@@ -34,7 +34,7 @@ export const CreateReminderPopover = () => {
 
   const handleSave = () => {
     if (!text.trim()) return
-    setReminders(text, due, recipient.trim() || undefined)
+    setReminders(text.trim(), due, recipient.trim() || undefined)
     setText("")
     setDue(undefined)
     setRecipient("")
