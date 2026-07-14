@@ -1,9 +1,8 @@
 import { useTranslation } from "react-i18next"
 import { PlusIcon } from "lucide-react"
-import { useState } from "react"
-import { Field, FieldGroup } from "@/components/ui/field"
-import { DatePicker } from "@/components/ui/datepicker"
-import { Textarea } from "@/components/ui/textarea"
+import { useEffect, useState } from "react"
+import { ReminderFormFields } from "./ReminderFormFields"
+import { useWeddingMemberEmails } from "./useWeddingMemberEmails"
 import { Button } from "@/components/ui/button"
 import {
   Popover,
@@ -17,18 +16,28 @@ import { useRemindersStore } from "@/stores/reminders.store"
 export const CreateReminderPopover = () => {
   const { t } = useTranslation()
 
-  const [due, setDueDate] = useState<Date>()
+  const [due, setDue] = useState<Date>()
   const [open, setOpen] = useState(false)
-  const [reminderContent, setReminderContent] = useState<string>()
+  const [text, setText] = useState("")
+  const [recipient, setRecipient] = useState("")
 
+  const members = useWeddingMemberEmails()
   const setReminders = useRemindersStore((state) => state.setReminders)
 
-  const handleSaveReminders = () => {
-    if (!reminderContent) return
+  // With a single member (typically a solo planner), default the recipient to
+  // their address so the common case needs no typing. One-shot sync from the
+  // async-loaded member list; the `!recipient` guard keeps it from cascading.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (members.length === 1 && !recipient) setRecipient(members[0].email)
+  }, [members, recipient])
 
-    setReminders(reminderContent, due)
-    setReminderContent("")
-    setDueDate(undefined)
+  const handleSave = () => {
+    if (!text.trim()) return
+    setReminders(text.trim(), due, recipient.trim() || undefined)
+    setText("")
+    setDue(undefined)
+    setRecipient("")
     setOpen(false)
   }
 
@@ -39,26 +48,26 @@ export const CreateReminderPopover = () => {
           <PlusIcon />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64" align="center">
+      <PopoverContent className="w-72" align="center">
         <PopoverHeader>
           <PopoverTitle>{t("reminders.create.title")}</PopoverTitle>
         </PopoverHeader>
-        <FieldGroup className="gap-4">
-          <Field orientation="horizontal">
-            <Textarea
-              onChange={(e) => setReminderContent(e.target.value)}
-              placeholder={t("reminders.create.content_placeholder")}
-            />
-          </Field>
-          <DatePicker
-            setDate={setDueDate}
-            date={due}
-            placeholderTlKey="reminders.create.date_prompt"
-          />
-          <Button disabled={!reminderContent} onClick={handleSaveReminders}>
-            {t("common.create")}
-          </Button>
-        </FieldGroup>
+        <ReminderFormFields
+          text={text}
+          onTextChange={setText}
+          due={due}
+          onDueChange={setDue}
+          recipient={recipient}
+          onRecipientChange={setRecipient}
+          members={members}
+        />
+        <Button
+          className="mt-4 w-full"
+          disabled={!text.trim()}
+          onClick={handleSave}
+        >
+          {t("common.create")}
+        </Button>
       </PopoverContent>
     </Popover>
   )

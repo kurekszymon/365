@@ -233,7 +233,11 @@ export type Database = {
         Row: {
           created_at: string
           due: string | null
+          email_status: string
           id: string
+          recipient_email: string | null
+          scheduled_email_id: string | null
+          sent_at: string | null
           status: string
           text: string
           updated_at: string
@@ -242,7 +246,11 @@ export type Database = {
         Insert: {
           created_at?: string
           due?: string | null
+          email_status?: string
           id: string
+          recipient_email?: string | null
+          scheduled_email_id?: string | null
+          sent_at?: string | null
           status: string
           text: string
           updated_at?: string
@@ -251,7 +259,11 @@ export type Database = {
         Update: {
           created_at?: string
           due?: string | null
+          email_status?: string
           id?: string
+          recipient_email?: string | null
+          scheduled_email_id?: string | null
+          sent_at?: string | null
           status?: string
           text?: string
           updated_at?: string
@@ -447,6 +459,14 @@ export type Database = {
           p_wedding_id: string
         }
         Returns: undefined
+      }
+      wedding_member_emails: {
+        Args: { _wedding_id: string }
+        Returns: {
+          email: string
+          role: string
+          user_id: string
+        }[]
       }
       wedding_role: { Args: { _wedding_id: string }; Returns: string }
     }

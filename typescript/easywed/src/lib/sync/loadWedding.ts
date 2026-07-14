@@ -62,7 +62,9 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
 
     supabase
       .from("reminders")
-      .select("id, text, due, status, created_at, updated_at")
+      .select(
+        "id, text, due, status, created_at, updated_at, recipient_email, email_status, scheduled_email_id, sent_at"
+      )
       .eq("wedding_id", id)
       .abortSignal(signal),
 
@@ -151,6 +153,10 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     status: r.status as "open" | "completed",
     createdAt: new Date(r.created_at),
     updatedAt: new Date(r.updated_at),
+    recipientEmail: r.recipient_email ?? undefined,
+    emailStatus: r.email_status as Reminder["emailStatus"],
+    scheduledEmailId: r.scheduled_email_id ?? undefined,
+    sentAt: r.sent_at ? new Date(r.sent_at) : undefined,
   }))
 
   useRemindersStore.setState({ reminders })
