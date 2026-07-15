@@ -1,5 +1,9 @@
 # easywed. — Development Log
 
+### 15.07
+
+- sort exported table names by Intl.Collator (prevent sorting lexicographically or numerically)
+
 ### 14.07
 
 - restore reminders preview, align for local wedding
