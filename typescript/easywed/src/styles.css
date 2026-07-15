@@ -79,9 +79,8 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Blush & Gold — warm cream, dusty rose, soft gold. The default palette.
+   Blush & Gold — warm cream, dusty rose, soft gold.
    ──────────────────────────────────────────────────────────────────────── */
-:root,
 [data-theme="blush"] {
   --background: oklch(0.963 0.013 70);
   --foreground: oklch(0.26 0.022 40);
@@ -167,7 +166,9 @@
 
 /* ─────────────────────────────────────────────────────────────────────────
    Editorial Cream & Ink — warm cream, near-black ink, restrained plum.
+   The default palette.
    ──────────────────────────────────────────────────────────────────────── */
+:root,
 [data-theme="editorial"] {
   --background: oklch(0.953 0.012 85);
   --foreground: oklch(0.2 0.012 60);

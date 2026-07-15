@@ -2,7 +2,8 @@
 
 ### 15.07
 
-- sort exported table names by Intl.Collator (prevent sorting lexicographically or numerically)
+- change default theme
+- sort exported table names by Intl.Collator (prevent sorting lexicographically or numerically) -- deploy
 
 ### 14.07
 

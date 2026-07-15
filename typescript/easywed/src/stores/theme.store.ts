@@ -3,9 +3,9 @@ import { persist } from "zustand/middleware"
 
 export type Theme = "blush" | "sage" | "editorial"
 
-export const THEMES: Array<Theme> = ["blush", "sage", "editorial"]
+export const THEMES: Array<Theme> = ["editorial", "blush", "sage"]
 
-export const DEFAULT_THEME: Theme = "blush"
+export const DEFAULT_THEME: Theme = "editorial"
 
 export const THEME_STORAGE_KEY = "easywed.theme"
 
