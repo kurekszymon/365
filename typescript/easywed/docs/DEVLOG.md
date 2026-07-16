@@ -1,14 +1,17 @@
 # easywed. — Development Log
 
+<!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
+
 ### 16.07
 
-- move reminders to sidebar, remove empty route -- deploy
+- mark past deployments
+- move reminders to sidebar, remove empty route -- deploy (aa76ef8)
 - let user choose sorting alphabetically/by table seats in exports
 
 ### 15.07
 
 - change default theme
-- sort exported table names by Intl.Collator (prevent sorting lexicographically or numerically) -- deploy
+- sort exported table names by Intl.Collator (prevent sorting lexicographically or numerically) -- deploy (5e8f163)
 
 --- started marking deploys for easy reference
 
@@ -18,62 +21,62 @@
 
 ### 13.07
 
-- center preview, make only right hand side of edit table scrollable (on desktop)
+- center preview, make only right hand side of edit table scrollable (on desktop) -- deploy (6c8aab6)
 - fix localization of dietary preferences in print
-- add tooltip explaining guest assignment'
+- add tooltip explaining guest assignment' -- deploy (2059e66)
 - add table preview into table edit dialog
-- display selected guest first in seat popover
+- display selected guest first in seat popover -- deploy (4234ea2)
 - use wheel pan on canvas
-- improve pan boundaries
+- improve pan boundaries -- deploy (2c808c6)
 - add pencil icon to indicate editability of inline-edit component
 - remove GuestSeated component from header - it's in sidebar rail now
 
 ### 12.07
 
-- add fuzzy search to GuestListContent
+- add fuzzy search to GuestListContent -- deploy (1df22b8)
 
 ### 11.07
 
-- rename /app -> /home
+- rename /app -> /home -- deploy (960c99d)
 - refine strings on landing page
 
 ### 10.07
 
-- add dietary badges in sidebar/guest list
+- add dietary badges in sidebar/guest list -- deploy (379824c)
 - open edit entity on double click
-- add Go to the app when user is signed in on LocaleLanding
+- add Go to the app when user is signed in on LocaleLanding -- deploy (923015e)
 
 ### 09.07
 
-- fix overflow in guest assignment picker
+- fix overflow in guest assignment picker -- deploy (0df693c)
 - add delete table/fixutre from canvas context menu
 - add option to soft delete guests
 
 ### 08.07
 
-- fix minimap geometry
-- fix clear seat
+- fix minimap geometry -- deploy (381c7bf, ac8af5b)
+- fix clear seat -- deploy (26341ba)
 - dont open edit table/fixture on click, but select
-- add edit table/fixture in contextmenu
+- add edit table/fixture in contextmenu -- deploy (1d66add)
 - dont open hall configure on hall click
-- redirect to /app after logging in
-- add option to login with enter
+- redirect to /app after logging in -- deploy (69f764d)
+- add option to login with enter -- deploy (a1b7ee9)
 
 ### 07.07
 
 - add edit-guest dialog (name / dietary / note), reachable via a pencil on each guest row — shares fields with add-guest via `GuestFormFields`, persists through new `updateGuest` store action + `updateGuestDetails` mutation
-- guest list: clear the search after seating a searched guest, add an `x` clear button to the search input
+- guest list: clear the search after seating a searched guest, add an `x` clear button to the search input -- deploy (77a0fba)
 
 ### 06.07
 
-- use confirm icon button instead of X for dialogs acknowledgment
+- use confirm icon button instead of X for dialogs acknowledgment -- deploy (8c12523)
 
 ### 05.07
 
 - mobile: lift zoom controls + add-FAB above the bottom tab bar (were hidden under it), size planner with `dvh` so it respects the android url bar
 - mobile: scroll the focused field into view when the android keyboard covers it in the entity drawer
 - mobile: confirm entity edits with a checkmark instead of an `x` — same close, clearer intent when adding from the FAB
-- send `/` to `/pl` or `/en` by detected language, move the wedding dashboard to `/app`
+- send `/` to `/pl` or `/en` by detected language, move the wedding dashboard to `/app` -- deploy (99c2f55)
 
 ### 04.07
 
@@ -93,11 +96,11 @@
 - add proper `/pl` and `/en` landing (hero / features / steps / cta / planner preview) + privacy policy (`/pl/privacy`, `/en/privacy`)
 - add landing page redirect
 - fix planner preview colors
-- update logos + favicon
+- update logos + favicon -- deploy (284f9f7, landing-pages merge)
 
 ### 03.07
 
-- use `easywed.` name in login screen
+- use `easywed.` name in login screen -- deploy (31f7a0c)
 
 ### 02.07
 
@@ -105,12 +108,12 @@
 - fix local mutations reporting false failures on guest import/dxf
 - fix local snapshot rehydrate clobbering existing local data
 - validate local snapshot shape before migrating to cloud
-- render landing page instantly for guests instead of blank screen
+- render landing page instantly for guests instead of blank screen -- deploy (4a08ba7)
 
 ### 01.07
 
 - trim names provided by ai
-- reclamp objects to hall after updating them
+- reclamp objects to hall after updating them -- deploy (7ea0c2d)
 - add local-first guest mode: plan without login, data stays in browser
 - migrate local wedding to a cloud wedding on sign in
 
@@ -121,7 +124,7 @@
 - trim history sent to ai
 - guard update table to limit guests number in the table
 - dont show settings button if ai is not configured
-- use queue for pending confirmations instead of single value
+- use queue for pending confirmations instead of single value -- deploy (c6c9407, ai-assistant merge)
 
 ### 29.06
 
