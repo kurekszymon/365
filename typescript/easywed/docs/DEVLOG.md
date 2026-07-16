@@ -4,6 +4,7 @@
 
 ### 16.07
 
+- fix mobile header title overlap -- deploy
 - mark past deployments
 - move reminders to sidebar, remove empty route -- deploy (aa76ef8)
 - let user choose sorting alphabetically/by table seats in exports

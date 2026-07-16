@@ -35,7 +35,7 @@ export const InlineEdit = ({ value, onSave, className }: InlineEditProps) => {
       <input
         ref={inputRef}
         className={cn(
-          "rounded border border-input bg-background px-2 py-0.5 ring-ring outline-none focus:ring-1",
+          "min-w-0 rounded border border-input bg-background px-2 py-0.5 ring-ring outline-none focus:ring-1",
           className
         )}
         value={draft}
@@ -53,12 +53,12 @@ export const InlineEdit = ({ value, onSave, className }: InlineEditProps) => {
   return (
     <button
       className={cn(
-        "group inline-flex cursor-pointer items-center gap-1 underline-offset-2 hover:underline",
+        "group inline-flex min-w-0 cursor-pointer items-center gap-1 underline-offset-2 hover:underline",
         className
       )}
       onClick={startEditing}
     >
-      <span className="truncate">{value}</span>
+      <span className="min-w-0 truncate">{value}</span>
       <PencilIcon className="size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-60" />
     </button>
   )
