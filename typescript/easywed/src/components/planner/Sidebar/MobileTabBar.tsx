@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
 import { GuestListContent } from "../Guests/GuestListContent"
+import { RemindersPanelContent } from "../../reminders/RemindersPanelContent"
 import { EntityListContent } from "./EntityListContent"
 import { TabBadgeIcon } from "./TabBadgeIcon"
 import { useTabBadgeCounts } from "./tabs"
@@ -11,7 +12,7 @@ import { usePanelStore } from "@/stores/panel.store"
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer"
 import { cn } from "@/lib/utils"
 
-const TABS: Array<MobileListTab> = ["guests", "tables", "fixtures"]
+const TABS: Array<MobileListTab> = ["guests", "tables", "fixtures", "reminders"]
 
 /**
  * Mobile counterpart of the desktop `Sidebar/SidebarRail`: a fixed bottom bar
@@ -44,15 +45,19 @@ export const MobileTabBar = () => {
 
   const badgeCount = useTabBadgeCounts()
 
+  const tabLabel = (tab: MobileListTab) =>
+    tab === "reminders" ? t("reminders.title") : t(tab)
+
   const listContent: Record<MobileListTab, React.ReactNode> = {
     guests: <GuestListContent />,
     tables: <EntityListContent kind="tables" />,
     fixtures: <EntityListContent kind="fixtures" />,
+    reminders: <RemindersPanelContent />,
   }
 
   return (
     <>
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 rounded-t-3xl border-t bg-background pb-[env(safe-area-inset-bottom)] shadow-[0_-14px_30px_-22px_rgba(40,60,45,0.4)]">
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 rounded-t-3xl border-t bg-background pb-[env(safe-area-inset-bottom)] shadow-[0_-14px_30px_-22px_rgba(40,60,45,0.4)]">
         {TABS.map((tab) => (
           <button
             key={tab}
@@ -61,7 +66,9 @@ export const MobileTabBar = () => {
             className="flex flex-col items-center gap-1 py-3 text-muted-foreground"
           >
             <TabBadgeIcon tab={tab} badgeCount={badgeCount[tab]} />
-            <span className="text-[11px] font-semibold">{t(tab)}</span>
+            <span className="max-w-full truncate px-0.5 text-[11px] font-semibold">
+              {tabLabel(tab)}
+            </span>
           </button>
         ))}
       </nav>
@@ -71,21 +78,21 @@ export const MobileTabBar = () => {
           aria-describedby={undefined}
           className="max-h-[88dvh] gap-0"
         >
-          <DrawerTitle className="sr-only">{t(listTab)}</DrawerTitle>
-          <div className="grid grid-cols-3 gap-2 px-4 pt-4 pb-4">
+          <DrawerTitle className="sr-only">{tabLabel(listTab)}</DrawerTitle>
+          <div className="grid grid-cols-4 gap-2 px-4 pt-4 pb-4">
             {TABS.map((tab) => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => openTab(tab)}
                 className={cn(
-                  "rounded-full py-2 text-sm font-semibold transition-colors",
+                  "truncate rounded-full px-2 py-2 text-sm font-semibold transition-colors",
                   listTab === tab
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground"
                 )}
               >
-                {t(tab)}
+                {tabLabel(tab)}
               </button>
             ))}
           </div>

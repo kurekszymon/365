@@ -77,6 +77,7 @@
   "common.clear": "Clear",
   "common.name": "Name",
   "common.date": "Date",
+  "common.time": "Time",
   "common.pick_date": "Pick a date",
   "common.recent": "Recent:",
   "common.preview": "Preview",
@@ -324,10 +325,10 @@
 
   "reminders.title": "Reminders",
   "reminders.empty": "No reminders yet",
-  "reminders.navigate": "Navigate to Reminders",
-  "reminders.create.title": "Create a reminder",
-  "reminders.create.content_placeholder": "for what are you thinking",
-  "reminders.create.date_prompt": "to be reminded on",
+  "reminders.add": "Add a reminder",
+  "reminders.create.title": "New reminder",
+  "reminders.create.content_placeholder": "What should we remind you about?",
+  "reminders.create.date_prompt": "When should we remind you?",
 
   "canvas.grid.off": "Off",
   "canvas.grid.dots": "Dots",

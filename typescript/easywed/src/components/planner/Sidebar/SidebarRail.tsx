@@ -4,6 +4,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { useShallow } from "zustand/react/shallow"
 import { GuestListContent } from "../Guests/GuestListContent"
 import { AiChatPanelContent } from "../EntityForms/AiChatPanelContent"
+import { RemindersPanelContent } from "../../reminders/RemindersPanelContent"
 import { EntityListContent } from "./EntityListContent"
 import { TabBadgeIcon } from "./TabBadgeIcon"
 import { useTabBadgeCounts } from "./tabs"
@@ -16,6 +17,7 @@ const TAB_ORDER: Array<EntityListTab> = [
   "guests",
   "tables",
   "fixtures",
+  "reminders",
   "ai_chat",
 ]
 
@@ -64,8 +66,11 @@ export const SidebarRail = () => {
     }
   }
 
-  const tabLabel = (tab: EntityListTab) =>
-    tab === "ai_chat" ? t("assistant.title") : t(tab)
+  const tabLabel = (tab: EntityListTab) => {
+    if (tab === "ai_chat") return t("assistant.title")
+    if (tab === "reminders") return t("reminders.title")
+    return t(tab)
+  }
 
   // The AI chat owns its own vertical layout (scrolling transcript + pinned
   // composer), so it fills the column instead of using the padded,
@@ -75,6 +80,7 @@ export const SidebarRail = () => {
     guests: <GuestListContent />,
     tables: <EntityListContent kind="tables" />,
     fixtures: <EntityListContent kind="fixtures" />,
+    reminders: <RemindersPanelContent />,
     ai_chat: <AiChatPanelContent />,
   }[activeTab]
 

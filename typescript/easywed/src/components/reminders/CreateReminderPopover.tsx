@@ -37,15 +37,22 @@ export const CreateReminderPopover = () => {
       <PopoverTrigger asChild>
         <Button variant="outline">
           <PlusIcon />
+          {t("reminders.add")}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64" align="center">
+      <PopoverContent
+        // Match the full-width trigger button so the form reads as an
+        // extension of it rather than a floating card.
+        className="w-[var(--radix-popover-trigger-width)]"
+        align="center"
+      >
         <PopoverHeader>
           <PopoverTitle>{t("reminders.create.title")}</PopoverTitle>
         </PopoverHeader>
         <FieldGroup className="gap-4">
           <Field orientation="horizontal">
             <Textarea
+              value={reminderContent ?? ""}
               onChange={(e) => setReminderContent(e.target.value)}
               placeholder={t("reminders.create.content_placeholder")}
             />
@@ -53,10 +60,11 @@ export const CreateReminderPopover = () => {
           <DatePicker
             setDate={setDueDate}
             date={due}
+            withTime
             placeholderTlKey="reminders.create.date_prompt"
           />
           <Button disabled={!reminderContent} onClick={handleSaveReminders}>
-            {t("common.create")}
+            {t("reminders.add")}
           </Button>
         </FieldGroup>
       </PopoverContent>

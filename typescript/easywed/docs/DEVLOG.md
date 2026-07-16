@@ -2,12 +2,15 @@
 
 ### 16.07
 
+- move reminders to sidebar, remove empty route -- deploy
 - let user choose sorting alphabetically/by table seats in exports
 
 ### 15.07
 
 - change default theme
 - sort exported table names by Intl.Collator (prevent sorting lexicographically or numerically) -- deploy
+
+--- started marking deploys for easy reference
 
 ### 14.07
 

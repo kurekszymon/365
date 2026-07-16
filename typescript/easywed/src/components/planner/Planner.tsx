@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next"
 import { LandmarkIcon, SparklesIcon, UserPlusIcon } from "lucide-react"
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
-import { RemindersPreview } from "../reminders/preview/RemindersPreview"
 import { Canvas } from "./Canvas"
 import { MobileTabBar } from "./Sidebar/MobileTabBar"
 import { SidebarRail } from "./Sidebar/SidebarRail"
@@ -61,7 +60,6 @@ export const Planner = () => {
         <Header>
           <Header.Title weddingId={weddingId}>
             <Header.WeddingName />
-            <RemindersPreview />
           </Header.Title>
           <div className="ml-auto flex items-center gap-2">
             <Button

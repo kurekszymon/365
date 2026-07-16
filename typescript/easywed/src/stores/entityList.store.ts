@@ -6,7 +6,12 @@ import { create } from "zustand"
 // — the mobile bar doesn't offer it and reaches the assistant through
 // `panel.store`'s `ai_chat` view (the header sparkles button) instead; that
 // duplication is deliberate, the two surfaces have different chrome.
-export type EntityListTab = "guests" | "tables" | "fixtures" | "ai_chat"
+export type EntityListTab =
+  | "guests"
+  | "tables"
+  | "fixtures"
+  | "reminders"
+  | "ai_chat"
 
 // The subset the mobile bottom bar offers.
 export type MobileListTab = Exclude<EntityListTab, "ai_chat">

@@ -1,4 +1,4 @@
-import { formatDistanceToNow } from "date-fns"
+import { format, formatDistanceToNow, isPast } from "date-fns"
 import { enUS, pl } from "date-fns/locale"
 import { CheckIcon, ClockIcon } from "lucide-react"
 import type { Reminder } from "@/stores/reminders.store"
@@ -12,6 +12,11 @@ export const ReminderPreview = ({
   reminder: Reminder
   completeReminder: (uuid: string) => void
 }) => {
+  // TODO: handle it better? for now it's good enough
+  const locale = i18n.language.startsWith("en") ? enUS : pl
+  const isOverdue =
+    reminder.due && reminder.status === "open" && isPast(reminder.due)
+
   return (
     <div className="flex items-center justify-between rounded-md bg-muted px-3 py-2">
       <div className="flex flex-col">
@@ -22,13 +27,19 @@ export const ReminderPreview = ({
         >
           {reminder.text}
         </span>
-        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+        <span
+          className={cn(
+            "flex items-center gap-1 text-xs",
+            isOverdue ? "text-destructive" : "text-muted-foreground"
+          )}
+        >
           <ClockIcon className="h-3 w-3" />
-          {formatDistanceToNow(reminder.createdAt, {
-            // TODO: handle it better? for now it's good enough
-            locale: i18n.language.startsWith("en") ? enUS : pl,
-            addSuffix: true,
-          })}
+          {reminder.due
+            ? format(reminder.due, "d MMM yyyy, HH:mm", { locale })
+            : formatDistanceToNow(reminder.createdAt, {
+                locale,
+                addSuffix: true,
+              })}
         </span>
       </div>
       <div className="ml-2 flex items-center gap-2">

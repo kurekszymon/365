@@ -15,16 +15,18 @@ export const ReminderList = () => {
 
   if (reminders.length === 0)
     return (
-      <p className="px-3 py-2 text-center text-sm text-muted-foreground">
-        {t("reminders.empty")}
-      </p>
+      <p className="text-sm text-muted-foreground">{t("reminders.empty")}</p>
     )
 
-  return reminders.map((reminder) => (
-    <ReminderPreview
-      key={reminder.uuid}
-      reminder={reminder}
-      completeReminder={completeReminder}
-    />
-  ))
+  return (
+    <div className="flex flex-col gap-2">
+      {reminders.map((reminder) => (
+        <ReminderPreview
+          key={reminder.uuid}
+          reminder={reminder}
+          completeReminder={completeReminder}
+        />
+      ))}
+    </div>
+  )
 }
