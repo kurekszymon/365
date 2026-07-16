@@ -47,6 +47,7 @@ export const PlannerPrintView = () => {
   const { t, i18n } = useTranslation()
 
   const fields = usePrintStore((s) => s.fields)
+  const sort = usePrintStore((s) => s.sort)
   const {
     includeSeats,
     seatsShowEmpty,
@@ -188,8 +189,8 @@ export const PlannerPrintView = () => {
   }, [fitToContent, contentBounds, hall.width, hall.height])
 
   const { groups, unassigned } = useMemo(
-    () => groupGuestsByTable(tables, guests),
-    [tables, guests]
+    () => groupGuestsByTable(tables, guests, sort),
+    [tables, guests, sort]
   )
 
   // Guests grouped by tableId for seat rendering. TableSeats resolves seatId

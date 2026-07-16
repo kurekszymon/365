@@ -1,11 +1,7 @@
 import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { getInitials, seatSizePx } from "./utils"
-import {
-  constrainSeatPosition,
-  effectiveSeats,
-  resolveSeatOccupants,
-} from "./seatLayout"
+import { constrainSeatPosition, effectiveSeats } from "./seatLayout"
 import { SeatAssignPopover } from "./SeatAssignPopover"
 import type {
   KeyboardEvent as ReactKeyboardEvent,
@@ -13,6 +9,7 @@ import type {
   PointerEvent as ReactPointerEvent,
 } from "react"
 import type { Guest, Seat, TableShape } from "@/stores/planner.store"
+import { resolveSeatOccupants } from "@/lib/seats"
 import { cn } from "@/lib/utils"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useViewStore } from "@/stores/view.store"

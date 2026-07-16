@@ -1,7 +1,10 @@
 import { useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
+import { GuestSortField } from "./GuestSortField"
 import type { GuestField } from "@/lib/export/guestsCsv"
+import type { GuestSort } from "@/lib/export/guests"
+import { DEFAULT_GUEST_SORT } from "@/lib/export/guests"
 import {
   ResponsiveDialog,
   ResponsiveDialogBody,
@@ -25,6 +28,7 @@ export const ExportGuestsPdfDialog = () => {
   const { t } = useTranslation()
   const [selected, setSelected] =
     useState<Array<GuestField>>(DEFAULT_PRINT_FIELDS)
+  const [sort, setSort] = useState<GuestSort>(DEFAULT_GUEST_SORT)
   // Mirror the planner's current seat visibility as the default.
   const [includeSeats, setIncludeSeats] = useState(
     () => useViewStore.getState().showSeats
@@ -83,6 +87,7 @@ export const ExportGuestsPdfDialog = () => {
               ))}
             </FieldContent>
           </Field>
+          <GuestSortField sort={sort} onChange={setSort} />
           <Field orientation="horizontal">
             <FieldLabel htmlFor="include-seats">
               {t("export.pdf.include_seats")}
@@ -148,6 +153,7 @@ export const ExportGuestsPdfDialog = () => {
             onClick={() => {
               dialog.close()
               triggerPdfExport(orderedSelected, {
+                sort,
                 includeSeats,
                 seatsShowEmpty,
                 includeGrid,

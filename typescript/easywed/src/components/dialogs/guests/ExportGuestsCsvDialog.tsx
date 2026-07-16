@@ -2,7 +2,10 @@ import { useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import { PreviewGuestsTable } from "./PreviewGuestsTable"
+import { GuestSortField } from "./GuestSortField"
 import type { FormatMode, GuestField } from "@/lib/export/guestsCsv"
+import type { GuestSort } from "@/lib/export/guests"
+import { DEFAULT_GUEST_SORT } from "@/lib/export/guests"
 import {
   ResponsiveDialog,
   ResponsiveDialogBody,
@@ -27,6 +30,7 @@ export const ExportGuestsCsvDialog = () => {
   const { t } = useTranslation()
   const [selected, setSelected] = useState<Array<GuestField>>(DEFAULT_FIELDS)
   const [formatMode, setFormatMode] = useState<FormatMode>(DEFAULT_FORMAT)
+  const [sort, setSort] = useState<GuestSort>(DEFAULT_GUEST_SORT)
 
   const dialog = useDialogStore(
     useShallow((state) => ({
@@ -75,6 +79,7 @@ export const ExportGuestsCsvDialog = () => {
               ))}
             </FieldContent>
           </Field>
+          <GuestSortField sort={sort} onChange={setSort} />
           <Field>
             <FieldLabel>{t("export.csv.fields")}</FieldLabel>
             <FieldContent className="flex-row flex-wrap gap-1.5">
@@ -103,13 +108,14 @@ export const ExportGuestsCsvDialog = () => {
               <PreviewGuestsTable
                 fields={orderedSelected}
                 formatMode={formatMode}
+                sort={sort}
               />
             </FieldContent>
           </Field>
           <Button
             disabled={!hasExportableColumn}
             onClick={() => {
-              exportGuestsCsv(orderedSelected, formatMode, t)
+              exportGuestsCsv(orderedSelected, formatMode, t, sort)
               dialog.close()
             }}
           >

@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import { flushSync } from "react-dom"
 import { usePrintStore } from "@/stores/print.store"
 import { useViewStore } from "@/stores/view.store"
+import { DEFAULT_GUEST_SORT } from "@/lib/export/guests"
 
 // Intercept the native Cmd/Ctrl+P quick print so the printed hall layout includes
 // seats iff they're currently enabled in the planner (view.store.showSeats). There
@@ -17,6 +18,7 @@ export const usePrintShortcut = () => {
         e.preventDefault()
         flushSync(() => {
           const view = useViewStore.getState()
+          usePrintStore.getState().setSort(DEFAULT_GUEST_SORT)
           usePrintStore.getState().setSeatOptions({
             includeSeats: view.showSeats,
             seatsShowEmpty: true,

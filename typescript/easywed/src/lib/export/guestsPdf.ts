@@ -1,11 +1,14 @@
 import { flushSync } from "react-dom"
+import { DEFAULT_GUEST_SORT } from "./guests"
 import type { GuestField } from "@/lib/export/guestsCsv"
+import type { GuestSort } from "./guests"
 import { usePrintStore } from "@/stores/print.store"
 
 export { groupGuestsByTable } from "./guests"
 export type { TableGroup } from "./guests"
 
 type PdfExportOptions = {
+  sort: GuestSort
   includeSeats: boolean
   seatsShowEmpty: boolean
   includeGrid: boolean
@@ -14,6 +17,7 @@ type PdfExportOptions = {
 }
 
 const DEFAULT_OPTIONS: PdfExportOptions = {
+  sort: DEFAULT_GUEST_SORT,
   includeSeats: false,
   seatsShowEmpty: true,
   includeGrid: true,
@@ -29,6 +33,7 @@ export const triggerPdfExport = (
   // https:// react.dev/reference/react-dom/flushSync#usage
   flushSync(() => {
     usePrintStore.getState().setFields(fields)
+    usePrintStore.getState().setSort(options.sort)
     usePrintStore.getState().setSeatOptions({
       includeSeats: options.includeSeats,
       seatsShowEmpty: options.seatsShowEmpty,

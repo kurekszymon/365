@@ -3,11 +3,8 @@ import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
 import { ArrowLeftIcon } from "lucide-react"
 import { getInitials } from "../Canvas/utils"
-import {
-  resolveSeatOccupants,
-  seatSlotsForCapacity,
-} from "../Canvas/seatLayout"
 import type { Guest } from "@/stores/planner.store"
+import { resolveSeatOccupants, seatSlotsForCapacity } from "@/lib/seats"
 import { seatIndexFromId, usePlannerStore } from "@/stores/planner.store"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"

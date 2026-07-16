@@ -1,5 +1,9 @@
 # easywed. — Development Log
 
+### 16.07
+
+- let user choose sorting alphabetically/by table seats in exports
+
 ### 15.07
 
 - change default theme

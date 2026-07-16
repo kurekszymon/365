@@ -1,8 +1,13 @@
 import { create } from "zustand"
 import type { GuestField } from "@/lib/export/guestsCsv"
+import type { GuestSort } from "@/lib/export/guests"
+import { DEFAULT_GUEST_SORT } from "@/lib/export/guests"
 
 type State = {
   fields: Array<GuestField>
+  // How guests are ordered under each table heading — alphabetically or by the
+  // chair they sit in.
+  sort: GuestSort
   // Whether the printed hall layout renders seat markers.
   includeSeats: boolean
   // When rendering seats, whether to also draw empty (unoccupied) seat positions.
@@ -19,6 +24,7 @@ type State = {
 
 type Action = {
   setFields: (fields: Array<GuestField>) => void
+  setSort: (sort: GuestSort) => void
   setSeatOptions: (opts: {
     includeSeats: boolean
     seatsShowEmpty?: boolean
@@ -34,6 +40,7 @@ export const DEFAULT_PRINT_FIELDS: Array<GuestField> = ["name", "dietary"]
 
 export const usePrintStore = create<State & Action>((set) => ({
   fields: DEFAULT_PRINT_FIELDS,
+  sort: DEFAULT_GUEST_SORT,
   includeSeats: false,
   seatsShowEmpty: true,
   includeGrid: true,
@@ -41,6 +48,7 @@ export const usePrintStore = create<State & Action>((set) => ({
   fitToContent: false,
 
   setFields: (fields) => set({ fields }),
+  setSort: (sort) => set({ sort }),
   setSeatOptions: ({ includeSeats, seatsShowEmpty }) =>
     set((state) => ({
       includeSeats,

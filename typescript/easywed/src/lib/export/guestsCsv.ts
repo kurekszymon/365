@@ -1,8 +1,13 @@
 import type { TFunction } from "i18next"
 import type { Guest } from "@/stores/planner.store"
+import type { GuestSort } from "@/lib/export/guests"
 import { useGlobalStore } from "@/stores/global.store"
 import { usePlannerStore } from "@/stores/planner.store"
-import { groupGuestsByTable } from "@/lib/export/guests"
+import {
+  DEFAULT_GUEST_SORT,
+  byGuestName,
+  groupGuestsByTable,
+} from "@/lib/export/guests"
 import { downloadBlob } from "@/lib/export/downloadBlob"
 
 export const GUEST_FIELDS = ["name", "table", "dietary", "note"] as const
@@ -53,7 +58,8 @@ export interface BuiltRow {
 export const buildRows = (
   fields: Array<GuestField>,
   formatMode: FormatMode,
-  t: TFunction
+  t: TFunction,
+  sort: GuestSort = DEFAULT_GUEST_SORT
 ): { header: Array<string>; rows: Array<BuiltRow> } => {
   const active = effectiveFields(fields, formatMode)
   const { tables, guests } = usePlannerStore.getState()
@@ -79,11 +85,19 @@ export const buildRows = (
   })
 
   if (formatMode === "flat") {
-    const byName = (a: Guest, b: Guest) => a.name.localeCompare(b.name)
-    return { header, rows: [...guests].sort(byName).map(toDataRow) }
+    // Flat has no section headings, so "by seat" only means something once the
+    // rows are grouped by table first: tables in natural order, seat order
+    // within each, unassigned last. Columns are untouched either way, so a flat
+    // export stays re-importable under both sorts.
+    if (sort === "seat") {
+      const { groups, unassigned } = groupGuestsByTable(tables, guests, "seat")
+      const ordered = [...groups.flatMap((g) => g.guests), ...unassigned]
+      return { header, rows: ordered.map(toDataRow) }
+    }
+    return { header, rows: [...guests].sort(byGuestName).map(toDataRow) }
   }
 
-  const { groups, unassigned } = groupGuestsByTable(tables, guests)
+  const { groups, unassigned } = groupGuestsByTable(tables, guests, sort)
   const out: Array<BuiltRow> = []
 
   for (const { table: tbl, guests: tableGuests } of groups) {
@@ -119,9 +133,10 @@ export const buildRows = (
 export const exportGuestsCsv = (
   fields: Array<GuestField>,
   formatMode: FormatMode,
-  t: TFunction
+  t: TFunction,
+  sort: GuestSort = DEFAULT_GUEST_SORT
 ) => {
-  const { header, rows } = buildRows(fields, formatMode, t)
+  const { header, rows } = buildRows(fields, formatMode, t, sort)
   if (header.length === 0) return
 
   // Flat: column header line + data rows.

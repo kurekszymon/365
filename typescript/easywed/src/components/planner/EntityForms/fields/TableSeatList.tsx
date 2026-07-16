@@ -3,10 +3,7 @@ import { useTranslation } from "react-i18next"
 import { InfoIcon } from "lucide-react"
 import { getInitials } from "../../Canvas/utils"
 import { SeatAssignPopover } from "../../Canvas/SeatAssignPopover"
-import {
-  resolveSeatOccupants,
-  seatSlotsForCapacity,
-} from "../../Canvas/seatLayout"
+import { resolveSeatOccupants, seatSlotsForCapacity } from "@/lib/seats"
 import { usePlannerStore } from "@/stores/planner.store"
 import { Button } from "@/components/ui/button"
 import {
