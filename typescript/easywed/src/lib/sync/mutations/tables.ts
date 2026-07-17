@@ -54,8 +54,9 @@ export const updateTableRow = (
 export const updateTablePos = (
   id: string,
   x: number,
-  y: number
-): Promise<boolean> => updatePos("tables", id, x, y)
+  y: number,
+  hallId?: string
+): Promise<boolean> => updatePos("tables", id, x, y, hallId)
 
 export const updateTableSeats = (
   id: string,

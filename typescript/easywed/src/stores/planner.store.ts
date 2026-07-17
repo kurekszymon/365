@@ -1,10 +1,16 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import { PLANNER_STORAGE_KEY, localPlannerStorage } from "@/lib/localWedding"
 import {
+  PLANNER_STORAGE_KEY,
+  localPlannerStorage,
+  normalizeLocalPlannerSnapshot,
+} from "@/lib/localWedding"
+import {
+  deleteHallRow,
   insertFixture,
   insertGuest,
   insertGuests,
+  insertHall,
   insertTable,
   insertTables,
   reassignTableGuests,
@@ -15,10 +21,11 @@ import {
   updateFixtureRow,
   updateGuestDetails,
   updateGuestSeat,
+  updateHallPos,
+  updateHallRow,
   updateTablePos,
   updateTableRow,
   updateTableSeats,
-  upsertHall,
 } from "@/lib/sync/mutations"
 import { useGlobalStore } from "@/stores/global.store"
 import { useMeasuresStore } from "@/stores/measures.store"
@@ -41,11 +48,14 @@ export interface Fixture {
   shape: FixtureShape
   size: Size
   rotation: TableRotation
+  // Hall-local meters, top-left origin. The hall's world position is added at
+  // render time, so moving a hall never rewrites its entities.
   position: Position
+  hallId: string
   geometry?: Geometry
 }
 
-export const DEFAULT_FIXTURE: Omit<Fixture, "id" | "position"> = {
+export const DEFAULT_FIXTURE: Omit<Fixture, "id" | "position" | "hallId"> = {
   name: "",
   shape: "rectangle",
   size: { width: 2, height: 1 },
@@ -84,12 +94,14 @@ export interface Table {
   capacity: number
   size: Size
   rotation: TableRotation
+  // Hall-local meters, top-left origin (see Fixture.position).
   position: Position
+  hallId: string
   geometry?: Geometry
   seats?: Array<Seat>
 }
 
-export const DEFAULT_TABLE: Omit<Table, "id" | "position"> = {
+export const DEFAULT_TABLE: Omit<Table, "id" | "position" | "hallId"> = {
   name: "",
   shape: "rectangular",
   capacity: 8,
@@ -101,6 +113,29 @@ export const getEffectiveSize = (size: Size, rotation: TableRotation): Size =>
   rotation === 90 ? { width: size.height, height: size.width } : size
 
 export type HallPreset = "rectangle" | "l-shape" | "u-shape" | "custom"
+
+// A room (or floor area) of the wedding venue. All halls render together on
+// one canvas; `position` is the hall's top-left corner in shared world-space
+// meters. Entity positions stay local to their hall.
+export interface Hall {
+  id: string
+  name: string
+  floor?: number | null
+  preset: HallPreset
+  size: Size
+  position: Position
+}
+
+// Where a newly added hall lands: to the right of everything that exists,
+// top-aligned with the highest hall, with a 2 m gap. First hall at the origin.
+const HALL_GAP = 2
+
+export const nextHallPosition = (halls: Array<Hall>): Position => {
+  if (halls.length === 0) return { x: 0, y: 0 }
+  const maxX = Math.max(...halls.map((h) => h.position.x + h.size.width))
+  const minY = Math.min(...halls.map((h) => h.position.y))
+  return { x: maxX + HALL_GAP, y: minY }
+}
 
 export type Dietary =
   | "vegetarian"
@@ -133,13 +168,7 @@ type State = {
   tables: Array<Table>
   guests: Array<Guest>
   fixtures: Array<Fixture>
-  hall: {
-    dimensions: {
-      width: number
-      height: number
-    }
-    preset?: HallPreset | undefined
-  }
+  halls: Array<Hall>
 }
 
 type Action = {
@@ -169,11 +198,14 @@ type Action = {
     details: Pick<Guest, "name" | "dietary" | "note">
   ) => void
   deleteGuest: (id: string) => void
-  updateHall: (
-    preset: HallPreset,
-    dimensions: { width: number; height: number }
+  addHall: (hall: Omit<Hall, "id" | "position">, position?: Position) => string
+  updateHall: (id: string, patch: Partial<Omit<Hall, "id">>) => void
+  saveHall: (id: string) => void
+  updateHallPosition: (id: string, x: number, y: number) => void
+  deleteHall: (
+    id: string,
+    contents: { kind: "move"; targetHallId: string } | { kind: "delete" }
   ) => void
-  saveHall: () => void
   assignGuestToSeat: (
     guestId: string,
     tableId: string,
@@ -182,7 +214,12 @@ type Action = {
   ) => void
   clearSeat: (guestId: string) => void
   moveSeat: (tableId: string, seatId: string, x: number, y: number) => void
-  updateTablePosition: (id: string, x: number, y: number) => void
+  updateTablePosition: (
+    id: string,
+    x: number,
+    y: number,
+    hallId?: string
+  ) => void
   addFixture: (
     fixture: Omit<Fixture, "id" | "position">,
     position?: Position
@@ -191,16 +228,43 @@ type Action = {
   saveFixture: (id: string) => void
   duplicateFixture: (id: string) => string | null
   deleteFixture: (id: string) => void
-  updateFixturePosition: (id: string, x: number, y: number) => void
+  updateFixturePosition: (
+    id: string,
+    x: number,
+    y: number,
+    hallId?: string
+  ) => void
 }
 
-export const DEFAULT_HALL: State["hall"] = {
-  dimensions: {
-    width: 20,
-    height: 12,
-  },
-  preset: undefined,
+export const DEFAULT_HALL: Omit<Hall, "id" | "position"> = {
+  name: "",
+  preset: "rectangle",
+  size: { width: 20, height: 12 },
 }
+
+// New halls whose insert is still in flight, so entity inserts targeting them
+// can chain on the hall row landing first (hall_id FK). Fire-and-forget
+// mutations otherwise race: a table insert can reach Postgres before its hall.
+const pendingHallInserts = new Map<string, Promise<boolean>>()
+
+const afterHallInsert = (hallId: string, fn: () => void) => {
+  const pending = pendingHallInserts.get(hallId)
+  if (!pending) {
+    fn()
+    return
+  }
+  void pending.then((ok) => {
+    if (ok) fn()
+  })
+}
+
+// Store-local clamp of an entity rect into a hall (hall-local coords). The
+// canvas has its own clampToHall in Canvas/utils.ts; duplicated here because
+// the store must not import from components.
+const clampIntoHall = (pos: Position, size: Size, hall: Hall): Position => ({
+  x: Math.min(Math.max(0, pos.x), Math.max(0, hall.size.width - size.width)),
+  y: Math.min(Math.max(0, pos.y), Math.max(0, hall.size.height - size.height)),
+})
 
 const createPlannerStore = (
   set: (
@@ -213,7 +277,7 @@ const createPlannerStore = (
   tables: [],
   guests: [],
   fixtures: [],
-  hall: DEFAULT_HALL,
+  halls: [],
 
   addTable: (table, guestIds = [], position) => {
     const tableId = crypto.randomUUID()
@@ -231,16 +295,22 @@ const createPlannerStore = (
               guestIds.includes(guest.id) ? { ...guest, tableId } : guest
             ),
     }))
-    void insertTable(newTable).then((ok) => {
-      if (ok && guestIds.length > 0) void reassignTableGuests(tableId, guestIds)
+    afterHallInsert(newTable.hallId, () => {
+      void insertTable(newTable).then((ok) => {
+        if (ok && guestIds.length > 0)
+          void reassignTableGuests(tableId, guestIds)
+      })
     })
     return tableId
   },
   addTables: (table, count, startPosition) => {
     if (count < 1) return []
 
+    const hall = get().halls.find((h) => h.id === table.hallId)
+    if (!hall) return []
+
     const start = startPosition ?? { x: 0, y: 0 }
-    const { width: hallWidth, height: hallHeight } = get().hall.dimensions
+    const { width: hallWidth, height: hallHeight } = hall.size
     const gap = 0.5
 
     const effective = getEffectiveSize(table.size, table.rotation)
@@ -270,7 +340,7 @@ const createPlannerStore = (
     })
 
     set((state) => ({ tables: [...state.tables, ...newTables] }))
-    void insertTables(newTables)
+    afterHallInsert(table.hallId, () => void insertTables(newTables))
 
     return newTables.map((t) => t.id)
   },
@@ -427,14 +497,116 @@ const createPlannerStore = (
     }))
     void softDeleteGuest(id)
   },
-  updateHall: (preset, dimensions) => {
-    set((state) => ({ hall: { ...state.hall, preset, dimensions } }))
+  addHall: (hall, position) => {
+    const id = crypto.randomUUID()
+    const newHall: Hall = {
+      ...hall,
+      id,
+      position: position ?? nextHallPosition(get().halls),
+    }
+    set((state) => ({ halls: [...state.halls, newHall] }))
+    const insert = insertHall(newHall).finally(() => {
+      pendingHallInserts.delete(id)
+    })
+    pendingHallInserts.set(id, insert)
+    void insert
+    return id
   },
-  saveHall: () => {
-    const { hall } = get()
-    if (!hall.preset) return
+  updateHall: (id, patch) => {
+    set((state) => ({
+      halls: state.halls.map((h) => (h.id === id ? { ...h, ...patch } : h)),
+    }))
+  },
+  saveHall: (id) => {
+    const hall = get().halls.find((h) => h.id === id)
+    if (!hall) return
+    afterHallInsert(id, () => {
+      void updateHallRow(id, {
+        name: hall.name,
+        floor: hall.floor ?? null,
+        preset: hall.preset,
+        width: hall.size.width,
+        height: hall.size.height,
+      })
+    })
+  },
+  updateHallPosition: (id, x, y) => {
+    set((state) => ({
+      halls: state.halls.map((h) =>
+        h.id === id ? { ...h, position: { x, y } } : h
+      ),
+    }))
+    afterHallInsert(id, () => void updateHallPos(id, x, y))
+  },
+  deleteHall: (id, contents) => {
+    const state = get()
+    const hall = state.halls.find((h) => h.id === id)
+    if (!hall) return
 
-    void upsertHall(hall.preset, hall.dimensions.width, hall.dimensions.height)
+    if (contents.kind === "move") {
+      const target = state.halls.find((h) => h.id === contents.targetHallId)
+      if (!target || target.id === id) return
+      const moved: Array<{
+        kind: "tables" | "fixtures"
+        id: string
+        position: Position
+      }> = []
+      set((s) => ({
+        halls: s.halls.filter((h) => h.id !== id),
+        tables: s.tables.map((t) => {
+          if (t.hallId !== id) return t
+          const position = clampIntoHall(
+            t.position,
+            getEffectiveSize(t.size, t.rotation),
+            target
+          )
+          moved.push({ kind: "tables", id: t.id, position })
+          return { ...t, hallId: target.id, position }
+        }),
+        fixtures: s.fixtures.map((f) => {
+          if (f.hallId !== id) return f
+          const position = clampIntoHall(
+            f.position,
+            getEffectiveSize(f.size, f.rotation),
+            target
+          )
+          moved.push({ kind: "fixtures", id: f.id, position })
+          return { ...f, hallId: target.id, position }
+        }),
+      }))
+      for (const m of moved) {
+        if (m.kind === "tables")
+          void updateTablePos(m.id, m.position.x, m.position.y, target.id)
+        else void updateFixturePos(m.id, m.position.x, m.position.y, target.id)
+      }
+    } else {
+      const tableIds = state.tables
+        .filter((t) => t.hallId === id)
+        .map((t) => t.id)
+      const fixtureIds = state.fixtures
+        .filter((f) => f.hallId === id)
+        .map((f) => f.id)
+      const tableIdSet = new Set(tableIds)
+      set((s) => ({
+        halls: s.halls.filter((h) => h.id !== id),
+        tables: s.tables.filter((t) => t.hallId !== id),
+        fixtures: s.fixtures.filter((f) => f.hallId !== id),
+        guests: s.guests.map((g) =>
+          g.tableId && tableIdSet.has(g.tableId)
+            ? { ...g, tableId: null, seatId: null }
+            : g
+        ),
+      }))
+      for (const tableId of tableIds) void softDeleteTable(tableId)
+      for (const fixtureId of fixtureIds) void softDeleteFixture(fixtureId)
+      const weddingId = useGlobalStore.getState().weddingId
+      if (weddingId) {
+        const measures = useMeasuresStore.getState()
+        for (const objectId of [...tableIds, ...fixtureIds])
+          measures.removeObjectMeasurements(weddingId, objectId)
+      }
+    }
+    afterHallInsert(id, () => void deleteHallRow(id))
   },
   assignGuestToSeat: (guestId, tableId, seatId, occupantId) => {
     const state = get()
@@ -522,13 +694,15 @@ const createPlannerStore = (
     const seats = get().tables.find((t) => t.id === tableId)?.seats ?? []
     void updateTableSeats(tableId, seats)
   },
-  updateTablePosition: (id, x, y) => {
+  updateTablePosition: (id, x, y, hallId) => {
     set((state) => ({
       tables: state.tables.map((t) =>
-        t.id === id ? { ...t, position: { x, y } } : t
+        t.id === id
+          ? { ...t, position: { x, y }, hallId: hallId ?? t.hallId }
+          : t
       ),
     }))
-    void updateTablePos(id, x, y)
+    void updateTablePos(id, x, y, hallId)
   },
 
   addFixture: (fixture, position) => {
@@ -539,7 +713,7 @@ const createPlannerStore = (
       position: position ?? { x: 0, y: 0 },
     }
     set((state) => ({ fixtures: [...state.fixtures, newFixture] }))
-    void insertFixture(newFixture)
+    afterHallInsert(newFixture.hallId, () => void insertFixture(newFixture))
     return fixtureId
   },
   updateFixture: (id, fixture) => {
@@ -585,13 +759,15 @@ const createPlannerStore = (
     if (weddingId)
       useMeasuresStore.getState().removeObjectMeasurements(weddingId, id)
   },
-  updateFixturePosition: (id, x, y) => {
+  updateFixturePosition: (id, x, y, hallId) => {
     set((state) => ({
       fixtures: state.fixtures.map((f) =>
-        f.id === id ? { ...f, position: { x, y } } : f
+        f.id === id
+          ? { ...f, position: { x, y }, hallId: hallId ?? f.hallId }
+          : f
       ),
     }))
-    void updateFixturePos(id, x, y)
+    void updateFixturePos(id, x, y, hallId)
   },
 })
 
@@ -600,5 +776,16 @@ export const usePlannerStore = create<State & Action>()(
     name: PLANNER_STORAGE_KEY,
     skipHydration: true,
     storage: localPlannerStorage,
+    // v1: multi-hall. Legacy local weddings persisted a single `hall` object;
+    // normalize converts it to `halls[0]` at world (0,0) and stamps entities
+    // with its id.
+    version: 1,
+    migrate: (persisted) =>
+      (normalizeLocalPlannerSnapshot(persisted) ?? {
+        tables: [],
+        guests: [],
+        fixtures: [],
+        halls: [],
+      }) as State & Action,
   })
 )

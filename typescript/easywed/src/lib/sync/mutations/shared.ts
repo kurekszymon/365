@@ -1,5 +1,5 @@
 import { toast } from "sonner"
-import type { Fixture, Geometry, Table } from "@/stores/planner.store"
+import type { Fixture, Geometry, Hall, Table } from "@/stores/planner.store"
 import type { Json } from "@/lib/supabase.types"
 import { supabase } from "@/lib/supabase"
 import i18n from "@/i18n"
@@ -69,8 +69,20 @@ export const run = async <T extends { error: unknown }>(
 // Maps a store Table/Fixture to its DB row (sans wedding_id, which inserts add
 // and the layout RPC supplies separately). Shared by the insert paths and the
 // `replace_planner_layout` payload so the field mapping lives in one place.
+export const hallRow = (h: Hall) => ({
+  id: h.id,
+  name: h.name,
+  floor: h.floor ?? null,
+  preset: h.preset,
+  width: h.size.width,
+  height: h.size.height,
+  pos_x: h.position.x,
+  pos_y: h.position.y,
+})
+
 export const tableRow = (t: Table) => ({
   id: t.id,
+  hall_id: t.hallId,
   name: t.name,
   shape: t.shape,
   capacity: t.capacity,
@@ -85,6 +97,7 @@ export const tableRow = (t: Table) => ({
 
 export const fixtureRow = (f: Fixture) => ({
   id: f.id,
+  hall_id: f.hallId,
   name: f.name,
   shape: f.shape,
   width: f.size.width,
@@ -109,15 +122,21 @@ export const withGeometry = <T extends { geometry?: Geometry | null }>(
 
 // Position-only and soft-delete writes are identical across tables/fixtures, so
 // they're parameterized by table name; the named exports below are thin wrappers.
+// `hallId` rides along on cross-hall moves so the reassignment and the new
+// position land in one write.
 export const updatePos = (
   table: "tables" | "fixtures",
   id: string,
   x: number,
-  y: number
+  y: number,
+  hallId?: string
 ): Promise<boolean> =>
   run(
     `updatePos:${table}`,
-    supabase.from(table).update({ pos_x: x, pos_y: y }).eq("id", id)
+    supabase
+      .from(table)
+      .update({ pos_x: x, pos_y: y, ...(hallId ? { hall_id: hallId } : {}) })
+      .eq("id", id)
   )
 
 export const markDeleted = (

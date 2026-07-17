@@ -44,8 +44,9 @@ export const updateFixtureRow = (
 export const updateFixturePos = (
   id: string,
   x: number,
-  y: number
-): Promise<boolean> => updatePos("fixtures", id, x, y)
+  y: number,
+  hallId?: string
+): Promise<boolean> => updatePos("fixtures", id, x, y, hallId)
 
 export const softDeleteFixture = (id: string): Promise<boolean> =>
   markDeleted("fixtures", id)
