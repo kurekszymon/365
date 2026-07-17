@@ -1,28 +1,22 @@
 import { useEffect } from "react"
 import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
-import { LandingHero } from "./LandingHero"
-import { LandingFeatures } from "./LandingFeatures"
-import { LandingSteps } from "./LandingSteps"
-import { LandingCta } from "./LandingCta"
+import { VenueHero } from "./VenueHero"
+import { VenueFeatures } from "./VenueFeatures"
+import { VenueSteps } from "./VenueSteps"
+import { VenuePricing } from "./VenuePricing"
+import { VenueCta } from "./VenueCta"
+import { salesMailto } from "./salesMailto"
+import type { Lang } from "@/components/landing/LocaleLanding"
 import { Button } from "@/components/ui/button"
-import { useAuthStore } from "@/stores/auth.store"
 import i18n from "@/i18n"
 
-export type Lang = "pl" | "en"
-
-// Public, language-pinned landing used for shareable locale URLs (/pl, /en).
-// Text renders with an explicit `lng` so the server output is deterministic
-// (no dependency on the browser language detector, which is undefined on the
-// server) and hydration stays stable. The global i18n language is synced on
-// the client so navigating into the app keeps the chosen language; <html lang>
-// is owned by the root shell (derived from the path).
-export function LocaleLanding({ lang }: { lang: Lang }) {
+// B2B landing for wedding venue owners (/pl/venues, /en/venues). Same
+// locale-pinned rendering rules as LocaleLanding: text renders with an
+// explicit `lng` for stable SSR output, and the global i18n language syncs
+// on the client.
+export function VenueLanding({ lang }: { lang: Lang }) {
   const { t } = useTranslation()
-  // Session hydrates client-side (null on the server), so both server and the
-  // first client render show "Sign in" — the label flips after hydration once
-  // an authenticated session is known, keeping SSR/hydration output stable.
-  const isSignedIn = useAuthStore((s) => s.isReady && s.session !== null)
 
   useEffect(() => {
     void i18n.changeLanguage(lang)
@@ -38,7 +32,7 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
           <div className="flex items-center gap-4">
             <nav className="flex items-center gap-1 text-sm font-medium">
               <Link
-                to="/pl"
+                to="/pl/venues"
                 className={
                   lang === "pl"
                     ? "text-foreground"
@@ -49,7 +43,7 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
               </Link>
               <span className="text-muted-foreground/50">/</span>
               <Link
-                to="/en"
+                to="/en/venues"
                 className={
                   lang === "en"
                     ? "text-foreground"
@@ -59,22 +53,21 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
                 EN
               </Link>
             </nav>
-            <Button asChild variant="outline" size="sm">
-              {isSignedIn ? (
-                <Link to="/home">{t("auth.go_to_app", { lng: lang })}</Link>
-              ) : (
-                <Link to="/login">{t("auth.sign_in", { lng: lang })}</Link>
-              )}
+            <Button asChild size="sm">
+              <a href={salesMailto(lang)}>
+                {t("venues.contact_sales", { lng: lang })}
+              </a>
             </Button>
           </div>
         </div>
       </header>
 
       <main className="flex-1">
-        <LandingHero lang={lang} />
-        <LandingFeatures lang={lang} />
-        <LandingSteps lang={lang} />
-        <LandingCta lang={lang} />
+        <VenueHero lang={lang} />
+        <VenueFeatures lang={lang} />
+        <VenueSteps lang={lang} />
+        <VenuePricing lang={lang} />
+        <VenueCta lang={lang} />
       </main>
 
       <footer className="border-t">
@@ -86,12 +79,6 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
             — {t("landing.footer.tagline", { lng: lang })}
           </p>
           <nav className="flex items-center gap-6">
-            <Link
-              to={lang === "pl" ? "/pl/venues" : "/en/venues"}
-              className="transition-colors hover:text-foreground"
-            >
-              {t("landing.footer.venues", { lng: lang })}
-            </Link>
             <Link
               to={lang === "pl" ? "/pl/privacy" : "/en/privacy"}
               className="transition-colors hover:text-foreground"
