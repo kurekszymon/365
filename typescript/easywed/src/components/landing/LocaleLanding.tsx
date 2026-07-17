@@ -5,6 +5,7 @@ import { LandingHero } from "./LandingHero"
 import { LandingFeatures } from "./LandingFeatures"
 import { LandingSteps } from "./LandingSteps"
 import { LandingCta } from "./LandingCta"
+import { VenueOwnersBanner } from "./VenueOwnersBanner"
 import { Button } from "@/components/ui/button"
 import { useAuthStore } from "@/stores/auth.store"
 import i18n from "@/i18n"
@@ -20,7 +21,7 @@ export type Lang = "pl" | "en"
 export function LocaleLanding({ lang }: { lang: Lang }) {
   const { t } = useTranslation()
   // Session hydrates client-side (null on the server), so both server and the
-  // first client render show "Sign in" — the label flips after hydration once
+  // first client render show "Sign in" - the label flips after hydration once
   // an authenticated session is known, keeping SSR/hydration output stable.
   const isSignedIn = useAuthStore((s) => s.isReady && s.session !== null)
 
@@ -74,6 +75,7 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
         <LandingHero lang={lang} />
         <LandingFeatures lang={lang} />
         <LandingSteps lang={lang} />
+        <VenueOwnersBanner lang={lang} />
         <LandingCta lang={lang} />
       </main>
 
@@ -83,7 +85,7 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
             <span className="font-heading font-semibold text-foreground">
               easywed.
             </span>{" "}
-            — {t("landing.footer.tagline", { lng: lang })}
+            - {t("landing.footer.tagline", { lng: lang })}
           </p>
           <nav className="flex items-center gap-6">
             <Link
