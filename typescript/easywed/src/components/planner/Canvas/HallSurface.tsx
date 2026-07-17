@@ -1,15 +1,15 @@
 import { useImperativeHandle, useMemo } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { StatusBar } from "../StatusBar"
-import { DraggableTable } from "./DraggableTable"
-import { DraggableFixture } from "./DraggableFixture"
-import { HallBackground } from "./HallBackground"
+import { HallView } from "./HallView"
 import { MeasureOverlay } from "./MeasureOverlay"
-import { clampToHall } from "./utils"
+import { clampToHall, hallWorldOf } from "./utils"
 import { useMeasureTool } from "./useMeasureTool"
 import { useTableSnap } from "./useTableSnap"
 import type { Ref } from "react"
+import type { WorldBounds } from "./utils"
 import type { GridSpacing, GridStyle, SnapStep } from "@/stores/view.store"
+import type { Hall } from "@/stores/planner.store"
 import { useViewStore } from "@/stores/view.store"
 import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
 import { useMeasuresStore } from "@/stores/measures.store"
@@ -27,6 +27,8 @@ interface HallSurfaceProps {
   top: number
   width: number
   height: number
+  worldBounds: WorldBounds
+  hallScreenOffset: (hall: Hall) => { left: number; top: number }
   ppm: number
   zoom: number
   gridStyle: GridStyle
@@ -40,6 +42,8 @@ export const HallSurface = ({
   top,
   width,
   height,
+  worldBounds,
+  hallScreenOffset,
   ppm,
   zoom,
   gridStyle,
@@ -49,13 +53,18 @@ export const HallSurface = ({
 }: HallSurfaceProps) => {
   const isMobile = useIsMobile()
 
-  const { tables, guests, fixtures, hallDimensions } = usePlannerStore(
+  const { tables, guests, fixtures, halls } = usePlannerStore(
     useShallow((state) => ({
       tables: state.tables,
       guests: state.guests,
       fixtures: state.fixtures,
-      hallDimensions: state.hall.dimensions,
+      halls: state.halls,
     }))
+  )
+
+  const hallsById = useMemo(
+    () => new Map(halls.map((h) => [h.id, h])),
+    [halls]
   )
 
   const guestsByTableId = useMemo(() => {
@@ -70,33 +79,82 @@ export const HallSurface = ({
     return byTable
   }, [tables, guests])
 
+  // Entities clamped into their own hall (hall-local coords, for rendering).
   const canvasTables = useMemo(
     () =>
-      tables.map((table) => ({
-        ...table,
-        position: clampToHall(
-          table.position,
-          getEffectiveSize(table.size, table.rotation),
-          hallDimensions.width,
-          hallDimensions.height
-        ),
-      })),
-    [tables, hallDimensions]
+      tables.map((table) => {
+        const hall = hallsById.get(table.hallId)
+        if (!hall) return table
+        return {
+          ...table,
+          position: clampToHall(
+            table.position,
+            getEffectiveSize(table.size, table.rotation),
+            hall.size.width,
+            hall.size.height
+          ),
+        }
+      }),
+    [tables, hallsById]
   )
 
   const canvasFixtures = useMemo(
     () =>
-      fixtures.map((fixture) => ({
-        ...fixture,
-        position: clampToHall(
-          fixture.position,
-          getEffectiveSize(fixture.size, fixture.rotation),
-          hallDimensions.width,
-          hallDimensions.height
-        ),
-      })),
-    [fixtures, hallDimensions]
+      fixtures.map((fixture) => {
+        const hall = hallsById.get(fixture.hallId)
+        if (!hall) return fixture
+        return {
+          ...fixture,
+          position: clampToHall(
+            fixture.position,
+            getEffectiveSize(fixture.size, fixture.rotation),
+            hall.size.width,
+            hall.size.height
+          ),
+        }
+      }),
+    [fixtures, hallsById]
   )
+
+  // The same entities in world coords, for the measure tool (measurements are
+  // world-space so they can span halls).
+  const worldTables = useMemo(
+    () =>
+      canvasTables.map((t) => {
+        const hall = hallsById.get(t.hallId)
+        return hall ? { ...t, position: hallWorldOf(t.position, hall) } : t
+      }),
+    [canvasTables, hallsById]
+  )
+
+  const worldFixtures = useMemo(
+    () =>
+      canvasFixtures.map((f) => {
+        const hall = hallsById.get(f.hallId)
+        return hall ? { ...f, position: hallWorldOf(f.position, hall) } : f
+      }),
+    [canvasFixtures, hallsById]
+  )
+
+  const tablesByHall = useMemo(() => {
+    const byHall = new Map<string, Array<(typeof canvasTables)[number]>>()
+    for (const t of canvasTables) {
+      const list = byHall.get(t.hallId)
+      if (list) list.push(t)
+      else byHall.set(t.hallId, [t])
+    }
+    return byHall
+  }, [canvasTables])
+
+  const fixturesByHall = useMemo(() => {
+    const byHall = new Map<string, Array<(typeof canvasFixtures)[number]>>()
+    for (const f of canvasFixtures) {
+      const list = byHall.get(f.hallId)
+      if (list) list.push(f)
+      else byHall.set(f.hallId, [f])
+    }
+    return byHall
+  }, [canvasFixtures])
 
   const isMeasuring = useViewStore((state) => state.isMeasuring)
   const measureMode = useViewStore((state) => state.measureMode)
@@ -113,12 +171,12 @@ export const HallSurface = ({
     )
   const measurements = weddingId ? (byWedding[weddingId] ?? []) : []
 
-  const { activeDrag } = useTableSnap({
+  const { activeDrag, dropTargetHallId } = useTableSnap({
     canvasTables,
     canvasFixtures,
+    halls,
     ppm,
     snapStep,
-    hallDimensions,
     weddingId,
   })
 
@@ -129,10 +187,11 @@ export const HallSurface = ({
     handleMeasureDown,
     handleMeasureMove,
   } = useMeasureTool({
-    canvasTables,
-    canvasFixtures,
+    worldTables,
+    worldFixtures,
+    halls,
+    worldBounds,
     measureMode,
-    hallDimensions,
     ppm,
     weddingId,
     isMeasuring,
@@ -153,47 +212,47 @@ export const HallSurface = ({
       {!isMobile && isMeasuring && (
         <StatusBar isMeasureStarted={!!pendingPoint} />
       )}
-      <HallBackground
-        hallWidth={width}
-        hallHeight={height}
-        ppm={ppm}
-        gridStyle={gridStyle}
-        gridSpacing={gridSpacing}
-        zoom={zoom}
-        className="absolute top-0 left-0 z-10 shadow-sm ring-1 ring-planner-hall/70"
-        // transform instead of left/top: panning moves this every frame, and a
-        // left/top change relayouts the whole hall subtree per frame while a
-        // translate only recomposites it.
-        style={{ transform: `translate3d(${left}px, ${top}px, 0)` }}
+      {/* World wrapper: contains every hall in one coordinate space.
+          transform instead of left/top: panning moves this every frame, and a
+          left/top change relayouts the whole subtree per frame while a
+          translate only recomposites it. */}
+      <div
+        className="absolute top-0 left-0"
+        style={{
+          width,
+          height,
+          transform: `translate3d(${left}px, ${top}px, 0)`,
+        }}
       >
-        {canvasTables.map((ct) => (
-          <DraggableTable
-            key={ct.id}
-            table={ct}
-            guestsAssigned={guestsByTableId.get(ct.id)?.length ?? 0}
-            hallWidth={hallDimensions.width}
-            hallHeight={hallDimensions.height}
-            ppm={ppm}
-            seatGuests={guestsByTableId.get(ct.id) ?? []}
-            showSeats={showSeats}
-          />
-        ))}
-        {canvasFixtures.map((cf) => (
-          <DraggableFixture
-            key={cf.id}
-            fixture={cf}
-            hallWidth={hallDimensions.width}
-            hallHeight={hallDimensions.height}
-            ppm={ppm}
-          />
-        ))}
+        {halls.map((hall) => {
+          const offset = hallScreenOffset(hall)
+          return (
+            <HallView
+              key={hall.id}
+              hall={hall}
+              left={offset.left}
+              top={offset.top}
+              ppm={ppm}
+              zoom={zoom}
+              gridStyle={gridStyle}
+              gridSpacing={gridSpacing}
+              tables={tablesByHall.get(hall.id) ?? []}
+              fixtures={fixturesByHall.get(hall.id) ?? []}
+              guestsByTableId={guestsByTableId}
+              showSeats={showSeats}
+              isDropTarget={hall.id === dropTargetHallId}
+            />
+          )
+        })}
 
-        {/* Measurement annotations - always rendered so saved lines are visible */}
+        {/* Measurement annotations - always rendered so saved lines are
+            visible; world-level so a line can span two halls. */}
         <MeasureOverlay
           measurements={measurements}
           ppm={ppm}
-          hallWidthPx={width}
-          hallHeightPx={height}
+          widthPx={width}
+          heightPx={height}
+          origin={{ x: worldBounds.x, y: worldBounds.y }}
           pendingPoint={isMeasuring ? pendingPoint : null}
           cursorPos={isMeasuring ? cursorPos : null}
           onDelete={(id) => weddingId && deleteMeasurement(weddingId, id)}
@@ -204,7 +263,7 @@ export const HallSurface = ({
             updateMeasurementPoint(weddingId, measurementId, pointKey, point)
           }
         />
-      </HallBackground>
+      </div>
     </>
   )
 }

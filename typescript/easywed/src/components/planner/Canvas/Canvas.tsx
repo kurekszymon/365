@@ -15,19 +15,26 @@ import { ScalePill } from "./ScalePill"
 import { Minimap } from "./Minimap"
 import { MobileZoomControl } from "./MobileZoomControl"
 import { AddFab } from "./AddFab"
-import { DimensionLabel } from "./DimensionLabel"
 import { CanvasContextMenu } from "./CanvasContextMenu"
 import { CanvasContextMenuItem } from "./CanvasContextMenuItem"
 import { CanvasToolbar } from "./CanvasToolbar"
 import { CanvasViewMenu } from "./CanvasViewMenu"
 import { CanvasEmptyState } from "./CanvasEmptyState"
 import { HallSurface } from "./HallSurface"
-import { findCapturedElement, isNoPan, snapPositionToGrid } from "./utils"
-import { useHallGeometry } from "./useHallGeometry"
+import {
+  findCapturedElement,
+  hallAtPoint,
+  hallLocalOf,
+  isNoPan,
+  nearestHall,
+  snapPositionToGrid,
+} from "./utils"
+import { useWorldGeometry } from "./useWorldGeometry"
 import { useCanvasPan } from "./useCanvasPan"
 import { useCanvasWheelPan } from "./useCanvasWheelPan"
 import { useCanvasClipboard } from "./useCanvasClipboard"
 import type { HallSurfaceMethods } from "./HallSurface"
+import type { Position } from "@/stores/planner.store"
 import {
   ContextMenuLabel,
   ContextMenuSeparator,
@@ -42,12 +49,12 @@ import { usePanelStore } from "@/stores/panel.store"
 import { useClipboardStore } from "@/stores/clipboard.store"
 import { useElementSize } from "@/hooks/useElementSize"
 import { useIsMobile } from "@/hooks/useMediaQuery"
-import { useOpenHall } from "@/hooks/useOpenHall"
+import { useOpenHalls } from "@/hooks/useOpenHalls"
 
 export const Canvas = () => {
   const { t } = useTranslation()
 
-  const hall = usePlannerStore((state) => state.hall)
+  const halls = usePlannerStore((state) => state.halls)
 
   const zoom = useViewStore((state) => state.zoom)
   const setZoom = useViewStore((state) => state.setZoom)
@@ -61,7 +68,7 @@ export const Canvas = () => {
   const isMeasuring = useViewStore((state) => state.isMeasuring)
   const toggleMeasuring = useViewStore((state) => state.toggleMeasuring)
 
-  const openHall = useOpenHall()
+  const openHalls = useOpenHalls()
   const isMobile = useIsMobile()
 
   const addTable = usePlannerStore((state) => state.addTable)
@@ -71,7 +78,6 @@ export const Canvas = () => {
   const panel = usePanelStore(
     useShallow((state) => ({
       selectedId: state.selectedId,
-      openHall: state.openHall,
       openTablesBatchAdd: state.openTablesBatchAdd,
       openTableEdit: state.openTableEdit,
       openFixtureEdit: state.openFixtureEdit,
@@ -119,23 +125,41 @@ export const Canvas = () => {
   } = useElementSize()
 
   const {
+    worldBounds,
     scaledWidth,
     scaledHeight,
-    hallLeft,
-    hallTop,
+    worldLeft,
+    worldTop,
     ppm,
-    viewportToHall,
-    isInHallBounds,
+    viewportToWorld,
+    isInAnyHall,
+    hallScreenOffset,
     clampPan,
     zoomToPan,
-  } = useHallGeometry(
+  } = useWorldGeometry(
     containerEl,
     containerWidth,
     containerHeight,
-    hall.dimensions,
+    halls,
     zoom,
     pan
   )
+
+  // Resolves a world-space point to a drop hall (under the point, else the
+  // nearest one) and that hall's local coords, clamped inside it. This is how
+  // every "create/paste here" action decides which hall receives the entity.
+  const resolveHallPoint = (world: Position) => {
+    const hall = hallAtPoint(halls, world) ?? nearestHall(halls, world)
+    if (!hall) return null
+    const local = hallLocalOf(world, hall)
+    return {
+      hall,
+      position: {
+        x: Math.max(0, Math.min(local.x, hall.size.width)),
+        y: Math.max(0, Math.min(local.y, hall.size.height)),
+      },
+    }
+  }
 
   usePinch(
     ({ offset: [scale], origin }) => {
@@ -190,60 +214,53 @@ export const Canvas = () => {
       } else if (key === "v") {
         e.preventDefault()
         const client = pointerClientRef.current
-        const raw = client
-          ? viewportToHall(client.x, client.y)
-          : { x: hall.dimensions.width / 2, y: hall.dimensions.height / 2 }
-        const clamped = {
-          x: Math.max(0, Math.min(raw.x, hall.dimensions.width)),
-          y: Math.max(0, Math.min(raw.y, hall.dimensions.height)),
-        }
+        const world = client
+          ? viewportToWorld(client.x, client.y)
+          : {
+              x: worldBounds.x + worldBounds.width / 2,
+              y: worldBounds.y + worldBounds.height / 2,
+            }
+        const resolved = resolveHallPoint(world)
+        if (!resolved) return
         paste(
-          snapStep === "off" ? clamped : snapPositionToGrid(clamped, snapStep)
+          snapStep === "off"
+            ? resolved.position
+            : snapPositionToGrid(resolved.position, snapStep),
+          resolved.hall.id
         )
       }
     }
     document.addEventListener("keydown", handleKeyDown)
     return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [
-    isMeasuring,
-    copySelected,
-    paste,
-    viewportToHall,
-    snapStep,
-    hall.dimensions.width,
-    hall.dimensions.height,
-  ])
+  })
 
   const hallSurfaceRef = useRef<HallSurfaceMethods>(null)
 
-  const toHallCoords = (clientX: number, clientY: number) => {
-    const raw = viewportToHall(clientX, clientY)
-    return {
-      x: Math.min(raw.x, hall.dimensions.width),
-      y: Math.min(raw.y, hall.dimensions.height),
-    }
-  }
-
-  // The minimap only earns its space when the whole hall isn't already framed:
-  // once it's been panned off-centre, or zoomed until it overflows the viewport
-  // on either axis. A fully-visible, centred hall needs no navigator.
-  const hallOverflows =
+  // The minimap only earns its space when the whole world isn't already
+  // framed: once it's been panned off-centre, or zoomed until it overflows the
+  // viewport on either axis. A fully-visible, centred layout needs no navigator.
+  const worldOverflows =
     scaledWidth > containerWidth + 1 || scaledHeight > containerHeight + 1
-  const showMinimap = hallOverflows || pan.x !== 0 || pan.y !== 0
+  const showMinimap = worldOverflows || pan.x !== 0 || pan.y !== 0
 
-  if (!hall.preset) {
+  if (halls.length === 0) {
     return (
-      <CanvasEmptyState message={t("hall.empty_state")} onClick={openHall} />
+      <CanvasEmptyState message={t("hall.empty_state")} onClick={openHalls} />
     )
   }
 
   return (
     <CanvasContextMenu
-      viewportToHall={viewportToHall}
-      isInHallBounds={isInHallBounds}
+      viewportToWorld={viewportToWorld}
+      isInAnyHall={isInAnyHall}
       renderItems={({ position, inHall, target }) => {
-        const snapped =
-          snapStep === "off" ? position : snapPositionToGrid(position, snapStep)
+        const resolved = resolveHallPoint(position)
+        const snapped = resolved
+          ? snapStep === "off"
+            ? resolved.position
+            : snapPositionToGrid(resolved.position, snapStep)
+          : { x: 0, y: 0 }
+        const targetHallId = resolved?.hall.id
 
         return (
           <>
@@ -299,8 +316,8 @@ export const Canvas = () => {
                 )}
                 {clipboardItem && (
                   <CanvasContextMenuItem
-                    disabled={!inHall}
-                    onSelect={() => paste(snapped)}
+                    disabled={!inHall || !targetHallId}
+                    onSelect={() => targetHallId && paste(snapped, targetHallId)}
                   >
                     <ClipboardPasteIcon className="size-4" />
                     {clipboardItem.kind === "table"
@@ -312,9 +329,14 @@ export const Canvas = () => {
               </>
             )}
             <CanvasContextMenuItem
-              disabled={!inHall}
+              disabled={!inHall || !targetHallId}
               onSelect={() => {
-                const tableId = addTable(DEFAULT_TABLE, [], snapped)
+                if (!targetHallId) return
+                const tableId = addTable(
+                  { ...DEFAULT_TABLE, hallId: targetHallId },
+                  [],
+                  snapped
+                )
                 panel.openTableEdit(tableId)
               }}
             >
@@ -322,16 +344,20 @@ export const Canvas = () => {
               {t("tables.add")}
             </CanvasContextMenuItem>
             <CanvasContextMenuItem
-              disabled={!inHall}
-              onSelect={() => panel.openTablesBatchAdd(snapped)}
+              disabled={!inHall || !targetHallId}
+              onSelect={() => panel.openTablesBatchAdd(snapped, targetHallId)}
             >
               <SquarePlusIcon className="size-4" />
               {t("tables.add_batch")}
             </CanvasContextMenuItem>
             <CanvasContextMenuItem
-              disabled={!inHall}
+              disabled={!inHall || !targetHallId}
               onSelect={() => {
-                const fixtureId = addFixture(DEFAULT_FIXTURE, snapped)
+                if (!targetHallId) return
+                const fixtureId = addFixture(
+                  { ...DEFAULT_FIXTURE, hallId: targetHallId },
+                  snapped
+                )
                 panel.openFixtureEdit(fixtureId)
               }}
             >
@@ -357,11 +383,11 @@ export const Canvas = () => {
           if (isMeasuring) {
             if (
               !hallSurfaceRef.current?.hasPendingPoint &&
-              !isInHallBounds(e.clientX, e.clientY)
+              !isInAnyHall(e.clientX, e.clientY)
             )
               return
 
-            const { x, y } = toHallCoords(e.clientX, e.clientY)
+            const { x, y } = viewportToWorld(e.clientX, e.clientY)
             hallSurfaceRef.current?.handleMeasureDown(x, y, e.shiftKey)
             return
           }
@@ -371,7 +397,7 @@ export const Canvas = () => {
         onPointerMove={(e) => {
           pointerClientRef.current = { x: e.clientX, y: e.clientY }
           if (isMeasuring) {
-            const { x, y } = toHallCoords(e.clientX, e.clientY)
+            const { x, y } = viewportToWorld(e.clientX, e.clientY)
             hallSurfaceRef.current?.handleMeasureMove(x, y, e.shiftKey)
             return
           }
@@ -435,41 +461,28 @@ export const Canvas = () => {
 
             {showMinimap && (
               <Minimap
-                hallDimensions={hall.dimensions}
+                halls={halls}
+                worldBounds={worldBounds}
                 selectedId={panel.selectedId}
-                hallLeft={hallLeft}
-                hallTop={hallTop}
+                worldLeft={worldLeft}
+                worldTop={worldTop}
                 ppm={ppm}
                 containerWidth={containerWidth}
                 containerHeight={containerHeight}
                 onNavigate={(p) => setPan(clampPan(p))}
               />
             )}
-
-            <DimensionLabel
-              orientation="horizontal"
-              value={hall.dimensions.width}
-              left={hallLeft}
-              top={hallTop - 28}
-              span={scaledWidth}
-            />
-
-            <DimensionLabel
-              orientation="vertical"
-              value={hall.dimensions.height}
-              left={hallLeft - 52}
-              top={hallTop}
-              span={scaledHeight}
-            />
           </>
         )}
 
         <HallSurface
           ref={hallSurfaceRef}
-          left={hallLeft}
-          top={hallTop}
+          left={worldLeft}
+          top={worldTop}
           width={scaledWidth}
           height={scaledHeight}
+          worldBounds={worldBounds}
+          hallScreenOffset={hallScreenOffset}
           ppm={ppm}
           zoom={zoom}
           gridStyle={gridStyle}

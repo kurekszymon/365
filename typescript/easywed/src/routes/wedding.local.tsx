@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { Outlet, createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { LOCAL_WEDDING_ID } from "@/lib/localWedding"
-import { DEFAULT_HALL, usePlannerStore } from "@/stores/planner.store"
+import { usePlannerStore } from "@/stores/planner.store"
 import { useGlobalStore } from "@/stores/global.store"
 
 // No requireAuth: this is the guest (no-login) planning route. State comes
@@ -35,7 +35,7 @@ function LocalWeddingLayout() {
       tables: [],
       guests: [],
       fixtures: [],
-      hall: DEFAULT_HALL,
+      halls: [],
     })
     useGlobalStore.setState({
       role: "owner",

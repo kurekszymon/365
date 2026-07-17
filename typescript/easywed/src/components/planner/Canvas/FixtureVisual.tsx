@@ -1,4 +1,3 @@
-import { clamp } from "./utils"
 import type { ComponentProps } from "react"
 import type { Fixture } from "@/stores/planner.store"
 import { getEffectiveSize } from "@/stores/planner.store"
@@ -9,8 +8,9 @@ type Translate = { x: number; y: number }
 type FixtureVisualProps = {
   fixture: Fixture
   ppm: number
+  // Raw drag delta applied as a translate. Unclamped by design: a drag may
+  // cross into another hall (the drop handler resolves the target hall).
   transform?: Translate | null
-  hallBounds?: { width: number; height: number }
 } & ComponentProps<"div">
 
 const SHAPE_CLASS: Record<Fixture["shape"], string> = {
@@ -24,7 +24,6 @@ export const FixtureVisual = ({
   fixture,
   ppm,
   transform,
-  hallBounds,
   className,
   style,
   children,
@@ -41,22 +40,6 @@ export const FixtureVisual = ({
     geometry != null &&
     Array.isArray(geometry.vertices) &&
     geometry.vertices.length > 0
-
-  const clamped =
-    transform && hallBounds
-      ? {
-          x: clamp(
-            transform.x,
-            -position.x * ppm,
-            (hallBounds.width - size.width - position.x) * ppm
-          ),
-          y: clamp(
-            transform.y,
-            -position.y * ppm,
-            (hallBounds.height - size.height - position.y) * ppm
-          ),
-        }
-      : null
 
   return (
     <div
@@ -75,9 +58,10 @@ export const FixtureVisual = ({
         top: position.y * ppm,
         width: size.width * ppm,
         height: (shape === "circle" ? size.width : size.height) * ppm,
-        transform: clamped
-          ? `translate3d(${clamped.x}px, ${clamped.y}px, 0)`
+        transform: transform
+          ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
           : undefined,
+        zIndex: transform ? 30 : undefined,
         printColorAdjust: "exact",
         WebkitPrintColorAdjust: "exact",
         ...style,

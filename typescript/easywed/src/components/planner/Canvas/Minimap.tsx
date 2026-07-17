@@ -1,13 +1,14 @@
-import { useRef } from "react"
+import { useMemo, useRef } from "react"
 import { clamp } from "./utils"
-import type { Position } from "@/stores/planner.store"
+import type { WorldBounds } from "./utils"
+import type { Hall, Position } from "@/stores/planner.store"
 import { usePlannerStore } from "@/stores/planner.store"
 
 const BOX_WIDTH = 120
 const BOX_HEIGHT = 84
 // The card has a 1px border + p-1 (4px) padding, so its inner (overflow-hidden)
-// content box is 2px smaller on each axis than BOX - 2*padding. The hall is
-// letterboxed to fill this drawable area.
+// content box is 2px smaller on each axis than BOX - 2*padding. The world
+// (union of all halls) is letterboxed to fill this drawable area.
 const CARD_BORDER = 1
 const CARD_PADDING = 4
 const INNER_WIDTH = BOX_WIDTH - 2 * (CARD_BORDER + CARD_PADDING)
@@ -15,10 +16,11 @@ const INNER_HEIGHT = BOX_HEIGHT - 2 * (CARD_BORDER + CARD_PADDING)
 const DOT_SIZE = 8
 
 type MinimapProps = {
-  hallDimensions: { width: number; height: number }
+  halls: Array<Hall>
+  worldBounds: WorldBounds
   selectedId: string | null
-  hallLeft: number
-  hallTop: number
+  worldLeft: number
+  worldTop: number
   ppm: number
   containerWidth: number
   containerHeight: number
@@ -26,10 +28,11 @@ type MinimapProps = {
 }
 
 export const Minimap = ({
-  hallDimensions,
+  halls,
+  worldBounds,
   selectedId,
-  hallLeft,
-  hallTop,
+  worldLeft,
+  worldTop,
   ppm,
   containerWidth,
   containerHeight,
@@ -39,51 +42,71 @@ export const Minimap = ({
   const fixtures = usePlannerStore((state) => state.fixtures)
   const boxRef = useRef<HTMLDivElement>(null)
 
-  if (hallDimensions.width <= 0 || hallDimensions.height <= 0) return null
+  const hallsById = useMemo(
+    () => new Map(halls.map((h) => [h.id, h])),
+    [halls]
+  )
+
+  if (worldBounds.width <= 0 || worldBounds.height <= 0) return null
 
   const scale = Math.min(
-    INNER_WIDTH / hallDimensions.width,
-    INNER_HEIGHT / hallDimensions.height
+    INNER_WIDTH / worldBounds.width,
+    INNER_HEIGHT / worldBounds.height
   )
-  const hallScaledWidth = hallDimensions.width * scale
-  const hallScaledHeight = hallDimensions.height * scale
-  const offsetX = (INNER_WIDTH - hallScaledWidth) / 2
-  const offsetY = (INNER_HEIGHT - hallScaledHeight) / 2
+  const worldScaledWidth = worldBounds.width * scale
+  const worldScaledHeight = worldBounds.height * scale
+  const offsetX = (INNER_WIDTH - worldScaledWidth) / 2
+  const offsetY = (INNER_HEIGHT - worldScaledHeight) / 2
 
-  // Place a marker of the given size, keeping its whole footprint inside the
-  // hall outline: a table pushed flush against a wall would otherwise render
+  // Minimap px of a world-space point.
+  const px = (x: number) => offsetX + (x - worldBounds.x) * scale
+  const py = (y: number) => offsetY + (y - worldBounds.y) * scale
+
+  // Place a marker of the given size, keeping its whole footprint inside its
+  // hall's outline: a table pushed flush against a wall would otherwise render
   // centred on the border and poke out past it, which reads as a clipped dot.
-  const dotLeft = (x: number, size: number) =>
-    clamp(
-      offsetX + x * scale - size / 2,
-      offsetX,
-      offsetX + hallScaledWidth - size
-    )
-  const dotTop = (y: number, size: number) =>
-    clamp(
-      offsetY + y * scale - size / 2,
-      offsetY,
-      offsetY + hallScaledHeight - size
-    )
+  const dot = (worldPos: Position, hall: Hall, size: number) => ({
+    left: clamp(
+      px(worldPos.x) - size / 2,
+      px(hall.position.x),
+      px(hall.position.x + hall.size.width) - size
+    ),
+    top: clamp(
+      py(worldPos.y) - size / 2,
+      py(hall.position.y),
+      py(hall.position.y + hall.size.height) - size
+    ),
+  })
 
-  // Visible viewport rect, in hall-space meters, clipped to the hall bounds -
-  // mirrors the geometry `useHallGeometry` already computes for the main canvas,
-  // just inverted (container px -> hall meters) instead of the other way round.
-  const visibleLeftM = -hallLeft / ppm
-  const visibleTopM = -hallTop / ppm
+  // World position of an entity, clamped into its hall.
+  const entityWorld = (
+    position: Position,
+    hall: Hall
+  ): Position => ({
+    x: hall.position.x + clamp(position.x, 0, hall.size.width),
+    y: hall.position.y + clamp(position.y, 0, hall.size.height),
+  })
+
+  // Visible viewport rect, in world-space meters, clipped to the world bounds -
+  // mirrors the geometry `useWorldGeometry` already computes for the main
+  // canvas, just inverted (container px -> world meters).
+  const visibleLeftM = worldBounds.x - worldLeft / ppm
+  const visibleTopM = worldBounds.y - worldTop / ppm
   const visibleRightM = visibleLeftM + containerWidth / ppm
   const visibleBottomM = visibleTopM + containerHeight / ppm
 
-  const clippedLeft = clamp(visibleLeftM, 0, hallDimensions.width)
-  const clippedTop = clamp(visibleTopM, 0, hallDimensions.height)
-  const clippedRight = clamp(visibleRightM, 0, hallDimensions.width)
-  const clippedBottom = clamp(visibleBottomM, 0, hallDimensions.height)
+  const worldRight = worldBounds.x + worldBounds.width
+  const worldBottom = worldBounds.y + worldBounds.height
+  const clippedLeft = clamp(visibleLeftM, worldBounds.x, worldRight)
+  const clippedTop = clamp(visibleTopM, worldBounds.y, worldBottom)
+  const clippedRight = clamp(visibleRightM, worldBounds.x, worldRight)
+  const clippedBottom = clamp(visibleBottomM, worldBounds.y, worldBottom)
 
   // translate instead of left/top - this rect moves on every pan frame, and a
   // transform update doesn't trigger layout (width/height only change while
-  // the viewport edge crosses a hall edge).
+  // the viewport edge crosses a world edge).
   const viewportRect = {
-    transform: `translate3d(${offsetX + clippedLeft * scale}px, ${offsetY + clippedTop * scale}px, 0)`,
+    transform: `translate3d(${px(clippedLeft)}px, ${py(clippedTop)}px, 0)`,
     width: Math.max(0, (clippedRight - clippedLeft) * scale),
     height: Math.max(0, (clippedBottom - clippedTop) * scale),
   }
@@ -93,14 +116,15 @@ export const Minimap = ({
     if (!rect) return
     const localX = clientX - rect.left - offsetX
     const localY = clientY - rect.top - offsetY
-    const hallX = clamp(localX / scale, 0, hallDimensions.width)
-    const hallY = clamp(localY / scale, 0, hallDimensions.height)
-    // Centers the clicked hall-space point in the viewport. Derived from
-    // hallLeft = (containerWidth - scaledWidth) / 2 + pan.x, solved for pan.x
-    // such that hallLeft + hallX * ppm == containerWidth / 2 (and similarly y).
+    // Clicked world point, relative to the world origin (worldBounds.x/y).
+    const relX = clamp(localX / scale, 0, worldBounds.width)
+    const relY = clamp(localY / scale, 0, worldBounds.height)
+    // Centers the clicked world-space point in the viewport. Derived from
+    // worldLeft = (containerWidth - scaledWidth) / 2 + pan.x, solved for pan.x
+    // such that worldLeft + relX * ppm == containerWidth / 2 (and similarly y).
     onNavigate({
-      x: ppm * (hallDimensions.width / 2 - hallX),
-      y: ppm * (hallDimensions.height / 2 - hallY),
+      x: ppm * (worldBounds.width / 2 - relX),
+      y: ppm * (worldBounds.height / 2 - relY),
     })
   }
 
@@ -122,26 +146,24 @@ export const Minimap = ({
           navigateTo(e.clientX, e.clientY)
         }}
       >
-        {/* Outlines the hall's own scaled rect, not the padded box around it -
-            when the aspect ratios differ (the common case), the hall is
-            letterboxed inside the box via offsetX/offsetY. Drawing the border
-            on the full box instead would leave a gap between this outline and
-            the viewport rect below even when panned flush to a hall edge. */}
-        <div
-          className="pointer-events-none absolute rounded-[5px] border border-dashed border-planner-table-border"
-          style={{
-            left: offsetX,
-            top: offsetY,
-            width: hallDimensions.width * scale,
-            height: hallDimensions.height * scale,
-          }}
-        />
+        {/* One dashed outline per hall, placed at its world position. */}
+        {halls.map((hall) => (
+          <div
+            key={hall.id}
+            className="pointer-events-none absolute rounded-[5px] border border-dashed border-planner-table-border"
+            style={{
+              left: px(hall.position.x),
+              top: py(hall.position.y),
+              width: hall.size.width * scale,
+              height: hall.size.height * scale,
+            }}
+          />
+        ))}
         {tables.map((table) => {
-          // Tables placed outside the (possibly resized) hall are clamped to
-          // its bounds here - same as the main canvas - so a stray dot can't
-          // render outside the minimap box.
-          const x = clamp(table.position.x, 0, hallDimensions.width)
-          const y = clamp(table.position.y, 0, hallDimensions.height)
+          const hall = hallsById.get(table.hallId)
+          if (!hall) return null
+          const world = entityWorld(table.position, hall)
+          const { left, top } = dot(world, hall, DOT_SIZE)
           return (
             <div
               key={table.id}
@@ -151,18 +173,15 @@ export const Minimap = ({
                   ? "bg-planner-selected"
                   : "bg-planner-table-border")
               }
-              style={{
-                width: DOT_SIZE,
-                height: DOT_SIZE,
-                left: dotLeft(x, DOT_SIZE),
-                top: dotTop(y, DOT_SIZE),
-              }}
+              style={{ width: DOT_SIZE, height: DOT_SIZE, left, top }}
             />
           )
         })}
         {fixtures.map((fixture) => {
-          const x = clamp(fixture.position.x, 0, hallDimensions.width)
-          const y = clamp(fixture.position.y, 0, hallDimensions.height)
+          const hall = hallsById.get(fixture.hallId)
+          if (!hall) return null
+          const world = entityWorld(fixture.position, hall)
+          const { left, top } = dot(world, hall, DOT_SIZE - 1)
           return (
             <div
               key={fixture.id}
@@ -170,8 +189,8 @@ export const Minimap = ({
               style={{
                 width: DOT_SIZE - 1,
                 height: DOT_SIZE - 1,
-                left: dotLeft(x, DOT_SIZE - 1),
-                top: dotTop(y, DOT_SIZE - 1),
+                left,
+                top,
               }}
             />
           )

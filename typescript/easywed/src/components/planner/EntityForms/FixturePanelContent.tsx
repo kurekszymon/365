@@ -23,9 +23,8 @@ import {
 export const FixturePanelContent = ({ fixtureId }: { fixtureId: string }) => {
   const { t } = useTranslation()
 
-  const { hallDimensions, updateFixture, saveFixture } = usePlannerStore(
+  const { updateFixture, saveFixture } = usePlannerStore(
     useShallow((state) => ({
-      hallDimensions: state.hall.dimensions,
       updateFixture: state.updateFixture,
       saveFixture: state.saveFixture,
     }))
@@ -34,6 +33,12 @@ export const FixturePanelContent = ({ fixtureId }: { fixtureId: string }) => {
   const editedFixture = usePlannerStore((state) =>
     state.fixtures.find((f) => f.id === fixtureId)
   )
+
+  // Validate size against the fixture's own hall.
+  const hall = usePlannerStore((state) =>
+    state.halls.find((h) => h.id === editedFixture?.hallId)
+  )
+  const hallDimensions = hall?.size ?? { width: Infinity, height: Infinity }
 
   const [form, setForm] = useState(() => {
     const source = editedFixture ?? DEFAULT_FIXTURE
@@ -73,12 +78,13 @@ export const FixturePanelContent = ({ fixtureId }: { fixtureId: string }) => {
   }
 
   const applyToStore = (f: typeof form) => {
-    if (!isDimensionsValid(f)) return
+    if (!editedFixture || !isDimensionsValid(f)) return
     updateFixture(fixtureId, {
       name: f.name.trim(),
       shape: f.shape,
       size: toStoredSize(f),
       rotation: f.shape === "circle" ? 0 : f.rotation,
+      hallId: editedFixture.hallId,
     })
   }
 

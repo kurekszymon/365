@@ -5,7 +5,11 @@ import {
   ExportGuestsPdfDialog,
   ImportGuestsDialog,
 } from "./guests"
-import { ExportPlannerDxfDialog, ImportPlannerDxfDialog } from "./planner"
+import {
+  DeleteHallDialog,
+  ExportPlannerDxfDialog,
+  ImportPlannerDxfDialog,
+} from "./planner"
 import { CreateWeddingFromDxfDialog, WeddingMembersDialog } from "./weddings"
 import { useDialogStore } from "@/stores/dialog.store"
 
@@ -31,6 +35,8 @@ export const DialogManager = () => {
       return <ExportPlannerDxfDialog />
     case "Planner.Import.Dxf":
       return <ImportPlannerDxfDialog />
+    case "Planner.Hall.Delete":
+      return <DeleteHallDialog />
     default:
       return <></>
   }

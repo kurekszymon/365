@@ -23,8 +23,6 @@ import { useIsMobile } from "@/hooks/useMediaQuery"
 type DraggableTableProps = {
   table: Table
   guestsAssigned: number
-  hallWidth: number
-  hallHeight: number
   ppm: number
   seatGuests?: Array<Guest>
   showSeats?: boolean
@@ -33,8 +31,6 @@ type DraggableTableProps = {
 const DraggableTableBase = ({
   table,
   guestsAssigned,
-  hallWidth,
-  hallHeight,
   ppm,
   seatGuests,
   showSeats,
@@ -71,7 +67,6 @@ const DraggableTableBase = ({
       guestsAssigned={guestsAssigned}
       ppm={ppm}
       transform={transform}
-      hallBounds={{ width: hallWidth, height: hallHeight }}
       seatGuests={seatGuests}
       showSeats={showSeats}
       className={cn(

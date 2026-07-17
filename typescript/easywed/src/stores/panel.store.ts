@@ -2,8 +2,9 @@ import { create } from "zustand"
 import type { Position } from "./planner.store"
 
 export type PanelView =
-  | { kind: "hall" }
-  | { kind: "tables.batch_add"; position?: Position }
+  | { kind: "halls.list" }
+  | { kind: "hall.edit"; hallId: string }
+  | { kind: "tables.batch_add"; position?: Position; hallId?: string }
   | { kind: "table.edit"; tableId: string }
   | { kind: "fixture.edit"; fixtureId: string }
   | { kind: "add_hub" }
@@ -18,8 +19,9 @@ type State = {
 }
 
 type Action = {
-  openHall: () => void
-  openTablesBatchAdd: (position?: Position) => void
+  openHalls: () => void
+  openHallEdit: (hallId: string) => void
+  openTablesBatchAdd: (position?: Position, hallId?: string) => void
   openTableEdit: (tableId: string) => void
   openFixtureEdit: (fixtureId: string) => void
   openAddHub: () => void
@@ -33,9 +35,11 @@ export const usePanelStore = create<State & Action>((set) => ({
   view: null,
   selectedId: null,
 
-  openHall: () => set({ view: { kind: "hall" }, selectedId: null }),
-  openTablesBatchAdd: (position) =>
-    set({ view: { kind: "tables.batch_add", position }, selectedId: null }),
+  openHalls: () => set({ view: { kind: "halls.list" }, selectedId: null }),
+  openHallEdit: (hallId) =>
+    set({ view: { kind: "hall.edit", hallId }, selectedId: null }),
+  openTablesBatchAdd: (position, hallId) =>
+    set({ view: { kind: "tables.batch_add", position, hallId }, selectedId: null }),
   openTableEdit: (tableId) =>
     set({ view: { kind: "table.edit", tableId }, selectedId: tableId }),
   openFixtureEdit: (fixtureId) =>
@@ -51,7 +55,8 @@ export const usePanelStore = create<State & Action>((set) => ({
       switch (state.view.kind) {
         // Clicking the canvas background closes any open form; the add hub and
         // the AI chat stay open - deselecting is orthogonal to them.
-        case "hall":
+        case "halls.list":
+        case "hall.edit":
         case "tables.batch_add":
         case "table.edit":
         case "fixture.edit":

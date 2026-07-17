@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/context-menu"
 
 type RenderItemsArgs = {
+  // World-space meters; the consumer resolves the hall under the point.
   position: Position
   inHall: boolean
   // The canvas element the menu was opened on (kind "hall" when on empty hall).
@@ -19,15 +20,15 @@ type RenderItemsArgs = {
 }
 
 interface Props {
-  viewportToHall: (x: number, y: number) => Position
-  isInHallBounds: (x: number, y: number) => boolean
+  viewportToWorld: (x: number, y: number) => Position
+  isInAnyHall: (x: number, y: number) => boolean
   renderItems: (args: RenderItemsArgs) => ReactNode
 }
 
 export const CanvasContextMenu = ({
   children,
-  viewportToHall,
-  isInHallBounds,
+  viewportToWorld,
+  isInAnyHall,
   renderItems,
 }: PropsWithChildren<Props>) => {
   // Non-null while a table/fixture is being dragged (PointerSensor past its 8px
@@ -61,7 +62,7 @@ export const CanvasContextMenu = ({
             return
           }
           setCapturedPos({ x: e.clientX, y: e.clientY })
-          setInHall(isInHallBounds(e.clientX, e.clientY))
+          setInHall(isInAnyHall(e.clientX, e.clientY))
           setTarget(captured)
         }}
       >
@@ -78,7 +79,7 @@ export const CanvasContextMenu = ({
         onContextMenu={(e) => e.preventDefault()}
       >
         {renderItems({
-          position: viewportToHall(capturedPos.x, capturedPos.y),
+          position: viewportToWorld(capturedPos.x, capturedPos.y),
           inHall,
           target,
         })}

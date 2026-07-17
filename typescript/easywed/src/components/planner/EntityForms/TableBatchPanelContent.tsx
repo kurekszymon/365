@@ -28,17 +28,22 @@ const MAX_BATCH_COUNT = 50
 
 interface Props {
   position?: Position
+  // Hall the batch lands in (set when opened from the canvas context menu);
+  // defaults to the first hall.
+  hallId?: string
 }
 
-export const TableBatchPanelContent = ({ position }: Props) => {
+export const TableBatchPanelContent = ({ position, hallId }: Props) => {
   const { t } = useTranslation()
 
-  const { hallDimensions, addTables } = usePlannerStore(
+  const { halls, addTables } = usePlannerStore(
     useShallow((state) => ({
-      hallDimensions: state.hall.dimensions,
+      halls: state.halls,
       addTables: state.addTables,
     }))
   )
+  const targetHall = halls.find((h) => h.id === hallId) ?? halls[0]
+  const hallDimensions = targetHall?.size ?? { width: 0, height: 0 }
 
   const openTableEdit = usePanelStore((state) => state.openTableEdit)
 
@@ -69,7 +74,7 @@ export const TableBatchPanelContent = ({ position }: Props) => {
   }
 
   const handleSubmit = () => {
-    if (!canSubmit) return
+    if (!canSubmit || !targetHall) return
     const storedSize =
       form.shape === "round"
         ? getSizeForShape(form.shape, form.width, form.height)
@@ -84,6 +89,7 @@ export const TableBatchPanelContent = ({ position }: Props) => {
         capacity: form.capacity,
         size: storedSize,
         rotation: form.shape === "round" ? 0 : form.rotation,
+        hallId: targetHall.id,
       },
       form.count,
       position

@@ -12,8 +12,11 @@ interface ActiveDrag {
 interface MeasureOverlayProps {
   measurements: Array<Measurement>
   ppm: number
-  hallWidthPx: number
-  hallHeightPx: number
+  widthPx: number
+  heightPx: number
+  // World-space meters of the overlay's top-left corner (the world bounds
+  // origin). Measurement points are absolute world coords; px = (m - origin) * ppm.
+  origin: Position
   pendingPoint: MeasurementPoint | null
   cursorPos: Position | null
   onDelete?: (id: string) => void
@@ -29,8 +32,9 @@ interface MeasureOverlayProps {
 export const MeasureOverlay = ({
   measurements,
   ppm,
-  hallWidthPx,
-  hallHeightPx,
+  widthPx,
+  heightPx,
+  origin,
   pendingPoint,
   cursorPos,
   onDelete,
@@ -53,10 +57,12 @@ export const MeasureOverlay = ({
     if (!svgRef.current) return null
     const rect = svgRef.current.getBoundingClientRect()
     return {
-      xM: (e.clientX - rect.left) / ppm,
-      yM: (e.clientY - rect.top) / ppm,
+      xM: origin.x + (e.clientX - rect.left) / ppm,
+      yM: origin.y + (e.clientY - rect.top) / ppm,
     }
   }
+
+  const toPx = (m: number, o: number) => (m - o) * ppm
 
   // Returns meter-space position accounting for endpoint drag and object following
   const getDisplayPos = (
@@ -113,8 +119,8 @@ export const MeasureOverlay = ({
     <svg
       ref={svgRef}
       className="pointer-events-none absolute inset-0 z-40 block"
-      width={hallWidthPx}
-      height={hallHeightPx}
+      width={widthPx}
+      height={heightPx}
       overflow="visible"
       role="group"
       aria-label={t("measure.overlay_label")}
@@ -123,10 +129,10 @@ export const MeasureOverlay = ({
       {measurements.map((m) => {
         const aM = getDisplayPos(m.a, m.id, "a")
         const bM = getDisplayPos(m.b, m.id, "b")
-        const ax = aM.x * ppm
-        const ay = aM.y * ppm
-        const bx = bM.x * ppm
-        const by = bM.y * ppm
+        const ax = toPx(aM.x, origin.x)
+        const ay = toPx(aM.y, origin.y)
+        const bx = toPx(bM.x, origin.x)
+        const by = toPx(bM.y, origin.y)
         const mx = (ax + bx) / 2
         const my = (ay + by) / 2
         const d = Math.sqrt((bM.x - aM.x) ** 2 + (bM.y - aM.y) ** 2)
@@ -270,18 +276,18 @@ export const MeasureOverlay = ({
       {pendingPoint && (
         <>
           <circle
-            cx={pendingPoint.x * ppm}
-            cy={pendingPoint.y * ppm}
+            cx={toPx(pendingPoint.x, origin.x)}
+            cy={toPx(pendingPoint.y, origin.y)}
             r={4}
             fill="#0d9488"
             opacity={0.7}
           />
           {cursorPos && (
             <line
-              x1={pendingPoint.x * ppm}
-              y1={pendingPoint.y * ppm}
-              x2={cursorPos.x * ppm}
-              y2={cursorPos.y * ppm}
+              x1={toPx(pendingPoint.x, origin.x)}
+              y1={toPx(pendingPoint.y, origin.y)}
+              x2={toPx(cursorPos.x, origin.x)}
+              y2={toPx(cursorPos.y, origin.y)}
               stroke="#0d9488"
               strokeWidth={1.5}
               strokeDasharray="4 4"
