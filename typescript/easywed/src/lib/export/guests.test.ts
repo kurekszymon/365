@@ -10,6 +10,7 @@ const table = (id: string, name: string, capacity = 8): Table => ({
   size: { width: 2, height: 2 },
   rotation: 0,
   position: { x: 0, y: 0 },
+  hallId: "hall-1",
 })
 
 const guest = (

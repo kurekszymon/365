@@ -10,7 +10,12 @@ import { useViewStore } from "@/stores/view.store"
 import { useDialogStore } from "@/stores/dialog.store"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
-import { Field, FieldContent, FieldLabel, FieldTitle } from "@/components/ui/field"
+import {
+  Field,
+  FieldContent,
+  FieldLabel,
+  FieldTitle,
+} from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
 import {
@@ -119,7 +124,9 @@ export const HallPanelContent = ({ hallId }: { hallId: string }) => {
               id="hall-pos-x"
               step={0.5}
               value={hall.position.x}
-              onValueChange={(x) => updateHallPosition(hallId, x, hall.position.y)}
+              onValueChange={(x) =>
+                updateHallPosition(hallId, x, hall.position.y)
+              }
             />
           </div>
           <div className="flex flex-1 flex-col gap-1">
@@ -128,7 +135,9 @@ export const HallPanelContent = ({ hallId }: { hallId: string }) => {
               id="hall-pos-y"
               step={0.5}
               value={hall.position.y}
-              onValueChange={(y) => updateHallPosition(hallId, hall.position.x, y)}
+              onValueChange={(y) =>
+                updateHallPosition(hallId, hall.position.x, y)
+              }
             />
           </div>
         </FieldContent>

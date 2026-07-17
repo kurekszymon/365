@@ -317,7 +317,9 @@ export const Canvas = () => {
                 {clipboardItem && (
                   <CanvasContextMenuItem
                     disabled={!inHall || !targetHallId}
-                    onSelect={() => targetHallId && paste(snapped, targetHallId)}
+                    onSelect={() =>
+                      targetHallId && paste(snapped, targetHallId)
+                    }
                   >
                     <ClipboardPasteIcon className="size-4" />
                     {clipboardItem.kind === "table"

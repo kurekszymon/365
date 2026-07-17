@@ -15,6 +15,7 @@ const table = (id: string, name: string): Table => ({
   size: { width: 1.6, height: 1.6 },
   rotation: 0,
   position: { x: 0, y: 0 },
+  hallId: "hall-1",
 })
 
 const TABLES = [table("t1", "Head Table"), table("t2", "Stół 2")]

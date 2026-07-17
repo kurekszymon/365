@@ -4,10 +4,38 @@ import type { DxfEntity, DxfTransform } from "./dxfGeometry"
 import type {
   Fixture,
   Geometry,
+  Hall,
   HallPreset,
   Position,
   Table,
 } from "@/stores/planner.store"
+
+// Parsed entities carry no hallId - a DXF file describes one hall's layout,
+// and the apply step (import dialog) stamps the target hall's id.
+export type ImportedTable = Omit<Table, "hallId">
+export type ImportedFixture = Omit<Fixture, "hallId">
+
+// Materializes a parsed preview as a concrete hall (at the given world
+// position) with its entities stamped with the new hall's id - the shape the
+// store and the layout RPC expect.
+export const previewToHallLayout = (
+  preview: ImportPreview,
+  position: Position = { x: 0, y: 0 },
+  name = ""
+): { hall: Hall; tables: Array<Table>; fixtures: Array<Fixture> } => {
+  const hall: Hall = {
+    id: crypto.randomUUID(),
+    name,
+    preset: preview.hall.preset,
+    size: { width: preview.hall.width, height: preview.hall.height },
+    position,
+  }
+  return {
+    hall,
+    tables: preview.tables.map((t) => ({ ...t, hallId: hall.id })),
+    fixtures: preview.fixtures.map((f) => ({ ...f, hallId: hall.id })),
+  }
+}
 
 // Layer roles. "ignore" means the layer's entities are silently dropped.
 export type LayerRole = "hall" | "tables" | "fixtures" | "labels" | "ignore"
@@ -41,8 +69,8 @@ const INSUNITS_TO_UNIT: Record<number, DxfUnit | undefined> = {
 
 export interface ImportPreview {
   hall: { width: number; height: number; preset: HallPreset }
-  tables: Array<Table>
-  fixtures: Array<Fixture>
+  tables: Array<ImportedTable>
+  fixtures: Array<ImportedFixture>
 }
 
 export interface ImportWarning {
@@ -566,8 +594,8 @@ const buildTablesFromShapes = (
   opts: BuildOpts,
   shapes: Array<NormShape>,
   labels: Array<LabelPoint>
-): Array<Table> => {
-  const tables: Array<Table> = []
+): Array<ImportedTable> => {
+  const tables: Array<ImportedTable> = []
   for (const s of shapes) {
     if (s.kind === "circle") {
       const topLeft = dxfToAppPoint(opts, s.cx - s.r, s.cy + s.r)
@@ -624,8 +652,8 @@ const buildFixturesFromShapes = (
   opts: BuildOpts,
   shapes: Array<NormShape>,
   labels: Array<LabelPoint>
-): Array<Fixture> => {
-  const fixtures: Array<Fixture> = []
+): Array<ImportedFixture> => {
+  const fixtures: Array<ImportedFixture> = []
   for (const s of shapes) {
     if (s.kind === "circle") {
       const topLeft = dxfToAppPoint(opts, s.cx - s.r, s.cy + s.r)

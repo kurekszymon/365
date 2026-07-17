@@ -6,7 +6,6 @@ import {
   readLocalPlannerSnapshot,
 } from "@/lib/localWedding"
 import { supabase } from "@/lib/supabase"
-import { DEFAULT_HALL } from "@/stores/planner.store"
 
 const DISMISSED_KEY = "easywed.guest_migration_dismissed"
 
@@ -61,7 +60,7 @@ export function LocalWeddingMigrationPrompt() {
     tables: [],
     guests: [],
     fixtures: [],
-    hall: DEFAULT_HALL,
+    halls: [],
   }
   const global = readLocalGlobalSnapshot()
 

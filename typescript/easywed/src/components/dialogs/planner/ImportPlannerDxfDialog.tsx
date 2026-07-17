@@ -1,6 +1,8 @@
+import { useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import type { ImportPreview } from "@/lib/import/plannerDxf"
+import { previewToHallLayout } from "@/lib/import/plannerDxf"
 import { DxfLayerMappingStep } from "@/components/dialogs/shared/DxfLayerMappingStep"
 import { DxfPreviewStep } from "@/components/dialogs/shared/DxfPreviewStep"
 import { FileDropZone } from "@/components/dialogs/shared/FileDropZone"
@@ -13,12 +15,24 @@ import {
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog"
 import { Button } from "@/components/ui/button"
+import { ButtonGroup } from "@/components/ui/button-group"
 import { useDialogStore } from "@/stores/dialog.store"
-import { usePlannerStore } from "@/stores/planner.store"
-import { replacePlannerLayout } from "@/lib/sync/mutations"
+import { nextHallPosition, usePlannerStore } from "@/stores/planner.store"
+import {
+  insertFixture,
+  insertHall,
+  insertTables,
+  replacePlannerLayout,
+} from "@/lib/sync/mutations"
+
+// What the imported layout does to the current plan: "replace" wipes every
+// hall/table/fixture and installs the file as the sole hall; "add" appends the
+// file as a NEW hall next to the existing layout, leaving everything in place.
+type ImportMode = "replace" | "add"
 
 export const ImportPlannerDxfDialog = () => {
   const { t } = useTranslation()
+  const [mode, setMode] = useState<ImportMode>("replace")
   const {
     stage,
     unit,
@@ -46,11 +60,40 @@ export const ImportPlannerDxfDialog = () => {
 
   const onCommit = async (preview: ImportPreview) => {
     setCommitting()
-    const ok = await replacePlannerLayout(
-      preview.hall,
-      preview.tables,
-      preview.fixtures
-    )
+
+    if (mode === "add") {
+      // Append as a new hall, keeping the current layout untouched. The hall
+      // row must land before its entities (hall_id FK), so these awaits are
+      // deliberately sequential.
+      const { halls } = usePlannerStore.getState()
+      const { hall, tables, fixtures } = previewToHallLayout(
+        preview,
+        nextHallPosition(halls)
+      )
+      const hallOk = await insertHall(hall)
+      if (!hallOk) {
+        setErrorMessage(t("import.dxf.commit_failed"))
+        return
+      }
+      const results = await Promise.all([
+        tables.length > 0 ? insertTables(tables) : Promise.resolve(true),
+        ...fixtures.map((f) => insertFixture(f)),
+      ])
+      if (results.some((ok) => !ok)) {
+        setErrorMessage(t("import.dxf.commit_failed"))
+        return
+      }
+      usePlannerStore.setState((s) => ({
+        halls: [...s.halls, hall],
+        tables: [...s.tables, ...tables],
+        fixtures: [...s.fixtures, ...fixtures],
+      }))
+      onClose()
+      return
+    }
+
+    const { hall, tables, fixtures } = previewToHallLayout(preview)
+    const ok = await replacePlannerLayout([hall], tables, fixtures)
     if (!ok) {
       setErrorMessage(t("import.dxf.commit_failed"))
       return
@@ -59,14 +102,11 @@ export const ImportPlannerDxfDialog = () => {
     // updates without waiting for a refetch. Guests whose tables were
     // removed get unassigned by the FK cascade server-side.
     usePlannerStore.setState((s) => ({
-      hall: {
-        dimensions: { width: preview.hall.width, height: preview.hall.height },
-        preset: preview.hall.preset,
-      },
-      tables: preview.tables,
-      fixtures: preview.fixtures,
+      halls: [hall],
+      tables,
+      fixtures,
       guests: s.guests.map((g) =>
-        g.tableId && !preview.tables.some((tbl) => tbl.id === g.tableId)
+        g.tableId && !tables.some((tbl) => tbl.id === g.tableId)
           ? { ...g, tableId: null }
           : g
       ),
@@ -121,17 +161,43 @@ export const ImportPlannerDxfDialog = () => {
           )}
 
           {stage.kind === "preview" && (
-            <DxfPreviewStep
-              preview={stage.preview}
-              warnings={stage.warnings}
-              unit={unit}
-              onUnitChange={onUnitChange}
-              assignedGuests={guests.filter((g) => g.tableId).length}
-              onBack={reset}
-              onCommit={() => onCommit(stage.preview)}
-              showDestructiveWarning
-              commitLabelKey="import.dxf.commit"
-            />
+            <div className="flex flex-col gap-3">
+              <ButtonGroup className="w-full">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="flex-1"
+                  variant={mode === "replace" ? "default" : "outline"}
+                  onClick={() => setMode("replace")}
+                >
+                  {t("import.dxf.mode_replace")}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="flex-1"
+                  variant={mode === "add" ? "default" : "outline"}
+                  onClick={() => setMode("add")}
+                >
+                  {t("import.dxf.mode_add_hall")}
+                </Button>
+              </ButtonGroup>
+              <DxfPreviewStep
+                preview={stage.preview}
+                warnings={stage.warnings}
+                unit={unit}
+                onUnitChange={onUnitChange}
+                assignedGuests={guests.filter((g) => g.tableId).length}
+                onBack={reset}
+                onCommit={() => onCommit(stage.preview)}
+                showDestructiveWarning={mode === "replace"}
+                commitLabelKey={
+                  mode === "replace"
+                    ? "import.dxf.commit"
+                    : "import.dxf.commit_add_hall"
+                }
+              />
+            </div>
           )}
 
           {stage.kind === "committing" && (

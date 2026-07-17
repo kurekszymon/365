@@ -134,10 +134,7 @@ const inHall = (hall: Hall, p: Position): boolean =>
 
 // The hall under a world-space point. When halls overlap the LAST one in
 // array order wins, matching paint order (later halls render on top).
-export const hallAtPoint = (
-  halls: Array<Hall>,
-  p: Position
-): Hall | null => {
+export const hallAtPoint = (halls: Array<Hall>, p: Position): Hall | null => {
   for (let i = halls.length - 1; i >= 0; i--) {
     if (inHall(halls[i], p)) return halls[i]
   }

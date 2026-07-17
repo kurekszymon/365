@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest"
-import type { Fixture, Table } from "@/stores/planner.store"
+import type { Fixture, Hall, Table } from "@/stores/planner.store"
 import { buildPlannerDxf } from "@/lib/export/plannerDxf"
 import { parsePlannerDxf } from "@/lib/import/plannerDxf"
 import { applyTransforms } from "@/lib/import/dxfGeometry"
 
-const HALL = { width: 20, height: 12 }
+const HALL: Hall = {
+  id: "hall-1",
+  name: "",
+  preset: "rectangle",
+  size: { width: 20, height: 12 },
+  position: { x: 0, y: 0 },
+}
 
 const ROUND_TABLE: Table = {
   id: "t-round",
@@ -14,6 +20,7 @@ const ROUND_TABLE: Table = {
   size: { width: 1.6, height: 1.6 },
   rotation: 0,
   position: { x: 1, y: 2 },
+  hallId: HALL.id,
 }
 
 const RECT_TABLE: Table = {
@@ -24,6 +31,7 @@ const RECT_TABLE: Table = {
   size: { width: 3, height: 1 },
   rotation: 0,
   position: { x: 3, y: 5 },
+  hallId: HALL.id,
 }
 
 const TRIANGLE_TABLE: Table = {
@@ -34,6 +42,7 @@ const TRIANGLE_TABLE: Table = {
   size: { width: 2, height: 1 },
   rotation: 0,
   position: { x: 8, y: 6 },
+  hallId: HALL.id,
   geometry: {
     vertices: [
       { x: 0, y: 0 },
@@ -51,6 +60,7 @@ const CIRCLE_FIXTURE: Fixture = {
   size: { width: 1, height: 1 },
   rotation: 0,
   position: { x: 10, y: 4 },
+  hallId: HALL.id,
 }
 
 const POLY_FIXTURE: Fixture = {
@@ -60,6 +70,7 @@ const POLY_FIXTURE: Fixture = {
   size: { width: 2, height: 1 },
   rotation: 0,
   position: { x: 12, y: 7 },
+  hallId: HALL.id,
   geometry: {
     vertices: [
       { x: 0, y: 0 },
@@ -73,7 +84,7 @@ const POLY_FIXTURE: Fixture = {
 describe("parsePlannerDxf round-trip", () => {
   it("reconstructs hall + rect table + circle fixture from an EasyWed export", () => {
     const dxf = buildPlannerDxf({
-      hall: HALL,
+      halls: [HALL],
       tables: [RECT_TABLE],
       fixtures: [CIRCLE_FIXTURE],
       guests: [],
@@ -90,8 +101,8 @@ describe("parsePlannerDxf round-trip", () => {
     if (!preview) throw new Error("preview missing")
 
     expect(result.detectedAsEasywed).toBe(true)
-    expect(preview.hall.width).toBeCloseTo(HALL.width, 3)
-    expect(preview.hall.height).toBeCloseTo(HALL.height, 3)
+    expect(preview.hall.width).toBeCloseTo(HALL.size.width, 3)
+    expect(preview.hall.height).toBeCloseTo(HALL.size.height, 3)
     // The exported hall is an axis-aligned rectangle, so it round-trips back
     // to the "rectangle" preset rather than the catch-all "custom".
     expect(preview.hall.preset).toBe("rectangle")
@@ -119,7 +130,7 @@ describe("parsePlannerDxf round-trip", () => {
 
   it("reconstructs a round table from an EasyWed export", () => {
     const dxf = buildPlannerDxf({
-      hall: HALL,
+      halls: [HALL],
       tables: [ROUND_TABLE],
       fixtures: [],
       guests: [],
@@ -142,7 +153,7 @@ describe("parsePlannerDxf round-trip", () => {
 
   it("preserves a triangle as a custom shape with local-coord vertices", () => {
     const dxf = buildPlannerDxf({
-      hall: HALL,
+      halls: [HALL],
       tables: [TRIANGLE_TABLE],
       fixtures: [],
       guests: [],
@@ -176,7 +187,7 @@ describe("parsePlannerDxf round-trip", () => {
 
   it("preserves a polygon fixture with local-coord vertices", () => {
     const dxf = buildPlannerDxf({
-      hall: HALL,
+      halls: [HALL],
       tables: [],
       fixtures: [POLY_FIXTURE],
       guests: [],

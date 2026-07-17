@@ -43,7 +43,7 @@ export const TableBatchPanelContent = ({ position, hallId }: Props) => {
     }))
   )
   const targetHall = halls.find((h) => h.id === hallId) ?? halls[0]
-  const hallDimensions = targetHall?.size ?? { width: 0, height: 0 }
+  const hallDimensions = targetHall.size
 
   const openTableEdit = usePanelStore((state) => state.openTableEdit)
 
@@ -74,7 +74,7 @@ export const TableBatchPanelContent = ({ position, hallId }: Props) => {
   }
 
   const handleSubmit = () => {
-    if (!canSubmit || !targetHall) return
+    if (!canSubmit) return
     const storedSize =
       form.shape === "round"
         ? getSizeForShape(form.shape, form.width, form.height)

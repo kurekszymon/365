@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router"
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import type { ImportPreview } from "@/lib/import/plannerDxf"
+import { previewToHallLayout } from "@/lib/import/plannerDxf"
 import { DxfLayerMappingStep } from "@/components/dialogs/shared/DxfLayerMappingStep"
 import { DxfPreviewStep } from "@/components/dialogs/shared/DxfPreviewStep"
 import { FileDropZone } from "@/components/dialogs/shared/FileDropZone"
@@ -69,11 +70,8 @@ export const CreateWeddingFromDxfDialog = () => {
     const previousWeddingId = useGlobalStore.getState().weddingId
     useGlobalStore.setState({ weddingId: data.id })
 
-    const ok = await replacePlannerLayout(
-      preview.hall,
-      preview.tables,
-      preview.fixtures
-    )
+    const { hall, tables, fixtures } = previewToHallLayout(preview)
+    const ok = await replacePlannerLayout([hall], tables, fixtures)
     if (!ok) {
       const { error: rollbackError } = await supabase
         .from("weddings")

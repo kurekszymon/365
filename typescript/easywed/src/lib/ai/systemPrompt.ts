@@ -10,7 +10,7 @@ import i18n from "@/i18n"
 // top-left origin: x grows right, y grows down. An object's position is its
 // top-left corner.
 export const buildSystemPrompt = (): string => {
-  const { hall, tables, fixtures, guests } = usePlannerStore.getState()
+  const { halls, tables, fixtures, guests } = usePlannerStore.getState()
 
   // Mirrors the "Dodaj do sali" visual-card picker's own presets (see
   // addPresets.ts) so tables/fixtures the assistant creates by free-form
@@ -33,9 +33,16 @@ export const buildSystemPrompt = (): string => {
     .join("\n")
 
   const snapshot = {
-    hall: hall.dimensions,
+    halls: halls.map((h) => ({
+      id: h.id,
+      name: h.name,
+      floor: h.floor ?? null,
+      size: h.size,
+      position: h.position,
+    })),
     tables: tables.map((t) => ({
       id: t.id,
+      hallId: t.hallId,
       name: t.name,
       shape: t.shape,
       capacity: t.capacity,
@@ -46,6 +53,7 @@ export const buildSystemPrompt = (): string => {
     })),
     fixtures: fixtures.map((f) => ({
       id: f.id,
+      hallId: f.hallId,
       name: f.name,
       shape: f.shape,
       size: f.size,
@@ -57,14 +65,25 @@ export const buildSystemPrompt = (): string => {
   return `You are the planning assistant for "easywed", a wedding reception hall planner.
 You help the user arrange tables and fixtures on the hall floor plan by calling tools.
 
+HALLS
+- A wedding can span MULTIPLE halls (rooms, or areas on different floors). Each hall in
+  the snapshot has an id, a name, an optional floor number, a size (meters), and a world
+  position (where it sits on the shared canvas - you rarely need it).
+- Every table/fixture belongs to exactly one hall via its "hallId".
+- Tools take an optional "hallId"; when omitted they default to the FIRST hall. Always
+  pass a hallId when the wedding has more than one hall and the user names a room/floor -
+  match the user's words against the hall names and floors in the snapshot.
+- Moving an object with a different "hallId" transfers it to that hall.
+
 COORDINATE SYSTEM
-- All distances are in METERS. The origin (0, 0) is the TOP-LEFT corner of the hall.
+- All distances are in METERS. The origin (0, 0) is the TOP-LEFT corner of the object's
+  HALL (the one identified by its hallId) - positions are hall-local.
 - x grows to the right, y grows downward.
 - An object's "position" is its TOP-LEFT corner, not its center.
 - "size" is the base, un-rotated footprint. width/height are in meters. Rotation of 90
   visually swaps width and height on the canvas; you still specify the base size.
-- The hall is ${snapshot.hall.width} m wide and ${snapshot.hall.height} m tall. Keep objects
-  inside these bounds. Positions are clamped to fit, so you can place near an edge safely.
+- Keep objects inside their hall's size. Positions are clamped to fit, so you can place
+  near an edge safely.
 
 SHAPES
 - Tables: "round" (uses width as diameter; height is ignored and rotation is forced to 0)

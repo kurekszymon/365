@@ -123,7 +123,12 @@ export function useTableSnap({
     const crossedHalls = target.id !== entity.hallId
 
     if (type === "table-drag")
-      updateTablePosition(id, next.x, next.y, crossedHalls ? target.id : undefined)
+      updateTablePosition(
+        id,
+        next.x,
+        next.y,
+        crossedHalls ? target.id : undefined
+      )
     else
       updateFixturePosition(
         id,
@@ -136,10 +141,12 @@ export function useTableSnap({
       // Measurements live in world coords, so shift anchored endpoints by the
       // object's world-space delta (including any hall change).
       const worldDx =
-        target.position.x + next.x -
+        target.position.x +
+        next.x -
         ((sourceHall?.position.x ?? 0) + entity.position.x)
       const worldDy =
-        target.position.y + next.y -
+        target.position.y +
+        next.y -
         ((sourceHall?.position.y ?? 0) + entity.position.y)
       shiftMeasurementPoints(weddingId, id, worldDx, worldDy)
     }

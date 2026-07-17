@@ -62,10 +62,7 @@ export const HallSurface = ({
     }))
   )
 
-  const hallsById = useMemo(
-    () => new Map(halls.map((h) => [h.id, h])),
-    [halls]
-  )
+  const hallsById = useMemo(() => new Map(halls.map((h) => [h.id, h])), [halls])
 
   const guestsByTableId = useMemo(() => {
     const byTable = new Map<string, Array<(typeof guests)[number]>>()

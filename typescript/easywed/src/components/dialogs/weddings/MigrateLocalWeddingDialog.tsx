@@ -77,8 +77,9 @@ export const MigrateLocalWeddingDialog = ({
     const previousWeddingId = useGlobalStore.getState().weddingId
     useGlobalStore.setState({ weddingId: data.id })
 
-    // Tables can only be added once a hall preset is chosen, so a preset-less
-    // snapshot has no layout to migrate - skip straight to guests.
+    // A hall-less snapshot has no layout to migrate - skip straight to guests.
+    // (readLocalPlannerSnapshot already normalized legacy single-hall payloads
+    // to the multi-hall shape.)
     // replacePlannerLayout maps over planner.tables/fixtures synchronously
     // before it ever awaits a request, so a malformed locally-persisted row
     // (e.g. missing `size`) throws synchronously rather than resolving
@@ -86,17 +87,14 @@ export const MigrateLocalWeddingDialog = ({
     // below instead of leaving the dialog stuck on "committing".
     let layoutOk: boolean
     try {
-      layoutOk = planner.hall.preset
-        ? await replacePlannerLayout(
-            {
-              preset: planner.hall.preset,
-              width: planner.hall.dimensions.width,
-              height: planner.hall.dimensions.height,
-            },
-            planner.tables,
-            planner.fixtures
-          )
-        : true
+      layoutOk =
+        planner.halls.length > 0
+          ? await replacePlannerLayout(
+              planner.halls,
+              planner.tables,
+              planner.fixtures
+            )
+          : true
     } catch (err) {
       console.error("[guest-mode] failed to migrate layout", err)
       layoutOk = false

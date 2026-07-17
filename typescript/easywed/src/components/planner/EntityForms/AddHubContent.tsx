@@ -73,11 +73,10 @@ export const AddHubContent = ({
   const [selectedHallId, setSelectedHallId] = useState<string | undefined>(
     undefined
   )
-  const targetHall =
-    halls.find((h) => h.id === selectedHallId) ?? halls[0]
+  const targetHall = halls.find((h) => h.id === selectedHallId) ?? halls[0]
 
   const centerPosition = (size: Size) => {
-    const dims = targetHall?.size ?? { width: 0, height: 0 }
+    const dims = targetHall.size
     return clampToHall(
       {
         x: dims.width / 2 - size.width / 2,
@@ -90,7 +89,6 @@ export const AddHubContent = ({
   }
 
   const insertTablePreset = (preset: TablePreset) => {
-    if (!targetHall) return
     const tableId = addTable(
       {
         name: "",
@@ -108,7 +106,6 @@ export const AddHubContent = ({
   }
 
   const insertFixturePreset = (preset: FixturePreset) => {
-    if (!targetHall) return
     // The "custom" card carries no name - it drops a blank fixture and lets
     // the edit view do the shaping, same insert-then-edit shortcut as every
     // other card (there is no separate add form anymore).
@@ -131,10 +128,7 @@ export const AddHubContent = ({
       <p className="text-xs text-muted-foreground">{t("hall.add_hub.hint")}</p>
 
       {halls.length > 1 && (
-        <Select
-          value={targetHall?.id}
-          onValueChange={setSelectedHallId}
-        >
+        <Select value={targetHall.id} onValueChange={setSelectedHallId}>
           <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>

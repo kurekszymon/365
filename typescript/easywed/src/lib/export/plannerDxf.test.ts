@@ -1,8 +1,14 @@
 import { describe, expect, it } from "vitest"
-import type { Fixture, Table } from "@/stores/planner.store"
+import type { Fixture, Hall, Table } from "@/stores/planner.store"
 import { buildPlannerDxf } from "@/lib/export/plannerDxf"
 
-const HALL = { width: 20, height: 12 }
+const HALL: Hall = {
+  id: "hall-1",
+  name: "",
+  preset: "rectangle",
+  size: { width: 20, height: 12 },
+  position: { x: 0, y: 0 },
+}
 
 const ROUND_TABLE: Table = {
   id: "t-round",
@@ -12,6 +18,7 @@ const ROUND_TABLE: Table = {
   size: { width: 1.6, height: 1.6 },
   rotation: 0,
   position: { x: 1, y: 2 },
+  hallId: HALL.id,
 }
 
 const RECT_TABLE: Table = {
@@ -22,6 +29,7 @@ const RECT_TABLE: Table = {
   size: { width: 3, height: 1 },
   rotation: 90,
   position: { x: 3, y: 5 },
+  hallId: HALL.id,
 }
 
 const CIRCLE_FIXTURE: Fixture = {
@@ -31,6 +39,7 @@ const CIRCLE_FIXTURE: Fixture = {
   size: { width: 1, height: 1 },
   rotation: 0,
   position: { x: 10, y: 4 },
+  hallId: HALL.id,
 }
 
 // Extract the (groupCode, value) pairs of the first entity of a given type
@@ -68,7 +77,7 @@ const groupValues = (entity: Array<string>, code: number): Array<string> => {
 
 describe("buildPlannerDxf", () => {
   const dxf = buildPlannerDxf({
-    hall: HALL,
+    halls: [HALL],
     tables: [ROUND_TABLE, RECT_TABLE],
     fixtures: [CIRCLE_FIXTURE],
     guests: [],
@@ -145,7 +154,7 @@ describe("buildPlannerDxf", () => {
 describe("buildPlannerDxf with options", () => {
   it("emits labels and capacity when requested", () => {
     const dxf = buildPlannerDxf({
-      hall: HALL,
+      halls: [HALL],
       tables: [ROUND_TABLE],
       fixtures: [],
       guests: [
@@ -165,7 +174,7 @@ describe("buildPlannerDxf with options", () => {
 
   it("emits dimension lines and value labels when requested", () => {
     const dxf = buildPlannerDxf({
-      hall: HALL,
+      halls: [HALL],
       tables: [],
       fixtures: [],
       guests: [],
@@ -192,6 +201,7 @@ describe("buildPlannerDxf with custom shapes", () => {
     size: { width: 2, height: 1 },
     rotation: 0,
     position: { x: 5, y: 3 },
+    hallId: HALL.id,
     geometry: {
       vertices: [
         { x: 0, y: 0 },
@@ -204,7 +214,7 @@ describe("buildPlannerDxf with custom shapes", () => {
 
   it("emits a custom-shape table as a closed LWPOLYLINE with Y-flipped vertices", () => {
     const dxf = buildPlannerDxf({
-      hall: HALL,
+      halls: [HALL],
       tables: [TRIANGLE_TABLE],
       fixtures: [],
       guests: [],
@@ -234,7 +244,7 @@ describe("buildPlannerDxf with custom shapes", () => {
       geometry: { vertices: TRIANGLE_TABLE.geometry!.vertices, closed: false },
     }
     const dxf = buildPlannerDxf({
-      hall: HALL,
+      halls: [HALL],
       tables: [open],
       fixtures: [],
       guests: [],
@@ -258,6 +268,7 @@ describe("buildPlannerDxf with custom shapes", () => {
     size: { width: 2, height: 2 },
     rotation: 0,
     position: { x: 6, y: 4 },
+    hallId: HALL.id,
     geometry: {
       vertices: [
         { x: 0, y: 0 },
@@ -273,7 +284,7 @@ describe("buildPlannerDxf with custom shapes", () => {
 
   it("emits a polygon fixture as a closed LWPOLYLINE on the FIXTURES layer", () => {
     const dxf = buildPlannerDxf({
-      hall: HALL,
+      halls: [HALL],
       tables: [],
       fixtures: [L_FIXTURE],
       guests: [],

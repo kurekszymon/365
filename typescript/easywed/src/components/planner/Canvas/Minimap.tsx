@@ -42,10 +42,7 @@ export const Minimap = ({
   const fixtures = usePlannerStore((state) => state.fixtures)
   const boxRef = useRef<HTMLDivElement>(null)
 
-  const hallsById = useMemo(
-    () => new Map(halls.map((h) => [h.id, h])),
-    [halls]
-  )
+  const hallsById = useMemo(() => new Map(halls.map((h) => [h.id, h])), [halls])
 
   if (worldBounds.width <= 0 || worldBounds.height <= 0) return null
 
@@ -79,10 +76,7 @@ export const Minimap = ({
   })
 
   // World position of an entity, clamped into its hall.
-  const entityWorld = (
-    position: Position,
-    hall: Hall
-  ): Position => ({
+  const entityWorld = (position: Position, hall: Hall): Position => ({
     x: hall.position.x + clamp(position.x, 0, hall.size.width),
     y: hall.position.y + clamp(position.y, 0, hall.size.height),
   })

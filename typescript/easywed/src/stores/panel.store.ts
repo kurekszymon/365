@@ -39,7 +39,10 @@ export const usePanelStore = create<State & Action>((set) => ({
   openHallEdit: (hallId) =>
     set({ view: { kind: "hall.edit", hallId }, selectedId: null }),
   openTablesBatchAdd: (position, hallId) =>
-    set({ view: { kind: "tables.batch_add", position, hallId }, selectedId: null }),
+    set({
+      view: { kind: "tables.batch_add", position, hallId },
+      selectedId: null,
+    }),
   openTableEdit: (tableId) =>
     set({ view: { kind: "table.edit", tableId }, selectedId: tableId }),
   openFixtureEdit: (fixtureId) =>

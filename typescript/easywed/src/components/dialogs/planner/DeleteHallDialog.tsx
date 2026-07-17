@@ -120,7 +120,9 @@ export const DeleteHallDialog = () => {
                         type="button"
                         size="sm"
                         className="flex-1"
-                        variant={effectiveMode === "move" ? "default" : "outline"}
+                        variant={
+                          effectiveMode === "move" ? "default" : "outline"
+                        }
                         onClick={() => setMode("move")}
                       >
                         {t("hall.delete_move_option")}
