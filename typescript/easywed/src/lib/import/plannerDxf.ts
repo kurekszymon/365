@@ -90,6 +90,9 @@ export interface ImportWarning {
     // Hall dimensions were derived from the AABB of imported objects plus a
     // fixed padding because the file didn't contain a usable hall outline.
     | "hall_synthesized"
+    // The hall layer contained several usable outlines (e.g. a multi-hall
+    // EasyWed export); only the largest becomes the hall - the import is lossy.
+    | "multiple_halls"
     | "ambiguous_layer"
     // The file carried no usable `$INSUNITS`, so we assumed meters. The user
     // can correct this via the unit dropdown in the wizard.
@@ -485,10 +488,15 @@ interface HallInfo {
 // Compute hall dimensions from the largest closed polygon on the hall layer.
 // Picking the largest (by AABB area) handles drawings that include auxiliary
 // outlines on the same layer - without that we could silently grab a small
-// annotation rectangle drawn before the actual hall outline.
-const extractHallDimensions = (shapes: Array<NormShape>): HallInfo | null => {
+// annotation rectangle drawn before the actual hall outline. `candidates`
+// counts every usable outline so the caller can warn when a multi-hall
+// export is being collapsed into a single hall.
+const extractHallDimensions = (
+  shapes: Array<NormShape>
+): { best: HallInfo | null; candidates: number } => {
   let best: HallInfo | null = null
   let bestArea = 0
+  let candidates = 0
   for (const s of shapes) {
     if (s.kind !== "poly") continue
     if (s.vertices.length < 3) continue
@@ -497,6 +505,7 @@ const extractHallDimensions = (shapes: Array<NormShape>): HallInfo | null => {
     const width = box.maxX - box.minX
     const height = box.maxY - box.minY
     if (width <= 0 || height <= 0) continue
+    candidates++
     const area = width * height
     if (area > bestArea) {
       bestArea = area
@@ -509,7 +518,7 @@ const extractHallDimensions = (shapes: Array<NormShape>): HallInfo | null => {
       }
     }
   }
-  return best
+  return { best, candidates }
 }
 
 // Padding (meters) added on each side when synthesizing a hall to wrap
@@ -812,7 +821,8 @@ export const parsePlannerDxf = (
   // Determine hall geometry. If the hall layer has no usable outline, fall
   // back to wrapping imported objects in a synthesized hall + padding. Only
   // when there's also nothing to wrap do we treat `no_hall` as fatal.
-  let hall = extractHallDimensions(byRole.hall)
+  const extracted = extractHallDimensions(byRole.hall)
+  let hall = extracted.best
   if (!hall) {
     warnings.push({ code: "no_hall" })
     hall = computeFallbackHall(byRole, FALLBACK_HALL_PADDING)
@@ -820,6 +830,12 @@ export const parsePlannerDxf = (
       return { preview: null, warnings, ...base }
     }
     warnings.push({ code: "hall_synthesized" })
+  } else if (extracted.candidates > 1) {
+    // A multi-hall EasyWed export (or any drawing with several room
+    // outlines) collapses to ONE hall on import - only the largest outline
+    // becomes the hall; the rest are dropped. Surface that instead of
+    // importing silently.
+    warnings.push({ code: "multiple_halls", count: extracted.candidates })
   }
 
   // World-to-app offset: anchor the hall's bottom-left at (0, 0) in app space

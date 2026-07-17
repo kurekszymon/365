@@ -73,7 +73,11 @@ export const AddHubContent = ({
   const [selectedHallId, setSelectedHallId] = useState<string | undefined>(
     undefined
   )
-  const targetHall = halls.find((h) => h.id === selectedHallId) ?? halls[0]
+  const targetHall = halls.find((h) => h.id === selectedHallId) ?? halls.at(0)
+
+  // The add hub is only reachable with a hall, but the last hall can vanish
+  // under an open panel (e.g. deleted via the AI chat).
+  if (!targetHall) return null
 
   const centerPosition = (size: Size) => {
     const dims = targetHall.size

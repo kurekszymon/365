@@ -201,6 +201,11 @@ export const Canvas = () => {
   // ⌘/Ctrl+C copies the selected table/fixture; ⌘/Ctrl+V pastes it under the
   // cursor (or hall centre if the pointer hasn't been over the canvas). Disabled
   // while measuring, and ignored when a form field is focused.
+  //
+  // Deliberately no dependency array: the handler closes over per-render
+  // values (viewportToWorld, resolveHallPoint, snapStep, …) whose identity
+  // changes every render anyway, so listing them would re-subscribe just as
+  // often while inviting a stale-closure bug when one is forgotten.
   useEffect(() => {
     if (isMeasuring) return
     const handleKeyDown = (e: KeyboardEvent) => {

@@ -638,11 +638,13 @@ export const tools = {
     execute: (input) => {
       const planner = usePlannerStore.getState()
       const index = planner.halls.findIndex((h) => h.id === input.id)
-      const hall = planner.halls[index]
+      const hall = planner.halls.at(index)
+      if (index < 0 || !hall)
+        return notFound(i18n.t("assistant.tool.result.hall_missing"))
       planner.updateHall(input.id, {
         ...(input.name !== undefined ? { name: input.name.trim() } : {}),
         ...(input.floor !== undefined ? { floor: input.floor } : {}),
-        ...(input.width || input.height
+        ...(input.width != null || input.height != null
           ? {
               size: {
                 width: input.width ?? hall.size.width,
@@ -671,7 +673,9 @@ export const tools = {
     execute: async ({ id }): Promise<ToolResult> => {
       const planner = usePlannerStore.getState()
       const index = planner.halls.findIndex((h) => h.id === id)
-      const hall = planner.halls[index]
+      const hall = planner.halls.at(index)
+      if (index < 0 || !hall)
+        return notFound(i18n.t("assistant.tool.result.hall_missing"))
       const label = hallLabel(hall, index)
       const contentCount =
         planner.tables.filter((t) => t.hallId === id).length +

@@ -19,6 +19,8 @@ export const updateHallRow = (
     preset?: HallPreset
     width?: number
     height?: number
+    pos_x?: number
+    pos_y?: number
   }
 ): Promise<boolean> =>
   run("updateHallRow", supabase.from("halls").update(fields).eq("id", id))

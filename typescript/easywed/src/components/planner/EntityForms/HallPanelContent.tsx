@@ -34,11 +34,10 @@ export const HallPanelContent = ({ hallId }: { hallId: string }) => {
   const hall = usePlannerStore((state) =>
     state.halls.find((h) => h.id === hallId)
   )
-  const { updateHall, saveHall, updateHallPosition } = usePlannerStore(
+  const { updateHall, saveHall } = usePlannerStore(
     useShallow((state) => ({
       updateHall: state.updateHall,
       saveHall: state.saveHall,
-      updateHallPosition: state.updateHallPosition,
     }))
   )
   const openDialog = useDialogStore((state) => state.open)
@@ -86,6 +85,9 @@ export const HallPanelContent = ({ hallId }: { hallId: string }) => {
       <Field>
         <FieldLabel>{t("hall.floor")}</FieldLabel>
         <FieldContent>
+          {/* Raw Input rather than NumberInput: floor is nullable, and
+              clearing the field must store null - NumberInput's contract
+              (always a number, empty reverts on blur) can't express that. */}
           <Input
             type="number"
             value={hall.floor ?? ""}
@@ -114,7 +116,10 @@ export const HallPanelContent = ({ hallId }: { hallId: string }) => {
       />
 
       {/* World position - the canvas drag (label chip) is the primary way to
-          arrange halls; these fields are the precise/accessible fallback. */}
+          arrange halls; these fields are the precise/accessible fallback.
+          Edits update the store (live canvas preview) and persist on blur /
+          panel close via saveHall, matching the name/floor fields instead of
+          firing a DB write per keystroke. */}
       <Field>
         <FieldTitle>{t("hall.position")}</FieldTitle>
         <FieldContent className="flex-row gap-2">
@@ -125,8 +130,9 @@ export const HallPanelContent = ({ hallId }: { hallId: string }) => {
               step={0.5}
               value={hall.position.x}
               onValueChange={(x) =>
-                updateHallPosition(hallId, x, hall.position.y)
+                updateHall(hallId, { position: { x, y: hall.position.y } })
               }
+              onBlur={() => saveHall(hallId)}
             />
           </div>
           <div className="flex flex-1 flex-col gap-1">
@@ -136,8 +142,9 @@ export const HallPanelContent = ({ hallId }: { hallId: string }) => {
               step={0.5}
               value={hall.position.y}
               onValueChange={(y) =>
-                updateHallPosition(hallId, hall.position.x, y)
+                updateHall(hallId, { position: { x: hall.position.x, y } })
               }
+              onBlur={() => saveHall(hallId)}
             />
           </div>
         </FieldContent>

@@ -255,6 +255,10 @@ const afterHallInsert = (hallId: string, fn: () => void) => {
   }
   void pending.then((ok) => {
     if (ok) fn()
+    else
+      console.error(
+        `[planner] hall ${hallId} insert failed - skipping dependent write`
+      )
   })
 }
 
@@ -527,6 +531,10 @@ const createPlannerStore = (
         preset: hall.preset,
         width: hall.size.width,
         height: hall.size.height,
+        // Position rides along so form edits (updateHall + saveHall on blur/
+        // close) persist it; canvas drags still use updateHallPosition.
+        pos_x: hall.position.x,
+        pos_y: hall.position.y,
       })
     })
   },
@@ -550,6 +558,9 @@ const createPlannerStore = (
         kind: "tables" | "fixtures"
         id: string
         position: Position
+        // World-space delta of the move, so measurements anchored to the
+        // entity can follow (they live in world coords).
+        delta: Position
       }> = []
       set((s) => ({
         halls: s.halls.filter((h) => h.id !== id),
@@ -560,7 +571,21 @@ const createPlannerStore = (
             getEffectiveSize(t.size, t.rotation),
             target
           )
-          moved.push({ kind: "tables", id: t.id, position })
+          moved.push({
+            kind: "tables",
+            id: t.id,
+            position,
+            delta: {
+              x:
+                target.position.x +
+                position.x -
+                (hall.position.x + t.position.x),
+              y:
+                target.position.y +
+                position.y -
+                (hall.position.y + t.position.y),
+            },
+          })
           return { ...t, hallId: target.id, position }
         }),
         fixtures: s.fixtures.map((f) => {
@@ -570,14 +595,33 @@ const createPlannerStore = (
             getEffectiveSize(f.size, f.rotation),
             target
           )
-          moved.push({ kind: "fixtures", id: f.id, position })
+          moved.push({
+            kind: "fixtures",
+            id: f.id,
+            position,
+            delta: {
+              x:
+                target.position.x +
+                position.x -
+                (hall.position.x + f.position.x),
+              y:
+                target.position.y +
+                position.y -
+                (hall.position.y + f.position.y),
+            },
+          })
           return { ...f, hallId: target.id, position }
         }),
       }))
+      const movedWeddingId = useGlobalStore.getState().weddingId
       for (const m of moved) {
         if (m.kind === "tables")
           void updateTablePos(m.id, m.position.x, m.position.y, target.id)
         else void updateFixturePos(m.id, m.position.x, m.position.y, target.id)
+        if (movedWeddingId && (m.delta.x !== 0 || m.delta.y !== 0))
+          useMeasuresStore
+            .getState()
+            .shiftMeasurementPoints(movedWeddingId, m.id, m.delta.x, m.delta.y)
       }
     } else {
       const tableIds = state.tables

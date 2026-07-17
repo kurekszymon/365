@@ -19,10 +19,13 @@ import { ButtonGroup } from "@/components/ui/button-group"
 import { useDialogStore } from "@/stores/dialog.store"
 import { nextHallPosition, usePlannerStore } from "@/stores/planner.store"
 import {
+  deleteHallRow,
   insertFixture,
   insertHall,
   insertTables,
   replacePlannerLayout,
+  softDeleteFixture,
+  softDeleteTable,
 } from "@/lib/sync/mutations"
 
 // What the imported layout does to the current plan: "replace" wipes every
@@ -80,6 +83,11 @@ export const ImportPlannerDxfDialog = () => {
         ...fixtures.map((f) => insertFixture(f)),
       ])
       if (results.some((ok) => !ok)) {
+        // Best-effort rollback so a partial failure doesn't leave a ghost
+        // hall (or orphaned entities) in the DB that the store never shows.
+        for (const tbl of tables) void softDeleteTable(tbl.id)
+        for (const f of fixtures) void softDeleteFixture(f.id)
+        void deleteHallRow(hall.id)
         setErrorMessage(t("import.dxf.commit_failed"))
         return
       }

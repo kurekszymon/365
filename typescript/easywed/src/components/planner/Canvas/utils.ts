@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react"
 import type { GridSpacing, GridStyle } from "@/stores/view.store"
 import type { Hall, Position, Size } from "@/stores/planner.store"
+import { DEFAULT_HALL } from "@/stores/planner.store"
 
 const NICE_INTERVALS: Array<Exclude<GridSpacing, "auto">> = [
   1, 2, 5, 10, 25, 50,
@@ -112,7 +113,7 @@ export interface WorldBounds {
 // Union of all hall rects. An empty hall list falls back to the default hall
 // footprint so the canvas math stays finite.
 export const worldBoundsOf = (halls: Array<Hall>): WorldBounds => {
-  if (halls.length === 0) return { x: 0, y: 0, width: 20, height: 12 }
+  if (halls.length === 0) return { x: 0, y: 0, ...DEFAULT_HALL.size }
   let minX = Infinity
   let minY = Infinity
   let maxX = -Infinity

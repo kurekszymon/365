@@ -42,12 +42,16 @@ export const TableBatchPanelContent = ({ position, hallId }: Props) => {
       addTables: state.addTables,
     }))
   )
-  const targetHall = halls.find((h) => h.id === hallId) ?? halls[0]
-  const hallDimensions = targetHall.size
+  const targetHall = halls.find((h) => h.id === hallId) ?? halls.at(0)
 
   const openTableEdit = usePanelStore((state) => state.openTableEdit)
 
   const [form, setForm] = useState(INITIAL_FORM)
+
+  // Only reachable with a hall, but the last hall can vanish under an open
+  // panel (e.g. deleted via the AI chat).
+  if (!targetHall) return null
+  const hallDimensions = targetHall.size
 
   const { width: hallMaxWidth, height: hallMaxHeight } = hallDimensions
   const isWidthOutOfBounds = form.width > hallMaxWidth

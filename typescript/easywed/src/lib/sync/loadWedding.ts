@@ -121,6 +121,10 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
   // `on delete set null`) can still leave orphans. Adopt them into the first
   // hall - creating a default one when entities exist but no hall does - and
   // repair the rows in the background.
+  //
+  // Known race: two clients loading a hall-less wedding at once each insert
+  // their own fallback hall, leaving a duplicate. Accepted - the state is
+  // already anomalous and the surplus hall is visible/deletable in the UI.
   const hasOrphans =
     tablesRes.data.some((t) => !t.hall_id) ||
     fixturesRes.data.some((f) => !f.hall_id)
@@ -147,7 +151,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     rotation: t.rotation as TableRotation,
     position: { x: Number(t.pos_x), y: Number(t.pos_y) },
     hallId: t.hall_id ?? adoptiveHallId,
-    ...((t.geometry ? { geometry: t.geometry } : {}) as Geometry),
+    ...(t.geometry ? { geometry: t.geometry as unknown as Geometry } : {}),
     seats: (t.seats as unknown as Array<Seat> | null) ?? [],
   }))
 
@@ -168,7 +172,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     rotation: f.rotation as TableRotation,
     position: { x: Number(f.pos_x), y: Number(f.pos_y) },
     hallId: f.hall_id ?? adoptiveHallId,
-    ...((f.geometry ? { geometry: f.geometry } : {}) as Geometry),
+    ...(f.geometry ? { geometry: f.geometry as unknown as Geometry } : {}),
   }))
 
   if (hasOrphans && adoptiveHallId) {

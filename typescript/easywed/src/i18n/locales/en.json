@@ -532,6 +532,8 @@
   "import.dxf.warning.skipped_unknown_other": "{{count}} unsupported entities skipped",
   "import.dxf.warning.no_hall": "No hall outline was found on the selected layers.",
   "import.dxf.warning.hall_synthesized": "Hall sized to fit imported objects with 1 m padding on each side.",
+  "import.dxf.warning.multiple_halls_one": "The file contains {{count}} hall outline.",
+  "import.dxf.warning.multiple_halls_other": "The file contains {{count}} hall outlines - only the largest was imported as the hall.",
   "import.dxf.warning.ambiguous_layer": "Multiple layers map to the same role.",
   "import.dxf.warning.parse_error": "Could not parse the DXF file.",
   "import.dxf.warning.guests_one": "{{count}} guest will be unassigned",
