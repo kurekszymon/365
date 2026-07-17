@@ -113,7 +113,7 @@ export function useHallGeometry(
   // The pan that, at `newZoom`, keeps the hall point currently under `focal`
   // (client coords; defaults to the container centre) pinned in place. Without
   // this, zooming always grows the hall from its centre, so the spot you're
-  // looking at slides away — the "clumsy" feeling. Returns a clamped pan.
+  // looking at slides away - the "clumsy" feeling. Returns a clamped pan.
   function zoomToPan(
     newZoom: number,
     focal?: { x: number; y: number }

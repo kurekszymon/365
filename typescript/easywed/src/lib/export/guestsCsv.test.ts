@@ -4,7 +4,7 @@ import type { Guest, Table } from "@/stores/planner.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { buildRows } from "@/lib/export/guestsCsv"
 
-// Keys pass through untouched — these tests assert row order, not copy.
+// Keys pass through untouched - these tests assert row order, not copy.
 const t = ((key: string) => key) as unknown as TFunction
 
 const table = (id: string, name: string): Table => ({
@@ -38,7 +38,7 @@ const seed = () =>
     ],
   })
 
-describe("buildRows — flat mode", () => {
+describe("buildRows - flat mode", () => {
   it("sorts every guest by name, ignoring tables", () => {
     seed()
     const { rows } = buildRows(["name", "table"], "flat", t, "name")
@@ -75,7 +75,7 @@ describe("buildRows — flat mode", () => {
   })
 })
 
-describe("buildRows — grouped mode", () => {
+describe("buildRows - grouped mode", () => {
   it("orders guests by seat within each table section", () => {
     seed()
     const { rows } = buildRows(["name"], "grouped", t, "seat")

@@ -35,7 +35,7 @@ export const AiChatPanelContent = () => {
   const mode = modeOverride ?? detectProvider(baseUrl)
 
   // The local (llama.cpp) provider talks to http://localhost, which only works
-  // when the dev server runs on the same machine — disable it in production
+  // when the dev server runs on the same machine - disable it in production
   // builds until we ship a proper local-bridge story.
   const isDev = import.meta.env.DEV
 

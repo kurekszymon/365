@@ -50,7 +50,7 @@ export const usePanelStore = create<State & Action>((set) => ({
       if (!state.view) return next
       switch (state.view.kind) {
         // Clicking the canvas background closes any open form; the add hub and
-        // the AI chat stay open — deselecting is orthogonal to them.
+        // the AI chat stay open - deselecting is orthogonal to them.
         case "hall":
         case "tables.batch_add":
         case "table.edit":

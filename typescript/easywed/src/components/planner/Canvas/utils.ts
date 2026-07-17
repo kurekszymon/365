@@ -125,7 +125,7 @@ export const nearestRectBorder = (
 /**
  * Returns the point on the boundary of an axis-aligned rectangle in the direction
  * from its center (cx, cy) towards (targetX, targetY). Works for target outside
- * the rectangle too — useful for "facing" border snap while aiming at another point.
+ * the rectangle too - useful for "facing" border snap while aiming at another point.
  */
 export const rectBorderTowards = (
   targetX: number,

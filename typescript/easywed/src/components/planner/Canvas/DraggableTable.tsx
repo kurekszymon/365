@@ -85,7 +85,7 @@ const DraggableTableBase = ({
         <div
           className="absolute left-1/2 flex -translate-x-1/2 gap-1"
           // The toolbar normally sits 2rem above the table. When seats are shown
-          // the top row sits SEAT_OFFSET_M above the edge plus half a marker —
+          // the top row sits SEAT_OFFSET_M above the edge plus half a marker -
           // lift the toolbar by that protrusion so it clears the seat ring.
           style={{
             top: showSeats
@@ -139,6 +139,6 @@ const DraggableTableBase = ({
 
 // Memoized: `HallSurface` re-renders on every pan/zoom frame, and its props
 // here (memoized table objects, ppm, guest arrays) are referentially stable
-// during a pan — without memo every table and its seats would reconcile per
+// during a pan - without memo every table and its seats would reconcile per
 // frame. Store subscriptions (selection, drag state) still re-render as usual.
 export const DraggableTable = memo(DraggableTableBase)

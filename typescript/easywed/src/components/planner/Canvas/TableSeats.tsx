@@ -72,12 +72,12 @@ export const TableSeats = ({
     if (isMeasuring) return
     // Keep the parent table's dnd-kit drag (and canvas pan) from firing. The
     // click still fires afterwards (separate event) and opens the popover via
-    // the Radix trigger — so we don't open it manually here.
+    // the Radix trigger - so we don't open it manually here.
     e.stopPropagation()
     draggedRef.current = false
     // Capture immediately, not on the first threshold-crossing move. Seat
     // markers are tiny, so a quick flick onto the table can leave the marker
-    // before any pointermove fires on it — without early capture the move/up
+    // before any pointermove fires on it - without early capture the move/up
     // events route to the table underneath instead, stranding the drag state
     // (it never gets cleared) and leaking a click that opens the table editor.
     e.currentTarget.setPointerCapture(e.pointerId)
@@ -98,7 +98,7 @@ export const TableSeats = ({
     const moved = Math.hypot(dx, dy) > DRAG_THRESHOLD
     // Mark as a real drag once past the threshold so the trailing click is
     // swallowed (a plain click still reaches the popover trigger). Close any
-    // open assign popover — the canvas is too busy to drag a seat and keep the
+    // open assign popover - the canvas is too busy to drag a seat and keep the
     // menu up. Pointer capture is already established in onPointerDown.
     if (moved && !drag.moved) {
       draggedRef.current = true
@@ -127,7 +127,7 @@ export const TableSeats = ({
     }
 
   // If the pointer stream is canceled (e.g. the OS steals it, a gesture aborts),
-  // pointerup never fires — reset so the seat doesn't get stuck mid-drag.
+  // pointerup never fires - reset so the seat doesn't get stuck mid-drag.
   const onPointerCancel = () => {
     setDrag(null)
     draggedRef.current = false
@@ -144,7 +144,7 @@ export const TableSeats = ({
   }
 
   // The seat is a div (role="button"), so Enter/Space don't synthesize a click
-  // the way they would on a native button — open the assign popover ourselves.
+  // the way they would on a native button - open the assign popover ourselves.
   const onKeyDown = (seatId: string) => (e: ReactKeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault()

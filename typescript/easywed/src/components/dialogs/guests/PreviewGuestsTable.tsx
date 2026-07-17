@@ -38,7 +38,7 @@ export const PreviewGuestsTable = ({
       row.kind === "heading"
         ? row.cells
         : row.cells.map(
-            (cell) => cell || <span className="text-muted-foreground">—</span>
+            (cell) => cell || <span className="text-muted-foreground">-</span>
           ),
     titles: row.kind === "data" ? row.cells : undefined,
   }))

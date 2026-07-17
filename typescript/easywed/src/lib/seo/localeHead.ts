@@ -2,7 +2,7 @@ import i18n from "@/i18n"
 
 // Per-locale <head> for the shareable language-pinned routes (/pl, /en and
 // their subpages). Language is pinned by the route (not detected), so og tags
-// are correct in the server-rendered HTML that social crawlers read — they
+// are correct in the server-rendered HTML that social crawlers read - they
 // never run client JS. Overrides the language-specific tags from the root
 // route and adds canonical + hreflang.
 const BASE = "https://easywed.app"

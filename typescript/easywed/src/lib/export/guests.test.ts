@@ -95,7 +95,7 @@ describe("groupGuestsByTable", () => {
   })
 })
 
-describe("groupGuestsByTable — seat sort", () => {
+describe("groupGuestsByTable - seat sort", () => {
   const seatNames = (tables: Array<Table>, guests: Array<Guest>) =>
     groupGuestsByTable(tables, guests, "seat").groups[0].guests.map(
       (g) => g.name
@@ -115,7 +115,7 @@ describe("groupGuestsByTable — seat sort", () => {
   it("order-fills unpinned guests into free seats in store order", () => {
     const tables = [table("t1", "Stół 1")]
     // Zofia is pinned to seat 2; Anna and Marek fill seats 0 and 1 in the order
-    // they appear in the store — the same rule the canvas applies.
+    // they appear in the store - the same rule the canvas applies.
     const guests = [
       guest("g1", "Anna", "t1"),
       guest("g2", "Zofia", "t1", "seat-2"),

@@ -83,7 +83,7 @@ export function useWeddingMembers(isOpen: boolean) {
   useEffect(() => {
     if (!isOpen || !weddingId) return
     const controller = new AbortController()
-    // refresh() only setState()s after awaiting the fetch — a legitimate
+    // refresh() only setState()s after awaiting the fetch - a legitimate
     // external-data sync, not a synchronous cascading render.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh(controller.signal)
@@ -164,7 +164,7 @@ export function useWeddingMembers(isOpen: boolean) {
         list.filter((item) => item.user_id !== member.user_id)
       )
 
-      // Delete membership first — that's the critical access revocation step.
+      // Delete membership first - that's the critical access revocation step.
       // Only delete the invitation row after membership is confirmed gone, so
       // we never end up with access still granted but no visible row to revoke.
       const memberRes = await supabase
@@ -222,7 +222,7 @@ export function useWeddingMembers(isOpen: boolean) {
         1500
       )
     } catch {
-      // Clipboard API unavailable — surface the URL so the owner can copy manually.
+      // Clipboard API unavailable - surface the URL so the owner can copy manually.
       setFallbackUrl({ id: invitation.id, url })
     }
   }, [])

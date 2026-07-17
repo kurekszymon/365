@@ -23,7 +23,7 @@ export const getWeddingId = (): string | null => {
 }
 
 // Surfaces sync failures to the user. There's no rollback layer, so optimistic
-// state can diverge from the DB on error — the toast at least tells the user
+// state can diverge from the DB on error - the toast at least tells the user
 // their change may not have saved. A fixed toast id collapses a burst of failed
 // mutations (e.g. chained writes) into a single toast instead of spamming.
 const log = (label: string, error: unknown) => {
@@ -33,11 +33,11 @@ const log = (label: string, error: unknown) => {
 
 // Runs a Supabase write, logs + toasts on failure, and reports success as a
 // boolean. Every mutation funnels through this so they share one contract:
-// `true` = persisted (to Supabase, or locally for a guest wedding — see the
+// `true` = persisted (to Supabase, or locally for a guest wedding - see the
 // local-gate check below), `false` = failed. Callers can chain on `ok`.
 // The try/catch matters: most callers do `void mutation(...)`, so a *rejected*
 // promise (aborted fetch, network drop, thrown error) would otherwise become an
-// unhandled rejection that never surfaces. Catching it keeps the contract — any
+// unhandled rejection that never surfaces. Catching it keeps the contract - any
 // failure, returned-as-error or thrown, becomes a toast + `false`.
 export const run = async <T extends { error: unknown }>(
   label: string,
@@ -45,12 +45,12 @@ export const run = async <T extends { error: unknown }>(
 ): Promise<boolean> => {
   // Guests plan against a device-local wedding with no Supabase row behind
   // it. `query` is a lazy Postgrest thenable, so returning before it's
-  // awaited means no request is ever sent — every mutation funnels through
+  // awaited means no request is ever sent - every mutation funnels through
   // here, so this single check covers row-scoped mutations that never call
   // getWeddingId() too (position/seat/soft-delete writes). Treated as a
   // successful no-op, not a failure: the caller's optimistic `set()` already
   // applied the change and the `persist` middleware already wrote it to
-  // localStorage before `run()` was ever called — callers that branch on the
+  // localStorage before `run()` was ever called - callers that branch on the
   // boolean (e.g. import dialogs) should proceed as if it persisted, since it did.
   if (isLocalWedding(useGlobalStore.getState().weddingId)) return true
   try {

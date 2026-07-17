@@ -5,7 +5,7 @@ type FileDropZoneProps = {
   /** Value for the input's `accept` attribute, e.g. ".dxf" or ".csv,.xlsx". */
   accept: string
   /**
-   * Allowed extensions (lowercase, with dot) used to validate a dropped file —
+   * Allowed extensions (lowercase, with dot) used to validate a dropped file -
    * the native file picker already enforces `accept`, but drag-and-drop does
    * not, so we re-check here. If omitted, any dropped file is accepted.
    */
@@ -57,7 +57,7 @@ export const FileDropZone = ({
         onChange={(e) => {
           const file = e.target.files?.[0]
           // Clear the value so picking the same file again still fires onChange
-          // — otherwise the "Try again" loop is flaky after an error.
+          // - otherwise the "Try again" loop is flaky after an error.
           e.target.value = ""
           if (file) onFile(file)
         }}

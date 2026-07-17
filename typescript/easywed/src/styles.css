@@ -11,7 +11,7 @@
 @theme inline {
   --font-heading: "Playfair Display", Georgia, serif;
   --font-sans: "Inter Variable", sans-serif;
-  /* Planner-specific accents — themed per palette below so the hall/tables
+  /* Planner-specific accents - themed per palette below so the hall/tables
        recolor with the rest of the app instead of hardcoding emerald. */
   --color-planner-hall: var(--planner-hall);
   --color-planner-table: var(--planner-table);
@@ -70,7 +70,7 @@
 :root {
   --radius: 0.625rem;
 
-  /* Brand seat colors — the logo's green + terracotta. Constant across
+  /* Brand seat colors - the logo's green + terracotta. Constant across
        palettes so an assigned seat always reads the same "taken" orange. */
   --seat-empty: oklch(0.62 0.1 150);
   --seat-empty-border: oklch(0.5 0.09 150);
@@ -79,7 +79,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Blush & Gold — warm cream, dusty rose, soft gold.
+   Blush & Gold - warm cream, dusty rose, soft gold.
    ──────────────────────────────────────────────────────────────────────── */
 [data-theme="blush"] {
   --background: oklch(0.963 0.013 70);
@@ -122,7 +122,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Sage & Botanical — warm ivory, eucalyptus sage, terracotta accent.
+   Sage & Botanical - warm ivory, eucalyptus sage, terracotta accent.
    ──────────────────────────────────────────────────────────────────────── */
 [data-theme="sage"] {
   --background: oklch(0.963 0.012 115);
@@ -165,7 +165,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Editorial Cream & Ink — warm cream, near-black ink, restrained plum.
+   Editorial Cream & Ink - warm cream, near-black ink, restrained plum.
    The default palette.
    ──────────────────────────────────────────────────────────────────────── */
 :root,
@@ -263,7 +263,7 @@ body.is-panning * {
   cursor: grabbing !important;
 }
 
-/* Soft selection glow for the currently-selected table/fixture on the canvas —
+/* Soft selection glow for the currently-selected table/fixture on the canvas -
    a tinted halo instead of a hard ring, so nearby selections don't read as
    harsh outlines against the hall grid. */
 @utility planner-selected-glow {

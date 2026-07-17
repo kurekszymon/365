@@ -188,7 +188,7 @@ export const HallSurface = ({
           />
         ))}
 
-        {/* Measurement annotations — always rendered so saved lines are visible */}
+        {/* Measurement annotations - always rendered so saved lines are visible */}
         <MeasureOverlay
           measurements={measurements}
           ppm={ppm}

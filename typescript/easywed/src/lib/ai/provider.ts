@@ -7,7 +7,7 @@ import { useAiStore } from "@/stores/ai.store"
 //
 // Calls run directly browser → user's endpoint (there is no server route).
 // OpenAI / OpenRouter / Gemini allow this with the user's key; a native
-// Anthropic base URL would be blocked by CORS — the setup instructions steer
+// Anthropic base URL would be blocked by CORS - the setup instructions steer
 // users to OpenRouter for Claude/Gemini.
 export const createModel = (): LanguageModel => {
   const { baseUrl, apiKey, model } = useAiStore.getState()

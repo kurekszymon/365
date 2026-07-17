@@ -72,7 +72,7 @@ export const updateGuestDetails = (
 
 // Pins (or clears) a guest's specific seat. Writes table_id alongside seat_id so
 // seating and unseating stay consistent in one round-trip. Also the single path
-// for plain table (re)assignment — seat_id must move with table_id, since the
+// for plain table (re)assignment - seat_id must move with table_id, since the
 // index-based seat ids aren't table-specific and a stale value would mis-pin.
 export const updateGuestSeat = (
   guestId: string,

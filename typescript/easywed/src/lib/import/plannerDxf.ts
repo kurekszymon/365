@@ -51,7 +51,7 @@ export interface ImportWarning {
     | "skipped_arc"
     // An open (non-closed) SPLINE is dropped; closed splines are tessellated.
     | "skipped_spline"
-    // Covers both heavy POLYLINE entities and open LWPOLYLINEs — neither can
+    // Covers both heavy POLYLINE entities and open LWPOLYLINEs - neither can
     // represent a closed planner shape, so they're counted under one code.
     | "skipped_polyline_open"
     | "skipped_unknown"
@@ -76,7 +76,7 @@ export interface ImportResult {
   preview: ImportPreview | null
   // Layer metadata is always populated, even when `preview` is null. This lets
   // the wizard drive its layer-mapping step on files that don't auto-detect as
-  // EasyWed exports — without it, the initial parse (where every layer maps
+  // EasyWed exports - without it, the initial parse (where every layer maps
   // to "ignore") would always fail with `no_hall` and dead-end into the error
   // stage.
   layers: Array<string>
@@ -127,7 +127,7 @@ type NormShape =
   | { kind: "circle"; cx: number; cy: number; r: number; layer: string }
   | {
       kind: "poly"
-      // Always a closed polygon — open polylines are reported as skips, never
+      // Always a closed polygon - open polylines are reported as skips, never
       // surfaced as shapes.
       vertices: Array<Position>
       layer: string
@@ -181,7 +181,7 @@ const isAxisAlignedRect = (
 // trailing number is left as part of the name, since "Table 12" is far more
 // likely to be a table name than a capacity-12 table. Our own export always
 // emits the slash form (see `tableLabel` in export/plannerDxf.ts), so dropping
-// the bare-number heuristic only affects foreign CAD files — where it was more
+// the bare-number heuristic only affects foreign CAD files - where it was more
 // likely to corrupt a name than to recover a real capacity.
 const parseLabel = (raw: string): { name: string; capacity?: number } => {
   // Match a trailing " N/M" (with optional whitespace around the slash),
@@ -271,7 +271,7 @@ const groupByLayer = (
 
 // Detect the EasyWed export convention. We only see layers that have at
 // least one entity on them, so a hall-only file won't have a TABLES layer
-// in the set — require HALL plus at least one of TABLES/FIXTURES to call it
+// in the set - require HALL plus at least one of TABLES/FIXTURES to call it
 // an EasyWed export.
 export const detectEasywedLayers = (layerNames: Array<string>): boolean => {
   const set = new Set(layerNames)
@@ -397,7 +397,7 @@ const normalizeEntity = (e: RawEntity, scale: number): NormResult => {
       const full =
         Math.abs(Math.abs(end - start) - TWO_PI) < 1e-3 ||
         (start === 0 && end === 0)
-      // A partial ellipse is an open arc — can't bound a shape.
+      // A partial ellipse is an open arc - can't bound a shape.
       if (!full) return { skip: "skipped_unknown" }
       const rx = Math.hypot(e.majorX ?? 0, e.majorY ?? 0)
       const ry = (e.axisRatio ?? 1) * rx
@@ -444,7 +444,7 @@ const normalizeEntity = (e: RawEntity, scale: number): NormResult => {
 interface HallInfo {
   width: number
   height: number
-  // Bottom-left of the hall in DXF world coords — used to anchor the app's
+  // Bottom-left of the hall in DXF world coords - used to anchor the app's
   // hall at (0, 0).
   bottomLeftDxfY: number
   offsetX: number
@@ -456,7 +456,7 @@ interface HallInfo {
 
 // Compute hall dimensions from the largest closed polygon on the hall layer.
 // Picking the largest (by AABB area) handles drawings that include auxiliary
-// outlines on the same layer — without that we could silently grab a small
+// outlines on the same layer - without that we could silently grab a small
 // annotation rectangle drawn before the actual hall outline.
 const extractHallDimensions = (shapes: Array<NormShape>): HallInfo | null => {
   let best: HallInfo | null = null
@@ -493,7 +493,7 @@ export const FALLBACK_HALL_PADDING = 1
 // nothing to wrap (in which case the caller surfaces `no_hall` as fatal).
 // Hall-layer shapes are deliberately excluded: this path runs precisely when
 // the hall layer had no usable outline, so its leftover shapes shouldn't drive
-// the size either. Labels are excluded too — a stray label sitting away from
+// the size either. Labels are excluded too - a stray label sitting away from
 // the furniture would inflate the box, and labels are positioned relative to
 // objects we already account for.
 const computeFallbackHall = (

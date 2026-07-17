@@ -42,7 +42,7 @@ export const TableVisual = ({
   const size = getEffectiveSize(table.size, rotation)
   const hasName = name.trim().length > 0
   const guestCountLabel = `${guestsAssigned} / ${capacity}`
-  const ariaLabel = hasName ? `${name} — ${guestCountLabel}` : guestCountLabel
+  const ariaLabel = hasName ? `${name} - ${guestCountLabel}` : guestCountLabel
   // Defensive guard: `geometry` is JSONB at rest, so a malformed payload
   // (e.g. {}) would still be truthy and crash when we map over vertices.
   const isPolygon =

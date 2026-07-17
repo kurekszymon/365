@@ -16,7 +16,7 @@ import {
 } from "@/stores/planner.store"
 
 /**
- * Edit form for one fixture. Add flows don't come through here anymore — new
+ * Edit form for one fixture. Add flows don't come through here anymore - new
  * fixtures are inserted directly (add hub presets, canvas context menu) and
  * then routed to this edit view.
  */

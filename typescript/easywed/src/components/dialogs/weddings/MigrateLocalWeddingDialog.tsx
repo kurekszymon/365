@@ -58,7 +58,7 @@ export const MigrateLocalWeddingDialog = ({
         owner_id: session.user.id,
         name: global.name?.trim() || t("wedding"),
         // global.date comes from localStorage (readLocalGlobalSnapshot
-        // already filters out unparsable strings) — re-checking here too
+        // already filters out unparsable strings) - re-checking here too
         // since guest-mode data is explicitly treated as potentially
         // corrupted, and toISOString() throws on an Invalid Date.
         date:
@@ -78,11 +78,11 @@ export const MigrateLocalWeddingDialog = ({
     useGlobalStore.setState({ weddingId: data.id })
 
     // Tables can only be added once a hall preset is chosen, so a preset-less
-    // snapshot has no layout to migrate — skip straight to guests.
+    // snapshot has no layout to migrate - skip straight to guests.
     // replacePlannerLayout maps over planner.tables/fixtures synchronously
     // before it ever awaits a request, so a malformed locally-persisted row
     // (e.g. missing `size`) throws synchronously rather than resolving
-    // false — catch it here too so it still hits the rollback + error stage
+    // false - catch it here too so it still hits the rollback + error stage
     // below instead of leaving the dialog stuck on "committing".
     let layoutOk: boolean
     try {
@@ -119,10 +119,10 @@ export const MigrateLocalWeddingDialog = ({
     }
 
     // Guests aren't covered by replacePlannerLayout's RPC. A failure here
-    // isn't rolled back — the layout is real and worth keeping — it's
+    // isn't rolled back - the layout is real and worth keeping - it's
     // surfaced as a toast after navigating instead. Same synchronous-throw
     // risk as replacePlannerLayout above (malformed locally-persisted guest
-    // rows) — catch it so the flow still completes (navigate + toast)
+    // rows) - catch it so the flow still completes (navigate + toast)
     // instead of rejecting onConfirm() silently.
     let guestsOk = true
     if (planner.guests.length > 0) {

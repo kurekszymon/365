@@ -54,7 +54,7 @@ export const useGuestImportWizard = ({ t }: { t: Translate }) => {
         mapping: autoDetectMapping(headers),
       })
     } catch (error) {
-      // Surface the underlying reason in the console — the user only sees the
+      // Surface the underlying reason in the console - the user only sees the
       // friendly "expected a simple table" message, but this aids debugging
       // genuine parse/loader failures.
       console.error("[guests.import] failed to parse file", error)

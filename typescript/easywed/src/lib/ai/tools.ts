@@ -268,7 +268,7 @@ export const tools = {
         assignedIds
       )
       // updateTable keeps the existing position untouched, but a size/rotation
-      // change can push it outside the hall bounds (especially near an edge) —
+      // change can push it outside the hall bounds (especially near an edge) -
       // re-clamp and persist the corrected position if it moved.
       const pos = clampPosition(
         table.position.x,
@@ -436,7 +436,7 @@ export const tools = {
         geometry: fixture.geometry,
       })
       // updateFixture keeps the existing position untouched, but a size/rotation
-      // change can push it outside the hall bounds (especially near an edge) —
+      // change can push it outside the hall bounds (especially near an edge) -
       // re-clamp and persist the corrected position if it moved.
       const pos = clampPosition(
         fixture.position.x,

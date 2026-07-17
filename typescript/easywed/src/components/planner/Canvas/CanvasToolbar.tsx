@@ -31,7 +31,7 @@ const SNAP_STEPS: Array<SnapStep> = ["off", 0.1, 0.25, 0.5, 1]
 /**
  * Desktop-only top-right canvas toolbar: snap stepper, grid style cycler,
  * measure toggle (+ its mode switch while active) and the seats overlay
- * toggle. Reads/writes `view.store` directly — it's all view state — so
+ * toggle. Reads/writes `view.store` directly - it's all view state - so
  * `Canvas` doesn't have to thread a dozen props through.
  */
 export const CanvasToolbar = () => {
@@ -127,7 +127,7 @@ export const CanvasToolbar = () => {
             type="button"
             className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] backdrop-blur-sm max-md:py-2 ${
               showSeats
-                ? // Same themed active treatment as the measure toggle — the old
+                ? // Same themed active treatment as the measure toggle - the old
                   // hardcoded emerald classes didn't follow the palette or dark
                   // mode.
                   "border-planner-selected bg-planner-soft text-planner-selected"

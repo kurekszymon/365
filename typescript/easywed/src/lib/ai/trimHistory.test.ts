@@ -28,12 +28,12 @@ describe("trimHistory", () => {
   it("keeps only the most recent messages when over the cap", () => {
     const msgs = [user("1"), assistant("2"), user("3"), assistant("4")]
     const out = trimHistory(msgs, 2)
-    // tail would be [user("3"), assistant("4")] — already starts on a user msg
+    // tail would be [user("3"), assistant("4")] - already starts on a user msg
     expect(out).toEqual([user("3"), assistant("4")])
   })
 
   it("never starts the window on an orphaned assistant/tool message", () => {
-    // raw tail of 2 would be [tool, user] — the tool result would be orphaned
+    // raw tail of 2 would be [tool, user] - the tool result would be orphaned
     // from its assistant tool-call, so the cut advances to the next user msg.
     const msgs = [
       user("1"),

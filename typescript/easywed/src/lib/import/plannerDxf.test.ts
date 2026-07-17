@@ -160,7 +160,7 @@ describe("parsePlannerDxf round-trip", () => {
     expect(reTable.shape).toBe("custom")
     expect(reTable.geometry?.closed).toBe(true)
     // Vertices should be back in object-local space (top-left origin, Y down):
-    // (0,0) (2,0) (1,1) — same as the input.
+    // (0,0) (2,0) (1,1) - same as the input.
     const verts = reTable.geometry?.vertices ?? []
     expect(verts).toHaveLength(3)
     expect(verts[0].x).toBeCloseTo(0, 3)
@@ -463,7 +463,7 @@ describe("parsePlannerDxf curves", () => {
     if (!preview) throw new Error("preview missing")
     expect(preview.fixtures).toHaveLength(1)
     // The bulged edge tessellates into many arc points, so this is no longer a
-    // 4-corner rectangle — it round-trips as a custom polygon with > 4 verts.
+    // 4-corner rectangle - it round-trips as a custom polygon with > 4 verts.
     expect(preview.fixtures[0].shape).toBe("polygon")
     expect(preview.fixtures[0].geometry?.vertices.length ?? 0).toBeGreaterThan(
       4

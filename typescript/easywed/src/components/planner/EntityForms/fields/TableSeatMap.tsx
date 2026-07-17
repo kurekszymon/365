@@ -12,7 +12,7 @@ type TableSeatMapProps = {
   tableId: string
   shape: TableShape
   // Visible (rotation-adjusted) footprint in meters. For round tables `heightM`
-  // equals `widthM` (the diameter) — same convention the canvas uses.
+  // equals `widthM` (the diameter) - same convention the canvas uses.
   widthM: number
   heightM: number
   capacity: number
@@ -30,7 +30,7 @@ const PAD = SEAT_PX / 2 + 4
 const PREVIEW_SEAT_OFFSET_M = 0.14
 
 // A scaled, top-down diagram of one table with its seats laid out in position
-// and numbered 1..capacity — the visual companion to `TableSeatList`. Each seat
+// and numbered 1..capacity - the visual companion to `TableSeatList`. Each seat
 // opens the same `SeatAssignPopover` as the canvas/list, so assigning here stays
 // in sync. Custom polygon tables (no auto seat geometry) render nothing.
 export const TableSeatMap = ({
@@ -129,7 +129,7 @@ export const TableSeatMap = ({
                 }
                 aria-label={
                   guest
-                    ? `${t("seats.numbered", { n: index + 1 })} — ${guest.name}`
+                    ? `${t("seats.numbered", { n: index + 1 })} - ${guest.name}`
                     : t("seats.numbered", { n: index + 1 })
                 }
                 className={cn(

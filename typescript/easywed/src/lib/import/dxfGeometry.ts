@@ -89,7 +89,7 @@ const bSpline = (
   // Remap t to the domain where the spline is defined.
   const low = knots[domain[0]]
   const high = knots[domain[1]]
-  // Clamp instead of throwing — see bjnortier/dxf#28.
+  // Clamp instead of throwing - see bjnortier/dxf#28.
   let u = t * (high - low) + low
   u = Math.max(u, low)
   u = Math.min(u, high)
@@ -348,7 +348,7 @@ export const entityToPolyline = (
 /**
  * Bake a transform stack (translation/scale/rotation/extrusion flip) into a
  * polyline, returning world-space points. Ported from `dxf`'s `applyTransforms`
- * — the order is scale → rotate → translate → extrusion-Z flip.
+ * - the order is scale → rotate → translate → extrusion-Z flip.
  */
 export const applyTransforms = (
   polyline: Array<Point>,

@@ -254,7 +254,7 @@ export const PlannerPrintView = () => {
             fitToContent ? "overflow-visible" : "overflow-hidden",
             // The hall outline only frames the full hall; cropping (fit) drops it.
             showHallOutline && !fitToContent && "border border-planner-hall",
-            // Without the outline, render bare — no paper background, no border.
+            // Without the outline, render bare - no paper background, no border.
             !showHallOutline && "bg-transparent"
           )}
         >
@@ -333,7 +333,7 @@ export const PlannerPrintView = () => {
                         <span className="w-5 shrink-0 text-right text-gray-500">
                           {idx + 1}.
                         </span>
-                        <span>{parts.join(" — ")}</span>
+                        <span>{parts.join(" - ")}</span>
                       </li>
                     )
                   })}
@@ -358,7 +358,7 @@ export const PlannerPrintView = () => {
                       <span className="w-5 shrink-0 text-right text-gray-500">
                         {idx + 1}.
                       </span>
-                      <span>{parts.join(" — ")}</span>
+                      <span>{parts.join(" - ")}</span>
                     </li>
                   )
                 })}

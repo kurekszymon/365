@@ -1,6 +1,13 @@
-# easywed. — Development Log
+# easywed. - Development Log
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
+
+### 17.07
+
+- fix non negative values in inputs -- deploy
+- add venues landing pages
+- add banner for venue owners for better visibility
+- replace emdashes across the repo
 
 ### 16.07
 
@@ -65,7 +72,7 @@
 
 ### 07.07
 
-- add edit-guest dialog (name / dietary / note), reachable via a pencil on each guest row — shares fields with add-guest via `GuestFormFields`, persists through new `updateGuest` store action + `updateGuestDetails` mutation
+- add edit-guest dialog (name / dietary / note), reachable via a pencil on each guest row - shares fields with add-guest via `GuestFormFields`, persists through new `updateGuest` store action + `updateGuestDetails` mutation
 - guest list: clear the search after seating a searched guest, add an `x` clear button to the search input -- deploy (77a0fba)
 
 ### 06.07
@@ -76,12 +83,12 @@
 
 - mobile: lift zoom controls + add-FAB above the bottom tab bar (were hidden under it), size planner with `dvh` so it respects the android url bar
 - mobile: scroll the focused field into view when the android keyboard covers it in the entity drawer
-- mobile: confirm entity edits with a checkmark instead of an `x` — same close, clearer intent when adding from the FAB
+- mobile: confirm entity edits with a checkmark instead of an `x` - same close, clearer intent when adding from the FAB
 - send `/` to `/pl` or `/en` by detected language, move the wedding dashboard to `/app` -- deploy (99c2f55)
 
 ### 04.07
 
-**seating planner redesign — cleanup**
+**seating planner redesign - cleanup**
 
 - zoom & pan improvements, badge counts on sidebar rail, smoother open animation
 - align dialog widths
@@ -262,7 +269,7 @@
 ### 04.06
 
 - make wedding creation frictionless: instant creation with auto-naming (Wedding 1, Wedding 2, etc.)
-- remove wedding create dialog — unnecessary modal friction
+- remove wedding create dialog - unnecessary modal friction
 - add pencil icon hint to wedding name to indicate inline rename capability
 
 ### 03.06
@@ -345,7 +352,7 @@
 - added proper padding so planner don't exceed the page on print
 - add Esc listener to quit measuremnets
 - measurement flips when user drags over object that is measured from (bad english, reword it)
-- shift-lock for measure tool — holding Shift while placing the second measurement point constrains the line to the nearest horizontal or vertical axis
+- shift-lock for measure tool - holding Shift while placing the second measurement point constrains the line to the nearest horizontal or vertical axis
 - all measures are now done in Canvas component, expose methods from hall surface with use imperative handle
 
 ### 29.04
@@ -457,13 +464,13 @@
 - move SnapStep/GridStyle/GridSpacing to `planner.store.ts` instead of local variables. all modifications from hall / canvas are going through the store now.
 - add grid style controls to property panel
 - centralized canvas click + context-menu routing in `Canvas.tsx` via `findCapturedElement` / `captured.kind`:
-  - `CanvasContextMenu` refactored from per-action props (`onAddTable`, `onEditTable`, `onConfigureHall`) into a `renderItems({ position, inHall })` render prop — the component is now just a trigger + content shell, Canvas owns all action logic
+  - `CanvasContextMenu` refactored from per-action props (`onAddTable`, `onEditTable`, `onConfigureHall`) into a `renderItems({ position, inHall })` render prop - the component is now just a trigger + content shell, Canvas owns all action logic
   - `DraggableTable` dropped `onSelect` / `isSelected` props; reads its own selection state from `panel.store` and selection clicks are handled by the outer canvas `onClick` via `captured.kind === "table"`
   - `HallSurface` dropped `onTableClick` / `selectedTableId` pass-through
-  - tightened `CapturedElement` into a discriminated union (`{ kind: "table"; id: string } | { kind: "hall" }`) so `captured.id` is narrowed by `kind` — dropped `captured.id!` / null guards
+  - tightened `CapturedElement` into a discriminated union (`{ kind: "table"; id: string } | { kind: "hall" }`) so `captured.id` is narrowed by `kind` - dropped `captured.id!` / null guards
   - narrowed `DraggableTable` selection selector to a boolean (`(s) => selectSelectedTableId(s) === table.id`) so only the newly-/previously-selected tables re-render on selection change
   - extracted `CanvasContextMenuItem` (shared menu-item className + variants) into its own file
-  - stripped "Edit table" and "Configure hall" items from the canvas context menu — both are reachable via the property panel on left-click, so the menu is now just "Add Table". `CanvasContextMenu` no longer tracks `capturedElement`.
+  - stripped "Edit table" and "Configure hall" items from the canvas context menu - both are reachable via the property panel on left-click, so the menu is now just "Add Table". `CanvasContextMenu` no longer tracks `capturedElement`.
 
 ### 14.04
 
@@ -490,19 +497,19 @@
 **Guest drag-and-drop**
 
 - lifted `DndContext` to `Planner.tsx` so canvas and panel share one drag context
-- `DraggableTable` is now also a droppable — shows blue ring when a guest hovers over it
+- `DraggableTable` is now also a droppable - shows blue ring when a guest hovers over it
 - `isDraggingGuest` tracked once in `HallSurface` via `useDndMonitor`, passed down to tables
-- fixed: panel section highlights firing during table drags — gated `onDragOver` to `type === "guest"`
-- fixed: `DragOverlay` ghost moving because transform applied to source — suppressed on source when dragging
-- fixed: `setRef` in `DraggableTable` unstable reference — stabilised with `useCallback`
+- fixed: panel section highlights firing during table drags - gated `onDragOver` to `type === "guest"`
+- fixed: `DragOverlay` ghost moving because transform applied to source - suppressed on source when dragging
+- fixed: `setRef` in `DraggableTable` unstable reference - stabilised with `useCallback`
 
 ### 12.04
 
-- replaced canvas-based hall preview in `ConfigureHall` with a real `HallSurface` render — deleted `canvas-utils.ts` entirely
+- replaced canvas-based hall preview in `ConfigureHall` with a real `HallSurface` render - deleted `canvas-utils.ts` entirely
 - added `GridSpacing` type to `HallSurface`, alongside `GridStyle` and `SnapStep`
 - nice derives meters from `width / ppm` and picks the nearest interval
 - `gridSpacing` stored in `planner.store` on `hall` object (default `1m`), passed through `updateHall`; canvas reads it from store
-- added grid spacing picker to `ConfigureHall` dialog — options `1m … 50m` + `auto` at the end (best for large halls), filter down options fitting the hall
+- added grid spacing picker to `ConfigureHall` dialog - options `1m … 50m` + `auto` at the end (best for large halls), filter down options fitting the hall
 - to think about - should grid be configurable from canvas or hall - probably from canvas?
 - removed `Canvas/consts` file and moved it contents into `useHallGeometry` hook as it was only used there
 - add disabled state for `Tables` trigger in Header
@@ -532,8 +539,8 @@
 ### 09.04
 
 - right-click (or long-press on mobile) on the hall canvas shows a context menu with two actions:
-  - "Add Table" — disabled when clicking outside hall bounds; table spawns at the clicked position
-  - "Configure Hall" — always available regardless of click position
+  - "Add Table" - disabled when clicking outside hall bounds; table spawns at the clicked position
+  - "Configure Hall" - always available regardless of click position
   - long-press detected via 500ms touch timer; cancels on move or release; fires synthetic `contextmenu` event to reuse the same menu on mobile
   - click position converted from viewport → hall coordinates, passed as `spawnPosition` through `dialog.store` meta into `addTable()`
 

@@ -14,7 +14,7 @@ export const GLOBAL_STORAGE_KEY = "easywed.global.local"
 
 // Resolves the currently-active weddingId for the gate below. global.store.ts
 // registers its own getter right after declaring itself (registerActiveWeddingIdGetter,
-// below) — that indirection, rather than importing useGlobalStore here, is
+// below) - that indirection, rather than importing useGlobalStore here, is
 // what lets global.store.ts wrap *itself* in this same gated storage without
 // a same-file circular type-inference error (TS can't type-check a store
 // referencing its own not-yet-fully-typed self inside its own persist config).
@@ -44,7 +44,7 @@ const safeSetItem = (key: string, value: string): void => {
   try {
     localStorage.setItem(key, value)
   } catch {
-    // storage blocked/full — guest mode just won't persist this write.
+    // storage blocked/full - guest mode just won't persist this write.
   }
 }
 
@@ -58,7 +58,7 @@ const safeRemoveItem = (key: string): void => {
 }
 
 // Gates writes so the planner/global stores only ever persist to localStorage
-// while the local wedding is the active one — editing a cloud wedding (same
+// while the local wedding is the active one - editing a cloud wedding (same
 // store instances) must never leak into these keys. Reads always pass
 // through.
 export const createLocalGatedStorage = (): StateStorage => ({
@@ -78,7 +78,7 @@ export const localPlannerStorage = createJSONStorage(() =>
 )
 
 // A malformed/hand-edited persisted date string must not become an Invalid
-// Date — downstream code (MigrateLocalWeddingDialog, PlannerPrintView) calls
+// Date - downstream code (MigrateLocalWeddingDialog, PlannerPrintView) calls
 // .toISOString()/date formatting on global.store's `date`, which throws for
 // an Invalid Date. Returning undefined here drops the key entirely (both as
 // a JSON.parse reviver and as a plain value).
@@ -159,7 +159,7 @@ const isValidPlannerSnapshot = (
 // Reads the raw persisted snapshot directly, bypassing the live stores
 // entirely. Rehydrating the live planner/global stores just to inspect them
 // would clobber an actively-loaded cloud wedding if the user signs in from a
-// different tab/route — this must stay decoupled from in-memory state.
+// different tab/route - this must stay decoupled from in-memory state.
 export const readLocalPlannerSnapshot = (): LocalPlannerSnapshot | null => {
   const state = readPersistedState<LocalPlannerSnapshot>(PLANNER_STORAGE_KEY)
   return isValidPlannerSnapshot(state) ? state : null

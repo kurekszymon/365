@@ -37,7 +37,7 @@ export const Planner = () => {
   const role = useGlobalStore((state) => state.role)
 
   // Distance-based activation (mouse + touch) so dragging starts the moment you
-  // move — no hold delay. Touch hold-without-moving is reserved for the canvas
+  // move - no hold delay. Touch hold-without-moving is reserved for the canvas
   // long-press (select → edit).
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })

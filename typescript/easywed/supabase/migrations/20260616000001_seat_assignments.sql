@@ -17,7 +17,7 @@ alter table public.guests
 
 -- A seat only means something while the guest is at a table: a non-null seat_id
 -- requires a non-null table_id. (updateGuestSeat always writes both columns
--- together, so the client never trips this — it's a guard against stray rows.)
+-- together, so the client never trips this - it's a guard against stray rows.)
 alter table public.guests
   add constraint guests_seat_requires_table
   check (seat_id is null or table_id is not null);

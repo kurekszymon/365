@@ -2,14 +2,14 @@ import { useEffect, useRef } from "react"
 import type { Position } from "@/stores/planner.store"
 
 // Fallback px-per-unit for the rare wheel that reports deltas in lines (mode 1)
-// or pages (mode 2) instead of pixels — mostly old mouse wheels. Trackpads
+// or pages (mode 2) instead of pixels - mostly old mouse wheels. Trackpads
 // report pixels (mode 0), so this is a no-op for the two-finger case.
 const LINE_HEIGHT_PX = 16
 
 // Two-finger trackpad panning (and plain mouse-wheel scroll). A trackpad swipe
 // arrives as a `wheel` event carrying deltaX/deltaY, which we translate straight
 // into a pan offset. Pinch-to-zoom on a trackpad arrives as ctrl+wheel, which
-// `usePinch` already owns — we skip those so the two gestures don't fight.
+// `usePinch` already owns - we skip those so the two gestures don't fight.
 export function useCanvasWheelPan(
   containerEl: HTMLElement | null,
   getPan: () => Position,
@@ -42,7 +42,7 @@ export function useCanvasWheelPan(
     }
 
     const onWheel = (e: WheelEvent) => {
-      // ctrl/meta wheel is pinch-zoom (owned by usePinch) — leave it alone.
+      // ctrl/meta wheel is pinch-zoom (owned by usePinch) - leave it alone.
       if (e.ctrlKey || e.metaKey) return
       e.preventDefault()
       const factor =

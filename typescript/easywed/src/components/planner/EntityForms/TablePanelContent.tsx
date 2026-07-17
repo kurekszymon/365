@@ -15,11 +15,11 @@ import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
 import { cn } from "@/lib/utils"
 
 /**
- * Edit form for one table. Add flows don't come through here anymore — new
+ * Edit form for one table. Add flows don't come through here anymore - new
  * tables are inserted directly from a preset (add hub, canvas context menu)
  * and then routed to this edit view.
  *
- * `fillHeight` (desktop dialog only): fill a fixed-height shell — center the
+ * `fillHeight` (desktop dialog only): fill a fixed-height shell - center the
  * preview in the left column's leftover space and scroll only the seat list.
  */
 export const TablePanelContent = ({
@@ -84,7 +84,7 @@ export const TablePanelContent = ({
   }
 
   // form.width/height represent the *visible* rectangle. Storage is the
-  // canonical, unrotated size — so at rotation=90 we swap before persisting.
+  // canonical, unrotated size - so at rotation=90 we swap before persisting.
   const toStoredSize = (f: typeof form) => {
     if (f.shape === "round") return getSizeForShape(f.shape, f.width, f.height)
     return f.rotation === 90
@@ -95,8 +95,8 @@ export const TablePanelContent = ({
   // Guest membership is read live from the store (its default) rather than
   // cached in form state: TableSeatList and the seat popovers reassign guests
   // through the store directly, so a cached list would go stale and clobber
-  // those newer assignments on the next attribute edit. Only the guest picker —
-  // which *is* the thing changing the assignment — passes an explicit list.
+  // those newer assignments on the next attribute edit. Only the guest picker -
+  // which *is* the thing changing the assignment - passes an explicit list.
   const applyToStore = (
     f: typeof form,
     assignedGuestIds: Array<string> = editedAssignedGuestIds
@@ -151,8 +151,8 @@ export const TablePanelContent = ({
     )
 
   return (
-    // Two columns once there's room (the wide desktop dialog) — table config on
-    // the left, guest assignment + per-seat list on the right — so the form
+    // Two columns once there's room (the wide desktop dialog) - table config on
+    // the left, guest assignment + per-seat list on the right - so the form
     // reads wider than tall instead of one long scroll. The narrow mobile
     // drawer keeps its container below the `@xl` threshold, so it stays single
     // column.

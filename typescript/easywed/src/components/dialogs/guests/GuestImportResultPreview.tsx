@@ -46,10 +46,10 @@ export const GuestImportResultPreview = ({ mapping, guests }: IProps) => {
             ]
           : []),
         ...(showDietary
-          ? [dietaryText ?? <span className="text-muted-foreground">—</span>]
+          ? [dietaryText ?? <span className="text-muted-foreground">-</span>]
           : []),
         ...(showNote
-          ? [g.note || <span className="text-muted-foreground">—</span>]
+          ? [g.note || <span className="text-muted-foreground">-</span>]
           : []),
       ],
       titles: [

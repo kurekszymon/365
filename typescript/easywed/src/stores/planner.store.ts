@@ -70,7 +70,7 @@ export interface Size {
 // A manually-positioned seat. `x`/`y` are table-local meters (top-left origin,
 // same convention as Geometry vertices). Only seats the user has dragged are
 // stored; the rest fall back to the auto layout (see seatLayout.ts). `id` is
-// deterministic by index — `seat-${i}` — so guest.seatId references stay stable.
+// deterministic by index - `seat-${i}` - so guest.seatId references stay stable.
 export interface Seat {
   id: string
   x: number
@@ -340,7 +340,7 @@ const createPlannerStore = (
     }
 
     // Reconcile seat overrides to the DB on every save. They're cleared on a
-    // rotation change (updateTable) and pruned on capacity shrink (above) —
+    // rotation change (updateTable) and pruned on capacity shrink (above) -
     // neither is detectable from the persisted row, so persist unconditionally.
     void updateTableSeats(id, prunedSeats)
 
@@ -362,8 +362,8 @@ const createPlannerStore = (
         if (!reassigned) return
         // reassignTableGuests writes only table_id; persist each assigned guest's
         // current seatId too. Otherwise a guest moved in from another table keeps
-        // its old seat_id in the DB and — since seat ids are index-based, not
-        // table-specific — gets wrongly re-pinned to that seat on reload. Writing
+        // its old seat_id in the DB and - since seat ids are index-based, not
+        // table-specific - gets wrongly re-pinned to that seat on reload. Writing
         // null where the store has no pin is what clears that stale value.
         for (const g of assignedGuests) {
           void updateGuestSeat(g.id, id, g.seatId ?? null)
@@ -412,7 +412,7 @@ const createPlannerStore = (
     }))
     set((state) => ({ guests: [...state.guests, ...newGuests] }))
     // Optimistic state is already applied; the returned promise lets the caller
-    // surface a persistence failure (no rollback — consistent with the store).
+    // surface a persistence failure (no rollback - consistent with the store).
     return insertGuests(newGuests)
   },
   updateGuest: (id, details) => {
@@ -475,7 +475,7 @@ const createPlannerStore = (
     }))
     // The DB enforces table capacity on table_id and uniqueness on (table_id,
     // seat_id), so the displaced occupant MUST be persisted before the incoming
-    // guest — otherwise seating the new guest while the occupant still holds the
+    // guest - otherwise seating the new guest while the occupant still holds the
     // seat (or the table is still full) trips one of those server-side guards.
     // Chain so the guest write only fires once the occupant write has landed.
     const persistGuest = () => updateGuestSeat(guestId, tableId, seatId)

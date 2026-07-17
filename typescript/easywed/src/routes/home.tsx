@@ -19,7 +19,7 @@ type WeddingRow = {
 
 function Home() {
   const { t, i18n } = useTranslation()
-  // The marketing landing is language-pinned (/pl, /en) — link the wordmark
+  // The marketing landing is language-pinned (/pl, /en) - link the wordmark
   // to the one matching the current UI language.
   const landingPath = i18n.resolvedLanguage === "pl" ? "/pl" : "/en"
   const session = useAuthStore((s) => s.session)
@@ -71,7 +71,7 @@ function Home() {
   }
 
   // Wait for the first getSession() to resolve before deciding which landing
-  // to show — otherwise an already-authenticated user reloading this page would
+  // to show - otherwise an already-authenticated user reloading this page would
   // flash the signed-out screen before flipping to their dashboard below.
   if (!isReady) return null
 

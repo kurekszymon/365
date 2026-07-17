@@ -6,21 +6,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Package manager is **pnpm** (see `pnpm-lock.lock`). Scripts are defined in `package.json`:
 
-- `pnpm dev` — Vite dev server on port 3000
-- `pnpm run build` — production build
-- `pnpm typecheck` — `tsc --noEmit` (use this for type checks; don't invoke `tsc` directly)
-- `pnpm test` — `vitest run`. For a single file: `pnpm test path/to/file.test.ts`. For watch mode: `pnpm dlx vitest`
-- `pnpm run lint` — ESLint (config: `eslint.config.js`, extends `@tanstack/eslint-config`)
-- `pnpm run format` — Prettier
+- `pnpm dev` - Vite dev server on port 3000
+- `pnpm run build` - production build
+- `pnpm typecheck` - `tsc --noEmit` (use this for type checks; don't invoke `tsc` directly)
+- `pnpm test` - `vitest run`. For a single file: `pnpm test path/to/file.test.ts`. For watch mode: `pnpm dlx vitest`
+- `pnpm run lint` - ESLint (config: `eslint.config.js`, extends `@tanstack/eslint-config`)
+- `pnpm run format` - Prettier
 
 Supabase local stack (see `docs/supabase.md` for the full flow):
 
-- `supabase start` — boots local Postgres + Auth in Docker
-- `supabase db reset` — destroys local DB and re-runs all migrations from scratch (the fast-feedback loop when editing a migration)
-- `supabase db push` — applies unapplied migrations to the remote project
-- `supabase db diff -f <name>` — generate a migration file from local DB changes
+- `supabase start` - boots local Postgres + Auth in Docker
+- `supabase db reset` - destroys local DB and re-runs all migrations from scratch (the fast-feedback loop when editing a migration)
+- `supabase db push` - applies unapplied migrations to the remote project
+- `supabase db diff -f <name>` - generate a migration file from local DB changes
 
-**Critical rule:** once a migration is pushed to remote, never edit it — make a new one.
+**Critical rule:** once a migration is pushed to remote, never edit it - make a new one.
 
 ## Architecture
 
@@ -36,9 +36,9 @@ The app uses a specific pattern that spans three files and is easy to miss:
 
 1. **Zustand stores** (`src/stores/*.ts`) hold the client state. `planner.store.ts` (tables/guests/hall), `reminders.store.ts`, `global.store.ts` (current `weddingId`), `auth.store.ts`, plus UI stores (`dialog`, `panel`, `view`, `entityList`).
 2. **`src/lib/sync/loadWedding.ts`** hydrates the planner/reminders stores from Supabase in one parallel `Promise.all` call, given a wedding id. Called from `src/routes/wedding.$id.tsx` with an `AbortController`.
-3. **`src/lib/sync/mutations.ts`** exports per-action functions (`insertTable`, `updateGuestTable`, `upsertHall`, …). Store actions optimistically update Zustand state first, then fire-and-forget the matching mutation (`void insertTable(...)`). The mutations currently only `console.error` on failure — there is no toast/rollback layer, so optimistic state can diverge from the DB on error. Keep this in mind when adding new mutations.
+3. **`src/lib/sync/mutations.ts`** exports per-action functions (`insertTable`, `updateGuestTable`, `upsertHall`, …). Store actions optimistically update Zustand state first, then fire-and-forget the matching mutation (`void insertTable(...)`). The mutations currently only `console.error` on failure - there is no toast/rollback layer, so optimistic state can diverge from the DB on error. Keep this in mind when adding new mutations.
 
-**`updateX` vs `saveX` split:** For tables and fixtures, `updateTable`/`updateFixture` are **local-only** state updates used for live preview while the user edits in an entity form. `saveTable`/`saveFixture` are the ones that call mutations and persist to Supabase. Do not treat the missing mutation call in `updateX` as a bug — it is by design.
+**`updateX` vs `saveX` split:** For tables and fixtures, `updateTable`/`updateFixture` are **local-only** state updates used for live preview while the user edits in an entity form. `saveTable`/`saveFixture` are the ones that call mutations and persist to Supabase. Do not treat the missing mutation call in `updateX` as a bug - it is by design.
 
 `global.store.ts` holds the current `weddingId`. Mutations read it via `getWeddingId()` to scope inserts; if none is loaded, they no-op with a warning.
 
@@ -48,13 +48,13 @@ The app uses a specific pattern that spans three files and is easy to miss:
 
 ### Supabase schema and RLS
 
-Schema lives in `supabase/migrations/` — six tables: `weddings`, `wedding_members`, `halls`, `tables`, `guests`, `reminders`. All tables have RLS enabled; access is gated by `public.is_wedding_member(wedding_id)` and `public.wedding_role(wedding_id)` helper functions (both `security definer` to avoid recursion through `wedding_members`' own policies).
+Schema lives in `supabase/migrations/` - six tables: `weddings`, `wedding_members`, `halls`, `tables`, `guests`, `reminders`. All tables have RLS enabled; access is gated by `public.is_wedding_member(wedding_id)` and `public.wedding_role(wedding_id)` helper functions (both `security definer` to avoid recursion through `wedding_members`' own policies).
 
 Key hardening already in place:
 
-- `revoke update (owner_id) on public.weddings from authenticated` — editors/owners cannot reassign ownership via UPDATE (migration `20260418000002`).
+- `revoke update (owner_id) on public.weddings from authenticated` - editors/owners cannot reassign ownership via UPDATE (migration `20260418000002`).
 - Triggers handle `updated_at`, auto-insert the `owner` row into `wedding_members` on wedding creation, and enforce table capacity server-side (`enforce_table_capacity`).
-- CHECK constraints enforce enum-like fields (`shape`, `dietary`) at the DB layer — the TS unions in `planner.store.ts` mirror them.
+- CHECK constraints enforce enum-like fields (`shape`, `dietary`) at the DB layer - the TS unions in `planner.store.ts` mirror them.
 
 **Gotcha (from project memory):** `.insert().select()` chained together can fail RLS when the SELECT policy depends on a row inserted by an AFTER trigger. Split the insert and select, or run the select separately after the trigger has fired.
 
@@ -68,29 +68,29 @@ When adding UI strings, add keys to **both** `en.json` and `pl.json`. Polish is 
 
 `src/routes/`:
 
-- `__root.tsx` — root layout, mounts `AuthGate`, devtools, tooltip provider
-- `index.tsx` — wedding list / landing
-- `login.tsx`, `auth.callback.tsx` — auth
-- `wedding.$id.tsx` — loads a wedding via `loadWedding` and renders `<Planner />`
-- `reminders/` — reminders subtree
+- `__root.tsx` - root layout, mounts `AuthGate`, devtools, tooltip provider
+- `index.tsx` - wedding list / landing
+- `login.tsx`, `auth.callback.tsx` - auth
+- `wedding.$id.tsx` - loads a wedding via `loadWedding` and renders `<Planner />`
+- `reminders/` - reminders subtree
 
 ### Planner (the main feature)
 
-`src/components/planner/` — split into `Canvas/` (dnd-kit drag surface for tables), `Header/`, `Sidebar/` (desktop rail + mobile bottom tab bar + entity list contents + add/edit dialogs), `Guests/` (guest list, seat-assign sheet, seating progress), and `EntityForms/` (the table/fixture/hall form contents, the add hub, the AI chat, and the mobile `MobilePanelDrawer` that hosts them; `EntityForms/fields/` holds reusable field components, e.g. `GuestAssignmentPicker.tsx`). The same form content renders in `Sidebar/EntityEditDialog` on desktop and `MobilePanelDrawer` on mobile via the shared `PanelBody`. Drag-and-drop uses `@dnd-kit/core`; table shapes are `round` or `rectangular` with `width/height` (round uses `width` as diameter).
+`src/components/planner/` - split into `Canvas/` (dnd-kit drag surface for tables), `Header/`, `Sidebar/` (desktop rail + mobile bottom tab bar + entity list contents + add/edit dialogs), `Guests/` (guest list, seat-assign sheet, seating progress), and `EntityForms/` (the table/fixture/hall form contents, the add hub, the AI chat, and the mobile `MobilePanelDrawer` that hosts them; `EntityForms/fields/` holds reusable field components, e.g. `GuestAssignmentPicker.tsx`). The same form content renders in `Sidebar/EntityEditDialog` on desktop and `MobilePanelDrawer` on mobile via the shared `PanelBody`. Drag-and-drop uses `@dnd-kit/core`; table shapes are `round` or `rectangular` with `width/height` (round uses `width` as diameter).
 
 ### Dialogs
 
 `src/components/dialogs/` holds modal flows, registered centrally: `dialog.store.ts` holds the currently-open dialog id (e.g. `"Guest.Import"`), `DialogManager.tsx` switches on it to render the right dialog, and each subfolder (`guests/`, `planner/`, `weddings/`, plus `shared/` for cross-flow steps) has an `index` barrel. `DialogManager` is mounted once in `Planner.tsx` and `routes/index.tsx`.
 
-**One component per file.** Keep each file to a single component — split multi-step dialogs into an orchestrator plus a file per step/preview. Examples: the guest CSV/XLSX import (`guests/ImportGuestsDialog.tsx` + `GuestImportMappingStep` + `GuestImportSheetPreview` + `GuestImportResultPreview`, with the wizard state machine in `shared/useGuestImportWizard.ts`) and the DXF import (`shared/useDxfImportWizard.ts` + `DxfLayerMappingStep` + `DxfPreviewStep`).
+**One component per file.** Keep each file to a single component - split multi-step dialogs into an orchestrator plus a file per step/preview. Examples: the guest CSV/XLSX import (`guests/ImportGuestsDialog.tsx` + `GuestImportMappingStep` + `GuestImportSheetPreview` + `GuestImportResultPreview`, with the wizard state machine in `shared/useGuestImportWizard.ts`) and the DXF import (`shared/useDxfImportWizard.ts` + `DxfLayerMappingStep` + `DxfPreviewStep`).
 
 ### Guest list import / export
 
-- **Export** (`src/lib/export/guestsCsv.ts`): two modes — `flat` (one header row, one guest per row) and `grouped` (section headings per table, ragged rows). Only **flat** is re-importable; grouped is a human-readable report. CSV is serialized by hand (small RFC-4180 helper), not a library.
-- **Import** (`src/lib/import/guestsImport.ts`): parses CSV **and** XLSX via **SheetJS**, which is the unmaintained npm `xlsx` replaced by the maintained CDN tarball (`package.json` → `"xlsx": "https://cdn.sheetjs.com/...tgz"`) and **lazy-loaded** inside `parseGuestFile` (`await import("xlsx")`) so it stays out of the main bundle. The CDN build is CJS, so resolve the API defensively (`mod.read ? mod : mod.default`). `buildGuests` matches table names case/diacritic-insensitively (incl. Polish `ł`) against existing tables, else leaves the guest unassigned — it never creates tables. The wizard expects a simple table with a header row; surface that in the UI rather than a generic "couldn't read" error.
+- **Export** (`src/lib/export/guestsCsv.ts`): two modes - `flat` (one header row, one guest per row) and `grouped` (section headings per table, ragged rows). Only **flat** is re-importable; grouped is a human-readable report. CSV is serialized by hand (small RFC-4180 helper), not a library.
+- **Import** (`src/lib/import/guestsImport.ts`): parses CSV **and** XLSX via **SheetJS**, which is the unmaintained npm `xlsx` replaced by the maintained CDN tarball (`package.json` → `"xlsx": "https://cdn.sheetjs.com/...tgz"`) and **lazy-loaded** inside `parseGuestFile` (`await import("xlsx")`) so it stays out of the main bundle. The CDN build is CJS, so resolve the API defensively (`mod.read ? mod : mod.default`). `buildGuests` matches table names case/diacritic-insensitively (incl. Polish `ł`) against existing tables, else leaves the guest unassigned - it never creates tables. The wizard expects a simple table with a header row; surface that in the UI rather than a generic "couldn't read" error.
 
 ## Reference docs
 
-- `docs/PRD.md` — product requirements. **Marked "AI Generated Content for reference"**; treat as aspirational scope, not ground truth for what's shipped.
-- `docs/supabase.md` — authoritative notes on the schema, RLS policies, triggers, and the Supabase CLI flow.
-- `docs/DEVLOG.md` — development log.
+- `docs/PRD.md` - product requirements. **Marked "AI Generated Content for reference"**; treat as aspirational scope, not ground truth for what's shipped.
+- `docs/supabase.md` - authoritative notes on the schema, RLS policies, triggers, and the Supabase CLI flow.
+- `docs/DEVLOG.md` - development log.

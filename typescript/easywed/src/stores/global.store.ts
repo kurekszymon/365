@@ -73,7 +73,7 @@ export const useGlobalStore = create<State & Action>()(
       name: GLOBAL_STORAGE_KEY,
       skipHydration: true,
       storage: localGlobalStorage,
-      // Only name/date are guest-editable content worth persisting locally —
+      // Only name/date are guest-editable content worth persisting locally -
       // weddingId/role are route-derived (set explicitly by wedding.local.tsx
       // / loadWedding.ts) and viewport is already persisted per-wedding by
       // view.store.ts.

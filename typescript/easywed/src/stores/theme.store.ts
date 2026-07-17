@@ -18,7 +18,7 @@ type Action = {
 }
 
 // React owns the <html data-theme> attribute (bound in RootDocument), so the
-// store only holds state — no imperative DOM writes. `skipHydration` defers the
+// store only holds state - no imperative DOM writes. `skipHydration` defers the
 // localStorage read until RootDocument triggers it after mount, keeping the
 // first client render equal to the server's default and avoiding a hydration
 // mismatch on <html>.

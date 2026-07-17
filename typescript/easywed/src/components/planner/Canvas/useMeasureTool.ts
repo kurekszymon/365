@@ -127,7 +127,7 @@ export function useMeasureTool({
       // Keep every resolved point inside the hall. Clamping up front (rather
       // than only the free-point fallback) also stops the wall-snap branch
       // below from returning an out-of-bounds coordinate when the cursor sits
-      // outside a corner — there dLeft/dTop go negative and would otherwise
+      // outside a corner - there dLeft/dTop go negative and would otherwise
       // win the nearest-wall test with an unclamped sibling coordinate.
       const xM = clamp(rawXM, 0, hallDimensions.width)
       const yM = clamp(rawYM, 0, hallDimensions.height)
@@ -187,7 +187,7 @@ export function useMeasureTool({
           return { x: cx, y: cy, objectId: fixture.id }
         }
       }
-      // Snap to hall walls — threshold scales with zoom so it always covers ~20px
+      // Snap to hall walls - threshold scales with zoom so it always covers ~20px
       const wallThreshold = Math.max(0.3, 20 / ppm)
       const dLeft = xM
       const dRight = hallDimensions.width - xM

@@ -13,7 +13,7 @@ import {
 /**
  * Mobile-only bottom drawer for the panel views (table/fixture/hall forms,
  * the add hub, the AI chat). On desktop the same views render in
- * `Sidebar/EntityEditDialog` / `Sidebar/SidebarRail` instead — this component
+ * `Sidebar/EntityEditDialog` / `Sidebar/SidebarRail` instead - this component
  * is only mounted below the `md` breakpoint (see `Planner.tsx`).
  */
 export const MobilePanelDrawer = () => {
@@ -28,7 +28,7 @@ export const MobilePanelDrawer = () => {
   // auto-scrolling content wrapper.
   const isChat = view?.kind === "ai_chat"
   // Form/edit views (table/fixture/hall/batch) apply their changes live, so
-  // dismissing them is really a "done" confirmation — show a checkmark instead
+  // dismissing them is really a "done" confirmation - show a checkmark instead
   // of an X. The add hub and AI chat are pickers/conversations, not forms, so
   // they keep the neutral close affordance.
   const isFormView =

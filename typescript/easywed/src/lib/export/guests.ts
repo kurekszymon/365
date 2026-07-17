@@ -14,7 +14,7 @@ export const byGuestName = (a: Guest, b: Guest) => a.name.localeCompare(b.name)
 
 // Order a table's guests by the chair they sit in, matching the canvas and the
 // table form's numbered seat list. `resolveSeatOccupants` order-fills unpinned
-// guests in array order, so `tableGuests` must arrive in store order — sorting
+// guests in array order, so `tableGuests` must arrive in store order - sorting
 // before this point would seat people differently than the app shows them.
 const bySeat = (table: Table, tableGuests: Array<Guest>): Array<Guest> => {
   const placed = seatSlotsForCapacity(table.capacity)

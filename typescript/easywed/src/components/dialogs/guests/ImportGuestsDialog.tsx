@@ -18,7 +18,7 @@ import { useDialogStore } from "@/stores/dialog.store"
 import { usePlannerStore } from "@/stores/planner.store"
 
 // Above this, warn that a big import may take a moment / is hard to review in
-// the panel. Soft — it never blocks the commit.
+// the panel. Soft - it never blocks the commit.
 const LARGE_IMPORT_THRESHOLD = 1000
 
 export const ImportGuestsDialog = () => {
@@ -51,7 +51,7 @@ export const ImportGuestsDialog = () => {
     setCommitting()
     const ok = await addGuests(guests)
     if (ok) onClose()
-    // Optimistic rows are already in the list, but persistence failed — keep the
+    // Optimistic rows are already in the list, but persistence failed - keep the
     // dialog open on the error stage so the user knows to retry rather than
     // assuming the import succeeded.
     else setErrorMessage(t("guests.import.failed"))

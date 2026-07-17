@@ -66,7 +66,7 @@ export const Minimap = ({
       offsetY + hallScaledHeight - size
     )
 
-  // Visible viewport rect, in hall-space meters, clipped to the hall bounds —
+  // Visible viewport rect, in hall-space meters, clipped to the hall bounds -
   // mirrors the geometry `useHallGeometry` already computes for the main canvas,
   // just inverted (container px -> hall meters) instead of the other way round.
   const visibleLeftM = -hallLeft / ppm
@@ -79,7 +79,7 @@ export const Minimap = ({
   const clippedRight = clamp(visibleRightM, 0, hallDimensions.width)
   const clippedBottom = clamp(visibleBottomM, 0, hallDimensions.height)
 
-  // translate instead of left/top — this rect moves on every pan frame, and a
+  // translate instead of left/top - this rect moves on every pan frame, and a
   // transform update doesn't trigger layout (width/height only change while
   // the viewport edge crosses a hall edge).
   const viewportRect = {
@@ -122,7 +122,7 @@ export const Minimap = ({
           navigateTo(e.clientX, e.clientY)
         }}
       >
-        {/* Outlines the hall's own scaled rect, not the padded box around it —
+        {/* Outlines the hall's own scaled rect, not the padded box around it -
             when the aspect ratios differ (the common case), the hall is
             letterboxed inside the box via offsetX/offsetY. Drawing the border
             on the full box instead would leave a gap between this outline and
@@ -138,7 +138,7 @@ export const Minimap = ({
         />
         {tables.map((table) => {
           // Tables placed outside the (possibly resized) hall are clamped to
-          // its bounds here — same as the main canvas — so a stray dot can't
+          // its bounds here - same as the main canvas - so a stray dot can't
           // render outside the minimap box.
           const x = clamp(table.position.x, 0, hallDimensions.width)
           const y = clamp(table.position.y, 0, hallDimensions.height)

@@ -19,7 +19,7 @@ type SeatAssignPopoverProps = {
   occupantId: string | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  // The seat marker — used as the popover trigger.
+  // The seat marker - used as the popover trigger.
   children: ReactNode
 }
 
@@ -43,7 +43,7 @@ export const SeatAssignPopover = ({
 
   const normalizedQuery = searchQuery.trim().toLowerCase()
   // The seat's current occupant leads the list (own section), then guests
-  // already at this table (seatless ones first — the natural candidates), then
+  // already at this table (seatless ones first - the natural candidates), then
   // unassigned guests, then guests seated at another table (the amber "moves
   // them" affordance).
   const groups = useMemo(() => {

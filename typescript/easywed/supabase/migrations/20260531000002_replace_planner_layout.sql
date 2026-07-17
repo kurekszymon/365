@@ -2,7 +2,7 @@
 -- DXF import wizard. The wizard collects parsed hall + tables + fixtures
 -- client-side, presents a preview, and on confirmation calls this RPC to
 -- (1) upsert the hall, (2) hard-delete all existing tables and fixtures for
--- the wedding, (3) insert the new ones — all inside a single transaction.
+-- the wedding, (3) insert the new ones - all inside a single transaction.
 --
 -- Hard deletes are intentional: import is an explicit "replace current layout"
 -- action. Guest assignments referencing the deleted tables fall back to NULL

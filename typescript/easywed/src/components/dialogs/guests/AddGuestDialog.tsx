@@ -63,7 +63,7 @@ export const AddGuestDialog = () => {
                 tableId: null,
                 dietary: form.dietary,
               })
-              // Reveal the new guest in the entity-list panel — the desktop
+              // Reveal the new guest in the entity-list panel - the desktop
               // rail and the mobile drawer share the store, so one call covers
               // whichever surface this platform renders.
               openGuestList("guests")

@@ -154,7 +154,7 @@ export const MeasureOverlay = ({
               opacity={0.85}
             />
 
-            {/* Endpoint dots — draggable in measure mode. The visible dot stays
+            {/* Endpoint dots - draggable in measure mode. The visible dot stays
                 small; an enlarged transparent circle widens the grab target. */}
             <g
               data-no-pan
@@ -221,7 +221,7 @@ export const MeasureOverlay = ({
               {label}
             </text>
 
-            {/* Delete button — pointer-events re-enabled just for this group */}
+            {/* Delete button - pointer-events re-enabled just for this group */}
             {onDelete && (
               <g
                 style={{ pointerEvents: "auto", cursor: "pointer" }}

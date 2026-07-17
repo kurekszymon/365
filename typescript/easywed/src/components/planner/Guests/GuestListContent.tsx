@@ -50,7 +50,7 @@ const ALL_DIETARY: Array<Dietary> = [
   "kosher",
 ]
 
-// One chip in the scrollable filter row — All/Unseated plus one per dietary
+// One chip in the scrollable filter row - All/Unseated plus one per dietary
 // category actually in use, replacing the old single "Dieta" toggle so a diner
 // can filter down to (say) just the vegan guests instead of "has any diet".
 const FilterChip = ({
@@ -115,8 +115,8 @@ export const GuestListContent = () => {
     (d) => (dietaryCounts.get(d) ?? 0) > 0
   )
 
-  // Fold the name plus each dietary preference — both the raw key ("vegan")
-  // and its translated label ("Wegańska") — into one normalized blob so a
+  // Fold the name plus each dietary preference - both the raw key ("vegan")
+  // and its translated label ("Wegańska") - into one normalized blob so a
   // fuzzy query can hit any of them.
   const guestHaystack = (guest: Guest) =>
     normalize(
@@ -168,7 +168,7 @@ export const GuestListContent = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Sticky controls: progress, search, filters, add/import — kept above the
+      {/* Sticky controls: progress, search, filters, add/import - kept above the
           scrolling list so they stay reachable in a long guest list. */}
       <div className="sticky top-0 z-10 flex flex-col gap-3 bg-background before:pointer-events-none before:absolute before:inset-x-0 before:-top-4 before:h-4 before:bg-background after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-4 after:h-4 after:bg-background">
         <SeatingProgress seated={seatedCount} total={guests.length} />

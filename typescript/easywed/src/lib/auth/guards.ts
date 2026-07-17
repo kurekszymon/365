@@ -8,7 +8,7 @@ export const sanitizeNextPath = (next: unknown): string | undefined => {
 }
 
 export const requireAuth = (nextPath: string) => {
-  // When !isReady, auth hasn't settled yet — don't redirect. AuthGate renders
+  // When !isReady, auth hasn't settled yet - don't redirect. AuthGate renders
   // null during this window and calls router.invalidate() once ready, which
   // re-runs beforeLoad. Both pieces must stay in sync: don't remove the
   // invalidate call in AuthGate without updating this guard.

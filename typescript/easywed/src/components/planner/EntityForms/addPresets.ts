@@ -6,7 +6,7 @@ export type TablePreset = {
   size: Size
   capacity: number
   labelKey: string
-  // Picker-card preview only — "oval" renders a pill-shaped swatch to hint at
+  // Picker-card preview only - "oval" renders a pill-shaped swatch to hint at
   // the shape, but the inserted table is a plain `rectangular` table like
   // Prostokąt (the schema has no oval shape), so it's editable via the normal
   // rectangular-table fields afterwards with no special-casing anywhere else.
@@ -54,7 +54,7 @@ export type FixturePreset = {
   size: Size
   labelKey: string
   icon: FixtureIcon
-  // "Custom" is a blank starting point — inserted without a preset name so
+  // "Custom" is a blank starting point - inserted without a preset name so
   // the edit view opens ready for the user to shape it.
   custom?: boolean
 }

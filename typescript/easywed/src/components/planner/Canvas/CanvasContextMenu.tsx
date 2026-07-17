@@ -31,8 +31,8 @@ export const CanvasContextMenu = ({
   renderItems,
 }: PropsWithChildren<Props>) => {
   // Non-null while a table/fixture is being dragged (PointerSensor past its 8px
-  // threshold). A long-press can fire `contextmenu` mid-drag — especially on
-  // touch — so we use this to suppress the menu only then, not on all touches.
+  // threshold). A long-press can fire `contextmenu` mid-drag - especially on
+  // touch - so we use this to suppress the menu only then, not on all touches.
   const { active } = useDndContext()
   const [capturedPos, setCapturedPos] = useState<{ x: number; y: number }>({
     x: 0,

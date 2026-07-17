@@ -21,7 +21,7 @@ export const StatusBar = ({ isMeasureStarted }: StatusBarProps) => {
     if (!faded) return
     const onMove = (e: PointerEvent) => {
       const rect = pillRef.current?.getBoundingClientRect()
-      // No rect means the pill unmounted (measure mode exited) — un-fade too.
+      // No rect means the pill unmounted (measure mode exited) - un-fade too.
       if (
         !rect ||
         e.clientX < rect.left ||

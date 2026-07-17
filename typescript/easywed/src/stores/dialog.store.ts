@@ -12,7 +12,7 @@ type Planner = "Planner.Export.Dxf" | "Planner.Import.Dxf"
 type Weddings = "Wedding.Rename" | "Wedding.Members" | "Wedding.Import.Dxf"
 type Dialog = Weddings | Guests | Planner
 
-// Optional context a dialog needs to open — e.g. which guest `Guest.Edit`
+// Optional context a dialog needs to open - e.g. which guest `Guest.Edit`
 // should load. Cleared alongside `opened` on close.
 type DialogPayload = {
   guestId?: string

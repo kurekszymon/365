@@ -36,7 +36,7 @@ export const MobileTabBar = () => {
   // after a desktop → mobile resize) fall back to the default list tab.
   const listTab: MobileListTab = activeTab === "ai_chat" ? "guests" : activeTab
   // When a panel view opens (tapping a list row → edit form, the add hub, the
-  // AI chat), it renders in `MobilePanelDrawer` — close this list drawer
+  // AI chat), it renders in `MobilePanelDrawer` - close this list drawer
   // so the two don't stack.
   const panelView = usePanelStore((state) => state.view)
   useEffect(() => {

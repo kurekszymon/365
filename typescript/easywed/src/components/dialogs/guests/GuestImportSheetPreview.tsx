@@ -16,7 +16,7 @@ export const GuestImportSheetPreview = ({ headers, rows }: IProps) => {
 
   const previewRows: Array<PreviewRow> = rows.map((row) => ({
     cells: headers.map(
-      (_, j) => row[j] ?? <span className="text-muted-foreground">—</span>
+      (_, j) => row[j] ?? <span className="text-muted-foreground">-</span>
     ),
     titles: headers.map((_, j) => row[j] ?? ""),
   }))

@@ -10,7 +10,7 @@ type TabBadgeIconProps = {
   active?: boolean
 }
 
-// Icon-in-a-circle with an optional count badge — the shared visual for a tab
+// Icon-in-a-circle with an optional count badge - the shared visual for a tab
 // button in both the desktop `SidebarRail` strip and the mobile `MobileTabBar`.
 export const TabBadgeIcon = ({
   tab,

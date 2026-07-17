@@ -22,7 +22,7 @@ import { ButtonGroup } from "@/components/ui/button-group"
 export type AddHubCategory = "tables" | "fixtures"
 
 type Props = {
-  // Seeds the Stoły/Elementy sali segmented filter — the desktop
+  // Seeds the Stoły/Elementy sali segmented filter - the desktop
   // `Sidebar/AddEntityDialog` opens pre-filtered to the list it was launched
   // from; the mobile add-hub sheet passes nothing and defaults to tables.
   initialCategory?: AddHubCategory
@@ -42,7 +42,7 @@ const FIXTURE_ICONS: Record<FixtureIcon, typeof ShapesIcon> = {
 
 // "Dodaj do sali" visual-card picker: segmented Stoły/Elementy sali filter +
 // a grid of preset cards. Tapping a card inserts it centered in the hall and
-// routes straight to its edit view — same short-circuit already used by the
+// routes straight to its edit view - same short-circuit already used by the
 // canvas's paste-at-cursor and right-click "Add table" flows, no intermediate
 // add-form step.
 export const AddHubContent = ({
@@ -90,7 +90,7 @@ export const AddHubContent = ({
   }
 
   const insertFixturePreset = (preset: FixturePreset) => {
-    // The "custom" card carries no name — it drops a blank fixture and lets
+    // The "custom" card carries no name - it drops a blank fixture and lets
     // the edit view do the shaping, same insert-then-edit shortcut as every
     // other card (there is no separate add form anymore).
     const fixtureId = addFixture(

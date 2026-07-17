@@ -76,7 +76,7 @@ export function VenueLanding({ lang }: { lang: Lang }) {
             <span className="font-heading font-semibold text-foreground">
               easywed.
             </span>{" "}
-            — {t("landing.footer.tagline", { lng: lang })}
+            - {t("landing.footer.tagline", { lng: lang })}
           </p>
           <nav className="flex items-center gap-6">
             <Link

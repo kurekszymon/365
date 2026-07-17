@@ -53,7 +53,7 @@ export const useCanvasClipboard = () => {
 
     // addTable/addFixture regenerate id and position, so the snapshot's own
     // id/position are ignored. Size, shape, seats and geometry carry over;
-    // guests do not — paste makes an empty copy.
+    // guests do not - paste makes an empty copy.
     if (item.kind === "table") {
       openTableEdit(addTable(item.table, [], position))
     } else {

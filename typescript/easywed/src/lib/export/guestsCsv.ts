@@ -40,8 +40,8 @@ const csvCell = (value: string): string =>
 const csvRow = (cells: Array<string>): string =>
   cells.map(sanitizeCell).map(csvCell).join(",")
 
-// In grouped mode the "table" column is redundant — it's already carried by
-// the section heading — so we drop it from the emitted columns.
+// In grouped mode the "table" column is redundant - it's already carried by
+// the section heading - so we drop it from the emitted columns.
 export const effectiveFields = (
   fields: Array<GuestField>,
   formatMode: FormatMode

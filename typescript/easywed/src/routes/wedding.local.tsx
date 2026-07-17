@@ -6,7 +6,7 @@ import { DEFAULT_HALL, usePlannerStore } from "@/stores/planner.store"
 import { useGlobalStore } from "@/stores/global.store"
 
 // No requireAuth: this is the guest (no-login) planning route. State comes
-// from localStorage instead of Supabase — see loadWedding.ts for the cloud
+// from localStorage instead of Supabase - see loadWedding.ts for the cloud
 // counterpart.
 export const Route = createFileRoute("/wedding/local")({
   component: LocalWeddingLayout,
@@ -20,7 +20,7 @@ function LocalWeddingLayout() {
     let cancelled = false
 
     // Force the local-storage gate off before resetting in-memory state,
-    // regardless of what weddingId was already active — including a prior
+    // regardless of what weddingId was already active - including a prior
     // guest session revisited via client-side nav, where it'd already be the
     // local sentinel. Otherwise the reset below would itself persist and
     // wipe the real local snapshot before rehydrate() gets to read it back.
@@ -49,7 +49,7 @@ function LocalWeddingLayout() {
     ])
       .catch((err: unknown) => {
         // A read/parse failure here (e.g. corrupted localStorage) must not
-        // leave the guest stuck on the loading screen forever — fall back to
+        // leave the guest stuck on the loading screen forever - fall back to
         // the already-reset empty state above and let them start fresh.
         console.error("[guest-mode] failed to rehydrate local wedding", err)
       })

@@ -7,7 +7,7 @@ export interface PlacedSeat {
   y: number
 }
 
-// Order-based seat ids with no real geometry (x/y are unused placeholders) —
+// Order-based seat ids with no real geometry (x/y are unused placeholders) -
 // for list-style seat pickers (the guest list's SeatAssignSheet, the table edit
 // form's seat list) and exports where only occupancy bookkeeping matters, not
 // screen position. Unlike `effectiveSeats`, this works for `custom` polygon
@@ -21,7 +21,7 @@ export function seatSlotsForCapacity(capacity: number): Array<PlacedSeat> {
 }
 
 // Resolve which guest sits in each placed seat: guests with an explicit `seatId`
-// matching a placed seat take it; the rest (order-fill — `seatId` null) fill the
+// matching a placed seat take it; the rest (order-fill - `seatId` null) fill the
 // still-empty seats in list order. This mirrors the table-picker / drag-to-table
 // flow, where a guest assigned to a table but not pinned occupies the next free
 // seat. Single source of truth so the canvas and any future consumer agree.

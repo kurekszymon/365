@@ -3,7 +3,7 @@ import type React from "react"
 import type { Position } from "@/stores/planner.store"
 
 // Pointer travel (px) before a press-and-hold on the background turns into a
-// pan. Below this it's a click (selecting/deselecting an element) — without the
+// pan. Below this it's a click (selecting/deselecting an element) - without the
 // threshold the sub-pixel jitter of a "still" click would start (and instantly
 // end) a pan and swallow the click.
 const PAN_START_THRESHOLD_PX = 4
@@ -18,7 +18,7 @@ export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
 
   function onPointerDown(e: React.PointerEvent) {
     pointers.current.add(e.pointerId)
-    // A second pointer means a pinch is starting — cancel any nascent pan.
+    // A second pointer means a pinch is starting - cancel any nascent pan.
     if (pointers.current.size > 1) {
       abortRef.current?.abort()
       return
@@ -32,7 +32,7 @@ export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
       return
 
     // The listeners below live for exactly this drag, so they just close over
-    // these locals — no refs needed to reach the start point, setPan, or the
+    // these locals - no refs needed to reach the start point, setPan, or the
     // crossed-threshold flag.
     const startX = e.clientX
     const startY = e.clientY
@@ -44,7 +44,7 @@ export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
     abortRef.current = controller
 
     // pointermove fires at the device rate (500+Hz on some mice) while React
-    // can only paint once per frame — committing every event just queues
+    // can only paint once per frame - committing every event just queues
     // wasted renders and makes the pan feel sluggish. Coalesce: remember the
     // latest position and flush at most one setPan per animation frame.
     let rafId = 0
@@ -58,7 +58,7 @@ export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
     const onMove = (ev: PointerEvent) => {
       // A mouse released outside the window never delivers pointerup here, so
       // the drag would otherwise stay live (and leak its listener on the next
-      // press). A move with no buttons held means the release was missed —
+      // press). A move with no buttons held means the release was missed -
       // tear the drag down. Touch always reports buttons while in contact.
       if (ev.pointerType === "mouse" && ev.buttons === 0) {
         controller.abort()
@@ -85,7 +85,7 @@ export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
     }
 
     // Listen on window (not the canvas element) so the pan keeps tracking once
-    // the pointer crosses the overlay toolbar or leaves the canvas — a mouse
+    // the pointer crosses the overlay toolbar or leaves the canvas - a mouse
     // gets no implicit pointer capture there. setPan clamps, so the hall just
     // pins to its last valid spot instead of freezing and jumping back.
     window.addEventListener("pointermove", onMove, { signal })
@@ -108,7 +108,7 @@ export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
   }
 
   // Pointers that never started a pan (a tap on a table/fixture/toolbar) get no
-  // window listeners — clear them here so the pinch guard doesn't get stuck.
+  // window listeners - clear them here so the pinch guard doesn't get stuck.
   function onPointerUp(e: { pointerId: number }) {
     pointers.current.delete(e.pointerId)
   }

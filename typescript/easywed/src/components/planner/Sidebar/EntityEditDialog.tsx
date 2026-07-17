@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog"
 
 // Only the "real form" views open as a desktop dialog. The rest of the
-// `PanelView` union is either mobile-only (`add_hub` — the FAB bottom-drawer
+// `PanelView` union is either mobile-only (`add_hub` - the FAB bottom-drawer
 // flow) or owned by the sidebar rail on desktop (`ai_chat`), so this dialog
 // treats them as closed.
 const DIALOG_KINDS: ReadonlySet<PanelView["kind"]> = new Set([
@@ -26,7 +26,7 @@ const DIALOG_KINDS: ReadonlySet<PanelView["kind"]> = new Set([
  * Desktop replacement for the old right-hand PropertyPanel column: watches
  * `panel.store` and renders the current table/fixture/hall form in a modal
  * dialog. Canvas selection, `openTableEdit`/`openFixtureEdit` callers and the
- * header's "Konfiguruj salę" entry all keep working unchanged — only the
+ * header's "Konfiguruj salę" entry all keep working unchanged - only the
  * surface the form renders in differs per platform.
  */
 export const EntityEditDialog = () => {

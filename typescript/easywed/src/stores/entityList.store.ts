@@ -3,7 +3,7 @@ import { create } from "zustand"
 // The entity-list surface: the desktop sidebar rail's content column and the
 // mobile bottom-bar drawer are the same logical panel rendered per platform,
 // so they share this one store (they never coexist). `ai_chat` is desktop-only
-// — the mobile bar doesn't offer it and reaches the assistant through
+// - the mobile bar doesn't offer it and reaches the assistant through
 // `panel.store`'s `ai_chat` view (the header sparkles button) instead; that
 // duplication is deliberate, the two surfaces have different chrome.
 export type EntityListTab =
@@ -24,7 +24,7 @@ type State = {
 }
 
 type Action = {
-  // Opens the panel straight on a tab — the single entry point used by the
+  // Opens the panel straight on a tab - the single entry point used by the
   // rail icons, the mobile bar, header shortcuts and post-add flows.
   openTab: (tab: EntityListTab) => void
   close: () => void

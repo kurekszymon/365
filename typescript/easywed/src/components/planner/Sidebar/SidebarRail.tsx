@@ -22,8 +22,8 @@ const TAB_ORDER: Array<EntityListTab> = [
 ]
 
 /**
- * Desktop-only unified sidebar: a ~60px icon strip — Guests / Tables /
- * Fixtures / Asystent AI — plus a content column that slides in over the
+ * Desktop-only unified sidebar: a ~60px icon strip - Guests / Tables /
+ * Fixtures / Asystent AI - plus a content column that slides in over the
  * canvas as an overlay (see the return for why it overlays rather than
  * pushing). The strip stays visible while expanded so switching tabs never
  * requires collapsing first; clicking the active tab's icon toggles the panel
@@ -43,7 +43,7 @@ export const SidebarRail = () => {
   const badgeCount = useTabBadgeCounts()
 
   // The panel is an overlay animated via `translate` (see below), so mounting
-  // its content no longer reflows the canvas — mount immediately on expand so
+  // its content no longer reflows the canvas - mount immediately on expand so
   // the panel is never empty, then keep it mounted through the slide-out and
   // drop it once that finishes (an empty off-screen panel). `showContent` is
   // adjusted during render (React's documented alternative to an effect for
@@ -88,7 +88,7 @@ export const SidebarRail = () => {
     // The rail's own footprint is always the 60px strip; the content column is
     // an absolutely-positioned overlay that slides in over the canvas by
     // animating `translate` (the `transition-transform` group). Animating
-    // `width` here instead would resize the flex-sibling canvas every frame —
+    // `width` here instead would resize the flex-sibling canvas every frame -
     // whose ResizeObserver then recomputes hall geometry and re-renders the
     // whole surface per frame, which is what made expanding feel sluggish. A
     // translate only composites; the canvas never relayouts.

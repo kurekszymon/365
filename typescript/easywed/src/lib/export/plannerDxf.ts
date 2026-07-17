@@ -145,7 +145,7 @@ const emitPolygon = (
 //
 // NOTE: `rotation` is deliberately NOT applied to the vertices here. This is
 // safe only because custom/polygon shapes are non-rotatable in the UI (their
-// rotation stays 0 — see TablePanelContent/FixturePanelContent, which hide the
+// rotation stays 0 - see TablePanelContent/FixturePanelContent, which hide the
 // rotation control for these shapes). If polygons ever become rotatable, bake
 // the rotation into these vertices, or the export will silently drop it.
 const polygonToDxf = (
@@ -370,7 +370,7 @@ export const buildPlannerDxf = (input: PlannerDxfInput): string => {
       const verts = polygonToDxf(hallH, f.position.x, f.position.y, f.geometry)
       emitPolygon(b, LAYER_FIXTURES, verts, f.geometry.closed)
     } else {
-      // "rectangle" and "rounded" both emit an axis-aligned rectangle —
+      // "rectangle" and "rounded" both emit an axis-aligned rectangle -
       // DXF has no native "rounded rectangle" primitive at this layer of
       // abstraction. The rounded corner is purely cosmetic in the app.
       emitRect(b, LAYER_FIXTURES, rect.x, rect.y, rect.w, rect.h)

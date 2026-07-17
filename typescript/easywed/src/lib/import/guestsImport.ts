@@ -24,7 +24,7 @@ const DIETARY_VALUES: ReadonlyArray<Dietary> = [
   "kosher",
 ]
 
-// Lowercase, strip diacritics, collapse whitespace — so "Gość", "gosc" and
+// Lowercase, strip diacritics, collapse whitespace - so "Gość", "gosc" and
 // "  GUEST " all compare equal. Used for both header detection and table
 // name matching.
 export const normalize = (value: string): string =>
@@ -32,7 +32,7 @@ export const normalize = (value: string): string =>
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     // Polish "ł" is a precomposed letter that NFD doesn't decompose, so map it
-    // explicitly — otherwise "Stół" wouldn't match a header alias of "stol".
+    // explicitly - otherwise "Stół" wouldn't match a header alias of "stol".
     .replace(/ł/gi, "l")
     .trim()
     .toLowerCase()
@@ -47,13 +47,13 @@ const HEADER_ALIASES: Record<GuestImportField, Array<string>> = {
 }
 
 // Reads a CSV/XLSX File into a header row + data rows of trimmed strings.
-// SheetJS is loaded lazily so it never enters the main bundle — the chunk only
+// SheetJS is loaded lazily so it never enters the main bundle - the chunk only
 // downloads when a user actually picks a file. `XLSX.read` autodetects the
 // format, so the same path handles both `.csv` and `.xlsx`.
 export const parseGuestFile = async (file: File): Promise<ParsedSheet> => {
   // SheetJS ships from its CDN as CommonJS. Depending on the bundler the API
   // lands either on the module namespace directly (Node/ESM) or under `default`
-  // (Vite/esbuild CJS interop) — resolve whichever actually carries `read` so
+  // (Vite/esbuild CJS interop) - resolve whichever actually carries `read` so
   // this works in dev, prod and tests alike.
   const mod = await import("xlsx")
   const ns = mod as unknown as { read?: unknown; default: typeof mod }
@@ -126,7 +126,7 @@ export interface BuildResult {
 // (or unmapped) tables leave the guest unassigned. Rows with a blank name are
 // skipped and counted so the UI can report them.
 //
-// `existingGuests` is the current guest list — needed to honour table capacity:
+// `existingGuests` is the current guest list - needed to honour table capacity:
 // the DB's `enforce_table_capacity` trigger rejects the whole batch if any table
 // would overflow, so we count remaining seats (capacity minus already-seated
 // minus what this import has already assigned) and bump the overflow to

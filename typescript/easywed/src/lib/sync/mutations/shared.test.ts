@@ -7,7 +7,7 @@ import { useGlobalStore } from "@/stores/global.store"
 describe("run", () => {
   afterEach(() => {
     useGlobalStore.setState({ weddingId: undefined })
-    // useGlobalStore is a persisted store — setting weddingId to the local
+    // useGlobalStore is a persisted store - setting weddingId to the local
     // sentinel above triggers the gated storage to actually write to
     // localStorage (see localWedding.ts's createLocalGatedStorage). Clear it
     // so that write doesn't leak into other test files sharing this worker.
@@ -20,7 +20,7 @@ describe("run", () => {
     let invoked = false
     // A spec-compliant thenable (accepts the resolve/reject callbacks and
     // returns a real promise) rather than a stub `then` that ignores its
-    // arguments — so this test would still fail correctly (a rejected
+    // arguments - so this test would still fail correctly (a rejected
     // promise) instead of relying on a synchronous throw if the local-gate
     // check in run() were ever accidentally removed.
     const query: PromiseLike<{ error: unknown }> = {

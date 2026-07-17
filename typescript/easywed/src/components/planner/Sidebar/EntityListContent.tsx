@@ -13,7 +13,7 @@ type EntityListContentProps = {
 
 /**
  * Sidebar "Stoły" / "Elementy sali" tab: add button (preset picker
- * pre-filtered to the launching kind) + a flat row per entity — no search,
+ * pre-filtered to the launching kind) + a flat row per entity - no search,
  * these counts stay small compared to guests. Tapping a row opens the
  * entity's edit dialog. Tables show an assigned/capacity subtitle; unnamed
  * fixtures fall back to their shape label.

@@ -45,7 +45,7 @@ type State = {
   error: string | null
   // FIFO of destructive ops awaiting confirmation. A queue (not a single slot)
   // because the model can fire multiple delete tools in one step, which the SDK
-  // executes concurrently — each gets its own pending entry, resolved in order.
+  // executes concurrently - each gets its own pending entry, resolved in order.
   confirmQueue: Array<PendingConfirm>
   // Aborts the in-flight turn. Held so clear()/unmount can stop a stream that
   // would otherwise keep mutating the planner after the user moved on.
@@ -68,7 +68,7 @@ export const selectPendingConfirm = (state: State): PendingConfirm | null =>
   state.confirmQueue[0] ?? null
 
 // Maps a tool result's discriminant to the chip's visual status. `satisfies`
-// keeps this exhaustive — adding a ToolResult variant forces an entry here.
+// keeps this exhaustive - adding a ToolResult variant forces an entry here.
 const TOOL_CHIP_STATUS = {
   ok: "done",
   not_found: "done",
@@ -183,11 +183,11 @@ export const useAiChatStore = create<State & Action>((set, get) => {
             chip.status === "running" ? { ...chip, status: "cancelled" } : chip
           ),
         }))
-        // An abort (clear / unmount) is intentional — stay silent, don't toast.
+        // An abort (clear / unmount) is intentional - stay silent, don't toast.
         if (controller.signal.aborted) {
           // Drop the assistant placeholder if nothing streamed yet; otherwise it
           // lingers with empty text and no chips and renders as a perpetual
-          // "thinking" spinner. Keep it when partial text/tools exist — that's
+          // "thinking" spinner. Keep it when partial text/tools exist - that's
           // real (now-cancelled) output worth showing.
           set((state) => ({
             messages: state.messages.filter(

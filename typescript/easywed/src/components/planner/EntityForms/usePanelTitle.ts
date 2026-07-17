@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next"
 import type { PanelView } from "@/stores/panel.store"
 
 /**
- * Human title for a panel view — shared by the mobile bottom drawer
+ * Human title for a panel view - shared by the mobile bottom drawer
  * (`MobilePanelDrawer`) and the desktop `Sidebar/EntityEditDialog` so
  * the two surfaces can't drift apart.
  */

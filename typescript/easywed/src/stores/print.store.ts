@@ -5,7 +5,7 @@ import { DEFAULT_GUEST_SORT } from "@/lib/export/guests"
 
 type State = {
   fields: Array<GuestField>
-  // How guests are ordered under each table heading — alphabetically or by the
+  // How guests are ordered under each table heading - alphabetically or by the
   // chair they sit in.
   sort: GuestSort
   // Whether the printed hall layout renders seat markers.

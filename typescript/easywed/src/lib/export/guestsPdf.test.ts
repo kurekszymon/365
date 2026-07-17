@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { usePrintStore } from "@/stores/print.store"
 
-// Prevent i18n LanguageDetector from running in a node environment — it crashes
+// Prevent i18n LanguageDetector from running in a node environment - it crashes
 // when it finds a partial `window` stub and tries to read window.location.search.
 vi.mock("@/i18n", () => ({
   default: { t: (k: string) => k, language: "en" },
@@ -15,7 +15,7 @@ vi.stubGlobal("window", { print: vi.fn() })
 // Import after stubs are set up.
 const { triggerPdfExport } = await import("@/lib/export/guestsPdf")
 
-describe("triggerPdfExport — print store wiring", () => {
+describe("triggerPdfExport - print store wiring", () => {
   beforeEach(() => {
     // Ensure each test starts from a clean-ish print state.
     usePrintStore.setState({ sort: "seat", fields: [] })
