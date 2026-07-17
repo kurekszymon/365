@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
 
 type RoundTableProps = {
   diameter: number
@@ -21,13 +21,12 @@ export const RoundTable = ({
     <Field>
       <FieldLabel>{t("tables.diameter")}</FieldLabel>
       <FieldContent>
-        <Input
-          type="number"
+        <NumberInput
           min={0.1}
           step={0.1}
           className="w-full rounded-md border"
           value={diameter}
-          onChange={(e) => onDiameterChange(Number(e.target.value))}
+          onValueChange={onDiameterChange}
           onBlur={onBlur}
         />
         {isOutOfBounds && (

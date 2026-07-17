@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
 
 type RectangularTableProps = {
   width: number
@@ -30,13 +30,12 @@ export const RectangularTable = ({
       <Field>
         <FieldLabel>{t("common.width")}</FieldLabel>
         <FieldContent>
-          <Input
-            type="number"
+          <NumberInput
             min={0.1}
             step={0.1}
             className="w-full rounded-md border"
             value={width}
-            onChange={(e) => onWidthChange(Number(e.target.value))}
+            onValueChange={onWidthChange}
             onBlur={onBlur}
           />
           {isWidthOutOfBounds && (
@@ -50,13 +49,12 @@ export const RectangularTable = ({
       <Field>
         <FieldLabel>{t("common.height")}</FieldLabel>
         <FieldContent>
-          <Input
-            type="number"
+          <NumberInput
             min={0.1}
             step={0.1}
             className="w-full rounded-md border"
             value={height}
-            onChange={(e) => onHeightChange(Number(e.target.value))}
+            onValueChange={onHeightChange}
             onBlur={onBlur}
           />
           {isHeightOutOfBounds && (

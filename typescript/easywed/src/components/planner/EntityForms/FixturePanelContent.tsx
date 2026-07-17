@@ -6,7 +6,7 @@ import { TableRotationField } from "./fields/TableRotationField"
 import { RectangularTable } from "./fields/TableRectDimensionsField"
 import type { FixtureShape } from "@/stores/planner.store"
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
 import {
@@ -141,13 +141,12 @@ export const FixturePanelContent = ({ fixtureId }: { fixtureId: string }) => {
             <Field>
               <FieldLabel>{t("fixtures.diameter")}</FieldLabel>
               <FieldContent>
-                <Input
-                  type="number"
+                <NumberInput
                   min={0.1}
                   step={0.1}
                   className="w-full rounded-md border"
                   value={form.width}
-                  onChange={(e) => update({ width: Number(e.target.value) })}
+                  onValueChange={(width) => update({ width })}
                   onBlur={persist}
                 />
                 {isCircleOutOfBounds && (

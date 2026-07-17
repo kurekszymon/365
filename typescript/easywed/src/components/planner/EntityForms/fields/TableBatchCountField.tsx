@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
 
 interface IProps {
   value: number
@@ -15,18 +15,15 @@ export const TableBatchCountField = ({ value, max, onChange }: IProps) => {
     <Field>
       <FieldLabel>{t("tables.batch_count")}</FieldLabel>
       <FieldContent>
-        <Input
-          type="number"
+        <NumberInput
           min={1}
           max={max}
           step={1}
           className="w-full rounded-md border"
           value={value}
-          onChange={(e) => {
-            const next = Number(e.target.value)
-            if (!Number.isFinite(next)) return
+          onValueChange={(next) =>
             onChange(Math.min(max, Math.max(1, Math.floor(next))))
-          }}
+          }
         />
       </FieldContent>
     </Field>

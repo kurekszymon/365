@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
 
 interface IProps {
   value: number
@@ -14,13 +14,12 @@ export const TableCapacityField = ({ value, onChange, onBlur }: IProps) => {
     <Field>
       <FieldLabel>{t("tables.capacity")}</FieldLabel>
       <FieldContent>
-        <Input
-          type="number"
+        <NumberInput
           min={1}
           step={1}
           className="w-full rounded-md border"
           value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
+          onValueChange={onChange}
           onBlur={onBlur}
         />
       </FieldContent>
