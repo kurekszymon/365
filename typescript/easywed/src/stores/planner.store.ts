@@ -181,6 +181,12 @@ type State = {
   guests: Array<Guest>
   fixtures: Array<Fixture>
   halls: Array<Hall>
+  // Hall ids in raise order (last = on top) - windowing-style bring-to-front
+  // for overlapping halls. Only affects paint/hit order on the canvas; the
+  // `halls` array keeps creation order, which the list panel and the
+  // "Hall {n}" fallback names depend on. Ids absent here sit at the bottom
+  // in creation order.
+  hallZOrder: Array<string>
 }
 
 type Action = {
@@ -214,6 +220,8 @@ type Action = {
   updateHall: (id: string, patch: Partial<Omit<Hall, "id">>) => void
   saveHall: (id: string) => void
   updateHallPosition: (id: string, x: number, y: number) => void
+  // Brings a hall to the front of the overlap stack (see hallZOrder).
+  raiseHall: (id: string) => void
   deleteHall: (
     id: string,
     contents: { kind: "move"; targetHallId: string } | { kind: "delete" }
@@ -294,6 +302,7 @@ const createPlannerStore = (
   guests: [],
   fixtures: [],
   halls: [],
+  hallZOrder: [],
 
   addTable: (table, guestIds = [], position) => {
     const tableId = crypto.randomUUID()
@@ -520,13 +529,28 @@ const createPlannerStore = (
       id,
       position: position ?? nextHallPosition(get().halls),
     }
-    set((state) => ({ halls: [...state.halls, newHall] }))
+    // The new hall starts on top of the overlap stack, like a fresh window.
+    set((state) => ({
+      halls: [...state.halls, newHall],
+      hallZOrder: [...state.hallZOrder, id],
+    }))
     const insert = insertHall(newHall).finally(() => {
       pendingHallInserts.delete(id)
     })
     pendingHallInserts.set(id, insert)
     void insert
     return id
+  },
+  raiseHall: (id) => {
+    set((state) =>
+      // Already on top (or empty stack with a single hall) - skip the no-op
+      // state change so drag-end doesn't re-render the canvas for nothing.
+      state.hallZOrder[state.hallZOrder.length - 1] === id
+        ? state
+        : {
+            hallZOrder: [...state.hallZOrder.filter((x) => x !== id), id],
+          }
+    )
   },
   updateHall: (id, patch) => {
     set((state) => ({
@@ -611,6 +635,7 @@ const createPlannerStore = (
       }
       set((s) => ({
         halls: s.halls.filter((h) => h.id !== id),
+        hallZOrder: s.hallZOrder.filter((x) => x !== id),
         tables: s.tables.map((t) => {
           if (t.hallId !== id) return t
           const { position, delta } = relocate(
@@ -650,6 +675,7 @@ const createPlannerStore = (
       const tableIdSet = new Set(tableIds)
       set((s) => ({
         halls: s.halls.filter((h) => h.id !== id),
+        hallZOrder: s.hallZOrder.filter((x) => x !== id),
         tables: s.tables.filter((t) => t.hallId !== id),
         fixtures: s.fixtures.filter((f) => f.hallId !== id),
         guests: s.guests.map((g) =>

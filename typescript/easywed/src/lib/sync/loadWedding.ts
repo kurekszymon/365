@@ -194,7 +194,9 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
         )
   }
 
-  usePlannerStore.setState({ tables, guests, halls, fixtures })
+  // hallZOrder reset: the raise order is per-wedding UI state, so a freshly
+  // loaded wedding starts from creation order.
+  usePlannerStore.setState({ tables, guests, halls, fixtures, hallZOrder: [] })
 
   const reminders: Array<Reminder> = remindersRes.data.map((r) => ({
     uuid: r.id,

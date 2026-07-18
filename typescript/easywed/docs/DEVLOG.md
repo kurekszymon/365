@@ -4,7 +4,7 @@
 
 ### 18.07
 
-- add multihall support (to be improved with further tests)
+- add multihall support (to be improved with further tests) - support adding more than one hall, drag objects between them, drag halls themselves, respect drag order
 - remove dxf imports
 - add custom objects geometry
 

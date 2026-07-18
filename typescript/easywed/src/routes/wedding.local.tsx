@@ -36,6 +36,7 @@ function LocalWeddingLayout() {
       guests: [],
       fixtures: [],
       halls: [],
+      hallZOrder: [],
     })
     useGlobalStore.setState({
       role: "owner",

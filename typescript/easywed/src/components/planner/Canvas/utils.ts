@@ -127,6 +127,20 @@ export const worldBoundsOf = (halls: Array<Hall>): WorldBounds => {
   return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
 }
 
+// Halls sorted back-to-front for rendering and hit-testing: unraised halls
+// keep their creation order at the bottom, raised ones stack in raise order
+// (most recently raised last = on top). Stable sort keeps ties in place.
+export const sortHallsByZ = (
+  halls: Array<Hall>,
+  zOrder: Array<string>
+): Array<Hall> => {
+  if (zOrder.length === 0) return halls
+  const rank = new Map(zOrder.map((id, i) => [id, i]))
+  return [...halls].sort(
+    (a, b) => (rank.get(a.id) ?? -1) - (rank.get(b.id) ?? -1)
+  )
+}
+
 const inHall = (hall: Hall, p: Position): boolean =>
   p.x >= hall.position.x &&
   p.x <= hall.position.x + hall.size.width &&

@@ -3,7 +3,7 @@ import { useShallow } from "zustand/react/shallow"
 import { StatusBar } from "../StatusBar"
 import { HallView } from "./HallView"
 import { MeasureOverlay } from "./MeasureOverlay"
-import { clampToHall, hallWorldOf } from "./utils"
+import { clampToHall, hallWorldOf, sortHallsByZ } from "./utils"
 import { useMeasureTool } from "./useMeasureTool"
 import { useTableSnap } from "./useTableSnap"
 import type { Ref } from "react"
@@ -53,13 +53,21 @@ export const HallSurface = ({
 }: HallSurfaceProps) => {
   const isMobile = useIsMobile()
 
-  const { tables, guests, fixtures, halls } = usePlannerStore(
+  const { tables, guests, fixtures, rawHalls, hallZOrder } = usePlannerStore(
     useShallow((state) => ({
       tables: state.tables,
       guests: state.guests,
       fixtures: state.fixtures,
-      halls: state.halls,
+      rawHalls: state.halls,
+      hallZOrder: state.hallZOrder,
     }))
+  )
+
+  // Back-to-front for both DOM/paint order and hit-testing (must agree with
+  // the z-sorted array Canvas hands to hallAtPoint).
+  const halls = useMemo(
+    () => sortHallsByZ(rawHalls, hallZOrder),
+    [rawHalls, hallZOrder]
   )
 
   const hallsById = useMemo(() => new Map(halls.map((h) => [h.id, h])), [halls])

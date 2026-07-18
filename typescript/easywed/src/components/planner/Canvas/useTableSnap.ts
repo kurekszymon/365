@@ -41,14 +41,19 @@ export function useTableSnap({
   snapStep,
   weddingId,
 }: UseTableSnapParams) {
-  const { updateTablePosition, updateFixturePosition, updateHallPosition } =
-    usePlannerStore(
-      useShallow((state) => ({
-        updateTablePosition: state.updateTablePosition,
-        updateFixturePosition: state.updateFixturePosition,
-        updateHallPosition: state.updateHallPosition,
-      }))
-    )
+  const {
+    updateTablePosition,
+    updateFixturePosition,
+    updateHallPosition,
+    raiseHall,
+  } = usePlannerStore(
+    useShallow((state) => ({
+      updateTablePosition: state.updateTablePosition,
+      updateFixturePosition: state.updateFixturePosition,
+      updateHallPosition: state.updateHallPosition,
+      raiseHall: state.raiseHall,
+    }))
+  )
   const shiftMeasurementPoints = useMeasuresStore(
     (state) => state.shiftMeasurementPoints
   )
@@ -197,6 +202,9 @@ export function useTableSnap({
         const next =
           snapStep === "off" ? raw : snapPositionToGrid(raw, snapStep)
         updateHallPosition(hall.id, next.x, next.y)
+        // Windowing behavior: the hall you just dragged lands on top of the
+        // overlap stack.
+        raiseHall(hall.id)
         if (weddingId) {
           const dx = next.x - hall.position.x
           const dy = next.y - hall.position.y

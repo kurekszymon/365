@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next"
-import { useEffect, useRef } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { useShallow } from "zustand/react/shallow"
 import {
   ClipboardCopyIcon,
@@ -28,6 +28,7 @@ import {
   isNoPan,
   nearestHall,
   snapPositionToGrid,
+  sortHallsByZ,
 } from "./utils"
 import { useWorldGeometry } from "./useWorldGeometry"
 import { useCanvasPan } from "./useCanvasPan"
@@ -54,7 +55,15 @@ import { useOpenHalls } from "@/hooks/useOpenHalls"
 export const Canvas = () => {
   const { t } = useTranslation()
 
-  const halls = usePlannerStore((state) => state.halls)
+  // Back-to-front hall order: hit-testing (hallAtPoint takes the last match)
+  // must agree with paint order, so everything below works off the z-sorted
+  // array, not the store's creation-ordered one.
+  const rawHalls = usePlannerStore((state) => state.halls)
+  const hallZOrder = usePlannerStore((state) => state.hallZOrder)
+  const halls = useMemo(
+    () => sortHallsByZ(rawHalls, hallZOrder),
+    [rawHalls, hallZOrder]
+  )
 
   const zoom = useViewStore((state) => state.zoom)
   const setZoom = useViewStore((state) => state.setZoom)

@@ -77,8 +77,13 @@ const HallViewBase = ({
     .join(" · ")
 
   return (
+    // `isolate`: each hall is its own stacking context, so the z-10 floor /
+    // z-20 chip and dimension labels only stack within their hall - without
+    // it a behind-hall's z-20 labels would paint over the front hall's z-10
+    // floor. Cross-hall stacking is then purely DOM order (the z-sorted
+    // array from HallSurface), with zIndex 30 lifting a dragged/raised hall.
     <div
-      className="absolute"
+      className="absolute isolate"
       style={{
         left,
         top,
