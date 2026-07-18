@@ -11,7 +11,8 @@ import {
 
 // Atomic counterpart to per-row inserts: replaces the entire planner layout
 // for a wedding in a single transaction via the `replace_planner_layout` RPC.
-// Used by the DXF import wizard once the user confirms the preview.
+// Used by the local-wedding migration (MigrateLocalWeddingDialog) when a
+// signed-in user adopts a guest-mode plan.
 export const replacePlannerLayout = (
   halls: Array<Hall>,
   tables: Array<Table>,
