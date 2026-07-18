@@ -34,6 +34,10 @@ export const updateFixtureRow = (
     height?: number
     rotation?: TableRotation
     geometry?: Geometry | null
+    // Shape edits ride the position along (a re-anchored outline shifts the
+    // bbox origin) so shape + geometry + position land in one write.
+    pos_x?: number
+    pos_y?: number
   }
 ): Promise<boolean> =>
   run(
@@ -44,8 +48,9 @@ export const updateFixtureRow = (
 export const updateFixturePos = (
   id: string,
   x: number,
-  y: number
-): Promise<boolean> => updatePos("fixtures", id, x, y)
+  y: number,
+  hallId?: string
+): Promise<boolean> => updatePos("fixtures", id, x, y, hallId)
 
 export const softDeleteFixture = (id: string): Promise<boolean> =>
   markDeleted("fixtures", id)

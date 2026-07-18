@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react"
 import type { GridSpacing, GridStyle } from "@/stores/view.store"
-import type { Position, Size } from "@/stores/planner.store"
+import type { Hall, Position, Size } from "@/stores/planner.store"
+import { DEFAULT_HALL } from "@/stores/planner.store"
 
 const NICE_INTERVALS: Array<Exclude<GridSpacing, "auto">> = [
   1, 2, 5, 10, 25, 50,
@@ -96,6 +97,98 @@ export const clampToHall = (
     y: clamp(pos.y, 0, hallHeight - tableSize.height),
   }
 }
+
+// ---------------------------------------------------------------------------
+// World space: all halls share one coordinate system (meters). A hall's
+// `position` is its top-left corner in world space; entity positions stay
+// local to their hall (world = hall.position + local).
+
+export interface WorldBounds {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+// Union of all hall rects. An empty hall list falls back to the default hall
+// footprint so the canvas math stays finite.
+export const worldBoundsOf = (halls: Array<Hall>): WorldBounds => {
+  if (halls.length === 0) return { x: 0, y: 0, ...DEFAULT_HALL.size }
+  let minX = Infinity
+  let minY = Infinity
+  let maxX = -Infinity
+  let maxY = -Infinity
+  for (const h of halls) {
+    minX = Math.min(minX, h.position.x)
+    minY = Math.min(minY, h.position.y)
+    maxX = Math.max(maxX, h.position.x + h.size.width)
+    maxY = Math.max(maxY, h.position.y + h.size.height)
+  }
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+}
+
+// Halls sorted back-to-front for rendering and hit-testing: unraised halls
+// keep their creation order at the bottom, raised ones stack in raise order
+// (most recently raised last = on top). Stable sort keeps ties in place.
+export const sortHallsByZ = (
+  halls: Array<Hall>,
+  zOrder: Array<string>
+): Array<Hall> => {
+  if (zOrder.length === 0) return halls
+  const rank = new Map(zOrder.map((id, i) => [id, i]))
+  return [...halls].sort(
+    (a, b) => (rank.get(a.id) ?? -1) - (rank.get(b.id) ?? -1)
+  )
+}
+
+const inHall = (hall: Hall, p: Position): boolean =>
+  p.x >= hall.position.x &&
+  p.x <= hall.position.x + hall.size.width &&
+  p.y >= hall.position.y &&
+  p.y <= hall.position.y + hall.size.height
+
+// The hall under a world-space point. When halls overlap the LAST one in
+// array order wins, matching paint order (later halls render on top).
+export const hallAtPoint = (halls: Array<Hall>, p: Position): Hall | null => {
+  for (let i = halls.length - 1; i >= 0; i--) {
+    if (inHall(halls[i], p)) return halls[i]
+  }
+  return null
+}
+
+// Fallback drop target: the hall whose rect is closest to the point.
+export const nearestHall = (halls: Array<Hall>, p: Position): Hall | null => {
+  let best: Hall | null = null
+  let bestD = Infinity
+  for (const h of halls) {
+    const dx = Math.max(
+      h.position.x - p.x,
+      0,
+      p.x - (h.position.x + h.size.width)
+    )
+    const dy = Math.max(
+      h.position.y - p.y,
+      0,
+      p.y - (h.position.y + h.size.height)
+    )
+    const d = dx * dx + dy * dy
+    if (d < bestD) {
+      bestD = d
+      best = h
+    }
+  }
+  return best
+}
+
+export const hallLocalOf = (p: Position, hall: Hall): Position => ({
+  x: p.x - hall.position.x,
+  y: p.y - hall.position.y,
+})
+
+export const hallWorldOf = (p: Position, hall: Hall): Position => ({
+  x: p.x + hall.position.x,
+  y: p.y + hall.position.y,
+})
 
 /**
  * Returns the nearest point on the boundary of an axis-aligned rectangle to (xM, yM).

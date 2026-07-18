@@ -1,4 +1,3 @@
-import { clamp } from "./utils"
 import { TableSeats } from "./TableSeats"
 import type { ComponentProps } from "react"
 import type { Guest, Table } from "@/stores/planner.store"
@@ -11,10 +10,9 @@ type TableVisualProps = {
   table: Table
   guestsAssigned: number
   ppm: number
-  // When provided together, the raw drag delta is clamped so the table stays
-  // within the hall. Passed by the canvas during a drag; omitted in print.
+  // Raw drag delta applied as a translate. Unclamped by design: a drag may
+  // cross into another hall (the drop handler resolves the target hall).
   transform?: Translate | null
-  hallBounds?: { width: number; height: number }
   // When `showSeats` is set, render seat markers (filled from `seatGuests`)
   // around the table. Off by default so print and other callers are unaffected.
   seatGuests?: Array<Guest>
@@ -28,7 +26,6 @@ export const TableVisual = ({
   guestsAssigned,
   ppm,
   transform,
-  hallBounds,
   seatGuests,
   showSeats,
   showEmpty,
@@ -51,22 +48,6 @@ export const TableVisual = ({
     Array.isArray(geometry.vertices) &&
     geometry.vertices.length > 0
 
-  const clamped =
-    transform && hallBounds
-      ? {
-          x: clamp(
-            transform.x,
-            -position.x * ppm,
-            (hallBounds.width - size.width - position.x) * ppm
-          ),
-          y: clamp(
-            transform.y,
-            -position.y * ppm,
-            (hallBounds.height - size.height - position.y) * ppm
-          ),
-        }
-      : null
-
   return (
     <div
       ref={ref}
@@ -85,9 +66,10 @@ export const TableVisual = ({
         top: position.y * ppm,
         width: size.width * ppm,
         height: (shape === "round" ? size.width : size.height) * ppm,
-        transform: clamped
-          ? `translate3d(${clamped.x}px, ${clamped.y}px, 0)`
+        transform: transform
+          ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
           : undefined,
+        zIndex: transform ? 30 : undefined,
         printColorAdjust: "exact",
         WebkitPrintColorAdjust: "exact",
         ...style,

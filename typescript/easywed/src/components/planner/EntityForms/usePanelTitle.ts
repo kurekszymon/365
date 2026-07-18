@@ -10,7 +10,9 @@ export function usePanelTitle(view: PanelView | null): string {
   const { t } = useTranslation()
   if (!view) return ""
   switch (view.kind) {
-    case "hall":
+    case "halls.list":
+      return t("hall.list_title")
+    case "hall.edit":
       return t("hall")
     case "tables.batch_add":
       return t("tables.add_batch")
@@ -18,6 +20,8 @@ export function usePanelTitle(view: PanelView | null): string {
       return t("tables.edit")
     case "fixture.edit":
       return t("fixtures.edit")
+    case "shape.edit":
+      return t("shape_edit.title")
     case "add_hub":
       return t("hall.add_hub.title")
     case "ai_chat":

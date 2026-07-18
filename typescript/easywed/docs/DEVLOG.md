@@ -2,6 +2,13 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 18.07
+
+- TODO: add custom geometry for halls
+- add multihall support (to be improved with further tests) - support adding more than one hall, drag objects between them, drag halls themselves, respect drag order
+- remove dxf imports
+- add custom objects geometry
+
 ### 17.07
 
 - fix non negative values in inputs -- deploy

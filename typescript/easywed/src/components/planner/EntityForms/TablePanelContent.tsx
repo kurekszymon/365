@@ -31,9 +31,8 @@ export const TablePanelContent = ({
 }) => {
   const { t } = useTranslation()
 
-  const { hallDimensions, updateTable, saveTable } = usePlannerStore(
+  const { updateTable, saveTable } = usePlannerStore(
     useShallow((state) => ({
-      hallDimensions: state.hall.dimensions,
       updateTable: state.updateTable,
       saveTable: state.saveTable,
     }))
@@ -42,6 +41,12 @@ export const TablePanelContent = ({
   const editedTable = usePlannerStore((state) =>
     state.tables.find((table) => table.id === tableId)
   )
+
+  // Validate size against the table's own hall.
+  const hall = usePlannerStore((state) =>
+    state.halls.find((h) => h.id === editedTable?.hallId)
+  )
+  const hallDimensions = hall?.size ?? { width: Infinity, height: Infinity }
 
   const editedAssignedGuestIds = usePlannerStore(
     useShallow((state) =>
@@ -101,7 +106,7 @@ export const TablePanelContent = ({
     f: typeof form,
     assignedGuestIds: Array<string> = editedAssignedGuestIds
   ) => {
-    if (!isValid(f)) return
+    if (!editedTable || !isValid(f)) return
     updateTable(
       tableId,
       {
@@ -110,6 +115,7 @@ export const TablePanelContent = ({
         capacity: f.capacity,
         size: toStoredSize(f),
         rotation: f.shape === "round" ? 0 : f.rotation,
+        hallId: editedTable.hallId,
       },
       assignedGuestIds.slice(0, f.capacity)
     )

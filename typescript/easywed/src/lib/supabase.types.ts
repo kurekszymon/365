@@ -39,6 +39,7 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           geometry: Json | null
+          hall_id: string | null
           height: number
           id: string
           name: string
@@ -54,6 +55,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           geometry?: Json | null
+          hall_id?: string | null
           height: number
           id: string
           name?: string
@@ -69,6 +71,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           geometry?: Json | null
+          hall_id?: string | null
           height?: number
           id?: string
           name?: string
@@ -81,6 +84,13 @@ export type Database = {
           width?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "fixtures_hall_id_fkey"
+            columns: ["hall_id"]
+            isOneToOne: false
+            referencedRelation: "halls"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fixtures_wedding_id_fkey"
             columns: ["wedding_id"]
@@ -147,7 +157,12 @@ export type Database = {
       halls: {
         Row: {
           created_at: string
+          floor: number | null
           height: number
+          id: string
+          name: string
+          pos_x: number
+          pos_y: number
           preset: string
           updated_at: string
           wedding_id: string
@@ -155,7 +170,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          floor?: number | null
           height: number
+          id?: string
+          name?: string
+          pos_x?: number
+          pos_y?: number
           preset: string
           updated_at?: string
           wedding_id: string
@@ -163,7 +183,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          floor?: number | null
           height?: number
+          id?: string
+          name?: string
+          pos_x?: number
+          pos_y?: number
           preset?: string
           updated_at?: string
           wedding_id?: string
@@ -173,7 +198,7 @@ export type Database = {
           {
             foreignKeyName: "halls_wedding_id_fkey"
             columns: ["wedding_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "weddings"
             referencedColumns: ["id"]
           },
@@ -273,6 +298,7 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           geometry: Json | null
+          hall_id: string | null
           height: number
           id: string
           name: string
@@ -290,6 +316,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           geometry?: Json | null
+          hall_id?: string | null
           height: number
           id: string
           name?: string
@@ -307,6 +334,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           geometry?: Json | null
+          hall_id?: string | null
           height?: number
           id?: string
           name?: string
@@ -320,6 +348,13 @@ export type Database = {
           width?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "tables_hall_id_fkey"
+            columns: ["hall_id"]
+            isOneToOne: false
+            referencedRelation: "halls"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tables_wedding_id_fkey"
             columns: ["wedding_id"]
@@ -440,9 +475,7 @@ export type Database = {
       replace_planner_layout: {
         Args: {
           p_fixtures: Json
-          p_hall_height: number
-          p_hall_preset: string
-          p_hall_width: number
+          p_halls: Json
           p_tables: Json
           p_wedding_id: string
         }

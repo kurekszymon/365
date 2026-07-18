@@ -16,7 +16,8 @@ import {
 // flow) or owned by the sidebar rail on desktop (`ai_chat`), so this dialog
 // treats them as closed.
 const DIALOG_KINDS: ReadonlySet<PanelView["kind"]> = new Set([
-  "hall",
+  "halls.list",
+  "hall.edit",
   "table.edit",
   "tables.batch_add",
   "fixture.edit",

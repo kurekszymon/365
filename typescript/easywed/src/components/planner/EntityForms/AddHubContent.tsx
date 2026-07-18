@@ -10,6 +10,7 @@ import {
   ShapesIcon,
 } from "lucide-react"
 import { clampToHall } from "../Canvas/utils"
+import { defaultPolygonVertices } from "../Canvas/geometryEdit"
 import { AddCard } from "./AddCard"
 import { FIXTURE_PRESETS, TABLE_PRESETS } from "./addPresets"
 import type { FixtureIcon, FixturePreset, TablePreset } from "./addPresets"
@@ -18,6 +19,13 @@ import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export type AddHubCategory = "tables" | "fixtures"
 
@@ -52,9 +60,9 @@ export const AddHubContent = ({
   const { t } = useTranslation()
   const [category, setCategory] = useState<AddHubCategory>(initialCategory)
 
-  const { hallDimensions, addTable, addFixture } = usePlannerStore(
+  const { halls, addTable, addFixture } = usePlannerStore(
     useShallow((state) => ({
-      hallDimensions: state.hall.dimensions,
+      halls: state.halls,
       addTable: state.addTable,
       addFixture: state.addFixture,
     }))
@@ -62,16 +70,28 @@ export const AddHubContent = ({
   const openTableEdit = usePanelStore((state) => state.openTableEdit)
   const openFixtureEdit = usePanelStore((state) => state.openFixtureEdit)
 
-  const centerPosition = (size: Size) =>
-    clampToHall(
+  // Which hall receives the preset. Only surfaced when there is a choice.
+  const [selectedHallId, setSelectedHallId] = useState<string | undefined>(
+    undefined
+  )
+  const targetHall = halls.find((h) => h.id === selectedHallId) ?? halls.at(0)
+
+  // The add hub is only reachable with a hall, but the last hall can vanish
+  // under an open panel (e.g. deleted via the AI chat).
+  if (!targetHall) return null
+
+  const centerPosition = (size: Size) => {
+    const dims = targetHall.size
+    return clampToHall(
       {
-        x: hallDimensions.width / 2 - size.width / 2,
-        y: hallDimensions.height / 2 - size.height / 2,
+        x: dims.width / 2 - size.width / 2,
+        y: dims.height / 2 - size.height / 2,
       },
       size,
-      hallDimensions.width,
-      hallDimensions.height
+      dims.width,
+      dims.height
     )
+  }
 
   const insertTablePreset = (preset: TablePreset) => {
     const tableId = addTable(
@@ -81,6 +101,7 @@ export const AddHubContent = ({
         capacity: preset.capacity,
         size: preset.size,
         rotation: 0,
+        hallId: targetHall.id,
       },
       [],
       centerPosition(preset.size)
@@ -90,15 +111,25 @@ export const AddHubContent = ({
   }
 
   const insertFixturePreset = (preset: FixturePreset) => {
-    // The "custom" card carries no name - it drops a blank fixture and lets
-    // the edit view do the shaping, same insert-then-edit shortcut as every
-    // other card (there is no separate add form anymore).
+    // The "custom" card carries no name - it drops a starter polygon (a
+    // clipped-corner rectangle, so it visibly isn't the plain rectangle) and
+    // lets the edit view do the shaping, same insert-then-edit shortcut as
+    // every other card (there is no separate add form anymore).
     const fixtureId = addFixture(
       {
         name: preset.custom ? "" : t(preset.labelKey),
         shape: preset.shape,
         size: preset.size,
         rotation: 0,
+        hallId: targetHall.id,
+        ...(preset.shape === "polygon"
+          ? {
+              geometry: {
+                vertices: defaultPolygonVertices(preset.size),
+                closed: true,
+              },
+            }
+          : {}),
       },
       centerPosition(preset.size)
     )
@@ -109,6 +140,22 @@ export const AddHubContent = ({
   return (
     <div className="flex flex-col gap-4">
       <p className="text-xs text-muted-foreground">{t("hall.add_hub.hint")}</p>
+
+      {halls.length > 1 && (
+        <Select value={targetHall.id} onValueChange={setSelectedHallId}>
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {halls.map((hall, index) => (
+              <SelectItem key={hall.id} value={hall.id}>
+                {hall.name.trim() ||
+                  t("hall.unnamed_index", { index: index + 1 })}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
 
       <ButtonGroup className="w-full">
         <Button

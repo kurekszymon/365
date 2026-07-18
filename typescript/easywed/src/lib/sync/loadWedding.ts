@@ -4,6 +4,7 @@ import type {
   FixtureShape,
   Geometry,
   Guest,
+  Hall,
   HallPreset,
   Seat,
   Table,
@@ -13,9 +14,14 @@ import type {
 import type { Reminder } from "@/stores/reminders.store"
 import type { WeddingRole } from "@/stores/global.store"
 import { supabase } from "@/lib/supabase"
+import {
+  insertHall,
+  updateFixturePos,
+  updateTablePos,
+} from "@/lib/sync/mutations"
+import { DEFAULT_HALL, usePlannerStore } from "@/stores/planner.store"
 import { useAuthStore } from "@/stores/auth.store"
 import { useGlobalStore } from "@/stores/global.store"
-import { usePlannerStore } from "@/stores/planner.store"
 import { useRemindersStore } from "@/stores/reminders.store"
 
 export const loadWedding = async (id: string, signal: AbortSignal) => {
@@ -23,7 +29,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
 
   const [
     weddingRes,
-    hallRes,
+    hallsRes,
     tablesRes,
     guestsRes,
     remindersRes,
@@ -39,15 +45,15 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
 
     supabase
       .from("halls")
-      .select("preset, width, height")
+      .select("id, name, floor, preset, width, height, pos_x, pos_y")
       .eq("wedding_id", id)
-      .abortSignal(signal)
-      .maybeSingle(),
+      .order("created_at")
+      .abortSignal(signal),
 
     supabase
       .from("tables")
       .select(
-        "id, name, shape, capacity, width, height, rotation, pos_x, pos_y, geometry, seats"
+        "id, hall_id, name, shape, capacity, width, height, rotation, pos_x, pos_y, geometry, seats"
       )
       .eq("wedding_id", id)
       .is("deleted_at", null)
@@ -79,7 +85,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     supabase
       .from("fixtures")
       .select(
-        "id, name, shape, width, height, rotation, pos_x, pos_y, geometry"
+        "id, hall_id, name, shape, width, height, rotation, pos_x, pos_y, geometry"
       )
       .eq("wedding_id", id)
       .is("deleted_at", null)
@@ -87,7 +93,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
   ])
 
   if (weddingRes.error) throw weddingRes.error
-  if (hallRes.error) throw hallRes.error
+  if (hallsRes.error) throw hallsRes.error
   if (tablesRes.error) throw tablesRes.error
   if (guestsRes.error) throw guestsRes.error
   if (remindersRes.error) throw remindersRes.error
@@ -101,6 +107,44 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     role: (memberRes.data?.role as WeddingRole | undefined) ?? undefined,
   })
 
+  const halls: Array<Hall> = hallsRes.data.map((h) => ({
+    id: h.id,
+    name: h.name,
+    floor: h.floor,
+    preset: h.preset as HallPreset,
+    size: { width: Number(h.width), height: Number(h.height) },
+    position: { x: Number(h.pos_x), y: Number(h.pos_y) },
+  }))
+
+  // Self-healing for rows without a hall: the migration backfilled hall_id,
+  // but a fire-and-forget insert race (or a hall row deleted server-side via
+  // `on delete set null`) can still leave orphans. Adopt them into the first
+  // hall - creating a default one when entities exist but no hall does - and
+  // repair the rows in the background. The fallback insert is awaited: the
+  // orphan backfill below and any user mutation against the adoptive hall
+  // reference its id, so it must exist server-side first or they FK-violate.
+  //
+  // Known race: two clients loading a hall-less wedding at once each insert
+  // their own fallback hall, leaving a duplicate. Accepted - the state is
+  // already anomalous and the surplus hall is visible/deletable in the UI.
+  const hasOrphans =
+    tablesRes.data.some((t) => !t.hall_id) ||
+    fixturesRes.data.some((f) => !f.hall_id)
+  let adoptiveHallPersisted = true
+  if (
+    halls.length === 0 &&
+    (tablesRes.data.length > 0 || fixturesRes.data.length > 0)
+  ) {
+    const fallback: Hall = {
+      ...DEFAULT_HALL,
+      id: crypto.randomUUID(),
+      position: { x: 0, y: 0 },
+    }
+    halls.push(fallback)
+    adoptiveHallPersisted = await insertHall(fallback)
+  }
+  const adoptiveHallId = halls[0]?.id
+
   const tables: Array<Table> = tablesRes.data.map((t) => ({
     id: t.id,
     name: t.name,
@@ -109,7 +153,8 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     size: { width: Number(t.width), height: Number(t.height) },
     rotation: t.rotation as TableRotation,
     position: { x: Number(t.pos_x), y: Number(t.pos_y) },
-    ...(t.geometry ? { geometry: t.geometry as unknown as Geometry } : {}),
+    hallId: t.hall_id ?? adoptiveHallId,
+    ...((t.geometry ? { geometry: t.geometry } : {}) as Geometry),
     seats: (t.seats as unknown as Array<Seat> | null) ?? [],
   }))
 
@@ -122,16 +167,6 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     note: g.note ?? undefined,
   }))
 
-  const hall = hallRes.data
-    ? {
-        preset: hallRes.data.preset as HallPreset,
-        dimensions: {
-          width: Number(hallRes.data.width),
-          height: Number(hallRes.data.height),
-        },
-      }
-    : { preset: undefined, dimensions: { width: 20, height: 12 } }
-
   const fixtures: Array<Fixture> = fixturesRes.data.map((f) => ({
     id: f.id,
     name: f.name,
@@ -139,10 +174,32 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     size: { width: Number(f.width), height: Number(f.height) },
     rotation: f.rotation as TableRotation,
     position: { x: Number(f.pos_x), y: Number(f.pos_y) },
-    ...(f.geometry ? { geometry: f.geometry as unknown as Geometry } : {}),
+    hallId: f.hall_id ?? adoptiveHallId,
+    ...((f.geometry ? { geometry: f.geometry } : {}) as Geometry),
   }))
 
-  usePlannerStore.setState({ tables, guests, hall, fixtures })
+  if (hasOrphans && adoptiveHallId && adoptiveHallPersisted) {
+    for (const t of tablesRes.data)
+      if (!t.hall_id)
+        void updateTablePos(
+          t.id,
+          Number(t.pos_x),
+          Number(t.pos_y),
+          adoptiveHallId
+        )
+    for (const f of fixturesRes.data)
+      if (!f.hall_id)
+        void updateFixturePos(
+          f.id,
+          Number(f.pos_x),
+          Number(f.pos_y),
+          adoptiveHallId
+        )
+  }
+
+  // hallZOrder reset: the raise order is per-wedding UI state, so a freshly
+  // loaded wedding starts from creation order.
+  usePlannerStore.setState({ tables, guests, halls, fixtures, hallZOrder: [] })
 
   const reminders: Array<Reminder> = remindersRes.data.map((r) => ({
     uuid: r.id,

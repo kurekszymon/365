@@ -32,10 +32,11 @@ interface MigrateLocalWeddingDialogProps {
   onClose: () => void
 }
 
-// Mirrors CreateWeddingFromDxfDialog's commit flow (create wedding -> bulk
-// layout write -> rollback on failure), plus a guests insert the layout RPC
-// doesn't cover. Props-driven rather than routed through dialog.store/
-// DialogManager since it's triggered by a sign-in transition, not a route.
+// Commit flow: create wedding -> bulk layout write via the
+// replace_planner_layout RPC -> rollback (delete the wedding) on failure,
+// plus a guests insert the layout RPC doesn't cover. Props-driven rather
+// than routed through dialog.store/DialogManager since it's triggered by a
+// sign-in transition, not a route.
 export const MigrateLocalWeddingDialog = ({
   open,
   planner,
@@ -77,8 +78,9 @@ export const MigrateLocalWeddingDialog = ({
     const previousWeddingId = useGlobalStore.getState().weddingId
     useGlobalStore.setState({ weddingId: data.id })
 
-    // Tables can only be added once a hall preset is chosen, so a preset-less
-    // snapshot has no layout to migrate - skip straight to guests.
+    // A hall-less snapshot has no layout to migrate - skip straight to guests.
+    // (readLocalPlannerSnapshot already normalized legacy single-hall payloads
+    // to the multi-hall shape.)
     // replacePlannerLayout maps over planner.tables/fixtures synchronously
     // before it ever awaits a request, so a malformed locally-persisted row
     // (e.g. missing `size`) throws synchronously rather than resolving
@@ -86,17 +88,14 @@ export const MigrateLocalWeddingDialog = ({
     // below instead of leaving the dialog stuck on "committing".
     let layoutOk: boolean
     try {
-      layoutOk = planner.hall.preset
-        ? await replacePlannerLayout(
-            {
-              preset: planner.hall.preset,
-              width: planner.hall.dimensions.width,
-              height: planner.hall.dimensions.height,
-            },
-            planner.tables,
-            planner.fixtures
-          )
-        : true
+      layoutOk =
+        planner.halls.length > 0
+          ? await replacePlannerLayout(
+              planner.halls,
+              planner.tables,
+              planner.fixtures
+            )
+          : true
     } catch (err) {
       console.error("[guest-mode] failed to migrate layout", err)
       layoutOk = false
@@ -198,7 +197,7 @@ export const MigrateLocalWeddingDialog = ({
                   {t("common.cancel")}
                 </Button>
                 <Button onClick={() => void onConfirm()}>
-                  {t("import.dxf.try_again")}
+                  {t("common.try_again")}
                 </Button>
               </div>
             </div>

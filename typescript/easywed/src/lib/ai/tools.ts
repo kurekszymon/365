@@ -1,12 +1,14 @@
 import { jsonSchema, tool } from "ai"
 import type {
   FixtureShape,
+  Hall,
   Size,
   TableRotation,
   TableShape,
 } from "@/stores/planner.store"
 import {
   DEFAULT_FIXTURE,
+  DEFAULT_HALL,
   DEFAULT_TABLE,
   getEffectiveSize,
   usePlannerStore,
@@ -30,15 +32,26 @@ const fixtureSize = (
   height: number
 ): Size => (shape === "circle" ? { width, height: width } : { width, height })
 
+// The hall a tool call targets: an explicit hallId, else the first hall (the
+// documented default). Undefined only when the wedding has no halls at all.
+const resolveHall = (hallId: string | undefined): Hall | undefined => {
+  const { halls } = usePlannerStore.getState()
+  return (hallId ? halls.find((h) => h.id === hallId) : undefined) ?? halls[0]
+}
+
 const clampPosition = (
+  hall: Hall,
   x: number,
   y: number,
   size: Size,
   rotation: TableRotation
-) => {
-  const { width, height } = usePlannerStore.getState().hall.dimensions
-  return clampToHall({ x, y }, getEffectiveSize(size, rotation), width, height)
-}
+) =>
+  clampToHall(
+    { x, y },
+    getEffectiveSize(size, rotation),
+    hall.size.width,
+    hall.size.height
+  )
 
 const fmt = (n: number) => n.toFixed(1)
 
@@ -78,12 +91,14 @@ interface AddTableInput {
   rotation?: number
   x?: number
   y?: number
+  hallId?: string
 }
 
 interface MoveInput {
   id: string
   x: number
   y: number
+  hallId?: string
 }
 
 interface UpdateTableInput {
@@ -104,6 +119,22 @@ interface AddFixtureInput {
   rotation?: number
   x?: number
   y?: number
+  hallId?: string
+}
+
+interface AddHallInput {
+  name?: string
+  floor?: number
+  width?: number
+  height?: number
+}
+
+interface UpdateHallInput {
+  id: string
+  name?: string
+  floor?: number | null
+  width?: number
+  height?: number
 }
 
 interface UpdateFixtureInput {
@@ -126,6 +157,22 @@ const positionProps = {
   },
   y: { type: "number", description: "Top edge in meters from the hall's top." },
 } as const
+
+const hallIdProp = {
+  hallId: {
+    type: "string",
+    description:
+      "Target hall id (from the snapshot). Defaults to the first hall.",
+  },
+} as const
+
+const hallLabel = (h: { name: string }, index: number) =>
+  h.name.trim() || i18n.t("hall.unnamed_index", { index: index + 1 })
+
+const noHall = (): ToolResult => ({
+  status: "cancelled",
+  message: i18n.t("assistant.tool.result.no_hall"),
+})
 
 export const tools = {
   add_table: tool({
@@ -150,10 +197,13 @@ export const tools = {
         },
         rotation: { type: "number", enum: [0, 90] },
         ...positionProps,
+        ...hallIdProp,
       },
     }),
     execute: (input) => {
       const planner = usePlannerStore.getState()
+      const hall = resolveHall(input.hallId)
+      if (!hall) return noHall()
       const shape = input.shape ?? DEFAULT_TABLE.shape
       const rotation = shape === "round" ? 0 : normalizeRotation(input.rotation)
       const size = tableSize(
@@ -161,7 +211,13 @@ export const tools = {
         input.width ?? DEFAULT_TABLE.size.width,
         input.height ?? DEFAULT_TABLE.size.height
       )
-      const pos = clampPosition(input.x ?? 0, input.y ?? 0, size, rotation)
+      const pos = clampPosition(
+        hall,
+        input.x ?? 0,
+        input.y ?? 0,
+        size,
+        rotation
+      )
       planner.addTable(
         {
           name: input.name?.trim() ?? "",
@@ -169,6 +225,7 @@ export const tools = {
           capacity: input.capacity ?? DEFAULT_TABLE.capacity,
           size,
           rotation,
+          hallId: hall.id,
         },
         [],
         pos
@@ -184,18 +241,26 @@ export const tools = {
   }),
 
   move_table: tool({
-    description: "Move an existing table to a new top-left position in meters.",
+    description:
+      "Move an existing table to a new top-left position in meters. Pass hallId to transfer it to another hall (position is then relative to that hall).",
     inputSchema: jsonSchema<MoveInput>({
       type: "object",
-      properties: { id: { type: "string" }, ...positionProps },
+      properties: { id: { type: "string" }, ...positionProps, ...hallIdProp },
       required: ["id", "x", "y"],
     }),
-    execute: ({ id, x, y }) => {
+    execute: ({ id, x, y, hallId }) => {
       const planner = usePlannerStore.getState()
       const table = planner.tables.find((t) => t.id === id)
       if (!table) return notFound(i18n.t("assistant.tool.result.table_missing"))
-      const pos = clampPosition(x, y, table.size, table.rotation)
-      planner.updateTablePosition(id, pos.x, pos.y)
+      const hall = resolveHall(hallId ?? table.hallId)
+      if (!hall) return noHall()
+      const pos = clampPosition(hall, x, y, table.size, table.rotation)
+      planner.updateTablePosition(
+        id,
+        pos.x,
+        pos.y,
+        hall.id !== table.hallId ? hall.id : undefined
+      )
       return ok(
         i18n.t("assistant.tool.result.table_moved", {
           label: tableLabel(table),
@@ -251,6 +316,8 @@ export const tools = {
         input.width ?? table.size.width,
         input.height ?? table.size.height
       )
+      const hall = resolveHall(table.hallId)
+      if (!hall) return noHall()
       // Pass the current occupants as the authoritative guest list. updateTable
       // treats a missing list as "no guests" and would unassign everyone seated
       // here (TablePanelContent passes assignedGuestIds for the same reason).
@@ -262,6 +329,7 @@ export const tools = {
           capacity: input.capacity ?? table.capacity,
           size,
           rotation,
+          hallId: table.hallId,
           geometry: table.geometry,
           seats: table.seats,
         },
@@ -271,6 +339,7 @@ export const tools = {
       // change can push it outside the hall bounds (especially near an edge) -
       // re-clamp and persist the corrected position if it moved.
       const pos = clampPosition(
+        hall,
         table.position.x,
         table.position.y,
         size,
@@ -343,10 +412,13 @@ export const tools = {
         },
         rotation: { type: "number", enum: [0, 90] },
         ...positionProps,
+        ...hallIdProp,
       },
     }),
     execute: (input) => {
       const planner = usePlannerStore.getState()
+      const hall = resolveHall(input.hallId)
+      if (!hall) return noHall()
       const shape = input.shape ?? DEFAULT_FIXTURE.shape
       const rotation =
         shape === "circle" ? 0 : normalizeRotation(input.rotation)
@@ -355,9 +427,21 @@ export const tools = {
         input.width ?? DEFAULT_FIXTURE.size.width,
         input.height ?? DEFAULT_FIXTURE.size.height
       )
-      const pos = clampPosition(input.x ?? 0, input.y ?? 0, size, rotation)
+      const pos = clampPosition(
+        hall,
+        input.x ?? 0,
+        input.y ?? 0,
+        size,
+        rotation
+      )
       planner.addFixture(
-        { name: input.name?.trim() ?? "", shape, size, rotation },
+        {
+          name: input.name?.trim() ?? "",
+          shape,
+          size,
+          rotation,
+          hallId: hall.id,
+        },
         pos
       )
       return ok(
@@ -372,19 +456,26 @@ export const tools = {
 
   move_fixture: tool({
     description:
-      "Move an existing fixture to a new top-left position in meters.",
+      "Move an existing fixture to a new top-left position in meters. Pass hallId to transfer it to another hall (position is then relative to that hall).",
     inputSchema: jsonSchema<MoveInput>({
       type: "object",
-      properties: { id: { type: "string" }, ...positionProps },
+      properties: { id: { type: "string" }, ...positionProps, ...hallIdProp },
       required: ["id", "x", "y"],
     }),
-    execute: ({ id, x, y }) => {
+    execute: ({ id, x, y, hallId }) => {
       const planner = usePlannerStore.getState()
       const fixture = planner.fixtures.find((f) => f.id === id)
       if (!fixture)
         return notFound(i18n.t("assistant.tool.result.fixture_missing"))
-      const pos = clampPosition(x, y, fixture.size, fixture.rotation)
-      planner.updateFixturePosition(id, pos.x, pos.y)
+      const hall = resolveHall(hallId ?? fixture.hallId)
+      if (!hall) return noHall()
+      const pos = clampPosition(hall, x, y, fixture.size, fixture.rotation)
+      planner.updateFixturePosition(
+        id,
+        pos.x,
+        pos.y,
+        hall.id !== fixture.hallId ? hall.id : undefined
+      )
       return ok(
         i18n.t("assistant.tool.result.fixture_moved", {
           label: fixtureLabel(fixture),
@@ -428,17 +519,21 @@ export const tools = {
         input.width ?? fixture.size.width,
         input.height ?? fixture.size.height
       )
+      const hall = resolveHall(fixture.hallId)
+      if (!hall) return noHall()
       planner.updateFixture(input.id, {
         name: input.name?.trim() ?? fixture.name,
         shape,
         size,
         rotation,
+        hallId: fixture.hallId,
         geometry: fixture.geometry,
       })
       // updateFixture keeps the existing position untouched, but a size/rotation
       // change can push it outside the hall bounds (especially near an edge) -
       // re-clamp and persist the corrected position if it moved.
       const pos = clampPosition(
+        hall,
         fixture.position.x,
         fixture.position.y,
         size,
@@ -488,6 +583,123 @@ export const tools = {
           label: fixtureLabel(fixture),
         })
       )
+    },
+  }),
+
+  add_hall: tool({
+    description:
+      "Add a new hall (room / floor area). It is placed automatically next to the existing halls; the user can drag it into place.",
+    inputSchema: jsonSchema<AddHallInput>({
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Display name, e.g. 'Sala B'." },
+        floor: {
+          type: "number",
+          description: "Optional floor number (0, 1, 2…).",
+        },
+        width: { type: "number", description: "Width in meters." },
+        height: { type: "number", description: "Height in meters." },
+      },
+    }),
+    execute: (input) => {
+      const planner = usePlannerStore.getState()
+      const name = input.name?.trim() ?? ""
+      planner.addHall({
+        name,
+        floor: input.floor ?? null,
+        preset: "rectangle",
+        size: {
+          width: input.width ?? DEFAULT_HALL.size.width,
+          height: input.height ?? DEFAULT_HALL.size.height,
+        },
+      })
+      return ok(
+        i18n.t("assistant.tool.result.hall_added", {
+          label: hallLabel({ name }, planner.halls.length),
+        })
+      )
+    },
+  }),
+
+  update_hall: tool({
+    description:
+      "Update a hall's name, floor, or size. Only provided fields change. Pass floor: null to clear the floor.",
+    inputSchema: jsonSchema<UpdateHallInput>({
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        name: { type: "string" },
+        floor: { type: ["number", "null"] },
+        width: { type: "number" },
+        height: { type: "number" },
+      },
+      required: ["id"],
+    }),
+    execute: (input) => {
+      const planner = usePlannerStore.getState()
+      const index = planner.halls.findIndex((h) => h.id === input.id)
+      const hall = planner.halls.at(index)
+      if (index < 0 || !hall)
+        return notFound(i18n.t("assistant.tool.result.hall_missing"))
+      planner.updateHall(input.id, {
+        ...(input.name !== undefined ? { name: input.name.trim() } : {}),
+        ...(input.floor !== undefined ? { floor: input.floor } : {}),
+        ...(input.width != null || input.height != null
+          ? {
+              size: {
+                width: input.width ?? hall.size.width,
+                height: input.height ?? hall.size.height,
+              },
+            }
+          : {}),
+      })
+      planner.saveHall(input.id)
+      return ok(
+        i18n.t("assistant.tool.result.hall_updated", {
+          label: hallLabel({ name: input.name ?? hall.name }, index),
+        })
+      )
+    },
+  }),
+
+  delete_hall: tool({
+    description:
+      "Delete an EMPTY hall. Refuses when the hall still contains tables or fixtures - move or delete them first (the user can also do this from the hall's settings). Asks the user to confirm.",
+    inputSchema: jsonSchema<IdInput>({
+      type: "object",
+      properties: { id: { type: "string" } },
+      required: ["id"],
+    }),
+    execute: async ({ id }): Promise<ToolResult> => {
+      const planner = usePlannerStore.getState()
+      const index = planner.halls.findIndex((h) => h.id === id)
+      const hall = planner.halls.at(index)
+      if (index < 0 || !hall)
+        return notFound(i18n.t("assistant.tool.result.hall_missing"))
+      const label = hallLabel(hall, index)
+      const contentCount =
+        planner.tables.filter((t) => t.hallId === id).length +
+        planner.fixtures.filter((f) => f.hallId === id).length
+      if (contentCount > 0)
+        return {
+          status: "cancelled",
+          message: i18n.t("assistant.tool.result.hall_not_empty", {
+            label,
+            count: contentCount,
+          }),
+        }
+      const approved = await useAiChatStore
+        .getState()
+        .requestConfirm("delete_hall", label)
+      if (!approved)
+        return {
+          status: "cancelled",
+          message: i18n.t("assistant.tool.result.hall_delete_cancelled", {
+            label,
+          }),
+        }
+      planner.deleteHall(id, { kind: "delete" })
+      return ok(i18n.t("assistant.tool.result.hall_deleted", { label }))
     },
   }),
 }

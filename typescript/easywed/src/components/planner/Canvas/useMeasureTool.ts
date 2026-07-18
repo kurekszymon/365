@@ -2,11 +2,13 @@ import { useCallback, useEffect, useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import {
   clamp,
+  hallAtPoint,
   nearestCircleBorder,
   nearestRectBorder,
   rectBorderTowards,
 } from "./utils"
-import type { Fixture, Position, Table } from "@/stores/planner.store"
+import type { WorldBounds } from "./utils"
+import type { Fixture, Hall, Position, Table } from "@/stores/planner.store"
 import type { MeasurementPoint } from "@/stores/measures.store"
 import { getEffectiveSize } from "@/stores/planner.store"
 import { useMeasuresStore } from "@/stores/measures.store"
@@ -74,10 +76,13 @@ const constrainToAxis = (
 }
 
 interface UseMeasureToolParams {
-  canvasTables: Array<Table>
-  canvasFixtures: Array<Fixture>
+  // Entities with positions converted to WORLD meters (hall pos + local pos) -
+  // measurements span halls, so everything here works in world space.
+  worldTables: Array<Table>
+  worldFixtures: Array<Fixture>
+  halls: Array<Hall>
+  worldBounds: WorldBounds
   measureMode: "center" | "border"
-  hallDimensions: { width: number; height: number }
   ppm: number
   weddingId: string | undefined
   isMeasuring: boolean
@@ -85,16 +90,18 @@ interface UseMeasureToolParams {
 
 /**
  * Owns the measure-tool state machine: resolving a pointer position to a
- * snapped point (table/fixture center or border, or hall wall), and tracking
- * the pending start point + live cursor between the two clicks of a
- * measurement. Returns the imperative handlers Canvas drives via its ref plus
- * the pending/cursor points the overlay renders.
+ * snapped point (table/fixture center or border, or a wall of the hall under
+ * the cursor), and tracking the pending start point + live cursor between the
+ * two clicks of a measurement. All coordinates are world-space meters.
+ * Returns the imperative handlers Canvas drives via its ref plus the
+ * pending/cursor points the overlay renders.
  */
 export function useMeasureTool({
-  canvasTables,
-  canvasFixtures,
+  worldTables: canvasTables,
+  worldFixtures: canvasFixtures,
+  halls,
+  worldBounds,
   measureMode,
-  hallDimensions,
   ppm,
   weddingId,
   isMeasuring,
@@ -124,13 +131,10 @@ export function useMeasureTool({
 
   const resolvePoint = useCallback(
     (rawXM: number, rawYM: number): MeasurementPoint => {
-      // Keep every resolved point inside the hall. Clamping up front (rather
-      // than only the free-point fallback) also stops the wall-snap branch
-      // below from returning an out-of-bounds coordinate when the cursor sits
-      // outside a corner - there dLeft/dTop go negative and would otherwise
-      // win the nearest-wall test with an unclamped sibling coordinate.
-      const xM = clamp(rawXM, 0, hallDimensions.width)
-      const yM = clamp(rawYM, 0, hallDimensions.height)
+      // Keep every resolved point inside the world (union of halls). Points
+      // between halls are allowed - that's what cross-hall measuring is for.
+      const xM = clamp(rawXM, worldBounds.x, worldBounds.x + worldBounds.width)
+      const yM = clamp(rawYM, worldBounds.y, worldBounds.y + worldBounds.height)
       for (const table of canvasTables) {
         const s = getEffectiveSize(table.size, table.rotation)
         const h = table.shape === "round" ? s.width : s.height
@@ -187,23 +191,31 @@ export function useMeasureTool({
           return { x: cx, y: cy, objectId: fixture.id }
         }
       }
-      // Snap to hall walls - threshold scales with zoom so it always covers ~20px
-      const wallThreshold = Math.max(0.3, 20 / ppm)
-      const dLeft = xM
-      const dRight = hallDimensions.width - xM
-      const dTop = yM
-      const dBottom = hallDimensions.height - yM
-      const minWall = Math.min(dLeft, dRight, dTop, dBottom)
-      if (minWall < wallThreshold) {
-        if (minWall === dLeft) return { x: 0, y: yM }
-        if (minWall === dRight) return { x: hallDimensions.width, y: yM }
-        if (minWall === dTop) return { x: xM, y: 0 }
-        return { x: xM, y: hallDimensions.height }
+      // Snap to the walls of the hall under the cursor - threshold scales with
+      // zoom so it always covers ~20px.
+      const hall = hallAtPoint(halls, { x: xM, y: yM })
+      if (hall) {
+        const wallThreshold = Math.max(0.3, 20 / ppm)
+        const left = hall.position.x
+        const top = hall.position.y
+        const right = left + hall.size.width
+        const bottom = top + hall.size.height
+        const dLeft = xM - left
+        const dRight = right - xM
+        const dTop = yM - top
+        const dBottom = bottom - yM
+        const minWall = Math.min(dLeft, dRight, dTop, dBottom)
+        if (minWall < wallThreshold) {
+          if (minWall === dLeft) return { x: left, y: yM }
+          if (minWall === dRight) return { x: right, y: yM }
+          if (minWall === dTop) return { x: xM, y: top }
+          return { x: xM, y: bottom }
+        }
       }
 
       return { x: xM, y: yM }
     },
-    [canvasTables, canvasFixtures, measureMode, hallDimensions, ppm]
+    [canvasTables, canvasFixtures, measureMode, halls, worldBounds, ppm]
   )
 
   const handleMeasureDown = useCallback(

@@ -5,7 +5,7 @@ import { HallBackground } from "./Canvas/HallBackground"
 import { TableVisual } from "./Canvas/TableVisual"
 import { FixtureVisual } from "./Canvas/FixtureVisual"
 import { MeasureOverlay } from "./Canvas/MeasureOverlay"
-import { clampToHall } from "./Canvas/utils"
+import { clampToHall, worldBoundsOf } from "./Canvas/utils"
 import { SEAT_MAX_OFFSET_M } from "./Canvas/seatLayout"
 import type { TFunction } from "i18next"
 import type { Guest } from "@/stores/planner.store"
@@ -72,14 +72,18 @@ export const PlannerPrintView = () => {
   const byWedding = useMeasuresStore((s) => s.byWedding)
   const measurements = weddingId ? (byWedding[weddingId] ?? []) : []
 
-  const { tables, guests, fixtures, hall } = usePlannerStore(
+  const { tables, guests, fixtures, halls } = usePlannerStore(
     useShallow((s) => ({
       tables: s.tables,
       guests: s.guests,
       fixtures: s.fixtures,
-      hall: s.hall.dimensions,
+      halls: s.halls,
     }))
   )
+
+  const hallsById = useMemo(() => new Map(halls.map((h) => [h.id, h])), [halls])
+  // Union of the hall rects in world meters - the print frame in full mode.
+  const worldBounds = useMemo(() => worldBoundsOf(halls), [halls])
 
   const { gridStyle, gridSpacing } = useViewStore(
     useShallow((s) => ({
@@ -97,32 +101,49 @@ export const PlannerPrintView = () => {
     return m
   }, [tables, guests])
 
+  // Entities clamped into their own hall, in WORLD meters (hall pos + local).
   const clampedTables = useMemo(
     () =>
-      tables.map((table) => ({
-        ...table,
-        position: clampToHall(
+      tables.map((table) => {
+        const hall = hallsById.get(table.hallId)
+        if (!hall) return table
+        const local = clampToHall(
           table.position,
           getEffectiveSize(table.size, table.rotation),
-          hall.width,
-          hall.height
-        ),
-      })),
-    [tables, hall]
+          hall.size.width,
+          hall.size.height
+        )
+        return {
+          ...table,
+          position: {
+            x: hall.position.x + local.x,
+            y: hall.position.y + local.y,
+          },
+        }
+      }),
+    [tables, hallsById]
   )
 
   const clampedFixtures = useMemo(
     () =>
-      fixtures.map((f) => ({
-        ...f,
-        position: clampToHall(
+      fixtures.map((f) => {
+        const hall = hallsById.get(f.hallId)
+        if (!hall) return f
+        const local = clampToHall(
           f.position,
           getEffectiveSize(f.size, f.rotation),
-          hall.width,
-          hall.height
-        ),
-      })),
-    [fixtures, hall]
+          hall.size.width,
+          hall.size.height
+        )
+        return {
+          ...f,
+          position: {
+            x: hall.position.x + local.x,
+            y: hall.position.y + local.y,
+          },
+        }
+      }),
+    [fixtures, hallsById]
   )
 
   // Tightest rect (meters) around the placed tables + fixtures, padded so seat
@@ -153,7 +174,7 @@ export const PlannerPrintView = () => {
       add(fix.position.x, fix.position.y, s.width, s.height)
     }
     if (!Number.isFinite(minX)) {
-      return { x: 0, y: 0, width: hall.width, height: hall.height }
+      return worldBounds
     }
     const pad = includeSeats ? SEAT_MAX_OFFSET_M + 0.4 : 0.4
     return {
@@ -162,14 +183,12 @@ export const PlannerPrintView = () => {
       width: maxX - minX + pad * 2,
       height: maxY - minY + pad * 2,
     }
-  }, [clampedTables, clampedFixtures, includeSeats, hall.width, hall.height])
+  }, [clampedTables, clampedFixtures, includeSeats, worldBounds])
 
   // Scale (px per meter) and origin offset. In fit mode we frame the content
-  // bbox; otherwise the full hall (origin 0,0) as before.
+  // bbox; otherwise the union of all hall rects.
   const { ppm, originX, originY, viewWidth, viewHeight } = useMemo(() => {
-    const frame = fitToContent
-      ? contentBounds
-      : { x: 0, y: 0, width: hall.width, height: hall.height }
+    const frame = fitToContent ? contentBounds : worldBounds
     const fit =
       frame.width <= 0 || frame.height <= 0
         ? 40
@@ -186,7 +205,7 @@ export const PlannerPrintView = () => {
       viewWidth: frame.width,
       viewHeight: frame.height,
     }
-  }, [fitToContent, contentBounds, hall.width, hall.height])
+  }, [fitToContent, contentBounds, worldBounds])
 
   const { groups, unassigned } = useMemo(
     () => groupGuestsByTable(tables, guests, sort),
@@ -244,20 +263,49 @@ export const PlannerPrintView = () => {
       </section>
 
       <section className="flex items-center justify-center p-6 print:min-h-[190mm] print:break-before-page print:break-inside-avoid">
-        <HallBackground
-          hallWidth={viewWidth * ppm}
-          hallHeight={viewHeight * ppm}
-          ppm={ppm}
-          gridStyle={includeGrid ? gridStyle : "off"}
-          gridSpacing={gridSpacing}
+        {/* World frame: every hall floor + all entities in one coordinate
+            space, so multi-room/floor layouts print on a single page. */}
+        <div
           className={cn(
-            fitToContent ? "overflow-visible" : "overflow-hidden",
-            // The hall outline only frames the full hall; cropping (fit) drops it.
-            showHallOutline && !fitToContent && "border border-planner-hall",
-            // Without the outline, render bare - no paper background, no border.
-            !showHallOutline && "bg-transparent"
+            "relative",
+            fitToContent ? "overflow-visible" : "overflow-hidden"
           )}
+          style={{ width: viewWidth * ppm, height: viewHeight * ppm }}
         >
+          {halls.map((h) => (
+            <HallBackground
+              key={h.id}
+              hallWidth={h.size.width * ppm}
+              hallHeight={h.size.height * ppm}
+              ppm={ppm}
+              gridStyle={includeGrid ? gridStyle : "off"}
+              gridSpacing={gridSpacing}
+              className={cn(
+                "absolute",
+                // The hall outline only frames full halls; cropping (fit) drops it.
+                showHallOutline &&
+                  !fitToContent &&
+                  "border border-planner-hall",
+                // Without the outline, render bare - no paper background, no border.
+                !showHallOutline && "bg-transparent"
+              )}
+              style={{
+                left: (h.position.x - originX) * ppm,
+                top: (h.position.y - originY) * ppm,
+              }}
+            >
+              {halls.length > 1 && (
+                <span className="absolute top-1 left-1 text-[10px] font-medium text-gray-600">
+                  {h.name.trim() ||
+                    t("hall.unnamed_index", {
+                      index: halls.findIndex((x) => x.id === h.id) + 1,
+                    })}
+                  {h.floor != null &&
+                    ` · ${t("hall.floor_short", { floor: h.floor })}`}
+                </span>
+              )}
+            </HallBackground>
+          ))}
           {clampedTables.map((tbl) => (
             <TableVisual
               key={tbl.id}
@@ -294,8 +342,9 @@ export const PlannerPrintView = () => {
             <MeasureOverlay
               measurements={measurements}
               ppm={ppm}
-              hallWidthPx={hall.width * ppm}
-              hallHeightPx={hall.height * ppm}
+              widthPx={viewWidth * ppm}
+              heightPx={viewHeight * ppm}
+              origin={{ x: originX, y: originY }}
               // mandatory props
               pendingPoint={null}
               cursorPos={null}
@@ -304,7 +353,7 @@ export const PlannerPrintView = () => {
               onEndpointUpdate={() => {}}
             />
           )}
-        </HallBackground>
+        </div>
       </section>
 
       <section className="p-6 print:break-before-page">

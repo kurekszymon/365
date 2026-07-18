@@ -22,12 +22,12 @@ export const EntityListContent = ({ kind }: EntityListContentProps) => {
   const { t } = useTranslation()
   const [addOpen, setAddOpen] = useState(false)
 
-  const { tables, fixtures, guests, preset } = usePlannerStore(
+  const { tables, fixtures, guests, hasHall } = usePlannerStore(
     useShallow((state) => ({
       tables: state.tables,
       fixtures: state.fixtures,
       guests: state.guests,
-      preset: state.hall.preset,
+      hasHall: state.halls.length > 0,
     }))
   )
   const openTableEdit = usePanelStore((state) => state.openTableEdit)
@@ -67,7 +67,7 @@ export const EntityListContent = ({ kind }: EntityListContentProps) => {
     <div className="flex flex-col gap-4">
       <Button
         variant="outline"
-        disabled={!preset}
+        disabled={!hasHall}
         onClick={() => setAddOpen(true)}
       >
         <PlusIcon />

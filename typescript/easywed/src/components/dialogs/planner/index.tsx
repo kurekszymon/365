@@ -1,2 +1,1 @@
-export { ExportPlannerDxfDialog } from "./ExportPlannerDxfDialog"
-export { ImportPlannerDxfDialog } from "./ImportPlannerDxfDialog"
+export { DeleteHallDialog } from "./DeleteHallDialog"

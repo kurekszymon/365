@@ -45,19 +45,20 @@ export const useCanvasClipboard = () => {
     [copyId]
   )
 
-  const paste = useCallback((position: Position) => {
+  const paste = useCallback((position: Position, hallId: string) => {
     const item = useClipboardStore.getState().item
     if (!item) return
     const { addTable, addFixture } = usePlannerStore.getState()
     const { openTableEdit, openFixtureEdit } = usePanelStore.getState()
 
     // addTable/addFixture regenerate id and position, so the snapshot's own
-    // id/position are ignored. Size, shape, seats and geometry carry over;
-    // guests do not - paste makes an empty copy.
+    // id/position are ignored; the paste target's hall wins over the copied
+    // hallId. Size, shape, seats and geometry carry over; guests do not -
+    // paste makes an empty copy.
     if (item.kind === "table") {
-      openTableEdit(addTable(item.table, [], position))
+      openTableEdit(addTable({ ...item.table, hallId }, [], position))
     } else {
-      openFixtureEdit(addFixture(item.fixture, position))
+      openFixtureEdit(addFixture({ ...item.fixture, hallId }, position))
     }
   }, [])
 

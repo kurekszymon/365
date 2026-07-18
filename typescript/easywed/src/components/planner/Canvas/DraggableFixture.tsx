@@ -19,17 +19,10 @@ import { useIsMobile } from "@/hooks/useMediaQuery"
 
 type DraggableFixtureProps = {
   fixture: Fixture
-  hallWidth: number
-  hallHeight: number
   ppm: number
 }
 
-const DraggableFixtureBase = ({
-  fixture,
-  hallWidth,
-  hallHeight,
-  ppm,
-}: DraggableFixtureProps) => {
+const DraggableFixtureBase = ({ fixture, ppm }: DraggableFixtureProps) => {
   const { t } = useTranslation()
 
   const isSelected = usePanelStore((state) => state.selectedId === fixture.id)
@@ -57,7 +50,6 @@ const DraggableFixtureBase = ({
       fixture={fixture}
       ppm={ppm}
       transform={transform}
-      hallBounds={{ width: hallWidth, height: hallHeight }}
       className={cn(
         "z-10 cursor-grab touch-none active:cursor-grabbing",
         isSelected && "planner-selected-glow"

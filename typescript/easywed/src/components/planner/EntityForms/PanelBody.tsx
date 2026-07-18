@@ -1,4 +1,5 @@
 import { HallPanelContent } from "./HallPanelContent"
+import { HallsPanelContent } from "./HallsPanelContent"
 import { TablePanelContent } from "./TablePanelContent"
 import { TableBatchPanelContent } from "./TableBatchPanelContent"
 import { FixturePanelContent } from "./FixturePanelContent"
@@ -22,9 +23,16 @@ export const PanelBody = ({
   fillHeight?: boolean
 }) => (
   <>
-    {view.kind === "hall" && <HallPanelContent />}
+    {view.kind === "halls.list" && <HallsPanelContent />}
+    {view.kind === "hall.edit" && (
+      <HallPanelContent key={`hall.edit.${view.hallId}`} hallId={view.hallId} />
+    )}
     {view.kind === "tables.batch_add" && (
-      <TableBatchPanelContent key="tables.batch_add" position={view.position} />
+      <TableBatchPanelContent
+        key="tables.batch_add"
+        position={view.position}
+        hallId={view.hallId}
+      />
     )}
     {view.kind === "table.edit" && (
       <TablePanelContent

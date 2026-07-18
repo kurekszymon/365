@@ -25,7 +25,7 @@ import { DialogManager } from "@/components/dialogs/DialogManager"
 import { useDialogStore } from "@/stores/dialog.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { usePanelStore } from "@/stores/panel.store"
-import { useOpenHall } from "@/hooks/useOpenHall"
+import { useOpenHalls } from "@/hooks/useOpenHalls"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 
 export const Planner = () => {
@@ -45,7 +45,7 @@ export const Planner = () => {
 
   const weddingId = useGlobalStore((state) => state.weddingId)
 
-  const openHall = useOpenHall()
+  const openHalls = useOpenHalls()
   const isMobile = useIsMobile()
 
   const openAiChat = usePanelStore((state) => state.openAiChat)
@@ -64,7 +64,7 @@ export const Planner = () => {
           <div className="ml-auto flex items-center gap-2">
             <Button
               variant="outline"
-              onClick={openHall}
+              onClick={openHalls}
               aria-label={t("hall.configure_short")}
             >
               <LandmarkIcon />
