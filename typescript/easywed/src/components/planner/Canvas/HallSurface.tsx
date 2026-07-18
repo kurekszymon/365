@@ -177,6 +177,16 @@ export const HallSurface = ({
     weddingId,
   })
 
+  // Hall the currently-dragged entity belongs to - raised above the other
+  // halls so the drag preview isn't hidden under a later-DOM hall (see
+  // HallView's `raise`).
+  const dragSourceHallId = activeDrag
+    ? ((
+        canvasTables.find((t) => t.id === activeDrag.id) ??
+        canvasFixtures.find((f) => f.id === activeDrag.id)
+      )?.hallId ?? null)
+    : null
+
   const {
     pendingPoint,
     cursorPos,
@@ -238,6 +248,7 @@ export const HallSurface = ({
               guestsByTableId={guestsByTableId}
               showSeats={showSeats}
               isDropTarget={hall.id === dropTargetHallId}
+              raise={hall.id === dragSourceHallId}
             />
           )
         })}

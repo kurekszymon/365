@@ -2,6 +2,12 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 18.07
+
+- add multihall support (to be improved with further tests)
+- remove dxf imports
+- add custom objects geometry
+
 ### 17.07
 
 - fix non negative values in inputs -- deploy

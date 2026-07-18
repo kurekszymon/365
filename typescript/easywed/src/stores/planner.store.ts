@@ -126,15 +126,27 @@ export interface Hall {
   position: Position
 }
 
-// Where a newly added hall lands: to the right of everything that exists,
-// top-aligned with the highest hall, with a 2 m gap. First hall at the origin.
-const HALL_GAP = 2
+// Where a newly added hall lands: two halls per row ("1 2 / 3 4"), so the
+// fit-to-view zoom stays readable as halls accumulate - a single long strip
+// shrinks everything until the dimension labels (fixed screen px, just
+// outside each hall's top/left edge) collide with the neighbouring hall.
+// Odd count → beside the last hall; even count → a new row under everything,
+// left-aligned with the leftmost hall. The gap leaves room for those labels.
+// This is only the starting spot - halls are freely draggable afterwards.
+const HALL_GAP = 3
 
 export const nextHallPosition = (halls: Array<Hall>): Position => {
   if (halls.length === 0) return { x: 0, y: 0 }
-  const maxX = Math.max(...halls.map((h) => h.position.x + h.size.width))
-  const minY = Math.min(...halls.map((h) => h.position.y))
-  return { x: maxX + HALL_GAP, y: minY }
+  const last = halls[halls.length - 1]
+  if (halls.length % 2 === 1) {
+    return {
+      x: last.position.x + last.size.width + HALL_GAP,
+      y: last.position.y,
+    }
+  }
+  const minX = Math.min(...halls.map((h) => h.position.x))
+  const maxY = Math.max(...halls.map((h) => h.position.y + h.size.height))
+  return { x: minX, y: maxY + HALL_GAP }
 }
 
 export type Dietary =
@@ -562,54 +574,59 @@ const createPlannerStore = (
         // entity can follow (they live in world coords).
         delta: Position
       }> = []
+      // Where a moved entity lands in the target hall. When its world
+      // position already lies inside the target (overlapping/adjacent
+      // halls), keep it - the entity doesn't visibly jump and measurements
+      // only shift by whatever clamping was needed. When the halls are
+      // disjoint (the default side-by-side layout) that world spot is
+      // outside the target and world-preserving placement would pile
+      // everything onto the nearest edge - so transplant the hall-local
+      // arrangement instead, preserving the room's layout.
+      const relocate = (local: Position, size: Size) => {
+        const oldWorld = {
+          x: hall.position.x + local.x,
+          y: hall.position.y + local.y,
+        }
+        const worldLocal = {
+          x: oldWorld.x - target.position.x,
+          y: oldWorld.y - target.position.y,
+        }
+        const insideTarget =
+          worldLocal.x >= 0 &&
+          worldLocal.x <= target.size.width &&
+          worldLocal.y >= 0 &&
+          worldLocal.y <= target.size.height
+        const position = clampIntoHall(
+          insideTarget ? worldLocal : local,
+          size,
+          target
+        )
+        return {
+          position,
+          delta: {
+            x: target.position.x + position.x - oldWorld.x,
+            y: target.position.y + position.y - oldWorld.y,
+          },
+        }
+      }
       set((s) => ({
         halls: s.halls.filter((h) => h.id !== id),
         tables: s.tables.map((t) => {
           if (t.hallId !== id) return t
-          const position = clampIntoHall(
+          const { position, delta } = relocate(
             t.position,
-            getEffectiveSize(t.size, t.rotation),
-            target
+            getEffectiveSize(t.size, t.rotation)
           )
-          moved.push({
-            kind: "tables",
-            id: t.id,
-            position,
-            delta: {
-              x:
-                target.position.x +
-                position.x -
-                (hall.position.x + t.position.x),
-              y:
-                target.position.y +
-                position.y -
-                (hall.position.y + t.position.y),
-            },
-          })
+          moved.push({ kind: "tables", id: t.id, position, delta })
           return { ...t, hallId: target.id, position }
         }),
         fixtures: s.fixtures.map((f) => {
           if (f.hallId !== id) return f
-          const position = clampIntoHall(
+          const { position, delta } = relocate(
             f.position,
-            getEffectiveSize(f.size, f.rotation),
-            target
+            getEffectiveSize(f.size, f.rotation)
           )
-          moved.push({
-            kind: "fixtures",
-            id: f.id,
-            position,
-            delta: {
-              x:
-                target.position.x +
-                position.x -
-                (hall.position.x + f.position.x),
-              y:
-                target.position.y +
-                position.y -
-                (hall.position.y + f.position.y),
-            },
-          })
+          moved.push({ kind: "fixtures", id: f.id, position, delta })
           return { ...f, hallId: target.id, position }
         }),
       }))

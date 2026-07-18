@@ -1,5 +1,6 @@
 import { memo } from "react"
 import { useDraggable } from "@dnd-kit/core"
+import { GripVerticalIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { HallBackground } from "./HallBackground"
 import { DraggableTable } from "./DraggableTable"
@@ -29,6 +30,11 @@ interface HallViewProps {
   showSeats: boolean
   // Ring highlight while an entity drag hovers over this hall.
   isDropTarget?: boolean
+  // True while one of THIS hall's entities is being dragged. Each hall floor
+  // is its own stacking context (z-10 below), so a dragged entity's z-30 can
+  // never escape above a later-DOM hall on its own - raising the whole source
+  // hall keeps the drag preview visible when it crosses into the next hall.
+  raise?: boolean
 }
 
 const HallViewBase = ({
@@ -44,6 +50,7 @@ const HallViewBase = ({
   guestsByTableId,
   showSeats,
   isDropTarget,
+  raise,
 }: HallViewProps) => {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
@@ -80,7 +87,7 @@ const HallViewBase = ({
         transform: transform
           ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
           : undefined,
-        zIndex: transform ? 30 : undefined,
+        zIndex: transform || raise ? 30 : undefined,
       }}
     >
       <HallBackground
@@ -128,20 +135,22 @@ const HallViewBase = ({
       )}
 
       {/* Label chip: identifies the hall, opens its settings on click, and is
-          the hall's drag handle. data-no-pan keeps the canvas pan away. */}
+          the hall's drag handle - the grip icon signals that. data-no-pan
+          keeps the canvas pan away. */}
       <button
         ref={setNodeRef}
         type="button"
         data-no-pan
         className={cn(
-          "absolute top-1 left-1 z-20 max-w-[calc(100%-0.5rem)] cursor-grab touch-none truncate rounded-md border bg-card/90 px-2 py-0.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm",
-          "hover:bg-card active:cursor-grabbing"
+          "absolute top-1 left-1 z-20 flex max-w-[calc(100%-0.5rem)] cursor-grab items-center gap-1 rounded-md border bg-card/90 py-0.5 pr-2 pl-1 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm",
+          "touch-none hover:bg-card active:cursor-grabbing"
         )}
         onClick={() => openHallEdit(hall.id)}
         {...listeners}
         {...attributes}
       >
-        {label}
+        <GripVerticalIcon className="size-3.5 shrink-0 text-muted-foreground" />
+        <span className="truncate">{label}</span>
       </button>
     </div>
   )

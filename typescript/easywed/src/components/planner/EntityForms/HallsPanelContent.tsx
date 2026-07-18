@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 
 // The halls overview: one row per hall (name/floor/size + entity counts),
 // tapping a row opens that hall's settings, plus the "add hall" entry point.
-// New halls are placed automatically to the right of the existing layout
+// New halls are placed automatically in a two-per-row layout
 // (nextHallPosition) and can then be dragged into place on the canvas.
 export const HallsPanelContent = () => {
   const { t } = useTranslation()
