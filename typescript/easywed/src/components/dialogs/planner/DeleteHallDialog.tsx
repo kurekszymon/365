@@ -59,6 +59,24 @@ export const DeleteHallDialog = () => {
     undefined
   )
 
+  const isOpen = dialog.opened === "Planner.Hall.Delete"
+
+  // Back to the defaults each time the dialog opens (or is retargeted at a
+  // different hall) so a previous session's mode/target can't leak in - this
+  // must hold even if DialogManager ever keeps the component mounted across
+  // openings. Render-time adjust (the React "state from previous renders"
+  // pattern) rather than an effect, so the reset lands before the first
+  // visible frame of the new opening.
+  const openKey = isOpen ? (dialog.hallId ?? "") : null
+  const [lastOpenKey, setLastOpenKey] = useState<string | null>(openKey)
+  if (openKey !== lastOpenKey) {
+    setLastOpenKey(openKey)
+    if (openKey !== null) {
+      setMode("move")
+      setTargetHallId(undefined)
+    }
+  }
+
   const effectiveMode = canMove ? mode : "delete"
   const effectiveTarget = targetHallId ?? otherHalls[0]?.id
 
@@ -79,7 +97,7 @@ export const DeleteHallDialog = () => {
 
   return (
     <ResponsiveDialog
-      open={dialog.opened === "Planner.Hall.Delete"}
+      open={isOpen}
       onOpenChange={(open) => {
         if (!open) dialog.close()
       }}

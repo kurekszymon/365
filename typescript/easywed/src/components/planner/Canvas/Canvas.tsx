@@ -202,13 +202,14 @@ export const Canvas = () => {
   // cursor (or hall centre if the pointer hasn't been over the canvas). Disabled
   // while measuring, and ignored when a form field is focused.
   //
-  // Deliberately no dependency array: the handler closes over per-render
-  // values (viewportToWorld, resolveHallPoint, snapStep, …) whose identity
-  // changes every render anyway, so listing them would re-subscribe just as
-  // often while inviting a stale-closure bug when one is forgotten.
+  // The handler closes over per-render values (viewportToWorld,
+  // resolveHallPoint, snapStep, …), so the DOM listener is subscribed once
+  // (per isMeasuring) and dispatches through a ref that's re-captured after
+  // every render - the canvas re-renders every pan/zoom frame, and
+  // re-subscribing at that rate would churn the listener for nothing.
+  const copyPasteRef = useRef<(e: KeyboardEvent) => void>(() => {})
   useEffect(() => {
-    if (isMeasuring) return
-    const handleKeyDown = (e: KeyboardEvent) => {
+    copyPasteRef.current = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey) || e.altKey) return
       const target = e.target as HTMLElement | null
       if (target?.closest("input, textarea, [contenteditable='true']")) return
@@ -235,9 +236,13 @@ export const Canvas = () => {
         )
       }
     }
+  })
+  useEffect(() => {
+    if (isMeasuring) return
+    const handleKeyDown = (e: KeyboardEvent) => copyPasteRef.current(e)
     document.addEventListener("keydown", handleKeyDown)
     return () => document.removeEventListener("keydown", handleKeyDown)
-  })
+  }, [isMeasuring])
 
   const hallSurfaceRef = useRef<HallSurfaceMethods>(null)
 
