@@ -82,7 +82,7 @@ When adding UI strings, add keys to **both** `en.json` and `pl.json`. Polish is 
 
 `src/components/dialogs/` holds modal flows, registered centrally: `dialog.store.ts` holds the currently-open dialog id (e.g. `"Guest.Import"`), `DialogManager.tsx` switches on it to render the right dialog, and each subfolder (`guests/`, `planner/`, `weddings/`, plus `shared/` for cross-flow steps) has an `index` barrel. `DialogManager` is mounted once in `Planner.tsx` and `routes/index.tsx`.
 
-**One component per file.** Keep each file to a single component - split multi-step dialogs into an orchestrator plus a file per step/preview. Examples: the guest CSV/XLSX import (`guests/ImportGuestsDialog.tsx` + `GuestImportMappingStep` + `GuestImportSheetPreview` + `GuestImportResultPreview`, with the wizard state machine in `shared/useGuestImportWizard.ts`) and the DXF import (`shared/useDxfImportWizard.ts` + `DxfLayerMappingStep` + `DxfPreviewStep`).
+**One component per file.** Keep each file to a single component - split multi-step dialogs into an orchestrator plus a file per step/preview. Example: the guest CSV/XLSX import (`guests/ImportGuestsDialog.tsx` + `GuestImportMappingStep` + `GuestImportSheetPreview` + `GuestImportResultPreview`, with the wizard state machine in `shared/useGuestImportWizard.ts`).
 
 ### Guest list import / export
 

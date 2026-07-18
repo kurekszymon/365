@@ -34,6 +34,10 @@ export const updateFixtureRow = (
     height?: number
     rotation?: TableRotation
     geometry?: Geometry | null
+    // Shape edits ride the position along (a re-anchored outline shifts the
+    // bbox origin) so shape + geometry + position land in one write.
+    pos_x?: number
+    pos_y?: number
   }
 ): Promise<boolean> =>
   run(

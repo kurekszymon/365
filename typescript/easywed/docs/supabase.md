@@ -27,7 +27,7 @@ If a wedding is deleted, Postgres auto-deletes all its halls/tables/guests/remin
 
 `guests.table_id references tables(id) on delete set null` is different - deleting a table doesn't delete its guests, it just unassigns them. Matches `deleteTable` in `planner.store.ts`.
 
-**Soft vs hard delete:** normal table/fixture deletes are _soft_ (`deleted_at` is set; `loadWedding` filters on `deleted_at is null`). The one exception is the `replace_planner_layout` RPC used by the DXF import wizard, which _hard_-`delete from`s all tables and fixtures for the wedding before inserting the imported layout. This is intentional - import is an explicit "replace everything" action - but it means imported layouts leave no tombstones for the rows they replaced. Guest assignments to the wiped tables fall back to `NULL` via the `on delete set null` FK above.
+**Soft vs hard delete:** normal table/fixture deletes are _soft_ (`deleted_at` is set; `loadWedding` filters on `deleted_at is null`). The one exception is the `replace_planner_layout` RPC used by the local-wedding migration (adopting a guest-mode plan into a fresh cloud wedding), which _hard_-`delete from`s all tables and fixtures for the wedding before inserting the new layout. This is intentional - it is an explicit "replace everything" action - but it means replaced layouts leave no tombstones for the rows they removed. Guest assignments to the wiped tables fall back to `NULL` via the `on delete set null` FK above.
 
 ## Row-Level Security (RLS) - the big one
 

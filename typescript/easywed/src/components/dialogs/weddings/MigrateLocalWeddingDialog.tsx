@@ -32,10 +32,11 @@ interface MigrateLocalWeddingDialogProps {
   onClose: () => void
 }
 
-// Mirrors CreateWeddingFromDxfDialog's commit flow (create wedding -> bulk
-// layout write -> rollback on failure), plus a guests insert the layout RPC
-// doesn't cover. Props-driven rather than routed through dialog.store/
-// DialogManager since it's triggered by a sign-in transition, not a route.
+// Commit flow: create wedding -> bulk layout write via the
+// replace_planner_layout RPC -> rollback (delete the wedding) on failure,
+// plus a guests insert the layout RPC doesn't cover. Props-driven rather
+// than routed through dialog.store/DialogManager since it's triggered by a
+// sign-in transition, not a route.
 export const MigrateLocalWeddingDialog = ({
   open,
   planner,
@@ -196,7 +197,7 @@ export const MigrateLocalWeddingDialog = ({
                   {t("common.cancel")}
                 </Button>
                 <Button onClick={() => void onConfirm()}>
-                  {t("import.dxf.try_again")}
+                  {t("common.try_again")}
                 </Button>
               </div>
             </div>

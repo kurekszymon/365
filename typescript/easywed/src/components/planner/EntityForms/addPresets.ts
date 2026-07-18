@@ -54,8 +54,9 @@ export type FixturePreset = {
   size: Size
   labelKey: string
   icon: FixtureIcon
-  // "Custom" is a blank starting point - inserted without a preset name so
-  // the edit view opens ready for the user to shape it.
+  // "Custom" is a blank starting point - inserted without a preset name (as a
+  // starter polygon, see AddHubContent) so the edit view opens ready for the
+  // user to shape it.
   custom?: boolean
 }
 
@@ -97,8 +98,8 @@ export const FIXTURE_PRESETS: Array<FixturePreset> = [
   },
   {
     key: "custom",
-    shape: "rectangle",
-    size: { width: 1, height: 1 },
+    shape: "polygon",
+    size: { width: 1.5, height: 1.5 },
     labelKey: "fixtures.preset.custom",
     icon: "custom",
     custom: true,

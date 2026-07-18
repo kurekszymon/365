@@ -2,7 +2,7 @@ import { useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 
 type FileDropZoneProps = {
-  /** Value for the input's `accept` attribute, e.g. ".dxf" or ".csv,.xlsx". */
+  /** Value for the input's `accept` attribute, e.g. ".csv,.xlsx". */
   accept: string
   /**
    * Allowed extensions (lowercase, with dot) used to validate a dropped file -

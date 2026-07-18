@@ -1,6 +1,8 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
+import { PencilRulerIcon } from "lucide-react"
+import { verticesForFootprint } from "../Canvas/geometryEdit"
 import { TableNameField } from "./fields/TableNameField"
 import { TableRotationField } from "./fields/TableRotationField"
 import { RectangularTable } from "./fields/TableRectDimensionsField"
@@ -14,6 +16,7 @@ import {
   getEffectiveSize,
   usePlannerStore,
 } from "@/stores/planner.store"
+import { usePanelStore } from "@/stores/panel.store"
 
 /**
  * Edit form for one fixture. Add flows don't come through here anymore - new
@@ -23,12 +26,14 @@ import {
 export const FixturePanelContent = ({ fixtureId }: { fixtureId: string }) => {
   const { t } = useTranslation()
 
-  const { updateFixture, saveFixture } = usePlannerStore(
+  const { updateFixture, saveFixture, setFixtureShape } = usePlannerStore(
     useShallow((state) => ({
       updateFixture: state.updateFixture,
       saveFixture: state.saveFixture,
+      setFixtureShape: state.setFixtureShape,
     }))
   )
+  const openShapeEdit = usePanelStore((state) => state.openShapeEdit)
 
   const editedFixture = usePlannerStore((state) =>
     state.fixtures.find((f) => f.id === fixtureId)
@@ -101,6 +106,58 @@ export const FixturePanelContent = ({ fixtureId }: { fixtureId: string }) => {
     persist()
   }
 
+  // Shape conversions to/from polygon go through setFixtureShape (not
+  // updateAndCommit): geometry must be set or cleared in the same write as
+  // the shape, and the polygon variants force rotation back to 0 because the
+  // vertices themselves encode orientation.
+  const pickShape = (shape: FixtureShape) => {
+    if (shape === form.shape) return
+    if (!editedFixture) return
+
+    if (shape === "polygon") {
+      // Convert the current visible footprint into vertices, 1:1.
+      const size = {
+        width: form.width,
+        height: form.shape === "circle" ? form.width : form.height,
+      }
+      setFixtureShape(fixtureId, {
+        shape,
+        geometry: {
+          vertices: verticesForFootprint(form.shape, size),
+          closed: true,
+        },
+        size,
+        rotation: 0,
+        position: editedFixture.position,
+      })
+      setForm({ ...form, shape, rotation: 0, height: size.height })
+      return
+    }
+    if (form.shape === "polygon") {
+      // Back to a basic shape: keep the polygon's bbox as the footprint and
+      // drop the vertices.
+      const size =
+        shape === "circle"
+          ? { width: form.width, height: form.width }
+          : { width: form.width, height: form.height }
+      setFixtureShape(fixtureId, {
+        shape,
+        geometry: null,
+        size,
+        rotation: 0,
+        position: editedFixture.position,
+      })
+      setForm({ ...form, shape, rotation: 0, height: size.height })
+      return
+    }
+
+    const next: Partial<typeof form> = { shape }
+    if (shape === "circle") {
+      next.height = form.width
+    }
+    updateAndCommit(next)
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <TableNameField
@@ -109,40 +166,45 @@ export const FixturePanelContent = ({ fixtureId }: { fixtureId: string }) => {
         onBlur={persist}
       />
 
+      <Field>
+        <FieldLabel>{t("fixtures.shape")}</FieldLabel>
+        <FieldContent>
+          <ButtonGroup className="w-full">
+            {(
+              [
+                "rectangle",
+                "circle",
+                "rounded",
+                "polygon",
+              ] as Array<FixtureShape>
+            ).map((shape) => (
+              <Button
+                key={shape}
+                type="button"
+                size="xs"
+                className="flex-1"
+                variant={form.shape === shape ? "default" : "outline"}
+                onClick={() => pickShape(shape)}
+              >
+                {t(`fixtures.shape.${shape}`)}
+              </Button>
+            ))}
+          </ButtonGroup>
+        </FieldContent>
+      </Field>
+
       {isPolygon ? (
-        <p className="text-xs text-muted-foreground">
-          {t("fixtures.shape.polygon_readonly")}
-        </p>
+        <>
+          <p className="text-xs text-muted-foreground">
+            {t("fixtures.shape.polygon_hint")}
+          </p>
+          <Button variant="outline" onClick={() => openShapeEdit(fixtureId)}>
+            <PencilRulerIcon className="size-4" />
+            {t("fixtures.shape.edit_button")}
+          </Button>
+        </>
       ) : (
         <>
-          <Field>
-            <FieldLabel>{t("fixtures.shape")}</FieldLabel>
-            <FieldContent>
-              <ButtonGroup className="w-full">
-                {(
-                  ["rectangle", "circle", "rounded"] as Array<FixtureShape>
-                ).map((shape) => (
-                  <Button
-                    key={shape}
-                    type="button"
-                    size="xs"
-                    className="flex-1"
-                    variant={form.shape === shape ? "default" : "outline"}
-                    onClick={() => {
-                      const next: Partial<typeof form> = { shape }
-                      if (shape === "circle") {
-                        next.height = form.width
-                      }
-                      updateAndCommit(next)
-                    }}
-                  >
-                    {t(`fixtures.shape.${shape}`)}
-                  </Button>
-                ))}
-              </ButtonGroup>
-            </FieldContent>
-          </Field>
-
           {form.shape === "circle" ? (
             <Field>
               <FieldLabel>{t("fixtures.diameter")}</FieldLabel>

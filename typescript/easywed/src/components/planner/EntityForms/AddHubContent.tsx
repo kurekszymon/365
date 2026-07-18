@@ -10,6 +10,7 @@ import {
   ShapesIcon,
 } from "lucide-react"
 import { clampToHall } from "../Canvas/utils"
+import { defaultPolygonVertices } from "../Canvas/geometryEdit"
 import { AddCard } from "./AddCard"
 import { FIXTURE_PRESETS, TABLE_PRESETS } from "./addPresets"
 import type { FixtureIcon, FixturePreset, TablePreset } from "./addPresets"
@@ -110,9 +111,10 @@ export const AddHubContent = ({
   }
 
   const insertFixturePreset = (preset: FixturePreset) => {
-    // The "custom" card carries no name - it drops a blank fixture and lets
-    // the edit view do the shaping, same insert-then-edit shortcut as every
-    // other card (there is no separate add form anymore).
+    // The "custom" card carries no name - it drops a starter polygon (a
+    // clipped-corner rectangle, so it visibly isn't the plain rectangle) and
+    // lets the edit view do the shaping, same insert-then-edit shortcut as
+    // every other card (there is no separate add form anymore).
     const fixtureId = addFixture(
       {
         name: preset.custom ? "" : t(preset.labelKey),
@@ -120,6 +122,14 @@ export const AddHubContent = ({
         size: preset.size,
         rotation: 0,
         hallId: targetHall.id,
+        ...(preset.shape === "polygon"
+          ? {
+              geometry: {
+                vertices: defaultPolygonVertices(preset.size),
+                closed: true,
+              },
+            }
+          : {}),
       },
       centerPosition(preset.size)
     )

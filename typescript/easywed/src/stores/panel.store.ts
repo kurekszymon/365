@@ -7,6 +7,10 @@ export type PanelView =
   | { kind: "tables.batch_add"; position?: Position; hallId?: string }
   | { kind: "table.edit"; tableId: string }
   | { kind: "fixture.edit"; fixtureId: string }
+  // Canvas-only mode: no dialog/drawer renders so the ShapeEditOverlay can
+  // own the canvas while the user drags the entity's outline vertices.
+  // `entityKind` is "fixture" today; tables join when they get the editor.
+  | { kind: "shape.edit"; entityKind: "fixture"; id: string }
   | { kind: "add_hub" }
   | { kind: "ai_chat" }
 
@@ -24,6 +28,7 @@ type Action = {
   openTablesBatchAdd: (position?: Position, hallId?: string) => void
   openTableEdit: (tableId: string) => void
   openFixtureEdit: (fixtureId: string) => void
+  openShapeEdit: (id: string) => void
   openAddHub: () => void
   openAiChat: () => void
   select: (id: string | null) => void
@@ -47,6 +52,13 @@ export const usePanelStore = create<State & Action>((set) => ({
     set({ view: { kind: "table.edit", tableId }, selectedId: tableId }),
   openFixtureEdit: (fixtureId) =>
     set({ view: { kind: "fixture.edit", fixtureId }, selectedId: fixtureId }),
+  // selectedId stays null: the selection ring + action buttons would overlap
+  // the vertex handles.
+  openShapeEdit: (id) =>
+    set({
+      view: { kind: "shape.edit", entityKind: "fixture", id },
+      selectedId: null,
+    }),
   openAddHub: () => set({ view: { kind: "add_hub" }, selectedId: null }),
   openAiChat: () => set({ view: { kind: "ai_chat" }, selectedId: null }),
   select: (id) => set({ selectedId: id }),
@@ -64,6 +76,9 @@ export const usePanelStore = create<State & Action>((set) => ({
         case "table.edit":
         case "fixture.edit":
           return { ...next, view: null }
+        // A canvas-background click while editing a shape is likely a missed
+        // vertex handle - the mode only exits via its Done button / Escape.
+        case "shape.edit":
         case "add_hub":
         case "ai_chat":
           return next
