@@ -22,7 +22,9 @@ export const MobilePanelDrawer = () => {
   const close = usePanelStore((state) => state.close)
   const title = usePanelTitle(view)
 
-  const isOpen = view !== null
+  // Shape editing is a canvas-only mode - the drawer stays closed so the
+  // vertex handles are reachable.
+  const isOpen = view !== null && view.kind !== "shape.edit"
   // The AI chat owns its own vertical layout (scrolling transcript + pinned
   // composer) and wants more room, so it opts out of the default padded,
   // auto-scrolling content wrapper.
@@ -32,7 +34,10 @@ export const MobilePanelDrawer = () => {
   // of an X. The add hub and AI chat are pickers/conversations, not forms, so
   // they keep the neutral close affordance.
   const isFormView =
-    view !== null && view.kind !== "add_hub" && view.kind !== "ai_chat"
+    view !== null &&
+    view.kind !== "add_hub" &&
+    view.kind !== "ai_chat" &&
+    view.kind !== "shape.edit"
   const body = view ? <PanelBody view={view} /> : null
 
   // Android's on-screen keyboard covers the lower half of the drawer, hiding

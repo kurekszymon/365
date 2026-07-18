@@ -21,6 +21,7 @@ import { CanvasToolbar } from "./CanvasToolbar"
 import { CanvasViewMenu } from "./CanvasViewMenu"
 import { CanvasEmptyState } from "./CanvasEmptyState"
 import { HallSurface } from "./HallSurface"
+import { ShapeEditToolbar } from "./ShapeEditToolbar"
 import {
   findCapturedElement,
   hallAtPoint,
@@ -87,6 +88,7 @@ export const Canvas = () => {
   const panel = usePanelStore(
     useShallow((state) => ({
       selectedId: state.selectedId,
+      isShapeEditing: state.view?.kind === "shape.edit",
       openTablesBatchAdd: state.openTablesBatchAdd,
       openTableEdit: state.openTableEdit,
       openFixtureEdit: state.openFixtureEdit,
@@ -435,6 +437,11 @@ export const Canvas = () => {
           if (isMeasuring) return
           if (isNoPan(e.target)) return
 
+          // While the shape editor owns the canvas, clicks must not re-select
+          // entities (the selection ring + buttons would cover the handles) or
+          // deselect-close anything - the mode exits via Done/Escape only.
+          if (panel.isShapeEditing) return
+
           const captured = findCapturedElement(e.target)
 
           // First click selects; clicking the already-selected element opens its
@@ -466,6 +473,8 @@ export const Canvas = () => {
             <AddFab />
           </>
         )}
+
+        <ShapeEditToolbar />
 
         {!isMobile && (
           <>
