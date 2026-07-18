@@ -20,6 +20,8 @@ export function usePanelTitle(view: PanelView | null): string {
       return t("tables.edit")
     case "fixture.edit":
       return t("fixtures.edit")
+    case "shape.edit":
+      return t("shape_edit.title")
     case "add_hub":
       return t("hall.add_hub.title")
     case "ai_chat":

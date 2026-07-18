@@ -245,6 +245,17 @@ type Action = {
     position?: Position
   ) => string
   updateFixture: (id: string, fixture: Omit<Fixture, "id" | "position">) => void
+  // Converts a fixture to/from a custom polygon or commits an edited outline.
+  // Unlike updateFixture/saveFixture this also moves the position (an outline
+  // edit can shift the bbox origin) and explicitly sets or clears `geometry`,
+  // persisting everything in one row update so the DB's shape/geometry CHECK
+  // constraint never sees a half-applied state.
+  setFixtureShape: (
+    id: string,
+    next: Pick<Fixture, "shape" | "size" | "rotation" | "position"> & {
+      geometry: Geometry | null
+    }
+  ) => void
   saveFixture: (id: string) => void
   duplicateFixture: (id: string) => string | null
   deleteFixture: (id: string) => void
@@ -809,6 +820,31 @@ const createPlannerStore = (
         f.id === id ? { ...f, ...fixture, position: f.position } : f
       ),
     }))
+  },
+  setFixtureShape: (id, next) => {
+    set((state) => ({
+      fixtures: state.fixtures.map((f) =>
+        f.id === id
+          ? {
+              ...f,
+              shape: next.shape,
+              size: next.size,
+              rotation: next.rotation,
+              position: next.position,
+              geometry: next.geometry ?? undefined,
+            }
+          : f
+      ),
+    }))
+    void updateFixtureRow(id, {
+      shape: next.shape,
+      width: next.size.width,
+      height: next.size.height,
+      rotation: next.rotation,
+      geometry: next.geometry,
+      pos_x: next.position.x,
+      pos_y: next.position.y,
+    })
   },
   saveFixture: (id) => {
     const fixture = get().fixtures.find((f) => f.id === id)

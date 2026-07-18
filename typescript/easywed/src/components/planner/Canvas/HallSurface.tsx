@@ -4,6 +4,7 @@ import { StatusBar } from "../StatusBar"
 import { HallView } from "./HallView"
 import { MeasureOverlay } from "./MeasureOverlay"
 import { clampToHall, hallWorldOf, sortHallsByZ } from "./utils"
+import { ShapeEditOverlay } from "./ShapeEditOverlay"
 import { useMeasureTool } from "./useMeasureTool"
 import { useTableSnap } from "./useTableSnap"
 import type { Ref } from "react"
@@ -279,6 +280,10 @@ export const HallSurface = ({
             updateMeasurementPoint(weddingId, measurementId, pointKey, point)
           }
         />
+
+        {/* Vertex editor for the entity in shape-edit mode (renders nothing
+            otherwise). Sits above the halls, in world-wrapper coordinates. */}
+        <ShapeEditOverlay ppm={ppm} hallScreenOffset={hallScreenOffset} />
       </div>
     </>
   )
