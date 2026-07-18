@@ -154,7 +154,11 @@ const isValidHallDimensions = (
 // `normalizeLocalPlannerSnapshot` converts the latter.
 const hasEntityArrays = (
   value: unknown
-): value is { tables: Array<unknown>; guests: unknown; fixtures: unknown } => {
+): value is {
+  tables: Array<unknown>
+  guests: Array<unknown>
+  fixtures: Array<unknown>
+} => {
   if (typeof value !== "object" || value === null) return false
   const v = value as { tables?: unknown; guests?: unknown; fixtures?: unknown }
   return (

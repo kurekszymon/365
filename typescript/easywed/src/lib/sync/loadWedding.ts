@@ -120,7 +120,9 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
   // but a fire-and-forget insert race (or a hall row deleted server-side via
   // `on delete set null`) can still leave orphans. Adopt them into the first
   // hall - creating a default one when entities exist but no hall does - and
-  // repair the rows in the background.
+  // repair the rows in the background. The fallback insert is awaited: the
+  // orphan backfill below and any user mutation against the adoptive hall
+  // reference its id, so it must exist server-side first or they FK-violate.
   //
   // Known race: two clients loading a hall-less wedding at once each insert
   // their own fallback hall, leaving a duplicate. Accepted - the state is
@@ -128,6 +130,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
   const hasOrphans =
     tablesRes.data.some((t) => !t.hall_id) ||
     fixturesRes.data.some((f) => !f.hall_id)
+  let adoptiveHallPersisted = true
   if (
     halls.length === 0 &&
     (tablesRes.data.length > 0 || fixturesRes.data.length > 0)
@@ -138,7 +141,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
       position: { x: 0, y: 0 },
     }
     halls.push(fallback)
-    void insertHall(fallback)
+    adoptiveHallPersisted = await insertHall(fallback)
   }
   const adoptiveHallId = halls[0]?.id
 
@@ -151,7 +154,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     rotation: t.rotation as TableRotation,
     position: { x: Number(t.pos_x), y: Number(t.pos_y) },
     hallId: t.hall_id ?? adoptiveHallId,
-    ...(t.geometry ? { geometry: t.geometry as unknown as Geometry } : {}),
+    ...((t.geometry ? { geometry: t.geometry } : {}) as Geometry),
     seats: (t.seats as unknown as Array<Seat> | null) ?? [],
   }))
 
@@ -172,10 +175,10 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     rotation: f.rotation as TableRotation,
     position: { x: Number(f.pos_x), y: Number(f.pos_y) },
     hallId: f.hall_id ?? adoptiveHallId,
-    ...(f.geometry ? { geometry: f.geometry as unknown as Geometry } : {}),
+    ...((f.geometry ? { geometry: f.geometry } : {}) as Geometry),
   }))
 
-  if (hasOrphans && adoptiveHallId) {
+  if (hasOrphans && adoptiveHallId && adoptiveHallPersisted) {
     for (const t of tablesRes.data)
       if (!t.hall_id)
         void updateTablePos(
