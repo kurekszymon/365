@@ -147,6 +147,7 @@ export const Canvas = () => {
     hallScreenOffset,
     clampPan,
     zoomToPan,
+    fitRect,
   } = useWorldGeometry(
     containerEl,
     containerWidth,
@@ -155,6 +156,33 @@ export const Canvas = () => {
     zoom,
     pan
   )
+
+  // Entering shape-edit mode jumps the view to frame the target entity (with
+  // margin for the vertex handles and the floating toolbar) - otherwise the
+  // mode can start with the shape half hidden behind the sidebar or off-screen.
+  // Keyed on the target id: the one-time jump per entity, not a camera lock -
+  // the user can still pan/zoom freely while editing.
+  const shapeEditId = usePanelStore((state) =>
+    state.view?.kind === "shape.edit" ? state.view.id : null
+  )
+  useEffect(() => {
+    if (!shapeEditId) return
+    const { fixtures, halls: allHalls } = usePlannerStore.getState()
+    const fixture = fixtures.find((f) => f.id === shapeEditId)
+    const hall = fixture
+      ? allHalls.find((h) => h.id === fixture.hallId)
+      : undefined
+    if (!fixture || !hall) return
+    const fitted = fitRect({
+      x: hall.position.x + fixture.position.x,
+      y: hall.position.y + fixture.position.y,
+      width: fixture.size.width,
+      height: fixture.size.height,
+    })
+    if (!fitted) return
+    setZoom(fitted.zoom)
+    setPan(fitted.pan)
+  }, [shapeEditId, fitRect, setZoom, setPan])
 
   // Resolves a world-space point to a drop hall (under the point, else the
   // nearest one) and that hall's local coords, clamped inside it. This is how

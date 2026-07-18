@@ -1,9 +1,14 @@
 import { useCallback, useMemo } from "react"
 import { hallAtPoint, nearestHall, worldBoundsOf } from "./utils"
+import type { WorldBounds } from "./utils"
 import type { Hall, Position } from "@/stores/planner.store"
+import { ZOOM_MAX, ZOOM_MIN } from "@/stores/view.store"
 
 export const PIXELS_PER_METER = 40
 const VIEWPORT_MARGIN = 48
+// Pixel margin kept around a rect framed via fitRect, leaving room for the
+// vertex handles and the floating shape-edit toolbar.
+const FIT_MARGIN_PX = 96
 // Gutter kept between the world (union of all halls) and the viewport edge
 // when clamping pan, so the whole layout (and its dimension labels) stays
 // comfortably visible rather than sitting flush against the edge.
@@ -167,6 +172,62 @@ export function useWorldGeometry(
     }
   }
 
+  // Zoom + clamped pan that frame a world-space rect (meters) with a
+  // FIT_MARGIN_PX gutter, centered in the viewport - used to jump the view to
+  // an entity (e.g. entering shape-edit mode). Deliberately independent of the
+  // current zoom/pan so its identity only changes on resize / world changes,
+  // letting effects depend on it without re-firing every pan frame.
+  const fitRect = useCallback(
+    (rect: WorldBounds): { zoom: number; pan: Position } | null => {
+      if (containerWidth <= 0 || containerHeight <= 0) return null
+      if (rect.width <= 0 || rect.height <= 0 || baseScale <= 0) return null
+      const targetPpm = Math.min(
+        (containerWidth - FIT_MARGIN_PX * 2) / rect.width,
+        (containerHeight - FIT_MARGIN_PX * 2) / rect.height
+      )
+      if (targetPpm <= 0) return null
+      const newZoom = Math.min(
+        ZOOM_MAX,
+        Math.max(ZOOM_MIN, targetPpm / (PIXELS_PER_METER * baseScale))
+      )
+      const newScale = baseScale * newZoom
+      const newScaledWidth = worldWidthPx * newScale
+      const newScaledHeight = worldHeightPx * newScale
+      const newPpm = PIXELS_PER_METER * newScale
+      // Rect center relative to the world origin; solve
+      // containerCenter === newWorldLeft + c * newPpm for pan (see zoomToPan).
+      const cx = rect.x + rect.width / 2 - worldBounds.x
+      const cy = rect.y + rect.height / 2 - worldBounds.y
+      const rawX = newScaledWidth / 2 - cx * newPpm
+      const rawY = newScaledHeight / 2 - cy * newPpm
+      const boundsX = axisPanBounds(
+        newScaledWidth,
+        containerWidth,
+        LABEL_GUTTER_X
+      )
+      const boundsY = axisPanBounds(
+        newScaledHeight,
+        containerHeight,
+        LABEL_GUTTER_Y
+      )
+      return {
+        zoom: newZoom,
+        pan: {
+          x: Math.max(boundsX.min, Math.min(boundsX.max, rawX)),
+          y: Math.max(boundsY.min, Math.min(boundsY.max, rawY)),
+        },
+      }
+    },
+    [
+      containerWidth,
+      containerHeight,
+      baseScale,
+      worldBounds,
+      worldWidthPx,
+      worldHeightPx,
+    ]
+  )
+
   return {
     worldBounds,
     scaledWidth,
@@ -180,6 +241,7 @@ export function useWorldGeometry(
     hallScreenOffset,
     clampPan,
     zoomToPan,
+    fitRect,
   }
 }
 
