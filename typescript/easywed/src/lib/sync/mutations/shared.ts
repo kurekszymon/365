@@ -78,6 +78,7 @@ export const hallRow = (h: Hall) => ({
   height: h.size.height,
   pos_x: h.position.x,
   pos_y: h.position.y,
+  geometry: toJsonOrNull(h.geometry),
 })
 
 export const tableRow = (t: Table) => ({

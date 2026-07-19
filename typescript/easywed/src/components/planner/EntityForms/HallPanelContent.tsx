@@ -1,11 +1,14 @@
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
-import { InfoIcon, Trash2Icon } from "lucide-react"
+import { InfoIcon, PencilRulerIcon, Trash2Icon } from "lucide-react"
 import { clampGridSpacing, validSpacings } from "../Canvas/utils"
 import { DimensionsRectangle } from "./fields/DimensionsRectangle"
 
+import type { HallPreset } from "@/stores/planner.store"
+import { verticesForHallPreset } from "@/lib/geometry"
 import { usePlannerStore } from "@/stores/planner.store"
+import { usePanelStore } from "@/stores/panel.store"
 import { useViewStore } from "@/stores/view.store"
 import { useDialogStore } from "@/stores/dialog.store"
 import { Button } from "@/components/ui/button"
@@ -34,13 +37,15 @@ export const HallPanelContent = ({ hallId }: { hallId: string }) => {
   const hall = usePlannerStore((state) =>
     state.halls.find((h) => h.id === hallId)
   )
-  const { updateHall, saveHall } = usePlannerStore(
+  const { updateHall, saveHall, setHallShape } = usePlannerStore(
     useShallow((state) => ({
       updateHall: state.updateHall,
       saveHall: state.saveHall,
+      setHallShape: state.setHallShape,
     }))
   )
   const openDialog = useDialogStore((state) => state.open)
+  const openShapeEdit = usePanelStore((state) => state.openShapeEdit)
 
   const gridSpacing = useViewStore((state) => state.gridSpacing)
   const gridStyle = useViewStore((state) => state.gridStyle)
@@ -64,6 +69,21 @@ export const HallPanelContent = ({ hallId }: { hallId: string }) => {
     updateHall(hallId, { size: { width: hall.size.width, height } })
     saveHall(hallId)
     if (spacing !== gridSpacing) setGridSpacing(spacing)
+  }
+
+  // Preset changes go through setHallShape (not updateHall/saveHall):
+  // preset and geometry must land in one write for the DB CHECK, and the
+  // entities get re-clamped into the new outline. Switching between polygon
+  // presets re-seeds the outline, discarding hand-edited vertices.
+  const pickPreset = (preset: HallPreset) => {
+    if (preset === hall.preset) return
+    const vertices = verticesForHallPreset(preset, hall.size)
+    setHallShape(hallId, {
+      preset,
+      geometry: vertices ? { vertices, closed: true } : null,
+      size: hall.size,
+      position: hall.position,
+    })
   }
 
   return (
@@ -107,6 +127,43 @@ export const HallPanelContent = ({ hallId }: { hallId: string }) => {
           />
         </FieldContent>
       </Field>
+
+      <Field>
+        <FieldLabel>{t("hall.shape")}</FieldLabel>
+        <FieldContent>
+          <ButtonGroup className="w-full">
+            {(
+              ["rectangle", "l-shape", "u-shape", "custom"] as Array<HallPreset>
+            ).map((preset) => (
+              <Button
+                key={preset}
+                type="button"
+                size="xs"
+                className="flex-1"
+                variant={hall.preset === preset ? "default" : "outline"}
+                onClick={() => pickPreset(preset)}
+              >
+                {t(`hall.preset.${preset}`)}
+              </Button>
+            ))}
+          </ButtonGroup>
+        </FieldContent>
+      </Field>
+
+      {hall.geometry && (
+        <>
+          <p className="text-xs text-muted-foreground">
+            {t("hall.shape.polygon_hint")}
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => openShapeEdit(hallId, "hall")}
+          >
+            <PencilRulerIcon className="size-4" />
+            {t("hall.shape.edit_button")}
+          </Button>
+        </>
+      )}
 
       <DimensionsRectangle
         width={hall.size.width}

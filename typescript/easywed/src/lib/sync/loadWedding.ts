@@ -45,7 +45,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
 
     supabase
       .from("halls")
-      .select("id, name, floor, preset, width, height, pos_x, pos_y")
+      .select("id, name, floor, preset, width, height, pos_x, pos_y, geometry")
       .eq("wedding_id", id)
       .order("created_at")
       .abortSignal(signal),
@@ -107,14 +107,26 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     role: (memberRes.data?.role as WeddingRole | undefined) ?? undefined,
   })
 
-  const halls: Array<Hall> = hallsRes.data.map((h) => ({
-    id: h.id,
-    name: h.name,
-    floor: h.floor,
-    preset: h.preset as HallPreset,
-    size: { width: Number(h.width), height: Number(h.height) },
-    position: { x: Number(h.pos_x), y: Number(h.pos_y) },
-  }))
+  const halls: Array<Hall> = hallsRes.data.map((h) => {
+    // Enforce the geometry <=> non-rectangle-preset invariant in both
+    // directions at the load boundary (the DB CHECK guards it too; this
+    // covers rows that predate the constraint): a polygon preset without
+    // geometry falls back to rectangle, a rectangle's stray geometry is
+    // dropped.
+    const geometry =
+      h.preset !== "rectangle"
+        ? (h.geometry as unknown as Geometry | null)
+        : null
+    return {
+      id: h.id,
+      name: h.name,
+      floor: h.floor,
+      preset: geometry ? (h.preset as HallPreset) : "rectangle",
+      size: { width: Number(h.width), height: Number(h.height) },
+      position: { x: Number(h.pos_x), y: Number(h.pos_y) },
+      ...(geometry ? { geometry } : {}),
+    }
+  })
 
   // Self-healing for rows without a hall: the migration backfilled hall_id,
   // but a fire-and-forget insert race (or a hall row deleted server-side via
@@ -154,7 +166,9 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     rotation: t.rotation as TableRotation,
     position: { x: Number(t.pos_x), y: Number(t.pos_y) },
     hallId: t.hall_id ?? adoptiveHallId,
-    ...((t.geometry ? { geometry: t.geometry } : {}) as Geometry),
+    // Json -> Geometry needs the unknown hop (see toJsonOrNull in
+    // mutations/shared.ts for the inverse cast and why).
+    ...(t.geometry ? { geometry: t.geometry as unknown as Geometry } : {}),
     seats: (t.seats as unknown as Array<Seat> | null) ?? [],
   }))
 
@@ -175,7 +189,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     rotation: f.rotation as TableRotation,
     position: { x: Number(f.pos_x), y: Number(f.pos_y) },
     hallId: f.hall_id ?? adoptiveHallId,
-    ...((f.geometry ? { geometry: f.geometry } : {}) as Geometry),
+    ...(f.geometry ? { geometry: f.geometry as unknown as Geometry } : {}),
   }))
 
   if (hasOrphans && adoptiveHallId && adoptiveHallPersisted) {

@@ -3,7 +3,7 @@ import { useShallow } from "zustand/react/shallow"
 import { StatusBar } from "../StatusBar"
 import { HallView } from "./HallView"
 import { MeasureOverlay } from "./MeasureOverlay"
-import { clampToHall, hallWorldOf, sortHallsByZ } from "./utils"
+import { hallWorldOf, sortHallsByZ } from "./utils"
 import { ShapeEditOverlay } from "./ShapeEditOverlay"
 import { useMeasureTool } from "./useMeasureTool"
 import { useTableSnap } from "./useTableSnap"
@@ -11,6 +11,7 @@ import type { Ref } from "react"
 import type { WorldBounds } from "./utils"
 import type { GridSpacing, GridStyle, SnapStep } from "@/stores/view.store"
 import type { Hall } from "@/stores/planner.store"
+import { clampRectIntoHall } from "@/lib/geometry"
 import { useViewStore } from "@/stores/view.store"
 import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
 import { useMeasuresStore } from "@/stores/measures.store"
@@ -93,11 +94,10 @@ export const HallSurface = ({
         if (!hall) return table
         return {
           ...table,
-          position: clampToHall(
+          position: clampRectIntoHall(
             table.position,
             getEffectiveSize(table.size, table.rotation),
-            hall.size.width,
-            hall.size.height
+            hall
           ),
         }
       }),
@@ -111,11 +111,10 @@ export const HallSurface = ({
         if (!hall) return fixture
         return {
           ...fixture,
-          position: clampToHall(
+          position: clampRectIntoHall(
             fixture.position,
             getEffectiveSize(fixture.size, fixture.rotation),
-            hall.size.width,
-            hall.size.height
+            hall
           ),
         }
       }),

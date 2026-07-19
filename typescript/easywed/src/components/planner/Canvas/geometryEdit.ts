@@ -5,6 +5,7 @@ import type {
   Size,
   TableShape,
 } from "@/stores/planner.store"
+import { rectVertices, round3 } from "@/lib/geometry"
 
 export const MIN_VERTICES = 3
 
@@ -12,10 +13,6 @@ export const MIN_VERTICES = 3
 // width/height > 0 checks and keeps the SVG viewBox non-degenerate when all
 // vertices go collinear.
 export const MIN_EXTENT_M = 0.05
-
-// Vertices are persisted as JSONB - round to mm so a drag doesn't store
-// 15-decimal floats.
-const round3 = (n: number) => Math.round(n * 1000) / 1000
 
 // Result of re-anchoring edited vertices: `geometry` is object-local again
 // (bbox min at 0,0), `size` is the new AABB, and `offset` is what to add to
@@ -76,12 +73,7 @@ export const verticesForFootprint = (
       }
     })
   }
-  return [
-    { x: 0, y: 0 },
-    { x: size.width, y: 0 },
-    { x: size.width, y: size.height },
-    { x: 0, y: size.height },
-  ]
+  return rectVertices(size)
 }
 
 // Starting outline for a brand-new custom fixture: a rectangle with the

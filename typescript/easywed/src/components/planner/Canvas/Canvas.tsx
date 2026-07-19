@@ -30,12 +30,14 @@ import {
   nearestHall,
   snapPositionToGrid,
   sortHallsByZ,
+  worldBoundsOf,
 } from "./utils"
 import { useWorldGeometry } from "./useWorldGeometry"
 import { useCanvasPan } from "./useCanvasPan"
 import { useCanvasWheelPan } from "./useCanvasWheelPan"
 import { useCanvasClipboard } from "./useCanvasClipboard"
 import type { HallSurfaceMethods } from "./HallSurface"
+import type { WorldBounds } from "./utils"
 import type { Position } from "@/stores/planner.store"
 import {
   ContextMenuLabel,
@@ -160,29 +162,46 @@ export const Canvas = () => {
   // Entering shape-edit mode jumps the view to frame the target entity (with
   // margin for the vertex handles and the floating toolbar) - otherwise the
   // mode can start with the shape half hidden behind the sidebar or off-screen.
-  // Keyed on the target id: the one-time jump per entity, not a camera lock -
-  // the user can still pan/zoom freely while editing.
-  const shapeEditId = usePanelStore((state) =>
-    state.view?.kind === "shape.edit" ? state.view.id : null
+  // The ref-guard makes the jump truly once per entity, not a camera lock:
+  // the effect's `fitRect` dep changes identity whenever the world bounds
+  // change, which for HALL editing is every committed vertex drag (the hall's
+  // AABB moves) - without the guard the camera would re-zoom on every drop.
+  const shapeEditView = usePanelStore((state) =>
+    state.view?.kind === "shape.edit" ? state.view : null
   )
+  const lastShapeEditFit = useRef<string | null>(null)
   useEffect(() => {
-    if (!shapeEditId) return
+    if (!shapeEditView) {
+      lastShapeEditFit.current = null
+      return
+    }
+    const fitKey = `${shapeEditView.entityKind}:${shapeEditView.id}`
+    if (lastShapeEditFit.current === fitKey) return
+    lastShapeEditFit.current = fitKey
     const { fixtures, halls: allHalls } = usePlannerStore.getState()
-    const fixture = fixtures.find((f) => f.id === shapeEditId)
-    const hall = fixture
-      ? allHalls.find((h) => h.id === fixture.hallId)
-      : undefined
-    if (!fixture || !hall) return
-    const fitted = fitRect({
-      x: hall.position.x + fixture.position.x,
-      y: hall.position.y + fixture.position.y,
-      width: fixture.size.width,
-      height: fixture.size.height,
-    })
+    let rect: WorldBounds | null = null
+    if (shapeEditView.entityKind === "hall") {
+      const hall = allHalls.find((h) => h.id === shapeEditView.id)
+      if (hall) rect = worldBoundsOf([hall])
+    } else {
+      const fixture = fixtures.find((f) => f.id === shapeEditView.id)
+      const hall = fixture
+        ? allHalls.find((h) => h.id === fixture.hallId)
+        : undefined
+      if (fixture && hall)
+        rect = {
+          x: hall.position.x + fixture.position.x,
+          y: hall.position.y + fixture.position.y,
+          width: fixture.size.width,
+          height: fixture.size.height,
+        }
+    }
+    if (!rect) return
+    const fitted = fitRect(rect)
     if (!fitted) return
     setZoom(fitted.zoom)
     setPan(fitted.pan)
-  }, [shapeEditId, fitRect, setZoom, setPan])
+  }, [shapeEditView, fitRect, setZoom, setPan])
 
   // Resolves a world-space point to a drop hall (under the point, else the
   // nearest one) and that hall's local coords, clamped inside it. This is how

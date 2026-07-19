@@ -198,7 +198,10 @@ export const FixturePanelContent = ({ fixtureId }: { fixtureId: string }) => {
           <p className="text-xs text-muted-foreground">
             {t("fixtures.shape.polygon_hint")}
           </p>
-          <Button variant="outline" onClick={() => openShapeEdit(fixtureId)}>
+          <Button
+            variant="outline"
+            onClick={() => openShapeEdit(fixtureId, "fixture")}
+          >
             <PencilRulerIcon className="size-4" />
             {t("fixtures.shape.edit_button")}
           </Button>

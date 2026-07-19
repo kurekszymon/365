@@ -384,6 +384,8 @@
   "hall.preset.l-shape": "Kształt L",
   "hall.preset.u-shape": "Kształt U",
   "hall.preset.custom": "Niestandardowy",
+  "hall.shape.edit_button": "Edytuj obrys",
+  "hall.shape.polygon_hint": "Przeciągnij punkty obrysu sali, aby dopasować go do lokalu.",
   "hall.add_hub.title": "Dodaj do sali",
   "hall.add_hub.hint": "Dotknij, aby wstawić na środek - potem przeciągnij na miejsce.",
   "hall.add_hub.tables_tab": "Stoły",

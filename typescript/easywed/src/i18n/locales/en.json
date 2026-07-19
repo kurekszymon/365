@@ -368,6 +368,8 @@
   "hall.preset.l-shape": "L-shape",
   "hall.preset.u-shape": "U-shape",
   "hall.preset.custom": "Custom",
+  "hall.shape.edit_button": "Edit outline",
+  "hall.shape.polygon_hint": "Drag the hall's corner points to match your venue.",
   "hall.add_hub.title": "Add to room",
   "hall.add_hub.hint": "Tap to insert it centered - then drag it into place.",
   "hall.add_hub.tables_tab": "Tables",
