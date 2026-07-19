@@ -51,8 +51,16 @@ export const ShapeEditOverlay = ({
   const snapStep = useViewStore((s) => s.snapStep)
 
   // Non-null only while a handle drag is in flight - the outline renders from
-  // it so the store (and the entity underneath) only updates on release.
+  // it so the store (and the entity underneath) only updates on release. The
+  // ref mirrors the state so pointer handlers always see the latest draft:
+  // pointer events can outrun React's re-render, and a commit read from a
+  // stale closure would silently drop the drag.
   const [draft, setDraft] = useState<Array<Position> | null>(null)
+  const draftRef = useRef<Array<Position> | null>(null)
+  const updateDraft = (next: Array<Position> | null) => {
+    draftRef.current = next
+    setDraft(next)
+  }
   const dragRef = useRef<{
     index: number
     startClient: Position
@@ -117,7 +125,7 @@ export const ShapeEditOverlay = ({
         position,
       })
     }
-    setDraft(null)
+    updateDraft(null)
   }
 
   // Snap against the hall-local grid, not the vertex's object-local frame -
@@ -144,25 +152,37 @@ export const ShapeEditOverlay = ({
         startClient: { x: e.clientX, y: e.clientY },
         startVertex: vertices[index],
       }
-      setDraft(vertices)
+      updateDraft(vertices)
     }
+
+  // The single way a drag ends, wired to pointerup, pointercancel AND
+  // lostpointercapture (plus the buttons check in the move handler). If the
+  // browser drops the pointerup (context menu mid-drag, alt-tab, touch
+  // interruption), a surviving dragRef would turn plain hovers into drags -
+  // pointermove fires without any button held - so the old vertex sticks to
+  // the cursor and no other handle can be grabbed.
+  const finishDrag = () => {
+    if (!dragRef.current) return
+    dragRef.current = null
+    if (draftRef.current) commit(draftRef.current)
+  }
 
   const onHandlePointerMove = (e: React.PointerEvent<SVGCircleElement>) => {
     const drag = dragRef.current
     if (!drag) return
+    // A hover-move with no button down means the release was missed -
+    // self-heal by committing the drag as-is instead of warping the vertex.
+    if (e.buttons === 0) {
+      finishDrag()
+      return
+    }
     const moved = snapVertex({
       x: drag.startVertex.x + (e.clientX - drag.startClient.x) / ppm,
       y: drag.startVertex.y + (e.clientY - drag.startClient.y) / ppm,
     })
-    setDraft((prev) =>
-      prev ? prev.map((v, i) => (i === drag.index ? moved : v)) : prev
-    )
-  }
-
-  const onHandlePointerUp = () => {
-    if (!dragRef.current) return
-    dragRef.current = null
-    if (draft) commit(draft)
+    const prev = draftRef.current
+    if (prev)
+      updateDraft(prev.map((v, i) => (i === drag.index ? moved : v)))
   }
 
   const removeVertex = (index: number) => {
@@ -234,8 +254,9 @@ export const ShapeEditOverlay = ({
           strokeWidth={2}
           onPointerDown={onHandlePointerDown(index)}
           onPointerMove={onHandlePointerMove}
-          onPointerUp={onHandlePointerUp}
-          onPointerCancel={onHandlePointerUp}
+          onPointerUp={finishDrag}
+          onPointerCancel={finishDrag}
+          onLostPointerCapture={finishDrag}
           onDoubleClick={(e) => {
             e.stopPropagation()
             removeVertex(index)

@@ -162,13 +162,22 @@ export const Canvas = () => {
   // Entering shape-edit mode jumps the view to frame the target entity (with
   // margin for the vertex handles and the floating toolbar) - otherwise the
   // mode can start with the shape half hidden behind the sidebar or off-screen.
-  // Keyed on the target id: the one-time jump per entity, not a camera lock -
-  // the user can still pan/zoom freely while editing.
+  // The ref-guard makes the jump truly once per entity, not a camera lock:
+  // the effect's `fitRect` dep changes identity whenever the world bounds
+  // change, which for HALL editing is every committed vertex drag (the hall's
+  // AABB moves) - without the guard the camera would re-zoom on every drop.
   const shapeEditView = usePanelStore((state) =>
     state.view?.kind === "shape.edit" ? state.view : null
   )
+  const lastShapeEditFit = useRef<string | null>(null)
   useEffect(() => {
-    if (!shapeEditView) return
+    if (!shapeEditView) {
+      lastShapeEditFit.current = null
+      return
+    }
+    const fitKey = `${shapeEditView.entityKind}:${shapeEditView.id}`
+    if (lastShapeEditFit.current === fitKey) return
+    lastShapeEditFit.current = fitKey
     const { fixtures, halls: allHalls } = usePlannerStore.getState()
     let rect: WorldBounds | null = null
     if (shapeEditView.entityKind === "hall") {
