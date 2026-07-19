@@ -346,7 +346,11 @@ type MovedEntity = {
 // world-space delta), collecting entities that need persistence into `moved`.
 // With `newHallId` every entity is collected (the hall reassignment must be
 // written even when the position is unchanged) and re-stamped; without it,
-// entities whose position didn't change are left untouched.
+// only entities that moved neither hall-locally NOR in world space are left
+// untouched. Both checks matter: a hall-origin shift cancelled by clamping
+// keeps the local position but still moves the entity in world space (the
+// measurements must shift), and a pure counter-shift changes the local
+// position with no world move (the row must be written).
 const rehomeHallEntities = (
   state: State,
   hallId: string,
@@ -370,7 +374,9 @@ const rehomeHallEntities = (
       if (
         !newHallId &&
         position.x === e.position.x &&
-        position.y === e.position.y
+        position.y === e.position.y &&
+        delta.x === 0 &&
+        delta.y === 0
       )
         return e
       moved.push({ kind, id: e.id, position, delta })

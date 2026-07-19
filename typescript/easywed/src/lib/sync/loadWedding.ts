@@ -114,7 +114,9 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     // geometry falls back to rectangle, a rectangle's stray geometry is
     // dropped.
     const geometry =
-      h.preset !== "rectangle" ? (h.geometry as Geometry | null) : null
+      h.preset !== "rectangle"
+        ? (h.geometry as unknown as Geometry | null)
+        : null
     return {
       id: h.id,
       name: h.name,
