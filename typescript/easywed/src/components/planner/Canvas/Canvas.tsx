@@ -36,6 +36,7 @@ import { useCanvasPan } from "./useCanvasPan"
 import { useCanvasWheelPan } from "./useCanvasWheelPan"
 import { useCanvasClipboard } from "./useCanvasClipboard"
 import type { HallSurfaceMethods } from "./HallSurface"
+import type { WorldBounds } from "./utils"
 import type { Position } from "@/stores/planner.store"
 import {
   ContextMenuLabel,
@@ -165,24 +166,41 @@ export const Canvas = () => {
   const shapeEditId = usePanelStore((state) =>
     state.view?.kind === "shape.edit" ? state.view.id : null
   )
+  const shapeEditKind = usePanelStore((state) =>
+    state.view?.kind === "shape.edit" ? state.view.entityKind : null
+  )
   useEffect(() => {
     if (!shapeEditId) return
     const { fixtures, halls: allHalls } = usePlannerStore.getState()
-    const fixture = fixtures.find((f) => f.id === shapeEditId)
-    const hall = fixture
-      ? allHalls.find((h) => h.id === fixture.hallId)
-      : undefined
-    if (!fixture || !hall) return
-    const fitted = fitRect({
-      x: hall.position.x + fixture.position.x,
-      y: hall.position.y + fixture.position.y,
-      width: fixture.size.width,
-      height: fixture.size.height,
-    })
+    let rect: WorldBounds | null = null
+    if (shapeEditKind === "hall") {
+      const hall = allHalls.find((h) => h.id === shapeEditId)
+      if (hall)
+        rect = {
+          x: hall.position.x,
+          y: hall.position.y,
+          width: hall.size.width,
+          height: hall.size.height,
+        }
+    } else {
+      const fixture = fixtures.find((f) => f.id === shapeEditId)
+      const hall = fixture
+        ? allHalls.find((h) => h.id === fixture.hallId)
+        : undefined
+      if (fixture && hall)
+        rect = {
+          x: hall.position.x + fixture.position.x,
+          y: hall.position.y + fixture.position.y,
+          width: fixture.size.width,
+          height: fixture.size.height,
+        }
+    }
+    if (!rect) return
+    const fitted = fitRect(rect)
     if (!fitted) return
     setZoom(fitted.zoom)
     setPan(fitted.pan)
-  }, [shapeEditId, fitRect, setZoom, setPan])
+  }, [shapeEditId, shapeEditKind, fitRect, setZoom, setPan])
 
   // Resolves a world-space point to a drop hall (under the point, else the
   // nearest one) and that hall's local coords, clamped inside it. This is how

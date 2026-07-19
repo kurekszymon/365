@@ -82,14 +82,15 @@ export const AddHubContent = ({
 
   const centerPosition = (size: Size) => {
     const dims = targetHall.size
+    // For a polygon hall whose AABB center falls in a cut-out (e.g. the
+    // U-shape notch), the clamp relocates to the nearest spot that fits.
     return clampToHall(
       {
         x: dims.width / 2 - size.width / 2,
         y: dims.height / 2 - size.height / 2,
       },
       size,
-      dims.width,
-      dims.height
+      targetHall
     )
   }
 

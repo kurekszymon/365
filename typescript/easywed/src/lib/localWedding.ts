@@ -207,7 +207,10 @@ const legacyToMultiHall = (
   const hall: Hall = {
     id: crypto.randomUUID(),
     name: "",
-    preset: legacy.hall.preset ?? "rectangle",
+    // Legacy presets never carried geometry (they were only round-tripped),
+    // so coerce to rectangle - matching the DB-side normalization in the
+    // hall_geometry migration and the geometry <=> preset invariant.
+    preset: "rectangle",
     size: {
       width: legacy.hall.dimensions.width,
       height: legacy.hall.dimensions.height,

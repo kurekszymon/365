@@ -45,7 +45,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
 
     supabase
       .from("halls")
-      .select("id, name, floor, preset, width, height, pos_x, pos_y")
+      .select("id, name, floor, preset, width, height, pos_x, pos_y, geometry")
       .eq("wedding_id", id)
       .order("created_at")
       .abortSignal(signal),
@@ -111,9 +111,13 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     id: h.id,
     name: h.name,
     floor: h.floor,
-    preset: h.preset as HallPreset,
+    // A non-rectangle preset without geometry (shouldn't exist - the DB CHECK
+    // ties them together) would render nothing polygon-y; coerce to rectangle
+    // so the invariant holds client-side too.
+    preset: h.geometry ? (h.preset as HallPreset) : "rectangle",
     size: { width: Number(h.width), height: Number(h.height) },
     position: { x: Number(h.pos_x), y: Number(h.pos_y) },
+    ...((h.geometry ? { geometry: h.geometry } : {}) as Geometry),
   }))
 
   // Self-healing for rows without a hall: the migration backfilled hall_id,

@@ -45,13 +45,7 @@ const clampPosition = (
   y: number,
   size: Size,
   rotation: TableRotation
-) =>
-  clampToHall(
-    { x, y },
-    getEffectiveSize(size, rotation),
-    hall.size.width,
-    hall.size.height
-  )
+) => clampToHall({ x, y }, getEffectiveSize(size, rotation), hall)
 
 const fmt = (n: number) => n.toFixed(1)
 

@@ -27,6 +27,11 @@ import {
   updateTableRow,
   updateTableSeats,
 } from "@/lib/sync/mutations"
+import {
+  clampRectIntoPolygon,
+  rectInsidePolygon,
+  scaleVertices,
+} from "@/lib/geometry"
 import { useGlobalStore } from "@/stores/global.store"
 import { useMeasuresStore } from "@/stores/measures.store"
 
@@ -124,6 +129,10 @@ export interface Hall {
   preset: HallPreset
   size: Size
   position: Position
+  // Hall-local polygon outline (bbox-min at (0,0); `size` stays the AABB),
+  // same convention as entity geometry. Present iff preset != "rectangle" -
+  // the DB CHECK enforces the same invariant.
+  geometry?: Geometry
 }
 
 // Where a newly added hall lands: two halls per row ("1 2 / 3 4"), so the
@@ -219,6 +228,18 @@ type Action = {
   addHall: (hall: Omit<Hall, "id" | "position">, position?: Position) => string
   updateHall: (id: string, patch: Partial<Omit<Hall, "id">>) => void
   saveHall: (id: string) => void
+  // Switches a hall's outline preset or commits an edited outline. Like
+  // setFixtureShape this writes preset + geometry + AABB + position in one
+  // row update so the DB's preset/geometry CHECK never sees a half state.
+  // A normalize offset baked into `position` shifts the hall's world origin;
+  // entities are hall-local, so they're counter-shifted to stay put in world
+  // space and then re-clamped into the new outline.
+  setHallShape: (
+    id: string,
+    next: Pick<Hall, "preset" | "size" | "position"> & {
+      geometry: Geometry | null
+    }
+  ) => void
   updateHallPosition: (id: string, x: number, y: number) => void
   // Brings a hall to the front of the overlap stack (see hallZOrder).
   raiseHall: (id: string) => void
@@ -293,13 +314,11 @@ const afterHallInsert = (hallId: string, fn: () => void) => {
   })
 }
 
-// Store-local clamp of an entity rect into a hall (hall-local coords). The
-// canvas has its own clampToHall in Canvas/utils.ts; duplicated here because
-// the store must not import from components.
-const clampIntoHall = (pos: Position, size: Size, hall: Hall): Position => ({
-  x: Math.min(Math.max(0, pos.x), Math.max(0, hall.size.width - size.width)),
-  y: Math.min(Math.max(0, pos.y), Math.max(0, hall.size.height - size.height)),
-})
+// Store-local clamp of an entity rect into a hall (hall-local coords),
+// polygon-aware for non-rectangular halls. The canvas' clampToHall in
+// Canvas/utils.ts delegates to the same lib helper.
+const clampIntoHall = (pos: Position, size: Size, hall: Hall): Position =>
+  clampRectIntoPolygon(pos, size, hall.size, hall.geometry)
 
 const createPlannerStore = (
   set: (
@@ -317,10 +336,18 @@ const createPlannerStore = (
 
   addTable: (table, guestIds = [], position) => {
     const tableId = crypto.randomUUID()
+    const hall = get().halls.find((h) => h.id === table.hallId)
+    const requested = position ?? { x: 0, y: 0 }
     const newTable: Table = {
       ...table,
       id: tableId,
-      position: position ?? { x: 0, y: 0 },
+      position: hall
+        ? clampIntoHall(
+            requested,
+            getEffectiveSize(table.size, table.rotation),
+            hall
+          )
+        : requested,
     }
     set((state) => ({
       tables: [...state.tables, newTable],
@@ -357,21 +384,33 @@ const createPlannerStore = (
     const availableH = Math.max(tileH, hallHeight - start.y)
     const cols = Math.max(1, Math.floor(availableW / tileW))
     const rowsCap = Math.max(1, Math.floor(availableH / tileH))
-    const capped = Math.min(count, cols * rowsCap)
 
-    const newTables: Array<Table> = Array.from({ length: capped }, (_, i) => {
-      const col = i % cols
-      const row = Math.floor(i / cols)
+    // Grid cells row-major; cells whose footprint pokes out of a polygon
+    // hall's outline are skipped, so the delivered count may fall short of
+    // the request (same silent cap as running out of rectangular hall).
+    const cells: Array<Position> = []
+    for (let i = 0; i < cols * rowsCap && cells.length < count; i++) {
+      const cell = {
+        x: start.x + (i % cols) * tileW,
+        y: start.y + Math.floor(i / cols) * tileH,
+      }
+      if (
+        hall.geometry &&
+        !rectInsidePolygon(cell, effective, hall.geometry.vertices)
+      )
+        continue
+      cells.push(cell)
+    }
+    const capped = cells.length
+    if (capped === 0) return []
+
+    const newTables: Array<Table> = cells.map((cellPosition, i) => {
       const suffix = capped > 1 && table.name ? ` ${i + 1}` : ""
-
       return {
         ...table,
         name: table.name ? `${table.name}${suffix}` : table.name,
         id: crypto.randomUUID(),
-        position: {
-          x: start.x + col * tileW,
-          y: start.y + row * tileH,
-        },
+        position: cellPosition,
       }
     })
 
@@ -480,14 +519,22 @@ const createPlannerStore = (
   duplicateTable: (id) => {
     const original = get().tables.find((t) => t.id === id)
     if (!original) return null
+    const hall = get().halls.find((h) => h.id === original.hallId)
+    const offsetPos = {
+      x: original.position.x + 0.5,
+      y: original.position.y + 0.5,
+    }
     const newId = crypto.randomUUID()
     const copy: Table = {
       ...original,
       id: newId,
-      position: {
-        x: original.position.x + 0.5,
-        y: original.position.y + 0.5,
-      },
+      position: hall
+        ? clampIntoHall(
+            offsetPos,
+            getEffectiveSize(original.size, original.rotation),
+            hall
+          )
+        : offsetPos,
     }
     set((state) => ({ tables: [...state.tables, copy] }))
     void insertTable(copy)
@@ -565,7 +612,22 @@ const createPlannerStore = (
   },
   updateHall: (id, patch) => {
     set((state) => ({
-      halls: state.halls.map((h) => (h.id === id ? { ...h, ...patch } : h)),
+      halls: state.halls.map((h) => {
+        if (h.id !== id) return h
+        const next = { ...h, ...patch }
+        // A size change on a polygon hall rescales the outline with it - the
+        // vertices span the AABB exactly, so the scaled bbox equals the new
+        // size. Covers the form's width/height fields and AI update_hall
+        // without any caller changes. Skipped when the patch replaces the
+        // geometry itself (setHallShape owns that path).
+        if (patch.size && h.geometry && !("geometry" in patch)) {
+          next.geometry = {
+            ...h.geometry,
+            vertices: scaleVertices(h.geometry.vertices, h.size, patch.size),
+          }
+        }
+        return next
+      }),
     }))
   },
   saveHall: (id) => {
@@ -582,6 +644,95 @@ const createPlannerStore = (
         // close) persist it; canvas drags still use updateHallPosition.
         pos_x: hall.position.x,
         pos_y: hall.position.y,
+        // Geometry too: a width/height edit rescales the outline (see
+        // updateHall), and preset+geometry landing together keeps the DB
+        // CHECK satisfied.
+        geometry: hall.geometry ?? null,
+      })
+    })
+  },
+  setHallShape: (id, next) => {
+    const hall = get().halls.find((h) => h.id === id)
+    if (!hall) return
+    // Entities are hall-local (world = hall.position + entity.position), so
+    // the normalize offset baked into `next.position` would visibly drag
+    // every entity along with the hall origin. Counter-shift them by the same
+    // offset (world-neutral), then re-clamp into the new outline; only the
+    // clamp is a real world-space move, which measurements must follow.
+    const offset = {
+      x: next.position.x - hall.position.x,
+      y: next.position.y - hall.position.y,
+    }
+    const moved: Array<{
+      kind: "tables" | "fixtures"
+      id: string
+      position: Position
+      delta: Position
+    }> = []
+    const rehome = (local: Position, size: Size) => {
+      const shifted = { x: local.x - offset.x, y: local.y - offset.y }
+      const position = clampRectIntoPolygon(
+        shifted,
+        size,
+        next.size,
+        next.geometry
+      )
+      return {
+        position,
+        delta: { x: position.x - shifted.x, y: position.y - shifted.y },
+      }
+    }
+    set((state) => ({
+      halls: state.halls.map((h) =>
+        h.id === id
+          ? {
+              ...h,
+              preset: next.preset,
+              size: next.size,
+              position: next.position,
+              geometry: next.geometry ?? undefined,
+            }
+          : h
+      ),
+      tables: state.tables.map((t) => {
+        if (t.hallId !== id) return t
+        const { position, delta } = rehome(
+          t.position,
+          getEffectiveSize(t.size, t.rotation)
+        )
+        if (position.x === t.position.x && position.y === t.position.y) return t
+        moved.push({ kind: "tables", id: t.id, position, delta })
+        return { ...t, position }
+      }),
+      fixtures: state.fixtures.map((f) => {
+        if (f.hallId !== id) return f
+        const { position, delta } = rehome(
+          f.position,
+          getEffectiveSize(f.size, f.rotation)
+        )
+        if (position.x === f.position.x && position.y === f.position.y) return f
+        moved.push({ kind: "fixtures", id: f.id, position, delta })
+        return { ...f, position }
+      }),
+    }))
+    const weddingId = useGlobalStore.getState().weddingId
+    for (const m of moved) {
+      if (m.kind === "tables")
+        void updateTablePos(m.id, m.position.x, m.position.y)
+      else void updateFixturePos(m.id, m.position.x, m.position.y)
+      if (weddingId && (m.delta.x !== 0 || m.delta.y !== 0))
+        useMeasuresStore
+          .getState()
+          .shiftMeasurementPoints(weddingId, m.id, m.delta.x, m.delta.y)
+    }
+    afterHallInsert(id, () => {
+      void updateHallRow(id, {
+        preset: next.preset,
+        width: next.size.width,
+        height: next.size.height,
+        pos_x: next.position.x,
+        pos_y: next.position.y,
+        geometry: next.geometry,
       })
     })
   },
@@ -805,10 +956,18 @@ const createPlannerStore = (
 
   addFixture: (fixture, position) => {
     const fixtureId = crypto.randomUUID()
+    const hall = get().halls.find((h) => h.id === fixture.hallId)
+    const requested = position ?? { x: 0, y: 0 }
     const newFixture: Fixture = {
       ...fixture,
       id: fixtureId,
-      position: position ?? { x: 0, y: 0 },
+      position: hall
+        ? clampIntoHall(
+            requested,
+            getEffectiveSize(fixture.size, fixture.rotation),
+            hall
+          )
+        : requested,
     }
     set((state) => ({ fixtures: [...state.fixtures, newFixture] }))
     afterHallInsert(newFixture.hallId, () => void insertFixture(newFixture))
@@ -860,14 +1019,22 @@ const createPlannerStore = (
   duplicateFixture: (id) => {
     const original = get().fixtures.find((f) => f.id === id)
     if (!original) return null
+    const hall = get().halls.find((h) => h.id === original.hallId)
+    const offsetPos = {
+      x: original.position.x + 0.5,
+      y: original.position.y + 0.5,
+    }
     const newId = crypto.randomUUID()
     const copy: Fixture = {
       ...original,
       id: newId,
-      position: {
-        x: original.position.x + 0.5,
-        y: original.position.y + 0.5,
-      },
+      position: hall
+        ? clampIntoHall(
+            offsetPos,
+            getEffectiveSize(original.size, original.rotation),
+            hall
+          )
+        : offsetPos,
     }
     set((state) => ({ fixtures: [...state.fixtures, copy] }))
     void insertFixture(copy)

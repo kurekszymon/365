@@ -1,6 +1,11 @@
-import type { Hall, HallPreset } from "@/stores/planner.store"
+import type { Geometry, Hall, HallPreset } from "@/stores/planner.store"
 import { supabase } from "@/lib/supabase"
-import { getWeddingId, hallRow, run } from "@/lib/sync/mutations/shared"
+import {
+  getWeddingId,
+  hallRow,
+  run,
+  withGeometry,
+} from "@/lib/sync/mutations/shared"
 
 export const insertHall = (hall: Hall): Promise<boolean> => {
   const weddingId = getWeddingId()
@@ -21,9 +26,13 @@ export const updateHallRow = (
     height?: number
     pos_x?: number
     pos_y?: number
+    geometry?: Geometry | null
   }
 ): Promise<boolean> =>
-  run("updateHallRow", supabase.from("halls").update(fields).eq("id", id))
+  run(
+    "updateHallRow",
+    supabase.from("halls").update(withGeometry(fields)).eq("id", id)
+  )
 
 export const updateHallPos = (
   id: string,

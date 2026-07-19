@@ -96,8 +96,7 @@ export const HallSurface = ({
           position: clampToHall(
             table.position,
             getEffectiveSize(table.size, table.rotation),
-            hall.size.width,
-            hall.size.height
+            hall
           ),
         }
       }),
@@ -114,8 +113,7 @@ export const HallSurface = ({
           position: clampToHall(
             fixture.position,
             getEffectiveSize(fixture.size, fixture.rotation),
-            hall.size.width,
-            hall.size.height
+            hall
           ),
         }
       }),

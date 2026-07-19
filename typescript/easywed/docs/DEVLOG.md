@@ -4,6 +4,7 @@
 
 ### 19.07
 
+- start working on custom hall geometry
 - change tl key from _import_ to _import guests_
 
 ### 18.07

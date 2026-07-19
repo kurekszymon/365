@@ -17,9 +17,10 @@ const HANDLE_R = 6
 const MIDPOINT_R = 4.5
 
 /**
- * Vertex editor for a custom-polygon entity, active while the panel view is
- * `shape.edit`. Renders on top of the halls inside the world wrapper, in the
- * target entity's hall-local frame:
+ * Vertex editor for a custom-polygon entity - a fixture's outline or a hall's
+ * floor plan - active while the panel view is `shape.edit`. Renders on top of
+ * the halls inside the world wrapper, in the target's hall-local frame (the
+ * hall itself edits at the hall origin):
  * - drag a round handle to move a vertex (grid-snapped via the canvas snap
  *   setting); the outline previews from local draft state and commits to the
  *   store (normalized + persisted) on release,
@@ -35,13 +36,24 @@ export const ShapeEditOverlay = ({
     s.view?.kind === "shape.edit" ? s.view : null
   )
   const openFixtureEdit = usePanelStore((s) => s.openFixtureEdit)
+  const openHallEdit = usePanelStore((s) => s.openHallEdit)
+  const isHall = view?.entityKind === "hall"
   const fixture = usePlannerStore((s) =>
-    view ? s.fixtures.find((f) => f.id === view.id) : undefined
+    view && view.entityKind === "fixture"
+      ? s.fixtures.find((f) => f.id === view.id)
+      : undefined
   )
   const hall = usePlannerStore((s) =>
-    s.halls.find((h) => h.id === fixture?.hallId)
+    view
+      ? s.halls.find((h) =>
+          view.entityKind === "hall"
+            ? h.id === view.id
+            : h.id === fixture?.hallId
+        )
+      : undefined
   )
   const setFixtureShape = usePlannerStore((s) => s.setFixtureShape)
+  const setHallShape = usePlannerStore((s) => s.setHallShape)
   const snapStep = useViewStore((s) => s.snapStep)
 
   // Non-null only while a handle drag is in flight - the outline renders from
@@ -56,48 +68,69 @@ export const ShapeEditOverlay = ({
   useEffect(() => {
     if (!view) return
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") openFixtureEdit(view.id)
+      if (e.key !== "Escape") return
+      if (view.entityKind === "hall") openHallEdit(view.id)
+      else openFixtureEdit(view.id)
     }
     document.addEventListener("keydown", onKeyDown)
     return () => document.removeEventListener("keydown", onKeyDown)
-  }, [view, openFixtureEdit])
+  }, [view, openFixtureEdit, openHallEdit])
 
   // The entity can vanish mid-edit (deleted via the AI chat); the Done
   // toolbar in Canvas still offers the way out.
-  if (!view || !fixture || !hall || !fixture.geometry) return null
+  const geometry = isHall ? hall?.geometry : fixture?.geometry
+  if (!view || !hall || !geometry || (!isHall && !fixture)) return null
 
-  const geometry = fixture.geometry
+  const size = isHall ? hall.size : fixture!.size
+  // Hall-local px offset of the edited entity's origin; the hall itself edits
+  // at the hall origin, so vertices are already in the hall's grid frame.
+  const origin = isHall ? { x: 0, y: 0 } : fixture!.position
   const vertices = draft ?? geometry.vertices
   const offset = hallScreenOffset(hall)
-  const left = offset.left + fixture.position.x * ppm
-  const top = offset.top + fixture.position.y * ppm
+  const left = offset.left + origin.x * ppm
+  const top = offset.top + origin.y * ppm
 
   const commit = (verts: Array<Position>) => {
     const normalized = normalizeGeometry(verts, geometry.closed)
-    setFixtureShape(fixture.id, {
-      shape: "polygon",
-      geometry: normalized.geometry,
-      size: normalized.size,
-      rotation: 0,
-      position: {
-        x: fixture.position.x + normalized.offset.x,
-        y: fixture.position.y + normalized.offset.y,
-      },
-    })
+    if (isHall) {
+      // The normalize offset moves the hall's world origin; setHallShape
+      // counter-shifts the hall's entities so they stay put on the canvas.
+      setHallShape(hall.id, {
+        preset: hall.preset,
+        geometry: normalized.geometry,
+        size: normalized.size,
+        position: {
+          x: hall.position.x + normalized.offset.x,
+          y: hall.position.y + normalized.offset.y,
+        },
+      })
+    } else {
+      setFixtureShape(fixture!.id, {
+        shape: "polygon",
+        geometry: normalized.geometry,
+        size: normalized.size,
+        rotation: 0,
+        position: {
+          x: fixture!.position.x + normalized.offset.x,
+          y: fixture!.position.y + normalized.offset.y,
+        },
+      })
+    }
     setDraft(null)
   }
 
   // Snap against the hall-local grid, not the vertex's object-local frame -
-  // the grid the user sees is anchored to the hall.
+  // the grid the user sees is anchored to the hall. (For the hall itself the
+  // two frames coincide.)
   const snapVertex = (v: Position): Position => {
     if (snapStep === "off") return v
     const abs = snapPositionToGrid(
-      { x: fixture.position.x + v.x, y: fixture.position.y + v.y },
+      { x: origin.x + v.x, y: origin.y + v.y },
       snapStep
     )
     return {
-      x: abs.x - fixture.position.x,
-      y: abs.y - fixture.position.y,
+      x: abs.x - origin.x,
+      y: abs.y - origin.y,
     }
   }
 
@@ -152,8 +185,8 @@ export const ShapeEditOverlay = ({
       data-no-pan
       className="absolute z-40 touch-none overflow-visible"
       style={{ left, top }}
-      width={Math.max(fixture.size.width * ppm, 1)}
-      height={Math.max(fixture.size.height * ppm, 1)}
+      width={Math.max(size.width * ppm, 1)}
+      height={Math.max(size.height * ppm, 1)}
     >
       {/* Live outline preview; pointer-events none so the entity below stays
           reachable through the fill. */}

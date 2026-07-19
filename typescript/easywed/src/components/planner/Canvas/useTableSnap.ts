@@ -119,11 +119,13 @@ export function useTableSnap({
     }
     const snapped =
       snapStep === "off" ? rawLocal : snapPositionToGrid(rawLocal, snapStep)
+    // The polygon-clamp fallback searches at the snap step so a pushed-out
+    // position stays grid-aligned.
     const next = clampToHall(
       snapped,
       size,
-      target.size.width,
-      target.size.height
+      target,
+      snapStep === "off" ? undefined : snapStep
     )
     const crossedHalls = target.id !== entity.hallId
 

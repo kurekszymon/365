@@ -95,6 +95,10 @@ const HallViewBase = ({
         zIndex: transform || raise ? 30 : undefined,
       }}
     >
+      {/* Floor + grid. For polygon halls the clip-path crops the ring/shadow
+          (and would crop children), so the border moves to the SVG outline
+          below and entities render in an unclipped sibling layer - a dragged
+          table crossing a notch must stay visible. */}
       <HallBackground
         hallWidth={widthPx}
         hallHeight={heightPx}
@@ -102,10 +106,42 @@ const HallViewBase = ({
         gridStyle={gridStyle}
         gridSpacing={gridSpacing}
         zoom={zoom}
+        geometry={hall.geometry}
         className={cn(
-          "absolute top-0 left-0 z-10 shadow-sm ring-1 ring-planner-hall/70",
-          isDropTarget && "ring-2 ring-planner-selected"
+          "absolute top-0 left-0 z-10",
+          !hall.geometry && "shadow-sm ring-1 ring-planner-hall/70",
+          !hall.geometry && isDropTarget && "ring-2 ring-planner-selected"
         )}
+      />
+
+      {hall.geometry && (
+        <svg
+          className="pointer-events-none absolute top-0 left-0 z-10 overflow-visible"
+          width={widthPx}
+          height={heightPx}
+          viewBox={`0 0 ${hall.size.width} ${hall.size.height}`}
+          preserveAspectRatio="none"
+        >
+          <polygon
+            points={hall.geometry.vertices
+              .map((v) => `${v.x},${v.y}`)
+              .join(" ")}
+            vectorEffect="non-scaling-stroke"
+            strokeWidth={isDropTarget ? 2 : 1}
+            className={cn(
+              "fill-none stroke-planner-hall/70",
+              isDropTarget && "stroke-planner-selected"
+            )}
+          />
+        </svg>
+      )}
+
+      {/* Entities, hall-marked like the floor so empty-floor clicks resolve
+          to the hall (deselect / context menu) exactly as before the split. */}
+      <div
+        data-canvas-element-kind="hall"
+        className="absolute top-0 left-0 z-10"
+        style={{ width: widthPx, height: heightPx }}
       >
         {tables.map((table) => (
           <DraggableTable
@@ -120,7 +156,7 @@ const HallViewBase = ({
         {fixtures.map((fixture) => (
           <DraggableFixture key={fixture.id} fixture={fixture} ppm={ppm} />
         ))}
-      </HallBackground>
+      </div>
 
       {!isMobile && (
         <>

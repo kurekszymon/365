@@ -15,9 +15,14 @@ export const ShapeEditToolbar = () => {
     s.view?.kind === "shape.edit" ? s.view : null
   )
   const openFixtureEdit = usePanelStore((s) => s.openFixtureEdit)
+  const openHallEdit = usePanelStore((s) => s.openHallEdit)
   const close = usePanelStore((s) => s.close)
-  const fixtureExists = usePlannerStore((s) =>
-    view ? s.fixtures.some((f) => f.id === view.id) : false
+  const entityExists = usePlannerStore((s) =>
+    view
+      ? view.entityKind === "hall"
+        ? s.halls.some((h) => h.id === view.id)
+        : s.fixtures.some((f) => f.id === view.id)
+      : false
   )
 
   if (!view) return null
@@ -37,8 +42,9 @@ export const ShapeEditToolbar = () => {
         size="sm"
         className="rounded-full"
         onClick={() => {
-          if (fixtureExists) openFixtureEdit(view.id)
-          else close()
+          if (!entityExists) close()
+          else if (view.entityKind === "hall") openHallEdit(view.id)
+          else openFixtureEdit(view.id)
         }}
       >
         <CheckIcon className="size-4" />

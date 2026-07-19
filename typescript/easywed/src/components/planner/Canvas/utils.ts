@@ -2,6 +2,7 @@ import type { CSSProperties } from "react"
 import type { GridSpacing, GridStyle } from "@/stores/view.store"
 import type { Hall, Position, Size } from "@/stores/planner.store"
 import { DEFAULT_HALL } from "@/stores/planner.store"
+import { clampRectIntoPolygon, pointInPolygon } from "@/lib/geometry"
 
 const NICE_INTERVALS: Array<Exclude<GridSpacing, "auto">> = [
   1, 2, 5, 10, 25, 50,
@@ -86,17 +87,17 @@ export const getInitials = (name: string) => {
 // anything that needs to clear the seat ring (e.g. the table toolbar offset).
 export const seatSizePx = (ppm: number) => clamp(ppm * 0.34, 12, 44)
 
+// Clamps an entity's AABB into a hall (hall-local coords). Polygon halls get
+// full containment: a position poking into a notch is pushed to the nearest
+// spot where the whole rect fits (see clampRectIntoPolygon). `snapStep`
+// aligns the fallback search with the caller's grid snapping.
 export const clampToHall = (
   pos: Position,
   tableSize: Size,
-  hallWidth: number,
-  hallHeight: number
-): Position => {
-  return {
-    x: clamp(pos.x, 0, hallWidth - tableSize.width),
-    y: clamp(pos.y, 0, hallHeight - tableSize.height),
-  }
-}
+  hall: Pick<Hall, "size" | "geometry">,
+  snapStep?: number
+): Position =>
+  clampRectIntoPolygon(pos, tableSize, hall.size, hall.geometry, snapStep)
 
 // ---------------------------------------------------------------------------
 // World space: all halls share one coordinate system (meters). A hall's
@@ -141,11 +142,19 @@ export const sortHallsByZ = (
   )
 }
 
-const inHall = (hall: Hall, p: Position): boolean =>
-  p.x >= hall.position.x &&
-  p.x <= hall.position.x + hall.size.width &&
-  p.y >= hall.position.y &&
-  p.y <= hall.position.y + hall.size.height
+const inHall = (hall: Hall, p: Position): boolean => {
+  const inAabb =
+    p.x >= hall.position.x &&
+    p.x <= hall.position.x + hall.size.width &&
+    p.y >= hall.position.y &&
+    p.y <= hall.position.y + hall.size.height
+  if (!inAabb || !hall.geometry) return inAabb
+  // Polygon halls: a point in the AABB can still sit in a cut-out notch.
+  return pointInPolygon(
+    { x: p.x - hall.position.x, y: p.y - hall.position.y },
+    hall.geometry.vertices
+  )
+}
 
 // The hall under a world-space point. When halls overlap the LAST one in
 // array order wins, matching paint order (later halls render on top).
@@ -157,6 +166,10 @@ export const hallAtPoint = (halls: Array<Hall>, p: Position): Hall | null => {
 }
 
 // Fallback drop target: the hall whose rect is closest to the point.
+// Deliberately AABB-based even for polygon halls: a drop inside a hall's own
+// notch misses hallAtPoint, lands here at distance 0, and the clamp then
+// pushes the entity inside the polygon - the right outcome without polygon
+// distance math.
 export const nearestHall = (halls: Array<Hall>, p: Position): Hall | null => {
   let best: Hall | null = null
   let bestD = Infinity

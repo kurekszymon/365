@@ -110,8 +110,7 @@ export const PlannerPrintView = () => {
         const local = clampToHall(
           table.position,
           getEffectiveSize(table.size, table.rotation),
-          hall.size.width,
-          hall.size.height
+          hall
         )
         return {
           ...table,
@@ -132,8 +131,7 @@ export const PlannerPrintView = () => {
         const local = clampToHall(
           f.position,
           getEffectiveSize(f.size, f.rotation),
-          hall.size.width,
-          hall.size.height
+          hall
         )
         return {
           ...f,
@@ -273,27 +271,55 @@ export const PlannerPrintView = () => {
           style={{ width: viewWidth * ppm, height: viewHeight * ppm }}
         >
           {halls.map((h) => (
-            <HallBackground
+            // Wrapper so the polygon outline and the hall label live outside
+            // the clipped floor (clip-path would crop a CSS border and could
+            // crop the label on shapes cut at the top-left).
+            <div
               key={h.id}
-              hallWidth={h.size.width * ppm}
-              hallHeight={h.size.height * ppm}
-              ppm={ppm}
-              gridStyle={includeGrid ? gridStyle : "off"}
-              gridSpacing={gridSpacing}
-              className={cn(
-                "absolute",
-                // The hall outline only frames full halls; cropping (fit) drops it.
-                showHallOutline &&
-                  !fitToContent &&
-                  "border border-planner-hall",
-                // Without the outline, render bare - no paper background, no border.
-                !showHallOutline && "bg-transparent"
-              )}
+              className="absolute"
               style={{
                 left: (h.position.x - originX) * ppm,
                 top: (h.position.y - originY) * ppm,
+                width: h.size.width * ppm,
+                height: h.size.height * ppm,
               }}
             >
+              <HallBackground
+                hallWidth={h.size.width * ppm}
+                hallHeight={h.size.height * ppm}
+                ppm={ppm}
+                gridStyle={includeGrid ? gridStyle : "off"}
+                gridSpacing={gridSpacing}
+                geometry={h.geometry}
+                className={cn(
+                  "absolute top-0 left-0",
+                  // The hall outline only frames full halls; cropping (fit) drops it.
+                  showHallOutline &&
+                    !fitToContent &&
+                    !h.geometry &&
+                    "border border-planner-hall",
+                  // Without the outline, render bare - no paper background, no border.
+                  !showHallOutline && "bg-transparent"
+                )}
+              />
+              {h.geometry && showHallOutline && !fitToContent && (
+                <svg
+                  className="pointer-events-none absolute top-0 left-0 overflow-visible"
+                  width={h.size.width * ppm}
+                  height={h.size.height * ppm}
+                  viewBox={`0 0 ${h.size.width} ${h.size.height}`}
+                  preserveAspectRatio="none"
+                >
+                  <polygon
+                    points={h.geometry.vertices
+                      .map((v) => `${v.x},${v.y}`)
+                      .join(" ")}
+                    vectorEffect="non-scaling-stroke"
+                    strokeWidth={1}
+                    className="fill-none stroke-planner-hall"
+                  />
+                </svg>
+              )}
               {halls.length > 1 && (
                 <span className="absolute top-1 left-1 text-[10px] font-medium text-gray-600">
                   {h.name.trim() ||
@@ -304,7 +330,7 @@ export const PlannerPrintView = () => {
                     ` · ${t("hall.floor_short", { floor: h.floor })}`}
                 </span>
               )}
-            </HallBackground>
+            </div>
           ))}
           {clampedTables.map((tbl) => (
             <TableVisual

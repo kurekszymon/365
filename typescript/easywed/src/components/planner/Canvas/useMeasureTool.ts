@@ -10,6 +10,7 @@ import {
 import type { WorldBounds } from "./utils"
 import type { Fixture, Hall, Position, Table } from "@/stores/planner.store"
 import type { MeasurementPoint } from "@/stores/measures.store"
+import { nearestPolygonBoundaryPoint } from "@/lib/geometry"
 import { getEffectiveSize } from "@/stores/planner.store"
 import { useMeasuresStore } from "@/stores/measures.store"
 
@@ -196,20 +197,34 @@ export function useMeasureTool({
       const hall = hallAtPoint(halls, { x: xM, y: yM })
       if (hall) {
         const wallThreshold = Math.max(0.3, 20 / ppm)
-        const left = hall.position.x
-        const top = hall.position.y
-        const right = left + hall.size.width
-        const bottom = top + hall.size.height
-        const dLeft = xM - left
-        const dRight = right - xM
-        const dTop = yM - top
-        const dBottom = bottom - yM
-        const minWall = Math.min(dLeft, dRight, dTop, dBottom)
-        if (minWall < wallThreshold) {
-          if (minWall === dLeft) return { x: left, y: yM }
-          if (minWall === dRight) return { x: right, y: yM }
-          if (minWall === dTop) return { x: xM, y: top }
-          return { x: xM, y: bottom }
+        if (hall.geometry) {
+          // Polygon halls: snap to the nearest point on the outline.
+          const local = {
+            x: xM - hall.position.x,
+            y: yM - hall.position.y,
+          }
+          const bp = nearestPolygonBoundaryPoint(local, hall.geometry.vertices)
+          if (Math.hypot(bp.x - local.x, bp.y - local.y) < wallThreshold)
+            return {
+              x: hall.position.x + bp.x,
+              y: hall.position.y + bp.y,
+            }
+        } else {
+          const left = hall.position.x
+          const top = hall.position.y
+          const right = left + hall.size.width
+          const bottom = top + hall.size.height
+          const dLeft = xM - left
+          const dRight = right - xM
+          const dTop = yM - top
+          const dBottom = bottom - yM
+          const minWall = Math.min(dLeft, dRight, dTop, dBottom)
+          if (minWall < wallThreshold) {
+            if (minWall === dLeft) return { x: left, y: yM }
+            if (minWall === dRight) return { x: right, y: yM }
+            if (minWall === dTop) return { x: xM, y: top }
+            return { x: xM, y: bottom }
+          }
         }
       }
 
