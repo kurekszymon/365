@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
-  clampRectIntoPolygon,
+  clampRectIntoHall,
   nearestPolygonBoundaryPoint,
   pointInPolygon,
   rectInsidePolygon,
@@ -67,37 +67,27 @@ describe("rectInsidePolygon", () => {
   })
 })
 
-describe("clampRectIntoPolygon", () => {
-  const hallSize = { width: 10, height: 10 }
+describe("clampRectIntoHall", () => {
+  const rectHall = { size: { width: 10, height: 10 } }
+  const lHall = { size: { width: 10, height: 10 }, geometry: lGeometry }
 
   it("plain AABB clamp when the hall has no geometry", () => {
     expect(
-      clampRectIntoPolygon(
-        { x: 11, y: -2 },
-        { width: 2, height: 2 },
-        hallSize,
-        null
-      )
+      clampRectIntoHall({ x: 11, y: -2 }, { width: 2, height: 2 }, rectHall)
     ).toEqual({ x: 8, y: 0 })
   })
 
   it("returns an already-valid position unchanged", () => {
     expect(
-      clampRectIntoPolygon(
-        { x: 1, y: 6 },
-        { width: 2, height: 2 },
-        hallSize,
-        lGeometry
-      )
+      clampRectIntoHall({ x: 1, y: 6 }, { width: 2, height: 2 }, lHall)
     ).toEqual({ x: 1, y: 6 })
   })
 
   it("pushes a rect out of the notch to the nearest valid spot", () => {
-    const pos = clampRectIntoPolygon(
+    const pos = clampRectIntoHall(
       { x: 7, y: 1 },
       { width: 2, height: 2 },
-      hallSize,
-      lGeometry
+      lHall
     )
     expect(rectInsidePolygon(pos, { width: 2, height: 2 }, L_SHAPE)).toBe(true)
     // Both escape routes (left leg at (3,1), below the notch at (7,5)) are
@@ -109,21 +99,15 @@ describe("clampRectIntoPolygon", () => {
   it("falls back to the AABB clamp when nothing fits", () => {
     // 9x9 can't fit in either leg of the L.
     expect(
-      clampRectIntoPolygon(
-        { x: 0, y: 0 },
-        { width: 9, height: 9 },
-        hallSize,
-        lGeometry
-      )
+      clampRectIntoHall({ x: 0, y: 0 }, { width: 9, height: 9 }, lHall)
     ).toEqual({ x: 0, y: 0 })
   })
 
   it("respects the caller's snap step", () => {
-    const pos = clampRectIntoPolygon(
+    const pos = clampRectIntoHall(
       { x: 7, y: 1 },
       { width: 2, height: 2 },
-      hallSize,
-      lGeometry,
+      lHall,
       0.5
     )
     expect(pos.x % 0.5).toBe(0)

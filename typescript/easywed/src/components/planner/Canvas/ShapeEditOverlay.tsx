@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { MIN_VERTICES, insertMidpoint, normalizeGeometry } from "./geometryEdit"
 import { snapPositionToGrid } from "./utils"
 import type { Hall, Position } from "@/stores/planner.store"
+import { polygonPoints } from "@/lib/geometry"
 import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { useViewStore } from "@/stores/view.store"
@@ -39,19 +40,12 @@ export const ShapeEditOverlay = ({
   const openHallEdit = usePanelStore((s) => s.openHallEdit)
   const isHall = view?.entityKind === "hall"
   const fixture = usePlannerStore((s) =>
-    view && view.entityKind === "fixture"
+    view?.entityKind === "fixture"
       ? s.fixtures.find((f) => f.id === view.id)
       : undefined
   )
-  const hall = usePlannerStore((s) =>
-    view
-      ? s.halls.find((h) =>
-          view.entityKind === "hall"
-            ? h.id === view.id
-            : h.id === fixture?.hallId
-        )
-      : undefined
-  )
+  const hallId = isHall ? view.id : fixture?.hallId
+  const hall = usePlannerStore((s) => s.halls.find((h) => h.id === hallId))
   const setFixtureShape = usePlannerStore((s) => s.setFixtureShape)
   const setHallShape = usePlannerStore((s) => s.setHallShape)
   const snapStep = useViewStore((s) => s.snapStep)
@@ -76,15 +70,24 @@ export const ShapeEditOverlay = ({
     return () => document.removeEventListener("keydown", onKeyDown)
   }, [view, openFixtureEdit, openHallEdit])
 
-  // The entity can vanish mid-edit (deleted via the AI chat); the Done
-  // toolbar in Canvas still offers the way out.
-  const geometry = isHall ? hall?.geometry : fixture?.geometry
-  if (!view || !hall || !geometry || (!isHall && !fixture)) return null
+  // The edited entity resolved to one shape: `origin` is its hall-local
+  // offset (the hall itself edits at the hall origin, so its vertices are
+  // already in the hall's grid frame). The entity can vanish mid-edit
+  // (deleted via the AI chat); the Done toolbar in Canvas offers the way out.
+  const target = isHall
+    ? hall?.geometry && {
+        geometry: hall.geometry,
+        size: hall.size,
+        origin: { x: 0, y: 0 },
+      }
+    : fixture?.geometry && {
+        geometry: fixture.geometry,
+        size: fixture.size,
+        origin: fixture.position,
+      }
+  if (!view || !hall || !target) return null
 
-  const size = isHall ? hall.size : fixture!.size
-  // Hall-local px offset of the edited entity's origin; the hall itself edits
-  // at the hall origin, so vertices are already in the hall's grid frame.
-  const origin = isHall ? { x: 0, y: 0 } : fixture!.position
+  const { geometry, origin, size } = target
   const vertices = draft ?? geometry.vertices
   const offset = hallScreenOffset(hall)
   const left = offset.left + origin.x * ppm
@@ -92,28 +95,26 @@ export const ShapeEditOverlay = ({
 
   const commit = (verts: Array<Position>) => {
     const normalized = normalizeGeometry(verts, geometry.closed)
+    const position = {
+      x: (isHall ? hall.position.x : origin.x) + normalized.offset.x,
+      y: (isHall ? hall.position.y : origin.y) + normalized.offset.y,
+    }
     if (isHall) {
       // The normalize offset moves the hall's world origin; setHallShape
       // counter-shifts the hall's entities so they stay put on the canvas.
-      setHallShape(hall.id, {
+      setHallShape(view.id, {
         preset: hall.preset,
         geometry: normalized.geometry,
         size: normalized.size,
-        position: {
-          x: hall.position.x + normalized.offset.x,
-          y: hall.position.y + normalized.offset.y,
-        },
+        position,
       })
     } else {
-      setFixtureShape(fixture!.id, {
+      setFixtureShape(view.id, {
         shape: "polygon",
         geometry: normalized.geometry,
         size: normalized.size,
         rotation: 0,
-        position: {
-          x: fixture!.position.x + normalized.offset.x,
-          y: fixture!.position.y + normalized.offset.y,
-        },
+        position,
       })
     }
     setDraft(null)
@@ -178,7 +179,7 @@ export const ShapeEditOverlay = ({
     return { edgeIndex: i, x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
   })
 
-  const points = vertices.map((v) => `${v.x * ppm},${v.y * ppm}`).join(" ")
+  const points = polygonPoints(vertices, ppm)
 
   return (
     <svg

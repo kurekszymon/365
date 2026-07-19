@@ -2,14 +2,16 @@ import { useMemo } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
 import { HallBackground } from "./Canvas/HallBackground"
+import { HallOutline } from "./Canvas/HallOutline"
 import { TableVisual } from "./Canvas/TableVisual"
 import { FixtureVisual } from "./Canvas/FixtureVisual"
 import { MeasureOverlay } from "./Canvas/MeasureOverlay"
-import { clampToHall, worldBoundsOf } from "./Canvas/utils"
+import { worldBoundsOf } from "./Canvas/utils"
 import { SEAT_MAX_OFFSET_M } from "./Canvas/seatLayout"
 import type { TFunction } from "i18next"
 import type { Guest } from "@/stores/planner.store"
 import type { GuestField } from "@/lib/export/guestsCsv"
+import { clampRectIntoHall } from "@/lib/geometry"
 import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { usePrintStore } from "@/stores/print.store"
@@ -107,7 +109,7 @@ export const PlannerPrintView = () => {
       tables.map((table) => {
         const hall = hallsById.get(table.hallId)
         if (!hall) return table
-        const local = clampToHall(
+        const local = clampRectIntoHall(
           table.position,
           getEffectiveSize(table.size, table.rotation),
           hall
@@ -128,7 +130,7 @@ export const PlannerPrintView = () => {
       fixtures.map((f) => {
         const hall = hallsById.get(f.hallId)
         if (!hall) return f
-        const local = clampToHall(
+        const local = clampRectIntoHall(
           f.position,
           getEffectiveSize(f.size, f.rotation),
           hall
@@ -303,22 +305,13 @@ export const PlannerPrintView = () => {
                 )}
               />
               {h.geometry && showHallOutline && !fitToContent && (
-                <svg
-                  className="pointer-events-none absolute top-0 left-0 overflow-visible"
-                  width={h.size.width * ppm}
-                  height={h.size.height * ppm}
-                  viewBox={`0 0 ${h.size.width} ${h.size.height}`}
-                  preserveAspectRatio="none"
-                >
-                  <polygon
-                    points={h.geometry.vertices
-                      .map((v) => `${v.x},${v.y}`)
-                      .join(" ")}
-                    vectorEffect="non-scaling-stroke"
-                    strokeWidth={1}
-                    className="fill-none stroke-planner-hall"
-                  />
-                </svg>
+                <HallOutline
+                  geometry={h.geometry}
+                  size={h.size}
+                  widthPx={h.size.width * ppm}
+                  heightPx={h.size.height * ppm}
+                  className="stroke-planner-hall"
+                />
               )}
               {halls.length > 1 && (
                 <span className="absolute top-1 left-1 text-[10px] font-medium text-gray-600">

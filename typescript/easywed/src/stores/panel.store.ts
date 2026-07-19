@@ -29,7 +29,7 @@ type Action = {
   openTablesBatchAdd: (position?: Position, hallId?: string) => void
   openTableEdit: (tableId: string) => void
   openFixtureEdit: (fixtureId: string) => void
-  openShapeEdit: (id: string, entityKind?: "fixture" | "hall") => void
+  openShapeEdit: (id: string, entityKind: "fixture" | "hall") => void
   openAddHub: () => void
   openAiChat: () => void
   select: (id: string | null) => void
@@ -55,7 +55,7 @@ export const usePanelStore = create<State & Action>((set) => ({
     set({ view: { kind: "fixture.edit", fixtureId }, selectedId: fixtureId }),
   // selectedId stays null: the selection ring + action buttons would overlap
   // the vertex handles.
-  openShapeEdit: (id, entityKind = "fixture") =>
+  openShapeEdit: (id, entityKind) =>
     set({
       view: { kind: "shape.edit", entityKind, id },
       selectedId: null,

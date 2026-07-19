@@ -14,7 +14,7 @@ import {
   usePlannerStore,
 } from "@/stores/planner.store"
 import { getSizeForShape } from "@/components/planner/EntityForms/fields/utils"
-import { clampToHall } from "@/components/planner/Canvas/utils"
+import { clampRectIntoHall } from "@/lib/geometry"
 import { useAiChatStore } from "@/stores/aiChat.store"
 import i18n from "@/i18n"
 
@@ -45,7 +45,7 @@ const clampPosition = (
   y: number,
   size: Size,
   rotation: TableRotation
-) => clampToHall({ x, y }, getEffectiveSize(size, rotation), hall)
+) => clampRectIntoHall({ x, y }, getEffectiveSize(size, rotation), hall)
 
 const fmt = (n: number) => n.toFixed(1)
 

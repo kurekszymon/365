@@ -1,8 +1,8 @@
 import type { CSSProperties } from "react"
 import type { GridSpacing, GridStyle } from "@/stores/view.store"
-import type { Hall, Position, Size } from "@/stores/planner.store"
+import type { Hall, Position } from "@/stores/planner.store"
 import { DEFAULT_HALL } from "@/stores/planner.store"
-import { clampRectIntoPolygon, pointInPolygon } from "@/lib/geometry"
+import { pointInPolygon } from "@/lib/geometry"
 
 const NICE_INTERVALS: Array<Exclude<GridSpacing, "auto">> = [
   1, 2, 5, 10, 25, 50,
@@ -87,18 +87,6 @@ export const getInitials = (name: string) => {
 // anything that needs to clear the seat ring (e.g. the table toolbar offset).
 export const seatSizePx = (ppm: number) => clamp(ppm * 0.34, 12, 44)
 
-// Clamps an entity's AABB into a hall (hall-local coords). Polygon halls get
-// full containment: a position poking into a notch is pushed to the nearest
-// spot where the whole rect fits (see clampRectIntoPolygon). `snapStep`
-// aligns the fallback search with the caller's grid snapping.
-export const clampToHall = (
-  pos: Position,
-  tableSize: Size,
-  hall: Pick<Hall, "size" | "geometry">,
-  snapStep?: number
-): Position =>
-  clampRectIntoPolygon(pos, tableSize, hall.size, hall.geometry, snapStep)
-
 // ---------------------------------------------------------------------------
 // World space: all halls share one coordinate system (meters). A hall's
 // `position` is its top-left corner in world space; entity positions stay
@@ -150,10 +138,7 @@ const inHall = (hall: Hall, p: Position): boolean => {
     p.y <= hall.position.y + hall.size.height
   if (!inAabb || !hall.geometry) return inAabb
   // Polygon halls: a point in the AABB can still sit in a cut-out notch.
-  return pointInPolygon(
-    { x: p.x - hall.position.x, y: p.y - hall.position.y },
-    hall.geometry.vertices
-  )
+  return pointInPolygon(hallLocalOf(p, hall), hall.geometry.vertices)
 }
 
 // The hall under a world-space point. When halls overlap the LAST one in

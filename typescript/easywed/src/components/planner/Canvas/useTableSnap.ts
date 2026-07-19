@@ -1,14 +1,10 @@
 import { useDndMonitor } from "@dnd-kit/core"
 import { useState } from "react"
 import { useShallow } from "zustand/react/shallow"
-import {
-  clampToHall,
-  hallAtPoint,
-  nearestHall,
-  snapPositionToGrid,
-} from "./utils"
+import { hallAtPoint, nearestHall, snapPositionToGrid } from "./utils"
 import type { Fixture, Hall, Position, Table } from "@/stores/planner.store"
 import type { SnapStep } from "@/stores/view.store"
+import { clampRectIntoHall } from "@/lib/geometry"
 import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
 import { useMeasuresStore } from "@/stores/measures.store"
 
@@ -121,7 +117,7 @@ export function useTableSnap({
       snapStep === "off" ? rawLocal : snapPositionToGrid(rawLocal, snapStep)
     // The polygon-clamp fallback searches at the snap step so a pushed-out
     // position stays grid-aligned.
-    const next = clampToHall(
+    const next = clampRectIntoHall(
       snapped,
       size,
       target,

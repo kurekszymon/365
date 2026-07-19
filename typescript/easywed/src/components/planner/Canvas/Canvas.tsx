@@ -30,6 +30,7 @@ import {
   nearestHall,
   snapPositionToGrid,
   sortHallsByZ,
+  worldBoundsOf,
 } from "./utils"
 import { useWorldGeometry } from "./useWorldGeometry"
 import { useCanvasPan } from "./useCanvasPan"
@@ -163,27 +164,18 @@ export const Canvas = () => {
   // mode can start with the shape half hidden behind the sidebar or off-screen.
   // Keyed on the target id: the one-time jump per entity, not a camera lock -
   // the user can still pan/zoom freely while editing.
-  const shapeEditId = usePanelStore((state) =>
-    state.view?.kind === "shape.edit" ? state.view.id : null
-  )
-  const shapeEditKind = usePanelStore((state) =>
-    state.view?.kind === "shape.edit" ? state.view.entityKind : null
+  const shapeEditView = usePanelStore((state) =>
+    state.view?.kind === "shape.edit" ? state.view : null
   )
   useEffect(() => {
-    if (!shapeEditId) return
+    if (!shapeEditView) return
     const { fixtures, halls: allHalls } = usePlannerStore.getState()
     let rect: WorldBounds | null = null
-    if (shapeEditKind === "hall") {
-      const hall = allHalls.find((h) => h.id === shapeEditId)
-      if (hall)
-        rect = {
-          x: hall.position.x,
-          y: hall.position.y,
-          width: hall.size.width,
-          height: hall.size.height,
-        }
+    if (shapeEditView.entityKind === "hall") {
+      const hall = allHalls.find((h) => h.id === shapeEditView.id)
+      if (hall) rect = worldBoundsOf([hall])
     } else {
-      const fixture = fixtures.find((f) => f.id === shapeEditId)
+      const fixture = fixtures.find((f) => f.id === shapeEditView.id)
       const hall = fixture
         ? allHalls.find((h) => h.id === fixture.hallId)
         : undefined
@@ -200,7 +192,7 @@ export const Canvas = () => {
     if (!fitted) return
     setZoom(fitted.zoom)
     setPan(fitted.pan)
-  }, [shapeEditId, shapeEditKind, fitRect, setZoom, setPan])
+  }, [shapeEditView, fitRect, setZoom, setPan])
 
   // Resolves a world-space point to a drop hall (under the point, else the
   // nearest one) and that hall's local coords, clamped inside it. This is how

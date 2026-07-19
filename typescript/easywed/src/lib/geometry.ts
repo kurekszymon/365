@@ -1,9 +1,4 @@
-import type {
-  Geometry,
-  HallPreset,
-  Position,
-  Size,
-} from "@/stores/planner.store"
+import type { Hall, HallPreset, Position, Size } from "@/stores/planner.store"
 
 // Polygon math shared by the planner store and the canvas. Lives in lib/ (not
 // Canvas/) because the store must not import from components. All coordinates
@@ -12,9 +7,21 @@ import type {
 
 const EPS = 1e-9
 
-// Vertices are persisted as JSONB - round to mm so derived vertices don't
-// store 15-decimal floats (same rule as Canvas/geometryEdit.ts).
-const round3 = (n: number) => Math.round(n * 1000) / 1000
+// Vertices (and positions derived from them) are persisted as JSONB - round
+// to mm so a drag doesn't store 15-decimal floats.
+export const round3 = (n: number) => Math.round(n * 1000) / 1000
+
+// SVG points attribute for a vertex list, optionally scaled (e.g. by ppm).
+export const polygonPoints = (vertices: Array<Position>, scale = 1): string =>
+  vertices.map((v) => `${v.x * scale},${v.y * scale}`).join(" ")
+
+// The 4 corners of an axis-aligned rect footprint, clockwise from top-left.
+export const rectVertices = (size: Size): Array<Position> => [
+  { x: 0, y: 0 },
+  { x: size.width, y: 0 },
+  { x: size.width, y: size.height },
+  { x: 0, y: size.height },
+]
 
 // Even-odd ray cast; points on the boundary count as inside so an entity
 // flush against a wall isn't rejected.
@@ -54,7 +61,7 @@ const orient = (a: Position, b: Position, c: Position): number => {
 
 // Proper crossing only: shared endpoints and collinear touches don't count,
 // so a rect edge sliding along a polygon wall isn't treated as escaping.
-export const segmentsIntersect = (
+const segmentsIntersect = (
   a1: Position,
   a2: Position,
   b1: Position,
@@ -107,25 +114,28 @@ export const rectInsidePolygon = (
 const DEFAULT_CLAMP_STEP = 0.25
 
 /**
- * Clamps an entity's AABB into a hall. Without geometry this is the classic
- * axis clamp into the hall rect (the historical behavior). With geometry, a
- * candidate that already fits the polygon is returned as-is; otherwise the
- * valid position range is grid-searched at `step` and the fitting position
- * nearest the candidate wins (row-major scan order breaks ties, so results
- * are deterministic). If nothing fits - the entity is larger than every
- * pocket of the polygon - the plain AABB clamp is returned, mirroring how
- * oversized entities already overflow rectangular halls today.
+ * Clamps an entity's AABB into a hall (hall-local coords) - the single
+ * containment entry point shared by the store, the canvas, and the AI tools.
+ * Without geometry this is the classic axis clamp into the hall rect (the
+ * historical behavior). With geometry, a candidate that already fits the
+ * polygon is returned as-is; otherwise the valid position range is
+ * grid-searched at `step` (pass the caller's snap step so results stay
+ * grid-aligned) and the fitting position nearest the candidate wins
+ * (row-major scan order breaks ties, so results are deterministic). If
+ * nothing fits - the entity is larger than every pocket of the polygon -
+ * the plain AABB clamp is returned, mirroring how oversized entities
+ * already overflow rectangular halls today.
  *
  * Entities are judged by their AABB even when they have their own polygon
  * geometry, matching the fixture stance where `size` drives all clamp logic.
  */
-export const clampRectIntoPolygon = (
+export const clampRectIntoHall = (
   pos: Position,
   size: Size,
-  hallSize: Size,
-  geometry: Geometry | null | undefined,
+  hall: Pick<Hall, "size" | "geometry">,
   step: number = DEFAULT_CLAMP_STEP
 ): Position => {
+  const { size: hallSize, geometry } = hall
   const maxX = Math.max(0, hallSize.width - size.width)
   const maxY = Math.max(0, hallSize.height - size.height)
   const clamped = {
@@ -135,11 +145,10 @@ export const clampRectIntoPolygon = (
   if (!geometry) return clamped
   if (rectInsidePolygon(clamped, size, geometry.vertices)) return clamped
 
-  const s = step > 0 ? step : DEFAULT_CLAMP_STEP
   let best: Position | null = null
   let bestD = Infinity
-  for (let y = 0; y <= maxY + EPS; y += s) {
-    for (let x = 0; x <= maxX + EPS; x += s) {
+  for (let y = 0; y <= maxY + EPS; y += step) {
+    for (let x = 0; x <= maxX + EPS; x += step) {
       const candidate = {
         x: round3(Math.min(x, maxX)),
         y: round3(Math.min(y, maxY)),
@@ -156,7 +165,7 @@ export const clampRectIntoPolygon = (
 }
 
 // Nearest point on the polygon's boundary to `p` - the measure tool's wall
-// snap for polygon halls (rect halls keep their four-wall special case).
+// snap (rect halls go through it too, via their 4 corner vertices).
 export const nearestPolygonBoundaryPoint = (
   p: Position,
   vertices: Array<Position>
@@ -231,11 +240,6 @@ export const verticesForHallPreset = (
         { x: 0, y: h },
       ]
     case "custom":
-      return [
-        { x: 0, y: 0 },
-        { x: w, y: 0 },
-        { x: w, y: h },
-        { x: 0, y: h },
-      ]
+      return rectVertices(size)
   }
 }

@@ -28,8 +28,9 @@ import {
   updateTableSeats,
 } from "@/lib/sync/mutations"
 import {
-  clampRectIntoPolygon,
+  clampRectIntoHall,
   rectInsidePolygon,
+  round3,
   scaleVertices,
 } from "@/lib/geometry"
 import { useGlobalStore } from "@/stores/global.store"
@@ -314,11 +315,88 @@ const afterHallInsert = (hallId: string, fn: () => void) => {
   })
 }
 
-// Store-local clamp of an entity rect into a hall (hall-local coords),
-// polygon-aware for non-rectangular halls. The canvas' clampToHall in
-// Canvas/utils.ts delegates to the same lib helper.
-const clampIntoHall = (pos: Position, size: Size, hall: Hall): Position =>
-  clampRectIntoPolygon(pos, size, hall.size, hall.geometry)
+// Clamps a candidate position into its target hall - the containment
+// guarantee shared by every store-level insert/duplicate path (context-menu
+// add, AddHub, paste, AI, duplicate offsets). The hall can be missing
+// mid-delete; the position then passes through untouched.
+const placeInHall = (
+  halls: Array<Hall>,
+  hallId: string,
+  pos: Position,
+  size: Size,
+  rotation: TableRotation
+): Position => {
+  const hall = halls.find((h) => h.id === hallId)
+  return hall
+    ? clampRectIntoHall(pos, getEffectiveSize(size, rotation), hall)
+    : pos
+}
+
+// An entity repositioned by a bulk hall operation (outline change, hall
+// deletion): `position` is the new hall-local spot to persist, `delta` the
+// world-space move that anchored measurements must follow.
+type MovedEntity = {
+  kind: "tables" | "fixtures"
+  id: string
+  position: Position
+  delta: Position
+}
+
+// Maps a hall's tables/fixtures through `place` (new hall-local position +
+// world-space delta), collecting entities that need persistence into `moved`.
+// With `newHallId` every entity is collected (the hall reassignment must be
+// written even when the position is unchanged) and re-stamped; without it,
+// entities whose position didn't change are left untouched.
+const rehomeHallEntities = (
+  state: State,
+  hallId: string,
+  place: (
+    local: Position,
+    size: Size
+  ) => { position: Position; delta: Position },
+  newHallId?: string
+) => {
+  const moved: Array<MovedEntity> = []
+  const rehome = <T extends Table | Fixture>(
+    kind: MovedEntity["kind"],
+    entities: Array<T>
+  ): Array<T> =>
+    entities.map((e) => {
+      if (e.hallId !== hallId) return e
+      const { position, delta } = place(
+        e.position,
+        getEffectiveSize(e.size, e.rotation)
+      )
+      if (
+        !newHallId &&
+        position.x === e.position.x &&
+        position.y === e.position.y
+      )
+        return e
+      moved.push({ kind, id: e.id, position, delta })
+      return { ...e, position, hallId: newHallId ?? e.hallId }
+    })
+  return {
+    tables: rehome("tables", state.tables),
+    fixtures: rehome("fixtures", state.fixtures),
+    moved,
+  }
+}
+
+// Persists rehomed entity positions (optionally reassigning their hall) and
+// shifts their anchored measurements (world coords) by each world delta.
+const persistMoved = (moved: Array<MovedEntity>, targetHallId?: string) => {
+  const weddingId = useGlobalStore.getState().weddingId
+  for (const m of moved) {
+    if (m.kind === "tables")
+      void updateTablePos(m.id, m.position.x, m.position.y, targetHallId)
+    else void updateFixturePos(m.id, m.position.x, m.position.y, targetHallId)
+    if (weddingId && (m.delta.x !== 0 || m.delta.y !== 0))
+      useMeasuresStore
+        .getState()
+        .shiftMeasurementPoints(weddingId, m.id, m.delta.x, m.delta.y)
+  }
+}
 
 const createPlannerStore = (
   set: (
@@ -336,18 +414,16 @@ const createPlannerStore = (
 
   addTable: (table, guestIds = [], position) => {
     const tableId = crypto.randomUUID()
-    const hall = get().halls.find((h) => h.id === table.hallId)
-    const requested = position ?? { x: 0, y: 0 }
     const newTable: Table = {
       ...table,
       id: tableId,
-      position: hall
-        ? clampIntoHall(
-            requested,
-            getEffectiveSize(table.size, table.rotation),
-            hall
-          )
-        : requested,
+      position: placeInHall(
+        get().halls,
+        table.hallId,
+        position ?? { x: 0, y: 0 },
+        table.size,
+        table.rotation
+      ),
     }
     set((state) => ({
       tables: [...state.tables, newTable],
@@ -519,22 +595,17 @@ const createPlannerStore = (
   duplicateTable: (id) => {
     const original = get().tables.find((t) => t.id === id)
     if (!original) return null
-    const hall = get().halls.find((h) => h.id === original.hallId)
-    const offsetPos = {
-      x: original.position.x + 0.5,
-      y: original.position.y + 0.5,
-    }
     const newId = crypto.randomUUID()
     const copy: Table = {
       ...original,
       id: newId,
-      position: hall
-        ? clampIntoHall(
-            offsetPos,
-            getEffectiveSize(original.size, original.rotation),
-            hall
-          )
-        : offsetPos,
+      position: placeInHall(
+        get().halls,
+        original.hallId,
+        { x: original.position.x + 0.5, y: original.position.y + 0.5 },
+        original.size,
+        original.rotation
+      ),
     }
     set((state) => ({ tables: [...state.tables, copy] }))
     void insertTable(copy)
@@ -619,8 +690,15 @@ const createPlannerStore = (
         // vertices span the AABB exactly, so the scaled bbox equals the new
         // size. Covers the form's width/height fields and AI update_hall
         // without any caller changes. Skipped when the patch replaces the
-        // geometry itself (setHallShape owns that path).
-        if (patch.size && h.geometry && !("geometry" in patch)) {
+        // geometry itself (setHallShape owns that path) and on no-op sizes,
+        // so vertex identity doesn't churn on every form keystroke.
+        if (
+          patch.size &&
+          h.geometry &&
+          !("geometry" in patch) &&
+          (patch.size.width !== h.size.width ||
+            patch.size.height !== h.size.height)
+        ) {
           next.geometry = {
             ...h.geometry,
             vertices: scaleVertices(h.geometry.vertices, h.size, patch.size),
@@ -663,68 +741,42 @@ const createPlannerStore = (
       x: next.position.x - hall.position.x,
       y: next.position.y - hall.position.y,
     }
-    const moved: Array<{
-      kind: "tables" | "fixtures"
-      id: string
-      position: Position
-      delta: Position
-    }> = []
-    const rehome = (local: Position, size: Size) => {
-      const shifted = { x: local.x - offset.x, y: local.y - offset.y }
-      const position = clampRectIntoPolygon(
-        shifted,
-        size,
-        next.size,
-        next.geometry
-      )
+    const target = { size: next.size, geometry: next.geometry ?? undefined }
+    const place = (local: Position, size: Size) => {
+      // mm-round the counter-shift (the offset is mm-rounded, the local
+      // position may not be) so persisted positions don't grow float dust;
+      // a zero offset passes positions through untouched.
+      const shifted =
+        offset.x === 0 && offset.y === 0
+          ? local
+          : { x: round3(local.x - offset.x), y: round3(local.y - offset.y) }
+      const position = clampRectIntoHall(shifted, size, target)
       return {
         position,
         delta: { x: position.x - shifted.x, y: position.y - shifted.y },
       }
     }
-    set((state) => ({
-      halls: state.halls.map((h) =>
-        h.id === id
-          ? {
-              ...h,
-              preset: next.preset,
-              size: next.size,
-              position: next.position,
-              geometry: next.geometry ?? undefined,
-            }
-          : h
-      ),
-      tables: state.tables.map((t) => {
-        if (t.hallId !== id) return t
-        const { position, delta } = rehome(
-          t.position,
-          getEffectiveSize(t.size, t.rotation)
-        )
-        if (position.x === t.position.x && position.y === t.position.y) return t
-        moved.push({ kind: "tables", id: t.id, position, delta })
-        return { ...t, position }
-      }),
-      fixtures: state.fixtures.map((f) => {
-        if (f.hallId !== id) return f
-        const { position, delta } = rehome(
-          f.position,
-          getEffectiveSize(f.size, f.rotation)
-        )
-        if (position.x === f.position.x && position.y === f.position.y) return f
-        moved.push({ kind: "fixtures", id: f.id, position, delta })
-        return { ...f, position }
-      }),
-    }))
-    const weddingId = useGlobalStore.getState().weddingId
-    for (const m of moved) {
-      if (m.kind === "tables")
-        void updateTablePos(m.id, m.position.x, m.position.y)
-      else void updateFixturePos(m.id, m.position.x, m.position.y)
-      if (weddingId && (m.delta.x !== 0 || m.delta.y !== 0))
-        useMeasuresStore
-          .getState()
-          .shiftMeasurementPoints(weddingId, m.id, m.delta.x, m.delta.y)
-    }
+    let moved: Array<MovedEntity> = []
+    set((state) => {
+      const rehomed = rehomeHallEntities(state, id, place)
+      moved = rehomed.moved
+      return {
+        halls: state.halls.map((h) =>
+          h.id === id
+            ? {
+                ...h,
+                preset: next.preset,
+                size: next.size,
+                position: next.position,
+                geometry: next.geometry ?? undefined,
+              }
+            : h
+        ),
+        tables: rehomed.tables,
+        fixtures: rehomed.fixtures,
+      }
+    })
+    persistMoved(moved)
     afterHallInsert(id, () => {
       void updateHallRow(id, {
         preset: next.preset,
@@ -752,14 +804,6 @@ const createPlannerStore = (
     if (contents.kind === "move") {
       const target = state.halls.find((h) => h.id === contents.targetHallId)
       if (!target || target.id === id) return
-      const moved: Array<{
-        kind: "tables" | "fixtures"
-        id: string
-        position: Position
-        // World-space delta of the move, so measurements anchored to the
-        // entity can follow (they live in world coords).
-        delta: Position
-      }> = []
       // Where a moved entity lands in the target hall. When its world
       // position already lies inside the target (overlapping/adjacent
       // halls), keep it - the entity doesn't visibly jump and measurements
@@ -782,7 +826,7 @@ const createPlannerStore = (
           worldLocal.x <= target.size.width &&
           worldLocal.y >= 0 &&
           worldLocal.y <= target.size.height
-        const position = clampIntoHall(
+        const position = clampRectIntoHall(
           insideTarget ? worldLocal : local,
           size,
           target
@@ -795,38 +839,18 @@ const createPlannerStore = (
           },
         }
       }
-      set((s) => ({
-        halls: s.halls.filter((h) => h.id !== id),
-        hallZOrder: s.hallZOrder.filter((x) => x !== id),
-        tables: s.tables.map((t) => {
-          if (t.hallId !== id) return t
-          const { position, delta } = relocate(
-            t.position,
-            getEffectiveSize(t.size, t.rotation)
-          )
-          moved.push({ kind: "tables", id: t.id, position, delta })
-          return { ...t, hallId: target.id, position }
-        }),
-        fixtures: s.fixtures.map((f) => {
-          if (f.hallId !== id) return f
-          const { position, delta } = relocate(
-            f.position,
-            getEffectiveSize(f.size, f.rotation)
-          )
-          moved.push({ kind: "fixtures", id: f.id, position, delta })
-          return { ...f, hallId: target.id, position }
-        }),
-      }))
-      const movedWeddingId = useGlobalStore.getState().weddingId
-      for (const m of moved) {
-        if (m.kind === "tables")
-          void updateTablePos(m.id, m.position.x, m.position.y, target.id)
-        else void updateFixturePos(m.id, m.position.x, m.position.y, target.id)
-        if (movedWeddingId && (m.delta.x !== 0 || m.delta.y !== 0))
-          useMeasuresStore
-            .getState()
-            .shiftMeasurementPoints(movedWeddingId, m.id, m.delta.x, m.delta.y)
-      }
+      let moved: Array<MovedEntity> = []
+      set((s) => {
+        const rehomed = rehomeHallEntities(s, id, relocate, target.id)
+        moved = rehomed.moved
+        return {
+          halls: s.halls.filter((h) => h.id !== id),
+          hallZOrder: s.hallZOrder.filter((x) => x !== id),
+          tables: rehomed.tables,
+          fixtures: rehomed.fixtures,
+        }
+      })
+      persistMoved(moved, target.id)
     } else {
       const tableIds = state.tables
         .filter((t) => t.hallId === id)
@@ -956,18 +980,16 @@ const createPlannerStore = (
 
   addFixture: (fixture, position) => {
     const fixtureId = crypto.randomUUID()
-    const hall = get().halls.find((h) => h.id === fixture.hallId)
-    const requested = position ?? { x: 0, y: 0 }
     const newFixture: Fixture = {
       ...fixture,
       id: fixtureId,
-      position: hall
-        ? clampIntoHall(
-            requested,
-            getEffectiveSize(fixture.size, fixture.rotation),
-            hall
-          )
-        : requested,
+      position: placeInHall(
+        get().halls,
+        fixture.hallId,
+        position ?? { x: 0, y: 0 },
+        fixture.size,
+        fixture.rotation
+      ),
     }
     set((state) => ({ fixtures: [...state.fixtures, newFixture] }))
     afterHallInsert(newFixture.hallId, () => void insertFixture(newFixture))
@@ -1019,22 +1041,17 @@ const createPlannerStore = (
   duplicateFixture: (id) => {
     const original = get().fixtures.find((f) => f.id === id)
     if (!original) return null
-    const hall = get().halls.find((h) => h.id === original.hallId)
-    const offsetPos = {
-      x: original.position.x + 0.5,
-      y: original.position.y + 0.5,
-    }
     const newId = crypto.randomUUID()
     const copy: Fixture = {
       ...original,
       id: newId,
-      position: hall
-        ? clampIntoHall(
-            offsetPos,
-            getEffectiveSize(original.size, original.rotation),
-            hall
-          )
-        : offsetPos,
+      position: placeInHall(
+        get().halls,
+        original.hallId,
+        { x: original.position.x + 0.5, y: original.position.y + 0.5 },
+        original.size,
+        original.rotation
+      ),
     }
     set((state) => ({ fixtures: [...state.fixtures, copy] }))
     void insertFixture(copy)

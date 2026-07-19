@@ -3,6 +3,7 @@ import { useDraggable } from "@dnd-kit/core"
 import { GripVerticalIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { HallBackground } from "./HallBackground"
+import { HallOutline } from "./HallOutline"
 import { DraggableTable } from "./DraggableTable"
 import { DraggableFixture } from "./DraggableFixture"
 import { DimensionLabel } from "./DimensionLabel"
@@ -115,25 +116,17 @@ const HallViewBase = ({
       />
 
       {hall.geometry && (
-        <svg
-          className="pointer-events-none absolute top-0 left-0 z-10 overflow-visible"
-          width={widthPx}
-          height={heightPx}
-          viewBox={`0 0 ${hall.size.width} ${hall.size.height}`}
-          preserveAspectRatio="none"
-        >
-          <polygon
-            points={hall.geometry.vertices
-              .map((v) => `${v.x},${v.y}`)
-              .join(" ")}
-            vectorEffect="non-scaling-stroke"
-            strokeWidth={isDropTarget ? 2 : 1}
-            className={cn(
-              "fill-none stroke-planner-hall/70",
-              isDropTarget && "stroke-planner-selected"
-            )}
-          />
-        </svg>
+        <HallOutline
+          geometry={hall.geometry}
+          size={hall.size}
+          widthPx={widthPx}
+          heightPx={heightPx}
+          strokeWidth={isDropTarget ? 2 : 1}
+          className={cn(
+            "stroke-planner-hall/70",
+            isDropTarget && "stroke-planner-selected"
+          )}
+        />
       )}
 
       {/* Entities, hall-marked like the floor so empty-floor clicks resolve

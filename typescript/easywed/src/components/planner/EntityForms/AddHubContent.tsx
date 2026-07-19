@@ -9,12 +9,12 @@ import {
   PresentationIcon,
   ShapesIcon,
 } from "lucide-react"
-import { clampToHall } from "../Canvas/utils"
 import { defaultPolygonVertices } from "../Canvas/geometryEdit"
 import { AddCard } from "./AddCard"
 import { FIXTURE_PRESETS, TABLE_PRESETS } from "./addPresets"
 import type { FixtureIcon, FixturePreset, TablePreset } from "./addPresets"
 import type { Size } from "@/stores/planner.store"
+import { clampRectIntoHall } from "@/lib/geometry"
 import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { Button } from "@/components/ui/button"
@@ -84,7 +84,7 @@ export const AddHubContent = ({
     const dims = targetHall.size
     // For a polygon hall whose AABB center falls in a cut-out (e.g. the
     // U-shape notch), the clamp relocates to the nearest spot that fits.
-    return clampToHall(
+    return clampRectIntoHall(
       {
         x: dims.width / 2 - size.width / 2,
         y: dims.height / 2 - size.height / 2,
