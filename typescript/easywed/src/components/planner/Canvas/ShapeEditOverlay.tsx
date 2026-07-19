@@ -181,8 +181,7 @@ export const ShapeEditOverlay = ({
       y: drag.startVertex.y + (e.clientY - drag.startClient.y) / ppm,
     })
     const prev = draftRef.current
-    if (prev)
-      updateDraft(prev.map((v, i) => (i === drag.index ? moved : v)))
+    if (prev) updateDraft(prev.map((v, i) => (i === drag.index ? moved : v)))
   }
 
   const removeVertex = (index: number) => {
