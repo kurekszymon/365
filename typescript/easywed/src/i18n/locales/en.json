@@ -477,7 +477,7 @@
   "export.pdf.wedding_date": "Wedding date: {{date}}",
   "export.pdf.generated_on": "Generated {{date}}",
 
-  "import": "Import",
+  "import.guests": "Import guests",
   "import.format.guests": "Guests (CSV / Excel)",
 
   "planner.back": "Back",

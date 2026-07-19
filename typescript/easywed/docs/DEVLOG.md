@@ -2,6 +2,10 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 19.07
+
+- change tl key from _import_ to _import guests_
+
 ### 18.07
 
 - TODO: add custom geometry for halls

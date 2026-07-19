@@ -19,13 +19,13 @@ export const ImportHeader = () => {
       <TooltipTrigger asChild>
         <Button
           variant="outline"
-          aria-label={t("import")}
+          aria-label={t("import.guests")}
           onClick={() => open("Guest.Import")}
         >
           <UploadIcon />
         </Button>
       </TooltipTrigger>
-      <TooltipContent>{t("import")}</TooltipContent>
+      <TooltipContent>{t("import.guests")}</TooltipContent>
     </Tooltip>
   )
 }

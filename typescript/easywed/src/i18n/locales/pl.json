@@ -495,7 +495,7 @@
   "export.pdf.wedding_date": "Data ślubu: {{date}}",
   "export.pdf.generated_on": "Wygenerowano {{date}}",
 
-  "import": "Import",
+  "import.guests": "Import gości",
   "import.format.guests": "Goście (CSV / Excel)",
 
   "planner.back": "Wróć",
