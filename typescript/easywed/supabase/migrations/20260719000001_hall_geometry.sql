@@ -30,6 +30,42 @@ alter table public.halls
     or (preset = 'rectangle' and geometry is null)
   );
 
+-- Backport the same explicit `geometry is not null` guard to the sibling
+-- tables/fixtures constraints from 20260531000001. Without it a 'custom' /
+-- 'polygon' row carrying SQL NULL geometry slips through: jsonb_typeof(null) is
+-- SQL NULL, so the whole conjunction is UNKNOWN, which Postgres treats as a
+-- satisfied CHECK. The guard forces such rows down the rejecting `shape <> ...`
+-- branch instead.
+alter table public.tables drop constraint tables_geometry_required_for_custom;
+alter table public.tables
+  add constraint tables_geometry_required_for_custom
+  check (
+    (
+      shape = 'custom'
+      and geometry is not null
+      and jsonb_typeof(geometry) = 'object'
+      and jsonb_typeof(geometry->'vertices') = 'array'
+      and jsonb_array_length(geometry->'vertices') > 0
+      and jsonb_typeof(geometry->'closed') = 'boolean'
+    )
+    or (shape <> 'custom')
+  );
+
+alter table public.fixtures drop constraint fixtures_geometry_required_for_polygon;
+alter table public.fixtures
+  add constraint fixtures_geometry_required_for_polygon
+  check (
+    (
+      shape = 'polygon'
+      and geometry is not null
+      and jsonb_typeof(geometry) = 'object'
+      and jsonb_typeof(geometry->'vertices') = 'array'
+      and jsonb_array_length(geometry->'vertices') > 0
+      and jsonb_typeof(geometry->'closed') = 'boolean'
+    )
+    or (shape <> 'polygon')
+  );
+
 -- Carry hall geometry through the layout-replacement RPC (CAD import / local
 -- wedding migration). Same signature, so grants are preserved.
 create or replace function public.replace_planner_layout(
@@ -60,21 +96,35 @@ begin
 
   -- 2. Insert halls. Ids are client-generated so tables/fixtures below can
   --    reference them.
+  -- Normalize preset/geometry together, mirroring the app-side load path
+  -- (loadWedding.ts): geometry is kept only for a non-rectangle preset, and a
+  -- preset whose geometry drops out falls back to 'rectangle'. Without this a
+  -- CAD-import payload with a preset/geometry mismatch would hard-fail the
+  -- halls_geometry_required_for_polygon CHECK instead of self-healing.
   insert into public.halls (id, wedding_id, name, floor, preset, width, height, pos_x, pos_y, geometry)
   select
     (h->>'id')::uuid,
     p_wedding_id,
     coalesce(h->>'name', ''),
     (h->>'floor')::int,
-    h->>'preset',
+    case when norm.geometry is not null then h->>'preset' else 'rectangle' end,
     (h->>'width')::numeric,
     (h->>'height')::numeric,
     coalesce((h->>'pos_x')::numeric, 0),
     coalesce((h->>'pos_y')::numeric, 0),
-    case when h ? 'geometry' and (h->'geometry') is not null and (h->'geometry') <> 'null'::jsonb
-         then h->'geometry'
-         else null end
-  from jsonb_array_elements(coalesce(p_halls, '[]'::jsonb)) as h;
+    norm.geometry
+  from jsonb_array_elements(coalesce(p_halls, '[]'::jsonb)) as h,
+  lateral (
+    select case
+      when h->>'preset' is distinct from 'rectangle'
+        and h ? 'geometry'
+        and (h->'geometry') is not null
+        and (h->'geometry') <> 'null'::jsonb
+        and jsonb_typeof(h->'geometry') = 'object'
+      then h->'geometry'
+      else null
+    end as geometry
+  ) norm;
 
   -- 3. Insert new tables.
   insert into public.tables (

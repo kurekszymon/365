@@ -120,8 +120,9 @@ const DEFAULT_CLAMP_STEP = 0.25
  * historical behavior). With geometry, a candidate that already fits the
  * polygon is returned as-is; otherwise the valid position range is
  * grid-searched at `step` (pass the caller's snap step so results stay
- * grid-aligned) and the fitting position nearest the candidate wins
- * (row-major scan order breaks ties, so results are deterministic). If
+ * grid-aligned; a non-positive/non-finite step falls back to the default)
+ * and the fitting position nearest the candidate wins (positions are visited
+ * in ascending distance order, so results are deterministic). If
  * nothing fits - the entity is larger than every pocket of the polygon -
  * the plain AABB clamp is returned, mirroring how oversized entities
  * already overflow rectangular halls today.
@@ -129,6 +130,20 @@ const DEFAULT_CLAMP_STEP = 0.25
  * Entities are judged by their AABB even when they have their own polygon
  * geometry, matching the fixture stance where `size` drives all clamp logic.
  */
+// Grid positions along one axis (0, step, ... capped at `max`), ordered by
+// distance to `target` so clampRectIntoHall can search nearest-first and
+// short-circuit. Values are mm-rounded to match the persisted coordinate grid.
+const axisCandidates = (
+  target: number,
+  max: number,
+  step: number
+): Array<number> => {
+  const vals: Array<number> = []
+  for (let v = 0; v <= max + EPS; v += step) vals.push(round3(Math.min(v, max)))
+  vals.sort((a, b) => Math.abs(a - target) - Math.abs(b - target))
+  return vals
+}
+
 export const clampRectIntoHall = (
   pos: Position,
   size: Size,
@@ -145,18 +160,26 @@ export const clampRectIntoHall = (
   if (!geometry) return clamped
   if (rectInsidePolygon(clamped, size, geometry.vertices)) return clamped
 
+  // A caller can pass a zero/negative/NaN snap step; fall back so the grid
+  // search below always advances (it would otherwise spin forever).
+  const s = Number.isFinite(step) && step > 0 ? step : DEFAULT_CLAMP_STEP
+
+  // Visit grid positions nearest `clamped` first, so the first fit is the
+  // best and we can stop once no remaining position can beat it - work is
+  // bounded by the distance to the nearest pocket, not the whole hall.
+  const xs = axisCandidates(clamped.x, maxX, s)
+  const ys = axisCandidates(clamped.y, maxY, s)
   let best: Position | null = null
   let bestD = Infinity
-  for (let y = 0; y <= maxY + EPS; y += step) {
-    for (let x = 0; x <= maxX + EPS; x += step) {
-      const candidate = {
-        x: round3(Math.min(x, maxX)),
-        y: round3(Math.min(y, maxY)),
-      }
-      const d = (candidate.x - clamped.x) ** 2 + (candidate.y - clamped.y) ** 2
-      if (d >= bestD) continue
-      if (rectInsidePolygon(candidate, size, geometry.vertices)) {
-        best = candidate
+  for (const y of ys) {
+    const dy = y - clamped.y
+    if (dy * dy >= bestD) break
+    for (const x of xs) {
+      const dx = x - clamped.x
+      const d = dx * dx + dy * dy
+      if (d >= bestD) break
+      if (rectInsidePolygon({ x, y }, size, geometry.vertices)) {
+        best = { x, y }
         bestD = d
       }
     }

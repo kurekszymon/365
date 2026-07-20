@@ -113,6 +113,22 @@ describe("clampRectIntoHall", () => {
     expect(pos.x % 0.5).toBe(0)
     expect(pos.y % 0.5).toBe(0)
   })
+
+  it("falls back to the default step for a non-positive/non-finite step", () => {
+    // A zero/NaN step would spin the grid search forever without the guard;
+    // it must still terminate and return a valid position.
+    for (const badStep of [0, -1, NaN]) {
+      const pos = clampRectIntoHall(
+        { x: 7, y: 1 },
+        { width: 2, height: 2 },
+        lHall,
+        badStep
+      )
+      expect(rectInsidePolygon(pos, { width: 2, height: 2 }, L_SHAPE)).toBe(
+        true
+      )
+    }
+  })
 })
 
 describe("nearestPolygonBoundaryPoint", () => {
