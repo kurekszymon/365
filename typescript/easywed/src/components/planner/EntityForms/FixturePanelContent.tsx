@@ -245,14 +245,13 @@ export const FixturePanelContent = ({ fixtureId }: { fixtureId: string }) => {
           {form.shape !== "circle" && (
             <TableRotationField
               value={form.rotation}
-              onChange={(rotation) => {
-                if (rotation === form.rotation) return
+              onChange={(rotation) =>
                 updateAndCommit({
                   rotation,
                   width: form.height,
                   height: form.width,
                 })
-              }}
+              }
             />
           )}
         </>

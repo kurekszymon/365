@@ -197,14 +197,13 @@ export const TablePanelContent = ({
               {form.shape === "rectangular" && (
                 <TableRotationField
                   value={form.rotation}
-                  onChange={(rotation) => {
-                    if (rotation === form.rotation) return
+                  onChange={(rotation) =>
                     updateAndCommit({
                       rotation,
                       width: form.height,
                       height: form.width,
                     })
-                  }}
+                  }
                 />
               )}
             </>

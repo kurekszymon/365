@@ -2,6 +2,8 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 21.07
+
 ### 20.07
 
 - harden hall geometry checks, check for isFinite, prevent infinite loops

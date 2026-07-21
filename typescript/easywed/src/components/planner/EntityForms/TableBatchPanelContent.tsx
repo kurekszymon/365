@@ -133,15 +133,13 @@ export const TableBatchPanelContent = ({ position, hallId }: Props) => {
       {form.shape === "rectangular" && (
         <TableRotationField
           value={form.rotation}
-          onChange={(rotation) => {
-            if (rotation === form.rotation) return
-
+          onChange={(rotation) =>
             update({
               rotation,
               width: form.height,
               height: form.width,
             })
-          }}
+          }
         />
       )}
 
