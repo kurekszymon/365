@@ -8,6 +8,7 @@ import { FixtureVisual } from "./Canvas/FixtureVisual"
 import { MeasureOverlay } from "./Canvas/MeasureOverlay"
 import { worldBoundsOf } from "./Canvas/utils"
 import { SEAT_MAX_OFFSET_M } from "./Canvas/seatLayout"
+import type { CSSProperties } from "react"
 import type { TFunction } from "i18next"
 import type { Guest } from "@/stores/planner.store"
 import type { GuestField } from "@/lib/export/guestsCsv"
@@ -263,115 +264,132 @@ export const PlannerPrintView = () => {
       </section>
 
       <section className="flex items-center justify-center p-6 print:min-h-[190mm] print:break-before-page print:break-inside-avoid">
-        {/* World frame: every hall floor + all entities in one coordinate
-            space, so multi-room/floor layouts print on a single page. */}
+        {/* Frame reserving the canvas' box. It carries the canvas size as CSS
+            vars so the print stylesheet can shrink both together when the
+            paper turns out to be portrait (see styles.css). */}
         <div
-          className={cn(
-            "relative",
-            fitToContent ? "overflow-visible" : "overflow-hidden"
-          )}
-          style={{ width: viewWidth * ppm, height: viewHeight * ppm }}
+          data-print-hall-frame
+          className="mx-auto"
+          style={
+            {
+              "--print-hall-w": `${viewWidth * ppm}px`,
+              "--print-hall-h": `${viewHeight * ppm}px`,
+            } as CSSProperties
+          }
         >
-          {halls.map((h) => (
-            // Wrapper so the polygon outline and the hall label live outside
-            // the clipped floor (clip-path would crop a CSS border and could
-            // crop the label on shapes cut at the top-left).
-            <div
-              key={h.id}
-              className="absolute"
-              style={{
-                left: (h.position.x - originX) * ppm,
-                top: (h.position.y - originY) * ppm,
-                width: h.size.width * ppm,
-                height: h.size.height * ppm,
-              }}
-            >
-              <HallBackground
-                hallWidth={h.size.width * ppm}
-                hallHeight={h.size.height * ppm}
-                ppm={ppm}
-                gridStyle={includeGrid ? gridStyle : "off"}
-                gridSpacing={gridSpacing}
-                geometry={h.geometry}
-                className={cn(
-                  "absolute top-0 left-0",
-                  // The hall outline only frames full halls; cropping (fit) drops it.
-                  showHallOutline &&
-                    !fitToContent &&
-                    !h.geometry &&
-                    "border border-planner-hall",
-                  // Without the outline, render bare - no paper background, no border.
-                  !showHallOutline && "bg-transparent"
-                )}
-              />
-              {h.geometry && showHallOutline && !fitToContent && (
-                <HallOutline
+          {/* World frame: every hall floor + all entities in one coordinate
+              space, so multi-room/floor layouts print on a single page. */}
+          <div
+            data-print-hall
+            className={cn(
+              "relative",
+              fitToContent ? "overflow-visible" : "overflow-hidden"
+            )}
+            style={{ width: viewWidth * ppm, height: viewHeight * ppm }}
+          >
+            {halls.map((h) => (
+              // Wrapper so the polygon outline and the hall label live outside
+              // the clipped floor (clip-path would crop a CSS border and could
+              // crop the label on shapes cut at the top-left).
+              <div
+                key={h.id}
+                className="absolute"
+                style={{
+                  left: (h.position.x - originX) * ppm,
+                  top: (h.position.y - originY) * ppm,
+                  width: h.size.width * ppm,
+                  height: h.size.height * ppm,
+                }}
+              >
+                <HallBackground
+                  hallWidth={h.size.width * ppm}
+                  hallHeight={h.size.height * ppm}
+                  ppm={ppm}
+                  gridStyle={includeGrid ? gridStyle : "off"}
+                  gridSpacing={gridSpacing}
                   geometry={h.geometry}
-                  size={h.size}
-                  widthPx={h.size.width * ppm}
-                  heightPx={h.size.height * ppm}
-                  className="stroke-planner-hall"
+                  className={cn(
+                    "absolute top-0 left-0",
+                    // The hall outline only frames full halls; cropping (fit) drops it.
+                    showHallOutline &&
+                      !fitToContent &&
+                      !h.geometry &&
+                      "border border-planner-hall",
+                    // Without the outline, render bare - no paper background, no border.
+                    !showHallOutline && "bg-transparent"
+                  )}
                 />
-              )}
-              {halls.length > 1 && (
-                <span className="absolute top-1 left-1 text-[10px] font-medium text-gray-600">
-                  {h.name.trim() ||
-                    t("hall.unnamed_index", {
-                      index: halls.findIndex((x) => x.id === h.id) + 1,
-                    })}
-                  {h.floor != null &&
-                    ` · ${t("hall.floor_short", { floor: h.floor })}`}
-                </span>
-              )}
-            </div>
-          ))}
-          {clampedTables.map((tbl) => (
-            <TableVisual
-              key={tbl.id}
-              table={{
-                ...tbl,
-                position: {
-                  x: tbl.position.x - originX,
-                  y: tbl.position.y - originY,
-                },
-              }}
-              guestsAssigned={assignedCounts.get(tbl.id) ?? 0}
-              ppm={ppm}
-              showSeats={includeSeats}
-              seatGuests={
-                includeSeats ? (seatGuestsByTable.get(tbl.id) ?? []) : undefined
-              }
-              showEmpty={seatsShowEmpty}
-            />
-          ))}
-          {clampedFixtures.map((fix) => (
-            <FixtureVisual
-              key={fix.id}
-              fixture={{
-                ...fix,
-                position: {
-                  x: fix.position.x - originX,
-                  y: fix.position.y - originY,
-                },
-              }}
-              ppm={ppm}
-            />
-          ))}
-          {!fitToContent && (
-            <MeasureOverlay
-              measurements={measurements}
-              ppm={ppm}
-              widthPx={viewWidth * ppm}
-              heightPx={viewHeight * ppm}
-              origin={{ x: originX, y: originY }}
-              // mandatory props
-              pendingPoint={null}
-              cursorPos={null}
-              activeDrag={null}
-              resolvePoint={(x, y) => ({ x, y })}
-              onEndpointUpdate={() => {}}
-            />
-          )}
+                {h.geometry && showHallOutline && !fitToContent && (
+                  <HallOutline
+                    geometry={h.geometry}
+                    size={h.size}
+                    widthPx={h.size.width * ppm}
+                    heightPx={h.size.height * ppm}
+                    className="stroke-planner-hall"
+                  />
+                )}
+                {halls.length > 1 && (
+                  <span className="absolute top-1 left-1 text-[10px] font-medium text-gray-600">
+                    {h.name.trim() ||
+                      t("hall.unnamed_index", {
+                        index: halls.findIndex((x) => x.id === h.id) + 1,
+                      })}
+                    {h.floor != null &&
+                      ` · ${t("hall.floor_short", { floor: h.floor })}`}
+                  </span>
+                )}
+              </div>
+            ))}
+            {clampedTables.map((tbl) => (
+              <TableVisual
+                key={tbl.id}
+                table={{
+                  ...tbl,
+                  position: {
+                    x: tbl.position.x - originX,
+                    y: tbl.position.y - originY,
+                  },
+                }}
+                guestsAssigned={assignedCounts.get(tbl.id) ?? 0}
+                ppm={ppm}
+                showSeats={includeSeats}
+                seatGuests={
+                  includeSeats
+                    ? (seatGuestsByTable.get(tbl.id) ?? [])
+                    : undefined
+                }
+                showEmpty={seatsShowEmpty}
+              />
+            ))}
+            {clampedFixtures.map((fix) => (
+              <FixtureVisual
+                key={fix.id}
+                fixture={{
+                  ...fix,
+                  position: {
+                    x: fix.position.x - originX,
+                    y: fix.position.y - originY,
+                  },
+                }}
+                ppm={ppm}
+              />
+            ))}
+            {!fitToContent && (
+              <MeasureOverlay
+                measurements={measurements}
+                ppm={ppm}
+                widthPx={viewWidth * ppm}
+                heightPx={viewHeight * ppm}
+                origin={{ x: originX, y: originY }}
+                // mandatory props
+                pendingPoint={null}
+                cursorPos={null}
+                activeDrag={null}
+                resolvePoint={(x, y) => ({ x, y })}
+                onEndpointUpdate={() => {}}
+              />
+            )}
+          </div>
         </div>
       </section>
 
