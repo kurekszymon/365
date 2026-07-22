@@ -15,8 +15,10 @@ import {
   insertTables,
   reassignTableGuests,
   softDeleteFixture,
+  softDeleteFixtures,
   softDeleteGuest,
   softDeleteTable,
+  softDeleteTables,
   updateFixturePos,
   updateFixtureRow,
   updateGuestDetails,
@@ -880,8 +882,8 @@ const createPlannerStore = (
             : g
         ),
       }))
-      for (const tableId of tableIds) void softDeleteTable(tableId)
-      for (const fixtureId of fixtureIds) void softDeleteFixture(fixtureId)
+      void softDeleteTables(tableIds)
+      void softDeleteFixtures(fixtureIds)
       const weddingId = useGlobalStore.getState().weddingId
       if (weddingId) {
         const measures = useMeasuresStore.getState()
