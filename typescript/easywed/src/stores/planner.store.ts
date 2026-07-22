@@ -856,7 +856,11 @@ const createPlannerStore = (
           fixtures: rehomed.fixtures,
         }
       })
-      persistMoved(moved, target.id)
+      // Wait for a still-in-flight target-hall insert before writing the
+      // reassignment: persistMoved stamps hall_id = target.id, which FK-violates
+      // if the target hall row hasn't landed yet (just-created target). Deferring
+      // the hall-independent measurement shifts alongside it is harmless.
+      afterHallInsert(target.id, () => persistMoved(moved, target.id))
     } else {
       const tableIds = state.tables
         .filter((t) => t.hallId === id)
