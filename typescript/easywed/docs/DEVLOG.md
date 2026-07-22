@@ -4,6 +4,8 @@
 
 ### 22.07
 
+- remove shadows around seats in print view
+- make same print width on mobile and desktop
 - reduce supabase calls with bulk delete
 - shift measurements before persisting new positions to db
 - enforce hall_id belongs to the same wedding, let the FK report missing halls

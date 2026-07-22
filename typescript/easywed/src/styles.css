@@ -420,6 +420,13 @@ body.is-panning * {
     visibility: visible !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    /* Tables, fixtures and occupied seats carry `shadow-sm` for depth on the
+       canvas. Forcing exact colour reproduction makes print engines actually
+       rasterise those shadows, and several of them ignore border-radius while
+       doing so - the round seat markers end up ringed by a grey box that reads
+       as a hitbox. Nothing in the printed layout needs depth, so drop them. */
+    box-shadow: none !important;
+    text-shadow: none !important;
   }
 
   /* Pin the print root to the physical page box rather than `100%` of the
