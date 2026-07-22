@@ -2,7 +2,17 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 22.07
+
+- reduce supabase calls with bulk delete
+- shift measurements before persisting new positions to db
+- enforce hall_id belongs to the same wedding, let the FK report missing halls
+- adopt tables/fixtures pointing at a missing hall on load
+- wait for target hall insert before reassigning moved entities
+
 ### 21.07
+
+- replace HORIZONTAL | VERTICAL with rotate 90 button
 
 ### 20.07
 

@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase"
 import {
   getWeddingId,
   markDeleted,
+  markDeletedMany,
   run,
   tableRow,
   updatePos,
@@ -83,4 +84,21 @@ export const softDeleteTable = async (id: string): Promise<boolean> => {
       .eq("table_id", id)
   )
   return markDeleted("tables", id)
+}
+
+// Bulk counterpart to softDeleteTable for wiping a hall's tables (deleteHall):
+// one guest-unassign and one soft-delete covering every id, instead of two
+// writes per table. Same seat_id/table_id clearing rationale as above.
+export const softDeleteTables = async (
+  ids: Array<string>
+): Promise<boolean> => {
+  if (ids.length === 0) return true
+  await run(
+    "softDeleteTables unassign",
+    supabase
+      .from("guests")
+      .update({ table_id: null, seat_id: null })
+      .in("table_id", ids)
+  )
+  return markDeletedMany("tables", ids)
 }

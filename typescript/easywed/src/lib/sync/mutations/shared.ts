@@ -151,3 +151,20 @@ export const markDeleted = (
       .update({ deleted_at: new Date().toISOString() })
       .eq("id", id)
   )
+
+// Bulk soft-delete: marks every listed id deleted in a single UPDATE, so a
+// hall wipe (deleteHall) is one write instead of one per row. Empty list is a
+// no-op success - `.in("id", [])` would still round-trip to match nothing.
+export const markDeletedMany = (
+  table: "tables" | "fixtures",
+  ids: Array<string>
+): Promise<boolean> => {
+  if (ids.length === 0) return Promise.resolve(true)
+  return run(
+    `softDeleteMany:${table}`,
+    supabase
+      .from(table)
+      .update({ deleted_at: new Date().toISOString() })
+      .in("id", ids)
+  )
+}

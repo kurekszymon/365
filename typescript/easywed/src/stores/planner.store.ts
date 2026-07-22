@@ -15,8 +15,10 @@ import {
   insertTables,
   reassignTableGuests,
   softDeleteFixture,
+  softDeleteFixtures,
   softDeleteGuest,
   softDeleteTable,
+  softDeleteTables,
   updateFixturePos,
   updateFixtureRow,
   updateGuestDetails,
@@ -389,18 +391,31 @@ const rehomeHallEntities = (
   }
 }
 
-// Persists rehomed entity positions (optionally reassigning their hall) and
-// shifts their anchored measurements (world coords) by each world delta.
-const persistMoved = (moved: Array<MovedEntity>, targetHallId?: string) => {
+// Shifts rehomed entities' anchored measurements (world coords) by each world
+// delta. Split out from the row writes below because measurements are purely
+// local state (measures.store is localStorage-backed, no Supabase): they must
+// land in the same tick as the `set()` that rehomed the entities. Deferring
+// them behind a pending hall insert would let them visibly drift from their
+// objects - and a failed insert would strand them wrong permanently, since the
+// entities are already rehomed in local state either way.
+const shiftMovedMeasurements = (moved: Array<MovedEntity>) => {
   const weddingId = useGlobalStore.getState().weddingId
+  if (!weddingId) return
+  const measures = useMeasuresStore.getState()
+  for (const m of moved) {
+    if (m.delta.x !== 0 || m.delta.y !== 0)
+      measures.shiftMeasurementPoints(weddingId, m.id, m.delta.x, m.delta.y)
+  }
+}
+
+// Persists rehomed entity positions, optionally reassigning their hall. Safe to
+// defer (behind afterHallInsert) - unlike the measurement shift above, these are
+// DB writes with no local-state visibility.
+const persistMovedRows = (moved: Array<MovedEntity>, targetHallId?: string) => {
   for (const m of moved) {
     if (m.kind === "tables")
       void updateTablePos(m.id, m.position.x, m.position.y, targetHallId)
     else void updateFixturePos(m.id, m.position.x, m.position.y, targetHallId)
-    if (weddingId && (m.delta.x !== 0 || m.delta.y !== 0))
-      useMeasuresStore
-        .getState()
-        .shiftMeasurementPoints(weddingId, m.id, m.delta.x, m.delta.y)
   }
 }
 
@@ -782,7 +797,8 @@ const createPlannerStore = (
         fixtures: rehomed.fixtures,
       }
     })
-    persistMoved(moved)
+    shiftMovedMeasurements(moved)
+    persistMovedRows(moved)
     afterHallInsert(id, () => {
       void updateHallRow(id, {
         preset: next.preset,
@@ -856,7 +872,12 @@ const createPlannerStore = (
           fixtures: rehomed.fixtures,
         }
       })
-      persistMoved(moved, target.id)
+      // Measurements are local state and the entities are already rehomed above,
+      // so shift them now - never behind the insert (see shiftMovedMeasurements).
+      shiftMovedMeasurements(moved)
+      // The row writes stamp hall_id = target.id, which FK-violates if the target
+      // hall row hasn't landed yet (just-created target), so those wait.
+      afterHallInsert(target.id, () => persistMovedRows(moved, target.id))
     } else {
       const tableIds = state.tables
         .filter((t) => t.hallId === id)
@@ -876,8 +897,8 @@ const createPlannerStore = (
             : g
         ),
       }))
-      for (const tableId of tableIds) void softDeleteTable(tableId)
-      for (const fixtureId of fixtureIds) void softDeleteFixture(fixtureId)
+      void softDeleteTables(tableIds)
+      void softDeleteFixtures(fixtureIds)
       const weddingId = useGlobalStore.getState().weddingId
       if (weddingId) {
         const measures = useMeasuresStore.getState()

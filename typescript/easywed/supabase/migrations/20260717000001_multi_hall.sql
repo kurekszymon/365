@@ -147,3 +147,46 @@ $$;
 
 revoke all on function public.replace_planner_layout(uuid, jsonb, jsonb, jsonb) from public;
 grant execute on function public.replace_planner_layout(uuid, jsonb, jsonb, jsonb) to authenticated;
+
+-- 6. Keep hall_id within the row's own wedding. The FK only checks the hall
+--    exists, so an authorized editor (or a crafted replace_planner_layout
+--    payload) could otherwise point a table/fixture at another wedding's hall.
+--    A CHECK can't subquery, so this is a trigger. `security definer` so it can
+--    read halls.wedding_id regardless of the caller's RLS on halls. Guards only
+--    when hall_id is set; `on delete set null` nulls are always allowed.
+--
+--    Deliberately an EXISTS over a scalar subquery: a *missing* hall must fall
+--    through to the FK, which reports it precisely (23503, naming the
+--    constraint). A scalar subquery would return NULL for a missing hall, and
+--    `null is distinct from new.wedding_id` is true - so this would raise a
+--    misleading "does not belong" 23514 and mask the real referential error.
+--    Raising only when the hall exists AND its wedding differs keeps the two
+--    failure modes reported by the mechanism that actually describes them.
+create function public.enforce_entity_hall_wedding()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.hall_id is not null
+     and exists (
+       select 1
+       from public.halls
+       where id = new.hall_id
+         and wedding_id is distinct from new.wedding_id
+     ) then
+    raise exception 'hall_id % does not belong to wedding %', new.hall_id, new.wedding_id
+      using errcode = '23514';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger tables_hall_wedding_check
+  before insert or update of hall_id, wedding_id on public.tables
+  for each row execute function public.enforce_entity_hall_wedding();
+
+create trigger fixtures_hall_wedding_check
+  before insert or update of hall_id, wedding_id on public.fixtures
+  for each row execute function public.enforce_entity_hall_wedding();
