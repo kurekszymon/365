@@ -4,7 +4,7 @@
 
 ### 22.07
 
-- remove shadows around seats in print view
+- remove shadows around seats in print view -- deploy (d90a265)
 - make same print width on mobile and desktop
 - reduce supabase calls with bulk delete
 - shift measurements before persisting new positions to db
@@ -34,14 +34,14 @@
 
 ### 17.07
 
-- fix non negative values in inputs -- deploy
+- fix non negative values in inputs -- deploy (38c5eb7)
 - add venues landing pages
 - add banner for venue owners for better visibility
 - replace emdashes across the repo
 
 ### 16.07
 
-- fix mobile header title overlap -- deploy
+- fix mobile header title overlap -- deploy (d173343)
 - mark past deployments
 - move reminders to sidebar, remove empty route -- deploy (aa76ef8)
 - let user choose sorting alphabetically/by table seats in exports
