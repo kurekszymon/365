@@ -128,20 +128,19 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     }
   })
 
-  // Self-healing for rows without a hall: the migration backfilled hall_id,
-  // but a fire-and-forget insert race (or a hall row deleted server-side via
-  // `on delete set null`) can still leave orphans. Adopt them into the first
-  // hall - creating a default one when entities exist but no hall does - and
-  // repair the rows in the background. The fallback insert is awaited: the
-  // orphan backfill below and any user mutation against the adoptive hall
-  // reference its id, so it must exist server-side first or they FK-violate.
+  // Self-healing for rows whose hall is missing: the migration backfilled
+  // hall_id, but a fire-and-forget insert race (or a hall row deleted
+  // server-side via `on delete set null`) can still leave orphans - either a
+  // null hall_id or a non-null one pointing at a hall absent from this
+  // wedding's hall list. Adopt both into the first hall - creating a default
+  // one when entities exist but no hall does - and repair the rows in the
+  // background. The fallback insert is awaited: the orphan backfill below and
+  // any user mutation against the adoptive hall reference its id, so it must
+  // exist server-side first or they FK-violate.
   //
   // Known race: two clients loading a hall-less wedding at once each insert
   // their own fallback hall, leaving a duplicate. Accepted - the state is
   // already anomalous and the surplus hall is visible/deletable in the UI.
-  const hasOrphans =
-    tablesRes.data.some((t) => !t.hall_id) ||
-    fixturesRes.data.some((f) => !f.hall_id)
   let adoptiveHallPersisted = true
   if (
     halls.length === 0 &&
@@ -156,6 +155,13 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     adoptiveHallPersisted = await insertHall(fallback)
   }
   const adoptiveHallId = halls[0]?.id
+  // A row is orphaned when its hall_id is null or points outside this
+  // wedding's halls (computed after the fallback push so it's in the set).
+  const hallIds = new Set(halls.map((h) => h.id))
+  const isOrphan = (hallId: string | null) => !hallId || !hallIds.has(hallId)
+  const hasOrphans =
+    tablesRes.data.some((t) => isOrphan(t.hall_id)) ||
+    fixturesRes.data.some((f) => isOrphan(f.hall_id))
 
   const tables: Array<Table> = tablesRes.data.map((t) => ({
     id: t.id,
@@ -165,7 +171,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     size: { width: Number(t.width), height: Number(t.height) },
     rotation: t.rotation as TableRotation,
     position: { x: Number(t.pos_x), y: Number(t.pos_y) },
-    hallId: t.hall_id ?? adoptiveHallId,
+    hallId: t.hall_id && hallIds.has(t.hall_id) ? t.hall_id : adoptiveHallId,
     // Json -> Geometry needs the unknown hop (see toJsonOrNull in
     // mutations/shared.ts for the inverse cast and why).
     ...(t.geometry ? { geometry: t.geometry as unknown as Geometry } : {}),
@@ -188,13 +194,13 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     size: { width: Number(f.width), height: Number(f.height) },
     rotation: f.rotation as TableRotation,
     position: { x: Number(f.pos_x), y: Number(f.pos_y) },
-    hallId: f.hall_id ?? adoptiveHallId,
+    hallId: f.hall_id && hallIds.has(f.hall_id) ? f.hall_id : adoptiveHallId,
     ...(f.geometry ? { geometry: f.geometry as unknown as Geometry } : {}),
   }))
 
   if (hasOrphans && adoptiveHallId && adoptiveHallPersisted) {
     for (const t of tablesRes.data)
-      if (!t.hall_id)
+      if (isOrphan(t.hall_id))
         void updateTablePos(
           t.id,
           Number(t.pos_x),
@@ -202,7 +208,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
           adoptiveHallId
         )
     for (const f of fixturesRes.data)
-      if (!f.hall_id)
+      if (isOrphan(f.hall_id))
         void updateFixturePos(
           f.id,
           Number(f.pos_x),
