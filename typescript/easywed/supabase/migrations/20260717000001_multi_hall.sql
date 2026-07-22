@@ -154,6 +154,14 @@ grant execute on function public.replace_planner_layout(uuid, jsonb, jsonb, json
 --    A CHECK can't subquery, so this is a trigger. `security definer` so it can
 --    read halls.wedding_id regardless of the caller's RLS on halls. Guards only
 --    when hall_id is set; `on delete set null` nulls are always allowed.
+--
+--    Deliberately an EXISTS over a scalar subquery: a *missing* hall must fall
+--    through to the FK, which reports it precisely (23503, naming the
+--    constraint). A scalar subquery would return NULL for a missing hall, and
+--    `null is distinct from new.wedding_id` is true - so this would raise a
+--    misleading "does not belong" 23514 and mask the real referential error.
+--    Raising only when the hall exists AND its wedding differs keeps the two
+--    failure modes reported by the mechanism that actually describes them.
 create function public.enforce_entity_hall_wedding()
 returns trigger
 language plpgsql
@@ -162,8 +170,12 @@ set search_path = public
 as $$
 begin
   if new.hall_id is not null
-     and (select wedding_id from public.halls where id = new.hall_id)
-         is distinct from new.wedding_id then
+     and exists (
+       select 1
+       from public.halls
+       where id = new.hall_id
+         and wedding_id is distinct from new.wedding_id
+     ) then
     raise exception 'hall_id % does not belong to wedding %', new.hall_id, new.wedding_id
       using errcode = '23514';
   end if;
