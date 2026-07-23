@@ -2,6 +2,10 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 23.07
+
+- exercise portrait orientation, decided to just hint to use landscape -- deploy (90e0e1f)
+
 ### 22.07
 
 - remove shadows around seats in print view -- deploy (d90a265)
