@@ -450,29 +450,11 @@ body.is-panning * {
     height: var(--print-hall-h);
   }
 
-  [data-print-hall] {
-    transform-origin: top left;
-  }
-
-  /* Portrait fallback. iOS Safari (and Android print-to-PDF with a portrait
-     paper preset) ignores `@page { size: A4 landscape }`, leaving a 190mm
-     content width. Narrow the root to that and shrink the hall by the same
-     ratio (190/277) so it fits instead of being clipped. The transform is
-     safe here because the hall section is `break-inside-avoid` - it never
-     spans a page boundary. */
-  @media (max-width: 220mm) {
-    [data-print-view] {
-      width: 190mm !important;
-    }
-
-    [data-print-hall] {
-      transform: scale(0.6859);
-    }
-
-    [data-print-hall-frame] {
-      width: calc(var(--print-hall-w) * 0.6859);
-      height: calc(var(--print-hall-h) * 0.6859);
-      overflow: hidden;
-    }
-  }
+  /* No portrait fallback by design. `@page { size: A4 landscape }` above is
+     a request - a paper/orientation preset chosen in the print dialog
+     overrides it, and CSS cannot force a print job's orientation. Compensating
+     for that in CSS meant scaling and rotating the hall against a page box the
+     engine reshapes underneath us, which produced worse output than doing
+     nothing. Portrait prints shrink-to-fit instead; that is the user's choice
+     to make in their own print dialog. */
 }

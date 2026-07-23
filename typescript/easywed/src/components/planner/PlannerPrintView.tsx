@@ -28,6 +28,8 @@ const PRINT_AREA_PX = { width: 1047, height: 718 }
 // The hall section uses p-6 (24px each side). Subtract from both axes so the
 // scaled hall + padding fits within one page without triggering a mid-section break.
 const SECTION_PADDING_PX = 48
+// Landscape only, deliberately - see the `@page` rule and the note in
+// styles.css. A portrait print job is left to the engine's shrink-to-fit.
 
 // The "table" column is never passed here (grouping carries it), so only the
 // other three fields are handled.
@@ -264,9 +266,8 @@ export const PlannerPrintView = () => {
       </section>
 
       <section className="flex items-center justify-center p-6 print:min-h-[190mm] print:break-before-page print:break-inside-avoid">
-        {/* Frame reserving the canvas' box. It carries the canvas size as CSS
-            vars so the print stylesheet can shrink both together when the
-            paper turns out to be portrait (see styles.css). */}
+        {/* Frame reserving the canvas' box, carrying its size as CSS vars so
+            the print stylesheet can size against it (see styles.css). */}
         <div
           data-print-hall-frame
           className="mx-auto"

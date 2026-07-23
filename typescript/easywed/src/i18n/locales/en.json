@@ -473,6 +473,7 @@
   "export.pdf.include_grid": "Show grid",
   "export.pdf.show_hall_outline": "Show hall outline",
   "export.pdf.fit_to_page": "Fit to page",
+  "export.pdf.landscape_hint": "In the print dialog, choose landscape orientation - the plan is laid out for it.",
   "export.pdf.download": "Download PDF",
   "export.pdf.wedding_date": "Wedding date: {{date}}",
   "export.pdf.generated_on": "Generated {{date}}",

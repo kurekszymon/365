@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch"
 import { useDialogStore } from "@/stores/dialog.store"
 import { DEFAULT_PRINT_FIELDS } from "@/stores/print.store"
 import { useViewStore } from "@/stores/view.store"
+import { useIsMobile } from "@/hooks/useMediaQuery"
 import { GUEST_FIELDS } from "@/lib/export/guestsCsv"
 import { triggerPdfExport } from "@/lib/export/guestsPdf"
 
@@ -26,6 +27,7 @@ const PICKABLE_FIELDS = GUEST_FIELDS.filter((f) => f !== "table")
 
 export const ExportGuestsPdfDialog = () => {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const [selected, setSelected] =
     useState<Array<GuestField>>(DEFAULT_PRINT_FIELDS)
   const [sort, setSort] = useState<GuestSort>(DEFAULT_GUEST_SORT)
@@ -148,6 +150,14 @@ export const ExportGuestsPdfDialog = () => {
               onCheckedChange={setFitToContent}
             />
           </Field>
+          {/* The plan is laid out for landscape paper. Desktop Chrome
+              preselects it from `@page`, but on mobile the system print UI
+              owns paper and orientation, so all we can do is ask. */}
+          {isMobile && (
+            <p className="text-xs text-muted-foreground">
+              {t("export.pdf.landscape_hint")}
+            </p>
+          )}
           <Button
             disabled={!canExport}
             onClick={() => {
