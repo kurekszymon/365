@@ -412,7 +412,7 @@ export const PlannerPrintView = () => {
                   {t("export.csv.preview_no_guests")}
                 </p>
               ) : (
-                <ol className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+                <ol className="grid grid-cols-1 gap-y-1 text-xs">
                   {tableGuests.map((g, idx) => {
                     const parts = renderGuestFields(g, fields, t)
                     return (
@@ -437,7 +437,7 @@ export const PlannerPrintView = () => {
                   count: unassigned.length,
                 })}
               </h3>
-              <ol className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+              <ol className="grid grid-cols-1 gap-y-1 text-xs">
                 {unassigned.map((g, idx) => {
                   const parts = renderGuestFields(g, fields, t)
                   return (
