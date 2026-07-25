@@ -397,7 +397,7 @@ export const PlannerPrintView = () => {
       <section className="p-6 print:break-before-page">
         <h2 className="mb-4 text-lg font-semibold">{t("guests")}</h2>
 
-        <div className="flex flex-col gap-5">
+        <div className="columns-2 gap-8 [&>*]:mb-5">
           {groups.map(({ table, guests: tableGuests }) => (
             <div key={table.id} className="break-inside-avoid">
               <h3 className="mb-2 text-sm font-semibold">
