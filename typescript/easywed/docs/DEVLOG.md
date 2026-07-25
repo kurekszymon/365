@@ -2,6 +2,14 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 25.07
+
+- render tables in print in two columns
+
+### 24.07
+
+- render guests in print in one column
+
 ### 23.07
 
 - exercise portrait orientation, decided to just hint to use landscape -- deploy (90e0e1f)
