@@ -13,7 +13,6 @@ import { usePrintShortcut } from "./usePrintShortcut"
 import { MobilePanelDrawer } from "./EntityForms/MobilePanelDrawer"
 import { ThemeSwitcher } from "./Header/ThemeSwitcher"
 import { GuestModeBanner } from "./GuestModeBanner"
-import { isLocalWedding } from "@/lib/localWedding"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Button } from "@/components/ui/button"
 import {
@@ -84,7 +83,10 @@ export const Planner = () => {
               </Button>
             )}
             <ButtonGroup>
-              {role === "owner" && !isLocalWedding(weddingId) && (
+              {/* Shown for guest (free-plan) weddings too - the dialog itself
+                  swaps the invite form for an upgrade notice, so the feature
+                  stays discoverable instead of silently missing. */}
+              {role === "owner" && (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button

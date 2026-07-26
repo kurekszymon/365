@@ -188,6 +188,9 @@
   "members.expires": "Expires {{date}}",
   "members.member": "Member",
   "members.you": "You",
+  "members.locked.title": "Inviting people needs an account",
+  "members.locked.body": "You're planning as a guest, so this wedding lives only in this browser - there's nothing to share yet. Sign in to save it to your account, then invite your partner, planner, or venue as editors or viewers.",
+  "members.locked.cta": "Sign in to invite people",
 
   "invite.claiming": "Joining wedding...",
   "invite.invalid": "This invitation is invalid or expired.",

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useAuthStore } from "@/stores/auth.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { supabase } from "@/lib/supabase"
+import { isLocalWedding } from "@/lib/localWedding"
 
 export type InviteRole = "editor" | "viewer"
 export type MemberRole = "owner" | InviteRole
@@ -43,9 +44,16 @@ export function useWeddingMembers(isOpen: boolean) {
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // Free plan = guest mode: a device-local wedding has no Supabase row, so
+  // there is nothing to attach members or invitations to. Signing in (which
+  // migrates the plan to an account) is the upgrade path - see
+  // MembersUpgradeNotice. Every DB call below is gated on this, so the
+  // dialog never fires a query with the "local" sentinel as a wedding id.
+  const canInvite = Boolean(session) && !isLocalWedding(weddingId)
+
   const refresh = useCallback(
     async (signal?: AbortSignal) => {
-      if (!weddingId) return
+      if (!weddingId || !canInvite) return
       const effectiveSignal = signal ?? new AbortController().signal
       const [invitationsRes, membersRes] = await Promise.all([
         supabase
@@ -77,7 +85,7 @@ export function useWeddingMembers(isOpen: boolean) {
       setInvitations(invitationsRes.data as Array<Invitation>)
       setMembers(membersRes.data as Array<MemberAccess>)
     },
-    [weddingId]
+    [weddingId, canInvite]
   )
 
   useEffect(() => {
@@ -91,7 +99,7 @@ export function useWeddingMembers(isOpen: boolean) {
   }, [isOpen, weddingId, refresh])
 
   const handleCreate = useCallback(async () => {
-    if (!weddingId || !session || submitting) return
+    if (!weddingId || !session || submitting || !canInvite) return
     setSubmitting(true)
     setError(null)
 
@@ -113,7 +121,7 @@ export function useWeddingMembers(isOpen: boolean) {
     await refresh()
     setSubmitting(false)
     setRole("editor")
-  }, [weddingId, session, submitting, role, refresh])
+  }, [weddingId, session, submitting, canInvite, role, refresh])
 
   const handleRevoke = useCallback(
     async (id: string) => {
@@ -238,6 +246,7 @@ export function useWeddingMembers(isOpen: boolean) {
   const pending = invitations.filter((i) => !i.claimed_at)
 
   return {
+    canInvite,
     role,
     setRole,
     submitting,

@@ -91,6 +91,6 @@ When adding UI strings, add keys to **both** `en.json` and `pl.json`. Polish is 
 
 ## Reference docs
 
-- `docs/PRD.md` - product requirements. **Marked "AI Generated Content for reference"**; treat as aspirational scope, not ground truth for what's shipped.
 - `docs/supabase.md` - authoritative notes on the schema, RLS policies, triggers, and the Supabase CLI flow.
+- `docs/guest-vs-account.md` - what differs between guest mode (not signed in, the free plan) and a signed-in account: routing guards, persistence, and the feature matrix.
 - `docs/DEVLOG.md` - development log.

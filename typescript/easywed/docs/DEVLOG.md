@@ -2,9 +2,15 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 26.07
+
+- todo - share free plan check so it's derived from custom hook
+- block member invites on the free plan (guest mode), show an upgrade notice instead
+- document guest vs signed-in differences (`docs/guest-vs-account.md`)
+
 ### 25.07
 
-- render tables in print in two columns
+- render tables in print in two columns -- deploy
 
 ### 24.07
 
