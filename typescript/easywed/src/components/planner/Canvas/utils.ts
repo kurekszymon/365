@@ -2,7 +2,11 @@ import type { CSSProperties } from "react"
 import type { GridSpacing, GridStyle } from "@/stores/view.store"
 import type { Hall, Position } from "@/stores/planner.store"
 import { DEFAULT_HALL } from "@/stores/planner.store"
-import { pointInPolygon } from "@/lib/geometry"
+import {
+  nearestPolygonBoundaryPoint,
+  pointInPolygon,
+  rectVertices,
+} from "@/lib/geometry"
 
 const NICE_INTERVALS: Array<Exclude<GridSpacing, "auto">> = [
   1, 2, 5, 10, 25, 50,
@@ -187,6 +191,35 @@ export const hallWorldOf = (p: Position, hall: Hall): Position => ({
   x: p.x + hall.position.x,
   y: p.y + hall.position.y,
 })
+
+// Closest point on any hall's outline (world meters). Unlike `nearestHall`
+// this projects onto the real polygon, so a point in the void lands exactly on
+// the wall a user would draw to. Returns null only when there are no halls.
+export const nearestHallBoundaryPoint = (
+  halls: Array<Hall>,
+  p: Position
+): Position | null => {
+  let best: Position | null = null
+  let bestD = Infinity
+  for (const hall of halls) {
+    const local = nearestPolygonBoundaryPoint(
+      hallLocalOf(p, hall),
+      hall.geometry?.vertices ?? rectVertices(hall.size)
+    )
+    const world = hallWorldOf(local, hall)
+    const d = (world.x - p.x) ** 2 + (world.y - p.y) ** 2
+    if (d < bestD) {
+      bestD = d
+      best = world
+    }
+  }
+  return best
+}
+
+// Keeps a point out of the void: inside a hall it stays where it is, anywhere
+// else it sticks to the nearest hall border.
+export const stickToHalls = (halls: Array<Hall>, p: Position): Position =>
+  hallAtPoint(halls, p) ? p : (nearestHallBoundaryPoint(halls, p) ?? p)
 
 /**
  * Returns the nearest point on the boundary of an axis-aligned rectangle to (xM, yM).

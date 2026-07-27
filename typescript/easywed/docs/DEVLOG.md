@@ -2,6 +2,11 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 27.07
+
+- dont drop measurements in void
+- drag measure instead of panning
+
 ### 26.07
 
 - todo - share free plan check so it's derived from custom hook

@@ -387,6 +387,7 @@ export const PlannerPrintView = () => {
                 cursorPos={null}
                 activeDrag={null}
                 resolvePoint={(x, y) => ({ x, y })}
+                constrainPoint={(x, y) => ({ x, y })}
                 onEndpointUpdate={() => {}}
               />
             )}

@@ -8,6 +8,7 @@ import {
   nearestCircleBorder,
   nearestRectBorder,
   rectBorderTowards,
+  stickToHalls,
 } from "./utils"
 import type { WorldBounds } from "./utils"
 import type { Fixture, Hall, Position, Table } from "@/stores/planner.store"
@@ -134,8 +135,8 @@ export function useMeasureTool({
 
   const resolvePoint = useCallback(
     (rawXM: number, rawYM: number): MeasurementPoint => {
-      // Keep every resolved point inside the world (union of halls). Points
-      // between halls are allowed - that's what cross-hall measuring is for.
+      // Keep every resolved point inside the world (union of halls); anything
+      // that still lands in the void between halls sticks to a wall below.
       const xM = clamp(rawXM, worldBounds.x, worldBounds.x + worldBounds.width)
       const yM = clamp(rawYM, worldBounds.y, worldBounds.y + worldBounds.height)
       for (const table of canvasTables) {
@@ -207,11 +208,27 @@ export function useMeasureTool({
         )
         if (Math.hypot(bp.x - local.x, bp.y - local.y) < wallThreshold)
           return hallWorldOf(bp, hall)
+        return { x: xM, y: yM }
       }
 
-      return { x: xM, y: yM }
+      // Void between/outside the halls: a point can't be dropped there, it
+      // sticks to the nearest hall border instead. Cross-hall measuring still
+      // works - each end lands on its own hall's wall.
+      return stickToHalls(halls, { x: xM, y: yM })
     },
     [canvasTables, canvasFixtures, measureMode, halls, worldBounds, ppm]
+  )
+
+  // Like resolvePoint but without object snapping: used when a whole
+  // measurement is dragged by its label, where re-snapping each end to
+  // whatever it passes over would rewrite the distance mid-drag.
+  const constrainPoint = useCallback(
+    (rawXM: number, rawYM: number): Position =>
+      stickToHalls(halls, {
+        x: clamp(rawXM, worldBounds.x, worldBounds.x + worldBounds.width),
+        y: clamp(rawYM, worldBounds.y, worldBounds.y + worldBounds.height),
+      }),
+    [halls, worldBounds]
   )
 
   const handleMeasureDown = useCallback(
@@ -334,6 +351,7 @@ export function useMeasureTool({
     pendingPoint,
     cursorPos,
     resolvePoint,
+    constrainPoint,
     handleMeasureDown,
     handleMeasureMove,
   }

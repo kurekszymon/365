@@ -22,10 +22,20 @@ interface MeasureOverlayProps {
   onDelete?: (id: string) => void
   activeDrag: ActiveDrag | null
   resolvePoint: (xM: number, yM: number) => MeasurementPoint
+  // Keeps a point out of the void without snapping it to objects - used when
+  // the whole measurement is dragged by its label.
+  constrainPoint: (xM: number, yM: number) => Position
   onEndpointUpdate: (
     measurementId: string,
     pointKey: "a" | "b",
     point: MeasurementPoint
+  ) => void
+  // Omitted where the overlay is read-only (print view): without it the label
+  // stays inert.
+  onMeasurementMove?: (
+    measurementId: string,
+    a: MeasurementPoint,
+    b: MeasurementPoint
   ) => void
 }
 
@@ -40,7 +50,9 @@ export const MeasureOverlay = ({
   onDelete,
   activeDrag,
   resolvePoint,
+  constrainPoint,
   onEndpointUpdate,
+  onMeasurementMove,
 }: MeasureOverlayProps) => {
   const { t } = useTranslation()
   const svgRef = useRef<SVGSVGElement>(null)
@@ -50,6 +62,21 @@ export const MeasureOverlay = ({
     pointKey: "a" | "b"
   } | null>(null)
   const [dragLivePos, setDragLivePos] = useState<MeasurementPoint | null>(null)
+
+  // Whole-measurement drag by its label: the grab origin plus the endpoints as
+  // they were when the drag started, so every move is an absolute offset from
+  // the press (no drift), and the live constrained result the overlay renders.
+  const [labelDrag, setLabelDrag] = useState<{
+    measurementId: string
+    startXM: number
+    startYM: number
+    a: MeasurementPoint
+    b: MeasurementPoint
+  } | null>(null)
+  const [labelLivePos, setLabelLivePos] = useState<{
+    a: Position
+    b: Position
+  } | null>(null)
 
   const getSVGCoords = (
     e: React.PointerEvent
@@ -76,6 +103,9 @@ export const MeasureOverlay = ({
       dragLivePos
     ) {
       return { x: dragLivePos.x, y: dragLivePos.y }
+    }
+    if (labelDrag?.measurementId === measurementId && labelLivePos) {
+      return labelLivePos[pointKey]
     }
     if (activeDrag && point.objectId === activeDrag.id) {
       return { x: point.x + activeDrag.dx, y: point.y + activeDrag.dy }
@@ -115,6 +145,51 @@ export const MeasureOverlay = ({
     setDragLivePos(null)
   }
 
+  const handleLabelPointerDown = (
+    e: React.PointerEvent<SVGElement>,
+    m: Measurement
+  ) => {
+    if (!onMeasurementMove) return
+    e.stopPropagation()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    const coords = getSVGCoords(e)
+    if (!coords) return
+    setLabelDrag({
+      measurementId: m.id,
+      startXM: coords.xM,
+      startYM: coords.yM,
+      a: m.a,
+      b: m.b,
+    })
+    setLabelLivePos({ a: { x: m.a.x, y: m.a.y }, b: { x: m.b.x, y: m.b.y } })
+  }
+
+  const handleLabelPointerMove = (e: React.PointerEvent<SVGElement>) => {
+    if (!labelDrag) return
+    const coords = getSVGCoords(e)
+    if (!coords) return
+    const dx = coords.xM - labelDrag.startXM
+    const dy = coords.yM - labelDrag.startYM
+    setLabelLivePos({
+      a: constrainPoint(labelDrag.a.x + dx, labelDrag.a.y + dy),
+      b: constrainPoint(labelDrag.b.x + dx, labelDrag.b.y + dy),
+    })
+  }
+
+  const handleLabelPointerUp = () => {
+    if (!labelDrag || !labelLivePos) return
+    // A moved measurement no longer sits on whatever it was snapped to, so the
+    // object link is dropped - it would otherwise keep following that object.
+    onMeasurementMove?.(labelDrag.measurementId, labelLivePos.a, labelLivePos.b)
+    setLabelDrag(null)
+    setLabelLivePos(null)
+  }
+
+  const handleLabelPointerCancel = () => {
+    setLabelDrag(null)
+    setLabelLivePos(null)
+  }
+
   return (
     <svg
       ref={svgRef}
@@ -146,6 +221,7 @@ export const MeasureOverlay = ({
           dragging?.measurementId === m.id && dragging.pointKey === "a"
         const isDraggingB =
           dragging?.measurementId === m.id && dragging.pointKey === "b"
+        const isDraggingLabel = labelDrag?.measurementId === m.id
 
         return (
           <g key={m.id}>
@@ -203,29 +279,47 @@ export const MeasureOverlay = ({
               />
             </g>
 
-            {/* Label background + text */}
-            <rect
-              x={mx - labelWidth / 2}
-              y={my - 10}
-              width={labelWidth}
-              height={20}
-              rx={4}
-              fill="white"
-              stroke="#0d9488"
-              strokeWidth={1}
-              opacity={0.95}
-            />
-            <text
-              x={mx}
-              y={my + 4}
-              textAnchor="middle"
-              fontSize={10}
-              fill="#0d9488"
-              fontFamily="sans-serif"
-              fontWeight="600"
+            {/* Label background + text - doubles as the handle that drags the
+                whole measurement. data-no-pan keeps that gesture from panning
+                the canvas (or dropping a new point in measure mode). */}
+            <g
+              data-no-pan={onMeasurementMove ? "" : undefined}
+              style={
+                onMeasurementMove
+                  ? {
+                      pointerEvents: "auto",
+                      cursor: isDraggingLabel ? "grabbing" : "grab",
+                    }
+                  : undefined
+              }
+              onPointerDown={(e) => handleLabelPointerDown(e, m)}
+              onPointerMove={handleLabelPointerMove}
+              onPointerUp={handleLabelPointerUp}
+              onPointerCancel={handleLabelPointerCancel}
             >
-              {label}
-            </text>
+              <rect
+                x={mx - labelWidth / 2}
+                y={my - 10}
+                width={labelWidth}
+                height={20}
+                rx={4}
+                fill="white"
+                stroke="#0d9488"
+                strokeWidth={1}
+                opacity={0.95}
+              />
+              <text
+                x={mx}
+                y={my + 4}
+                textAnchor="middle"
+                fontSize={10}
+                fill="#0d9488"
+                fontFamily="sans-serif"
+                fontWeight="600"
+              >
+                {label}
+              </text>
+            </g>
 
             {/* Delete button - pointer-events re-enabled just for this group */}
             {onDelete && (

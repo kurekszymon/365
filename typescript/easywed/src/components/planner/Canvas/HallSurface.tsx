@@ -199,6 +199,7 @@ export const HallSurface = ({
     pendingPoint,
     cursorPos,
     resolvePoint,
+    constrainPoint,
     handleMeasureDown,
     handleMeasureMove,
   } = useMeasureTool({
@@ -274,10 +275,16 @@ export const HallSurface = ({
           onDelete={(id) => weddingId && deleteMeasurement(weddingId, id)}
           activeDrag={activeDrag}
           resolvePoint={resolvePoint}
+          constrainPoint={constrainPoint}
           onEndpointUpdate={(measurementId, pointKey, point) =>
             weddingId &&
             updateMeasurementPoint(weddingId, measurementId, pointKey, point)
           }
+          onMeasurementMove={(measurementId, a, b) => {
+            if (!weddingId) return
+            updateMeasurementPoint(weddingId, measurementId, "a", a)
+            updateMeasurementPoint(weddingId, measurementId, "b", b)
+          }}
         />
 
         {/* Vertex editor for the entity in shape-edit mode (renders nothing
