@@ -1,5 +1,4 @@
 import type {
-  Dietary,
   Fixture,
   FixtureShape,
   Geometry,
@@ -181,7 +180,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
   const guests: Array<Guest> = guestsRes.data.map((g) => ({
     id: g.id,
     name: g.name,
-    dietary: g.dietary as Array<Dietary>,
+    dietary: g.dietary,
     tableId: g.table_id,
     seatId: g.seat_id,
     note: g.note ?? undefined,

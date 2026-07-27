@@ -72,10 +72,18 @@ Triggers are "on event X, run function Y" - like `useEffect` but running inside 
 ```sql
 capacity integer not null check (capacity > 0),
 shape text not null check (shape in ('round', 'rectangular')),
-dietary text[] not null check (dietary <@ array[...]::text[])
+dietary text[] not null check (public.dietary_tags_valid(dietary))
 ```
 
-TypeScript's union types as runtime rules. `<@` means "subset of" - dietary values must all be in the allowlist.
+TypeScript's union types as runtime rules. `shape` mirrors a TS string union.
+
+`dietary` used to be an allowlist (`<@ array[...]`) but is now **free-form
+tags**: migration `20260727000001` swapped the value allowlist for a shape rule
+(`dietary_tags_valid`: at most 12 tags, each 1-24 chars). The client
+(`canonicalizeDietary` in `src/lib/dietary.ts`) is the source of truth for
+cleaning tags; the constraint only guards the hard limits. A CHECK can't hold a
+subquery, so the per-element check lives in an immutable helper that unnests the
+array.
 
 Could've used Postgres enums instead of `text` + CHECK. Enums are faster but a pain to alter (`ALTER TYPE ... ADD VALUE` is locking). CHECK constraints are easier to evolve. Analogy: enums ≈ `const enum`, CHECK ≈ union type of string literals.
 

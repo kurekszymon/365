@@ -75,8 +75,8 @@ describe("parseDietary", () => {
     ])
   })
 
-  it("drops unknown tokens and dedupes", () => {
-    expect(parseDietary("Vegan, paleo, vegan")).toEqual(["vegan"])
+  it("keeps custom tokens and dedupes", () => {
+    expect(parseDietary("Vegan, paleo, vegan")).toEqual(["vegan", "paleo"])
   })
 
   it("matches space-separated 'gluten free' as gluten-free", () => {

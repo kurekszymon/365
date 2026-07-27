@@ -1,16 +1,22 @@
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { CheckIcon, PlusIcon, XIcon } from "lucide-react"
+import { useShallow } from "zustand/react/shallow"
 import type { Dietary } from "@/stores/planner.store"
+import { usePlannerStore } from "@/stores/planner.store"
+import {
+  DIETARY_PRESETS,
+  MAX_DIETARY_TAGS,
+  canonicalizeDietary,
+  collectDietaryTags,
+  dietaryLabel,
+  isDietaryPreset,
+  sortDietaryTags,
+} from "@/lib/dietary"
+import { cn } from "@/lib/utils"
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-
-const DIETARY_OPTIONS: Array<Dietary> = [
-  "vegetarian",
-  "vegan",
-  "gluten-free",
-  "halal",
-  "kosher",
-]
 
 export type GuestFormValues = {
   name: string
@@ -28,14 +34,55 @@ export const GuestFormFields = ({
   onChange: (value: GuestFormValues) => void
 }) => {
   const { t } = useTranslation()
+  const guests = usePlannerStore(useShallow((state) => state.guests))
+  const [adding, setAdding] = useState(false)
+  const [draft, setDraft] = useState("")
+  // Custom tags the user removed from the suggestion row this session. They stay
+  // hidden unless re-typed; presets are never dismissable.
+  const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set())
+
+  // Presets + every tag already used in this wedding + the guest's own tags, so
+  // a just-added custom tag stays visible as an active pill. A dismissed tag is
+  // hidden unless it is still selected on this guest.
+  const options = sortDietaryTags(
+    [...DIETARY_PRESETS, ...collectDietaryTags(guests), ...value.dietary],
+    t
+  ).filter((o) => value.dietary.includes(o) || !dismissed.has(o))
+  const atLimit = value.dietary.length >= MAX_DIETARY_TAGS
 
   const toggleDietary = (option: Dietary) => {
+    const selected = value.dietary.includes(option)
+    if (!selected && atLimit) return
     onChange({
       ...value,
-      dietary: value.dietary.includes(option)
+      dietary: selected
         ? value.dietary.filter((o) => o !== option)
         : [...value.dietary, option],
     })
+  }
+
+  // Drops a custom tag off this guest and hides it from the suggestion row.
+  const deleteTag = (tag: Dietary) => {
+    setDismissed((prev) => new Set(prev).add(tag))
+    if (value.dietary.includes(tag)) {
+      onChange({ ...value, dietary: value.dietary.filter((o) => o !== tag) })
+    }
+  }
+
+  const commitDraft = () => {
+    const tag = canonicalizeDietary(draft)
+    if (tag && !value.dietary.includes(tag) && !atLimit) {
+      // Re-typing a previously dismissed tag brings it back.
+      setDismissed((prev) => {
+        if (!prev.has(tag)) return prev
+        const next = new Set(prev)
+        next.delete(tag)
+        return next
+      })
+      onChange({ ...value, dietary: [...value.dietary, tag] })
+    }
+    setDraft("")
+    setAdding(false)
   }
 
   return (
@@ -55,16 +102,98 @@ export const GuestFormFields = ({
       <Field>
         <FieldLabel>{t("guests.add.dietary_preferences")}</FieldLabel>
         <FieldContent className="flex-row flex-wrap gap-1.5">
-          {DIETARY_OPTIONS.map((option) => (
+          {options.map((option) => {
+            const selected = value.dietary.includes(option)
+            // Presets are a plain toggle; custom tags get a delete affordance.
+            if (isDietaryPreset(option)) {
+              return (
+                <Button
+                  key={option}
+                  variant={selected ? "default" : "outline"}
+                  className="rounded-full"
+                  onClick={() => toggleDietary(option)}
+                >
+                  {dietaryLabel(t, option)}
+                </Button>
+              )
+            }
+            return (
+              <span
+                key={option}
+                className={cn(
+                  "inline-flex h-8 items-center rounded-full border text-sm font-medium",
+                  selected
+                    ? "border-transparent bg-primary text-primary-foreground"
+                    : "border-border bg-secondary text-secondary-foreground"
+                )}
+              >
+                <button
+                  type="button"
+                  onClick={() => toggleDietary(option)}
+                  className="h-full rounded-l-full pr-1 pl-3"
+                >
+                  {option}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => deleteTag(option)}
+                  aria-label={t("guests.add.dietary_delete", { tag: option })}
+                  className={cn(
+                    "flex h-full cursor-pointer items-center rounded-r-full pr-2 pl-1",
+                    selected
+                      ? "hover:bg-primary-foreground/20"
+                      : "hover:bg-foreground/10"
+                  )}
+                >
+                  <XIcon className="size-3.5 opacity-70" />
+                </button>
+              </span>
+            )
+          })}
+          {adding ? (
+            <span className="inline-flex items-center gap-1">
+              <Input
+                autoFocus
+                type="text"
+                className="h-8 w-32 rounded-full"
+                placeholder={t("guests.add.dietary_custom_placeholder")}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onBlur={commitDraft}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === ",") {
+                    e.preventDefault()
+                    commitDraft()
+                  } else if (e.key === "Escape") {
+                    e.preventDefault()
+                    setDraft("")
+                    setAdding(false)
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                size="icon-sm"
+                className="cursor-pointer rounded-full"
+                aria-label={t("guests.add.dietary_confirm")}
+                // Keep focus so the input doesn't blur-commit before this fires.
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={commitDraft}
+              >
+                <CheckIcon />
+              </Button>
+            </span>
+          ) : (
             <Button
-              key={option}
-              variant={value.dietary.includes(option) ? "default" : "outline"}
+              variant="outline"
               className="rounded-full"
-              onClick={() => toggleDietary(option)}
+              disabled={atLimit}
+              onClick={() => setAdding(true)}
             >
-              {t(`guests.dietary.${option}`)}
+              <PlusIcon className="size-4" />
+              {t("guests.add.dietary_custom")}
             </Button>
-          ))}
+          )}
         </FieldContent>
       </Field>
       <Field>

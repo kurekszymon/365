@@ -19,6 +19,7 @@ import { usePrintStore } from "@/stores/print.store"
 import { useViewStore } from "@/stores/view.store"
 import { useMeasuresStore } from "@/stores/measures.store"
 import { groupGuestsByTable } from "@/lib/export/guests"
+import { dietaryLabel } from "@/lib/dietary"
 import { cn } from "@/lib/utils"
 
 // TODO: only planner is printable - other pages would be blank
@@ -42,7 +43,7 @@ const renderGuestFields = (
   for (const f of fields) {
     if (f === "name") parts.push(g.name)
     else if (f === "dietary" && g.dietary.length > 0)
-      parts.push(g.dietary.map((d) => t(`guests.dietary.${d}`)).join(", "))
+      parts.push(g.dietary.map((d) => dietaryLabel(t, d)).join(", "))
     else if (f === "note" && g.note) parts.push(g.note)
   }
   return parts

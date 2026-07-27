@@ -161,12 +161,10 @@ export const nextHallPosition = (halls: Array<Hall>): Position => {
   return { x: minX, y: maxY + HALL_GAP }
 }
 
-export type Dietary =
-  | "vegetarian"
-  | "vegan"
-  | "gluten-free"
-  | "halal"
-  | "kosher"
+// Free-form dietary tag. The offered pills come from `DIETARY_PRESETS` in
+// `@/lib/dietary` plus whatever tags guests already use; storage/validation is
+// shape-based (length/count), not an enum.
+export type Dietary = string
 
 export interface Guest {
   id: string

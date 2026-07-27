@@ -14,15 +14,21 @@ import { getInitials } from "../Canvas/utils"
 import { SeatingProgress } from "./SeatingProgress"
 import { SeatAssignSheet } from "./SeatAssignSheet"
 import type { ReactNode } from "react"
-import type { Dietary, Guest } from "@/stores/planner.store"
+import type { Guest } from "@/stores/planner.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useDialogStore } from "@/stores/dialog.store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { normalize } from "@/lib/import/guestsImport"
+import { dietaryLabel, sortDietaryTags } from "@/lib/dietary"
 
-type Filter = "all" | "unseated" | Dietary
+// A user-typed tag could literally be "all", so the sentinels can't be bare
+// strings sharing the tag namespace.
+type Filter =
+  | { kind: "all" }
+  | { kind: "unseated" }
+  | { kind: "dietary"; tag: string }
 
 // True if every char of `needle` appears in `haystack` in order (a classic
 // fuzzy subsequence match), so "vgn" still finds "vegan" and a dropped letter
@@ -41,14 +47,6 @@ const fuzzyMatch = (query: string, haystack: string): boolean =>
   query
     .split(/\s+/)
     .every((token) => token === "" || isSubsequence(token, haystack))
-
-const ALL_DIETARY: Array<Dietary> = [
-  "vegetarian",
-  "vegan",
-  "gluten-free",
-  "halal",
-  "kosher",
-]
 
 // One chip in the scrollable filter row - All/Unseated plus one per dietary
 // category actually in use, replacing the old single "Dieta" toggle so a diner
@@ -85,7 +83,7 @@ const FilterChip = ({
 export const GuestListContent = () => {
   const { t } = useTranslation()
   const [searchQuery, setSearchQuery] = useState("")
-  const [filter, setFilter] = useState<Filter>("all")
+  const [filter, setFilter] = useState<Filter>({ kind: "all" })
   const [assigningGuest, setAssigningGuest] = useState<Guest | null>(null)
 
   const { guests, tables } = usePlannerStore(
@@ -103,7 +101,7 @@ export const GuestListContent = () => {
   const unseatedCount = guests.length - seatedCount
 
   const dietaryCounts = useMemo(() => {
-    const counts = new Map<Dietary, number>()
+    const counts = new Map<string, number>()
     for (const guest of guests) {
       for (const d of guest.dietary) {
         counts.set(d, (counts.get(d) ?? 0) + 1)
@@ -111,29 +109,24 @@ export const GuestListContent = () => {
     }
     return counts
   }, [guests])
-  const activeDietaryFilters = ALL_DIETARY.filter(
-    (d) => (dietaryCounts.get(d) ?? 0) > 0
-  )
+  // Only tags actually in use, presets-first then alphabetical.
+  const activeDietaryFilters = sortDietaryTags(dietaryCounts.keys(), t)
 
-  // Fold the name plus each dietary preference - both the raw key ("vegan")
-  // and its translated label ("Wegańska") - into one normalized blob so a
+  // Fold the name plus each dietary preference - both the raw tag ("vegan")
+  // and its displayed label ("Wegańska") - into one normalized blob so a
   // fuzzy query can hit any of them.
   const guestHaystack = (guest: Guest) =>
     normalize(
       [
         guest.name,
-        ...guest.dietary.flatMap((d) => [d, t(`guests.dietary.${d}`)]),
+        ...guest.dietary.flatMap((d) => [d, dietaryLabel(t, d)]),
       ].join(" ")
     )
 
   const normalizedQuery = normalize(searchQuery)
   const filteredGuests = guests.filter((guest) => {
-    if (filter === "unseated" && guest.tableId) return false
-    if (
-      filter !== "all" &&
-      filter !== "unseated" &&
-      !guest.dietary.includes(filter)
-    )
+    if (filter.kind === "unseated" && guest.tableId) return false
+    if (filter.kind === "dietary" && !guest.dietary.includes(filter.tag))
       return false
     if (normalizedQuery && !fuzzyMatch(normalizedQuery, guestHaystack(guest)))
       return false
@@ -195,24 +188,24 @@ export const GuestListContent = () => {
 
         <div className="flex gap-2 overflow-x-auto pb-0.5">
           <FilterChip
-            active={filter === "all"}
-            onClick={() => setFilter("all")}
+            active={filter.kind === "all"}
+            onClick={() => setFilter({ kind: "all" })}
           >
             {t("guests.filter.all", { count: guests.length })}
           </FilterChip>
           <FilterChip
-            active={filter === "unseated"}
-            onClick={() => setFilter("unseated")}
+            active={filter.kind === "unseated"}
+            onClick={() => setFilter({ kind: "unseated" })}
           >
             {t("guests.filter.unseated", { count: unseatedCount })}
           </FilterChip>
           {activeDietaryFilters.map((d) => (
             <FilterChip
               key={d}
-              active={filter === d}
-              onClick={() => setFilter(d)}
+              active={filter.kind === "dietary" && filter.tag === d}
+              onClick={() => setFilter({ kind: "dietary", tag: d })}
             >
-              {t(`guests.dietary.${d}`)} ({dietaryCounts.get(d)})
+              {dietaryLabel(t, d)} ({dietaryCounts.get(d)})
             </FilterChip>
           ))}
         </div>
@@ -279,7 +272,7 @@ export const GuestListContent = () => {
                             key={d}
                             className="inline-flex items-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground"
                           >
-                            {t(`guests.dietary.${d}`)}
+                            {dietaryLabel(t, d)}
                           </span>
                         ))}
                       </div>

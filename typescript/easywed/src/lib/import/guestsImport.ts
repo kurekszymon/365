@@ -1,4 +1,5 @@
 import type { Dietary, Guest, Table } from "@/stores/planner.store"
+import { MAX_DIETARY_TAGS, canonicalizeDietary } from "@/lib/dietary"
 
 // The columns we can map an imported spreadsheet onto. `name` is the only
 // required one; the rest are optional and may stay unmapped.
@@ -13,16 +14,6 @@ export interface ParsedSheet {
   headers: Array<string>
   rows: Array<Array<string>>
 }
-
-// Mirrors the `Dietary` union so we can validate imported cells against it.
-// Kept here (not imported from the store) so this module stays pure/testable.
-const DIETARY_VALUES: ReadonlyArray<Dietary> = [
-  "vegetarian",
-  "vegan",
-  "gluten-free",
-  "halal",
-  "kosher",
-]
 
 // Lowercase, strip diacritics, collapse whitespace - so "Gość", "gosc" and
 // "  GUEST " all compare equal. Used for both header detection and table
@@ -98,19 +89,24 @@ export const autoDetectMapping = (headers: Array<string>): ColumnMapping => {
   return mapping
 }
 
-// Splits a dietary cell on common separators and keeps only valid values.
-// Unknown tokens are dropped silently rather than failing the whole import.
+// Splits a dietary cell on common separators into free-form tags. Each part is
+// canonicalized (trimmed, length-capped, snapped to a preset when it matches);
+// blanks are dropped. Deduped by normalized form so "Vegan"/"vegan" collapse,
+// and capped at the per-guest limit.
 export const parseDietary = (cell: string): Array<Dietary> => {
   if (!cell) return []
-  const seen = new Set<Dietary>()
+  const seen = new Set<string>()
+  const tags: Array<Dietary> = []
   for (const part of cell.split(/[,;/]/)) {
-    // Collapse internal whitespace to a hyphen so "gluten free" matches the
-    // canonical "gluten-free" value (the only multi-word dietary tag).
-    const token = normalize(part).replace(/\s+/g, "-")
-    const match = DIETARY_VALUES.find((d) => d === token)
-    if (match) seen.add(match)
+    const tag = canonicalizeDietary(part)
+    if (!tag) continue
+    const key = normalize(tag)
+    if (seen.has(key)) continue
+    seen.add(key)
+    tags.push(tag)
+    if (tags.length >= MAX_DIETARY_TAGS) break
   }
-  return [...seen]
+  return tags
 }
 
 export interface BuildResult {

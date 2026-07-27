@@ -6,6 +6,7 @@
 
 - dont drop measurements in void
 - drag measure instead of panning
+- free-form dietary tags: drop halal/kosher presets, let guests add custom pills; DB CHECK relaxed from value allowlist to a shape rule (`dietary_tags_valid`)
 
 ### 26.07
 
