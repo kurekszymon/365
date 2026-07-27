@@ -23,6 +23,7 @@ import { useAiStore } from "@/stores/ai.store"
 const options = {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
   defaults: "2026-01-30",
+  cookieless_mode: "always",
 } as const
 
 function NotFound() {
