@@ -24,6 +24,7 @@ describe("triggerPdfExport - print store wiring", () => {
   it("writes the requested sort into the print store", () => {
     triggerPdfExport(["name", "table"], {
       sort: "seat",
+      includeAgeGroups: true,
       includeSeats: false,
       seatsShowEmpty: true,
       includeGrid: true,

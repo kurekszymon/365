@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { CheckIcon, PlusIcon, XIcon } from "lucide-react"
 import { useShallow } from "zustand/react/shallow"
+import { GuestAgeGroupField } from "./GuestAgeGroupField"
 import type { Dietary } from "@/stores/planner.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import {
@@ -21,11 +22,14 @@ import { Button } from "@/components/ui/button"
 export type GuestFormValues = {
   name: string
   dietary: Array<Dietary>
+  // Always an explicit value; ADULT_AGE_GROUP is the default (see EMPTY_GUEST).
+  ageGroup: string
   note: string
 }
 
-// Controlled name/dietary/note fields shared by the add and edit guest dialogs
-// so the two stay in sync. The parent owns the values and persistence.
+// Controlled name/dietary/age-group/note fields shared by the add and edit
+// guest dialogs so the two stay in sync. The parent owns the values and
+// persistence.
 export const GuestFormFields = ({
   value,
   onChange,
@@ -196,6 +200,10 @@ export const GuestFormFields = ({
           )}
         </FieldContent>
       </Field>
+      <GuestAgeGroupField
+        value={value.ageGroup}
+        onChange={(ageGroup) => onChange({ ...value, ageGroup })}
+      />
       <Field>
         <FieldLabel>{t("guests.add.note")}</FieldLabel>
         <FieldContent>

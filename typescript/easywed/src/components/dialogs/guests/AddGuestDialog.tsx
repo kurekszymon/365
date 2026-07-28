@@ -14,8 +14,14 @@ import {
 } from "@/components/ui/responsive-dialog"
 import { Button } from "@/components/ui/button"
 import { useDialogStore } from "@/stores/dialog.store"
+import { ADULT_AGE_GROUP } from "@/lib/ageGroup"
 
-const EMPTY_GUEST: GuestFormValues = { name: "", dietary: [], note: "" }
+const EMPTY_GUEST: GuestFormValues = {
+  name: "",
+  dietary: [],
+  ageGroup: ADULT_AGE_GROUP,
+  note: "",
+}
 
 export const AddGuestDialog = () => {
   const { t } = useTranslation()
@@ -62,6 +68,7 @@ export const AddGuestDialog = () => {
                 note: form.note.trim(),
                 tableId: null,
                 dietary: form.dietary,
+                ageGroup: form.ageGroup,
               })
               // Reveal the new guest in the entity-list panel - the desktop
               // rail and the mobile drawer share the store, so one call covers

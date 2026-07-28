@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { normalize } from "@/lib/import/guestsImport"
 import { dietaryLabel, sortDietaryTags } from "@/lib/dietary"
+import { ageGroupLabel, childAgeGroup } from "@/lib/ageGroup"
 
 // A user-typed tag could literally be "all", so the sentinels can't be bare
 // strings sharing the tag namespace.
@@ -112,16 +113,19 @@ export const GuestListContent = () => {
   // Only tags actually in use, presets-first then alphabetical.
   const activeDietaryFilters = sortDietaryTags(dietaryCounts.keys(), t)
 
-  // Fold the name plus each dietary preference - both the raw tag ("vegan")
-  // and its displayed label ("Wegańska") - into one normalized blob so a
-  // fuzzy query can hit any of them.
-  const guestHaystack = (guest: Guest) =>
-    normalize(
+  // Fold the name, each dietary preference - both the raw tag ("vegan") and
+  // its displayed label ("Wegańska") - and the age bracket into one normalized
+  // blob so a fuzzy query can hit any of them.
+  const guestHaystack = (guest: Guest) => {
+    const child = childAgeGroup(guest.ageGroup)
+    return normalize(
       [
         guest.name,
         ...guest.dietary.flatMap((d) => [d, dietaryLabel(t, d)]),
+        ...(child ? [child, ageGroupLabel(t, child)] : []),
       ].join(" ")
     )
+  }
 
   const normalizedQuery = normalize(searchQuery)
   const filteredGuests = guests.filter((guest) => {
@@ -238,6 +242,7 @@ export const GuestListContent = () => {
         <div className="flex flex-col gap-2">
           {filteredGuests.map((guest) => {
             const seatedAt = seatedTableLabel(guest)
+            const ageBadge = childAgeGroup(guest.ageGroup)
             return (
               <div
                 key={guest.id}
@@ -252,9 +257,20 @@ export const GuestListContent = () => {
                     {getInitials(guest.name)}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">
-                      {guest.name}
-                    </p>
+                    {/* Adults are the default, so only child brackets earn a
+                        badge - same rule as the printed guest list. It rides
+                        alongside the name rather than with the dietary tags:
+                        it's who the guest is, not what they eat. */}
+                    <div className="flex items-center gap-1.5">
+                      <p className="truncate text-sm font-semibold">
+                        {guest.name}
+                      </p>
+                      {ageBadge && (
+                        <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                          {ageGroupLabel(t, ageBadge)}
+                        </span>
+                      )}
+                    </div>
                     {seatedAt ? (
                       <p className="mt-0.5 flex items-center gap-1 text-xs font-medium text-primary">
                         <CheckIcon className="size-3" />

@@ -102,6 +102,7 @@ export type Database = {
       }
       guests: {
         Row: {
+          age_group: string | null
           created_at: string
           deleted_at: string | null
           dietary: string[]
@@ -114,6 +115,7 @@ export type Database = {
           wedding_id: string
         }
         Insert: {
+          age_group?: string | null
           created_at?: string
           deleted_at?: string | null
           dietary?: string[]
@@ -126,6 +128,7 @@ export type Database = {
           wedding_id: string
         }
         Update: {
+          age_group?: string | null
           created_at?: string
           deleted_at?: string | null
           dietary?: string[]

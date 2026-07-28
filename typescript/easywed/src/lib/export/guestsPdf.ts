@@ -9,6 +9,7 @@ export type { TableGroup } from "./guests"
 
 type PdfExportOptions = {
   sort: GuestSort
+  includeAgeGroups: boolean
   includeSeats: boolean
   seatsShowEmpty: boolean
   includeGrid: boolean
@@ -18,6 +19,7 @@ type PdfExportOptions = {
 
 const DEFAULT_OPTIONS: PdfExportOptions = {
   sort: DEFAULT_GUEST_SORT,
+  includeAgeGroups: true,
   includeSeats: false,
   seatsShowEmpty: true,
   includeGrid: true,
@@ -34,6 +36,7 @@ export const triggerPdfExport = (
   flushSync(() => {
     usePrintStore.getState().setFields(fields)
     usePrintStore.getState().setSort(options.sort)
+    usePrintStore.getState().setIncludeAgeGroups(options.includeAgeGroups)
     usePrintStore.getState().setSeatOptions({
       includeSeats: options.includeSeats,
       seatsShowEmpty: options.seatsShowEmpty,

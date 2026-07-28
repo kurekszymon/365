@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/responsive-dialog"
 import { Button } from "@/components/ui/button"
 import { useDialogStore } from "@/stores/dialog.store"
+import { ADULT_AGE_GROUP } from "@/lib/ageGroup"
 
 export const EditGuestDialog = () => {
   const { t } = useTranslation()
@@ -36,6 +37,7 @@ export const EditGuestDialog = () => {
   const [form, setForm] = useState<GuestFormValues>({
     name: "",
     dietary: [],
+    ageGroup: ADULT_AGE_GROUP,
     note: "",
   })
   // Reload the form whenever the dialog targets a different guest (React's
@@ -47,6 +49,7 @@ export const EditGuestDialog = () => {
     setForm({
       name: guest.name,
       dietary: guest.dietary,
+      ageGroup: guest.ageGroup ?? ADULT_AGE_GROUP,
       note: guest.note ?? "",
     })
   }
@@ -78,6 +81,7 @@ export const EditGuestDialog = () => {
                 name: form.name.trim(),
                 note: form.note.trim(),
                 dietary: form.dietary,
+                ageGroup: form.ageGroup,
               })
               dialog.close()
               setPrevGuestId(null)

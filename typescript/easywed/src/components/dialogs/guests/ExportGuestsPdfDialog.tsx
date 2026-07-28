@@ -31,6 +31,8 @@ export const ExportGuestsPdfDialog = () => {
   const [selected, setSelected] =
     useState<Array<GuestField>>(DEFAULT_PRINT_FIELDS)
   const [sort, setSort] = useState<GuestSort>(DEFAULT_GUEST_SORT)
+  // Only non-adult guests are annotated, so this is cheap to leave on.
+  const [includeAgeGroups, setIncludeAgeGroups] = useState(true)
   // Mirror the planner's current seat visibility as the default.
   const [includeSeats, setIncludeSeats] = useState(
     () => useViewStore.getState().showSeats
@@ -90,6 +92,16 @@ export const ExportGuestsPdfDialog = () => {
             </FieldContent>
           </Field>
           <GuestSortField sort={sort} onChange={setSort} />
+          <Field orientation="horizontal">
+            <FieldLabel htmlFor="include-age-groups">
+              {t("export.pdf.include_age_groups")}
+            </FieldLabel>
+            <Switch
+              id="include-age-groups"
+              checked={includeAgeGroups}
+              onCheckedChange={setIncludeAgeGroups}
+            />
+          </Field>
           <Field orientation="horizontal">
             <FieldLabel htmlFor="include-seats">
               {t("export.pdf.include_seats")}
@@ -164,6 +176,7 @@ export const ExportGuestsPdfDialog = () => {
               dialog.close()
               triggerPdfExport(orderedSelected, {
                 sort,
+                includeAgeGroups,
                 includeSeats,
                 seatsShowEmpty,
                 includeGrid,
