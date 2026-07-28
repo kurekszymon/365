@@ -60,7 +60,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
 
     supabase
       .from("guests")
-      .select("id, name, dietary, note, table_id, seat_id")
+      .select("id, name, dietary, age_group, note, table_id, seat_id")
       .eq("wedding_id", id)
       .is("deleted_at", null)
       .abortSignal(signal),
@@ -181,6 +181,8 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     id: g.id,
     name: g.name,
     dietary: g.dietary,
+    // NULL is the adult default; the store leaves it undefined in that case.
+    ageGroup: g.age_group ?? undefined,
     tableId: g.table_id,
     seatId: g.seat_id,
     note: g.note ?? undefined,

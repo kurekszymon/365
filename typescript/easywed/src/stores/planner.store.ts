@@ -170,6 +170,9 @@ export interface Guest {
   id: string
   name: string
   dietary: Array<Dietary>
+  // Which age bracket the guest falls in ("0-3", "3-6", or a user-typed one).
+  // Absent/"adult" means the default, adult - see `@/lib/ageGroup`.
+  ageGroup?: string | null
   tableId: string | null
   // Specific seat at `tableId` (e.g. "seat-3"), or null to fill the next free
   // seat in order. Always null when `tableId` is null.
@@ -220,10 +223,11 @@ type Action = {
   deleteTable: (id: string) => void
   addGuest: (guest: Omit<Guest, "id">) => void
   addGuests: (guests: Array<Omit<Guest, "id">>) => Promise<boolean>
-  // Edits a guest's details (name/dietary/note); seating is left untouched.
+  // Edits a guest's details (name/dietary/age group/note); seating is left
+  // untouched.
   updateGuest: (
     id: string,
-    details: Pick<Guest, "name" | "dietary" | "note">
+    details: Pick<Guest, "name" | "dietary" | "ageGroup" | "note">
   ) => void
   deleteGuest: (id: string) => void
   addHall: (hall: Omit<Hall, "id" | "position">, position?: Position) => string

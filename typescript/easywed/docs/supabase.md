@@ -72,7 +72,8 @@ Triggers are "on event X, run function Y" - like `useEffect` but running inside 
 ```sql
 capacity integer not null check (capacity > 0),
 shape text not null check (shape in ('round', 'rectangular')),
-dietary text[] not null check (public.dietary_tags_valid(dietary))
+dietary text[] not null check (public.dietary_tags_valid(dietary)),
+age_group text check (age_group is null or char_length(age_group) between 1 and 24)
 ```
 
 TypeScript's union types as runtime rules. `shape` mirrors a TS string union.
@@ -84,6 +85,12 @@ tags**: migration `20260727000001` swapped the value allowlist for a shape rule
 cleaning tags; the constraint only guards the hard limits. A CHECK can't hold a
 subquery, so the per-element check lives in an immutable helper that unnests the
 array.
+
+`guests.age_group` (migration `20260728000001`) follows the same philosophy: a
+bounded-length rule rather than an allowlist, because the brackets are
+user-editable. **NULL means adult** - the default - so existing rows needed no
+backfill and the client never writes the literal `'adult'` (see
+`toStoredAgeGroup` in `src/lib/ageGroup.ts`).
 
 Could've used Postgres enums instead of `text` + CHECK. Enums are faster but a pain to alter (`ALTER TYPE ... ADD VALUE` is locking). CHECK constraints are easier to evolve. Analogy: enums ≈ `const enum`, CHECK ≈ union type of string literals.
 

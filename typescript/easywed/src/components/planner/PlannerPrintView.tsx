@@ -20,6 +20,7 @@ import { useViewStore } from "@/stores/view.store"
 import { useMeasuresStore } from "@/stores/measures.store"
 import { groupGuestsByTable } from "@/lib/export/guests"
 import { dietaryLabel } from "@/lib/dietary"
+import { ageGroupLabel, childAgeGroup } from "@/lib/ageGroup"
 import { cn } from "@/lib/utils"
 
 // TODO: only planner is printable - other pages would be blank
@@ -49,11 +50,21 @@ const renderGuestFields = (
   return parts
 }
 
+// Adults are the default, so a guest only carries an age annotation when they
+// fall in a child bracket - a printed list of 120 "(adult)" suffixes helps
+// nobody, while "(0-3 years)" is exactly what catering needs.
+const ageSuffix = (g: Guest, enabled: boolean, t: TFunction): string | null => {
+  if (!enabled) return null
+  const group = childAgeGroup(g.ageGroup)
+  return group ? `(${ageGroupLabel(t, group)})` : null
+}
+
 export const PlannerPrintView = () => {
   const { t, i18n } = useTranslation()
 
   const fields = usePrintStore((s) => s.fields)
   const sort = usePrintStore((s) => s.sort)
+  const includeAgeGroups = usePrintStore((s) => s.includeAgeGroups)
   const {
     includeSeats,
     seatsShowEmpty,
@@ -417,12 +428,18 @@ export const PlannerPrintView = () => {
                 <ol className="grid grid-cols-1 gap-y-1 text-xs">
                   {tableGuests.map((g, idx) => {
                     const parts = renderGuestFields(g, fields, t)
+                    const age = ageSuffix(g, includeAgeGroups, t)
                     return (
                       <li key={g.id} className="flex gap-1">
                         <span className="w-5 shrink-0 text-right text-gray-500">
                           {idx + 1}.
                         </span>
-                        <span>{parts.join(" - ")}</span>
+                        <span>
+                          {parts.join(" - ")}
+                          {age && (
+                            <span className="ml-1 text-gray-500">{age}</span>
+                          )}
+                        </span>
                       </li>
                     )
                   })}
@@ -442,12 +459,18 @@ export const PlannerPrintView = () => {
               <ol className="grid grid-cols-1 gap-y-1 text-xs">
                 {unassigned.map((g, idx) => {
                   const parts = renderGuestFields(g, fields, t)
+                  const age = ageSuffix(g, includeAgeGroups, t)
                   return (
                     <li key={g.id} className="flex gap-1">
                       <span className="w-5 shrink-0 text-right text-gray-500">
                         {idx + 1}.
                       </span>
-                      <span>{parts.join(" - ")}</span>
+                      <span>
+                        {parts.join(" - ")}
+                        {age && (
+                          <span className="ml-1 text-gray-500">{age}</span>
+                        )}
+                      </span>
                     </li>
                   )
                 })}

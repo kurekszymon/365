@@ -1,6 +1,7 @@
 import type { Guest } from "@/stores/planner.store"
 import { supabase } from "@/lib/supabase"
 import { getWeddingId, run } from "@/lib/sync/mutations/shared"
+import { toStoredAgeGroup } from "@/lib/ageGroup"
 
 export const insertGuest = (guest: Guest): Promise<boolean> => {
   const weddingId = getWeddingId()
@@ -12,6 +13,8 @@ export const insertGuest = (guest: Guest): Promise<boolean> => {
       wedding_id: weddingId,
       name: guest.name,
       dietary: guest.dietary,
+      // Adults are stored as NULL - see toStoredAgeGroup.
+      age_group: toStoredAgeGroup(guest.ageGroup),
       note: guest.note ?? null,
       table_id: guest.tableId,
       seat_id: guest.seatId ?? null,
@@ -33,6 +36,7 @@ export const insertGuests = (guests: Array<Guest>): Promise<boolean> => {
         wedding_id: weddingId,
         name: guest.name,
         dietary: guest.dietary,
+        age_group: toStoredAgeGroup(guest.ageGroup),
         note: guest.note ?? null,
         table_id: guest.tableId,
         seat_id: guest.seatId ?? null,
@@ -52,11 +56,11 @@ export const softDeleteGuest = (id: string): Promise<boolean> =>
       .eq("id", id)
   )
 
-// Persists a guest's editable details (name, dietary, note). Seat/table
-// assignment is handled separately by `updateGuestSeat`, so this never touches
-// table_id/seat_id.
+// Persists a guest's editable details (name, dietary, age group, note).
+// Seat/table assignment is handled separately by `updateGuestSeat`, so this
+// never touches table_id/seat_id.
 export const updateGuestDetails = (
-  guest: Pick<Guest, "id" | "name" | "dietary" | "note">
+  guest: Pick<Guest, "id" | "name" | "dietary" | "ageGroup" | "note">
 ): Promise<boolean> =>
   run(
     "updateGuestDetails",
@@ -65,6 +69,7 @@ export const updateGuestDetails = (
       .update({
         name: guest.name,
         dietary: guest.dietary,
+        age_group: toStoredAgeGroup(guest.ageGroup),
         note: guest.note ?? null,
       })
       .eq("id", guest.id)
