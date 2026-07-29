@@ -19,16 +19,27 @@ import { usePlannerStore } from "@/stores/planner.store"
 import { useDialogStore } from "@/stores/dialog.store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { normalize } from "@/lib/import/guestsImport"
 import { dietaryLabel, sortDietaryTags } from "@/lib/dietary"
-import { ageGroupLabel, childAgeGroup } from "@/lib/ageGroup"
+import {
+  ageGroupLabel,
+  childAgeGroup,
+  countKids,
+  isKidAgeGroup,
+} from "@/lib/ageGroup"
 
 // A user-typed tag could literally be "all", so the sentinels can't be bare
 // strings sharing the tag namespace.
 type Filter =
   | { kind: "all" }
   | { kind: "unseated" }
+  | { kind: "kids" }
   | { kind: "dietary"; tag: string }
 
 // True if every char of `needle` appears in `haystack` in order (a classic
@@ -52,28 +63,41 @@ const fuzzyMatch = (query: string, haystack: string): boolean =>
 // One chip in the scrollable filter row - All/Unseated plus one per dietary
 // category actually in use, replacing the old single "Dieta" toggle so a diner
 // can filter down to (say) just the vegan guests instead of "has any diet".
+// `tooltip` is for chips whose count is derived rather than literal (Kids), so
+// the rule behind the number is discoverable.
 const FilterChip = ({
   active,
   onClick,
+  tooltip,
   children,
 }: {
   active: boolean
   onClick: () => void
+  tooltip?: string
   children: ReactNode
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={cn(
-      "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors",
-      active
-        ? "bg-primary text-primary-foreground"
-        : "bg-muted text-muted-foreground hover:bg-muted/70"
-    )}
-  >
-    {children}
-  </button>
-)
+}) => {
+  const chip = (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors",
+        active
+          ? "bg-primary text-primary-foreground"
+          : "bg-muted text-muted-foreground hover:bg-muted/70"
+      )}
+    >
+      {children}
+    </button>
+  )
+  if (!tooltip) return chip
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{chip}</TooltipTrigger>
+      <TooltipContent side="bottom">{tooltip}</TooltipContent>
+    </Tooltip>
+  )
+}
 
 /**
  * Guests-first list: search + filter chips + seating progress, replacing the
@@ -100,6 +124,10 @@ export const GuestListContent = () => {
 
   const seatedCount = guests.filter((g) => g.tableId).length
   const unseatedCount = guests.length - seatedCount
+  // One number for every under-18, inferred from whichever bracket they were
+  // tagged with (preset or custom) rather than a badge of its own. Caterers ask
+  // for this total, and no single bracket chip answers it.
+  const kidsCount = countKids(guests)
 
   const dietaryCounts = useMemo(() => {
     const counts = new Map<string, number>()
@@ -130,6 +158,7 @@ export const GuestListContent = () => {
   const normalizedQuery = normalize(searchQuery)
   const filteredGuests = guests.filter((guest) => {
     if (filter.kind === "unseated" && guest.tableId) return false
+    if (filter.kind === "kids" && !isKidAgeGroup(guest.ageGroup)) return false
     if (filter.kind === "dietary" && !guest.dietary.includes(filter.tag))
       return false
     if (normalizedQuery && !fuzzyMatch(normalizedQuery, guestHaystack(guest)))
@@ -203,6 +232,18 @@ export const GuestListContent = () => {
           >
             {t("guests.filter.unseated", { count: unseatedCount })}
           </FilterChip>
+          {/* Only offered once someone is tagged as a kid, like the dietary
+              chips - an always-visible "Kids 0" is noise for a wedding
+              without children. */}
+          {kidsCount > 0 && (
+            <FilterChip
+              active={filter.kind === "kids"}
+              onClick={() => setFilter({ kind: "kids" })}
+              tooltip={t("guests.filter.kids_hint")}
+            >
+              {t("guests.filter.kids", { count: kidsCount })}
+            </FilterChip>
+          )}
           {activeDietaryFilters.map((d) => (
             <FilterChip
               key={d}

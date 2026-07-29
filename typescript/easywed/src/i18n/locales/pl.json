@@ -333,6 +333,8 @@
   "guests.assign.pick_seat": "Wybierz miejsce",
   "guests.filter.all": "Wszyscy {{count}}",
   "guests.filter.unseated": "Bez miejsca {{count}}",
+  "guests.filter.kids": "Dzieci {{count}}",
+  "guests.filter.kids_hint": "Liczone automatycznie z przedziałów wieku: każdy gość poniżej 18 lat - z gotowego lub własnego przedziału.",
   "guests.dietary.vegetarian": "Wege",
   "guests.dietary.vegan": "Vegan",
   "guests.dietary.gluten-free": "Bez glutenu",

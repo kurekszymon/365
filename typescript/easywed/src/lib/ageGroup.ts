@@ -6,6 +6,10 @@ import { normalize } from "@/lib/import/guestsImport"
 // adult - so only the child brackets ever need storing or displaying.
 export const ADULT_AGE_GROUP = "adult"
 
+// Age at which a guest counts as an adult. Only used to read numeric brackets -
+// a "12-18" is kids, an "18-25" (a couple grouping young adults) is not.
+const ADULT_AGE = 18
+
 // The brackets offered out of the box in the guest form. Anything else is a
 // bracket the user typed (e.g. "6-12"), which is how the ranges stay editable
 // without a per-wedding settings table. Kept as a pure module (no store import)
@@ -27,6 +31,24 @@ export const isAgeGroupPreset = (group: string): boolean =>
 // renders a badge checks this first, so adults stay unlabelled.
 export const isAdultAgeGroup = (group: string | null | undefined): boolean =>
   !group || group === ADULT_AGE_GROUP
+
+// True when the guest is a kid (under 18). Inferred from whichever bracket they
+// were tagged with rather than a separate "kid" flag: a numeric bracket is
+// judged by its lower bound, so the "0-3"/"3-6" presets and a custom "12-18"
+// count while an "18-25" doesn't, and a non-numeric custom label ("baby",
+// "teen") counts since the adult default is the only non-kid group. This is the
+// rule behind every "how many children" number in the app.
+export const isKidAgeGroup = (group: string | null | undefined): boolean => {
+  if (isAdultAgeGroup(group)) return false
+  const lowerBound = /^(\d{1,2})/.exec(group as string)
+  return lowerBound ? Number(lowerBound[1]) < ADULT_AGE : true
+}
+
+// How many of these guests are kids - the headcount for catering/seating.
+// Structural param type, like `collectAgeGroups`.
+export const countKids = (
+  guests: ReadonlyArray<{ ageGroup?: string | null }>
+): number => guests.filter((guest) => isKidAgeGroup(guest.ageGroup)).length
 
 // The guest's group when it's worth showing (a child bracket), else null.
 // Adults are the default, so every badge/print surface renders nothing for

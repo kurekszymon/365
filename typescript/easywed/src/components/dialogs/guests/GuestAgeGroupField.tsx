@@ -20,9 +20,11 @@ import { Button } from "@/components/ui/button"
 /**
  * Single-select age bracket for a guest: the presets (adult / 0-3 / 3-6) plus
  * every custom bracket already used in this wedding, and an input to type a new
- * one - which is how the ranges stay editable without a settings screen.
- * Deselecting falls back to "adult", the default. Mirrors the dietary pill row
- * in `GuestFormFields`, except a guest has exactly one group.
+ * one - which is how the ranges stay editable without a settings screen. There
+ * is deliberately no separate "kid" pill: the kid headcount is inferred from
+ * whichever bracket is picked (see `isKidAgeGroup`). Deselecting falls back to
+ * "adult", the default. Mirrors the dietary pill row in `GuestFormFields`,
+ * except a guest has exactly one group.
  */
 export const GuestAgeGroupField = ({
   value,

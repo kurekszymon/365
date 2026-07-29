@@ -325,6 +325,8 @@
   "guests.assign.pick_seat": "Pick a seat",
   "guests.filter.all": "All {{count}}",
   "guests.filter.unseated": "Unseated {{count}}",
+  "guests.filter.kids": "Kids {{count}}",
+  "guests.filter.kids_hint": "Counted automatically from age brackets: every guest under 18, whether you used a ready-made bracket or your own.",
   "guests.dietary.vegetarian": "Vegetarian",
   "guests.dietary.vegan": "Vegan",
   "guests.dietary.gluten-free": "Gluten-free",

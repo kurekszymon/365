@@ -6,7 +6,9 @@ import {
   canonicalizeAgeGroup,
   childAgeGroup,
   collectAgeGroups,
+  countKids,
   isAdultAgeGroup,
+  isKidAgeGroup,
   sortAgeGroups,
   toStoredAgeGroup,
 } from "./ageGroup"
@@ -62,6 +64,47 @@ describe("adult defaulting", () => {
     expect(toStoredAgeGroup(ADULT_AGE_GROUP)).toBeNull()
     expect(toStoredAgeGroup(undefined)).toBeNull()
     expect(toStoredAgeGroup("3-6")).toBe("3-6")
+  })
+})
+
+describe("isKidAgeGroup", () => {
+  it("counts the preset ranges", () => {
+    expect(isKidAgeGroup("0-3")).toBe(true)
+    expect(isKidAgeGroup("3-6")).toBe(true)
+  })
+
+  it("excludes adults and untagged guests", () => {
+    expect(isKidAgeGroup(ADULT_AGE_GROUP)).toBe(false)
+    expect(isKidAgeGroup(null)).toBe(false)
+    expect(isKidAgeGroup(undefined)).toBe(false)
+    expect(isKidAgeGroup("")).toBe(false)
+  })
+
+  it("reads a custom numeric bracket by its lower bound", () => {
+    expect(isKidAgeGroup("12-18")).toBe(true)
+    expect(isKidAgeGroup("17")).toBe(true)
+    expect(isKidAgeGroup("18-25")).toBe(false)
+    expect(isKidAgeGroup("60+")).toBe(false)
+  })
+
+  it("treats a non-numeric custom bracket as a kid bracket", () => {
+    expect(isKidAgeGroup("teen")).toBe(true)
+    expect(isKidAgeGroup("niemowlę")).toBe(true)
+  })
+})
+
+describe("countKids", () => {
+  it("totals every under-18 regardless of which bracket was used", () => {
+    expect(
+      countKids([
+        { ageGroup: "0-3" },
+        { ageGroup: "3-6" },
+        { ageGroup: "12-18" },
+        { ageGroup: ADULT_AGE_GROUP },
+        { ageGroup: "18-25" },
+        {},
+      ])
+    ).toBe(3)
   })
 })
 

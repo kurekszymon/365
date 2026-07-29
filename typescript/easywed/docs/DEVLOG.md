@@ -2,6 +2,11 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 29.07
+
+- add filter preset for kids, automatically infer age from age group
+- dont render provider ch
+
 ### 28.07
 
 - add age groups tags
