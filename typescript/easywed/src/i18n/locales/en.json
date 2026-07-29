@@ -576,7 +576,5 @@
   "assistant.setup.llamacpp_jinja": "Important: the assistant can only add or move things if your model supports tool calling. If tools aren't being called, restart the server with the --jinja flag so llama.cpp uses the model's own chat template.",
   "assistant.setup.llamacpp_models": "Read the function-calling guide",
   "assistant.setup.provider_openrouter": "OpenRouter",
-  "assistant.setup.provider_local": "Local (llama.cpp)",
-  "assistant.setup.provider_local_dev_only": "The local llama.cpp option is only available in development.",
-  "assistant.setup.dev_only_badge": "dev"
+  "assistant.setup.provider_local": "Local (llama.cpp)"
 }

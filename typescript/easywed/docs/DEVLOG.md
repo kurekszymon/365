@@ -2,6 +2,10 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 28.07
+
+- add age groups tags
+
 ### 27.07
 
 - posthog: dont track user by cookie
