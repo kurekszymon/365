@@ -33,10 +33,18 @@ Created this repo to (due to lack of a better word) _force_ myself to do somethi
 - idempotency is easy until the second request is different https://blog.dochia.dev/blog/idempotency/
 - webrtc is the problem https://moq.dev/blog/webrtc-is-the-problem/
 - What forces layout/reflow https://gist.github.com/paulirish/5d52fb081b3570c81e3a
+- Understanding Monomorphism to Improve Your JS Performance up to 60x https://www.builder.io/blog/monomorphic-javascript
+- What's up with monomorphism https://mrale.ph/blog/2015/01/11/whats-up-with-monomorphism.html
+- [You don't know html lists]https://blog.frankmtaylor.com/2026/05/13/you-dont-know-html-lists/
+- Appearing productive in the workplace https://nooneshappy.com/article/appearing-productive-in-the-workplace/
+- auth migrations https://blog.val.town/better-auth
+- making your own programming language is easier https://lisyarus.github.io/blog/posts/making-your-own-programming-language.html
+- if ai writes your code, why use python https://medium.com/@NMitchem/if-ai-writes-your-code-why-use-python-bf8c4ba1a055
 
 ### papers
 
 - [What every programmer should know about memory](https://people.freebsd.org/~lstewart/articles/cpumemory.pdf)
+- [The letter S](https://gwern.net/doc/design/typography/1980-knuth.pdf)
 
 ## rust
 
