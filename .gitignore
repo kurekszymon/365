@@ -8,3 +8,5 @@
 # ignore compile commands in root project to make Zed aware of include paths..
 compile_commands.json
 .cache
+
+ocaml/
