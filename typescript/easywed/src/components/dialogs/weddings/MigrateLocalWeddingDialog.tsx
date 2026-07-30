@@ -6,6 +6,7 @@ import type {
   LocalGlobalSnapshot,
   LocalPlannerSnapshot,
 } from "@/lib/localWedding"
+import type { Reminder } from "@/stores/reminders.store"
 import {
   ResponsiveDialog,
   ResponsiveDialogBody,
@@ -17,7 +18,11 @@ import { Button } from "@/components/ui/button"
 import { useAuthStore } from "@/stores/auth.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { supabase } from "@/lib/supabase"
-import { insertGuests, replacePlannerLayout } from "@/lib/sync/mutations"
+import {
+  insertGuests,
+  insertReminders,
+  replacePlannerLayout,
+} from "@/lib/sync/mutations"
 import { clearLocalWeddingStorage } from "@/lib/localWedding"
 
 type Stage =
@@ -29,18 +34,20 @@ interface MigrateLocalWeddingDialogProps {
   open: boolean
   planner: LocalPlannerSnapshot
   global: LocalGlobalSnapshot
+  reminders: Array<Reminder>
   onClose: () => void
 }
 
 // Commit flow: create wedding -> bulk layout write via the
 // replace_planner_layout RPC -> rollback (delete the wedding) on failure,
-// plus a guests insert the layout RPC doesn't cover. Props-driven rather
-// than routed through dialog.store/DialogManager since it's triggered by a
-// sign-in transition, not a route.
+// plus guests and reminders inserts the layout RPC doesn't cover. Props-driven
+// rather than routed through dialog.store/DialogManager since it's triggered
+// by a sign-in transition, not a route.
 export const MigrateLocalWeddingDialog = ({
   open,
   planner,
   global,
+  reminders,
   onClose,
 }: MigrateLocalWeddingDialogProps) => {
   const { t } = useTranslation()
@@ -117,27 +124,32 @@ export const MigrateLocalWeddingDialog = ({
       return
     }
 
-    // Guests aren't covered by replacePlannerLayout's RPC. A failure here
-    // isn't rolled back - the layout is real and worth keeping - it's
-    // surfaced as a toast after navigating instead. Same synchronous-throw
-    // risk as replacePlannerLayout above (malformed locally-persisted guest
-    // rows) - catch it so the flow still completes (navigate + toast)
-    // instead of rejecting onConfirm() silently.
-    let guestsOk = true
-    if (planner.guests.length > 0) {
+    // Guests and reminders aren't covered by replacePlannerLayout's RPC. A
+    // failure in either isn't rolled back - the layout is real and worth
+    // keeping - it's surfaced as a toast after navigating instead. Same
+    // synchronous-throw risk as replacePlannerLayout above (malformed
+    // locally-persisted rows) - catch it so the flow still completes
+    // (navigate + toast) instead of rejecting onConfirm() silently. Both
+    // no-op successfully on an empty list, so neither needs a length guard.
+    const commit = async (label: string, write: () => Promise<boolean>) => {
       try {
-        guestsOk = await insertGuests(planner.guests)
+        return await write()
       } catch (err) {
-        console.error("[guest-mode] failed to migrate guests", err)
-        guestsOk = false
+        console.error(`[guest-mode] failed to migrate ${label}`, err)
+        return false
       }
     }
+
+    const [guestsOk, remindersOk] = await Promise.all([
+      commit("guests", () => insertGuests(planner.guests)),
+      commit("reminders", () => insertReminders(reminders)),
+    ])
 
     clearLocalWeddingStorage()
     onClose()
     await navigate({ to: "/wedding/$id/planner", params: { id: data.id } })
 
-    if (!guestsOk) {
+    if (!guestsOk || !remindersOk) {
       toast.error(t("guest_mode.migrate.partial_failed"), {
         id: "guest-migrate-partial",
       })

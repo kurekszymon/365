@@ -4,6 +4,7 @@ import {
   hasLocalWeddingData,
   readLocalGlobalSnapshot,
   readLocalPlannerSnapshot,
+  readLocalRemindersSnapshot,
 } from "@/lib/localWedding"
 import { supabase } from "@/lib/supabase"
 
@@ -63,6 +64,8 @@ export function LocalWeddingMigrationPrompt() {
     halls: [],
   }
   const global = readLocalGlobalSnapshot()
+  // Already an array (empty when nothing is stored), so no fallback needed.
+  const reminders = readLocalRemindersSnapshot()
 
   const close = () => {
     markDismissed()
@@ -74,6 +77,7 @@ export function LocalWeddingMigrationPrompt() {
       open={promptOpen}
       planner={planner}
       global={global ?? {}}
+      reminders={reminders}
       onClose={close}
     />
   )

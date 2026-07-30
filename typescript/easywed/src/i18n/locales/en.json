@@ -169,7 +169,7 @@
   "guest_mode.migrate.confirm": "Save to my account",
   "guest_mode.migrate.committing": "Saving…",
   "guest_mode.migrate.failed": "Couldn't save your local wedding. Please try again.",
-  "guest_mode.migrate.partial_failed": "Your layout was saved, but some guests couldn't be imported - you can re-add them.",
+  "guest_mode.migrate.partial_failed": "Your layout was saved, but some guests or reminders couldn't be imported - you can re-add them.",
 
   "members.title": "Members",
   "members.role": "Role",
