@@ -33,25 +33,40 @@ on it.
 
 ## Persistence
 
-Guest data lives in two `localStorage` keys, both written through
+Guest data lives in three `localStorage` keys, all written through
 `createLocalGatedStorage()`:
 
 - `easywed.planner.local` - tables, guests, fixtures, halls
 - `easywed.global.local` - wedding name and date only
+- `easywed.reminders.local` - the reminder list
 
-The gate matters: the planner/global stores are the **same instances** used for
-cloud weddings, so writes are dropped unless the active `weddingId` is the
-local sentinel. A signed-in user editing a real wedding never leaks into these
-keys.
+The gate matters: the planner/global/reminders stores are the **same instances**
+used for cloud weddings, so writes are dropped unless the active `weddingId` is
+the local sentinel. A signed-in user editing a real wedding never leaks into
+these keys.
 
 Supabase writes are skipped the same way - `run()` in
 `src/lib/sync/mutations/shared.ts` returns early (reporting success) for a
 local wedding, so every mutation becomes a no-op and callers that branch on the
 result still behave correctly.
 
-Not persisted in guest mode: **reminders**. `reminders.store.ts` has no
-`persist` middleware and is hydrated from Supabase by `loadWedding.ts`, so a
-guest's reminders live in memory for the session and are gone on reload.
+All three stores use `skipHydration: true`; `/wedding/local` resets them and
+calls `persist.rehydrate()` explicitly, so a cloud wedding left over from a
+client-side nav can't leak into a guest session. `loadWedding.ts` is what fills
+the same stores for a signed-in wedding.
+
+Reminders carry two extra wrinkles the planner/global keys don't:
+
+- Their three date fields (`createdAt`, `updatedAt`, `due`) round-trip through
+  JSON as strings, so `normalizeLocalRemindersSnapshot` in
+  `src/lib/localWedding.ts` revives them on the way back in. It also drops rows
+  whose `uuid`/`text`/`status` are missing or malformed, and backfills
+  unparsable timestamps with "now" - guest storage is treated as potentially
+  corrupted (`Reminder` types `createdAt`/`updatedAt` as non-optional and every
+  consumer reads them unguarded).
+- The store's persist `merge` and `readLocalRemindersSnapshot` share that one
+  normalizer, so the live-hydration path and the migration-read path can't
+  drift apart.
 
 ## Feature matrix
 
@@ -62,7 +77,7 @@ guest's reminders live in memory for the session and are gone on reload.
 | Print / PDF export                   |  ✅   |    ✅     |                                                |
 | AI assistant                         |  ✅   |    ✅     | bring-your-own key, settings in `localStorage` |
 | Wedding name and date                |  ✅   |    ✅     | guest default: `wedding.default_local_name`    |
-| Reminders                            |  ⚠️   |    ✅     | guest: session-only, never saved               |
+| Reminders                            |  ✅   |    ✅     | `easywed.reminders.local`, migrated on sign-in |
 | **Inviting members**                 |  ❌   |    ✅     | free-plan gate, see below                      |
 | Multiple weddings                    |  ❌   |    ✅     | `/home` list requires auth                     |
 | Sync across devices / browsers       |  ❌   |    ✅     |                                                |
@@ -91,8 +106,10 @@ the `"local"` sentinel as a wedding id.
   Supabase's `SIGNED_IN` event (not `INITIAL_SESSION`, so a returning user is
   not re-prompted). If `hasLocalWeddingData()` is true it opens
   `MigrateLocalWeddingDialog`, which creates a wedding row, pushes the layout
-  through `replacePlannerLayout`, then inserts guests. Reminders are not
-  migrated - there are none stored to migrate.
+  through `replacePlannerLayout`, then inserts guests and reminders in
+  parallel (`insertGuests` / `insertReminders`). Only a layout failure rolls
+  the wedding back; a guests/reminders failure keeps the wedding and surfaces
+  `guest_mode.migrate.partial_failed` as a toast after navigating.
 - Dismissal is remembered in `sessionStorage` (`easywed.guest_migration_dismissed`).
 
 ## Adding a new account-only feature

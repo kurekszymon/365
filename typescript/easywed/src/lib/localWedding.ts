@@ -7,6 +7,7 @@ import type {
   HallPreset,
   Table,
 } from "@/stores/planner.store"
+import type { Reminder } from "@/stores/reminders.store"
 
 // Sentinel `weddingId` for the single, device-local wedding a signed-out
 // guest plans in. Never a real Supabase row id, so it doubles as the signal
@@ -17,6 +18,7 @@ export const isLocalWedding = (id?: string): boolean => id === LOCAL_WEDDING_ID
 
 export const PLANNER_STORAGE_KEY = "easywed.planner.local"
 export const GLOBAL_STORAGE_KEY = "easywed.global.local"
+export const REMINDERS_STORAGE_KEY = "easywed.reminders.local"
 
 // Resolves the currently-active weddingId for the gate below. global.store.ts
 // registers its own getter right after declaring itself (registerActiveWeddingIdGetter,
@@ -87,8 +89,13 @@ export const localPlannerStorage = createJSONStorage(() =>
 // Date - downstream code (MigrateLocalWeddingDialog, PlannerPrintView) calls
 // .toISOString()/date formatting on global.store's `date`, which throws for
 // an Invalid Date. Returning undefined here drops the key entirely (both as
-// a JSON.parse reviver and as a plain value).
+// a JSON.parse reviver and as a plain value). `Date` instances pass through
+// (revalidated) so the same helper serves both a raw JSON read and an
+// already-revived value.
 const parseValidDate = (value: unknown): Date | undefined => {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? undefined : value
+  }
   if (typeof value !== "string") return undefined
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? undefined : date
@@ -102,6 +109,14 @@ export const localGlobalStorage = createJSONStorage(
   {
     reviver: (key, value) => (key === "date" ? parseValidDate(value) : value),
   }
+)
+
+// No reviver here (unlike localGlobalStorage): reminders.store's persist
+// `merge` runs the payload through normalizeLocalRemindersSnapshot below,
+// which revives the three date fields and validates the rows in one pass -
+// the same pass readLocalRemindersSnapshot uses for the raw JSON read.
+export const localRemindersStorage = createJSONStorage(() =>
+  createLocalGatedStorage()
 )
 
 export interface LocalPlannerSnapshot {
@@ -254,6 +269,55 @@ export const readLocalGlobalSnapshot = (): LocalGlobalSnapshot | null => {
   }
 }
 
+// The identifying fields must be intact for a persisted reminder to be worth
+// keeping; the timestamps are recoverable (see below), so they aren't checked
+// here.
+const hasReminderIdentity = (
+  value: unknown
+): value is Omit<Reminder, "createdAt" | "updatedAt" | "due"> & {
+  createdAt?: unknown
+  updatedAt?: unknown
+  due?: unknown
+} => {
+  if (typeof value !== "object" || value === null) return false
+  const r = value as { uuid?: unknown; text?: unknown; status?: unknown }
+  return (
+    typeof r.uuid === "string" &&
+    typeof r.text === "string" &&
+    (r.status === "open" || r.status === "completed")
+  )
+}
+
+// Normalizes a persisted reminders payload (dates arrive as strings from
+// plain JSON, or as `Date`s if something already revived them) into store
+// shape. Malformed rows are dropped rather than crashing the list; missing or
+// unparsable `createdAt`/`updatedAt` fall back to now, since Reminder types
+// them as non-optional and every consumer (ReminderPreview, the migration
+// insert) reads them unguarded. Shared by the raw read below and
+// reminders.store's persist `merge`.
+export const normalizeLocalRemindersSnapshot = (
+  value: unknown
+): Array<Reminder> => {
+  const reminders = (value as { reminders?: unknown } | null | undefined)
+    ?.reminders
+  if (!Array.isArray(reminders)) return []
+  return reminders.filter(hasReminderIdentity).map((r) => {
+    const now = new Date()
+    const due = parseValidDate(r.due)
+    return {
+      uuid: r.uuid,
+      text: r.text,
+      status: r.status,
+      createdAt: parseValidDate(r.createdAt) ?? now,
+      updatedAt: parseValidDate(r.updatedAt) ?? now,
+      ...(due ? { due } : {}),
+    }
+  })
+}
+
+export const readLocalRemindersSnapshot = (): Array<Reminder> =>
+  normalizeLocalRemindersSnapshot(readPersistedState(REMINDERS_STORAGE_KEY))
+
 export const hasLocalWeddingData = (): boolean => {
   const planner = readLocalPlannerSnapshot()
   const global = readLocalGlobalSnapshot()
@@ -261,6 +325,7 @@ export const hasLocalWeddingData = (): boolean => {
     (planner?.tables.length ?? 0) > 0 ||
     (planner?.guests.length ?? 0) > 0 ||
     (planner?.fixtures.length ?? 0) > 0 ||
+    readLocalRemindersSnapshot().length > 0 ||
     Boolean(global?.name?.trim()) ||
     Boolean(global?.date)
   )
@@ -269,4 +334,5 @@ export const hasLocalWeddingData = (): boolean => {
 export const clearLocalWeddingStorage = (): void => {
   safeRemoveItem(PLANNER_STORAGE_KEY)
   safeRemoveItem(GLOBAL_STORAGE_KEY)
+  safeRemoveItem(REMINDERS_STORAGE_KEY)
 }

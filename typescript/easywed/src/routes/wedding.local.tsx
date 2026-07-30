@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { LOCAL_WEDDING_ID } from "@/lib/localWedding"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useGlobalStore } from "@/stores/global.store"
+import { useRemindersStore } from "@/stores/reminders.store"
 
 // No requireAuth: this is the guest (no-login) planning route. State comes
 // from localStorage instead of Supabase - see loadWedding.ts for the cloud
@@ -43,10 +44,12 @@ function LocalWeddingLayout() {
       name: undefined,
       date: undefined,
     })
+    useRemindersStore.setState({ reminders: [] })
 
     void Promise.all([
       usePlannerStore.persist.rehydrate(),
       useGlobalStore.persist.rehydrate(),
+      useRemindersStore.persist.rehydrate(),
     ])
       .catch((err: unknown) => {
         // A read/parse failure here (e.g. corrupted localStorage) must not

@@ -4,18 +4,32 @@ import {
   GLOBAL_STORAGE_KEY,
   LOCAL_WEDDING_ID,
   PLANNER_STORAGE_KEY,
+  REMINDERS_STORAGE_KEY,
   clearLocalWeddingStorage,
   createLocalGatedStorage,
   hasLocalWeddingData,
   isLocalWedding,
+  normalizeLocalRemindersSnapshot,
   readLocalGlobalSnapshot,
   readLocalPlannerSnapshot,
+  readLocalRemindersSnapshot,
   registerActiveWeddingIdGetter,
 } from "./localWedding"
 
 beforeEach(() => {
   localStorage.clear()
 })
+
+// Writes a reminders payload in zustand's persisted envelope shape. Rows are
+// `unknown` on purpose: several tests persist deliberately malformed ones.
+const persistReminders = (reminders: Array<unknown>) =>
+  localStorage.setItem(
+    REMINDERS_STORAGE_KEY,
+    JSON.stringify({ state: { reminders }, version: 0 })
+  )
+
+const isValidDate = (value: unknown) =>
+  value instanceof Date && !Number.isNaN(value.getTime())
 
 // registerActiveWeddingIdGetter mutates module-level state in localWedding.ts
 // (not per-test state), so a getter registered by one test would otherwise
@@ -141,6 +155,154 @@ describe("readLocalPlannerSnapshot / readLocalGlobalSnapshot", () => {
   })
 })
 
+describe("readLocalRemindersSnapshot", () => {
+  it("returns an empty array when nothing is persisted", () => {
+    expect(readLocalRemindersSnapshot()).toEqual([])
+  })
+
+  it("returns an empty array on malformed JSON instead of throwing", () => {
+    localStorage.setItem(REMINDERS_STORAGE_KEY, "{not json")
+    expect(readLocalRemindersSnapshot()).toEqual([])
+  })
+
+  it("unwraps zustand's persisted envelope and revives the date fields", () => {
+    persistReminders([
+      {
+        uuid: "r1",
+        text: "Book the band",
+        status: "open",
+        createdAt: "2026-07-01T10:00:00.000Z",
+        updatedAt: "2026-07-02T10:00:00.000Z",
+        due: "2026-08-01T00:00:00.000Z",
+      },
+    ])
+
+    const [reminder] = readLocalRemindersSnapshot()
+    expect(reminder.uuid).toBe("r1")
+    expect(reminder.text).toBe("Book the band")
+    expect(reminder.status).toBe("open")
+    expect(reminder.createdAt.toISOString()).toBe("2026-07-01T10:00:00.000Z")
+    expect(reminder.updatedAt.toISOString()).toBe("2026-07-02T10:00:00.000Z")
+    expect(reminder.due?.toISOString()).toBe("2026-08-01T00:00:00.000Z")
+  })
+
+  it("keeps a due-less reminder without stamping an undefined `due` key", () => {
+    persistReminders([
+      {
+        uuid: "r1",
+        text: "No deadline",
+        status: "completed",
+        createdAt: "2026-07-01T10:00:00.000Z",
+        updatedAt: "2026-07-01T10:00:00.000Z",
+      },
+    ])
+
+    const [reminder] = readLocalRemindersSnapshot()
+    expect(reminder.status).toBe("completed")
+    expect("due" in reminder).toBe(false)
+  })
+
+  it("drops rows whose identifying fields are missing or malformed", () => {
+    persistReminders([
+      { uuid: "keep", text: "Valid", status: "open" },
+      null,
+      "not an object",
+      { text: "No uuid", status: "open" },
+      { uuid: 42, text: "Numeric uuid", status: "open" },
+      { uuid: "no-text", status: "open" },
+      { uuid: "bad-status", text: "Unknown status", status: "archived" },
+    ])
+
+    const reminders = readLocalRemindersSnapshot()
+    expect(reminders.map((r) => r.uuid)).toEqual(["keep"])
+  })
+
+  it("returns an empty array when `reminders` isn't an array", () => {
+    localStorage.setItem(
+      REMINDERS_STORAGE_KEY,
+      JSON.stringify({ state: { reminders: { r1: {} } }, version: 0 })
+    )
+    expect(readLocalRemindersSnapshot()).toEqual([])
+  })
+
+  it("backfills timestamps that are missing or unparsable rather than returning Invalid Dates", () => {
+    persistReminders([
+      { uuid: "r1", text: "No timestamps", status: "open" },
+      {
+        uuid: "r2",
+        text: "Junk timestamps",
+        status: "open",
+        createdAt: "not-a-date",
+        updatedAt: 12345,
+      },
+    ])
+
+    const reminders = readLocalRemindersSnapshot()
+    expect(reminders).toHaveLength(2)
+    for (const reminder of reminders) {
+      expect(isValidDate(reminder.createdAt)).toBe(true)
+      expect(isValidDate(reminder.updatedAt)).toBe(true)
+    }
+  })
+
+  it("drops an unparsable `due` instead of returning an Invalid Date", () => {
+    persistReminders([
+      { uuid: "r1", text: "Bad due", status: "open", due: "not-a-date" },
+    ])
+
+    const [reminder] = readLocalRemindersSnapshot()
+    expect(reminder.uuid).toBe("r1")
+    expect(reminder.due).toBeUndefined()
+  })
+})
+
+describe("normalizeLocalRemindersSnapshot", () => {
+  it("returns an empty array for a null/undefined/non-object payload", () => {
+    expect(normalizeLocalRemindersSnapshot(null)).toEqual([])
+    expect(normalizeLocalRemindersSnapshot(undefined)).toEqual([])
+    expect(normalizeLocalRemindersSnapshot("nonsense")).toEqual([])
+    expect(normalizeLocalRemindersSnapshot({})).toEqual([])
+  })
+
+  // reminders.store's persist `merge` hands this JSON-parsed state (dates as
+  // strings), but the helper also has to survive already-revived `Date`s.
+  it("passes through values that are already Date instances", () => {
+    const createdAt = new Date("2026-07-01T10:00:00.000Z")
+    const reminders = normalizeLocalRemindersSnapshot({
+      reminders: [
+        {
+          uuid: "r1",
+          text: "Already revived",
+          status: "open",
+          createdAt,
+          updatedAt: createdAt,
+          due: new Date("2026-08-01T00:00:00.000Z"),
+        },
+      ],
+    })
+
+    expect(reminders[0].createdAt).toEqual(createdAt)
+    expect(reminders[0].due?.toISOString()).toBe("2026-08-01T00:00:00.000Z")
+  })
+
+  it("drops an Invalid Date instance the same way it drops a bad string", () => {
+    const reminders = normalizeLocalRemindersSnapshot({
+      reminders: [
+        {
+          uuid: "r1",
+          text: "Invalid Date instance",
+          status: "open",
+          createdAt: new Date("nope"),
+          due: new Date("nope"),
+        },
+      ],
+    })
+
+    expect(isValidDate(reminders[0].createdAt)).toBe(true)
+    expect(reminders[0].due).toBeUndefined()
+  })
+})
+
 describe("hasLocalWeddingData", () => {
   it("is false when storage is empty", () => {
     expect(hasLocalWeddingData()).toBe(false)
@@ -177,15 +339,29 @@ describe("hasLocalWeddingData", () => {
     )
     expect(hasLocalWeddingData()).toBe(false)
   })
+
+  // A guest whose only local data is a reminder still has something worth
+  // migrating - this is what opens MigrateLocalWeddingDialog for them.
+  it("is true when only a reminder exists", () => {
+    persistReminders([{ uuid: "r1", text: "Book the band", status: "open" }])
+    expect(hasLocalWeddingData()).toBe(true)
+  })
+
+  it("is false when every persisted reminder is malformed", () => {
+    persistReminders([{ uuid: "r1", status: "open" }])
+    expect(hasLocalWeddingData()).toBe(false)
+  })
 })
 
 describe("clearLocalWeddingStorage", () => {
-  it("removes both persisted keys", () => {
+  it("removes every persisted key", () => {
     localStorage.setItem(PLANNER_STORAGE_KEY, "{}")
     localStorage.setItem(GLOBAL_STORAGE_KEY, "{}")
+    localStorage.setItem(REMINDERS_STORAGE_KEY, "{}")
     clearLocalWeddingStorage()
     expect(localStorage.getItem(PLANNER_STORAGE_KEY)).toBeNull()
     expect(localStorage.getItem(GLOBAL_STORAGE_KEY)).toBeNull()
+    expect(localStorage.getItem(REMINDERS_STORAGE_KEY)).toBeNull()
   })
 })
 
