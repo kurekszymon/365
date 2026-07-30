@@ -4,6 +4,7 @@
 
 ### 30.07
 
+- pass mobile class name prop to responsive-dialog so that drawers renders correctly on smaller screens
 - fix themes (specifity order) -- deploy
 - improve sidebar rail transition
 

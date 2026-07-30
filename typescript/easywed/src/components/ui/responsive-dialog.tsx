@@ -52,15 +52,23 @@ function ResponsiveDialog({ dismissible, ...props }: ResponsiveDialogProps) {
   )
 }
 
+// `className` sizes the *desktop* dialog only. Callers pass `sm:max-w-*`, and
+// `sm:` (>=640px) overlaps the drawer range (<=767px), so forwarding it to the
+// drawer clamps the full-bleed sheet - which, being `inset-x-0` with no auto
+// margins, then hugs the left edge on 640-767px viewports. Mobile-specific
+// classes go through `drawerClassName` instead.
 function ResponsiveDialogContent({
   className,
+  drawerClassName,
   children,
   ...props
-}: React.ComponentProps<typeof DialogContent>) {
+}: React.ComponentProps<typeof DialogContent> & {
+  drawerClassName?: string
+}) {
   const isDrawer = useIsDrawer()
   if (isDrawer) {
     return (
-      <DrawerContent className={className} {...props}>
+      <DrawerContent className={drawerClassName} {...props}>
         {children}
       </DrawerContent>
     )
