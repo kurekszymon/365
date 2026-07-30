@@ -2,9 +2,13 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 30.07
+
+- improve sidebar rail transition
+
 ### 29.07
 
-- add filter preset for kids, automatically infer age from age group
+- add filter preset for kids, automatically infer age from age group -- deploy
 - dont render provider ch
 
 ### 28.07
