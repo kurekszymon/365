@@ -4,6 +4,7 @@
 
 ### 30.07
 
+- fix themes (specifity order) -- deploy
 - improve sidebar rail transition
 
 ### 29.07

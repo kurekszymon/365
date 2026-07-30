@@ -78,10 +78,15 @@
   --seat-filled-border: oklch(0.46 0.11 50);
 }
 
+/* Each palette is scoped as `:root[data-theme=...]` (specificity 0,2,0) so it
+   always outranks the bare `:root` default below (0,1,0), whatever the source
+   order. A plain `[data-theme=...]` ties with `:root` and silently loses to
+   whichever block comes last in the file. */
+
 /* ─────────────────────────────────────────────────────────────────────────
    Blush & Gold - warm cream, dusty rose, soft gold.
    ──────────────────────────────────────────────────────────────────────── */
-[data-theme="blush"] {
+:root[data-theme="blush"] {
   --background: oklch(0.963 0.013 70);
   --foreground: oklch(0.26 0.022 40);
   --card: oklch(0.995 0.006 75);
@@ -124,7 +129,7 @@
 /* ─────────────────────────────────────────────────────────────────────────
    Sage & Botanical - warm ivory, eucalyptus sage, terracotta accent.
    ──────────────────────────────────────────────────────────────────────── */
-[data-theme="sage"] {
+:root[data-theme="sage"] {
   --background: oklch(0.963 0.012 115);
   --foreground: oklch(0.27 0.028 150);
   --card: oklch(0.995 0.005 110);
@@ -169,7 +174,7 @@
    The default palette.
    ──────────────────────────────────────────────────────────────────────── */
 :root,
-[data-theme="editorial"] {
+:root[data-theme="editorial"] {
   --background: oklch(0.953 0.012 85);
   --foreground: oklch(0.2 0.012 60);
   --card: oklch(0.992 0.005 85);
