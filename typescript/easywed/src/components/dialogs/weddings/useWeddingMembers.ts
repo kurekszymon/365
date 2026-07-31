@@ -5,6 +5,7 @@ import { useGlobalStore } from "@/stores/global.store"
 import { supabase } from "@/lib/supabase"
 import { fetchDisplayNames } from "@/lib/sync/profile"
 import { isLocalWedding } from "@/lib/localWedding"
+import i18n from "@/i18n"
 
 export type InviteRole = "editor" | "viewer"
 export type MemberRole = "owner" | InviteRole
@@ -209,13 +210,20 @@ export function useWeddingMembers(isOpen: boolean) {
       // Delete membership first - that's the critical access revocation step.
       // Only delete the invitation row after membership is confirmed gone, so
       // we never end up with access still granted but no visible row to revoke.
+      //
+      // `.select()` because a DELETE that RLS filters to nothing comes back as
+      // a clean 204 - no error, no rows. Treating that as success is the worst
+      // outcome available here: the optimistic removal above stands, both the
+      // dialog and the header stack show the member gone, and they still have
+      // full access to the wedding.
       const memberRes = await supabase
         .from("wedding_members")
         .delete()
         .eq("wedding_id", weddingId)
         .eq("user_id", member.user_id)
+        .select("user_id")
 
-      if (memberRes.error) {
+      if (memberRes.error || memberRes.data.length === 0) {
         setMembers((list) => {
           if (list.some((item) => item.user_id === member.user_id)) {
             return list
@@ -242,7 +250,11 @@ export function useWeddingMembers(isOpen: boolean) {
                 ],
               }
         )
-        setError(memberRes.error.message)
+        console.error("[members] remove access failed", {
+          error: memberRes.error,
+          removed: memberRes.data?.length ?? 0,
+        })
+        setError(memberRes.error?.message ?? i18n.t("members.remove_failed"))
         return
       }
 

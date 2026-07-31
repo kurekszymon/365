@@ -29,11 +29,25 @@ const forgetIfCurrent = (weddingId: string) => {
 export const deleteWedding = async (
   weddingId: string
 ): Promise<{ error: string | null }> => {
-  const { error } = await supabase.from("weddings").delete().eq("id", weddingId)
+  // `.select()` is load-bearing, not decoration. A DELETE whose rows are all
+  // filtered out by RLS is not an error to PostgREST - it answers 204 with no
+  // body, which supabase-js reports as { data: null, error: null }. Without
+  // asking for the deleted rows back we'd read "you aren't the owner" as
+  // success and tell the user their wedding is gone while it sits there.
+  const { data, error } = await supabase
+    .from("weddings")
+    .delete()
+    .eq("id", weddingId)
+    .select("id")
 
   if (error) {
     console.error("[weddings] deleteWedding failed", error)
     return { error: error.message }
+  }
+
+  if (data.length === 0) {
+    console.error("[weddings] deleteWedding matched no rows", { weddingId })
+    return { error: "not_deleted" }
   }
 
   forgetIfCurrent(weddingId)
@@ -58,15 +72,27 @@ export const leaveWedding = async (
   weddingId: string,
   userId: string
 ): Promise<{ error: string | null }> => {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("wedding_members")
     .delete()
     .eq("wedding_id", weddingId)
     .eq("user_id", userId)
+    .select("user_id")
 
   if (error) {
     console.error("[weddings] leaveWedding failed", error)
     return { error: error.message }
+  }
+
+  // Same 0-rows-is-not-an-error trap as deleteWedding. The policy here is
+  // `user_id = auth.uid() and role <> 'owner'`, so an owner who somehow
+  // reached this would silently delete nothing and be told they'd left.
+  if (data.length === 0) {
+    console.error("[weddings] leaveWedding matched no rows", {
+      weddingId,
+      userId,
+    })
+    return { error: "not_left" }
   }
 
   forgetIfCurrent(weddingId)

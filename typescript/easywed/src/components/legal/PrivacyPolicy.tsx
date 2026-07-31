@@ -11,14 +11,7 @@ const SECTIONS: Array<{ id: string; bullets?: Array<string> }> = [
   { id: "controller" },
   {
     id: "data",
-    bullets: [
-      "account",
-      "display_name",
-      "content",
-      "files",
-      "usage",
-      "local",
-    ],
+    bullets: ["account", "display_name", "content", "files", "usage", "local"],
   },
   { id: "storage" },
   { id: "guest_mode" },

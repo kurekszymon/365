@@ -192,6 +192,7 @@
   "members.member": "Member",
   "members.you": "You",
   "members.invite": "Invite someone",
+  "members.remove_failed": "Couldn't remove their access. They may still be able to open this wedding - please try again.",
   "members.set_name": "Set your name",
   "members.change_name": "Change name",
   "account.menu": "Account",

@@ -26,8 +26,14 @@ export const fetchDisplayName = async (
 }
 
 /**
- * Display names for a set of members, keyed by user id. A member who never
- * set one has no row here - callers fall back to their role label.
+ * Display names for a set of members, keyed by user id.
+ *
+ * Every user has a profiles row - handle_new_user creates one at signup and
+ * the migration backfilled the rest - so the normal shape for someone who
+ * hasn't chosen a name is a present key mapped to `null`, not a missing key.
+ * Callers should treat both the same and fall back to the role label, because
+ * a missing key is still possible: a row this user can't read under the
+ * profiles SELECT policy, or a partial result after the failure below.
  *
  * Failure is non-fatal by design: a member list that renders roles instead of
  * names is still useful, so this logs and returns what it has.

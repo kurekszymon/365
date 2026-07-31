@@ -192,6 +192,7 @@
   "members.member": "Członek",
   "members.you": "Ty",
   "members.invite": "Zaproś kogoś",
+  "members.remove_failed": "Nie udało się odebrać dostępu. Ta osoba może nadal otwierać to wesele - spróbuj ponownie.",
   "members.set_name": "Ustaw nazwę",
   "members.change_name": "Zmień nazwę",
   "account.menu": "Konto",
