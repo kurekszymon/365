@@ -6,8 +6,11 @@
 -- Supabase dashboard. Set null instead of cascade: the invitation row is an
 -- audit record of a burned link belonging to someone else's wedding, and the
 -- owner should keep seeing that it was used even once the claimer is gone.
+-- `if exists` so a name that doesn't match Postgres' default (a constraint
+-- created by hand at some point) fails the ALTER below with a clear error
+-- instead of aborting the whole push here.
 alter table public.wedding_invitations
-  drop constraint wedding_invitations_claimed_by_fkey;
+  drop constraint if exists wedding_invitations_claimed_by_fkey;
 
 alter table public.wedding_invitations
   add constraint wedding_invitations_claimed_by_fkey

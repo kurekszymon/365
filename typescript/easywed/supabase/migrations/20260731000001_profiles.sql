@@ -71,6 +71,13 @@ as $$
   );
 $$;
 
+-- Left executable by PUBLIC, unlike delete_own_account in 20260731000002.
+-- That looks inconsistent but isn't: this one is called *from the policy
+-- below*, which anon evaluates too. Revoking it would turn an anonymous SELECT
+-- on profiles from a clean "no rows" into a permission-denied error, and buy
+-- nothing - the function only ever answers about its caller, and returns false
+-- when auth.uid() is null. Same reasoning as is_wedding_member.
+
 -- You can read your own profile, and the profiles of people you actually share
 -- a wedding with. Not the whole user table.
 create policy "read own and co-members profiles"

@@ -1,4 +1,24 @@
 import { supabase } from "@/lib/supabase"
+import { useGlobalStore } from "@/stores/global.store"
+
+/**
+ * Drop the loaded wedding from the global store if it's the one that just went
+ * away. Mutations scope their inserts with getWeddingId(), so an id that
+ * outlives its row would have them writing at a wedding that no longer exists.
+ */
+const forgetIfCurrent = (weddingId: string) => {
+  useGlobalStore.setState((state) =>
+    state.weddingId === weddingId
+      ? {
+          weddingId: undefined,
+          name: undefined,
+          date: undefined,
+          role: undefined,
+          members: [],
+        }
+      : state
+  )
+}
 
 /**
  * Hard delete, unlike the soft-deleted tables and guests inside it. Cascades
@@ -16,6 +36,7 @@ export const deleteWedding = async (
     return { error: error.message }
   }
 
+  forgetIfCurrent(weddingId)
   return { error: null }
 }
 
@@ -24,6 +45,14 @@ export const deleteWedding = async (
  * membership row - the plan itself and everyone else's access are untouched.
  * Owners can't use this (see migration 20260731000003); they delete the
  * wedding instead.
+ *
+ * Deliberately leaves the wedding_invitations row that brought them in: DELETE
+ * on that table is owner-only ("owners delete invites"), so a leaving member
+ * has no way to clear it, and the owner keeps an accurate record that the link
+ * was used. Consequence: after someone leaves, the owner's invitation list
+ * still shows a claimed invite naming them. Re-inviting means issuing a new
+ * link - the old one is spent either way. Cleaning this up properly needs a DB
+ * change (a trigger on membership delete), not a client-side one.
  */
 export const leaveWedding = async (
   weddingId: string,
@@ -40,5 +69,6 @@ export const leaveWedding = async (
     return { error: error.message }
   }
 
+  forgetIfCurrent(weddingId)
   return { error: null }
 }

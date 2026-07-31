@@ -106,17 +106,10 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
 
   const memberRows = memberRes.data ?? []
 
-  // Names live in profiles, not wedding_members, so this can't ride along in
-  // the batch above - it needs the ids first.
-  const profileNames = await fetchDisplayNames(
-    memberRows.map((m) => m.user_id),
-    signal
-  )
-
   const members: Array<WeddingMember> = memberRows.map((m) => ({
     userId: m.user_id,
     role: m.role as WeddingRole,
-    displayName: profileNames.get(m.user_id) ?? null,
+    displayName: null,
   }))
 
   useGlobalStore.setState({
@@ -125,6 +118,29 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     date: weddingRes.data.date ? new Date(weddingRes.data.date) : undefined,
     role: members.find((m) => m.userId === userId)?.role,
     members,
+  })
+
+  // Names live in profiles, not wedding_members, and there's no FK between
+  // them (both point at auth.users), so PostgREST can't embed them in the
+  // batch above - it's a second round trip that needs the ids first.
+  //
+  // Deliberately not awaited: the avatar stack already renders a neutral glyph
+  // for a member without a name, so holding up first paint for this would cost
+  // every wedding open a serial request to change a tooltip. Names patch
+  // themselves in when they arrive.
+  void fetchDisplayNames(
+    memberRows.map((m) => m.user_id),
+    signal
+  ).then((profileNames) => {
+    if (signal.aborted) return
+
+    // A different wedding may have finished loading in the meantime; these
+    // names belong to this one.
+    if (useGlobalStore.getState().weddingId !== id) return
+
+    for (const [userIdKey, displayName] of profileNames) {
+      useGlobalStore.getState().setMemberDisplayName(userIdKey, displayName)
+    }
   })
 
   const halls: Array<Hall> = hallsRes.data.map((h) => {

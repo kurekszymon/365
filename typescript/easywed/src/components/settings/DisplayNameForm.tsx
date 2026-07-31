@@ -44,6 +44,12 @@ export const DisplayNameForm = () => {
     value ?? displayName ?? suggestedName(session.user.user_metadata)
   const isDirty = current.trim() !== (displayName ?? "")
 
+  // A filled-in field reads as "this is what people see", which is the exact
+  // opposite of the truth while nothing is stored - someone who signed in with
+  // Google would be looking at their real name and assuming co-members already
+  // have it. Say so until they actually save.
+  const isUnsaved = !displayName && current.trim().length > 0
+
   const handleSave = async () => {
     setSaving(true)
     const { value: saved, error } = await saveDisplayName(
@@ -81,6 +87,11 @@ export const DisplayNameForm = () => {
           placeholder={t("settings.display_name.placeholder")}
           onChange={(e) => setValue(e.target.value)}
         />
+        {isUnsaved && (
+          <p className="text-xs font-medium text-amber-700 dark:text-amber-500">
+            {t("settings.display_name.unsaved")}
+          </p>
+        )}
         <p className="text-xs text-muted-foreground">
           {t("settings.display_name.help")}
         </p>

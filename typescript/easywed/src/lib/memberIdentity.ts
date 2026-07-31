@@ -9,6 +9,12 @@
  * Locale-aware uppercase so Polish names ("łukasz") don't lose their casing
  * rules, and code-point aware so an emoji or an accented letter counts as one
  * character instead of half a surrogate pair.
+ *
+ * The locale is pinned to "pl" rather than read from i18n on purpose: initials
+ * belong to the *name*, not to whoever is looking at it, so the same person
+ * must not render as "İK" to one member and "IK" to another. "pl" and "en"
+ * agree on every letter this touches, so pinning costs nothing today and keeps
+ * the function pure.
  */
 export const getInitials = (displayName: string): string => {
   const words = displayName.trim().split(/\s+/).filter(Boolean)

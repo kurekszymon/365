@@ -30,7 +30,15 @@ function Home() {
   const [weddings, setWeddings] = useState<Array<WeddingSummary>>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  // Kept separate from `removeOpen` so the target outlives the close: the
+  // dialog reads its own copy from it while animating out.
   const [removeTarget, setRemoveTarget] = useState<RemoveTarget | null>(null)
+  const [removeOpen, setRemoveOpen] = useState(false)
+
+  const openRemove = (wedding: WeddingSummary, mode: RemoveMode) => {
+    setRemoveTarget({ wedding, mode })
+    setRemoveOpen(true)
+  }
 
   useEffect(() => {
     if (!session) return
@@ -39,7 +47,7 @@ function Home() {
     // for everyone, invited members only drop their own access.
     supabase
       .from("weddings")
-      .select("id, name, date, owner_id")
+      .select("id, name, owner_id")
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
         if (error) console.error(error)
@@ -48,7 +56,6 @@ function Home() {
           (data ?? []).map((wedding) => ({
             id: wedding.id,
             name: wedding.name,
-            date: wedding.date,
             isOwner: wedding.owner_id === session.user.id,
           }))
         )
@@ -141,27 +148,29 @@ function Home() {
               <WeddingListItem
                 key={wedding.id}
                 wedding={wedding}
-                onDelete={(target) =>
-                  setRemoveTarget({ wedding: target, mode: "delete" })
-                }
-                onLeave={(target) =>
-                  setRemoveTarget({ wedding: target, mode: "leave" })
-                }
+                onDelete={(target) => openRemove(target, "delete")}
+                onLeave={(target) => openRemove(target, "leave")}
               />
             ))
           )}
         </div>
 
-        <RemoveWeddingDialog
-          wedding={removeTarget?.wedding ?? null}
-          mode={removeTarget?.mode ?? "delete"}
-          onOpenChange={(open) => {
-            if (!open) setRemoveTarget(null)
-          }}
-          onDone={(weddingId) =>
-            setWeddings((list) => list.filter((w) => w.id !== weddingId))
-          }
-        />
+        {/* The target survives closing so the dialog keeps its own wording
+            while animating out; `key` gives each new target a fresh
+            confirmation field, so a half-typed DELETE can't carry over to the
+            next wedding and pre-arm its button. */}
+        {removeTarget && (
+          <RemoveWeddingDialog
+            key={`${removeTarget.wedding.id}-${removeTarget.mode}`}
+            open={removeOpen}
+            wedding={removeTarget.wedding}
+            mode={removeTarget.mode}
+            onOpenChange={setRemoveOpen}
+            onDone={(weddingId) =>
+              setWeddings((list) => list.filter((w) => w.id !== weddingId))
+            }
+          />
+        )}
 
         <div className="flex justify-center gap-4 text-xs text-muted-foreground">
           <Link

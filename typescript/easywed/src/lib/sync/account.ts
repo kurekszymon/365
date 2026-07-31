@@ -6,6 +6,35 @@ export type SharedWedding = {
   otherMembers: number
 }
 
+export type OwnedWeddingRow = {
+  id: string
+  name: string
+  wedding_members: Array<{ user_id: string }>
+}
+
+/**
+ * Which of the user's owned weddings block deletion, and by how many people.
+ *
+ * Split out from the query because it's the whole decision: get the "who else
+ * is here" count wrong and we either refuse a deletion we owe the user, or
+ * cascade someone else's wedding out from under them. The owner is always a
+ * member of their own wedding (handle_new_wedding inserts that row), so they
+ * have to come out of the count - a solo wedding has one member, not zero.
+ */
+export const toBlockingWeddings = (
+  rows: Array<OwnedWeddingRow>,
+  userId: string
+): Array<SharedWedding> =>
+  rows
+    .map((wedding) => ({
+      id: wedding.id,
+      name: wedding.name,
+      otherMembers: wedding.wedding_members.filter(
+        (member) => member.user_id !== userId
+      ).length,
+    }))
+    .filter((wedding) => wedding.otherMembers > 0)
+
 /**
  * Weddings the user owns that someone else can also reach. These block account
  * deletion: weddings.owner_id cascades, so deleting the account would take the
@@ -30,15 +59,7 @@ export const fetchSharedOwnedWeddings = async (
     throw error
   }
 
-  return data
-    .map((wedding) => ({
-      id: wedding.id,
-      name: wedding.name,
-      otherMembers: wedding.wedding_members.filter(
-        (member) => member.user_id !== userId
-      ).length,
-    }))
-    .filter((wedding) => wedding.otherMembers > 0)
+  return toBlockingWeddings(data, userId)
 }
 
 export type DeleteAccountResult =

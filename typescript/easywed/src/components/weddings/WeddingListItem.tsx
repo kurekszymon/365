@@ -5,7 +5,6 @@ import { WeddingRowMenu } from "./WeddingRowMenu"
 export type WeddingSummary = {
   id: string
   name: string
-  date: string | null
   isOwner: boolean
 }
 

@@ -7,6 +7,7 @@ import type { SharedWedding } from "@/lib/sync/account"
 import { deleteOwnAccount, fetchSharedOwnedWeddings } from "@/lib/sync/account"
 import { useAuthStore } from "@/stores/auth.store"
 import { supabase } from "@/lib/supabase"
+import { matchesConfirmWord } from "@/lib/confirmWord"
 import {
   ResponsiveDialog,
   ResponsiveDialogBody,
@@ -17,9 +18,8 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog"
+import { ConfirmWordField } from "@/components/dialogs/shared/ConfirmWordField"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 
 interface DeleteAccountDialogProps {
   open: boolean
@@ -76,19 +76,25 @@ export const DeleteAccountDialog = ({
       return
     }
 
+    // Leave /settings before dropping the session, not after. signOut fires
+    // SIGNED_OUT, AuthGate calls router.invalidate(), and this route's
+    // requireAuth("/settings") would redirect to /login?next=/settings -
+    // racing the navigate below and stranding a just-deleted user on a login
+    // page pointing at a route they no longer have.
+    await navigate({ to: i18n.resolvedLanguage === "pl" ? "/pl" : "/en" })
+
     // Local scope only: the user row is already gone, so a server-side
     // revocation would just 401 on the way out.
     await supabase.auth.signOut({ scope: "local" })
-    void navigate({ to: i18n.resolvedLanguage === "pl" ? "/pl" : "/en" })
   }, [t, i18n.resolvedLanguage, navigate])
 
   const isBlocked = blocking !== null && blocking.length > 0
-  const confirmWord = t("settings.delete.confirm_word")
+  const confirmWord = t("common.confirm_word")
   const canDelete =
     blocking !== null &&
     !isBlocked &&
     !deleting &&
-    confirmation.trim().toLocaleUpperCase() === confirmWord.toLocaleUpperCase()
+    matchesConfirmWord(confirmation, confirmWord)
 
   return (
     <ResponsiveDialog
@@ -144,17 +150,12 @@ export const DeleteAccountDialog = ({
           )}
 
           {blocking !== null && !isBlocked && (
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="delete-confirmation">
-                {t("settings.delete.confirm_label", { word: confirmWord })}
-              </Label>
-              <Input
-                id="delete-confirmation"
-                value={confirmation}
-                autoComplete="off"
-                onChange={(e) => setConfirmation(e.target.value)}
-              />
-            </div>
+            <ConfirmWordField
+              id="delete-confirmation"
+              word={confirmWord}
+              value={confirmation}
+              onChange={setConfirmation}
+            />
           )}
         </ResponsiveDialogBody>
 

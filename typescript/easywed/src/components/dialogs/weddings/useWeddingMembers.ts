@@ -92,14 +92,27 @@ export function useWeddingMembers(isOpen: boolean) {
         effectiveSignal
       )
 
+      const nextMembers = membersRes.data.map((member) => ({
+        ...(member as Omit<MemberAccess, "display_name">),
+        display_name: names.get(member.user_id) ?? null,
+      }))
+
       setError(null)
       setInvitations(invitationsRes.data as Array<Invitation>)
-      setMembers(
-        membersRes.data.map((member) => ({
-          ...(member as Omit<MemberAccess, "display_name">),
-          display_name: names.get(member.user_id) ?? null,
-        }))
-      )
+      setMembers(nextMembers)
+
+      // The header avatar stack reads global.store, which is otherwise only
+      // written by loadWedding - so it's a snapshot from page load and goes
+      // stale the moment anyone joins or leaves in another session. This is
+      // the same list, freshly fetched, so hand it over: opening the dialog
+      // doubles as the stack's refresh.
+      useGlobalStore.setState({
+        members: nextMembers.map((member) => ({
+          userId: member.user_id,
+          role: member.role,
+          displayName: member.display_name,
+        })),
+      })
     },
     [weddingId, canInvite]
   )

@@ -17,8 +17,12 @@ const MAX_VISIBLE = 4
 /**
  * Who else is in this wedding. Shown to every role, not just owners: an editor
  * moving tables around should be able to see at a glance that someone else can
- * be doing the same thing. Reads the member list loaded with the wedding, so
- * it costs no extra request.
+ * be doing the same thing.
+ *
+ * Not presence - this is who *has access*, from the list loaded with the
+ * wedding (and re-synced whenever the members dialog fetches, see
+ * useWeddingMembers). It costs no extra request, and it won't notice someone
+ * joining in another session until one of those two things happens again.
  */
 export const MemberAvatars = () => {
   const { t } = useTranslation()
