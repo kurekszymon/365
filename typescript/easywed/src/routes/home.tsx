@@ -1,18 +1,21 @@
 import { useEffect, useState } from "react"
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
+import type { WeddingSummary } from "@/components/weddings/WeddingListItem"
+import type { RemoveMode } from "@/components/weddings/RemoveWeddingDialog"
 import { supabase } from "@/lib/supabase"
 import { useAuthStore } from "@/stores/auth.store"
 import { Button } from "@/components/ui/button"
+import { WeddingListItem } from "@/components/weddings/WeddingListItem"
+import { RemoveWeddingDialog } from "@/components/weddings/RemoveWeddingDialog"
 
 export const Route = createFileRoute("/home")({
   component: Home,
 })
 
-type WeddingRow = {
-  id: string
-  name: string
-  date: string | null
+type RemoveTarget = {
+  wedding: WeddingSummary
+  mode: RemoveMode
 }
 
 function Home() {
@@ -24,21 +27,31 @@ function Home() {
   const isReady = useAuthStore((s) => s.isReady)
   const navigate = useNavigate()
 
-  const [weddings, setWeddings] = useState<Array<WeddingRow>>([])
+  const [weddings, setWeddings] = useState<Array<WeddingSummary>>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [removeTarget, setRemoveTarget] = useState<RemoveTarget | null>(null)
 
   useEffect(() => {
     if (!session) return
 
+    // owner_id decides which exit the row offers: owners delete the wedding
+    // for everyone, invited members only drop their own access.
     supabase
       .from("weddings")
-      .select("id, name, date")
+      .select("id, name, date, owner_id")
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
         if (error) console.error(error)
 
-        setWeddings(data ?? [])
+        setWeddings(
+          (data ?? []).map((wedding) => ({
+            id: wedding.id,
+            name: wedding.name,
+            date: wedding.date,
+            isOwner: wedding.owner_id === session.user.id,
+          }))
+        )
         setLoading(false)
       })
   }, [session])
@@ -125,17 +138,30 @@ function Home() {
           ) : (
             // TODO: based on a role (couple/planner/site) render only one wedding / list etc.
             weddings.map((wedding) => (
-              <Link
+              <WeddingListItem
                 key={wedding.id}
-                to="/wedding/$id"
-                params={{ id: wedding.id }}
-                className="rounded-md border bg-card p-3 text-sm hover:bg-accent"
-              >
-                {wedding.name || t("wedding")}
-              </Link>
+                wedding={wedding}
+                onDelete={(target) =>
+                  setRemoveTarget({ wedding: target, mode: "delete" })
+                }
+                onLeave={(target) =>
+                  setRemoveTarget({ wedding: target, mode: "leave" })
+                }
+              />
             ))
           )}
         </div>
+
+        <RemoveWeddingDialog
+          wedding={removeTarget?.wedding ?? null}
+          mode={removeTarget?.mode ?? "delete"}
+          onOpenChange={(open) => {
+            if (!open) setRemoveTarget(null)
+          }}
+          onDone={(weddingId) =>
+            setWeddings((list) => list.filter((w) => w.id !== weddingId))
+          }
+        />
 
         <div className="flex justify-center gap-4 text-xs text-muted-foreground">
           <Link
