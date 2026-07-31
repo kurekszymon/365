@@ -13,6 +13,7 @@ import { PlannerPrintView } from "./PlannerPrintView"
 import { usePrintShortcut } from "./usePrintShortcut"
 import { MobilePanelDrawer } from "./EntityForms/MobilePanelDrawer"
 import { ThemeSwitcher } from "./Header/ThemeSwitcher"
+import { AccountMenu } from "./Header/AccountMenu"
 import { GuestModeBanner } from "./GuestModeBanner"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Button } from "@/components/ui/button"
@@ -86,6 +87,7 @@ export const Planner = () => {
               <ExportHeader />
             </ButtonGroup>
             <ThemeSwitcher />
+            <AccountMenu />
           </div>
         </Header>
         <DndContext sensors={sensors}>

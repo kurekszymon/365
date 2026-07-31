@@ -497,6 +497,7 @@ export type Database = {
     }
     Functions: {
       claim_wedding_invitation: { Args: { _token: string }; Returns: string }
+      delete_own_account: { Args: never; Returns: undefined }
       dietary_tags_valid: { Args: { tags: string[] }; Returns: boolean }
       guest_names_valid: { Args: { names: string[] }; Returns: boolean }
       is_wedding_member: { Args: { _wedding_id: string }; Returns: boolean }

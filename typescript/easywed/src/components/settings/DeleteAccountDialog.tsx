@@ -1,0 +1,178 @@
+import { useCallback, useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
+import { useNavigate } from "@tanstack/react-router"
+import { toast } from "sonner"
+import { AlertTriangleIcon } from "lucide-react"
+import type { SharedWedding } from "@/lib/sync/account"
+import { deleteOwnAccount, fetchSharedOwnedWeddings } from "@/lib/sync/account"
+import { useAuthStore } from "@/stores/auth.store"
+import { supabase } from "@/lib/supabase"
+import {
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogClose,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+
+interface DeleteAccountDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+export const DeleteAccountDialog = ({
+  open,
+  onOpenChange,
+}: DeleteAccountDialogProps) => {
+  const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
+  const userId = useAuthStore((s) => s.session?.user.id)
+
+  const [blocking, setBlocking] = useState<Array<SharedWedding> | null>(null)
+  const [confirmation, setConfirmation] = useState("")
+  const [deleting, setDeleting] = useState(false)
+
+  // Re-checked every time the dialog opens: the user may have just removed the
+  // members that were in the way, and a stale "blocked" screen would send them
+  // in circles.
+  useEffect(() => {
+    if (!open || !userId) return
+
+    const controller = new AbortController()
+
+    fetchSharedOwnedWeddings(userId, controller.signal)
+      .then((weddings) => {
+        if (controller.signal.aborted) return
+        setBlocking(weddings)
+      })
+      .catch(() => {
+        if (controller.signal.aborted) return
+        // Unknown state is not a safe state for an irreversible action, so
+        // fail closed: an empty list here would render the delete button.
+        toast.error(t("settings.delete.check_failed"))
+        onOpenChange(false)
+      })
+
+    return () => controller.abort()
+  }, [open, userId, t, onOpenChange])
+
+  const handleDelete = useCallback(async () => {
+    setDeleting(true)
+    const result = await deleteOwnAccount()
+
+    if (!result.ok) {
+      setDeleting(false)
+      toast.error(
+        result.reason === "shared_weddings"
+          ? t("settings.delete.blocked_title")
+          : t("settings.delete.failed")
+      )
+      return
+    }
+
+    // Local scope only: the user row is already gone, so a server-side
+    // revocation would just 401 on the way out.
+    await supabase.auth.signOut({ scope: "local" })
+    void navigate({ to: i18n.resolvedLanguage === "pl" ? "/pl" : "/en" })
+  }, [t, i18n.resolvedLanguage, navigate])
+
+  const isBlocked = blocking !== null && blocking.length > 0
+  const confirmWord = t("settings.delete.confirm_word")
+  const canDelete =
+    blocking !== null &&
+    !isBlocked &&
+    !deleting &&
+    confirmation.trim().toLocaleUpperCase() === confirmWord.toLocaleUpperCase()
+
+  return (
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={(next) => {
+        onOpenChange(next)
+        if (!next) {
+          setConfirmation("")
+          setBlocking(null)
+        }
+      }}
+    >
+      <ResponsiveDialogContent className="sm:max-w-md">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>
+            {isBlocked
+              ? t("settings.delete.blocked_title")
+              : t("settings.delete.title")}
+          </ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {isBlocked
+              ? t("settings.delete.blocked_body")
+              : t("settings.delete.body")}
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+
+        <ResponsiveDialogBody>
+          {blocking === null && (
+            <p className="text-sm text-muted-foreground">
+              {t("settings.delete.checking")}
+            </p>
+          )}
+
+          {isBlocked && (
+            <ul className="flex flex-col gap-2">
+              {blocking.map((wedding) => (
+                <li
+                  key={wedding.id}
+                  className="flex items-center gap-2 rounded-md border p-2 text-sm"
+                >
+                  <AlertTriangleIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1 truncate font-medium">
+                    {wedding.name || t("wedding")}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {t("settings.delete.other_members", {
+                      count: wedding.otherMembers,
+                    })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {blocking !== null && !isBlocked && (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="delete-confirmation">
+                {t("settings.delete.confirm_label", { word: confirmWord })}
+              </Label>
+              <Input
+                id="delete-confirmation"
+                value={confirmation}
+                autoComplete="off"
+                onChange={(e) => setConfirmation(e.target.value)}
+              />
+            </div>
+          )}
+        </ResponsiveDialogBody>
+
+        <ResponsiveDialogFooter>
+          <ResponsiveDialogClose asChild>
+            <Button variant="outline">{t("common.cancel")}</Button>
+          </ResponsiveDialogClose>
+          {blocking !== null && !isBlocked && (
+            <Button
+              variant="destructive"
+              disabled={!canDelete}
+              onClick={() => void handleDelete()}
+            >
+              {t("settings.delete.confirm")}
+            </Button>
+          )}
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
+  )
+}
