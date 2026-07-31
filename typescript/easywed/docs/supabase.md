@@ -13,6 +13,8 @@ weddings              ← top-level project
   ├─ tables           ← 1:N (seating tables)
   ├─ guests           ← 1:N, optionally FK → tables
   └─ reminders        ← 1:N (wedding todo list)
+
+profiles              ← 1:1 with auth.users, outside the wedding tree
 ```
 
 Frontend analogy: like setting up Zustand stores' TypeScript types once upfront, but enforced at the database level so no client bug can corrupt the shape.
@@ -46,6 +48,20 @@ Each table has 4 policies: one per operation (SELECT/INSERT/UPDATE/DELETE). `usi
 
 **Why this matters vs Node/Express**: traditionally you'd write `if (user.canEdit(wedding)) { ... }` in every endpoint - easy to forget one route. RLS pushes the check to the data layer - can't be bypassed by a missed middleware.
 
+## `profiles` - and what deliberately isn't in it
+
+`profiles` holds exactly one piece of user-visible identity: a nullable `display_name` the user types themselves (migration `20260731000001`). It exists because the header avatar stack and the members dialog need something human to show, and `wedding_members` only has a `user_id`.
+
+What it does **not** hold is the point. Signing in with Google puts `full_name`, `picture` and `email` into `auth.users.raw_user_meta_data` whether we ask for it or not. Copying any of that into a table every co-member can read would mean accepting a wedding invite hands you the other members' contact details. So:
+
+- Emails and OAuth metadata stay in `auth.users`, reachable only by that user and the service role.
+- The Google name is offered as a **prefill** in `/settings`, client-side from the session, and is only stored once the user saves it.
+- `display_name` stays null until they choose one. The UI then falls back to their role ("Editor"), never to an email or a slice of their user id.
+
+Read access is `id = auth.uid() or public.shares_wedding_with(id)` - your own row, plus people you actually share a wedding with. `shares_wedding_with` is `security definer` for the same anti-recursion reason as `is_wedding_member` below.
+
+`handle_new_user` (trigger on `auth.users` INSERT) creates the row at signup so the members list can look it up unconditionally, and the migration backfills everyone who predates it.
+
 ## Helper functions (`is_wedding_member`, `wedding_role`)
 
 ```sql
@@ -66,6 +82,9 @@ Triggers are "on event X, run function Y" - like `useEffect` but running inside 
 - **`set_updated_at`**: on every UPDATE, bump `updated_at = now()`. Automatic, can't be forgotten.
 - **`handle_new_wedding`**: when a wedding is INSERTed, auto-insert an `owner` row in `wedding_members`. Avoids a race where the creator briefly isn't a member of their own wedding.
 - **`enforce_table_capacity`**: on guest INSERT/UPDATE, counts current assignees and rejects if over capacity. Mirrors the client check in `assignGuestToTable` - client for UX, DB for correctness under races.
+- **`handle_new_user`**: on `auth.users` INSERT, create the matching `profiles` row (see above).
+
+**Local vs remote gotcha:** on a local `supabase db reset`, the `authenticated` role ends up with no CRUD grants on `public` tables (`relacl` shows only `Dxtm`) - hosted Supabase grants them via default privileges. Consequence: column-level hardening like `revoke update (owner_id) on weddings` and `revoke update (id) on profiles` is a **no-op locally** and only bites on remote. If you're testing RLS against the local DB with `set role authenticated`, `grant select, insert, update, delete on all tables in schema public to authenticated` first or every query fails with "permission denied" before RLS is even consulted.
 
 ## Check constraints
 

@@ -137,13 +137,21 @@ function Home() {
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => supabase.auth.signOut()}
-          className="mx-auto text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
-        >
-          {t("auth.sign_out")}
-        </button>
+        <div className="flex justify-center gap-4 text-xs text-muted-foreground">
+          <Link
+            to="/settings"
+            className="underline underline-offset-4 hover:text-foreground"
+          >
+            {t("settings.title")}
+          </Link>
+          <button
+            type="button"
+            onClick={() => supabase.auth.signOut()}
+            className="underline underline-offset-4 hover:text-foreground"
+          >
+            {t("auth.sign_out")}
+          </button>
+        </div>
       </div>
     </div>
   )

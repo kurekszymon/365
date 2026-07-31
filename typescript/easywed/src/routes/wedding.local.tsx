@@ -43,6 +43,9 @@ function LocalWeddingLayout() {
       role: "owner",
       name: undefined,
       date: undefined,
+      // A local wedding has no members table behind it - clearing this stops
+      // the previous cloud wedding's avatar stack showing in guest mode.
+      members: [],
     })
     useRemindersStore.setState({ reminders: [] })
 

@@ -1,11 +1,12 @@
 import { useTranslation } from "react-i18next"
-import { LandmarkIcon, SparklesIcon, UserPlusIcon } from "lucide-react"
+import { LandmarkIcon, SparklesIcon } from "lucide-react"
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
 import { Canvas } from "./Canvas"
 import { MobileTabBar } from "./Sidebar/MobileTabBar"
 import { SidebarRail } from "./Sidebar/SidebarRail"
 import { EntityEditDialog } from "./Sidebar/EntityEditDialog"
 import { Header } from "./Header"
+import { MemberAvatars } from "./Header/MemberAvatars"
 import { ExportHeader } from "./Header/Export.header"
 import { ImportHeader } from "./Header/Import.header"
 import { PlannerPrintView } from "./PlannerPrintView"
@@ -15,13 +16,7 @@ import { ThemeSwitcher } from "./Header/ThemeSwitcher"
 import { GuestModeBanner } from "./GuestModeBanner"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Button } from "@/components/ui/button"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import { DialogManager } from "@/components/dialogs/DialogManager"
-import { useDialogStore } from "@/stores/dialog.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { useOpenHalls } from "@/hooks/useOpenHalls"
@@ -31,9 +26,6 @@ export const Planner = () => {
   const { t } = useTranslation()
 
   usePrintShortcut()
-
-  const openDialog = useDialogStore((state) => state.open)
-  const role = useGlobalStore((state) => state.role)
 
   // Distance-based activation (mouse + touch) so dragging starts the moment you
   // move - no hold delay. Touch hold-without-moving is reserved for the canvas
@@ -57,6 +49,7 @@ export const Planner = () => {
       <div className="flex h-[100dvh] w-screen flex-col print:hidden">
         <GuestModeBanner />
         <Header>
+          <Header.Brand />
           <Header.Title weddingId={weddingId}>
             <Header.WeddingName />
           </Header.Title>
@@ -82,23 +75,13 @@ export const Planner = () => {
                 <SparklesIcon />
               </Button>
             )}
+            {/* Replaces the old owner-only invite button: the avatar stack
+                opens the same dialog, but shows every role who else is in
+                here. In guest mode the member list is empty, so it collapses
+                to the owner's invite chip alone - which still opens the
+                dialog and its upgrade notice, as before. */}
+            <MemberAvatars />
             <ButtonGroup>
-              {/* Shown for guest (free-plan) weddings too - the dialog itself
-                  swaps the invite form for an upgrade notice, so the feature
-                  stays discoverable instead of silently missing. */}
-              {role === "owner" && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      onClick={() => openDialog("Wedding.Members")}
-                    >
-                      <UserPlusIcon />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{t("members.title")}</TooltipContent>
-                </Tooltip>
-              )}
               <ImportHeader />
               <ExportHeader />
             </ButtonGroup>

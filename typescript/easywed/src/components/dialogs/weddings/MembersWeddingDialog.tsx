@@ -26,6 +26,7 @@ export const WeddingMembersDialog = () => {
 
   const {
     canInvite,
+    isOwner,
     role,
     setRole,
     submitting,
@@ -61,7 +62,12 @@ export const WeddingMembersDialog = () => {
         </ResponsiveDialogHeader>
 
         <ResponsiveDialogBody>
-          {canInvite ? (
+          {/* Three cases: guest mode gets the upgrade notice, owners get the
+              invite form, and editors/viewers get neither - just the read-only
+              member list below, which is the whole point of letting them open
+              this dialog. */}
+          {!canInvite && <MembersUpgradeNotice />}
+          {canInvite && isOwner && (
             <InvitationManager
               role={role}
               setRole={setRole}
@@ -74,8 +80,6 @@ export const WeddingMembersDialog = () => {
               onRevoke={handleRevoke}
               onCopy={handleCopy}
             />
-          ) : (
-            <MembersUpgradeNotice />
           )}
 
           {/* Stays mounted on the free plan: the list is empty there (no rows
@@ -84,6 +88,7 @@ export const WeddingMembersDialog = () => {
           <MemberList
             members={members}
             currentUserId={currentUserId}
+            canManage={isOwner}
             onRemoveAccess={handleRemoveAccess}
           />
         </ResponsiveDialogBody>

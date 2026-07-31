@@ -2,6 +2,8 @@ import { useEffect } from "react"
 import { useRouter, useRouterState } from "@tanstack/react-router"
 import { toast } from "sonner"
 import { useAuthStore } from "@/stores/auth.store"
+import { useProfileStore } from "@/stores/profile.store"
+import { fetchDisplayName } from "@/lib/sync/profile"
 import { supabase } from "@/lib/supabase"
 import i18n from "@/i18n"
 
@@ -25,6 +27,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const isReady = useAuthStore((s) => s.isReady)
   const setSession = useAuthStore((s) => s.setSession)
   const setReady = useAuthStore((s) => s.setReady)
+  const userId = useAuthStore((s) => s.session?.user.id)
   const router = useRouter()
   const pathname = useRouterState({ select: (s) => s.location.pathname })
 
@@ -52,6 +55,28 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe()
   }, [setSession, setReady, router])
+
+  // The user's own display name, kept next to the session it belongs to.
+  // Signing out clears it so the next account never briefly shows the
+  // previous one's name in the header.
+  useEffect(() => {
+    const { setDisplayName, setLoaded, reset } = useProfileStore.getState()
+
+    if (!userId) {
+      reset()
+      return
+    }
+
+    const controller = new AbortController()
+
+    fetchDisplayName(userId, controller.signal).then((name) => {
+      if (controller.signal.aborted) return
+      setDisplayName(name)
+      setLoaded(true)
+    })
+
+    return () => controller.abort()
+  }, [userId])
 
   const isPublic = PUBLIC_PATHS.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`)

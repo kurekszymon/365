@@ -11,13 +11,14 @@ import type {
   TableShape,
 } from "@/stores/planner.store"
 import type { Reminder } from "@/stores/reminders.store"
-import type { WeddingRole } from "@/stores/global.store"
+import type { WeddingMember, WeddingRole } from "@/stores/global.store"
 import { supabase } from "@/lib/supabase"
 import {
   insertHall,
   updateFixturePos,
   updateTablePos,
 } from "@/lib/sync/mutations"
+import { fetchDisplayNames } from "@/lib/sync/profile"
 import { DEFAULT_HALL, usePlannerStore } from "@/stores/planner.store"
 import { useAuthStore } from "@/stores/auth.store"
 import { useGlobalStore } from "@/stores/global.store"
@@ -71,14 +72,18 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
       .eq("wedding_id", id)
       .abortSignal(signal),
 
+    // Every member, not just this user's row: the header avatar stack shows
+    // editors that they aren't alone in here. RLS ("members can view
+    // co-members") already permits this for any role, so no extra gating.
+    // Ordered by created_at so the owner - inserted first by the trigger -
+    // leads the stack and the order stays stable across loads.
     userId
       ? supabase
           .from("wedding_members")
-          .select("role")
+          .select("user_id, role")
           .eq("wedding_id", id)
-          .eq("user_id", userId)
+          .order("created_at")
           .abortSignal(signal)
-          .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
 
     supabase
@@ -99,11 +104,27 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
   if (memberRes.error) throw memberRes.error
   if (fixturesRes.error) throw fixturesRes.error
 
+  const memberRows = memberRes.data ?? []
+
+  // Names live in profiles, not wedding_members, so this can't ride along in
+  // the batch above - it needs the ids first.
+  const profileNames = await fetchDisplayNames(
+    memberRows.map((m) => m.user_id),
+    signal
+  )
+
+  const members: Array<WeddingMember> = memberRows.map((m) => ({
+    userId: m.user_id,
+    role: m.role as WeddingRole,
+    displayName: profileNames.get(m.user_id) ?? null,
+  }))
+
   useGlobalStore.setState({
     weddingId: id,
     name: weddingRes.data.name || undefined,
     date: weddingRes.data.date ? new Date(weddingRes.data.date) : undefined,
-    role: (memberRes.data?.role as WeddingRole | undefined) ?? undefined,
+    role: members.find((m) => m.userId === userId)?.role,
+    members,
   })
 
   const halls: Array<Hall> = hallsRes.data.map((h) => {

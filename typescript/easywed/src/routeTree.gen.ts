@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PlRouteImport } from './routes/pl'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HomeRouteImport } from './routes/home'
@@ -27,6 +28,11 @@ import { Route as WeddingIdIndexRouteImport } from './routes/wedding.$id/index'
 import { Route as WeddingLocalPlannerRouteImport } from './routes/wedding.local/planner'
 import { Route as WeddingIdPlannerRouteImport } from './routes/wedding.$id/planner'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlRoute = PlRouteImport.update({
   id: '/pl',
   path: '/pl',
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/pl': typeof PlRoute
+  '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/en/privacy': typeof EnPrivacyRoute
   '/en/venues': typeof EnVenuesRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/pl': typeof PlRoute
+  '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/en/privacy': typeof EnPrivacyRoute
   '/en/venues': typeof EnVenuesRoute
@@ -156,6 +164,7 @@ export interface FileRoutesById {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/pl': typeof PlRoute
+  '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/en_/privacy': typeof EnPrivacyRoute
   '/en_/venues': typeof EnVenuesRoute
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/pl'
+    | '/settings'
     | '/auth/callback'
     | '/en/privacy'
     | '/en/venues'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/pl'
+    | '/settings'
     | '/auth/callback'
     | '/en/privacy'
     | '/en/venues'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/pl'
+    | '/settings'
     | '/auth/callback'
     | '/en_/privacy'
     | '/en_/venues'
@@ -233,6 +245,7 @@ export interface RootRouteChildren {
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
   PlRoute: typeof PlRoute
+  SettingsRoute: typeof SettingsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   EnPrivacyRoute: typeof EnPrivacyRoute
   EnVenuesRoute: typeof EnVenuesRoute
@@ -245,6 +258,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pl': {
       id: '/pl'
       path: '/pl'
@@ -401,6 +421,7 @@ const rootRouteChildren: RootRouteChildren = {
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
   PlRoute: PlRoute,
+  SettingsRoute: SettingsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   EnPrivacyRoute: EnPrivacyRoute,
   EnVenuesRoute: EnVenuesRoute,

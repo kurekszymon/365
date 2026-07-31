@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useAuthStore } from "@/stores/auth.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { supabase } from "@/lib/supabase"
+import { fetchDisplayNames } from "@/lib/sync/profile"
 import { isLocalWedding } from "@/lib/localWedding"
 
 export type InviteRole = "editor" | "viewer"
@@ -22,6 +23,7 @@ export type MemberAccess = {
   user_id: string
   role: MemberRole
   created_at: string
+  display_name: string | null
 }
 
 /**
@@ -32,6 +34,10 @@ export type MemberAccess = {
 export function useWeddingMembers(isOpen: boolean) {
   const weddingId = useGlobalStore((s) => s.weddingId)
   const session = useAuthStore((s) => s.session)
+  // Editors and viewers open the same dialog from the header avatar stack,
+  // but only owners get the invite form and the revoke buttons - RLS enforces
+  // that server-side, so this only keeps the UI honest about it.
+  const isOwner = useGlobalStore((s) => s.role) === "owner"
 
   const [role, setRole] = useState<InviteRole>("editor")
   const [submitting, setSubmitting] = useState(false)
@@ -81,9 +87,19 @@ export function useWeddingMembers(isOpen: boolean) {
         return
       }
 
+      const names = await fetchDisplayNames(
+        membersRes.data.map((member) => member.user_id),
+        effectiveSignal
+      )
+
       setError(null)
       setInvitations(invitationsRes.data as Array<Invitation>)
-      setMembers(membersRes.data as Array<MemberAccess>)
+      setMembers(
+        membersRes.data.map((member) => ({
+          ...(member as Omit<MemberAccess, "display_name">),
+          display_name: names.get(member.user_id) ?? null,
+        }))
+      )
     },
     [weddingId, canInvite]
   )
@@ -171,6 +187,11 @@ export function useWeddingMembers(isOpen: boolean) {
       setMembers((list) =>
         list.filter((item) => item.user_id !== member.user_id)
       )
+      // Keep the header avatar stack in step with the dialog - it reads the
+      // list loaded with the wedding, which this removal invalidates.
+      useGlobalStore.setState((state) => ({
+        members: state.members.filter((m) => m.userId !== member.user_id),
+      }))
 
       // Delete membership first - that's the critical access revocation step.
       // Only delete the invitation row after membership is confirmed gone, so
@@ -192,6 +213,22 @@ export function useWeddingMembers(isOpen: boolean) {
               new Date(b.created_at).getTime()
           )
         })
+        // Put them back in the header stack too, or the optimistic removal
+        // above would outlive the failure it was predicting.
+        useGlobalStore.setState((state) =>
+          state.members.some((m) => m.userId === member.user_id)
+            ? state
+            : {
+                members: [
+                  ...state.members,
+                  {
+                    userId: member.user_id,
+                    role: member.role,
+                    displayName: member.display_name,
+                  },
+                ],
+              }
+        )
         setError(memberRes.error.message)
         return
       }
@@ -247,6 +284,7 @@ export function useWeddingMembers(isOpen: boolean) {
 
   return {
     canInvite,
+    isOwner,
     role,
     setRole,
     submitting,
