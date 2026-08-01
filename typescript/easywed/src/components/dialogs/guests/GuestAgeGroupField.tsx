@@ -1,17 +1,20 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { CheckIcon, PlusIcon, XIcon } from "lucide-react"
+import { CheckIcon, PlusIcon } from "lucide-react"
 import { useShallow } from "zustand/react/shallow"
+import { DeletableTagPill } from "./DeletableTagPill"
 import { usePlannerStore } from "@/stores/planner.store"
 import {
   ADULT_AGE_GROUP,
   AGE_GROUP_PRESETS,
+  AGE_GROUP_TONE,
   ageGroupLabel,
   canonicalizeAgeGroup,
   collectAgeGroups,
   isAgeGroupPreset,
   sortAgeGroups,
 } from "@/lib/ageGroup"
+import { TAG_TONE_SOLID } from "@/lib/tagTone"
 import { cn } from "@/lib/utils"
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
@@ -40,9 +43,14 @@ export const GuestAgeGroupField = ({
   // Custom brackets the user removed from the row this session. They stay
   // hidden unless re-typed; presets are never dismissable.
   const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set())
+  // Brackets typed this session. A guest has exactly one group, so unlike the
+  // dietary row we can't recover them from the current value - without this,
+  // typing a second bracket would drop the first off the row until some guest
+  // was actually saved with it.
+  const [created, setCreated] = useState<ReadonlySet<string>>(new Set())
 
   const options = sortAgeGroups(
-    [...AGE_GROUP_PRESETS, ...collectAgeGroups(guests), value],
+    [...AGE_GROUP_PRESETS, ...collectAgeGroups(guests), ...created, value],
     t
   ).filter((o) => o === value || !dismissed.has(o))
 
@@ -62,6 +70,7 @@ export const GuestAgeGroupField = ({
         next.delete(group)
         return next
       })
+      setCreated((prev) => (prev.has(group) ? prev : new Set(prev).add(group)))
       onChange(group)
     }
     setDraft("")
@@ -74,13 +83,20 @@ export const GuestAgeGroupField = ({
       <FieldContent className="flex-row flex-wrap gap-1.5">
         {options.map((option) => {
           const selected = option === value
+          // Adults are the default and never earn a badge in the guest list, so
+          // that pill stays neutral; every child bracket carries the one age
+          // tone, matching the badge the guest will get.
+          const isAdult = option === ADULT_AGE_GROUP
           // Presets are a plain toggle; custom brackets get a delete affordance.
           if (isAgeGroupPreset(option)) {
             return (
               <Button
                 key={option}
-                variant={selected ? "default" : "outline"}
-                className="rounded-full"
+                variant={selected && isAdult ? "default" : "outline"}
+                className={cn(
+                  "rounded-full",
+                  selected && !isAdult && TAG_TONE_SOLID[AGE_GROUP_TONE]
+                )}
                 onClick={() => onChange(option)}
               >
                 {ageGroupLabel(t, option)}
@@ -88,36 +104,15 @@ export const GuestAgeGroupField = ({
             )
           }
           return (
-            <span
+            <DeletableTagPill
               key={option}
-              className={cn(
-                "inline-flex h-8 items-center rounded-full border text-sm font-medium",
-                selected
-                  ? "border-transparent bg-primary text-primary-foreground"
-                  : "border-border bg-secondary text-secondary-foreground"
-              )}
-            >
-              <button
-                type="button"
-                onClick={() => onChange(option)}
-                className="h-full rounded-l-full pr-1 pl-3"
-              >
-                {option}
-              </button>
-              <button
-                type="button"
-                onClick={() => deleteGroup(option)}
-                aria-label={t("guests.add.age_group_delete", { group: option })}
-                className={cn(
-                  "flex h-full cursor-pointer items-center rounded-r-full pr-2 pl-1",
-                  selected
-                    ? "hover:bg-primary-foreground/20"
-                    : "hover:bg-foreground/10"
-                )}
-              >
-                <XIcon className="size-3.5 opacity-70" />
-              </button>
-            </span>
+              label={option}
+              tone={AGE_GROUP_TONE}
+              selected={selected}
+              deleteLabel={t("guests.add.age_group_delete", { group: option })}
+              onToggle={() => onChange(option)}
+              onDelete={() => deleteGroup(option)}
+            />
           )
         })}
         {adding ? (
