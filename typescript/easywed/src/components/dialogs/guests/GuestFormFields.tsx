@@ -1,8 +1,9 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { CheckIcon, PlusIcon, XIcon } from "lucide-react"
+import { CheckIcon, PlusIcon } from "lucide-react"
 import { useShallow } from "zustand/react/shallow"
 import { GuestAgeGroupField } from "./GuestAgeGroupField"
+import { DeletableTagPill } from "./DeletableTagPill"
 import type { Dietary } from "@/stores/planner.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import {
@@ -11,9 +12,11 @@ import {
   canonicalizeDietary,
   collectDietaryTags,
   dietaryLabel,
+  dietaryTone,
   isDietaryPreset,
   sortDietaryTags,
 } from "@/lib/dietary"
+import { TAG_TONE_SOLID } from "@/lib/tagTone"
 import { cn } from "@/lib/utils"
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
@@ -108,13 +111,17 @@ export const GuestFormFields = ({
         <FieldContent className="flex-row flex-wrap gap-1.5">
           {options.map((option) => {
             const selected = value.dietary.includes(option)
+            const tone = dietaryTone(option)
             // Presets are a plain toggle; custom tags get a delete affordance.
             if (isDietaryPreset(option)) {
               return (
                 <Button
                   key={option}
-                  variant={selected ? "default" : "outline"}
-                  className="rounded-full"
+                  variant="outline"
+                  className={cn(
+                    "rounded-full",
+                    selected && TAG_TONE_SOLID[tone]
+                  )}
                   onClick={() => toggleDietary(option)}
                 >
                   {dietaryLabel(t, option)}
@@ -122,36 +129,15 @@ export const GuestFormFields = ({
               )
             }
             return (
-              <span
+              <DeletableTagPill
                 key={option}
-                className={cn(
-                  "inline-flex h-8 items-center rounded-full border text-sm font-medium",
-                  selected
-                    ? "border-transparent bg-primary text-primary-foreground"
-                    : "border-border bg-secondary text-secondary-foreground"
-                )}
-              >
-                <button
-                  type="button"
-                  onClick={() => toggleDietary(option)}
-                  className="h-full rounded-l-full pr-1 pl-3"
-                >
-                  {option}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => deleteTag(option)}
-                  aria-label={t("guests.add.dietary_delete", { tag: option })}
-                  className={cn(
-                    "flex h-full cursor-pointer items-center rounded-r-full pr-2 pl-1",
-                    selected
-                      ? "hover:bg-primary-foreground/20"
-                      : "hover:bg-foreground/10"
-                  )}
-                >
-                  <XIcon className="size-3.5 opacity-70" />
-                </button>
-              </span>
+                label={option}
+                tone={tone}
+                selected={selected}
+                deleteLabel={t("guests.add.dietary_delete", { tag: option })}
+                onToggle={() => toggleDietary(option)}
+                onDelete={() => deleteTag(option)}
+              />
             )
           })}
           {adding ? (

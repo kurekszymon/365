@@ -2,6 +2,14 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 01.08
+
+- color tags for dietary and age groups
+
+### 31.07
+
+- add easywed-video proj to render clips
+
 ### 30.07
 
 - migrate reminders from local wedding to the remote one

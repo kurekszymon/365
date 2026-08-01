@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest"
 import {
+  DIETARY_PRESETS,
   MAX_DIETARY_TAG_LENGTH,
   canonicalizeDietary,
   collectDietaryTags,
   dietaryLabel,
+  dietaryTone,
   sortDietaryTags,
 } from "./dietary"
+import { TAG_TONES } from "./tagTone"
+import { AGE_GROUP_TONE } from "./ageGroup"
 import type { TFunction } from "i18next"
 
 // Identity translator: returns the key unchanged. Enough for the sort/label
@@ -69,5 +73,30 @@ describe("dietaryLabel", () => {
   it("translates known keys, passes custom tags through", () => {
     expect(dietaryLabel(t, "vegan")).toBe("guests.dietary.vegan")
     expect(dietaryLabel(t, "bez laktozy")).toBe("bez laktozy")
+  })
+})
+
+describe("dietaryTone", () => {
+  const presetTones = DIETARY_PRESETS.map(dietaryTone)
+
+  it("gives each preset its own reserved tone", () => {
+    expect(new Set(presetTones).size).toBe(DIETARY_PRESETS.length)
+  })
+
+  // Reserved by @/lib/ageGroup, so a kid badge never reads as a diet.
+  it("leaves violet to the age groups", () => {
+    expect(presetTones).not.toContain(AGE_GROUP_TONE)
+  })
+
+  it("gives custom tags a stable tone from the palette", () => {
+    const tag = "bez laktozy"
+    expect(TAG_TONES).toContain(dietaryTone(tag))
+    expect(dietaryTone(tag)).toBe(dietaryTone(tag))
+  })
+
+  it("is stable across the canonicalize round-trip", () => {
+    expect(dietaryTone(canonicalizeDietary("  Bez   Laktozy ")!)).toBe(
+      dietaryTone("Bez Laktozy")
+    )
   })
 })

@@ -1,4 +1,6 @@
 import type { TFunction } from "i18next"
+import type { TagTone } from "@/lib/tagTone"
+import { toneFromKey } from "@/lib/tagTone"
 import { normalize } from "@/lib/import/guestsImport"
 
 // Dietary tags are free-form strings. These presets are the pills offered out
@@ -27,6 +29,22 @@ export const MAX_DIETARY_TAG_LENGTH = 24
 // either would misresolve.
 export const dietaryLabel = (t: TFunction, tag: string): string =>
   PRESET_SET.has(tag) ? t(`guests.dietary.${tag}`) : tag
+
+// Reserved hues for the presets - the three tags almost every wedding uses, so
+// they're worth a stable, deliberately-chosen color rather than a hashed one.
+// "violet" is absent on purpose: @/lib/ageGroup claims it, so a kid badge never
+// reads as a diet.
+const PRESET_TONES: Record<string, TagTone> = {
+  vegetarian: "green",
+  vegan: "teal",
+  "gluten-free": "amber",
+}
+
+// Color for a tag. Custom tags fall back to a hash of the tag itself, which can
+// land on a preset's hue - acceptable, since the label is the identity and the
+// color only speeds up scanning.
+export const dietaryTone = (tag: string): TagTone =>
+  PRESET_TONES[tag] ?? toneFromKey(tag)
 
 // Normalize a raw tag for comparison/dedupe. Presets have a fixed normalized
 // form so "Wegan", "vegan" and "  VEGAN " all collapse to the same key.

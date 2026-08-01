@@ -1,4 +1,5 @@
 import type { TFunction } from "i18next"
+import type { TagTone } from "@/lib/tagTone"
 import { normalize } from "@/lib/import/guestsImport"
 
 // A guest's age group: exactly one per guest (unlike dietary tags, which are a
@@ -17,6 +18,13 @@ const ADULT_AGE = 18
 export const AGE_GROUP_PRESETS = [ADULT_AGE_GROUP, "0-3", "3-6"] as const
 
 const PRESET_SET: ReadonlySet<string> = new Set(AGE_GROUP_PRESETS)
+
+// One tone for every child bracket, custom ones included - the badge says "this
+// guest is a kid" and the label carries which bracket, so per-bracket hues would
+// only compete with the dietary tags for attention. Reserved here and left out
+// of @/lib/dietary's preset map. Adults never render a badge (`childAgeGroup`
+// returns null), so there is nothing else to color.
+export const AGE_GROUP_TONE: TagTone = "violet"
 
 // Mirrors the DB `guests_age_group_shape` constraint. Enforced client-side too
 // so guest-mode (localStorage) values stay within range and survive the

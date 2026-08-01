@@ -15,6 +15,7 @@ import { SeatingProgress } from "./SeatingProgress"
 import { SeatAssignSheet } from "./SeatAssignSheet"
 import type { ReactNode } from "react"
 import type { Guest } from "@/stores/planner.store"
+import type { TagTone } from "@/lib/tagTone"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useDialogStore } from "@/stores/dialog.store"
 import { Button } from "@/components/ui/button"
@@ -24,15 +25,22 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { TagBadge } from "@/components/ui/tag-badge"
 import { cn } from "@/lib/utils"
 import { normalize } from "@/lib/import/guestsImport"
-import { dietaryLabel, sortDietaryTags } from "@/lib/dietary"
+import { dietaryLabel, dietaryTone, sortDietaryTags } from "@/lib/dietary"
 import {
+  AGE_GROUP_TONE,
   ageGroupLabel,
   childAgeGroup,
   countKids,
   isKidAgeGroup,
 } from "@/lib/ageGroup"
+import {
+  TAG_TONE_BADGE,
+  TAG_TONE_BADGE_HOVER,
+  TAG_TONE_SOLID,
+} from "@/lib/tagTone"
 
 // A user-typed tag could literally be "all", so the sentinels can't be bare
 // strings sharing the tag namespace.
@@ -65,14 +73,21 @@ const fuzzyMatch = (query: string, haystack: string): boolean =>
 // can filter down to (say) just the vegan guests instead of "has any diet".
 // `tooltip` is for chips whose count is derived rather than literal (Kids), so
 // the rule behind the number is discoverable.
+//
+// `tone` carries the same hue the matching badges use down in the list, which
+// turns the row into a legend: the green chip filters to the green badges. The
+// chips that stand for no tag (All / Unseated) pass no tone and keep the neutral
+// primary/muted pair.
 const FilterChip = ({
   active,
   onClick,
+  tone,
   tooltip,
   children,
 }: {
   active: boolean
   onClick: () => void
+  tone?: TagTone
   tooltip?: string
   children: ReactNode
 }) => {
@@ -81,10 +96,14 @@ const FilterChip = ({
       type="button"
       onClick={onClick}
       className={cn(
-        "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors",
-        active
-          ? "bg-primary text-primary-foreground"
-          : "bg-muted text-muted-foreground hover:bg-muted/70"
+        "shrink-0 rounded-full border border-transparent px-3.5 py-1.5 text-xs font-semibold transition-colors",
+        tone
+          ? active
+            ? TAG_TONE_SOLID[tone]
+            : cn(TAG_TONE_BADGE[tone], TAG_TONE_BADGE_HOVER[tone])
+          : active
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted text-muted-foreground hover:bg-muted/70"
       )}
     >
       {children}
@@ -239,6 +258,7 @@ export const GuestListContent = () => {
             <FilterChip
               active={filter.kind === "kids"}
               onClick={() => setFilter({ kind: "kids" })}
+              tone={AGE_GROUP_TONE}
               tooltip={t("guests.filter.kids_hint")}
             >
               {t("guests.filter.kids", { count: kidsCount })}
@@ -249,6 +269,7 @@ export const GuestListContent = () => {
               key={d}
               active={filter.kind === "dietary" && filter.tag === d}
               onClick={() => setFilter({ kind: "dietary", tag: d })}
+              tone={dietaryTone(d)}
             >
               {dietaryLabel(t, d)} ({dietaryCounts.get(d)})
             </FilterChip>
@@ -307,9 +328,9 @@ export const GuestListContent = () => {
                         {guest.name}
                       </p>
                       {ageBadge && (
-                        <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                        <TagBadge tone={AGE_GROUP_TONE}>
                           {ageGroupLabel(t, ageBadge)}
-                        </span>
+                        </TagBadge>
                       )}
                     </div>
                     {seatedAt ? (
@@ -322,15 +343,15 @@ export const GuestListContent = () => {
                         {t("guests.status.unseated")}
                       </span>
                     )}
+                    {/* Sorted rather than shown in storage order, so the same
+                        two diets always appear in the same order - and
+                        therefore the same color order - on every row. */}
                     {guest.dietary.length > 0 && (
                       <div className="mt-1 flex flex-wrap gap-1">
-                        {guest.dietary.map((d) => (
-                          <span
-                            key={d}
-                            className="inline-flex items-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground"
-                          >
+                        {sortDietaryTags(guest.dietary, t).map((d) => (
+                          <TagBadge key={d} tone={dietaryTone(d)}>
                             {dietaryLabel(t, d)}
-                          </span>
+                          </TagBadge>
                         ))}
                       </div>
                     )}
