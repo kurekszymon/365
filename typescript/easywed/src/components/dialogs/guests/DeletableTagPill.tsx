@@ -41,6 +41,7 @@ export const DeletableTagPill = ({
     <button
       type="button"
       onClick={onToggle}
+      aria-pressed={selected}
       className="h-full cursor-pointer rounded-l-full pr-1 pl-3"
     >
       {label}

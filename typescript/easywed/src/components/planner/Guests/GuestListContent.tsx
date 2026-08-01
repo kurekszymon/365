@@ -95,6 +95,7 @@ const FilterChip = ({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={cn(
         "shrink-0 rounded-full border border-transparent px-3.5 py-1.5 text-xs font-semibold transition-colors",
         tone

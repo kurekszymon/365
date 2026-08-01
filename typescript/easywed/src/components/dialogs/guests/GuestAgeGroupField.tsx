@@ -97,6 +97,7 @@ export const GuestAgeGroupField = ({
                   "rounded-full",
                   selected && !isAdult && TAG_TONE_SOLID[AGE_GROUP_TONE]
                 )}
+                aria-pressed={selected}
                 onClick={() => onChange(option)}
               >
                 {ageGroupLabel(t, option)}

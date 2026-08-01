@@ -122,6 +122,7 @@ export const GuestFormFields = ({
                     "rounded-full",
                     selected && TAG_TONE_SOLID[tone]
                   )}
+                  aria-pressed={selected}
                   onClick={() => toggleDietary(option)}
                 >
                   {dietaryLabel(t, option)}
