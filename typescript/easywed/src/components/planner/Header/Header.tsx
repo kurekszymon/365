@@ -2,6 +2,7 @@ import { ArrowLeftIcon } from "lucide-react"
 import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { WeddingName } from "./WeddingName.header"
+import { Brand } from "./Brand.header"
 import type { PropsWithChildren } from "react"
 
 export const Header = (props: PropsWithChildren) => {
@@ -19,6 +20,8 @@ const Nav = (props: PropsWithChildren) => {
 const Title = (props: PropsWithChildren<{ weddingId?: string }>) => {
   return (
     <div className="flex min-w-0 items-center gap-3">
+      {/* Separates the app's identity (Header.Brand) from this wedding's. */}
+      <span aria-hidden="true" className="h-5 w-px shrink-0 bg-border" />
       <BackButton weddingId={props.weddingId} />
       {props.children}
     </div>
@@ -44,5 +47,6 @@ const BackButton = (props: { weddingId?: string }) => {
 }
 
 Header.Nav = Nav
+Header.Brand = Brand
 Header.Title = Title
 Header.WeddingName = WeddingName

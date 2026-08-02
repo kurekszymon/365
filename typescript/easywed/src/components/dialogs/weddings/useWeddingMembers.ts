@@ -3,7 +3,9 @@ import { useCallback, useEffect, useState } from "react"
 import { useAuthStore } from "@/stores/auth.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { supabase } from "@/lib/supabase"
+import { fetchDisplayNames } from "@/lib/sync/profile"
 import { isLocalWedding } from "@/lib/localWedding"
+import i18n from "@/i18n"
 
 export type InviteRole = "editor" | "viewer"
 export type MemberRole = "owner" | InviteRole
@@ -22,6 +24,7 @@ export type MemberAccess = {
   user_id: string
   role: MemberRole
   created_at: string
+  display_name: string | null
 }
 
 /**
@@ -32,6 +35,10 @@ export type MemberAccess = {
 export function useWeddingMembers(isOpen: boolean) {
   const weddingId = useGlobalStore((s) => s.weddingId)
   const session = useAuthStore((s) => s.session)
+  // Editors and viewers open the same dialog from the header avatar stack,
+  // but only owners get the invite form and the revoke buttons - RLS enforces
+  // that server-side, so this only keeps the UI honest about it.
+  const isOwner = useGlobalStore((s) => s.role) === "owner"
 
   const [role, setRole] = useState<InviteRole>("editor")
   const [submitting, setSubmitting] = useState(false)
@@ -55,6 +62,11 @@ export function useWeddingMembers(isOpen: boolean) {
     async (signal?: AbortSignal) => {
       if (!weddingId || !canInvite) return
       const effectiveSignal = signal ?? new AbortController().signal
+      // Read through a call, not the property. TypeScript narrows `aborted` to
+      // false at the first check and doesn't reconsider across the awaits that
+      // follow, so the later checks - the ones that actually catch a
+      // cancellation - get flagged as dead code they aren't.
+      const isAborted = () => effectiveSignal.aborted
       const [invitationsRes, membersRes] = await Promise.all([
         supabase
           .from("wedding_invitations")
@@ -72,6 +84,12 @@ export function useWeddingMembers(isOpen: boolean) {
           .abortSignal(effectiveSignal),
       ])
 
+      // Has to come before the error checks: an aborted PostgREST request
+      // comes back as an error *result*, not a silent no-op, so closing the
+      // dialog mid-fetch would otherwise park an "AbortError" string in
+      // `error` for the next time it opens.
+      if (isAborted()) return
+
       if (invitationsRes.error) {
         setError(invitationsRes.error.message)
         return
@@ -81,9 +99,43 @@ export function useWeddingMembers(isOpen: boolean) {
         return
       }
 
+      const names = await fetchDisplayNames(
+        membersRes.data.map((member) => member.user_id),
+        effectiveSignal
+      )
+
+      // Second await, second chance to have been cancelled in the meantime.
+      if (isAborted()) return
+
+      const nextMembers = membersRes.data.map((member) => ({
+        ...(member as Omit<MemberAccess, "display_name">),
+        display_name: names.get(member.user_id) ?? null,
+      }))
+
       setError(null)
       setInvitations(invitationsRes.data as Array<Invitation>)
-      setMembers(membersRes.data as Array<MemberAccess>)
+      setMembers(nextMembers)
+
+      // The header avatar stack reads global.store, which is otherwise only
+      // written by loadWedding - so it's a snapshot from page load and goes
+      // stale the moment anyone joins or leaves in another session. This is
+      // the same list, freshly fetched, so hand it over: opening the dialog
+      // doubles as the stack's refresh.
+      //
+      // Same guard loadWedding puts on its own member write, and it earns its
+      // keep here for a reason the abort checks above don't cover: refresh()
+      // is also called without a signal after an invite is created or revoked,
+      // so nothing would otherwise stop a slow round trip for the previous
+      // wedding landing on the current one's stack.
+      if (useGlobalStore.getState().weddingId !== weddingId) return
+
+      useGlobalStore.setState({
+        members: nextMembers.map((member) => ({
+          userId: member.user_id,
+          role: member.role,
+          displayName: member.display_name,
+        })),
+      })
     },
     [weddingId, canInvite]
   )
@@ -171,17 +223,29 @@ export function useWeddingMembers(isOpen: boolean) {
       setMembers((list) =>
         list.filter((item) => item.user_id !== member.user_id)
       )
+      // Keep the header avatar stack in step with the dialog - it reads the
+      // list loaded with the wedding, which this removal invalidates.
+      useGlobalStore.setState((state) => ({
+        members: state.members.filter((m) => m.userId !== member.user_id),
+      }))
 
       // Delete membership first - that's the critical access revocation step.
       // Only delete the invitation row after membership is confirmed gone, so
       // we never end up with access still granted but no visible row to revoke.
+      //
+      // `.select()` because a DELETE that RLS filters to nothing comes back as
+      // a clean 204 - no error, no rows. Treating that as success is the worst
+      // outcome available here: the optimistic removal above stands, both the
+      // dialog and the header stack show the member gone, and they still have
+      // full access to the wedding.
       const memberRes = await supabase
         .from("wedding_members")
         .delete()
         .eq("wedding_id", weddingId)
         .eq("user_id", member.user_id)
+        .select("user_id")
 
-      if (memberRes.error) {
+      if (memberRes.error || memberRes.data.length === 0) {
         setMembers((list) => {
           if (list.some((item) => item.user_id === member.user_id)) {
             return list
@@ -192,7 +256,27 @@ export function useWeddingMembers(isOpen: boolean) {
               new Date(b.created_at).getTime()
           )
         })
-        setError(memberRes.error.message)
+        // Put them back in the header stack too, or the optimistic removal
+        // above would outlive the failure it was predicting.
+        useGlobalStore.setState((state) =>
+          state.members.some((m) => m.userId === member.user_id)
+            ? state
+            : {
+                members: [
+                  ...state.members,
+                  {
+                    userId: member.user_id,
+                    role: member.role,
+                    displayName: member.display_name,
+                  },
+                ],
+              }
+        )
+        console.error("[members] remove access failed", {
+          error: memberRes.error,
+          removed: memberRes.data?.length ?? 0,
+        })
+        setError(memberRes.error?.message ?? i18n.t("members.remove_failed"))
         return
       }
 
@@ -247,6 +331,7 @@ export function useWeddingMembers(isOpen: boolean) {
 
   return {
     canInvite,
+    isOwner,
     role,
     setRole,
     submitting,

@@ -1,18 +1,21 @@
 import { useEffect, useState } from "react"
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
+import type { WeddingSummary } from "@/components/weddings/WeddingListItem"
+import type { RemoveMode } from "@/components/weddings/RemoveWeddingDialog"
 import { supabase } from "@/lib/supabase"
 import { useAuthStore } from "@/stores/auth.store"
 import { Button } from "@/components/ui/button"
+import { WeddingListItem } from "@/components/weddings/WeddingListItem"
+import { RemoveWeddingDialog } from "@/components/weddings/RemoveWeddingDialog"
 
 export const Route = createFileRoute("/home")({
   component: Home,
 })
 
-type WeddingRow = {
-  id: string
-  name: string
-  date: string | null
+type RemoveTarget = {
+  wedding: WeddingSummary
+  mode: RemoveMode
 }
 
 function Home() {
@@ -24,21 +27,38 @@ function Home() {
   const isReady = useAuthStore((s) => s.isReady)
   const navigate = useNavigate()
 
-  const [weddings, setWeddings] = useState<Array<WeddingRow>>([])
+  const [weddings, setWeddings] = useState<Array<WeddingSummary>>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  // Kept separate from `removeOpen` so the target outlives the close: the
+  // dialog reads its own copy from it while animating out.
+  const [removeTarget, setRemoveTarget] = useState<RemoveTarget | null>(null)
+  const [removeOpen, setRemoveOpen] = useState(false)
+
+  const openRemove = (wedding: WeddingSummary, mode: RemoveMode) => {
+    setRemoveTarget({ wedding, mode })
+    setRemoveOpen(true)
+  }
 
   useEffect(() => {
     if (!session) return
 
+    // owner_id decides which exit the row offers: owners delete the wedding
+    // for everyone, invited members only drop their own access.
     supabase
       .from("weddings")
-      .select("id, name, date")
+      .select("id, name, owner_id")
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
         if (error) console.error(error)
 
-        setWeddings(data ?? [])
+        setWeddings(
+          (data ?? []).map((wedding) => ({
+            id: wedding.id,
+            name: wedding.name,
+            isOwner: wedding.owner_id === session.user.id,
+          }))
+        )
         setLoading(false)
       })
   }, [session])
@@ -125,25 +145,50 @@ function Home() {
           ) : (
             // TODO: based on a role (couple/planner/site) render only one wedding / list etc.
             weddings.map((wedding) => (
-              <Link
+              <WeddingListItem
                 key={wedding.id}
-                to="/wedding/$id"
-                params={{ id: wedding.id }}
-                className="rounded-md border bg-card p-3 text-sm hover:bg-accent"
-              >
-                {wedding.name || t("wedding")}
-              </Link>
+                wedding={wedding}
+                onDelete={(target) => openRemove(target, "delete")}
+                onLeave={(target) => openRemove(target, "leave")}
+              />
             ))
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => supabase.auth.signOut()}
-          className="mx-auto text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
-        >
-          {t("auth.sign_out")}
-        </button>
+        {/* The target survives closing so the dialog keeps its own wording
+            while animating out; `key` gives each new target a fresh
+            confirmation field, so a half-typed DELETE can't carry over to the
+            next wedding and pre-arm its button. Reopening the *same* target
+            reuses the instance, so the dialog clears that field on close
+            itself - the two together are what keep it disarmed. */}
+        {removeTarget && (
+          <RemoveWeddingDialog
+            key={`${removeTarget.wedding.id}-${removeTarget.mode}`}
+            open={removeOpen}
+            wedding={removeTarget.wedding}
+            mode={removeTarget.mode}
+            onOpenChange={setRemoveOpen}
+            onDone={(weddingId) =>
+              setWeddings((list) => list.filter((w) => w.id !== weddingId))
+            }
+          />
+        )}
+
+        <div className="flex justify-center gap-4 text-xs text-muted-foreground">
+          <Link
+            to="/settings"
+            className="underline underline-offset-4 hover:text-foreground"
+          >
+            {t("settings.title")}
+          </Link>
+          <button
+            type="button"
+            onClick={() => supabase.auth.signOut()}
+            className="underline underline-offset-4 hover:text-foreground"
+          >
+            {t("auth.sign_out")}
+          </button>
+        </div>
       </div>
     </div>
   )

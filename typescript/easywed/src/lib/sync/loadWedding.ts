@@ -11,13 +11,14 @@ import type {
   TableShape,
 } from "@/stores/planner.store"
 import type { Reminder } from "@/stores/reminders.store"
-import type { WeddingRole } from "@/stores/global.store"
+import type { WeddingMember, WeddingRole } from "@/stores/global.store"
 import { supabase } from "@/lib/supabase"
 import {
   insertHall,
   updateFixturePos,
   updateTablePos,
 } from "@/lib/sync/mutations"
+import { fetchDisplayNames } from "@/lib/sync/profile"
 import { DEFAULT_HALL, usePlannerStore } from "@/stores/planner.store"
 import { useAuthStore } from "@/stores/auth.store"
 import { useGlobalStore } from "@/stores/global.store"
@@ -71,14 +72,18 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
       .eq("wedding_id", id)
       .abortSignal(signal),
 
+    // Every member, not just this user's row: the header avatar stack shows
+    // editors that they aren't alone in here. RLS ("members can view
+    // co-members") already permits this for any role, so no extra gating.
+    // Ordered by created_at so the owner - inserted first by the trigger -
+    // leads the stack and the order stays stable across loads.
     userId
       ? supabase
           .from("wedding_members")
-          .select("role")
+          .select("user_id, role")
           .eq("wedding_id", id)
-          .eq("user_id", userId)
+          .order("created_at")
           .abortSignal(signal)
-          .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
 
     supabase
@@ -99,11 +104,54 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
   if (memberRes.error) throw memberRes.error
   if (fixturesRes.error) throw fixturesRes.error
 
+  const memberRows = memberRes.data ?? []
+
+  const members: Array<WeddingMember> = memberRows.map((m) => ({
+    userId: m.user_id,
+    role: m.role as WeddingRole,
+    displayName: null,
+  }))
+
   useGlobalStore.setState({
     weddingId: id,
     name: weddingRes.data.name || undefined,
     date: weddingRes.data.date ? new Date(weddingRes.data.date) : undefined,
-    role: (memberRes.data?.role as WeddingRole | undefined) ?? undefined,
+    role: members.find((m) => m.userId === userId)?.role,
+    members,
+  })
+
+  // Names live in profiles, not wedding_members, and there's no FK between
+  // them (both point at auth.users), so PostgREST can't embed them in the
+  // batch above - it's a second round trip that needs the ids first.
+  //
+  // Deliberately not awaited: the avatar stack already renders a neutral glyph
+  // for a member without a name, so holding up first paint for this would cost
+  // every wedding open a serial request to change a tooltip. Names patch
+  // themselves in when they arrive.
+  void fetchDisplayNames(
+    memberRows.map((m) => m.user_id),
+    signal
+  ).then((profileNames) => {
+    if (signal.aborted) return
+
+    // A different wedding may have finished loading in the meantime; these
+    // names belong to this one.
+    if (useGlobalStore.getState().weddingId !== id) return
+
+    // One write for the whole batch rather than setMemberDisplayName per
+    // member: that action re-maps the entire array and publishes a new
+    // `members` identity each time, so patching n names re-rendered the avatar
+    // stack n times to reach a single settled state.
+    useGlobalStore.setState((state) => ({
+      members: state.members.map((member) =>
+        profileNames.has(member.userId)
+          ? {
+              ...member,
+              displayName: profileNames.get(member.userId) ?? null,
+            }
+          : member
+      ),
+    }))
   })
 
   const halls: Array<Hall> = hallsRes.data.map((h) => {

@@ -13,6 +13,8 @@ weddings              ← top-level project
   ├─ tables           ← 1:N (seating tables)
   ├─ guests           ← 1:N, optionally FK → tables
   └─ reminders        ← 1:N (wedding todo list)
+
+profiles              ← 1:1 with auth.users, outside the wedding tree
 ```
 
 Frontend analogy: like setting up Zustand stores' TypeScript types once upfront, but enforced at the database level so no client bug can corrupt the shape.
@@ -46,6 +48,42 @@ Each table has 4 policies: one per operation (SELECT/INSERT/UPDATE/DELETE). `usi
 
 **Why this matters vs Node/Express**: traditionally you'd write `if (user.canEdit(wedding)) { ... }` in every endpoint - easy to forget one route. RLS pushes the check to the data layer - can't be bypassed by a missed middleware.
 
+## `profiles` - and what deliberately isn't in it
+
+`profiles` holds exactly one piece of user-visible identity: a nullable `display_name` the user types themselves (migration `20260731000001`). It exists because the header avatar stack and the members dialog need something human to show, and `wedding_members` only has a `user_id`.
+
+What it does **not** hold is the point. Signing in with Google puts `full_name`, `picture` and `email` into `auth.users.raw_user_meta_data` whether we ask for it or not. Copying any of that into a table every co-member can read would mean accepting a wedding invite hands you the other members' contact details. So:
+
+- Emails and OAuth metadata stay in `auth.users`, reachable only by that user and the service role.
+- The Google name is offered as a **prefill** in `/settings`, client-side from the session, and is only stored once the user saves it.
+- `display_name` stays null until they choose one. The UI then falls back to their role ("Editor"), never to an email or a slice of their user id.
+
+Read access is `id = auth.uid() or public.shares_wedding_with(id)` - your own row, plus people you actually share a wedding with. `shares_wedding_with` is `security definer` for the same anti-recursion reason as `is_wedding_member` below.
+
+`handle_new_user` (trigger on `auth.users` INSERT) creates the row at signup so the members list can look it up unconditionally, and the migration backfills everyone who predates it.
+
+## Account deletion (`delete_own_account`)
+
+`security definer` RPC (migration `20260731000002`), because `auth.users` isn't reachable by `authenticated` and the service role key that could do this client-side must never leave the server.
+
+**It refuses while the caller owns a wedding anyone else can access.** `weddings.owner_id` is `ON DELETE CASCADE`, so proceeding would take the hall, tables and every guest with it — for the co-owner, planner or venue too. That data isn't the caller's to erase. Solo weddings do cascade away. The client re-queries the blocking weddings (`fetchSharedOwnedWeddings`) to name them; the RPC raises `account_has_shared_weddings` as the server-side copy of the same check.
+
+**Why it locks invitations first.** The check and the `delete from auth.users` run in one READ COMMITTED transaction, but on their own they hold nothing that would stop `claim_wedding_invitation` inserting a `wedding_members` row in between — handing someone access to a wedding milliseconds before it cascades away, which is the exact outcome the check exists to prevent. So the function opens by taking `for update` on the caller's unclaimed, unexpired invitations. Every claim already locks its own invitation row first, so the two serialize on the row they share: lock first and the claim waits, then reports "invalid or expired" against a cascaded-away invite; lose the race and the count re-reads afterwards, sees the new member, and refuses. Claimed and expired rows are skipped — neither can produce a new member.
+
+The same migration fixes `wedding_invitations.claimed_by`, which was `ON DELETE NO ACTION` — meaning **any user who had ever accepted an invite link was undeletable**, including from the Supabase dashboard. It's now `on delete set null`, which keeps the burned-invite audit row visible to the wedding's owner.
+
+## Leaving a wedding — and the owner self-removal bug (`20260731000003`)
+
+Until this migration the only DELETE policy on `wedding_members` was "owners can remove members", so an editor or viewer could not disassociate themselves from a wedding at all — their only exit was deleting their whole account. That's the wrong shape for a plan someone was *invited* into, and it makes the advice in `delete_own_account`'s blocked state impossible to follow. `members can remove themselves` fixes it, gated on `user_id = auth.uid() and role <> 'owner'`.
+
+Owners are excluded because `weddings.owner_id` would still point at them, leaving a wedding whose owner isn't a member of it. They delete the wedding instead.
+
+**The `role <> 'owner'` guard is not enough on its own, and that's the part worth reading twice.** Permissive policies are OR'd together, and the pre-existing "owners can remove members" matched *every* row in the owner's wedding — including the owner's own membership row. An owner could therefore delete themselves out of their own wedding, leaving `owner_id` pointing at a non-member who then fails `is_wedding_member()` and loses access to their own halls, tables and guests. This bug predates the migration; adding a self-removal policy just made it reachable from the UI. The policy is re-created here with `user_id <> auth.uid()`, so removing yourself is only possible through the policy above — which owners can't satisfy.
+
+Client-side, `deleteWedding` and `leaveWedding` both ask for the deleted rows back with `.select()`. A DELETE whose rows are all filtered out by RLS is not an error to PostgREST — it answers 204 with no body, which supabase-js reports as `{ data: null, error: null }`. Without the returned rows, "you aren't the owner" reads as success and the user is told their wedding is gone while it sits there.
+
+`leaveWedding` deliberately leaves the `wedding_invitations` row that brought the member in: DELETE on that table is owner-only, so a leaving member has no way to clear it, and the owner keeps an accurate record that the link was used. The consequence is that the owner's invitation list still shows a claimed invite naming someone who left; re-inviting means issuing a new link, which is true either way since the old one is spent. Cleaning this up properly needs a trigger on membership delete, not a client-side change.
+
 ## Helper functions (`is_wedding_member`, `wedding_role`)
 
 ```sql
@@ -66,6 +104,9 @@ Triggers are "on event X, run function Y" - like `useEffect` but running inside 
 - **`set_updated_at`**: on every UPDATE, bump `updated_at = now()`. Automatic, can't be forgotten.
 - **`handle_new_wedding`**: when a wedding is INSERTed, auto-insert an `owner` row in `wedding_members`. Avoids a race where the creator briefly isn't a member of their own wedding.
 - **`enforce_table_capacity`**: on guest INSERT/UPDATE, counts current assignees and rejects if over capacity. Mirrors the client check in `assignGuestToTable` - client for UX, DB for correctness under races.
+- **`handle_new_user`**: on `auth.users` INSERT, create the matching `profiles` row (see above).
+
+**Local vs remote gotcha:** on a local `supabase db reset`, the `authenticated` role ends up with no CRUD grants on `public` tables (`relacl` shows only `Dxtm`) - hosted Supabase grants them via default privileges. Consequence: column-level hardening like `revoke update (owner_id) on weddings` and `revoke update (id) on profiles` is a **no-op locally** and only bites on remote. If you're testing RLS against the local DB with `set role authenticated`, `grant select, insert, update, delete on all tables in schema public to authenticated` first or every query fails with "permission denied" before RLS is even consulted.
 
 ## Check constraints
 

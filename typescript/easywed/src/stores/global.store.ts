@@ -20,17 +20,31 @@ interface Viewport {
 
 export type WeddingRole = "owner" | "editor" | "viewer"
 
+/**
+ * Everyone with access to the current wedding. `displayName` is null until
+ * that person sets one in their settings - see the profiles migration for why
+ * this is all we're allowed to know about them.
+ */
+export type WeddingMember = {
+  userId: string
+  role: WeddingRole
+  displayName: string | null
+}
+
 type State = {
   weddingId?: string
   name?: string
   date?: Date
   role?: WeddingRole
+  members: Array<WeddingMember>
   viewport: Viewport
 }
 
 type Action = {
   setName: (name?: string) => void
   setDate: (date?: Date) => void
+  setMembers: (members: Array<WeddingMember>) => void
+  setMemberDisplayName: (userId: string, displayName: string | null) => void
 
   setPan: (pan: Pan) => void
   setScale: (scale: number) => void
@@ -44,6 +58,7 @@ export const useGlobalStore = create<State & Action>()(
       name: undefined,
       date: undefined,
       role: undefined,
+      members: [],
       viewport: {
         scale: 1,
         pan: {
@@ -62,6 +77,16 @@ export const useGlobalStore = create<State & Action>()(
           date: date ? date.toISOString().slice(0, 10) : null,
         })
       },
+
+      setMembers: (members) => set({ members }),
+      // Renaming yourself in settings has to reach the avatar stack, which
+      // reads the member list loaded with the wedding rather than re-fetching.
+      setMemberDisplayName: (userId, displayName) =>
+        set((state) => ({
+          members: state.members.map((member) =>
+            member.userId === userId ? { ...member, displayName } : member
+          ),
+        })),
 
       setPan: (pan) =>
         set((state) => ({ viewport: { ...state.viewport, pan } })),
