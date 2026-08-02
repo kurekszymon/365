@@ -28,13 +28,7 @@ export const WeddingRowMenu = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          aria-label={t("weddings.actions")}
-          // The row itself is a link; keep the menu from navigating with it.
-          onClick={(e) => e.stopPropagation()}
-        >
+        <Button variant="ghost" size="sm" aria-label={t("weddings.actions")}>
           <MoreVerticalIcon />
         </Button>
       </DropdownMenuTrigger>

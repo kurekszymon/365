@@ -158,7 +158,9 @@ function Home() {
         {/* The target survives closing so the dialog keeps its own wording
             while animating out; `key` gives each new target a fresh
             confirmation field, so a half-typed DELETE can't carry over to the
-            next wedding and pre-arm its button. */}
+            next wedding and pre-arm its button. Reopening the *same* target
+            reuses the instance, so the dialog clears that field on close
+            itself - the two together are what keep it disarmed. */}
         {removeTarget && (
           <RemoveWeddingDialog
             key={`${removeTarget.wedding.id}-${removeTarget.mode}`}

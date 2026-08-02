@@ -76,7 +76,22 @@ export const RemoveWeddingDialog = ({
     (!needsConfirmWord || matchesConfirmWord(confirmation, confirmWord))
 
   return (
-    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={(next) => {
+        onOpenChange(next)
+        // Clear the typed word on the way out. home.tsx keys this component by
+        // wedding+mode, which gives a fresh instance for a *different* target
+        // but reuses this one when the same wedding is reopened - so without
+        // this, cancelling a delete and opening it again would find the
+        // destructive button already armed by the word you typed last time.
+        //
+        // `submitting` is deliberately not reset: it clears itself when the
+        // request settles, and forcing it false here would re-enable the
+        // button for a leave that is still in flight.
+        if (!next) setConfirmation("")
+      }}
+    >
       <ResponsiveDialogContent className="sm:max-w-md">
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>
