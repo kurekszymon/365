@@ -9,7 +9,10 @@ import i18n from "@/i18n"
 // render `privacy.<id>.intro` + a list; the rest render `privacy.<id>.body`.
 const SECTIONS: Array<{ id: string; bullets?: Array<string> }> = [
   { id: "controller" },
-  { id: "data", bullets: ["account", "content", "files", "usage", "local"] },
+  {
+    id: "data",
+    bullets: ["account", "display_name", "content", "files", "usage", "local"],
+  },
   { id: "storage" },
   { id: "guest_mode" },
   { id: "ai" },

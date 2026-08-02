@@ -260,6 +260,27 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reminders: {
         Row: {
           created_at: string
@@ -476,6 +497,7 @@ export type Database = {
     }
     Functions: {
       claim_wedding_invitation: { Args: { _token: string }; Returns: string }
+      dietary_tags_valid: { Args: { tags: string[] }; Returns: boolean }
       guest_names_valid: { Args: { names: string[] }; Returns: boolean }
       is_wedding_member: { Args: { _wedding_id: string }; Returns: boolean }
       replace_planner_layout: {
@@ -487,6 +509,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      shares_wedding_with: { Args: { _user_id: string }; Returns: boolean }
       wedding_role: { Args: { _wedding_id: string }; Returns: string }
     }
     Enums: {
