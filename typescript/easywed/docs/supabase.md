@@ -62,6 +62,16 @@ Read access is `id = auth.uid() or public.shares_wedding_with(id)` - your own ro
 
 `handle_new_user` (trigger on `auth.users` INSERT) creates the row at signup so the members list can look it up unconditionally, and the migration backfills everyone who predates it.
 
+## Account deletion (`delete_own_account`)
+
+`security definer` RPC (migration `20260731000002`), because `auth.users` isn't reachable by `authenticated` and the service role key that could do this client-side must never leave the server.
+
+**It refuses while the caller owns a wedding anyone else can access.** `weddings.owner_id` is `ON DELETE CASCADE`, so proceeding would take the hall, tables and every guest with it — for the co-owner, planner or venue too. That data isn't the caller's to erase. Solo weddings do cascade away. The client re-queries the blocking weddings (`fetchSharedOwnedWeddings`) to name them; the RPC raises `account_has_shared_weddings` as the server-side copy of the same check.
+
+**Why it locks invitations first.** The check and the `delete from auth.users` run in one READ COMMITTED transaction, but on their own they hold nothing that would stop `claim_wedding_invitation` inserting a `wedding_members` row in between — handing someone access to a wedding milliseconds before it cascades away, which is the exact outcome the check exists to prevent. So the function opens by taking `for update` on the caller's unclaimed, unexpired invitations. Every claim already locks its own invitation row first, so the two serialize on the row they share: lock first and the claim waits, then reports "invalid or expired" against a cascaded-away invite; lose the race and the count re-reads afterwards, sees the new member, and refuses. Claimed and expired rows are skipped — neither can produce a new member.
+
+The same migration fixes `wedding_invitations.claimed_by`, which was `ON DELETE NO ACTION` — meaning **any user who had ever accepted an invite link was undeletable**, including from the Supabase dashboard. It's now `on delete set null`, which keeps the burned-invite audit row visible to the wedding's owner.
+
 ## Helper functions (`is_wedding_member`, `wedding_role`)
 
 ```sql
