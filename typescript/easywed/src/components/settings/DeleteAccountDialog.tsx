@@ -42,7 +42,18 @@ export const DeleteAccountDialog = ({
   // members that were in the way, and a stale "blocked" screen would send them
   // in circles.
   useEffect(() => {
-    if (!open || !userId) return
+    if (!open) return
+
+    // No user id while the dialog is open means the session went away under us
+    // (/settings is auth-guarded, so this takes an expiry race). Returning
+    // early would leave `blocking` null forever - the dialog stuck on
+    // "checking your weddings", with no button, no error and no retry. Same
+    // exit as a failed check below.
+    if (!userId) {
+      toast.error(t("settings.delete.check_failed"))
+      onOpenChange(false)
+      return
+    }
 
     const controller = new AbortController()
 

@@ -91,6 +91,18 @@ begin
   end if;
 
   delete from auth.users where id = auth.uid();
+
+  -- The client's success path signs the user out and tells them the account is
+  -- gone, so a delete that matched nothing must not return void quietly. It
+  -- can't happen today - `postgres` has BYPASSRLS, so the RLS on auth.users
+  -- doesn't filter this - but that's a role attribute owned by the platform,
+  -- not by us, and if it ever changes the failure mode is telling someone their
+  -- data is erased when it isn't. Same rule the client already applies to its
+  -- own deletes (see weddings.ts, useWeddingMembers): 0 rows is a failure.
+  if not found then
+    raise exception 'account_not_deleted'
+      using errcode = 'P0001';
+  end if;
 end;
 $$;
 
