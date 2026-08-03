@@ -454,6 +454,8 @@
   "reminders.title": "Reminders",
   "reminders.empty": "No reminders yet",
   "reminders.add": "Add a reminder",
+  "reminders.complete": "Mark as done",
+  "reminders.delete": "Delete reminder",
   "reminders.create.title": "New reminder",
   "reminders.create.content_placeholder": "What should we remind you about?",
   "reminders.create.date_prompt": "When should we remind you?",

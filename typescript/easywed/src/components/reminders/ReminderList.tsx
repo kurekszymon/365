@@ -6,10 +6,11 @@ import { useRemindersStore } from "@/stores/reminders.store"
 export const ReminderList = () => {
   const { t } = useTranslation()
 
-  const { reminders, completeReminder } = useRemindersStore(
+  const { reminders, completeReminder, removeReminder } = useRemindersStore(
     useShallow((state) => ({
       reminders: state.reminders,
       completeReminder: state.completeReminder,
+      removeReminder: state.removeReminder,
     }))
   )
 
@@ -25,6 +26,7 @@ export const ReminderList = () => {
           key={reminder.uuid}
           reminder={reminder}
           completeReminder={completeReminder}
+          removeReminder={removeReminder}
         />
       ))}
     </div>

@@ -473,6 +473,8 @@
   "reminders.title": "Przypo\u00admnienia",
   "reminders.empty": "Nie macie jeszcze żadnych przypomnień",
   "reminders.add": "Dodaj przypomnienie",
+  "reminders.complete": "Oznacz jako zrobione",
+  "reminders.delete": "Usuń przypomnienie",
   "reminders.create.title": "Nowe przypomnienie",
   "reminders.create.content_placeholder": "O czym mamy Wam przypomnieć?",
   "reminders.create.date_prompt": "Kiedy Wam przypomnieć?",

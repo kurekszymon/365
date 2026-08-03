@@ -48,3 +48,8 @@ export const updateReminderStatus = (
     "updateReminderStatus",
     supabase.from("reminders").update({ status }).eq("id", uuid)
   )
+
+// Hard delete: `reminders` has no `deleted_at` column (unlike tables/guests,
+// which loadWedding filters on), so removal is a real DELETE.
+export const deleteReminder = (uuid: string): Promise<boolean> =>
+  run("deleteReminder", supabase.from("reminders").delete().eq("id", uuid))

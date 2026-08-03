@@ -1,6 +1,7 @@
 import { format, formatDistanceToNow, isPast } from "date-fns"
 import { enUS, pl } from "date-fns/locale"
-import { CheckIcon, ClockIcon } from "lucide-react"
+import { CheckIcon, ClockIcon, Trash2Icon } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import type { Reminder } from "@/stores/reminders.store"
 import i18n from "@/i18n"
 import { cn } from "@/lib/utils"
@@ -8,10 +9,13 @@ import { cn } from "@/lib/utils"
 export const ReminderPreview = ({
   reminder,
   completeReminder,
+  removeReminder,
 }: {
   reminder: Reminder
   completeReminder: (uuid: string) => void
+  removeReminder: (uuid: string) => void
 }) => {
+  const { t } = useTranslation()
   // TODO: handle it better? for now it's good enough
   const locale = i18n.language.startsWith("en") ? enUS : pl
   const isOverdue =
@@ -43,10 +47,24 @@ export const ReminderPreview = ({
         </span>
       </div>
       <div className="ml-2 flex items-center gap-2">
-        <CheckIcon
-          className="h-4 w-4 cursor-pointer"
+        <button
+          type="button"
+          aria-label={t("reminders.complete")}
+          title={t("reminders.complete")}
+          className="cursor-pointer text-muted-foreground hover:text-foreground"
           onClick={() => completeReminder(reminder.uuid)}
-        />
+        >
+          <CheckIcon className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          aria-label={t("reminders.delete")}
+          title={t("reminders.delete")}
+          className="cursor-pointer text-muted-foreground hover:text-destructive"
+          onClick={() => removeReminder(reminder.uuid)}
+        >
+          <Trash2Icon className="h-4 w-4" />
+        </button>
       </div>
     </div>
   )

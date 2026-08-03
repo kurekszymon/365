@@ -1,6 +1,10 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import { insertReminder, updateReminderStatus } from "@/lib/sync/mutations"
+import {
+  deleteReminder,
+  insertReminder,
+  updateReminderStatus,
+} from "@/lib/sync/mutations"
 import {
   REMINDERS_STORAGE_KEY,
   localRemindersStorage,
@@ -23,6 +27,7 @@ type State = {
 type Action = {
   setReminders: (text: string, due?: Date) => void
   completeReminder: (uuid: string) => void
+  removeReminder: (uuid: string) => void
 }
 
 export const useRemindersStore = create<State & Action>()(
@@ -38,6 +43,14 @@ export const useRemindersStore = create<State & Action>()(
           ),
         }))
         void updateReminderStatus(guid, "completed")
+      },
+      removeReminder: (uuid: string) => {
+        set((state) => ({
+          reminders: state.reminders.filter(
+            (reminder) => reminder.uuid !== uuid
+          ),
+        }))
+        void deleteReminder(uuid)
       },
       setReminders: (text, due) => {
         const now = new Date()
