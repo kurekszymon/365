@@ -4,6 +4,8 @@
 
 ### 03.08
 
+-- deploy
+
 - lock `weddings.owner_id` with a trigger - the april `revoke update (owner_id)` never did anything (table grant on remote beats a column revoke), so any editor could set themselves as owner, kick the real owner out and delete the wedding
 - `delete_own_account` raises `account_not_deleted` instead of reporting success on a 0-row delete
 - neutral polish copy for leave/delete wedding
