@@ -70,6 +70,8 @@ Read access is `id = auth.uid() or public.shares_wedding_with(id)` - your own ro
 
 **Why it locks invitations first.** The check and the `delete from auth.users` run in one READ COMMITTED transaction, but on their own they hold nothing that would stop `claim_wedding_invitation` inserting a `wedding_members` row in between — handing someone access to a wedding milliseconds before it cascades away, which is the exact outcome the check exists to prevent. So the function opens by taking `for update` on the caller's unclaimed, unexpired invitations. Every claim already locks its own invitation row first, so the two serialize on the row they share: lock first and the claim waits, then reports "invalid or expired" against a cascaded-away invite; lose the race and the count re-reads afterwards, sees the new member, and refuses. Claimed and expired rows are skipped — neither can produce a new member.
 
+**It also checks the delete actually removed a row** (`if not found then raise 'account_not_deleted'`). It can't fail today — `postgres` has `BYPASSRLS`, so the RLS on `auth.users` doesn't filter the `security definer` delete — but that's a platform-owned role attribute, and the client's success path signs the user out and tells them the account is gone. Same rule the client already applies to its own deletes: 0 rows is a failure, not success.
+
 The same migration fixes `wedding_invitations.claimed_by`, which was `ON DELETE NO ACTION` — meaning **any user who had ever accepted an invite link was undeletable**, including from the Supabase dashboard. It's now `on delete set null`, which keeps the burned-invite audit row visible to the wedding's owner.
 
 ## Leaving a wedding — and the owner self-removal bug (`20260731000003`)
@@ -106,7 +108,19 @@ Triggers are "on event X, run function Y" - like `useEffect` but running inside 
 - **`enforce_table_capacity`**: on guest INSERT/UPDATE, counts current assignees and rejects if over capacity. Mirrors the client check in `assignGuestToTable` - client for UX, DB for correctness under races.
 - **`handle_new_user`**: on `auth.users` INSERT, create the matching `profiles` row (see above).
 
-**Local vs remote gotcha:** on a local `supabase db reset`, the `authenticated` role ends up with no CRUD grants on `public` tables (`relacl` shows only `Dxtm`) - hosted Supabase grants them via default privileges. Consequence: column-level hardening like `revoke update (owner_id) on weddings` and `revoke update (id) on profiles` is a **no-op locally** and only bites on remote. If you're testing RLS against the local DB with `set role authenticated`, `grant select, insert, update, delete on all tables in schema public to authenticated` first or every query fails with "permission denied" before RLS is even consulted.
+- **`enforce_wedding_owner_immutable`**: on every `weddings` UPDATE, rejects a changed `owner_id` when the caller is `authenticated` or `anon` (see below).
+
+**Local vs remote gotcha, and why the column revokes don't work:** on a local `supabase db reset`, the `authenticated` role ends up with no CRUD grants on `public` tables (`relacl` shows only `Dxtm`) - hosted Supabase grants them via default privileges. That difference hides a real bug rather than just being an inconvenience: column-level statements like `revoke update (owner_id) on weddings` and `revoke update (id) on profiles` are **no-ops on remote precisely because the table-level grant is there** - a column revoke cannot subtract from a table grant, and the column privilege was never separately granted, so there is nothing to revoke. Locally they *appear* to hold only because `authenticated` has no grant at all. Both are defence in depth at best; the real guards are the trigger below (`owner_id`) and the UPDATE policy's `with check (id = auth.uid())` (`profiles.id`).
+
+If you're testing RLS against the local DB with `set role authenticated`, run `grant select, insert, update, delete on all tables in schema public to authenticated` first — otherwise every query fails with "permission denied" before RLS is even consulted, *and* you will be testing a grant shape that doesn't match production.
+
+## `weddings.owner_id` is immutable from the client (`20260731000003`)
+
+Ownership decides who can delete a wedding, who can remove members, and whether `delete_own_account` is allowed to proceed — so being able to write it is being able to take the whole plan.
+
+Nothing stopped that until this trigger. The `revoke` above does nothing (see the gotcha), and RLS doesn't catch it either: `"owners and editors can update weddings"` has `using` but no `with check`, so Postgres reuses `using` as the check — and an editor writing their own id into `owner_id` passes it, because the row id is unchanged and they are still an editor of that wedding. The full chain is three statements: set `owner_id` to yourself, use `"owners can remove members"` to evict the real owner, then delete the wedding outright from the wedding list UI.
+
+`with check` has no access to `OLD`, so the guard has to be a `before update` trigger. It raises `42501` when `owner_id` changes and `current_user` is `authenticated` or `anon`. Ownership transfer is still a legitimate feature — it just has to go through a `security definer` RPC, which runs as `postgres` and passes the check.
 
 ## Check constraints
 

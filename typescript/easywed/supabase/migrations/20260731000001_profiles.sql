@@ -95,7 +95,13 @@ create policy "users update own profile"
   using (id = auth.uid())
   with check (id = auth.uid());
 
--- Same hardening as weddings.owner_id: the id is the identity, never editable.
+-- Defence in depth only, and weaker than it looks: on hosted Supabase this is a
+-- no-op, because `authenticated` holds table-level UPDATE via default
+-- privileges and a column-level revoke can't subtract from that (see the
+-- owner_id trigger in 20260731000003 for the version of this mistake that
+-- mattered). Harmless here: the UPDATE policy's `with check (id = auth.uid())`
+-- already pins the column, since changing your id to someone else's fails the
+-- check and changing it to your own is a no-op.
 revoke update (id) on public.profiles from authenticated;
 
 -- No delete policy: profiles die with their auth.users row via the cascade.

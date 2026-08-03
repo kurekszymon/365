@@ -242,7 +242,7 @@
   "weddings.actions": "Opcje wesela",
   "weddings.delete": "Usuń wesele",
   "weddings.delete_title": "Usunąć {{name}}?",
-  "weddings.delete_body": "Zniknie cały plan - sala, wszystkie stoły i lista gości - dla Ciebie i dla wszystkich, którym je udostępniłeś. Tej operacji nie można cofnąć.",
+  "weddings.delete_body": "Zniknie cały plan - sala, wszystkie stoły i lista gości - dla Ciebie i dla wszystkich osób, którym je udostępniono. Tej operacji nie można cofnąć.",
   "weddings.delete_confirm": "Usuń trwale",
   "weddings.delete_done": "Wesele usunięte",
   "weddings.delete_failed": "Nie udało się usunąć wesela. Spróbuj ponownie.",
@@ -250,7 +250,7 @@
   "weddings.leave_title": "Opuścić {{name}}?",
   "weddings.leave_body": "Stracisz dostęp do tego planu. Wesele nie zostanie usunięte - właściciel i pozostałe osoby zachowują je i mogą zaprosić Cię ponownie.",
   "weddings.leave_confirm": "Opuść",
-  "weddings.leave_done": "Opuściłeś wesele",
+  "weddings.leave_done": "Wesele opuszczone",
   "weddings.leave_failed": "Nie udało się opuścić wesela. Spróbuj ponownie.",
 
   "tables.count": "{{count}} stołów",

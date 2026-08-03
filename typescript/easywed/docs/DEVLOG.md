@@ -2,9 +2,23 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 03.08
+
+- lock `weddings.owner_id` with a trigger - the april `revoke update (owner_id)` never did anything (table grant on remote beats a column revoke), so any editor could set themselves as owner, kick the real owner out and delete the wedding
+- `delete_own_account` raises `account_not_deleted` instead of reporting success on a 0-row delete
+- neutral polish copy for leave/delete wedding
+- add option to remove a reminder
+
+### 02.08
+
+- profiles: display name, `/settings` route, header avatar stack, account menu - emails and oauth metadata stay in `auth.users`
+- account deletion: `delete_own_account()` rpc, refuses while you own a wedding someone else can reach; `claimed_by` fk to `on delete set null`, anyone who ever claimed an invite was undeletable
+- delete (owner) / leave (member) wedding from the wedding row menu; `members can remove themselves` policy, and owners can no longer delete themselves out of their own wedding
+
 ### 01.08
 
 - color tags for dietary and age groups
+- aria states for tags and fields
 
 ### 31.07
 

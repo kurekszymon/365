@@ -83,6 +83,10 @@ Reminders carry two extra wrinkles the planner/global keys don't:
 | Sync across devices / browsers       |  ❌   |    ✅     |                                                |
 | Roles (editor / viewer)              |  ❌   |    ✅     | guest is always owner of the one local wedding |
 | Accepting an invite link             |  ❌   |    ✅     | `/invite/$token` calls `requireAuth`           |
+| Display name (`/settings`)           |  ❌   |    ✅     | `profiles.display_name`, avatar stack          |
+| Leaving a wedding                    |  ❌   |    ✅     | row menu on `/home`, members only              |
+| Deleting a wedding                   |  ❌   |    ✅     | row menu on `/home`, owner only                |
+| Deleting your account                |  ❌   |    ✅     | `delete_own_account()`; guest data is local    |
 
 ## The members gate (free plan)
 
@@ -97,6 +101,24 @@ the `"local"` sentinel as a wedding id.
   so the feature is discoverable and the upsell has somewhere to live.
 - The upgrade path is signing in, not a payment - copy lives under
   `members.locked.*` in `en.json` / `pl.json`.
+
+## Account surface (`/settings`, leaving, deleting)
+
+None of this exists in guest mode, and not as a gate we chose - there is no
+account and no server row to act on.
+
+- `/settings` runs `requireAuth("/settings")` in `beforeLoad`. It holds the
+  display name form (`profiles.display_name`) and the delete-account section.
+- The wedding row menu - **Delete wedding** (owner) and **Leave wedding**
+  (member) - lives in the `/home` list, and `home.tsx` returns the "Start
+  planning" CTA instead of the list when there is no session. A guest has one
+  local wedding, is always its owner, and nobody else can reach it.
+- The guest equivalent of deleting your account is clearing the three
+  `localStorage` keys; nothing about a guest ever reaches Postgres.
+- `delete_own_account()` refuses while the caller owns a wedding someone else
+  can access, and points them at the two ways out - remove the members, or
+  delete the wedding. Both are in the row menu above, which is why that menu and
+  the delete dialog had to ship together.
 
 ## Signalling and migration
 

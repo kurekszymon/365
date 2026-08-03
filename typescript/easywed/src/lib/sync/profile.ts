@@ -68,12 +68,13 @@ export const fetchDisplayNames = async (
  * Update first, insert only if there was no row.
  *
  * Deliberately not an upsert: PostgREST builds `on conflict (id) do update set`
- * from every key in the payload, `id` included, and Postgres checks
- * column-level UPDATE privileges for every column in a SET list. The profiles
- * migration ends with `revoke update (id) ... from authenticated`, so an upsert
- * risks 42501 - and only on remote, since that revoke is a no-op against a
- * local `db reset` (see docs/supabase.md). Updating a named column sidesteps
- * the question entirely.
+ * from every key in the payload, `id` included, and an upsert that writes `id`
+ * has to satisfy the UPDATE policy's `with check (id = auth.uid())` on top of
+ * the insert path. Updating one named column sidesteps the question entirely.
+ * (An earlier version of this note blamed the migration's
+ * `revoke update (id) ... from authenticated`; that revoke is a no-op on remote
+ * as well as locally, so it was never what made this shape necessary - see
+ * docs/supabase.md.)
  *
  * `.select("id")` makes the "no such row" case observable instead of a silent
  * no-op; the signup trigger and the backfill mean it should never fire, but a

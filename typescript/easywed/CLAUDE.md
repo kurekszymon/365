@@ -52,7 +52,7 @@ Schema lives in `supabase/migrations/` - six tables: `weddings`, `wedding_member
 
 Key hardening already in place:
 
-- `revoke update (owner_id) on public.weddings from authenticated` - editors/owners cannot reassign ownership via UPDATE (migration `20260418000002`).
+- `weddings.owner_id` is immutable from the client, enforced by the `enforce_wedding_owner_immutable` trigger (migration `20260731000003`). The older `revoke update (owner_id) ... from authenticated` in `20260418000002` reads like it does this but is a **no-op**: hosted Supabase grants `authenticated` table-level UPDATE, and a column revoke can't subtract from a table grant. Same for `revoke update (id) on public.profiles` - harmless there, since the UPDATE policy's `with check` already pins the column. Ownership transfer must go through a `security definer` RPC.
 - Triggers handle `updated_at`, auto-insert the `owner` row into `wedding_members` on wedding creation, and enforce table capacity server-side (`enforce_table_capacity`).
 - CHECK constraints enforce enum-like fields (`shape`, `dietary`) at the DB layer - the TS unions in `planner.store.ts` mirror them.
 

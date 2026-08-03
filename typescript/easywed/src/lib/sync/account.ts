@@ -78,11 +78,18 @@ export const deleteOwnAccount = async (): Promise<DeleteAccountResult> => {
 
   console.error("[account] deleteOwnAccount failed", error)
 
-  // Raised by the function when the caller still owns a shared wedding - the
-  // server's own copy of the check the UI ran before offering the button.
+  // `account_has_shared_weddings` is raised when the caller still owns a shared
+  // wedding - the server's own copy of the check the UI ran before offering the
+  // button, and the only failure the dialog can do anything useful about.
   //
-  // Both halves are load-bearing. P0001 is the generic `raise_exception` code,
-  // so the function's own 'Not authenticated' carries it too - the code alone
+  // The function's other sentinels stay `unknown` on purpose. 'Not
+  // authenticated' and `account_not_deleted` (the delete matched no row) both
+  // leave the user with nothing to act on, so they get the generic failure
+  // message - what matters is that they land here at all rather than on the
+  // success path, which signs the user out claiming the account is gone.
+  //
+  // Both halves of the match are load-bearing. P0001 is the generic
+  // `raise_exception` code every one of those raises carries, so the code alone
   // can't tell them apart. And the sentinel is matched with `includes` rather
   // than equality because PostgREST owns the framing of `message`; a prefix it
   // adds later would break `===` while leaving the sentinel intact.
