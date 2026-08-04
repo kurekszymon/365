@@ -76,6 +76,91 @@ const notFound = (message: string): ToolResult => ({
   message,
 })
 
+// Every dimension the model can set is CHECK-constrained to be positive
+// (tables/fixtures/halls all carry `width > 0`, `height > 0`, and tables
+// `capacity > 0`), and the store writes are fire-and-forget: a zero, a negative
+// or a NaN would be applied optimistically, bounce off the constraint, and
+// leave the canvas showing something the database refused behind a generic
+// "save failed" toast. Screening here is the only place that can say which
+// field was wrong, and the only place that can refuse before the store changes.
+//
+// `undefined` passes: an omitted field means "keep the current value" (or take
+// the preset default), which every tool below already handles.
+const invalidMeasures = (
+  fields: Record<string, number | undefined>
+): Array<string> =>
+  Object.entries(fields)
+    .filter(([, v]) => v !== undefined && !(Number.isFinite(v) && v > 0))
+    .map(([field]) => field)
+
+// Whether `height` is worth checking at all for a given shape.
+//
+// A round table's diameter and a circle fixture's both come from `width` -
+// getSizeForShape and fixtureSize collapse height into it and never read the
+// value that was passed in. Validating it anyway would refuse the whole request
+// over a number already destined for the bin, and a model filling in every
+// field of the schema whether or not it applies is exactly how that happens.
+// `width` still matters for those shapes; it IS the diameter.
+const heightIfUsed = (
+  shape: TableShape | FixtureShape,
+  height: number | undefined
+): { height?: number } =>
+  shape === "round" || shape === "circle" ? {} : { height }
+
+// `count` drives i18next's plural selection, not the text: one bad field reads
+// "width must be a positive number", several "width, height must be positive
+// numbers". Polish needs it more than English does - its verb has to agree with
+// the list too - which is why the locale carries _few and _many alongside _one.
+const rejectMeasures = (fields: Array<string>): ToolResult => ({
+  status: "cancelled",
+  message: i18n.t("assistant.tool.result.invalid_measures", {
+    fields: fields.join(", "),
+    count: fields.length,
+  }),
+})
+
+// Seats are whole. A model asking for 8.4 means 8, not a constraint violation
+// when Postgres casts it to the integer column - but rounding happens before
+// the positivity check, so 0.4 is still refused rather than silently becoming 0.
+const roundCapacity = (capacity: number | undefined): number | undefined =>
+  capacity === undefined ? undefined : Math.round(capacity)
+
+// Floors are whole and may be negative (a basement is floor -1), so there is no
+// positivity check here - but there does have to be a finiteness one.
+// `Math.trunc` passes Infinity and NaN straight through, and JSON has no
+// literal for either, but `1e309` parses to Infinity perfectly happily - so a
+// model could put a value into an `integer` column that Postgres will not take.
+//
+// Non-finite becomes null rather than a refusal, matching HallPanelContent,
+// which does exactly this for a hand-typed floor. Floor is optional metadata
+// and the tool's result never quotes it back, so dropping it costs the user
+// nothing; a dimension is different, which is why invalidMeasures refuses
+// instead of substituting.
+const truncFloor = (
+  floor: number | null | undefined
+): number | null | undefined => {
+  if (floor === undefined || floor === null) return floor
+  return Number.isFinite(floor) ? Math.trunc(floor) : null
+}
+
+// Positions take the same untrusted path as the measures above but can't reuse
+// their check: 0 is a perfectly good coordinate, and an out-of-bounds one is
+// meant to be clamped rather than rejected.
+//
+// NaN and NaN only. clampRectIntoHall already handles every other number
+// correctly - `Math.min(Math.max(0, x), max)` pins ±Infinity to the hall edge,
+// which is the right answer for "put it as far right as it goes" - but the same
+// expression returns NaN for NaN, so that one value would reach the numeric
+// column intact. Screening ±Infinity here as well would quietly turn a
+// clamp-to-edge request into a jump back to the origin.
+//
+// Falls back rather than refusing: for an add the fallback is the same 0 an
+// omitted coordinate already gets, and for a move it is the object's current
+// position - and since the result message reports the position it actually
+// ended at, the model's summary stays true either way.
+const usablePosition = (value: number | undefined, fallback: number): number =>
+  value === undefined || Number.isNaN(value) ? fallback : value
+
 interface AddTableInput {
   name?: string
   shape?: TableShape
@@ -199,6 +284,13 @@ export const tools = {
       const hall = resolveHall(input.hallId)
       if (!hall) return noHall()
       const shape = input.shape ?? DEFAULT_TABLE.shape
+      const capacity = roundCapacity(input.capacity)
+      const bad = invalidMeasures({
+        width: input.width,
+        ...heightIfUsed(shape, input.height),
+        capacity,
+      })
+      if (bad.length > 0) return rejectMeasures(bad)
       const rotation = shape === "round" ? 0 : normalizeRotation(input.rotation)
       const size = tableSize(
         shape,
@@ -207,8 +299,8 @@ export const tools = {
       )
       const pos = clampPosition(
         hall,
-        input.x ?? 0,
-        input.y ?? 0,
+        usablePosition(input.x, 0),
+        usablePosition(input.y, 0),
         size,
         rotation
       )
@@ -216,7 +308,7 @@ export const tools = {
         {
           name: input.name?.trim() ?? "",
           shape,
-          capacity: input.capacity ?? DEFAULT_TABLE.capacity,
+          capacity: capacity ?? DEFAULT_TABLE.capacity,
           size,
           rotation,
           hallId: hall.id,
@@ -248,7 +340,13 @@ export const tools = {
       if (!table) return notFound(i18n.t("assistant.tool.result.table_missing"))
       const hall = resolveHall(hallId ?? table.hallId)
       if (!hall) return noHall()
-      const pos = clampPosition(hall, x, y, table.size, table.rotation)
+      const pos = clampPosition(
+        hall,
+        usablePosition(x, table.position.x),
+        usablePosition(y, table.position.y),
+        table.size,
+        table.rotation
+      )
       planner.updateTablePosition(
         id,
         pos.x,
@@ -285,22 +383,32 @@ export const tools = {
       const planner = usePlannerStore.getState()
       const table = planner.tables.find((t) => t.id === input.id)
       if (!table) return notFound(i18n.t("assistant.tool.result.table_missing"))
+      const shape = input.shape ?? table.shape
+      const capacity = roundCapacity(input.capacity)
+      const bad = invalidMeasures({
+        width: input.width,
+        ...heightIfUsed(shape, input.height),
+        capacity,
+      })
+      if (bad.length > 0) return rejectMeasures(bad)
       const assignedIds = planner.guests
         .filter((g) => g.tableId === input.id)
         .map((g) => g.id)
-      // Hard guard: the DB capacity trigger would reject a shrink below the
-      // seated count, but mutations only console.error, so the optimistic store
-      // would silently diverge. Refuse it here instead.
-      if (input.capacity != null && input.capacity < assignedIds.length)
+      // Refuse before touching the store. The DB does reject this now
+      // (enforce_table_capacity_floor), but saveTable is fire-and-forget, so
+      // letting it through would apply the shrink optimistically and leave the
+      // canvas disagreeing with the row behind a "save failed" toast. The form
+      // avoids the same trap by truncating its guest list; the assistant has no
+      // equivalent, so it declines and says why.
+      if (capacity != null && capacity < assignedIds.length)
         return {
           status: "cancelled",
           message: i18n.t("assistant.tool.result.capacity_too_small", {
             count: assignedIds.length,
-            capacity: input.capacity,
+            capacity,
             label: tableLabel(table),
           }),
         }
-      const shape = input.shape ?? table.shape
       const rotation =
         shape === "round"
           ? 0
@@ -320,7 +428,7 @@ export const tools = {
         {
           name: input.name?.trim() ?? table.name,
           shape,
-          capacity: input.capacity ?? table.capacity,
+          capacity: capacity ?? table.capacity,
           size,
           rotation,
           hallId: table.hallId,
@@ -414,6 +522,11 @@ export const tools = {
       const hall = resolveHall(input.hallId)
       if (!hall) return noHall()
       const shape = input.shape ?? DEFAULT_FIXTURE.shape
+      const bad = invalidMeasures({
+        width: input.width,
+        ...heightIfUsed(shape, input.height),
+      })
+      if (bad.length > 0) return rejectMeasures(bad)
       const rotation =
         shape === "circle" ? 0 : normalizeRotation(input.rotation)
       const size = fixtureSize(
@@ -423,8 +536,8 @@ export const tools = {
       )
       const pos = clampPosition(
         hall,
-        input.x ?? 0,
-        input.y ?? 0,
+        usablePosition(input.x, 0),
+        usablePosition(input.y, 0),
         size,
         rotation
       )
@@ -463,7 +576,13 @@ export const tools = {
         return notFound(i18n.t("assistant.tool.result.fixture_missing"))
       const hall = resolveHall(hallId ?? fixture.hallId)
       if (!hall) return noHall()
-      const pos = clampPosition(hall, x, y, fixture.size, fixture.rotation)
+      const pos = clampPosition(
+        hall,
+        usablePosition(x, fixture.position.x),
+        usablePosition(y, fixture.position.y),
+        fixture.size,
+        fixture.rotation
+      )
       planner.updateFixturePosition(
         id,
         pos.x,
@@ -504,6 +623,11 @@ export const tools = {
       if (!fixture)
         return notFound(i18n.t("assistant.tool.result.fixture_missing"))
       const shape = input.shape ?? fixture.shape
+      const bad = invalidMeasures({
+        width: input.width,
+        ...heightIfUsed(shape, input.height),
+      })
+      if (bad.length > 0) return rejectMeasures(bad)
       const rotation =
         shape === "circle"
           ? 0
@@ -597,10 +721,12 @@ export const tools = {
     }),
     execute: (input) => {
       const planner = usePlannerStore.getState()
+      const bad = invalidMeasures({ width: input.width, height: input.height })
+      if (bad.length > 0) return rejectMeasures(bad)
       const name = input.name?.trim() ?? ""
       planner.addHall({
         name,
-        floor: input.floor ?? null,
+        floor: truncFloor(input.floor) ?? null,
         preset: "rectangle",
         size: {
           width: input.width ?? DEFAULT_HALL.size.width,
@@ -635,9 +761,13 @@ export const tools = {
       const hall = planner.halls.at(index)
       if (index < 0 || !hall)
         return notFound(i18n.t("assistant.tool.result.hall_missing"))
+      const bad = invalidMeasures({ width: input.width, height: input.height })
+      if (bad.length > 0) return rejectMeasures(bad)
       planner.updateHall(input.id, {
         ...(input.name !== undefined ? { name: input.name.trim() } : {}),
-        ...(input.floor !== undefined ? { floor: input.floor } : {}),
+        ...(input.floor !== undefined
+          ? { floor: truncFloor(input.floor) }
+          : {}),
         ...(input.width != null || input.height != null
           ? {
               size: {

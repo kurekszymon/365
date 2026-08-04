@@ -1,6 +1,6 @@
 import { stepCountIs, streamText } from "ai"
 import { createModel } from "./provider"
-import { buildSystemPrompt } from "./systemPrompt"
+import { buildLayoutMessage, buildSystemPrompt } from "./systemPrompt"
 import { tools } from "./tools"
 import { trimHistory } from "./trimHistory"
 import type { ToolResult } from "./tools"
@@ -26,7 +26,13 @@ export const runAgent = async (params: {
   const result = streamText({
     model: createModel(),
     system: buildSystemPrompt(),
-    messages: trimHistory(params.history),
+    // The layout rides in the conversation rather than the system prompt: it is
+    // full of user-supplied names, and a co-editor (or a guest list imported
+    // from a spreadsheet) should not get to put text in the same role as the
+    // rules. Prepended fresh each turn and never written back to the stored
+    // history - `response.messages` below carries only the model's own reply -
+    // so exactly one, current, snapshot is ever in flight.
+    messages: [buildLayoutMessage(), ...trimHistory(params.history)],
     tools,
     stopWhen: stepCountIs(8),
     abortSignal: params.abortSignal,

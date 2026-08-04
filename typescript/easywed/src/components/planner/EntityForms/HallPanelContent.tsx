@@ -11,6 +11,7 @@ import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { useViewStore } from "@/stores/view.store"
 import { useDialogStore } from "@/stores/dialog.store"
+import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
 import {
@@ -46,6 +47,7 @@ export const HallPanelContent = ({ hallId }: { hallId: string }) => {
   )
   const openDialog = useDialogStore((state) => state.open)
   const openShapeEdit = usePanelStore((state) => state.openShapeEdit)
+  const canEdit = useGlobalStore(selectCanEdit)
 
   const gridSpacing = useViewStore((state) => state.gridSpacing)
   const gridStyle = useViewStore((state) => state.gridStyle)
@@ -271,15 +273,20 @@ export const HallPanelContent = ({ hallId }: { hallId: string }) => {
         </ButtonGroup>
       </Field>
 
-      <Button
-        type="button"
-        variant="outline"
-        className="text-destructive hover:text-destructive"
-        onClick={() => openDialog("Planner.Hall.Delete", { hallId })}
-      >
-        <Trash2Icon className="size-4" />
-        {t("hall.delete")}
-      </Button>
+      {/* Hidden, not disabled - see the note on the add button in
+          HallsPanelContent. The fields above stay visible-but-disabled because
+          they carry data a viewer needs to read; a delete button carries none. */}
+      {canEdit && (
+        <Button
+          type="button"
+          variant="outline"
+          className="text-destructive hover:text-destructive"
+          onClick={() => openDialog("Planner.Hall.Delete", { hallId })}
+        >
+          <Trash2Icon className="size-4" />
+          {t("hall.delete")}
+        </Button>
+      )}
     </div>
   )
 }

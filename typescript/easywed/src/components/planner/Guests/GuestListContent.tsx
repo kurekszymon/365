@@ -18,6 +18,7 @@ import type { Guest } from "@/stores/planner.store"
 import type { TagTone } from "@/lib/tagTone"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useDialogStore } from "@/stores/dialog.store"
+import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -136,6 +137,7 @@ export const GuestListContent = () => {
   )
   const deleteGuest = usePlannerStore((state) => state.deleteGuest)
   const openDialog = useDialogStore((state) => state.open)
+  const canEdit = useGlobalStore(selectCanEdit)
 
   const tableById = useMemo(
     () => new Map(tables.map((table, index) => [table.id, { table, index }])),
@@ -200,14 +202,21 @@ export const GuestListContent = () => {
     return (
       <div className="flex flex-col gap-3">
         <p className="text-sm text-muted-foreground">{t("guests.none")}</p>
-        <Button variant="outline" onClick={() => openDialog("Guest.Add")}>
-          <PlusIcon />
-          {t("guests.add")}
-        </Button>
-        <Button variant="outline" onClick={() => openDialog("Guest.Import")}>
-          <FileSpreadsheetIcon />
-          {t("guests.import")}
-        </Button>
+        {canEdit && (
+          <>
+            <Button variant="outline" onClick={() => openDialog("Guest.Add")}>
+              <PlusIcon />
+              {t("guests.add")}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => openDialog("Guest.Import")}
+            >
+              <FileSpreadsheetIcon />
+              {t("guests.import")}
+            </Button>
+          </>
+        )}
       </div>
     )
   }
@@ -277,24 +286,26 @@ export const GuestListContent = () => {
           ))}
         </div>
 
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            className="flex-1"
-            onClick={() => openDialog("Guest.Add")}
-          >
-            <PlusIcon />
-            {t("guests.add")}
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1"
-            onClick={() => openDialog("Guest.Import")}
-          >
-            <FileSpreadsheetIcon />
-            {t("guests.import")}
-          </Button>
-        </div>
+        {canEdit && (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => openDialog("Guest.Add")}
+            >
+              <PlusIcon />
+              {t("guests.add")}
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => openDialog("Guest.Import")}
+            >
+              <FileSpreadsheetIcon />
+              {t("guests.import")}
+            </Button>
+          </div>
+        )}
       </div>
 
       {filteredGuests.length === 0 ? (
@@ -311,8 +322,12 @@ export const GuestListContent = () => {
                 key={guest.id}
                 className="flex items-center gap-1 rounded-2xl border pr-2 transition-colors hover:bg-accent/50"
               >
+                {/* The row itself opens the seat picker, which is a write.
+                    Disabled rather than swapped for a div so the row keeps its
+                    shape and the guest's details stay readable. */}
                 <button
                   type="button"
+                  disabled={!canEdit}
                   onClick={() => setAssigningGuest(guest)}
                   className="flex min-w-0 flex-1 items-center gap-3 p-3 text-left"
                 >
@@ -358,24 +373,28 @@ export const GuestListContent = () => {
                     )}
                   </div>
                 </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    openDialog("Guest.Edit", { guestId: guest.id })
-                  }
-                  aria-label={t("guests.edit")}
-                  className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                >
-                  <PencilIcon className="size-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => deleteGuest(guest.id)}
-                  aria-label={t("guests.delete")}
-                  className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <Trash2Icon className="size-4" />
-                </button>
+                {canEdit && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openDialog("Guest.Edit", { guestId: guest.id })
+                      }
+                      aria-label={t("guests.edit")}
+                      className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    >
+                      <PencilIcon className="size-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteGuest(guest.id)}
+                      aria-label={t("guests.delete")}
+                      className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2Icon className="size-4" />
+                    </button>
+                  </>
+                )}
               </div>
             )
           })}

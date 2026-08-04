@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next"
 import { CheckIcon, XIcon } from "lucide-react"
 import { PanelBody } from "./PanelBody"
 import { usePanelTitle } from "./usePanelTitle"
+import { useVisiblePanelView } from "./useVisiblePanelView"
 import { usePanelStore } from "@/stores/panel.store"
 import {
   Drawer,
@@ -18,7 +19,9 @@ import {
  */
 export const MobilePanelDrawer = () => {
   const { t } = useTranslation()
-  const view = usePanelStore((state) => state.view)
+  // Not the raw store view: one a viewer may not see resolves to null here, so
+  // the drawer stays shut instead of opening its chrome around nothing.
+  const view = useVisiblePanelView()
   const close = usePanelStore((state) => state.close)
   const title = usePanelTitle(view)
 

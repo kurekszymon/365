@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
-import { toast } from "sonner"
 import type {
   LocalGlobalSnapshot,
   LocalPlannerSnapshot,
@@ -16,14 +15,7 @@ import {
 } from "@/components/ui/responsive-dialog"
 import { Button } from "@/components/ui/button"
 import { useAuthStore } from "@/stores/auth.store"
-import { useGlobalStore } from "@/stores/global.store"
-import { supabase } from "@/lib/supabase"
-import {
-  insertGuests,
-  insertReminders,
-  replacePlannerLayout,
-} from "@/lib/sync/mutations"
-import { clearLocalWeddingStorage } from "@/lib/localWedding"
+import { migrateLocalWedding } from "@/lib/sync/migrateLocalWedding"
 
 type Stage =
   | { kind: "idle" }
@@ -38,11 +30,10 @@ interface MigrateLocalWeddingDialogProps {
   onClose: () => void
 }
 
-// Commit flow: create wedding -> bulk layout write via the
-// replace_planner_layout RPC -> rollback (delete the wedding) on failure,
-// plus guests and reminders inserts the layout RPC doesn't cover. Props-driven
-// rather than routed through dialog.store/DialogManager since it's triggered
-// by a sign-in transition, not a route.
+// Presentation only - the commit sequence and its rollback rules live in
+// migrateLocalWedding.ts, where they're testable. Props-driven rather than
+// routed through dialog.store/DialogManager since it's triggered by a sign-in
+// transition, not a route.
 export const MigrateLocalWeddingDialog = ({
   open,
   planner,
@@ -60,100 +51,27 @@ export const MigrateLocalWeddingDialog = ({
 
     setStage({ kind: "committing" })
 
-    const { data, error } = await supabase
-      .from("weddings")
-      .insert({
-        owner_id: session.user.id,
-        name: global.name?.trim() || t("wedding"),
-        // global.date comes from localStorage (readLocalGlobalSnapshot
-        // already filters out unparsable strings) - re-checking here too
-        // since guest-mode data is explicitly treated as potentially
-        // corrupted, and toISOString() throws on an Invalid Date.
-        date:
-          global.date && !Number.isNaN(global.date.getTime())
-            ? global.date.toISOString().slice(0, 10)
-            : null,
-      })
-      .select("id")
-      .single()
+    const result = await migrateLocalWedding({
+      ownerId: session.user.id,
+      planner,
+      global,
+      reminders,
+      fallbackName: t("wedding"),
+    })
 
-    if (error) {
+    // Every failure mode rolls back and leaves localStorage intact, so there is
+    // one error state and "try again" is always safe to press - it re-runs the
+    // whole migration from the same local snapshot.
+    if (!result.ok) {
       setStage({ kind: "error", message: t("guest_mode.migrate.failed") })
       return
     }
 
-    const previousWeddingId = useGlobalStore.getState().weddingId
-    useGlobalStore.setState({ weddingId: data.id })
-
-    // A hall-less snapshot has no layout to migrate - skip straight to guests.
-    // (readLocalPlannerSnapshot already normalized legacy single-hall payloads
-    // to the multi-hall shape.)
-    // replacePlannerLayout maps over planner.tables/fixtures synchronously
-    // before it ever awaits a request, so a malformed locally-persisted row
-    // (e.g. missing `size`) throws synchronously rather than resolving
-    // false - catch it here too so it still hits the rollback + error stage
-    // below instead of leaving the dialog stuck on "committing".
-    let layoutOk: boolean
-    try {
-      layoutOk =
-        planner.halls.length > 0
-          ? await replacePlannerLayout(
-              planner.halls,
-              planner.tables,
-              planner.fixtures
-            )
-          : true
-    } catch (err) {
-      console.error("[guest-mode] failed to migrate layout", err)
-      layoutOk = false
-    }
-
-    if (!layoutOk) {
-      const { error: rollbackError } = await supabase
-        .from("weddings")
-        .delete()
-        .eq("id", data.id)
-      if (rollbackError) {
-        console.error(
-          "[guest-mode] failed to rollback wedding after migration",
-          rollbackError
-        )
-      }
-      useGlobalStore.setState({ weddingId: previousWeddingId })
-      setStage({ kind: "error", message: t("guest_mode.migrate.failed") })
-      return
-    }
-
-    // Guests and reminders aren't covered by replacePlannerLayout's RPC. A
-    // failure in either isn't rolled back - the layout is real and worth
-    // keeping - it's surfaced as a toast after navigating instead. Same
-    // synchronous-throw risk as replacePlannerLayout above (malformed
-    // locally-persisted rows) - catch it so the flow still completes
-    // (navigate + toast) instead of rejecting onConfirm() silently. Both
-    // no-op successfully on an empty list, so neither needs a length guard.
-    const commit = async (label: string, write: () => Promise<boolean>) => {
-      try {
-        return await write()
-      } catch (err) {
-        console.error(`[guest-mode] failed to migrate ${label}`, err)
-        return false
-      }
-    }
-
-    const [guestsOk, remindersOk] = await Promise.all([
-      commit("guests", () => insertGuests(planner.guests)),
-      commit("reminders", () => insertReminders(reminders)),
-    ])
-
-    clearLocalWeddingStorage()
     onClose()
-    await navigate({ to: "/wedding/$id/planner", params: { id: data.id } })
-
-    if (!guestsOk || !remindersOk) {
-      toast.error(t("guest_mode.migrate.partial_failed"), {
-        id: "guest-migrate-partial",
-      })
-    }
+    await navigate({
+      to: "/wedding/$id/planner",
+      params: { id: result.weddingId },
+    })
   }
 
   return (

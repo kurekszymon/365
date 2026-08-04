@@ -19,11 +19,15 @@ import { LocalWeddingMigrationPrompt } from "@/components/auth/LocalWeddingMigra
 import { ErrorFallback } from "@/components/ErrorFallback"
 import { useThemeStore } from "@/stores/theme.store"
 import { useAiStore } from "@/stores/ai.store"
+import { scrubInviteTokens } from "@/lib/analytics/scrubInviteTokens"
 
 const options = {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
   defaults: "2026-01-30",
   cookieless_mode: "always",
+  // Invite tokens are bearer credentials and they live in the URL path, which
+  // pageview capture would otherwise ship verbatim. See scrubInviteTokens.
+  before_send: scrubInviteTokens,
 } as const
 
 function NotFound() {

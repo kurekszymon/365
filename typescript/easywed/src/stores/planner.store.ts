@@ -14,6 +14,7 @@ import {
   insertTable,
   insertTables,
   reassignTableGuests,
+  saveTableRow,
   softDeleteFixture,
   softDeleteFixtures,
   softDeleteGuest,
@@ -26,7 +27,6 @@ import {
   updateHallPos,
   updateHallRow,
   updateTablePos,
-  updateTableRow,
   updateTableSeats,
 } from "@/lib/sync/mutations"
 import {
@@ -580,40 +580,21 @@ const createPlannerStore = (
           orphanIds.has(g.id) ? { ...g, seatId: null } : g
         ),
       }))
-      for (const g of orphanedGuests) void updateGuestSeat(g.id, id, null)
     }
 
-    // Reconcile seat overrides to the DB on every save. They're cleared on a
-    // rotation change (updateTable) and pruned on capacity shrink (above) -
-    // neither is detectable from the persisted row, so persist unconditionally.
-    void updateTableSeats(id, prunedSeats)
+    // Read back after the prune above so the roster already carries the cleared
+    // pins. Every guest currently at the table goes in, each with the seat they
+    // hold: seat ids are index-based rather than table-specific, so a guest
+    // moved in from elsewhere has to have their old pin overwritten (with null
+    // where the store has none) or they get re-pinned to a stale seat on reload.
+    const roster = get()
+      .guests.filter((g) => g.tableId === id)
+      .map((g) => ({ id: g.id, seatId: g.seatId ?? null }))
 
-    const assignedGuests = get().guests.filter((g) => g.tableId === id)
-
-    void updateTableRow(id, {
-      name: table.name,
-      shape: table.shape,
-      capacity: table.capacity,
-      width: table.size.width,
-      height: table.size.height,
-      rotation: table.rotation,
-    }).then((ok) => {
-      if (!ok) return
-      void reassignTableGuests(
-        id,
-        assignedGuests.map((g) => g.id)
-      ).then((reassigned) => {
-        if (!reassigned) return
-        // reassignTableGuests writes only table_id; persist each assigned guest's
-        // current seatId too. Otherwise a guest moved in from another table keeps
-        // its old seat_id in the DB and - since seat ids are index-based, not
-        // table-specific - gets wrongly re-pinned to that seat on reload. Writing
-        // null where the store has no pin is what clears that stale value.
-        for (const g of assignedGuests) {
-          void updateGuestSeat(g.id, id, g.seatId ?? null)
-        }
-      })
-    })
+    // One transaction rather than the four chained writes this replaced - the
+    // attributes, the pruned seat overrides and the roster all land together or
+    // not at all. saveTableRow explains why the ordering can't live out here.
+    void saveTableRow({ ...table, seats: prunedSeats }, roster)
   },
   duplicateTable: (id) => {
     const original = get().tables.find((t) => t.id === id)

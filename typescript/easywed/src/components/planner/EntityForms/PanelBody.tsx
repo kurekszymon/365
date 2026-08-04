@@ -5,7 +5,9 @@ import { TableBatchPanelContent } from "./TableBatchPanelContent"
 import { FixturePanelContent } from "./FixturePanelContent"
 import { AddHubContent } from "./AddHubContent"
 import { AiChatPanelContent } from "./AiChatPanelContent"
+import { WRITE_ONLY_VIEWS } from "./useVisiblePanelView"
 import type { PanelView } from "@/stores/panel.store"
+import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 
 /**
  * The inner content of a panel view, switched on its kind. Layout-agnostic so
@@ -14,6 +16,18 @@ import type { PanelView } from "@/stores/panel.store"
  *
  * `fillHeight` opts the table form into the desktop dialog's fixed-height,
  * scroll-only-the-list layout; the mobile drawer leaves it off (natural flow).
+ *
+ * Every entity form funnels through here, so this is also where the read-only
+ * planner is enforced for viewers (see selectCanEdit). The edit forms still
+ * render - a viewer needs to read a table's capacity and dimensions - but sit
+ * inside a disabled `fieldset`, which the platform propagates to every control
+ * within, rather than threading a `disabled` prop through five forms and their
+ * shared field components. `display: contents` keeps the fieldset out of the
+ * layout so the existing flex/height rules are untouched.
+ *
+ * The write-only views are refused here too, but both hosts resolve them ahead
+ * of opening (see useVisiblePanelView) - so this is a backstop for a new caller
+ * that renders a PanelBody without going through one of them, not the gate.
  */
 export const PanelBody = ({
   view,
@@ -21,33 +35,42 @@ export const PanelBody = ({
 }: {
   view: PanelView
   fillHeight?: boolean
-}) => (
-  <>
-    {view.kind === "halls.list" && <HallsPanelContent />}
-    {view.kind === "hall.edit" && (
-      <HallPanelContent key={`hall.edit.${view.hallId}`} hallId={view.hallId} />
-    )}
-    {view.kind === "tables.batch_add" && (
-      <TableBatchPanelContent
-        key="tables.batch_add"
-        position={view.position}
-        hallId={view.hallId}
-      />
-    )}
-    {view.kind === "table.edit" && (
-      <TablePanelContent
-        key={`table.edit.${view.tableId}`}
-        tableId={view.tableId}
-        fillHeight={fillHeight}
-      />
-    )}
-    {view.kind === "fixture.edit" && (
-      <FixturePanelContent
-        key={`fixture.edit.${view.fixtureId}`}
-        fixtureId={view.fixtureId}
-      />
-    )}
-    {view.kind === "add_hub" && <AddHubContent />}
-    {view.kind === "ai_chat" && <AiChatPanelContent />}
-  </>
-)
+}) => {
+  const canEdit = useGlobalStore(selectCanEdit)
+
+  if (!canEdit && WRITE_ONLY_VIEWS.has(view.kind)) return null
+
+  return (
+    <fieldset disabled={!canEdit} className="contents">
+      {view.kind === "halls.list" && <HallsPanelContent />}
+      {view.kind === "hall.edit" && (
+        <HallPanelContent
+          key={`hall.edit.${view.hallId}`}
+          hallId={view.hallId}
+        />
+      )}
+      {view.kind === "tables.batch_add" && (
+        <TableBatchPanelContent
+          key="tables.batch_add"
+          position={view.position}
+          hallId={view.hallId}
+        />
+      )}
+      {view.kind === "table.edit" && (
+        <TablePanelContent
+          key={`table.edit.${view.tableId}`}
+          tableId={view.tableId}
+          fillHeight={fillHeight}
+        />
+      )}
+      {view.kind === "fixture.edit" && (
+        <FixturePanelContent
+          key={`fixture.edit.${view.fixtureId}`}
+          fixtureId={view.fixtureId}
+        />
+      )}
+      {view.kind === "add_hub" && <AddHubContent />}
+      {view.kind === "ai_chat" && <AiChatPanelContent />}
+    </fieldset>
+  )
+}
