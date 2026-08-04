@@ -10,7 +10,7 @@ import {
   PLANNER_STORAGE_KEY,
   REMINDERS_STORAGE_KEY,
 } from "@/lib/localWedding"
-import { useGlobalStore } from "@/stores/global.store"
+import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 
 const OWNER = "11111111-1111-1111-1111-111111111111"
 const NEW_WEDDING = "22222222-2222-2222-2222-222222222222"
@@ -55,8 +55,9 @@ const reminders = (): Array<Reminder> => [
 ]
 
 // Guest-mode state as it actually sits on disk when the dialog opens: three
-// persisted keys, and the local sentinel as the active wedding.
-const seedLocalWedding = () => {
+// persisted keys. Split from the in-memory half below because the two come
+// apart in production - see the OAuth case in `seedLocalStorageOnly`'s test.
+const seedLocalStorage = () => {
   localStorage.setItem(
     PLANNER_STORAGE_KEY,
     JSON.stringify({ state: planner() })
@@ -69,6 +70,12 @@ const seedLocalWedding = () => {
     REMINDERS_STORAGE_KEY,
     JSON.stringify({ state: { reminders: reminders() } })
   )
+}
+
+// ...plus the in-memory half: signing in from the guest planner without a page
+// reload leaves `/wedding/local`'s state live in this tab.
+const seedLocalWedding = () => {
+  seedLocalStorage()
   useGlobalStore.setState({
     weddingId: LOCAL_WEDDING_ID,
     name: "Nasze wesele",
@@ -86,26 +93,32 @@ interface Recorder {
   writes: MigrationWrites
   calls: Array<string>
   activeWeddingIdDuringWrites: Array<string | undefined>
+  canEditDuringWrites: Array<boolean>
 }
 
-// Records the call order and, for each write, which wedding was active at the
-// time - the writes scope themselves with getWeddingId(), so "was the new
-// wedding live when guests were inserted" is part of what's under test.
+// Records the call order and, for each write, the two pieces of global state
+// the real writes read on their way out: which wedding was active (they scope
+// themselves with getWeddingId()) and whether the role permits writing at all
+// (run() refuses outright when selectCanEdit is false). The injected writes
+// can't fail those checks themselves, so the state they saw is what's asserted.
 const recorder = (
   overrides: Partial<Record<string, boolean>> = {}
 ): Recorder => {
   const calls: Array<string> = []
   const activeWeddingIdDuringWrites: Array<string | undefined> = []
+  const canEditDuringWrites: Array<boolean> = []
 
   const track = (name: string, result: boolean) => {
     calls.push(name)
     activeWeddingIdDuringWrites.push(useGlobalStore.getState().weddingId)
+    canEditDuringWrites.push(selectCanEdit(useGlobalStore.getState()))
     return Promise.resolve(overrides[name] ?? result)
   }
 
   return {
     calls,
     activeWeddingIdDuringWrites,
+    canEditDuringWrites,
     writes: {
       createWedding: () => {
         calls.push("createWedding")
@@ -175,6 +188,28 @@ describe("migrateLocalWedding", () => {
       NEW_WEDDING,
       NEW_WEDDING,
     ])
+  })
+
+  // The other half of "the new wedding is properly active": run() fails closed
+  // on an unset role, so the role in the store decides whether these writes go
+  // out at all - and this is the path where there isn't one.
+  //
+  // Signing in through OAuth (or a magic link) reloads the page, so the tab
+  // that opens the prompt never mounted /wedding/local and has no role in
+  // memory - `partialize` doesn't persist one. The local snapshot is still on
+  // disk, which is the only thing the prompt needs to fire. Every write used to
+  // be refused here, rolling back a wedding that had been created perfectly
+  // well and telling the user their migration failed.
+  it("migrates a snapshot picked up in a tab with no guest-mode state", async () => {
+    seedLocalStorage()
+    const rec = recorder()
+
+    const result = await migrateLocalWedding(input(), rec.writes)
+
+    expect(result).toEqual({ ok: true, weddingId: NEW_WEDDING })
+    expect(rec.canEditDuringWrites).toEqual([true, true, true])
+    expect(useGlobalStore.getState().role).toBe("owner")
+    expect(localStorage.getItem(PLANNER_STORAGE_KEY)).toBeNull()
   })
 
   // The regression this stage exists for: the guest list is the only thing the

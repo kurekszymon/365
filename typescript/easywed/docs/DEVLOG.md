@@ -2,6 +2,18 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 04.08
+
+- drop `invitation_orders` and the `guest_names_valid()` it existed for - leftovers of the removed invitation designer, nothing read or wrote them
+- local wedding migration is atomic: create -> layout -> guests + reminders, and any failure rolls the wedding back and leaves localstorage intact; the sequence moved out of the dialog into `migrateLocalWedding.ts` where it's testable. the guest list is the thing the snapshot uniquely holds, and it used to be dropped on exactly that path
+- invite tokens out of analytics: posthog `before_send` scrubs `/invite/<token>` from urls, `$referrer` and the `$set`/`$set_once` person props (keyed on the value, not a list of property names - `$initial_current_url` is synthesized at runtime). robots.txt disallows `/invite/`, `/wedding/`, `/settings`, `/auth/`. session replay is NOT covered - exclude `/invite/*` in project settings if it's ever turned on
+- read-only planner for viewers: `selectCanEdit` mirrors the RLS predicate, dnd-kit sensors withheld at the context, write dialogs / context-menu items / fabs / the assistant tab gone, edit forms render inside a disabled `fieldset` so a viewer can still read capacities and sizes. `run()` refuses any write that gets past the UI
+- ...and the fix for what that gate broke: the migration set the new `weddingId` but no role, so a fail-closed `run()` blocked every write and rolled back a wedding that had just been created fine. only reachable after an oauth reload, where nothing has set a role yet and `partialize` doesn't persist one
+- same pass: a panel view a viewer can't see (add hub, assistant) no longer opens the drawer/dialog chrome around an empty body - `useVisiblePanelView` resolves it and clears it from the store, since `panel.store` is a singleton nothing resets between weddings
+- a table's capacity can no longer drop below the guests already seated at it: `enforce_table_capacity_floor` trigger, plus a `save_table` rpc so the whole edit (attributes, seat overrides, roster + pins) lands in one transaction. the two capacity triggers want opposite write orders - a shrink needs the departures written first, a growth needs the capacity first - so no client-side ordering satisfies both
+- assistant: tool inputs screened before they reach the store - non-positive/NaN sizes and capacities refused by field name, fractional seats rounded, non-finite floors dropped, NaN positions fall back (±Infinity still clamps to the hall edge, which is the right answer)
+- assistant: layout snapshot out of the system prompt and into a delimited user message. every name in it is user-supplied - typed by a co-editor or imported wholesale from a spreadsheet - so it doesn't belong in the same turn role as the rules. angle brackets json-escaped (`<`/`>`, same parsed value, no literal bracket left) so a table named `</layout-snapshot>` can't close the fence and make the rest read as the user talking
+
 ### 03.08
 
 -- deploy

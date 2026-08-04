@@ -5,18 +5,9 @@ import { TableBatchPanelContent } from "./TableBatchPanelContent"
 import { FixturePanelContent } from "./FixturePanelContent"
 import { AddHubContent } from "./AddHubContent"
 import { AiChatPanelContent } from "./AiChatPanelContent"
+import { WRITE_ONLY_VIEWS } from "./useVisiblePanelView"
 import type { PanelView } from "@/stores/panel.store"
 import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
-
-// Views that exist only to create something, plus the assistant (whose every
-// tool mutates the planner). A viewer has no use for any of them, and they're
-// exactly the views a disabled fieldset would reduce to a form that looks
-// fillable but can never submit - so they don't render at all.
-const WRITE_ONLY_VIEWS: ReadonlySet<PanelView["kind"]> = new Set([
-  "tables.batch_add",
-  "add_hub",
-  "ai_chat",
-])
 
 /**
  * The inner content of a panel view, switched on its kind. Layout-agnostic so
@@ -33,6 +24,10 @@ const WRITE_ONLY_VIEWS: ReadonlySet<PanelView["kind"]> = new Set([
  * within, rather than threading a `disabled` prop through five forms and their
  * shared field components. `display: contents` keeps the fieldset out of the
  * layout so the existing flex/height rules are untouched.
+ *
+ * The write-only views are refused here too, but both hosts resolve them ahead
+ * of opening (see useVisiblePanelView) - so this is a backstop for a new caller
+ * that renders a PanelBody without going through one of them, not the gate.
  */
 export const PanelBody = ({
   view,

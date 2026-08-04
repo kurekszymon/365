@@ -9,7 +9,7 @@ type Guests =
   | "Guests.Export.Csv"
   | "Guests.Export.Pdf"
 type Planner = "Planner.Hall.Delete"
-type Weddings = "Wedding.Rename" | "Wedding.Members"
+type Weddings = "Wedding.Members"
 export type Dialog = Weddings | Guests | Planner
 
 // Optional context a dialog needs to open - e.g. which guest `Guest.Edit`

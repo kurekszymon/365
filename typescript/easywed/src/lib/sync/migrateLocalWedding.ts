@@ -151,7 +151,16 @@ export const migrateLocalWedding = async (
     role: previous.role,
     members: previous.members,
   }
-  useGlobalStore.setState({ weddingId })
+  // `role` goes with the id, and not just for tidiness: run() refuses every
+  // write unless selectCanEdit passes, and it fails closed on an unset role.
+  // Nothing sets one here - loadWedding and wedding.local.tsx are the only two
+  // writers, and neither has run when the prompt fires after an OAuth round
+  // trip (the page reloaded into /auth/callback, and `partialize` doesn't
+  // persist role). Without this, every write below is blocked, the migration
+  // rolls back a wedding that was created fine, and the user is told it failed.
+  // "owner" is true by construction: createWedding just set owner_id to this
+  // user, and the trigger on `weddings` inserts their `owner` membership row.
+  useGlobalStore.setState({ weddingId, role: "owner" })
 
   const rollback = async (): Promise<MigrateResult> => {
     const discarded = await attempt("rollback", () =>

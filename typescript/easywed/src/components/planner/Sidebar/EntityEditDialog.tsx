@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next"
 import { CheckIcon } from "lucide-react"
 import { PanelBody } from "../EntityForms/PanelBody"
 import { usePanelTitle } from "../EntityForms/usePanelTitle"
+import { useVisiblePanelView } from "../EntityForms/useVisiblePanelView"
 import type { PanelView } from "@/stores/panel.store"
 import { usePanelStore } from "@/stores/panel.store"
 import {
@@ -32,7 +33,9 @@ const DIALOG_KINDS: ReadonlySet<PanelView["kind"]> = new Set([
  */
 export const EntityEditDialog = () => {
   const { t } = useTranslation()
-  const view = usePanelStore((state) => state.view)
+  // Not the raw store view: one a viewer may not see resolves to null here, so
+  // the dialog stays shut instead of opening its chrome around nothing.
+  const view = useVisiblePanelView()
   const close = usePanelStore((state) => state.close)
 
   const dialogView = view && DIALOG_KINDS.has(view.kind) ? view : null
