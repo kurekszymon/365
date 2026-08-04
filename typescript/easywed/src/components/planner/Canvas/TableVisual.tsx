@@ -13,6 +13,12 @@ type TableVisualProps = {
   // Raw drag delta applied as a translate. Unclamped by design: a drag may
   // cross into another hall (the drop handler resolves the target hall).
   transform?: Translate | null
+  // Lifts this table above its peers. Tables and fixtures share one z-10 layer
+  // and fixtures paint last, so anything that has to be *readable* while it
+  // overlaps - a selected table's action toolbar, which renders inside this
+  // element and so can't escape its stacking context - has to raise the whole
+  // table. Print and the other read-only callers leave it off.
+  raised?: boolean
   // When `showSeats` is set, render seat markers (filled from `seatGuests`)
   // around the table. Off by default so print and other callers are unaffected.
   seatGuests?: Array<Guest>
@@ -26,6 +32,7 @@ export const TableVisual = ({
   guestsAssigned,
   ppm,
   transform,
+  raised,
   seatGuests,
   showSeats,
   showEmpty,
@@ -69,7 +76,9 @@ export const TableVisual = ({
         transform: transform
           ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
           : undefined,
-        zIndex: transform ? 30 : undefined,
+        // A drag outranks a selection, so a table dragged over a selected one
+        // still comes out on top.
+        zIndex: transform ? 30 : raised ? 20 : undefined,
         printColorAdjust: "exact",
         WebkitPrintColorAdjust: "exact",
         ...style,

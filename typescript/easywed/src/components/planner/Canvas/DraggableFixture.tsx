@@ -52,6 +52,7 @@ const DraggableFixtureBase = ({ fixture, ppm }: DraggableFixtureProps) => {
       fixture={fixture}
       ppm={ppm}
       transform={transform}
+      raised={isSelected}
       className={cn(
         "z-10 cursor-grab touch-none active:cursor-grabbing",
         isSelected && "planner-selected-glow"

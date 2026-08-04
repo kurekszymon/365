@@ -69,6 +69,7 @@ const DraggableTableBase = ({
       guestsAssigned={guestsAssigned}
       ppm={ppm}
       transform={transform}
+      raised={isSelected}
       seatGuests={seatGuests}
       showSeats={showSeats}
       className={cn(

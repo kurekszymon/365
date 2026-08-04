@@ -11,6 +11,10 @@ type FixtureVisualProps = {
   // Raw drag delta applied as a translate. Unclamped by design: a drag may
   // cross into another hall (the drop handler resolves the target hall).
   transform?: Translate | null
+  // Lifts this fixture above its peers - see the matching note in TableVisual.
+  // Fixtures already paint over tables by DOM order, so this only settles
+  // fixture-over-fixture, but the toolbar has the same problem either way.
+  raised?: boolean
 } & ComponentProps<"div">
 
 const SHAPE_CLASS: Record<Fixture["shape"], string> = {
@@ -24,6 +28,7 @@ export const FixtureVisual = ({
   fixture,
   ppm,
   transform,
+  raised,
   className,
   style,
   children,
@@ -61,7 +66,7 @@ export const FixtureVisual = ({
         transform: transform
           ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
           : undefined,
-        zIndex: transform ? 30 : undefined,
+        zIndex: transform ? 30 : raised ? 20 : undefined,
         printColorAdjust: "exact",
         WebkitPrintColorAdjust: "exact",
         ...style,
