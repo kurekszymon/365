@@ -210,56 +210,6 @@ export type Database = {
           },
         ]
       }
-      invitation_orders: {
-        Row: {
-          contact_email: string
-          contact_name: string
-          contact_phone: string | null
-          created_at: string
-          design_hash: string | null
-          guest_names: string[] | null
-          id: string
-          notes: string | null
-          quantity: number
-          status: string
-          wedding_id: string | null
-        }
-        Insert: {
-          contact_email: string
-          contact_name: string
-          contact_phone?: string | null
-          created_at?: string
-          design_hash?: string | null
-          guest_names?: string[] | null
-          id?: string
-          notes?: string | null
-          quantity: number
-          status?: string
-          wedding_id?: string | null
-        }
-        Update: {
-          contact_email?: string
-          contact_name?: string
-          contact_phone?: string | null
-          created_at?: string
-          design_hash?: string | null
-          guest_names?: string[] | null
-          id?: string
-          notes?: string | null
-          quantity?: number
-          status?: string
-          wedding_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "invitation_orders_wedding_id_fkey"
-            columns: ["wedding_id"]
-            isOneToOne: false
-            referencedRelation: "weddings"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           created_at: string
@@ -499,7 +449,6 @@ export type Database = {
       claim_wedding_invitation: { Args: { _token: string }; Returns: string }
       delete_own_account: { Args: never; Returns: undefined }
       dietary_tags_valid: { Args: { tags: string[] }; Returns: boolean }
-      guest_names_valid: { Args: { names: string[] }; Returns: boolean }
       is_wedding_member: { Args: { _wedding_id: string }; Returns: boolean }
       replace_planner_layout: {
         Args: {
