@@ -172,7 +172,6 @@
   "guest_mode.migrate.confirm": "Zapisz na moim koncie",
   "guest_mode.migrate.committing": "Zapisywanie…",
   "guest_mode.migrate.failed": "Nie udało się zapisać lokalnego wesela. Spróbuj ponownie.",
-  "guest_mode.migrate.partial_failed": "Układ sali został zapisany, ale nie udało się zaimportować niektórych gości lub przypomnień - możesz dodać je ponownie.",
 
   "members.title": "Członkowie",
   "members.role": "Rola",

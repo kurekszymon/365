@@ -28,9 +28,13 @@ export const insertTable = (table: Table): Promise<boolean> => {
   )
 }
 
+// Empty list is a no-op success, matching insertGuests/insertReminders/
+// markDeletedMany: `false` is this module's "the write failed" signal, and
+// callers that branch on it must not read "nothing to insert" as a failure.
 export const insertTables = (tables: Array<Table>): Promise<boolean> => {
+  if (tables.length === 0) return Promise.resolve(true)
   const weddingId = getWeddingId()
-  if (!weddingId || tables.length === 0) return Promise.resolve(false)
+  if (!weddingId) return Promise.resolve(false)
   const rows = tables.map((t) => ({ ...tableRow(t), wedding_id: weddingId }))
   return run("insertTables", supabase.from("tables").insert(rows))
 }
