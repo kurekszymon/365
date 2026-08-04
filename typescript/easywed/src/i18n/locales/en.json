@@ -604,6 +604,8 @@
   "assistant.tool.result.hall_not_empty_other": "Can't delete {{label}}: it still contains {{count}} items. Move or delete its contents first.",
   "assistant.tool.result.hall_delete_cancelled": "Deletion of {{label}} was cancelled by the user.",
   "assistant.tool.result.no_hall": "There is no hall yet - add one first.",
+  "assistant.tool.result.invalid_measures_one": "Can't do that - {{fields}} must be a positive number.",
+  "assistant.tool.result.invalid_measures_other": "Can't do that - {{fields}} must be positive numbers.",
   "assistant.setup.title": "Connect your AI",
   "assistant.setup.intro": "The assistant uses your own AI account (bring your own key). Enter an OpenAI-compatible endpoint, key, and model.",
   "assistant.setup.save": "Save & start",
