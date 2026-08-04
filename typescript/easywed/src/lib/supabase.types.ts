@@ -459,6 +459,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      save_table: {
+        Args: {
+          p_capacity: number
+          p_geometry: Json
+          p_guests: Json
+          p_height: number
+          p_name: string
+          p_rotation: number
+          p_seats: Json
+          p_shape: string
+          p_table_id: string
+          p_width: number
+        }
+        Returns: undefined
+      }
       shares_wedding_with: { Args: { _user_id: string }; Returns: boolean }
       wedding_role: { Args: { _wedding_id: string }; Returns: string }
     }

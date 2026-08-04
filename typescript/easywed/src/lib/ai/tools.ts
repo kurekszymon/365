@@ -288,9 +288,12 @@ export const tools = {
       const assignedIds = planner.guests
         .filter((g) => g.tableId === input.id)
         .map((g) => g.id)
-      // Hard guard: the DB capacity trigger would reject a shrink below the
-      // seated count, but mutations only console.error, so the optimistic store
-      // would silently diverge. Refuse it here instead.
+      // Refuse before touching the store. The DB does reject this now
+      // (enforce_table_capacity_floor), but saveTable is fire-and-forget, so
+      // letting it through would apply the shrink optimistically and leave the
+      // canvas disagreeing with the row behind a "save failed" toast. The form
+      // avoids the same trap by truncating its guest list; the assistant has no
+      // equivalent, so it declines and says why.
       if (input.capacity != null && input.capacity < assignedIds.length)
         return {
           status: "cancelled",
