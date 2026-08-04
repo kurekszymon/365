@@ -1,3 +1,15 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+
+# Invite links are bearer tokens - anyone holding one can join the wedding, so
+# a crawled and indexed claim URL hands access to whoever reads the index.
+Disallow: /invite/
+
+# Signed-in surfaces. Nothing here renders without a session, and the URLs
+# carry wedding ids, so there is nothing to index and something to leak.
+Disallow: /wedding/
+Disallow: /settings
+Disallow: /auth/
+
+# Everything else - the /pl and /en landing, venues and privacy pages - stays
+# crawlable by omission.
