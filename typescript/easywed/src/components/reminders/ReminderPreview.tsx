@@ -8,10 +8,12 @@ import { cn } from "@/lib/utils"
 
 export const ReminderPreview = ({
   reminder,
+  canEdit = true,
   completeReminder,
   removeReminder,
 }: {
   reminder: Reminder
+  canEdit?: boolean
   completeReminder: (uuid: string) => void
   removeReminder: (uuid: string) => void
 }) => {
@@ -46,26 +48,28 @@ export const ReminderPreview = ({
               })}
         </span>
       </div>
-      <div className="ml-2 flex items-center gap-2">
-        <button
-          type="button"
-          aria-label={t("reminders.complete")}
-          title={t("reminders.complete")}
-          className="cursor-pointer text-muted-foreground hover:text-foreground"
-          onClick={() => completeReminder(reminder.uuid)}
-        >
-          <CheckIcon className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          aria-label={t("reminders.delete")}
-          title={t("reminders.delete")}
-          className="cursor-pointer text-muted-foreground hover:text-destructive"
-          onClick={() => removeReminder(reminder.uuid)}
-        >
-          <Trash2Icon className="h-4 w-4" />
-        </button>
-      </div>
+      {canEdit && (
+        <div className="ml-2 flex items-center gap-2">
+          <button
+            type="button"
+            aria-label={t("reminders.complete")}
+            title={t("reminders.complete")}
+            className="cursor-pointer text-muted-foreground hover:text-foreground"
+            onClick={() => completeReminder(reminder.uuid)}
+          >
+            <CheckIcon className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            aria-label={t("reminders.delete")}
+            title={t("reminders.delete")}
+            className="cursor-pointer text-muted-foreground hover:text-destructive"
+            onClick={() => removeReminder(reminder.uuid)}
+          >
+            <Trash2Icon className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </div>
   )
 }

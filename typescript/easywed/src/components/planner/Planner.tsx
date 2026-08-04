@@ -18,7 +18,7 @@ import { GuestModeBanner } from "./GuestModeBanner"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Button } from "@/components/ui/button"
 import { DialogManager } from "@/components/dialogs/DialogManager"
-import { useGlobalStore } from "@/stores/global.store"
+import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { useOpenHalls } from "@/hooks/useOpenHalls"
 import { useIsMobile } from "@/hooks/useMediaQuery"
@@ -34,8 +34,15 @@ export const Planner = () => {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   )
+  // No sensors, no drags. Every dnd-kit draggable in the planner - tables,
+  // fixtures, hall chips, guest-to-seat - is a write, so withholding the
+  // sensors disables the lot at the context instead of threading `disabled`
+  // through each useDraggable. Canvas pan/zoom is @use-gesture, not dnd-kit,
+  // so a viewer can still move around the plan freely.
+  const noSensors = useSensors()
 
   const weddingId = useGlobalStore((state) => state.weddingId)
+  const canEdit = useGlobalStore(selectCanEdit)
 
   const openHalls = useOpenHalls()
   const isMobile = useIsMobile()
@@ -66,8 +73,9 @@ export const Planner = () => {
               </span>
             </Button>
             {/* Mobile only: on desktop the assistant lives in the sidebar
-                rail's "Asystent AI" tab, so the header shortcut is redundant. */}
-            {isMobile && (
+                rail's "Asystent AI" tab, so the header shortcut is redundant.
+                Hidden for viewers on both, for the reason in SidebarRail. */}
+            {isMobile && canEdit && (
               <Button
                 variant="outline"
                 onClick={() => openAiChat()}
@@ -82,15 +90,20 @@ export const Planner = () => {
                 to the owner's invite chip alone - which still opens the
                 dialog and its upgrade notice, as before. */}
             <MemberAvatars />
+            {/* Export and print stay: a viewer can already read every guest on
+                screen, so withholding the CSV would be theatre - and a
+                venue-side viewer is often exactly who needs the catering list.
+                Import is a bulk write, and RLS refuses it, so offering it would
+                only waste the user's column-mapping work on a failed insert. */}
             <ButtonGroup>
-              <ImportHeader />
+              {canEdit && <ImportHeader />}
               <ExportHeader />
             </ButtonGroup>
             <ThemeSwitcher />
             <AccountMenu />
           </div>
         </Header>
-        <DndContext sensors={sensors}>
+        <DndContext sensors={canEdit ? sensors : noSensors}>
           <div className="flex min-h-0 flex-1 overflow-hidden">
             {!isMobile && <SidebarRail />}
             <Canvas />

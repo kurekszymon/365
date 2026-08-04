@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils"
 import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { useClipboardStore } from "@/stores/clipboard.store"
+import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 import { useViewStore } from "@/stores/view.store"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 
@@ -48,6 +49,7 @@ const DraggableTableBase = ({
   const duplicateTable = usePlannerStore((state) => state.duplicateTable)
   const deleteTable = usePlannerStore((state) => state.deleteTable)
   const copyToClipboard = useClipboardStore((state) => state.copy)
+  const canEdit = useGlobalStore(selectCanEdit)
 
   const {
     attributes,
@@ -99,33 +101,40 @@ const DraggableTableBase = ({
               }}
             />
           )}
-          <CanvasActionButton
-            icon={<ClipboardCopyIcon className="size-3.5" />}
-            label={t("tables.copy")}
-            onClick={(e) => {
-              e.stopPropagation()
-              copyToClipboard({ kind: "table", table })
-            }}
-          />
-          <CanvasActionButton
-            icon={<CopyIcon className="size-3.5" />}
-            label={t("tables.duplicate")}
-            onClick={(e) => {
-              e.stopPropagation()
-              const newId = duplicateTable(table.id)
-              if (newId) openTableEdit(newId)
-            }}
-          />
-          <CanvasActionButton
-            icon={<Trash2Icon className="size-3.5" />}
-            label={t("tables.delete")}
-            variant="danger"
-            onClick={(e) => {
-              e.stopPropagation()
-              deleteTable(table.id)
-              deselectPanel()
-            }}
-          />
+          {/* Copy/duplicate/delete all write. A viewer keeps the selection
+              ring and the mobile edit button (which opens the read-only form),
+              so a table can still be inspected. */}
+          {canEdit && (
+            <>
+              <CanvasActionButton
+                icon={<ClipboardCopyIcon className="size-3.5" />}
+                label={t("tables.copy")}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  copyToClipboard({ kind: "table", table })
+                }}
+              />
+              <CanvasActionButton
+                icon={<CopyIcon className="size-3.5" />}
+                label={t("tables.duplicate")}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const newId = duplicateTable(table.id)
+                  if (newId) openTableEdit(newId)
+                }}
+              />
+              <CanvasActionButton
+                icon={<Trash2Icon className="size-3.5" />}
+                label={t("tables.delete")}
+                variant="danger"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  deleteTable(table.id)
+                  deselectPanel()
+                }}
+              />
+            </>
+          )}
         </div>
       )}
     </TableVisual>

@@ -21,6 +21,23 @@ interface Viewport {
 export type WeddingRole = "owner" | "editor" | "viewer"
 
 /**
+ * Whether the current user may change anything in the loaded wedding.
+ *
+ * Mirrors the RLS predicate every write policy uses
+ * (`wedding_role(...) in ('owner', 'editor')`), so the UI offers exactly what
+ * the database will accept. Viewers get a read-only planner: without this they
+ * were shown the full editing surface, and their changes applied optimistically
+ * to the store, hit an RLS refusal, and silently reverted on the next reload.
+ *
+ * Fails closed on an unknown role. `undefined` is both the pre-load state and
+ * the "this user has no membership row" state - defaulting either to editable
+ * would flash write affordances at a viewer before loadWedding resolves.
+ * Guest mode is unaffected: wedding.local.tsx sets role "owner" up front.
+ */
+export const selectCanEdit = (state: { role?: WeddingRole }): boolean =>
+  state.role === "owner" || state.role === "editor"
+
+/**
  * Everyone with access to the current wedding. `displayName` is null until
  * that person sets one in their settings - see the profiles migration for why
  * this is all we're allowed to know about them.

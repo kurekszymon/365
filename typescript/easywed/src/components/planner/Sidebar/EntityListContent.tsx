@@ -5,6 +5,7 @@ import { LayoutPanelLeftIcon, PlusIcon, UtensilsIcon } from "lucide-react"
 import { AddEntityDialog } from "./AddEntityDialog"
 import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
+import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 import { Button } from "@/components/ui/button"
 
 type EntityListContentProps = {
@@ -32,6 +33,7 @@ export const EntityListContent = ({ kind }: EntityListContentProps) => {
   )
   const openTableEdit = usePanelStore((state) => state.openTableEdit)
   const openFixtureEdit = usePanelStore((state) => state.openFixtureEdit)
+  const canEdit = useGlobalStore(selectCanEdit)
 
   const assignedByTable = useMemo(() => {
     if (kind !== "tables") return new Map<string, number>()
@@ -65,14 +67,16 @@ export const EntityListContent = ({ kind }: EntityListContentProps) => {
 
   return (
     <div className="flex flex-col gap-4">
-      <Button
-        variant="outline"
-        disabled={!hasHall}
-        onClick={() => setAddOpen(true)}
-      >
-        <PlusIcon />
-        {t(isTables ? "tables.add" : "fixtures.add")}
-      </Button>
+      {canEdit && (
+        <Button
+          variant="outline"
+          disabled={!hasHall}
+          onClick={() => setAddOpen(true)}
+        >
+          <PlusIcon />
+          {t(isTables ? "tables.add" : "fixtures.add")}
+        </Button>
+      )}
 
       {rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">

@@ -13,6 +13,7 @@ import { resolveSeatOccupants } from "@/lib/seats"
 import { cn } from "@/lib/utils"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useViewStore } from "@/stores/view.store"
+import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 
 type TableSeatsProps = {
   tableId: string
@@ -53,6 +54,12 @@ export const TableSeats = ({
 }: TableSeatsProps) => {
   const { t } = useTranslation()
   const isMeasuring = useViewStore((state) => state.isMeasuring)
+  const canEdit = useGlobalStore(selectCanEdit)
+  // Both seat interactions write - dragging repositions the seat, clicking
+  // opens the assign popover - so a viewer gets the same inert markers the
+  // measure tool already renders: occupancy still legible, nothing draggable,
+  // no popover trigger. One flag drives every guard below.
+  const isInert = isMeasuring || !canEdit
   const moveSeat = usePlannerStore((state) => state.moveSeat)
   const [drag, setDrag] = useState<DragState | null>(null)
   const [openSeatId, setOpenSeatId] = useState<string | null>(null)
@@ -69,7 +76,7 @@ export const TableSeats = ({
   const showInitials = seatPx >= 14
 
   const onPointerDown = (seatId: string) => (e: ReactPointerEvent) => {
-    if (isMeasuring) return
+    if (isInert) return
     // Keep the parent table's dnd-kit drag (and canvas pan) from firing. The
     // click still fires afterwards (separate event) and opens the popover via
     // the Radix trigger - so we don't open it manually here.
@@ -177,20 +184,27 @@ export const TableSeats = ({
           <div
             data-no-pan
             role="button"
-            tabIndex={isMeasuring ? -1 : 0}
+            // Still a button in the accessibility tree, but an unavailable one:
+            // dropping the role would take the aria-label's reliable exposure
+            // with it (a bare div's label is inconsistently announced), and
+            // leaving it a plain button would advertise an action that has no
+            // handlers behind it. tabIndex -1 keeps it out of the tab order to
+            // match, the way a native disabled control behaves.
+            aria-disabled={isInert}
+            tabIndex={isInert ? -1 : 0}
             aria-label={guest ? guest.name : t("seats.empty")}
             title={guest ? guest.name : undefined}
-            onPointerDown={isMeasuring ? undefined : onPointerDown(seat.id)}
-            onPointerMove={isMeasuring ? undefined : onPointerMove(seat.id)}
+            onPointerDown={isInert ? undefined : onPointerDown(seat.id)}
+            onPointerMove={isInert ? undefined : onPointerMove(seat.id)}
             onPointerUp={
-              isMeasuring ? undefined : onPointerUp(seat.id, seat.x, seat.y)
+              isInert ? undefined : onPointerUp(seat.id, seat.x, seat.y)
             }
-            onPointerCancel={isMeasuring ? undefined : onPointerCancel}
-            onKeyDown={isMeasuring ? undefined : onKeyDown(seat.id)}
-            onClick={isMeasuring ? undefined : onClick}
+            onPointerCancel={isInert ? undefined : onPointerCancel}
+            onKeyDown={isInert ? undefined : onKeyDown(seat.id)}
+            onClick={isInert ? undefined : onClick}
             className={cn(
               "absolute flex items-center justify-center rounded-full font-medium select-none",
-              !isMeasuring &&
+              !isInert &&
                 "pointer-events-auto cursor-grab touch-none active:cursor-grabbing",
               occupied
                 ? "border border-seat-filled-border bg-seat-filled text-white shadow-sm"
@@ -211,7 +225,7 @@ export const TableSeats = ({
           </div>
         )
 
-        if (isMeasuring) return <div key={seat.id}>{marker}</div>
+        if (isInert) return <div key={seat.id}>{marker}</div>
 
         return (
           <SeatAssignPopover

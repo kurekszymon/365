@@ -178,6 +178,8 @@
   "members.role.owner": "Właściciel",
   "members.role.editor": "Edytor",
   "members.role.viewer": "Podgląd",
+  "planner.read_only": "Tylko do odczytu - masz dostęp do podglądu tego wesela",
+  "planner.read_only_short": "Tylko do odczytu",
   "members.create_invite": "Utwórz link zaproszenia",
   "members.pending": "Oczekujące zaproszenia",
   "members.copy_link": "Kopiuj link",

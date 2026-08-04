@@ -9,6 +9,7 @@ import { TabBadgeIcon } from "./TabBadgeIcon"
 import { useTabBadgeCounts } from "./tabs"
 import type { EntityListTab } from "@/stores/entityList.store"
 import { useEntityListStore } from "@/stores/entityList.store"
+import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 import { cn } from "@/lib/utils"
 
 const TAB_ORDER: Array<EntityListTab> = [
@@ -18,6 +19,12 @@ const TAB_ORDER: Array<EntityListTab> = [
   "reminders",
   "ai_chat",
 ]
+
+// Every assistant tool mutates the planner, so a viewer's assistant would be a
+// chat that narrates changes it can't make. The tab goes away entirely rather
+// than answering with refusals.
+const tabsFor = (canEdit: boolean): Array<EntityListTab> =>
+  canEdit ? TAB_ORDER : TAB_ORDER.filter((tab) => tab !== "ai_chat")
 
 /**
  * Desktop-only unified sidebar: a ~60px icon strip - Guests / Tables /
@@ -39,6 +46,8 @@ export const SidebarRail = () => {
     }))
   )
   const badgeCount = useTabBadgeCounts()
+  const canEdit = useGlobalStore(selectCanEdit)
+  const tabs = tabsFor(canEdit)
 
   const tabLabel = (tab: EntityListTab) => {
     if (tab === "ai_chat") return t("assistant.title")
@@ -46,17 +55,31 @@ export const SidebarRail = () => {
     return t(tab)
   }
 
+  // entityList.store is a module-level singleton that nothing resets between
+  // weddings, so activeTab survives client-side navigation: open the assistant
+  // in a wedding you edit, move to one you only view, and activeTab is still
+  // "ai_chat" - a tab this role doesn't get. Resolve it to something visible,
+  // the same way MobileTabBar does for its desktop-only ai_chat.
+  //
+  // Everything the strip and panel render must key off this, not activeTab:
+  // driving the content from the fallback while the highlight still followed
+  // activeTab left the panel showing Guests with no tab lit, and the first
+  // click on Guests re-opened it instead of toggling it closed.
+  const visibleTab: EntityListTab = tabs.includes(activeTab)
+    ? activeTab
+    : "guests"
+
   // The AI chat owns its own vertical layout (scrolling transcript + pinned
   // composer), so it fills the column instead of using the padded,
   // auto-scrolling wrapper the list tabs get.
-  const isChat = activeTab === "ai_chat"
+  const isChat = visibleTab === "ai_chat"
   const content = {
     guests: <GuestListContent />,
     tables: <EntityListContent kind="tables" />,
     fixtures: <EntityListContent kind="fixtures" />,
     reminders: <RemindersPanelContent />,
     ai_chat: <AiChatPanelContent />,
-  }[activeTab]
+  }[visibleTab]
 
   return (
     // The rail's own footprint is always the 60px strip; the content column is
@@ -84,8 +107,8 @@ export const SidebarRail = () => {
             <ChevronRightIcon className="size-5" />
           )}
         </button>
-        {TAB_ORDER.map((tab) => {
-          const isActive = expanded && activeTab === tab
+        {tabs.map((tab) => {
+          const isActive = expanded && visibleTab === tab
           return (
             <button
               key={tab}
@@ -128,7 +151,7 @@ export const SidebarRail = () => {
       >
         <div className="flex items-center justify-between border-b px-4 py-3">
           <span className="font-heading text-base font-semibold">
-            {tabLabel(activeTab)}
+            {tabLabel(visibleTab)}
           </span>
           <button
             type="button"

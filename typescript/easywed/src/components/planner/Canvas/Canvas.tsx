@@ -49,6 +49,7 @@ import {
   usePlannerStore,
 } from "@/stores/planner.store"
 import { ZOOM_MAX, ZOOM_MIN, useViewStore } from "@/stores/view.store"
+import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { useClipboardStore } from "@/stores/clipboard.store"
 import { useElementSize } from "@/hooks/useElementSize"
@@ -82,6 +83,8 @@ export const Canvas = () => {
 
   const openHalls = useOpenHalls()
   const isMobile = useIsMobile()
+
+  const canEdit = useGlobalStore(selectCanEdit)
 
   const addTable = usePlannerStore((state) => state.addTable)
   const addFixture = usePlannerStore((state) => state.addFixture)
@@ -297,10 +300,13 @@ export const Canvas = () => {
   })
   useEffect(() => {
     if (isMeasuring) return
+    // Copy/paste is a write path of its own - the context-menu items are gone
+    // for viewers, so the keyboard route has to close too.
+    if (!canEdit) return
     const handleKeyDown = (e: KeyboardEvent) => copyPasteRef.current(e)
     document.addEventListener("keydown", handleKeyDown)
     return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [isMeasuring])
+  }, [isMeasuring, canEdit])
 
   const hallSurfaceRef = useRef<HallSurfaceMethods>(null)
 
@@ -332,7 +338,7 @@ export const Canvas = () => {
 
         return (
           <>
-            {(target.kind !== "hall" || clipboardItem) && (
+            {(target.kind !== "hall" || (canEdit && clipboardItem)) && (
               <>
                 {target.kind === "table" && (
                   <CanvasContextMenuItem
@@ -350,7 +356,9 @@ export const Canvas = () => {
                     {t("fixtures.edit")}
                   </CanvasContextMenuItem>
                 )}
-                {target.kind !== "hall" && (
+                {/* Copy is gated with paste rather than on its own merits:
+                    filling a clipboard nothing can paste from is a dead end. */}
+                {canEdit && target.kind !== "hall" && (
                   <CanvasContextMenuItem onSelect={() => copyTarget(target)}>
                     <ClipboardCopyIcon className="size-4" />
                     {target.kind === "table"
@@ -358,7 +366,7 @@ export const Canvas = () => {
                       : t("fixtures.copy")}
                   </CanvasContextMenuItem>
                 )}
-                {target.kind === "table" && (
+                {canEdit && target.kind === "table" && (
                   <CanvasContextMenuItem
                     className="text-destructive focus:bg-destructive/10 focus:text-destructive"
                     onSelect={() => {
@@ -370,7 +378,7 @@ export const Canvas = () => {
                     {t("tables.delete")}
                   </CanvasContextMenuItem>
                 )}
-                {target.kind === "fixture" && (
+                {canEdit && target.kind === "fixture" && (
                   <CanvasContextMenuItem
                     className="text-destructive focus:bg-destructive/10 focus:text-destructive"
                     onSelect={() => {
@@ -382,7 +390,7 @@ export const Canvas = () => {
                     {t("fixtures.delete")}
                   </CanvasContextMenuItem>
                 )}
-                {clipboardItem && (
+                {canEdit && clipboardItem && (
                   <CanvasContextMenuItem
                     disabled={!inHall || !targetHallId}
                     onSelect={() =>
@@ -398,44 +406,50 @@ export const Canvas = () => {
                 <ContextMenuSeparator />
               </>
             )}
-            <CanvasContextMenuItem
-              disabled={!inHall || !targetHallId}
-              onSelect={() => {
-                if (!targetHallId) return
-                const tableId = addTable(
-                  { ...DEFAULT_TABLE, hallId: targetHallId },
-                  [],
-                  snapped
-                )
-                panel.openTableEdit(tableId)
-              }}
-            >
-              <TableIcon className="size-4" />
-              {t("tables.add")}
-            </CanvasContextMenuItem>
-            <CanvasContextMenuItem
-              disabled={!inHall || !targetHallId}
-              onSelect={() => panel.openTablesBatchAdd(snapped, targetHallId)}
-            >
-              <SquarePlusIcon className="size-4" />
-              {t("tables.add_batch")}
-            </CanvasContextMenuItem>
-            <CanvasContextMenuItem
-              disabled={!inHall || !targetHallId}
-              onSelect={() => {
-                if (!targetHallId) return
-                const fixtureId = addFixture(
-                  { ...DEFAULT_FIXTURE, hallId: targetHallId },
-                  snapped
-                )
-                panel.openFixtureEdit(fixtureId)
-              }}
-            >
-              <LayoutPanelLeftIcon className="size-4" />
-              {t("fixtures.add")}
-            </CanvasContextMenuItem>
+            {canEdit && (
+              <>
+                <CanvasContextMenuItem
+                  disabled={!inHall || !targetHallId}
+                  onSelect={() => {
+                    if (!targetHallId) return
+                    const tableId = addTable(
+                      { ...DEFAULT_TABLE, hallId: targetHallId },
+                      [],
+                      snapped
+                    )
+                    panel.openTableEdit(tableId)
+                  }}
+                >
+                  <TableIcon className="size-4" />
+                  {t("tables.add")}
+                </CanvasContextMenuItem>
+                <CanvasContextMenuItem
+                  disabled={!inHall || !targetHallId}
+                  onSelect={() =>
+                    panel.openTablesBatchAdd(snapped, targetHallId)
+                  }
+                >
+                  <SquarePlusIcon className="size-4" />
+                  {t("tables.add_batch")}
+                </CanvasContextMenuItem>
+                <CanvasContextMenuItem
+                  disabled={!inHall || !targetHallId}
+                  onSelect={() => {
+                    if (!targetHallId) return
+                    const fixtureId = addFixture(
+                      { ...DEFAULT_FIXTURE, hallId: targetHallId },
+                      snapped
+                    )
+                    panel.openFixtureEdit(fixtureId)
+                  }}
+                >
+                  <LayoutPanelLeftIcon className="size-4" />
+                  {t("fixtures.add")}
+                </CanvasContextMenuItem>
 
-            <ContextMenuSeparator />
+                <ContextMenuSeparator />
+              </>
+            )}
             <ContextMenuLabel>{t("canvas.view_section")}</ContextMenuLabel>
             <CanvasViewMenu />
           </>
@@ -517,7 +531,7 @@ export const Canvas = () => {
               zoomIn={() => stepZoom(1)}
               zoomOut={() => stepZoom(-1)}
             />
-            <AddFab />
+            {canEdit && <AddFab />}
           </>
         )}
 

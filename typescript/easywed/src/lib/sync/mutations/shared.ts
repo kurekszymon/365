@@ -3,7 +3,7 @@ import type { Fixture, Geometry, Hall, Table } from "@/stores/planner.store"
 import type { Json } from "@/lib/supabase.types"
 import { supabase } from "@/lib/supabase"
 import i18n from "@/i18n"
-import { useGlobalStore } from "@/stores/global.store"
+import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 import { isLocalWedding } from "@/lib/localWedding"
 
 // Geometry's typed shape (object with `vertices` and `closed`) is structurally
@@ -53,6 +53,19 @@ export const run = async <T extends { error: unknown }>(
   // localStorage before `run()` was ever called - callers that branch on the
   // boolean (e.g. import dialogs) should proceed as if it persisted, since it did.
   if (isLocalWedding(useGlobalStore.getState().weddingId)) return true
+
+  // Defence in depth behind the UI gating, not a substitute for it: by the time
+  // a mutation reaches here the caller's optimistic `set()` has already applied,
+  // so this prevents a guaranteed-to-fail request, not the store divergence.
+  // Anything that lands here is a write affordance a viewer should never have
+  // been offered - hence a warn rather than the user-facing toast below, which
+  // would be blaming them for a bug of ours. Checked after the local gate: guest
+  // mode carries role "owner", but the sentinel short-circuits either way.
+  if (!selectCanEdit(useGlobalStore.getState())) {
+    console.warn(`[sync] ${label} blocked: read-only role`)
+    return false
+  }
+
   try {
     const { error } = await query
     if (error) {

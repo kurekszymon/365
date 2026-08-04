@@ -3,6 +3,7 @@ import { useShallow } from "zustand/react/shallow"
 import { ChevronRightIcon, PlusIcon } from "lucide-react"
 import { DEFAULT_HALL, usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
+import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 import { Button } from "@/components/ui/button"
 
 // The halls overview: one row per hall (name/floor/size + entity counts),
@@ -21,6 +22,7 @@ export const HallsPanelContent = () => {
     }))
   )
   const openHallEdit = usePanelStore((state) => state.openHallEdit)
+  const canEdit = useGlobalStore(selectCanEdit)
 
   const entityCount = (hallId: string) =>
     tables.filter((t2) => t2.hallId === hallId).length +
@@ -58,13 +60,18 @@ export const HallsPanelContent = () => {
         ))}
       </div>
 
-      <Button
-        variant="outline"
-        onClick={() => openHallEdit(addHall(DEFAULT_HALL))}
-      >
-        <PlusIcon />
-        {t("hall.add")}
-      </Button>
+      {/* Hidden rather than left to the disabled fieldset in PanelBody: an
+          add button is an offer, and greying one out just advertises something
+          a viewer can't have. Disabled edit *fields* still read as data. */}
+      {canEdit && (
+        <Button
+          variant="outline"
+          onClick={() => openHallEdit(addHall(DEFAULT_HALL))}
+        >
+          <PlusIcon />
+          {t("hall.add")}
+        </Button>
+      )}
     </div>
   )
 }

@@ -178,6 +178,8 @@
   "members.role.owner": "Owner",
   "members.role.editor": "Editor",
   "members.role.viewer": "Viewer",
+  "planner.read_only": "Read-only - you have view access to this wedding",
+  "planner.read_only_short": "Read-only",
   "members.create_invite": "Create invite link",
   "members.pending": "Pending invites",
   "members.copy_link": "Copy link",

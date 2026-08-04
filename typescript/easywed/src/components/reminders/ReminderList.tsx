@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 import { ReminderPreview } from "./ReminderPreview"
 import { useRemindersStore } from "@/stores/reminders.store"
 
-export const ReminderList = () => {
+export const ReminderList = ({ canEdit = true }: { canEdit?: boolean }) => {
   const { t } = useTranslation()
 
   const { reminders, completeReminder, removeReminder } = useRemindersStore(
@@ -25,6 +25,7 @@ export const ReminderList = () => {
         <ReminderPreview
           key={reminder.uuid}
           reminder={reminder}
+          canEdit={canEdit}
           completeReminder={completeReminder}
           removeReminder={removeReminder}
         />

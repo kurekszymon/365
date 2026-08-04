@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { useClipboardStore } from "@/stores/clipboard.store"
+import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 import { useViewStore } from "@/stores/view.store"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 
@@ -37,6 +38,7 @@ const DraggableFixtureBase = ({ fixture, ppm }: DraggableFixtureProps) => {
   const duplicateFixture = usePlannerStore((state) => state.duplicateFixture)
   const deleteFixture = usePlannerStore((state) => state.deleteFixture)
   const copyToClipboard = useClipboardStore((state) => state.copy)
+  const canEdit = useGlobalStore(selectCanEdit)
 
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: fixture.id,
@@ -72,33 +74,38 @@ const DraggableFixtureBase = ({ fixture, ppm }: DraggableFixtureProps) => {
               }}
             />
           )}
-          <CanvasActionButton
-            icon={<ClipboardCopyIcon className="size-3.5" />}
-            label={t("fixtures.copy")}
-            onClick={(e) => {
-              e.stopPropagation()
-              copyToClipboard({ kind: "fixture", fixture })
-            }}
-          />
-          <CanvasActionButton
-            icon={<CopyIcon className="size-3.5" />}
-            label={t("fixtures.duplicate")}
-            onClick={(e) => {
-              e.stopPropagation()
-              const newId = duplicateFixture(fixture.id)
-              if (newId) openFixtureEdit(newId)
-            }}
-          />
-          <CanvasActionButton
-            icon={<Trash2Icon className="size-3.5" />}
-            label={t("fixtures.delete")}
-            variant="danger"
-            onClick={(e) => {
-              e.stopPropagation()
-              deleteFixture(fixture.id)
-              deselectPanel()
-            }}
-          />
+          {/* See the matching note in DraggableTable. */}
+          {canEdit && (
+            <>
+              <CanvasActionButton
+                icon={<ClipboardCopyIcon className="size-3.5" />}
+                label={t("fixtures.copy")}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  copyToClipboard({ kind: "fixture", fixture })
+                }}
+              />
+              <CanvasActionButton
+                icon={<CopyIcon className="size-3.5" />}
+                label={t("fixtures.duplicate")}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const newId = duplicateFixture(fixture.id)
+                  if (newId) openFixtureEdit(newId)
+                }}
+              />
+              <CanvasActionButton
+                icon={<Trash2Icon className="size-3.5" />}
+                label={t("fixtures.delete")}
+                variant="danger"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  deleteFixture(fixture.id)
+                  deselectPanel()
+                }}
+              />
+            </>
+          )}
         </div>
       )}
     </FixtureVisual>

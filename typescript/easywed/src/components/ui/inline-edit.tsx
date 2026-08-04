@@ -6,9 +6,19 @@ interface InlineEditProps {
   value: string
   onSave: (value: string) => void
   className?: string
+  // Renders the value as plain text - no pencil affordance, no way into the
+  // input. Used for the read-only planner (see selectCanEdit).
+  readOnly?: boolean
+  readOnlyTitle?: string
 }
 
-export const InlineEdit = ({ value, onSave, className }: InlineEditProps) => {
+export const InlineEdit = ({
+  value,
+  onSave,
+  className,
+  readOnly = false,
+  readOnlyTitle,
+}: InlineEditProps) => {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
@@ -29,6 +39,19 @@ export const InlineEdit = ({ value, onSave, className }: InlineEditProps) => {
   }
 
   const cancel = () => setEditing(false)
+
+  // Checked before `editing` so a role change mid-edit can't leave an open
+  // input behind.
+  if (readOnly) {
+    return (
+      <span
+        title={readOnlyTitle}
+        className={cn("inline-flex min-w-0 items-center", className)}
+      >
+        <span className="min-w-0 truncate">{value}</span>
+      </span>
+    )
+  }
 
   if (editing) {
     return (
