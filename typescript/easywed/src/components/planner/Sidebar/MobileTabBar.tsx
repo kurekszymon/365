@@ -9,6 +9,7 @@ import { useTabBadgeCounts } from "./tabs"
 import type { MobileListTab } from "@/stores/entityList.store"
 import { useEntityListStore } from "@/stores/entityList.store"
 import { usePanelStore } from "@/stores/panel.store"
+import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer"
 import { cn } from "@/lib/utils"
 
@@ -21,6 +22,11 @@ const TABS: Array<MobileListTab> = ["guests", "tables", "fixtures", "reminders"]
  * segmented header inside the drawer switches between them without closing.
  * Opening an edit form / add hub / AI chat (which surface via
  * `MobilePanelDrawer`) supersedes the list, so this one steps aside.
+ *
+ * The assistant sits here too, mirroring the desktop rail's "Asystent" tab -
+ * it used to be a sparkles button in the header, which left the mobile header
+ * too crowded to read. It isn't an entity list, so it opens the panel drawer
+ * directly instead of going through `entityList.store`.
  */
 export const MobileTabBar = () => {
   const { t } = useTranslation()
@@ -43,6 +49,11 @@ export const MobileTabBar = () => {
     if (panelView) close()
   }, [panelView, close])
 
+  const openAiChat = usePanelStore((state) => state.openAiChat)
+  // Every assistant tool is a write, so a viewer gets no assistant tab - same
+  // rule as the desktop rail.
+  const canEdit = useGlobalStore(selectCanEdit)
+
   const badgeCount = useTabBadgeCounts()
 
   const tabLabel = (tab: MobileListTab) =>
@@ -57,7 +68,12 @@ export const MobileTabBar = () => {
 
   return (
     <>
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 rounded-t-3xl border-t bg-background pb-[env(safe-area-inset-bottom)] shadow-[0_-14px_30px_-22px_rgba(40,60,45,0.4)]">
+      <nav
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-40 grid rounded-t-3xl border-t bg-background pb-[env(safe-area-inset-bottom)] shadow-[0_-14px_30px_-22px_rgba(40,60,45,0.4)]",
+          canEdit ? "grid-cols-5" : "grid-cols-4"
+        )}
+      >
         {TABS.map((tab) => (
           <button
             key={tab}
@@ -71,6 +87,18 @@ export const MobileTabBar = () => {
             </span>
           </button>
         ))}
+        {canEdit && (
+          <button
+            type="button"
+            onClick={() => openAiChat()}
+            className="flex flex-col items-center gap-1 py-3 text-muted-foreground"
+          >
+            <TabBadgeIcon tab="ai_chat" badgeCount={0} />
+            <span className="max-w-full truncate px-0.5 text-[11px] font-semibold">
+              {t("assistant.title")}
+            </span>
+          </button>
+        )}
       </nav>
 
       <Drawer open={isOpen} onOpenChange={(open) => !open && close()}>

@@ -3,9 +3,10 @@ import { create } from "zustand"
 // The entity-list surface: the desktop sidebar rail's content column and the
 // mobile bottom-bar drawer are the same logical panel rendered per platform,
 // so they share this one store (they never coexist). `ai_chat` is desktop-only
-// - the mobile bar doesn't offer it and reaches the assistant through
-// `panel.store`'s `ai_chat` view (the header sparkles button) instead; that
-// duplication is deliberate, the two surfaces have different chrome.
+// here - the mobile bar shows an assistant button too, but it opens
+// `panel.store`'s `ai_chat` view (the bottom drawer) rather than the list
+// panel; that duplication is deliberate, the two surfaces have different
+// chrome.
 export type EntityListTab =
   | "guests"
   | "tables"
