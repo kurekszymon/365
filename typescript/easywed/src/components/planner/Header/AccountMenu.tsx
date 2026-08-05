@@ -7,6 +7,7 @@ import {
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Link } from "@tanstack/react-router"
+import { ThemeSubmenu } from "./ThemeSubmenu"
 import { supabase } from "@/lib/supabase"
 import { useAuthStore } from "@/stores/auth.store"
 import { useProfileStore } from "@/stores/profile.store"
@@ -58,6 +59,11 @@ export const AccountMenu = () => {
         {/* Their own name, if they've set one - the menu is the one place it's
             worth confirming which account you're acting as. Never the email. */}
         <DropdownMenuLabel>{displayName ?? label}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+
+        {/* Above the account actions because it's the one entry that works the
+            same signed in or out. */}
+        <ThemeSubmenu />
         <DropdownMenuSeparator />
 
         {session ? (

@@ -2,8 +2,13 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 05.08
+
+- move theme switcher to profile settings -- deploy
+
 ### 04.08
 
+- moved ai assistant on mobile to bottom rail -- deploy
 - drop `invitation_orders` and the `guest_names_valid()` it existed for - leftovers of the removed invitation designer, nothing read or wrote them
 - local wedding migration is atomic: create -> layout -> guests + reminders, and any failure rolls the wedding back and leaves localstorage intact; the sequence moved out of the dialog into `migrateLocalWedding.ts` where it's testable. the guest list is the thing the snapshot uniquely holds, and it used to be dropped on exactly that path
 - invite tokens out of analytics: posthog `before_send` scrubs `/invite/<token>` from urls, `$referrer` and the `$set`/`$set_once` person props (keyed on the value, not a list of property names - `$initial_current_url` is synthesized at runtime). robots.txt disallows `/invite/`, `/wedding/`, `/settings`, `/auth/`. session replay is NOT covered - exclude `/invite/*` in project settings if it's ever turned on

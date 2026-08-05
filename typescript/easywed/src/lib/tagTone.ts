@@ -24,7 +24,7 @@ export type TagTone = (typeof TAG_TONES)[number]
 // Both records are literal maps, not built from a template - Tailwind v4's
 // scanner only sees class names written verbatim in the source, so
 // `` `text-tag-${tone}` `` would compile to nothing. Same reason `SWATCH` in
-// planner/Header/ThemeSwitcher.tsx is spelled out.
+// planner/Header/ThemeSubmenu.tsx is spelled out.
 export const TAG_TONE_BADGE: Record<TagTone, string> = {
   green: "border-tag-green/35 bg-tag-green/10 text-tag-green",
   teal: "border-tag-teal/35 bg-tag-teal/10 text-tag-teal",
