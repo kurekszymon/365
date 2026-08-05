@@ -8,9 +8,10 @@ import { colors, fonts, shadow } from "../theme";
 
 const FEATURES = [
   "Drag & drop floor plan",
-  "CSV & Excel import",
+  "CSV & XLSX import",
+  "PDF export for printing",
+  "Rooms & floors",
   "Plan together",
-  "Printable seating report",
 ];
 
 export const OutroScene: React.FC = () => {
@@ -85,10 +86,11 @@ export const OutroScene: React.FC = () => {
         >
           <div
             style={{
+              // The landing page's CTA block is `bg-primary`, not the logo green.
               padding: "22px 52px",
               borderRadius: 999,
-              backgroundColor: colors.brandGreen,
-              color: "#fdfbf6",
+              backgroundColor: colors.primary,
+              color: colors.primaryInk,
               boxShadow: shadow.chip,
               fontFamily: fonts.sans,
               fontSize: 34,

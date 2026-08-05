@@ -1,7 +1,7 @@
 import "./index.css";
 import React from "react";
 import { Composition, Folder } from "remotion";
-import { EasywedDemo } from "./easywed/EasywedDemo";
+import { Film } from "./easywed/Film";
 import { IntroScene } from "./easywed/scenes/IntroScene";
 import { HallScene } from "./easywed/scenes/HallScene";
 import { GuestsScene } from "./easywed/scenes/GuestsScene";
@@ -20,9 +20,11 @@ import {
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      {/* Composition ids are the brand as it is written everywhere else -
+          lowercase, never "Easywed" - and ids can't hold the trailing dot. */}
       <Composition
-        id="EasywedDemo"
-        component={EasywedDemo}
+        id="easywed-demo"
+        component={Film}
         durationInFrames={TOTAL_DURATION}
         fps={FPS}
         width={WIDTH}
@@ -31,8 +33,8 @@ export const RemotionRoot: React.FC = () => {
 
       {/* Same scenes; they switch to the portrait hall and mobile chrome on their own. */}
       <Composition
-        id="EasywedDemoVertical"
-        component={EasywedDemo}
+        id="easywed-demo-vertical"
+        component={Film}
         durationInFrames={TOTAL_DURATION}
         fps={FPS}
         width={VERTICAL_WIDTH}

@@ -2,6 +2,7 @@ import React from "react";
 import { Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { AppFrame } from "../components/AppFrame";
 import { HallCanvas } from "../components/HallCanvas";
+import { PlannerCanvas } from "../components/PlannerCanvas";
 import { SceneLabel } from "../components/SceneLabel";
 import { GUESTS } from "../data";
 import { useFormat } from "../format";
@@ -42,16 +43,16 @@ export const SeatingScene: React.FC = () => {
   const progress = seated / hall.totalSeats;
   const barIn = spring({ frame: frame - 20, fps, config: { damping: 200 }, durationInFrames: 24 });
 
-  const chipWidth = tall ? 150 : 180;
+  const chipWidth = tall ? 210 : 240;
 
   return (
-    <AppFrame activeRail="plan">
+    <AppFrame activeRail="guests">
       <div
         style={{
           flex: 1,
           display: "flex",
           flexDirection: tall ? "column" : "row",
-          padding: tall ? `${pad}px 40px 8px` : "34px 40px",
+          padding: tall ? `${pad}px 40px 8px` : "34px 20px 34px 40px",
           gap,
           minWidth: 0,
         }}
@@ -69,8 +70,7 @@ export const SeatingScene: React.FC = () => {
               marginTop: tall ? 26 : 48,
               padding: "26px 28px",
               borderRadius: 22,
-              backgroundColor: colors.bg,
-              border: `1px solid ${colors.border}`,
+              backgroundColor: colors.secondary,
               opacity: barIn,
               transform: `translateY(${interpolate(barIn, [0, 1], [24, 0])}px)`,
             }}
@@ -104,7 +104,7 @@ export const SeatingScene: React.FC = () => {
                   width: `${progress * 100}%`,
                   height: "100%",
                   borderRadius: 999,
-                  backgroundColor: colors.terracotta,
+                  backgroundColor: colors.primary,
                 }}
               />
             </div>
@@ -124,16 +124,7 @@ export const SeatingScene: React.FC = () => {
           </div>
         </div>
 
-        <div
-          style={{
-            flex: 1,
-            minWidth: 0,
-            minHeight: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
+        <PlannerCanvas hall={hall} tall={tall} zoom="96%">
           <HallCanvas
             hall={hall}
             outline={1}
@@ -163,23 +154,39 @@ export const SeatingScene: React.FC = () => {
               const name = GUESTS[i % GUESTS.length].name;
 
               return (
+                // A guest card lifted straight out of the list: avatar circle,
+                // name, the app's card fill and hairline border.
                 <g key={seatIndex} transform={`translate(${x} ${y})`} opacity={opacity}>
                   <rect
                     x={-chipWidth / 2}
-                    y={-22}
+                    y={-21}
                     width={chipWidth}
-                    height={44}
-                    rx={22}
+                    height={42}
+                    rx={14}
                     fill={colors.card}
-                    stroke={colors.terracotta}
-                    strokeWidth={2.5}
+                    stroke={colors.border}
+                    strokeWidth={1.5}
                   />
+                  <circle cx={-chipWidth / 2 + 24} cy={0} r={13} fill={colors.seatFilled} />
                   <text
-                    x={0}
-                    y={7}
+                    x={-chipWidth / 2 + 24}
+                    y={5}
                     textAnchor="middle"
                     fontFamily={fonts.sans}
-                    fontSize={tall ? 19 : 22}
+                    fontSize={12}
+                    fontWeight={600}
+                    fill="#fff"
+                  >
+                    {name
+                      .split(" ")
+                      .map((part) => part.charAt(0))
+                      .join("")}
+                  </text>
+                  <text
+                    x={-chipWidth / 2 + 46}
+                    y={6}
+                    fontFamily={fonts.sans}
+                    fontSize={tall ? 18 : 20}
                     fontWeight={500}
                     fill={colors.ink}
                   >
@@ -189,7 +196,7 @@ export const SeatingScene: React.FC = () => {
               );
             })}
           </HallCanvas>
-        </div>
+        </PlannerCanvas>
       </div>
     </AppFrame>
   );

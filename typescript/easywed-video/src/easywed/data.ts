@@ -16,8 +16,8 @@ export const GUESTS: GuestSpec[] = [
   { name: "Hanna Mazur", diet: "Vegetarian", table: "Table 5" },
 ];
 
+/** The venue line comes from the active `HallLayout` (name + metres). */
 export const WEDDING = {
   couple: "Anna & Piotr",
   date: "12 September 2026",
-  venue: "Main hall · 18 × 12 m",
 };

@@ -43,7 +43,7 @@ export const PlannerTable: React.FC<Props> = ({ table, enter, fill, dx = 0, dy =
             r={SEAT_RADIUS * pop}
             fill={interpolateColors(taken, [0, 1], [colors.seatEmpty, colors.seatFilled])}
             stroke={interpolateColors(taken, [0, 1], [colors.seatEmptyBorder, colors.seatFilledBorder])}
-            strokeWidth={2}
+            strokeWidth={1.5}
           />
         );
       })}
@@ -54,8 +54,8 @@ export const PlannerTable: React.FC<Props> = ({ table, enter, fill, dx = 0, dy =
           cy={table.y}
           r={table.width / 2}
           fill={colors.table}
-          stroke={selected ? colors.accent : colors.tableBorder}
-          strokeWidth={selected ? 4 : 3}
+          stroke={selected ? colors.selected : colors.tableBorder}
+          strokeWidth={selected ? 3 : 1.5}
         />
       ) : (
         <rect
@@ -63,23 +63,36 @@ export const PlannerTable: React.FC<Props> = ({ table, enter, fill, dx = 0, dy =
           y={table.y - table.height / 2}
           width={table.width}
           height={table.height}
-          rx={14}
+          rx={10}
           fill={colors.table}
-          stroke={selected ? colors.accent : colors.tableBorder}
-          strokeWidth={selected ? 4 : 3}
+          stroke={selected ? colors.selected : colors.tableBorder}
+          strokeWidth={selected ? 3 : 1.5}
         />
       )}
 
+      {/* Two lines, as on the canvas: the name in the heading face, the
+          occupancy underneath in muted tabular digits. */}
       <text
         x={table.x}
-        y={table.y + 9}
+        y={table.y - 2}
         textAnchor="middle"
-        fontFamily={fonts.sans}
-        fontSize={table.shape === "rect" ? 26 : 30}
+        fontFamily={fonts.heading}
+        fontSize={22}
         fontWeight={600}
         fill={colors.tableInk}
       >
         {table.label}
+      </text>
+      <text
+        x={table.x}
+        y={table.y + 22}
+        textAnchor="middle"
+        fontFamily={fonts.sans}
+        fontSize={17}
+        fill={colors.tableInk}
+        opacity={0.75}
+      >
+        {`${Math.round(takenSeats)} / ${table.seats}`}
       </text>
     </g>
   );

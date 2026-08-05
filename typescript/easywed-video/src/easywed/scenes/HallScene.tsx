@@ -3,8 +3,8 @@ import { Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "re
 import { AppFrame } from "../components/AppFrame";
 import { Cursor } from "../components/Cursor";
 import { HallCanvas } from "../components/HallCanvas";
+import { PlannerCanvas } from "../components/PlannerCanvas";
 import { SceneLabel } from "../components/SceneLabel";
-import { WEDDING } from "../data";
 import { useFormat } from "../format";
 import type { Point } from "../geometry";
 import { colors, fonts } from "../theme";
@@ -14,7 +14,7 @@ import { colors, fonts } from "../theme";
  * head table. Portrait: parked on the dance floor, so dragging it into the left
  * column reads as fixing an obviously wrong spot.
  */
-const DRAG_FROM = { wide: { x: 70, y: -118 }, tall: { x: 250, y: -140 } };
+const DRAG_FROM = { wide: { x: 90, y: -150 }, tall: { x: 300, y: -140 } };
 
 export const HallScene: React.FC = () => {
   const frame = useCurrentFrame();
@@ -88,10 +88,9 @@ export const HallScene: React.FC = () => {
         display: "inline-flex",
         alignItems: "center",
         gap: 14,
-        padding: "14px 22px",
-        borderRadius: 16,
-        border: `1px solid ${colors.border}`,
-        backgroundColor: colors.bg,
+        padding: "16px 24px",
+        borderRadius: 18,
+        backgroundColor: colors.secondary,
         fontFamily: fonts.sans,
         fontSize: type.body,
         color: colors.ink,
@@ -99,18 +98,20 @@ export const HallScene: React.FC = () => {
       }}
     >
       <span style={{ color: colors.inkSoft }}>Venue</span>
-      <strong style={{ fontWeight: 600 }}>{WEDDING.venue}</strong>
+      <strong style={{ fontWeight: 600 }}>
+        {`${hall.name} · ${hall.meters.width} × ${hall.meters.height} m`}
+      </strong>
     </div>
   );
 
   return (
-    <AppFrame activeRail="plan">
+    <AppFrame activeRail="tables">
       <div
         style={{
           flex: 1,
           display: "flex",
           flexDirection: tall ? "column" : "row",
-          padding: tall ? `${pad}px 40px 8px` : "34px 40px",
+          padding: tall ? `${pad}px 40px 8px` : "34px 20px 34px 40px",
           gap,
           minWidth: 0,
         }}
@@ -125,18 +126,9 @@ export const HallScene: React.FC = () => {
           {venuePill}
         </div>
 
-        <div
-          style={{
-            flex: 1,
-            minWidth: 0,
-            minHeight: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
+        <PlannerCanvas hall={hall} tall={tall}>
           {canvas}
-        </div>
+        </PlannerCanvas>
       </div>
     </AppFrame>
   );

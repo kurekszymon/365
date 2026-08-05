@@ -17,7 +17,8 @@ const crossfade = (
   />
 );
 
-export const EasywedDemo: React.FC = () => {
+/** The whole film: the five scenes, crossfaded. */
+export const Film: React.FC = () => {
   return (
     <AbsoluteFill style={{ backgroundColor: colors.bg }}>
       <TransitionSeries>

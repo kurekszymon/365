@@ -22,13 +22,29 @@ export const colors = {
   inkSoft: "#7b736b",
   border: "#e6e1d8",
 
+  /** `--secondary` / `--primary`: the app's card fills and its black pills. */
+  secondary: "#efe9dd",
+  primary: "#2b2621",
+  primaryInk: "#faf7f0",
+
   hall: "#5b544c",
   table: "#efebe0",
   tableBorder: "#c9c2b4",
   tableInk: "#3a352f",
 
+  /** Canvas grid - `gridBackground()` draws slate-400 at half alpha. */
+  grid: "#94a3b8",
+
+  /** Fixtures are the one slate-toned thing on the canvas, as in the app. */
+  fixture: "#e2e8f0",
+  fixtureBorder: "#94a3b8",
+  fixtureInk: "#334155",
+
   accent: "#8f4f80",
   accentSoft: "#f3e3ef",
+  /** `--planner-selected` / `--planner-soft`: active toolbar + selection. */
+  selected: "#9c4f89",
+  selectedSoft: "#f6e8f2",
 
   brandGreen: "#43684b",
   brandGreenSoft: "#9ec2a2",

@@ -2,6 +2,7 @@ import React from "react";
 import { interpolate } from "remotion";
 import type { Point } from "../geometry";
 import type { HallLayout } from "../layouts";
+import { PX_PER_M } from "../layouts";
 import { colors, fonts } from "../theme";
 import { PlannerTable } from "./PlannerTable";
 
@@ -22,7 +23,42 @@ type Props = {
   children?: React.ReactNode;
 };
 
-const GRID = 40;
+/** Room around the hall for the dimension labels and the room chip. */
+const PAD = { left: 46, top: 62, right: 76, bottom: 34 };
+
+/** A fixture, drawn the way the app draws one: slate on a cream floor. */
+const Fixture: React.FC<{
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  label: string;
+  radius?: number;
+}> = ({ x, y, width, height, label, radius = 6 }) => (
+  <g>
+    <rect
+      x={x - width / 2}
+      y={y - height / 2}
+      width={width}
+      height={height}
+      rx={radius}
+      fill={colors.fixture}
+      stroke={colors.fixtureBorder}
+      strokeWidth={1.5}
+    />
+    <text
+      x={x}
+      y={y + 7}
+      textAnchor="middle"
+      fontFamily={fonts.sans}
+      fontSize={20}
+      fontWeight={500}
+      fill={colors.fixtureInk}
+    >
+      {label}
+    </text>
+  </g>
+);
 
 export const HallCanvas: React.FC<Props> = ({
   hall,
@@ -34,30 +70,52 @@ export const HallCanvas: React.FC<Props> = ({
   selectedTableId,
   children,
 }) => {
-  const { canvas, danceFloor } = hall;
+  const { canvas, danceFloor, meters } = hall;
   const perimeter = (canvas.width + canvas.height) * 2;
+  const chipLabel = `${hall.name} · ${meters.width}×${meters.height} m`;
+  const chipWidth = 22 + chipLabel.length * 10.6;
 
   return (
     <svg
-      viewBox={`-8 -8 ${canvas.width + 16} ${canvas.height + 16}`}
+      viewBox={`${-PAD.left} ${-PAD.top} ${canvas.width + PAD.left + PAD.right} ${
+        canvas.height + PAD.top + PAD.bottom
+      }`}
       width="100%"
       height="100%"
       style={{ display: "block" }}
     >
       <defs>
-        <pattern id="hall-grid" width={GRID} height={GRID} patternUnits="userSpaceOnUse">
-          <path d={`M ${GRID} 0 L 0 0 0 ${GRID}`} fill="none" stroke={colors.border} strokeWidth={1} />
+        {/* Two rulings, like the app's ruled-paper grid: 1 m fine, 5 m firmer. */}
+        <pattern id="hall-grid" width={PX_PER_M} height={PX_PER_M} patternUnits="userSpaceOnUse">
+          <path
+            d={`M ${PX_PER_M} 0 L 0 0 0 ${PX_PER_M}`}
+            fill="none"
+            stroke={colors.grid}
+            strokeOpacity={0.5}
+            strokeWidth={1}
+          />
+        </pattern>
+        <pattern
+          id="hall-grid-major"
+          width={PX_PER_M * 5}
+          height={PX_PER_M * 5}
+          patternUnits="userSpaceOnUse"
+        >
+          <path
+            d={`M ${PX_PER_M * 5} 0 L 0 0 0 ${PX_PER_M * 5}`}
+            fill="none"
+            stroke={colors.grid}
+            strokeOpacity={0.75}
+            strokeWidth={1.5}
+          />
         </pattern>
       </defs>
 
-      <rect
-        x={0}
-        y={0}
-        width={canvas.width}
-        height={canvas.height}
-        fill="url(#hall-grid)"
-        opacity={outline}
-      />
+      <g opacity={outline}>
+        <rect x={0} y={0} width={canvas.width} height={canvas.height} fill={colors.bg} />
+        <rect x={0} y={0} width={canvas.width} height={canvas.height} fill="url(#hall-grid)" />
+        <rect x={0} y={0} width={canvas.width} height={canvas.height} fill="url(#hall-grid-major)" />
+      </g>
 
       {/* The room outline draws itself on, like sketching the hall. */}
       <rect
@@ -65,64 +123,67 @@ export const HallCanvas: React.FC<Props> = ({
         y={0}
         width={canvas.width}
         height={canvas.height}
-        rx={10}
         fill="none"
         stroke={colors.hall}
-        strokeWidth={5}
+        strokeWidth={1.5}
         strokeDasharray={perimeter}
         strokeDashoffset={interpolate(outline, [0, 1], [perimeter, 0])}
       />
 
-      <g opacity={floor}>
+      {/* Dimension labels sit outside the walls, as on the canvas. */}
+      <g opacity={outline} fill={colors.hall} fontFamily={fonts.sans} fontSize={21} fontWeight={500}>
+        <text x={canvas.width / 2} y={-22} textAnchor="middle">
+          {`${meters.width} m`}
+        </text>
+        <text
+          x={canvas.width + 30}
+          y={canvas.height / 2}
+          textAnchor="middle"
+          transform={`rotate(-90 ${canvas.width + 30} ${canvas.height / 2})`}
+        >
+          {`${meters.height} m`}
+        </text>
+      </g>
+
+      {/* The hall's own label chip, grip handle and all. */}
+      <g opacity={outline}>
         <rect
-          x={danceFloor.x - danceFloor.width / 2}
-          y={danceFloor.y - danceFloor.height / 2}
+          x={14}
+          y={14}
+          width={chipWidth}
+          height={38}
+          rx={8}
+          fill={colors.card}
+          stroke={colors.border}
+          strokeWidth={1.5}
+        />
+        {[0, 1].map((col) =>
+          [0, 1, 2].map((row) => (
+            <circle
+              key={`${col}-${row}`}
+              cx={27 + col * 7}
+              cy={25 + row * 7}
+              r={1.8}
+              fill={colors.inkSoft}
+            />
+          )),
+        )}
+        <text x={46} y={39} fontFamily={fonts.sans} fontSize={20} fill={colors.ink}>
+          {chipLabel}
+        </text>
+      </g>
+
+      <g opacity={floor}>
+        <Fixture
+          x={danceFloor.x}
+          y={danceFloor.y}
           width={danceFloor.width}
           height={danceFloor.height}
-          rx={12}
-          fill={colors.accentSoft}
-          stroke={colors.accent}
-          strokeWidth={3}
-          strokeDasharray="12 10"
-          opacity={0.9}
+          label="Dance floor"
+          radius={24}
         />
-        <text
-          x={danceFloor.x}
-          y={danceFloor.y + 8}
-          textAnchor="middle"
-          fontFamily={fonts.sans}
-          fontSize={26}
-          fontWeight={600}
-          letterSpacing={2}
-          fill={colors.accent}
-        >
-          DANCE FLOOR
-        </text>
-
         {hall.fixtures.map((fixture) => (
-          <g key={fixture.id}>
-            <rect
-              x={fixture.x - fixture.width / 2}
-              y={fixture.y - fixture.height / 2}
-              width={fixture.width}
-              height={fixture.height}
-              rx={10}
-              fill={colors.bgDeep}
-              stroke={colors.tableBorder}
-              strokeWidth={3}
-            />
-            <text
-              x={fixture.x}
-              y={fixture.y + 8}
-              textAnchor="middle"
-              fontFamily={fonts.sans}
-              fontSize={22}
-              fontWeight={500}
-              fill={colors.inkSoft}
-            >
-              {fixture.label}
-            </text>
-          </g>
+          <Fixture key={fixture.id} {...fixture} />
         ))}
       </g>
 
