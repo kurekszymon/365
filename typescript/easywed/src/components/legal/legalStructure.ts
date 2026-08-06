@@ -134,6 +134,12 @@ export const TERMS_SECTIONS: Array<TermsSection> = [
   { id: "final", clauses: ["c1", "c2", "c3", "c4", "c5"] },
 ]
 
+// The model withdrawal form (załącznik nr 2 to the Ustawa o prawach
+// konsumenta), which art. 12 ust. 1 pkt 9 requires the trader to supply rather
+// than just cite. Rendered after the last § as an appendix - it isn't a section
+// of the contract and carries no § number of its own.
+export const TERMS_APPENDIX = { id: "withdrawal_form", lines: 8 } as const
+
 // Sections with `bullets` render `privacy.<id>.intro` + a list; the rest
 // render `privacy.<id>.body`.
 export const PRIVACY_SECTIONS: Array<{ id: string; bullets?: Array<string> }> =
@@ -212,6 +218,12 @@ export function legalI18nKeys(): Array<string> {
         keys.push(`terms.${section.id}.${id}.${i}`)
       }
     }
+  }
+
+  keys.push(`terms.${TERMS_APPENDIX.id}.title`)
+  keys.push(`terms.${TERMS_APPENDIX.id}.intro`)
+  for (let i = 1; i <= TERMS_APPENDIX.lines; i++) {
+    keys.push(`terms.${TERMS_APPENDIX.id}.l${i}`)
   }
 
   for (const { id, bullets } of PRIVACY_SECTIONS) {

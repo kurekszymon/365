@@ -2,7 +2,10 @@ import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import type { Lang } from "@/components/landing/LocaleLanding"
 import { LegalPageShell } from "@/components/legal/LegalPageShell"
-import { TERMS_SECTIONS } from "@/components/legal/legalStructure"
+import {
+  TERMS_APPENDIX,
+  TERMS_SECTIONS,
+} from "@/components/legal/legalStructure"
 import { legalVars } from "@/lib/legal/provider"
 
 export function TermsOfService({ lang }: { lang: Lang }) {
@@ -36,6 +39,14 @@ export function TermsOfService({ lang }: { lang: Lang }) {
               </a>
             </li>
           ))}
+          <li>
+            <a
+              href={`#${TERMS_APPENDIX.id}`}
+              className="transition-colors hover:text-foreground"
+            >
+              {tr(`terms.${TERMS_APPENDIX.id}.title`)}
+            </a>
+          </li>
         </ol>
       </nav>
 
@@ -88,6 +99,22 @@ export function TermsOfService({ lang }: { lang: Lang }) {
           </section>
         ))}
       </div>
+
+      <section id={TERMS_APPENDIX.id} className="mt-12 space-y-3">
+        <h2 className="font-heading text-2xl font-semibold">
+          {tr(`terms.${TERMS_APPENDIX.id}.title`)}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          {tr(`terms.${TERMS_APPENDIX.id}.intro`)}
+        </p>
+        {/* Bordered rather than run into the prose: this is a form to copy out
+            and fill in, not another clause to read. */}
+        <div className="space-y-4 rounded-lg border p-5 leading-relaxed text-muted-foreground">
+          {Array.from({ length: TERMS_APPENDIX.lines }, (_, i) => (
+            <p key={i}>{tr(`terms.${TERMS_APPENDIX.id}.l${i + 1}`)}</p>
+          ))}
+        </div>
+      </section>
     </LegalPageShell>
   )
 }

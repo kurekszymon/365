@@ -4,6 +4,7 @@ import { toast } from "sonner"
 import { useAuthStore } from "@/stores/auth.store"
 import { useProfileStore } from "@/stores/profile.store"
 import { fetchDisplayName } from "@/lib/sync/profile"
+import { recordPendingTermsAcceptance } from "@/lib/sync/termsAcceptance"
 import { supabase } from "@/lib/supabase"
 import i18n from "@/i18n"
 
@@ -83,6 +84,16 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     })
 
     return () => controller.abort()
+  }, [userId])
+
+  // A sign-up that went through Google accepted the Regulamin on the form, but
+  // couldn't record it: signInWithOAuth carries no user metadata and there was
+  // no session yet to write with. This is the first moment there is one. No-ops
+  // for everyone else - it only fires when a pending acceptance is stored, and
+  // only fills a blank terms_version.
+  useEffect(() => {
+    if (!userId) return
+    void recordPendingTermsAcceptance(userId)
   }, [userId])
 
   const isPublic = PUBLIC_PATHS.some(

@@ -3,6 +3,8 @@ import { Link, createFileRoute } from "@tanstack/react-router"
 import { Trans, useTranslation } from "react-i18next"
 import { supabase } from "@/lib/supabase"
 import { redirectAuthedAwayFromLogin } from "@/lib/auth/guards"
+import { TERMS_VERSION } from "@/lib/legal/dates"
+import { rememberAcceptedTerms } from "@/lib/sync/termsAcceptance"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -49,11 +51,19 @@ function Signup() {
 
   const signUp = async () => {
     setStatus({ kind: "loading" })
+    // Belt and braces: the metadata below is what handle_new_user records
+    // server-side, and this covers a user created outside the trigger's watch.
+    rememberAcceptedTerms()
 
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: callbackUrl() },
+      options: {
+        emailRedirectTo: callbackUrl(),
+        // Written into profiles.terms_version by handle_new_user, at the moment
+        // the user row is created - before they have a session to write with.
+        data: { terms_version: TERMS_VERSION },
+      },
     })
     if (error) {
       return handleError(error)
@@ -64,6 +74,9 @@ function Signup() {
 
   const signUpWithGoogle = async () => {
     setStatus({ kind: "loading" })
+    // signInWithOAuth carries no user metadata, so the accepted version has to
+    // survive the round trip in localStorage and get written once we're back.
+    rememberAcceptedTerms()
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
