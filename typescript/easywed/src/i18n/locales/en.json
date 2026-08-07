@@ -483,6 +483,10 @@
   "auth.no_account": "No account yet?",
   "auth.accept_terms_required": "Tick the box above to continue.",
   "auth.accept_terms": "I accept the <terms>Terms of Service</terms> and confirm I have read the <privacy>Privacy policy</privacy>.",
+  "auth.terms_gate_title": "One more step",
+  "auth.terms_gate_body": "Your account is ready. Before you start using easywed, please accept the terms.",
+  "auth.terms_gate_accept": "Accept and continue",
+  "auth.terms_gate_failed": "Couldn't save your acceptance. Please try again.",
   "auth.signup_subtitle": "Create an account to save your plan and plan with others",
   "auth.session_failed": "Couldn't verify your session. Please refresh and try again.",
 

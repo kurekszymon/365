@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Link, createFileRoute } from "@tanstack/react-router"
-import { Trans, useTranslation } from "react-i18next"
+import { useTranslation } from "react-i18next"
 import { supabase } from "@/lib/supabase"
 import { redirectAuthedAwayFromLogin } from "@/lib/auth/guards"
 import { TERMS_VERSION } from "@/lib/legal/dates"
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton"
+import { TermsConsentText } from "@/components/auth/TermsConsentText"
 
 type SignupSearch = { next?: string }
 
@@ -30,9 +31,8 @@ type Status =
   | { kind: "error"; message: string }
 
 function Signup() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { next } = Route.useSearch()
-  const locale = i18n.language.startsWith("pl") ? "pl" : "en"
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [accepted, setAccepted] = useState(false)
@@ -142,31 +142,13 @@ function Signup() {
               onCheckedChange={(value) => setAccepted(value === true)}
               className="mt-0.5"
             />
+            {/* block, because Label is flex by default - that would make every
+                <Trans> segment its own flex item instead of one sentence. */}
             <Label
               htmlFor="accept-terms"
-              className="text-xs leading-relaxed font-normal text-muted-foreground"
+              className="block text-xs leading-relaxed font-normal text-muted-foreground"
             >
-              <Trans
-                i18nKey="auth.accept_terms"
-                components={{
-                  terms: (
-                    <Link
-                      to={locale === "pl" ? "/pl/terms" : "/en/terms"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline underline-offset-2 hover:text-foreground"
-                    />
-                  ),
-                  privacy: (
-                    <Link
-                      to={locale === "pl" ? "/pl/privacy" : "/en/privacy"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline underline-offset-2 hover:text-foreground"
-                    />
-                  ),
-                }}
-              />
+              <TermsConsentText />
             </Label>
           </div>
 
