@@ -18,9 +18,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as WeddingLocalRouteImport } from './routes/wedding.local'
 import { Route as WeddingIdRouteImport } from './routes/wedding.$id'
 import { Route as PlVenuesRouteImport } from './routes/pl_.venues'
+import { Route as PlTermsRouteImport } from './routes/pl_.terms'
 import { Route as PlPrivacyRouteImport } from './routes/pl_.privacy'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as EnVenuesRouteImport } from './routes/en_.venues'
+import { Route as EnTermsRouteImport } from './routes/en_.terms'
 import { Route as EnPrivacyRouteImport } from './routes/en_.privacy'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as WeddingLocalIndexRouteImport } from './routes/wedding.local/index'
@@ -73,6 +75,11 @@ const PlVenuesRoute = PlVenuesRouteImport.update({
   path: '/pl/venues',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlTermsRoute = PlTermsRouteImport.update({
+  id: '/pl_/terms',
+  path: '/pl/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlPrivacyRoute = PlPrivacyRouteImport.update({
   id: '/pl_/privacy',
   path: '/pl/privacy',
@@ -86,6 +93,11 @@ const InviteTokenRoute = InviteTokenRouteImport.update({
 const EnVenuesRoute = EnVenuesRouteImport.update({
   id: '/en_/venues',
   path: '/en/venues',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnTermsRoute = EnTermsRouteImport.update({
+  id: '/en_/terms',
+  path: '/en/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EnPrivacyRoute = EnPrivacyRouteImport.update({
@@ -128,9 +140,11 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/en/privacy': typeof EnPrivacyRoute
+  '/en/terms': typeof EnTermsRoute
   '/en/venues': typeof EnVenuesRoute
   '/invite/$token': typeof InviteTokenRoute
   '/pl/privacy': typeof PlPrivacyRoute
+  '/pl/terms': typeof PlTermsRoute
   '/pl/venues': typeof PlVenuesRoute
   '/wedding/$id': typeof WeddingIdRouteWithChildren
   '/wedding/local': typeof WeddingLocalRouteWithChildren
@@ -148,9 +162,11 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/en/privacy': typeof EnPrivacyRoute
+  '/en/terms': typeof EnTermsRoute
   '/en/venues': typeof EnVenuesRoute
   '/invite/$token': typeof InviteTokenRoute
   '/pl/privacy': typeof PlPrivacyRoute
+  '/pl/terms': typeof PlTermsRoute
   '/pl/venues': typeof PlVenuesRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
   '/wedding/local/planner': typeof WeddingLocalPlannerRoute
@@ -167,9 +183,11 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/en_/privacy': typeof EnPrivacyRoute
+  '/en_/terms': typeof EnTermsRoute
   '/en_/venues': typeof EnVenuesRoute
   '/invite/$token': typeof InviteTokenRoute
   '/pl_/privacy': typeof PlPrivacyRoute
+  '/pl_/terms': typeof PlTermsRoute
   '/pl_/venues': typeof PlVenuesRoute
   '/wedding/$id': typeof WeddingIdRouteWithChildren
   '/wedding/local': typeof WeddingLocalRouteWithChildren
@@ -189,9 +207,11 @@ export interface FileRouteTypes {
     | '/settings'
     | '/auth/callback'
     | '/en/privacy'
+    | '/en/terms'
     | '/en/venues'
     | '/invite/$token'
     | '/pl/privacy'
+    | '/pl/terms'
     | '/pl/venues'
     | '/wedding/$id'
     | '/wedding/local'
@@ -209,9 +229,11 @@ export interface FileRouteTypes {
     | '/settings'
     | '/auth/callback'
     | '/en/privacy'
+    | '/en/terms'
     | '/en/venues'
     | '/invite/$token'
     | '/pl/privacy'
+    | '/pl/terms'
     | '/pl/venues'
     | '/wedding/$id/planner'
     | '/wedding/local/planner'
@@ -227,9 +249,11 @@ export interface FileRouteTypes {
     | '/settings'
     | '/auth/callback'
     | '/en_/privacy'
+    | '/en_/terms'
     | '/en_/venues'
     | '/invite/$token'
     | '/pl_/privacy'
+    | '/pl_/terms'
     | '/pl_/venues'
     | '/wedding/$id'
     | '/wedding/local'
@@ -248,9 +272,11 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   EnPrivacyRoute: typeof EnPrivacyRoute
+  EnTermsRoute: typeof EnTermsRoute
   EnVenuesRoute: typeof EnVenuesRoute
   InviteTokenRoute: typeof InviteTokenRoute
   PlPrivacyRoute: typeof PlPrivacyRoute
+  PlTermsRoute: typeof PlTermsRoute
   PlVenuesRoute: typeof PlVenuesRoute
   WeddingIdRoute: typeof WeddingIdRouteWithChildren
   WeddingLocalRoute: typeof WeddingLocalRouteWithChildren
@@ -321,6 +347,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlVenuesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pl_/terms': {
+      id: '/pl_/terms'
+      path: '/pl/terms'
+      fullPath: '/pl/terms'
+      preLoaderRoute: typeof PlTermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pl_/privacy': {
       id: '/pl_/privacy'
       path: '/pl/privacy'
@@ -340,6 +373,13 @@ declare module '@tanstack/react-router' {
       path: '/en/venues'
       fullPath: '/en/venues'
       preLoaderRoute: typeof EnVenuesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/en_/terms': {
+      id: '/en_/terms'
+      path: '/en/terms'
+      fullPath: '/en/terms'
+      preLoaderRoute: typeof EnTermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/en_/privacy': {
@@ -424,9 +464,11 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   EnPrivacyRoute: EnPrivacyRoute,
+  EnTermsRoute: EnTermsRoute,
   EnVenuesRoute: EnVenuesRoute,
   InviteTokenRoute: InviteTokenRoute,
   PlPrivacyRoute: PlPrivacyRoute,
+  PlTermsRoute: PlTermsRoute,
   PlVenuesRoute: PlVenuesRoute,
   WeddingIdRoute: WeddingIdRouteWithChildren,
   WeddingLocalRoute: WeddingLocalRouteWithChildren,
