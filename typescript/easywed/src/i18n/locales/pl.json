@@ -478,8 +478,12 @@
   "auth.signing_you_in": "Logujemy cię...",
   "auth.sign_in_with_google": "Zaloguj się przez Google",
   "auth.or": "lub",
-  "auth.sign_up_hint": "Wypełnij pola powyżej i kliknij \"Załóż konto\", aby się zarejestrować.",
   "auth.email_sent": "Sprawdź skrzynkę - wysłaliśmy Ci link potwierdzający.",
+  "auth.have_account": "Masz już konto?",
+  "auth.no_account": "Nie masz konta?",
+  "auth.accept_terms_required": "Zaznacz zgodę powyżej, aby kontynuować.",
+  "auth.accept_terms": "Akceptuję <terms>Regulamin</terms> i potwierdzam zapoznanie się z <privacy>Polityką prywatności</privacy>.",
+  "auth.signup_subtitle": "Załóż konto, żeby zapisać plan i planować z innymi",
   "auth.session_failed": "Nie udało się zweryfikować sesji. Odśwież stronę i spróbuj ponownie.",
 
   "guest_mode.start_planning": "Zacznij planować",
