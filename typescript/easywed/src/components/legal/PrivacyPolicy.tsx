@@ -7,8 +7,10 @@ import { legalVars } from "@/lib/legal/provider"
 
 export function PrivacyPolicy({ lang }: { lang: Lang }) {
   const { t } = useTranslation()
-  const vars = useMemo(() => legalVars(lang), [lang])
-  const tr = (key: string) => t(key, { lng: lang, ...vars })
+  // One object for every `t()` call on the page - see TermsOfService, which
+  // does the same thing across a document five times this size.
+  const options = useMemo(() => ({ lng: lang, ...legalVars(lang) }), [lang])
+  const tr = (key: string) => t(key, options)
 
   return (
     <LegalPageShell
