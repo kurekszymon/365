@@ -107,8 +107,6 @@ export function TermsOfService({ lang }: { lang: Lang }) {
         <p className="text-sm text-muted-foreground">
           {tr(`terms.${TERMS_APPENDIX.id}.intro`)}
         </p>
-        {/* Bordered rather than run into the prose: this is a form to copy out
-            and fill in, not another clause to read. */}
         <div className="space-y-4 rounded-lg border p-5 leading-relaxed text-muted-foreground">
           {Array.from({ length: TERMS_APPENDIX.lines }, (_, i) => (
             <p key={i}>{tr(`terms.${TERMS_APPENDIX.id}.l${i + 1}`)}</p>

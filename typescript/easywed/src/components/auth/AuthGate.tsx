@@ -89,20 +89,13 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return () => controller.abort()
   }, [userId])
 
-  // Whether this user still owes an acceptance of the Regulamin, resolved once
-  // per session and parked in the profile store so route guards can read it
-  // synchronously in beforeLoad (see requireAcceptedTerms).
+  // Whether this user still owes an acceptance of the Regulamin, parked in the
+  // profile store so route guards can read it synchronously in beforeLoad (see
+  // requireAcceptedTerms), then invalidated so they re-run with the answer.
   //
-  // The write comes first: a sign-up that went through Google accepted the
-  // Regulamin on the form but couldn't record it - signInWithOAuth carries no
-  // user metadata and there was no session yet to write with, and this is the
-  // first moment there is one. Reading before that write lands would send
-  // someone who already ticked the box to the acceptance screen anyway. No-ops
-  // for everyone else: it only fires when a pending acceptance is stored, and
-  // only fills a blank terms_version.
-  //
-  // router.invalidate() re-runs beforeLoad with the answer in hand, the same
-  // handshake requireAuth relies on for isReady.
+  // The write has to come first: a Google sign-up ticked the box but had no
+  // session to record it with until now, and reading before that write lands
+  // would send someone who already accepted to the gate anyway.
   useEffect(() => {
     if (!userId) return
 

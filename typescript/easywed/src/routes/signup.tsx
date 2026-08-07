@@ -51,8 +51,8 @@ function Signup() {
 
   const signUp = async () => {
     setStatus({ kind: "loading" })
-    // Belt and braces: the metadata below is what handle_new_user records
-    // server-side, and this covers a user created outside the trigger's watch.
+    // Belt and braces - the metadata below is the real record. This only
+    // matters for a user somehow created outside the trigger's watch.
     rememberAcceptedTerms()
 
     const { error } = await supabase.auth.signUp({

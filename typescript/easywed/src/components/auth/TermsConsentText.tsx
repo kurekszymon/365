@@ -4,9 +4,9 @@ import { Trans, useTranslation } from "react-i18next"
 /**
  * "I accept the <terms> and confirm I have read the <privacy>."
  *
- * Shared by the sign-up form's checkbox label and the acceptance gate on
- * /auth/callback: both are the same consent moment, so the wording - and the
- * documents it points at - must be identical on either path.
+ * Shared by the sign-up form's checkbox label and the /accept-terms gate: both
+ * are the same consent moment, so the wording - and the documents it points
+ * at - must be identical on either path.
  */
 export function TermsConsentText() {
   const { i18n } = useTranslation()
