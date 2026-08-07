@@ -15,6 +15,7 @@ import { Route as PlRouteImport } from './routes/pl'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as EnRouteImport } from './routes/en'
+import { Route as AcceptTermsRouteImport } from './routes/accept-terms'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WeddingLocalRouteImport } from './routes/wedding.local'
 import { Route as WeddingIdRouteImport } from './routes/wedding.$id'
@@ -59,6 +60,11 @@ const HomeRoute = HomeRouteImport.update({
 const EnRoute = EnRouteImport.update({
   id: '/en',
   path: '/en',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AcceptTermsRoute = AcceptTermsRouteImport.update({
+  id: '/accept-terms',
+  path: '/accept-terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -139,6 +145,7 @@ const WeddingIdPlannerRoute = WeddingIdPlannerRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/accept-terms': typeof AcceptTermsRoute
   '/en': typeof EnRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
@@ -162,6 +169,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/accept-terms': typeof AcceptTermsRoute
   '/en': typeof EnRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
@@ -184,6 +192,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/accept-terms': typeof AcceptTermsRoute
   '/en': typeof EnRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
@@ -209,6 +218,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/accept-terms'
     | '/en'
     | '/home'
     | '/login'
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/accept-terms'
     | '/en'
     | '/home'
     | '/login'
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/accept-terms'
     | '/en'
     | '/home'
     | '/login'
@@ -277,6 +289,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AcceptTermsRoute: typeof AcceptTermsRoute
   EnRoute: typeof EnRoute
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
@@ -337,6 +350,13 @@ declare module '@tanstack/react-router' {
       path: '/en'
       fullPath: '/en'
       preLoaderRoute: typeof EnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/accept-terms': {
+      id: '/accept-terms'
+      path: '/accept-terms'
+      fullPath: '/accept-terms'
+      preLoaderRoute: typeof AcceptTermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -477,6 +497,7 @@ const WeddingLocalRouteWithChildren = WeddingLocalRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AcceptTermsRoute: AcceptTermsRoute,
   EnRoute: EnRoute,
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
