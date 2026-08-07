@@ -1,8 +1,9 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link, createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { supabase } from "@/lib/supabase"
 import { redirectAuthedAwayFromLogin } from "@/lib/auth/guards"
+import { forgetPendingTermsAcceptance } from "@/lib/sync/termsAcceptance"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -31,6 +32,15 @@ function Login() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [status, setStatus] = useState<Status>({ kind: "idle" })
+
+  // Whoever is at the login form is not the person mid-sign-up, so any consent
+  // marker still lying around belongs to an abandoned attempt - and Google
+  // sign-in from here creates accounts, which is exactly what a stale marker
+  // would wrongly mark as having accepted. The legitimate OAuth round trip goes
+  // /signup → provider → /auth/callback and never passes through here.
+  useEffect(() => {
+    forgetPendingTermsAcceptance()
+  }, [])
 
   // Preserve ?next= through email confirmation + OAuth round-trips.
   // Supabase requires a full absolute URL here, so we construct one.

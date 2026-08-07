@@ -62,6 +62,19 @@ Read access is `id = auth.uid() or public.shares_wedding_with(id)` - your own ro
 
 `handle_new_user` (trigger on `auth.users` INSERT) creates the row at signup so the members list can look it up unconditionally, and the migration backfills everyone who predates it.
 
+### Terms acceptance (`terms_version`, `terms_accepted_at`)
+
+Migration `20260806000002` adds the two columns that record which version of the Regulamin a user accepted at signup. The sign-up checkbox is blocking and unticked by default, but on its own it's React state that leaves no trace — and the burden of proving the contract was concluded on those terms is the Provider's (art. 6 kc). `terms_version` holds `LEGAL_DATES.termsEffective` (the effective date *is* the version; § 16 ust. 3 moves it on every substantive change).
+
+Two paths write it, because Supabase only offers one of them:
+
+- **Email signup** passes `data: { terms_version }` to `signUp()`, and the replaced `handle_new_user` copies it out of `raw_user_meta_data` at the moment the user row is created — server-side, before there's a session.
+- **Google** has no equivalent: `signInWithOAuth()` takes no user metadata. The accepted version rides through the redirect in `localStorage` (`easywed.terms.pending`) and `recordPendingTermsAcceptance` writes it on the first authenticated render, from `AuthGate`. It only ever fills a blank, so it can't overwrite what the trigger already recorded or re-stamp a returning user.
+
+`terms_accepted_at` is **never client-supplied**. `stamp_terms_acceptance` (BEFORE INSERT OR UPDATE) sets `now()` whenever `terms_version` changes and carries the old value forward otherwise, so the column can't be backdated through the profiles UPDATE policy — the user chooses *which* version they accepted, never *when*.
+
+Accounts predating the migration are left `null` rather than backfilled: null means "no evidence", which is the true state. § 16 ust. 2 (notify by email, 14 days to object) is the mechanism for putting the current version in front of them.
+
 ## Account deletion (`delete_own_account`)
 
 `security definer` RPC (migration `20260731000002`), because `auth.users` isn't reachable by `authenticated` and the service role key that could do this client-side must never leave the server.

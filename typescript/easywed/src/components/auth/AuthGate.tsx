@@ -4,6 +4,7 @@ import { toast } from "sonner"
 import { useAuthStore } from "@/stores/auth.store"
 import { useProfileStore } from "@/stores/profile.store"
 import { fetchDisplayName } from "@/lib/sync/profile"
+import { recordPendingTermsAcceptance } from "@/lib/sync/termsAcceptance"
 import { supabase } from "@/lib/supabase"
 import i18n from "@/i18n"
 
@@ -83,6 +84,17 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     })
 
     return () => controller.abort()
+  }, [userId])
+
+  // A Google sign-up ticked the box but had no session to record it with, so
+  // the acceptance is parked in localStorage and written here, on the first
+  // render that has a user. Email sign-up never needs this - handle_new_user
+  // wrote the version server-side from the signUp() metadata - and this only
+  // ever fills a blank, so it can't overwrite what the trigger recorded.
+  useEffect(() => {
+    if (!userId) return
+
+    void recordPendingTermsAcceptance(userId)
   }, [userId])
 
   const isPublic = PUBLIC_PATHS.some(
