@@ -7,6 +7,7 @@ import {
   readLocalRemindersSnapshot,
 } from "@/lib/localWedding"
 import { supabase } from "@/lib/supabase"
+import { useProfileStore } from "@/stores/profile.store"
 
 const DISMISSED_KEY = "easywed.guest_migration_dismissed"
 
@@ -37,19 +38,66 @@ const markDismissed = (): void => {
 // AuthGate makes the same SIGNED_IN/SIGNED_OUT distinction for its own
 // router.invalidate() call.
 export function LocalWeddingMigrationPrompt() {
+  // Everything the sign-in transition can tell us: local data is there and the
+  // prompt hasn't been dismissed. Whether to actually offer it needs a session
+  // and a round trip, so that's settled in the effect below.
+  const [candidate, setCandidate] = useState(false)
   const [promptOpen, setPromptOpen] = useState(false)
+  const termsStatus = useProfileStore((s) => s.termsStatus)
 
   useEffect(() => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" && !wasDismissed() && hasLocalWeddingData()) {
-        setPromptOpen(true)
+        setCandidate(true)
       }
     })
 
     return () => subscription.unsubscribe()
   }, [])
+
+  // Only offered to an account with nothing in it.
+  //
+  // The dialog creates a *new* wedding from local storage, so someone who
+  // already has one ends up with an unexplained duplicate next to their real
+  // plan - and guest-mode leftovers are usually a throwaway from before the
+  // account existed, not something they meant to keep. An empty account is the
+  // only case where "this is your wedding now" is true.
+  //
+  // Waiting on termsStatus is the other half: a Google sign-in from /login
+  // creates accounts, and one with local data would otherwise get this dialog
+  // on top of the /accept-terms gate, offering to write to the database under
+  // a contract they haven't agreed to. Deciding at SIGNED_IN can't work - the
+  // status is still "unknown" then.
+  //
+  // A failed lookup stays quiet rather than guessing. Local storage is
+  // untouched and the next sign-in asks again.
+  useEffect(() => {
+    if (!candidate || termsStatus !== "accepted") return
+
+    const controller = new AbortController()
+
+    const offerIfAccountIsEmpty = async () => {
+      const { count, error } = await supabase
+        .from("weddings")
+        .select("id", { count: "exact", head: true })
+        .abortSignal(controller.signal)
+
+      if (controller.signal.aborted) return
+
+      if (error) {
+        console.error("[migration] existing wedding lookup failed", error)
+        return
+      }
+
+      if ((count ?? 0) === 0) setPromptOpen(true)
+    }
+
+    void offerIfAccountIsEmpty()
+
+    return () => controller.abort()
+  }, [candidate, termsStatus])
 
   if (!promptOpen) return null
 
@@ -70,6 +118,9 @@ export function LocalWeddingMigrationPrompt() {
   const close = () => {
     markDismissed()
     setPromptOpen(false)
+    // Clears the trigger too, so a later termsStatus change can't re-run the
+    // lookup and reopen what was just dismissed.
+    setCandidate(false)
   }
 
   return (

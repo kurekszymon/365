@@ -29,6 +29,8 @@ export const LEGAL_DATES = {
  */
 export const TERMS_VERSION = LEGAL_DATES.termsEffective
 
+export const TERMS_ENFORCED_SINCE = "2026-08-06"
+
 const LOCALE = { pl: "pl-PL", en: "en-GB" } as const
 
 /** "6 sierpnia 2026" / "6 August 2026" - deterministic across SSR and client. */

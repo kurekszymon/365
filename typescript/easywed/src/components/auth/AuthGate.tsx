@@ -4,7 +4,10 @@ import { toast } from "sonner"
 import { useAuthStore } from "@/stores/auth.store"
 import { useProfileStore } from "@/stores/profile.store"
 import { fetchDisplayName } from "@/lib/sync/profile"
-import { recordPendingTermsAcceptance } from "@/lib/sync/termsAcceptance"
+import {
+  fetchTermsStatus,
+  recordPendingTermsAcceptance,
+} from "@/lib/sync/termsAcceptance"
 import { supabase } from "@/lib/supabase"
 import i18n from "@/i18n"
 
@@ -86,16 +89,32 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return () => controller.abort()
   }, [userId])
 
-  // A Google sign-up ticked the box but had no session to record it with, so
-  // the acceptance is parked in localStorage and written here, on the first
-  // render that has a user. Email sign-up never needs this - handle_new_user
-  // wrote the version server-side from the signUp() metadata - and this only
-  // ever fills a blank, so it can't overwrite what the trigger recorded.
+  // Whether this user still owes an acceptance of the Regulamin, parked in the
+  // profile store so route guards can read it synchronously in beforeLoad (see
+  // requireAcceptedTerms), then invalidated so they re-run with the answer.
+  //
+  // The write has to come first: a Google sign-up ticked the box but had no
+  // session to record it with until now, and reading before that write lands
+  // would send someone who already accepted to the gate anyway.
   useEffect(() => {
     if (!userId) return
 
-    void recordPendingTermsAcceptance(userId)
-  }, [userId])
+    const controller = new AbortController()
+
+    const resolve = async () => {
+      await recordPendingTermsAcceptance(userId)
+
+      const status = await fetchTermsStatus(userId)
+      if (controller.signal.aborted) return
+
+      useProfileStore.getState().setTermsStatus(status)
+      void router.invalidate()
+    }
+
+    void resolve()
+
+    return () => controller.abort()
+  }, [userId, router])
 
   const isPublic = PUBLIC_PATHS.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`)

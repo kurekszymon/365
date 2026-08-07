@@ -15,6 +15,7 @@ import i18n from "@/i18n"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 import { AuthGate } from "@/components/auth/AuthGate"
+import { requireAcceptedTerms } from "@/lib/auth/guards"
 import { LocalWeddingMigrationPrompt } from "@/components/auth/LocalWeddingMigrationPrompt"
 import { ErrorFallback } from "@/components/ErrorFallback"
 import { useThemeStore } from "@/stores/theme.store"
@@ -47,6 +48,12 @@ function NotFound() {
 export const Route = createRootRoute({
   notFoundComponent: NotFound,
   errorComponent: ErrorFallback,
+  // On the root route because the acceptance has to survive someone typing a
+  // path instead of following the flow - a per-route guard would only cover the
+  // routes we remembered to annotate.
+  beforeLoad: ({ location }) => {
+    requireAcceptedTerms(location.pathname)
+  },
   head: () => {
     const language = i18n.resolvedLanguage === "pl" ? "pl" : "en"
     const isPolish = language === "pl"
