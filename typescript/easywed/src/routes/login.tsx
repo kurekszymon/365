@@ -1,8 +1,9 @@
-import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
+import { useEffect, useState } from "react"
+import { Link, createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { supabase } from "@/lib/supabase"
 import { redirectAuthedAwayFromLogin } from "@/lib/auth/guards"
+import { forgetPendingTermsAcceptance } from "@/lib/sync/termsAcceptance"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,7 +24,6 @@ export const Route = createFileRoute("/login")({
 type Status =
   | { kind: "idle" }
   | { kind: "loading" }
-  | { kind: "success" }
   | { kind: "error"; message: string }
 
 function Login() {
@@ -32,6 +32,15 @@ function Login() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [status, setStatus] = useState<Status>({ kind: "idle" })
+
+  // Whoever is at the login form is not the person mid-sign-up, so any consent
+  // marker still lying around belongs to an abandoned attempt - and Google
+  // sign-in from here creates accounts, which is exactly what a stale marker
+  // would wrongly mark as having accepted. The legitimate OAuth round trip goes
+  // /signup → provider → /auth/callback and never passes through here.
+  useEffect(() => {
+    forgetPendingTermsAcceptance()
+  }, [])
 
   // Preserve ?next= through email confirmation + OAuth round-trips.
   // Supabase requires a full absolute URL here, so we construct one.
@@ -60,20 +69,6 @@ function Login() {
     }
 
     setStatus({ kind: "idle" })
-  }
-
-  const signUp = async () => {
-    setStatus({ kind: "loading" })
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: callbackUrl() },
-    })
-    if (error) {
-      return handleError(error)
-    }
-
-    setStatus({ kind: "success" })
   }
 
   const signInWithGoogle = async () => {
@@ -137,31 +132,25 @@ function Login() {
             />
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            {t("auth.sign_up_hint")}
-          </p>
-
-          <div className="flex flex-col gap-2">
-            <Button type="submit" disabled={!canSubmit}>
-              {t("auth.sign_in")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={signUp}
-              disabled={!canSubmit}
-            >
-              {t("auth.sign_up")}
-            </Button>
-          </div>
+          <Button type="submit" disabled={!canSubmit}>
+            {t("auth.sign_in")}
+          </Button>
         </form>
 
-        {status.kind === "success" && (
-          <p className="text-sm text-green-600">{t("auth.email_sent")}</p>
-        )}
         {status.kind === "error" && (
           <p className="text-sm text-destructive">{status.message}</p>
         )}
+
+        <p className="text-center text-sm text-muted-foreground">
+          {t("auth.no_account")}{" "}
+          <Link
+            to="/signup"
+            search={next ? { next } : {}}
+            className="underline underline-offset-2 hover:text-foreground"
+          >
+            {t("auth.sign_up")}
+          </Link>
+        </p>
       </div>
     </div>
   )

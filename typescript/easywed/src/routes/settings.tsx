@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { ArrowLeftIcon } from "lucide-react"
 import { requireAuth } from "@/lib/auth/guards"
 import { DisplayNameForm } from "@/components/settings/DisplayNameForm"
+import { LegalLinksSection } from "@/components/settings/LegalLinksSection"
 import { DeleteAccountSection } from "@/components/settings/DeleteAccountSection"
 
 export const Route = createFileRoute("/settings")({
@@ -32,6 +33,7 @@ function Settings() {
         </div>
 
         <DisplayNameForm />
+        <LegalLinksSection />
         <DeleteAccountSection />
       </div>
     </div>

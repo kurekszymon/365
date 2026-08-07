@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { CheckIcon, PlusIcon } from "lucide-react"
+import { CheckIcon, Info, PlusIcon } from "lucide-react"
 import { useShallow } from "zustand/react/shallow"
 import { GuestAgeGroupField } from "./GuestAgeGroupField"
 import { DeletableTagPill } from "./DeletableTagPill"
@@ -19,6 +19,11 @@ import {
 import { TAG_TONE_SOLID } from "@/lib/tagTone"
 import { cn } from "@/lib/utils"
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
@@ -107,7 +112,28 @@ export const GuestFormFields = ({
         </FieldContent>
       </Field>
       <Field>
-        <FieldLabel>{t("guests.add.dietary_preferences")}</FieldLabel>
+        <FieldLabel className="gap-1.5">
+          {t("guests.add.dietary_preferences")}
+          {/* Custom tags are free text, and "why" answers here are Art. 9 GDPR
+              special-category data about someone who never signed up. The terms
+              (§ 9 ust. 3) put that obligation on the user - this is where they
+              actually see it. Focusable so the hint is reachable by keyboard
+              and tap, not hover only. */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="cursor-help text-muted-foreground transition-colors hover:text-foreground"
+                aria-label={t("guests.add.dietary_hint")}
+              >
+                <Info className="size-3.5" aria-hidden="true" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-64">
+              {t("guests.add.dietary_hint")}
+            </TooltipContent>
+          </Tooltip>
+        </FieldLabel>
         <FieldContent className="flex-row flex-wrap gap-1.5">
           {options.map((option) => {
             const selected = value.dietary.includes(option)
