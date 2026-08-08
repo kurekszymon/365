@@ -25,13 +25,13 @@ export const LEGAL_CONFIG = {
    */
   provider: {
     /** Full name of the natural person running the sole proprietorship. */
-    name: "[IMIĘ I NAZWISKO]",
+    name: "Szymon Kurek",
     /** Registered business name as it appears in CEIDG. */
-    company: "[NAZWA FIRMY]",
+    company: "Szymon Kurek",
     /** Fixed place of business: street, number, postcode, city. */
-    address: "[ULICA I NUMER, KOD POCZTOWY MIASTO]",
-    nip: "[NIP]",
-    regon: "[REGON]",
+    address: "Czarnucha 6/132, 61-612 Poznań",
+    nip: "6653048328",
+    regon: "522102512",
     /**
      * The statutory contact address: complaints, RODO requests, withdrawal
      * declarations, DSA point of contact. Everything the documents route
@@ -50,7 +50,7 @@ export const LEGAL_CONFIG = {
      */
     outboundEmail: "szymon@easywed.app",
     /** Expected by art. 12 ust. 1 pkt 2 UPK when contracting with consumers. */
-    phone: "[NUMER TELEFONU]",
+    phone: "+48 535 685 800",
   },
 
   /**
@@ -73,8 +73,8 @@ export const LEGAL_CONFIG = {
    * object), not editing this line.
    */
   dates: {
-    termsEffective: "2026-08-06",
-    privacyUpdated: "2026-08-06",
+    termsEffective: "2026-08-10",
+    privacyUpdated: "2026-08-10",
     /**
      * The day the acceptance gate started running. Deliberately a separate
      * literal rather than `termsEffective`: derived, it would silently absolve
@@ -82,7 +82,7 @@ export const LEGAL_CONFIG = {
      * Accounts created before this are grandfathered - § 16 ust. 2 is their
      * route, not a wall in front of the app.
      */
-    enforcedSince: "2026-08-06",
+    enforcedSince: "2026-08-10",
   },
 
   /**
