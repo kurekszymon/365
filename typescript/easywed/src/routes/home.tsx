@@ -5,6 +5,7 @@ import type { WeddingSummary } from "@/components/weddings/WeddingListItem"
 import type { RemoveMode } from "@/components/weddings/RemoveWeddingDialog"
 import { supabase } from "@/lib/supabase"
 import { useAuthStore } from "@/stores/auth.store"
+import { track } from "@/lib/analytics/track"
 import { Button } from "@/components/ui/button"
 import { WeddingListItem } from "@/components/weddings/WeddingListItem"
 import { RemoveWeddingDialog } from "@/components/weddings/RemoveWeddingDialog"
@@ -83,6 +84,7 @@ function Home() {
       console.error(error)
       return
     }
+    track("wedding_created", { source: "wedding_list" })
     navigate({ to: "/wedding/$id", params: { id: data.id } })
   }
 

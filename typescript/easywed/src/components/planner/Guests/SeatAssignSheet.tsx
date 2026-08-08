@@ -7,6 +7,7 @@ import type { Guest } from "@/stores/planner.store"
 import { resolveSeatOccupants, seatSlotsForCapacity } from "@/lib/seats"
 import { seatIndexFromId, usePlannerStore } from "@/stores/planner.store"
 import { Button } from "@/components/ui/button"
+import { track } from "@/lib/analytics/track"
 import { cn } from "@/lib/utils"
 import {
   ResponsiveDialog,
@@ -87,6 +88,8 @@ export const SeatAssignSheet = ({
   const confirm = () => {
     if (!guest || !tableId || !seatId) return
     assignGuestToSeat(guest.id, tableId, seatId, null)
+    // This sheet only offers free seats, so it can never bump an occupant.
+    track("guest_seated", { source: "guest_list", displaced: false })
     onAssigned?.()
     close()
   }

@@ -16,6 +16,8 @@ import {
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 import { Button } from "@/components/ui/button"
 import { useDialogStore } from "@/stores/dialog.store"
+import { usePlannerStore } from "@/stores/planner.store"
+import { track } from "@/lib/analytics/track"
 import {
   FORMAT_MODES,
   GUEST_FIELDS,
@@ -116,6 +118,14 @@ export const ExportGuestsCsvDialog = () => {
             disabled={!hasExportableColumn}
             onClick={() => {
               exportGuestsCsv(orderedSelected, formatMode, t, sort)
+              // Which columns were picked is only counted, not named: the field
+              // keys are ours, but the count is all the event needs, and it
+              // keeps the payload from growing a list as fields are added.
+              track("guests_exported", {
+                mode: formatMode,
+                field_count: effectiveFields(selected, formatMode).length,
+                guest_count: usePlannerStore.getState().guests.length,
+              })
               dialog.close()
             }}
           >

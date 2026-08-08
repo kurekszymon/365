@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { usePlannerStore } from "@/stores/planner.store"
+import { track } from "@/lib/analytics/track"
 import { cn } from "@/lib/utils"
 
 type SeatAssignPopoverProps = {
@@ -85,6 +86,12 @@ export const SeatAssignPopover = ({
 
   const assign = (guestId: string) => {
     assignGuestToSeat(guestId, tableId, seatId, occupantId)
+    // Tracked here rather than in the store action: which surface the user
+    // seated from is the whole point of the event, and only the caller knows.
+    track("guest_seated", {
+      source: "canvas_seat",
+      displaced: occupantId != null && occupantId !== guestId,
+    })
     setSearchQuery("")
     onOpenChange(false)
   }

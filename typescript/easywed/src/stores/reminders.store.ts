@@ -5,6 +5,7 @@ import {
   insertReminder,
   updateReminderStatus,
 } from "@/lib/sync/mutations"
+import { track } from "@/lib/analytics/track"
 import {
   REMINDERS_STORAGE_KEY,
   localRemindersStorage,
@@ -64,6 +65,8 @@ export const useRemindersStore = create<State & Action>()(
         }
         set((state) => ({ reminders: [...state.reminders, reminder] }))
         void insertReminder(reminder)
+        // `text` is whatever the user typed, so only its presence is reported.
+        track("reminder_created", { has_due_date: due != null })
       },
     }),
     {

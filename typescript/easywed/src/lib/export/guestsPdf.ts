@@ -3,6 +3,7 @@ import { DEFAULT_GUEST_SORT } from "./guests"
 import type { GuestField } from "@/lib/export/guestsCsv"
 import type { GuestSort } from "./guests"
 import { usePrintStore } from "@/stores/print.store"
+import { track } from "@/lib/analytics/track"
 
 export { groupGuestsByTable } from "./guests"
 export type { TableGroup } from "./guests"
@@ -46,6 +47,13 @@ export const triggerPdfExport = (
       showHallOutline: options.showHallOutline,
       fitToContent: options.fitToContent,
     })
+  })
+  // Before window.print(), which blocks on the browser's modal print UI. The
+  // event only says the plan reached that dialog - whether the user then saved
+  // a PDF, printed it or cancelled is not observable from here.
+  track("plan_printed", {
+    trigger: "export_dialog",
+    include_seats: options.includeSeats,
   })
   window.print()
 }

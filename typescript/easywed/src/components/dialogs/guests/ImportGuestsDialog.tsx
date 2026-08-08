@@ -1,5 +1,6 @@
 import { useShallow } from "zustand/react/shallow"
 import { useTranslation } from "react-i18next"
+import type { GuestImportFormat } from "@/components/dialogs/shared/useGuestImportWizard"
 import type { Guest } from "@/stores/planner.store"
 import { FileDropZone } from "@/components/dialogs/shared/FileDropZone"
 import { useGuestImportWizard } from "@/components/dialogs/shared/useGuestImportWizard"
@@ -16,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { useDialogStore } from "@/stores/dialog.store"
 import { usePlannerStore } from "@/stores/planner.store"
+import { track } from "@/lib/analytics/track"
 
 // Above this, warn that a big import may take a moment / is hard to review in
 // the panel. Soft - it never blocks the commit.
@@ -47,14 +49,33 @@ export const ImportGuestsDialog = () => {
     dialog.close()
   }
 
-  const onCommit = async (guests: Array<Omit<Guest, "id">>) => {
+  const onCommit = async (preview: {
+    format: GuestImportFormat
+    rows: Array<Array<string>>
+    guests: Array<Omit<Guest, "id">>
+    skipped: number
+    overflowed: number
+  }) => {
     setCommitting()
-    const ok = await addGuests(guests)
-    if (ok) onClose()
+    const ok = await addGuests(preview.guests)
     // Optimistic rows are already in the list, but persistence failed - keep the
     // dialog open on the error stage so the user knows to retry rather than
     // assuming the import succeeded.
-    else setErrorMessage(t("guests.import.failed"))
+    if (!ok) {
+      setErrorMessage(t("guests.import.failed"))
+      return
+    }
+    // Only on success - a failed import isn't an import. Counts only: neither
+    // the headers the user's spreadsheet used nor the names in it leave here.
+    track("guests_imported", {
+      format: preview.format,
+      row_count: preview.rows.length,
+      imported: preview.guests.length,
+      skipped: preview.skipped,
+      overflowed: preview.overflowed,
+      seated: preview.guests.filter((g) => g.tableId != null).length,
+    })
+    onClose()
   }
 
   return (
@@ -133,7 +154,7 @@ export const ImportGuestsDialog = () => {
                 </Button>
                 <Button
                   disabled={stage.guests.length === 0}
-                  onClick={() => void onCommit(stage.guests)}
+                  onClick={() => void onCommit(stage)}
                 >
                   {t("guests.import.commit", { count: stage.guests.length })}
                 </Button>

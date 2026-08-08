@@ -35,6 +35,8 @@ import {
   round3,
   scaleVertices,
 } from "@/lib/geometry"
+import { track } from "@/lib/analytics/track"
+import { isAdultAgeGroup, isAgeGroupPreset } from "@/lib/ageGroup"
 import { useGlobalStore } from "@/stores/global.store"
 import { useMeasuresStore } from "@/stores/measures.store"
 
@@ -463,6 +465,10 @@ const createPlannerStore = (
           void reassignTableGuests(tableId, guestIds)
       })
     })
+    // In the store rather than at the call sites so every route to a new table
+    // is counted once: the add hub, a canvas drop, a clipboard paste, and the
+    // AI's addTable tool all land here.
+    track("table_added", { shape: newTable.shape })
     return tableId
   },
   addTables: (table, count, startPosition) => {
@@ -515,6 +521,15 @@ const createPlannerStore = (
 
     set((state) => ({ tables: [...state.tables, ...newTables] }))
     afterHallInsert(table.hallId, () => void insertTables(newTables))
+
+    // Reported as its own event rather than N x table_added: `capped` falling
+    // short of `count` is the interesting signal here (the grid silently skips
+    // cells that fall outside the hall), and it only exists at this level.
+    track("tables_batch_added", {
+      shape: table.shape,
+      requested: count,
+      created: capped,
+    })
 
     return newTables.map((t) => t.id)
   },
@@ -631,6 +646,17 @@ const createPlannerStore = (
     const newGuest: Guest = { ...guest, id: crypto.randomUUID() }
     set((state) => ({ guests: [...state.guests, newGuest] }))
     void insertGuest(newGuest)
+    // Neither the name/note nor the raw tag values leave the browser - the
+    // dietary tags are counted and the age bracket is reduced to which kind of
+    // value it is, because both are free text the user typed.
+    track("guest_added", {
+      dietary_count: newGuest.dietary.length,
+      age_group: isAdultAgeGroup(newGuest.ageGroup)
+        ? "adult"
+        : isAgeGroupPreset(newGuest.ageGroup ?? "")
+          ? "preset"
+          : "custom",
+    })
   },
   addGuests: (guests) => {
     if (guests.length === 0) return Promise.resolve(true)

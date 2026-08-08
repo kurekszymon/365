@@ -25,7 +25,18 @@ import { scrubInviteTokens } from "@/lib/analytics/scrubInviteTokens"
 const options = {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
   defaults: "2026-01-30",
+  // Load-bearing beyond the cookie banner it saves us: session replay cannot
+  // start in cookieless mode, and scrubInviteTokens deliberately does not walk
+  // into $snapshot payloads. Turning this off silently enables replay of the
+  // planner - the guest list, names and all - with un-redacted invite tokens
+  // in the recorded URLs. Read the note at the bottom of scrubInviteTokens.ts
+  // before changing it.
   cookieless_mode: "always",
+  // Off because autocapture reports the text of whatever was clicked, and in
+  // the planner that is a wedding guest's name - a third party with no
+  // relationship to us, and beyond what privacy.data.analytics promises.
+  // Product events are declared explicitly instead; see lib/analytics/track.
+  autocapture: false,
   // Invite tokens are bearer credentials and they live in the URL path, which
   // pageview capture would otherwise ship verbatim. See scrubInviteTokens.
   before_send: scrubInviteTokens,

@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useAuthStore } from "@/stores/auth.store"
 import { migrateLocalWedding } from "@/lib/sync/migrateLocalWedding"
+import { track } from "@/lib/analytics/track"
 
 type Stage =
   | { kind: "idle" }
@@ -66,6 +67,16 @@ export const MigrateLocalWeddingDialog = ({
       setStage({ kind: "error", message: t("guest_mode.migrate.failed") })
       return
     }
+
+    // Sizes rather than contents - how much guest-mode work people actually
+    // bring with them is the thing worth knowing, and it decides whether the
+    // all-or-nothing rollback above is protecting anything that matters.
+    track("local_wedding_migrated", {
+      halls: planner.halls.length,
+      tables: planner.tables.length,
+      guests: planner.guests.length,
+      reminders: reminders.length,
+    })
 
     onClose()
     await navigate({

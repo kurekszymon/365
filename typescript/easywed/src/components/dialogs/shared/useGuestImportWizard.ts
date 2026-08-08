@@ -8,16 +8,23 @@ import {
 } from "@/lib/import/guestsImport"
 import { usePlannerStore } from "@/stores/planner.store"
 
+// Which kind of file the rows came from. Carried through the stages purely so
+// the import can be reported to analytics - XLSX.read autodetects the format,
+// so nothing in the parse path needs to know.
+export type GuestImportFormat = "csv" | "xlsx"
+
 type GuestImportStage =
   | { kind: "file" }
   | {
       kind: "mapping"
+      format: GuestImportFormat
       headers: Array<string>
       rows: Array<Array<string>>
       mapping: ColumnMapping
     }
   | {
       kind: "preview"
+      format: GuestImportFormat
       headers: Array<string>
       rows: Array<Array<string>>
       mapping: ColumnMapping
@@ -49,6 +56,7 @@ export const useGuestImportWizard = ({ t }: { t: Translate }) => {
       }
       setStage({
         kind: "mapping",
+        format: file.name.toLowerCase().endsWith(".csv") ? "csv" : "xlsx",
         headers,
         rows,
         mapping: autoDetectMapping(headers),
@@ -82,6 +90,7 @@ export const useGuestImportWizard = ({ t }: { t: Translate }) => {
       )
       return {
         kind: "preview",
+        format: prev.format,
         headers: prev.headers,
         rows: prev.rows,
         mapping: prev.mapping,
@@ -97,6 +106,7 @@ export const useGuestImportWizard = ({ t }: { t: Translate }) => {
       prev.kind === "preview"
         ? {
             kind: "mapping",
+            format: prev.format,
             headers: prev.headers,
             rows: prev.rows,
             mapping: prev.mapping,

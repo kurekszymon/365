@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 
 import { requireAuth } from "@/lib/auth/guards"
 import { supabase } from "@/lib/supabase"
+import { track } from "@/lib/analytics/track"
 
 export const Route = createFileRoute("/invite/$token")({
   beforeLoad: ({ params }) => {
@@ -35,6 +36,10 @@ function InviteClaim() {
           })
           return
         }
+        // No properties: the token is a bearer credential (which is why
+        // scrubInviteTokens exists) and the wedding id it resolves to is
+        // already in the $current_url of the pageview that follows.
+        track("invite_claimed")
         navigate({ to: "/wedding/$id", params: { id: data }, replace: true })
       })
 

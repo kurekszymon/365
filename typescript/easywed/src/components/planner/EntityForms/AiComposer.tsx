@@ -4,6 +4,7 @@ import { SendHorizontalIcon } from "lucide-react"
 import { useAiChatStore } from "@/stores/aiChat.store"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { track } from "@/lib/analytics/track"
 
 // Canned prompts shown above the input, matching the mockup's suggestion-chip
 // row. Tapping one sends it immediately through the existing `send` action -
@@ -22,15 +23,20 @@ export const AiComposer = () => {
   const isStreaming = status === "streaming"
   const canSend = text.trim().length > 0 && !isStreaming
 
+  // Both paths report only which affordance was used. The prompt itself is
+  // never a property - a user asking the assistant to "seat Anna next to her
+  // mum" is naming a guest just as surely as autocapture used to.
   const submit = () => {
     if (!canSend) return
     void send(text)
+    track("ai_chat_message_sent", { source: "composer" })
     setText("")
   }
 
   const submitSuggestion = (key: (typeof SUGGESTIONS)[number]) => {
     if (isStreaming) return
     void send(t(key))
+    track("ai_chat_message_sent", { source: "suggestion" })
   }
 
   return (

@@ -3,6 +3,7 @@ import { flushSync } from "react-dom"
 import { usePrintStore } from "@/stores/print.store"
 import { useViewStore } from "@/stores/view.store"
 import { DEFAULT_GUEST_SORT } from "@/lib/export/guests"
+import { track } from "@/lib/analytics/track"
 
 // Intercept the native Cmd/Ctrl+P quick print so the printed hall layout includes
 // seats iff they're currently enabled in the planner (view.store.showSeats). There
@@ -28,6 +29,10 @@ export const usePrintShortcut = () => {
             showHallOutline: true,
             fitToContent: false,
           })
+        })
+        track("plan_printed", {
+          trigger: "keyboard_shortcut",
+          include_seats: useViewStore.getState().showSeats,
         })
         window.print()
       }
