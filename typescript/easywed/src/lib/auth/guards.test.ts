@@ -101,6 +101,18 @@ describe("requireAcceptedTerms", () => {
     expect(redirectFrom(pathname)).toBeNull()
   })
 
+  // A recovery link signs the user in, so this guard sees a session and would
+  // otherwise send them to the acceptance gate - and from there to /home, with
+  // the password still unchanged.
+  it.each(["/forgot-password", "/reset-password"])(
+    "leaves %s reachable, so a recovery is not swallowed by the gate",
+    (pathname) => {
+      setup({})
+
+      expect(redirectFrom(pathname)).toBeNull()
+    }
+  )
+
   it("does not treat a path merely prefixed with an exempt one as exempt", () => {
     setup({})
 

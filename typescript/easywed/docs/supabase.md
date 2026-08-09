@@ -75,6 +75,16 @@ Two paths write it, because Supabase only offers one of them:
 
 Accounts predating the migration are left `null` rather than backfilled: null means "no evidence", which is the true state. § 16 ust. 2 (notify by email, 14 days to object) is the mechanism for putting the current version in front of them.
 
+### Password recovery (`/forgot-password`, `/reset-password`)
+
+No schema behind it — it's `supabase.auth.resetPasswordForEmail()` out and `updateUser({ password })` back. Three things about the wiring are worth knowing:
+
+- **The recovery link creates a real session.** `createClient` runs the implicit flow with `detectSessionInUrl` on, so `/reset-password` lands as `#access_token=…&refresh_token=…&type=recovery` and the client has consumed it before `AuthGate`'s `getSession()` resolves. `isReady` is therefore the verdict on the link: session means good, no session means expired, spent, or the path was typed. Both routes are in `PUBLIC_PATHS`, so the page renders its own "checking…" state rather than blanking.
+- **Both routes are in `TERMS_EXEMPT_PATHS`.** A signed-in user is exactly what `requireAcceptedTerms` acts on, so without the exemption someone mid-recovery gets bounced to `/accept-terms` and on to `/home` with the password unchanged.
+- **Those tokens are scrubbed from analytics.** PostHog captures `$current_url` on every pageview and `$referrer` on the next one; a recovery token in the event store is an account takeover. `scrubInviteTokens` redacts `code`/`access_token`/`refresh_token` values alongside invite tokens. The session-replay gap documented in that file applies here too.
+
+**Remote config:** the reset URL has to be reachable from the project's Auth → URL Configuration. Redirect targets are matched against Site URL's origin, so `https://easywed.app/reset-password` is already covered by the existing Site URL — but if a preview deployment is ever added to the allowlist, its `/reset-password` needs to be too. Locally, `site_url` in `config.toml` covers it the same way `/auth/callback` is covered.
+
 ## Account deletion (`delete_own_account`)
 
 `security definer` RPC (migration `20260731000002`), because `auth.users` isn't reachable by `authenticated` and the service role key that could do this client-side must never leave the server.

@@ -33,12 +33,21 @@ export const requireAuth = (nextPath: string) => {
 // marketing, not the app, and trapping a half-signed-up user on the gate when
 // they click the wordmark buys no enforcement. The app itself - /home, /wedding,
 // /settings, /invite - is what this actually closes.
+//
+// /reset-password is the other one that has to be here. A recovery link creates
+// a real session, so this guard sees a signed-in user and would bounce them to
+// /accept-terms - which then sends them on to /home, and the password they came
+// to change is never changed. Only reachable by someone predating enforcedSince
+// or mid-signup, but the failure is a locked-out user, so it's not worth
+// leaving to chance.
 const TERMS_EXEMPT_PATHS = [
   "/",
   "/pl",
   "/en",
   "/login",
   "/signup",
+  "/forgot-password",
+  "/reset-password",
   "/auth/callback",
   "/accept-terms",
 ]

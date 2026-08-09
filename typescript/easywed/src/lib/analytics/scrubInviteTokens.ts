@@ -14,12 +14,34 @@ const INVITE_TOKEN = /(\/invite\/)[^/?#]+/g
 export const redactInviteToken = (value: string): string =>
   value.replace(INVITE_TOKEN, "$1<redacted>")
 
+// The other credential that arrives in a URL: Supabase hands the session back
+// through the address bar on the pages it redirects to. The client runs the
+// implicit flow, so /reset-password lands as
+// #access_token=...&refresh_token=...&type=recovery, and /auth/callback the
+// same after a Google sign-in; the ?code= form is covered too in case flowType
+// ever moves to PKCE. A recovery token is an account takeover for whoever can
+// read it, and it would otherwise sit in $current_url, then in $referrer on the
+// navigation to /home straight after.
+//
+// Matched on the delimiter so a query key that merely ends in "code" doesn't
+// hit, and stopped at & or # so only the value is replaced.
+const AUTH_CREDENTIAL = /([?#&](?:code|access_token|refresh_token)=)[^&#]*/g
+
+export const redactAuthCredential = (value: string): string =>
+  value.replace(AUTH_CREDENTIAL, "$1<redacted>")
+
+const redactSecrets = (value: string): string =>
+  redactAuthCredential(redactInviteToken(value))
+
 // Deliberately keyed on the value rather than a list of property names.
 // PostHog derives its person properties by prefixing - $initial_current_url is
 // built from $current_url at runtime, not declared anywhere - so the set of
 // keys that can hold a URL isn't fixed, and an allowlist would quietly miss the
 // next one it invents.
-const carriesInvitePath = (value: string): boolean => value.includes("/invite/")
+const carriesSecret = (value: string): boolean =>
+  value.includes("/invite/") ||
+  value.includes("code=") ||
+  value.includes("token=")
 
 // Properties are a mostly-flat bag, but $set/$set_once can arrive nested inside
 // them, so a shallow pass isn't enough. The cap keeps this from turning into a
@@ -34,7 +56,7 @@ const redactIn = (bag: unknown, maxDepth: number, depth = 0): void => {
   // URL-bearing entries in list-valued properties.
   for (const [key, value] of Object.entries(record)) {
     if (typeof value === "string") {
-      if (carriesInvitePath(value)) record[key] = redactInviteToken(value)
+      if (carriesSecret(value)) record[key] = redactSecrets(value)
     } else if (typeof value === "object") {
       redactIn(value, maxDepth, depth + 1)
     }
@@ -51,9 +73,12 @@ const depthFor = (event: CaptureResult): number =>
   event.event === "$snapshot" ? 0 : MAX_DEPTH
 
 /**
- * Strips invite tokens out of every captured event before it leaves the
- * browser. Mutates and returns the event, which is the contract `before_send`
- * expects (returning null would drop the event instead).
+ * Strips URL-borne credentials - invite tokens and Supabase auth tokens - out
+ * of every captured event before it leaves the browser. Mutates and returns the
+ * event, which is the contract `before_send` expects (returning null would drop
+ * the event instead).
+ *
+ * Named for the invite case it was written for; it covers both.
  */
 export const scrubInviteTokens: BeforeSendFn = (event) => {
   if (!event) return event

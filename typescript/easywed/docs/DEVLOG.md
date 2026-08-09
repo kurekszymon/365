@@ -2,6 +2,10 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 09.08
+
+- add reset password
+
 ### 05.08
 
 - move theme switcher to profile settings -- deploy

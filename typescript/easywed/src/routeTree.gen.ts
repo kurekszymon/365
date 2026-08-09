@@ -11,9 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PlRouteImport } from './routes/pl'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HomeRouteImport } from './routes/home'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as EnRouteImport } from './routes/en'
 import { Route as AcceptTermsRouteImport } from './routes/accept-terms'
 import { Route as IndexRouteImport } from './routes/index'
@@ -42,6 +44,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlRoute = PlRouteImport.update({
   id: '/pl',
   path: '/pl',
@@ -55,6 +62,11 @@ const LoginRoute = LoginRouteImport.update({
 const HomeRoute = HomeRouteImport.update({
   id: '/home',
   path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EnRoute = EnRouteImport.update({
@@ -147,9 +159,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/accept-terms': typeof AcceptTermsRoute
   '/en': typeof EnRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/pl': typeof PlRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -171,9 +185,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/accept-terms': typeof AcceptTermsRoute
   '/en': typeof EnRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/pl': typeof PlRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -194,9 +210,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/accept-terms': typeof AcceptTermsRoute
   '/en': typeof EnRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/pl': typeof PlRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -220,9 +238,11 @@ export interface FileRouteTypes {
     | '/'
     | '/accept-terms'
     | '/en'
+    | '/forgot-password'
     | '/home'
     | '/login'
     | '/pl'
+    | '/reset-password'
     | '/settings'
     | '/signup'
     | '/auth/callback'
@@ -244,9 +264,11 @@ export interface FileRouteTypes {
     | '/'
     | '/accept-terms'
     | '/en'
+    | '/forgot-password'
     | '/home'
     | '/login'
     | '/pl'
+    | '/reset-password'
     | '/settings'
     | '/signup'
     | '/auth/callback'
@@ -266,9 +288,11 @@ export interface FileRouteTypes {
     | '/'
     | '/accept-terms'
     | '/en'
+    | '/forgot-password'
     | '/home'
     | '/login'
     | '/pl'
+    | '/reset-password'
     | '/settings'
     | '/signup'
     | '/auth/callback'
@@ -291,9 +315,11 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AcceptTermsRoute: typeof AcceptTermsRoute
   EnRoute: typeof EnRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
   PlRoute: typeof PlRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -324,6 +350,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pl': {
       id: '/pl'
       path: '/pl'
@@ -343,6 +376,13 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/en': {
@@ -499,9 +539,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AcceptTermsRoute: AcceptTermsRoute,
   EnRoute: EnRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
   PlRoute: PlRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
   AuthCallbackRoute: AuthCallbackRoute,

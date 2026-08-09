@@ -130,6 +130,12 @@ function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            <Link
+              to="/forgot-password"
+              className="self-end text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              {t("auth.forgot_password")}
+            </Link>
           </div>
 
           <Button type="submit" disabled={!canSubmit}>

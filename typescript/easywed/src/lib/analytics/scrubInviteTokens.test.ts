@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest"
-import { redactInviteToken, scrubInviteTokens } from "./scrubInviteTokens"
+import {
+  redactAuthCredential,
+  redactInviteToken,
+  scrubInviteTokens,
+} from "./scrubInviteTokens"
 import type { CaptureResult } from "posthog-js"
 
 const TOKEN = "8f14e45fceea167a5a36dedd4bea2543a1b2c3d4e5f60718293a4b5c6d7e8f90"
@@ -52,6 +56,46 @@ describe("redactInviteToken", () => {
     expect(redactInviteToken("https://easywed.app/invite/")).toBe(
       "https://easywed.app/invite/"
     )
+  })
+})
+
+describe("redactAuthCredential", () => {
+  // What the recovery email actually lands as - the implicit flow puts the
+  // whole session in the fragment.
+  it("replaces every token in a recovery fragment", () => {
+    expect(
+      redactAuthCredential(
+        "https://easywed.app/reset-password#access_token=eyJhbGc.abc&expires_in=3600&refresh_token=xyz123&type=recovery"
+      )
+    ).toBe(
+      "https://easywed.app/reset-password#access_token=<redacted>&expires_in=3600&refresh_token=<redacted>&type=recovery"
+    )
+  })
+
+  it("replaces a pkce code in the query string", () => {
+    expect(
+      redactAuthCredential("https://easywed.app/auth/callback?code=abc-123")
+    ).toBe("https://easywed.app/auth/callback?code=<redacted>")
+  })
+
+  it("stops at the fragment rather than eating it", () => {
+    expect(redactAuthCredential("/auth/callback?code=abc#top")).toBe(
+      "/auth/callback?code=<redacted>#top"
+    )
+  })
+
+  // Anchored on the delimiter, so a longer key that merely ends the same way is
+  // not a match - it is not a credential and blanking it would lose real data.
+  it("leaves a key that merely ends in code or token alone", () => {
+    expect(redactAuthCredential("/home?promo_code=WEDDING10")).toBe(
+      "/home?promo_code=WEDDING10"
+    )
+  })
+
+  it("leaves unrelated urls untouched", () => {
+    expect(
+      redactAuthCredential("https://easywed.app/wedding/abc/planner")
+    ).toBe("https://easywed.app/wedding/abc/planner")
   })
 })
 
@@ -133,6 +177,40 @@ describe("scrubInviteTokens", () => {
     expect(result.properties.$external_click_urls).toEqual([
       "https://easywed.app/invite/<redacted>",
     ])
+  })
+
+  it("redacts the recovery tokens on the /reset-password pageview", () => {
+    const result = scrub(
+      event({
+        properties: {
+          $current_url:
+            "https://easywed.app/reset-password#access_token=eyJhbGc.abc&refresh_token=xyz",
+          $pathname: "/reset-password",
+        },
+      })
+    )
+
+    expect(result.properties.$current_url).toBe(
+      "https://easywed.app/reset-password#access_token=<redacted>&refresh_token=<redacted>"
+    )
+  })
+
+  // The second half of the leak again: /reset-password navigates to /home the
+  // moment the password is saved, and reports where it came from.
+  it("redacts the referrer of the navigation away from the reset page", () => {
+    const result = scrub(
+      event({
+        properties: {
+          $current_url: "https://easywed.app/home",
+          $referrer:
+            "https://easywed.app/reset-password#access_token=eyJhbGc.abc",
+        },
+      })
+    )
+
+    expect(result.properties.$referrer).toBe(
+      "https://easywed.app/reset-password#access_token=<redacted>"
+    )
   })
 
   it("leaves non-url properties and unrelated urls alone", () => {
