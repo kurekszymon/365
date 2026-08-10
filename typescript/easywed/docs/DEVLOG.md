@@ -2,9 +2,35 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 10.08
+
+-- deploy
+
+- prerender the marketing pages - `/`, `/pl`, `/en` and the six locale subpages build to real html now, sitemap generated from the same `pages` list. the whole site was one empty `index.html` served for every url, so there was nothing to index: 285 impressions, 7 clicks, and "easywed" ranking around 17 for its own name
+- the spa shell was what overwrote it. the plugin appends the shell to `pages` keyed on `spa.maskPath`, so at the default `/` it collided with the homepage entry and won - `/` came out 4kB of scripts against `/pl`'s 28kB of content. shell moved to `app-shell.html`, and since `maskPath` has to resolve to a real 200 route there's a stub route for it
+- head defaults to `noindex` and the marketing routes opt back in. robots.txt stops disallowing `/home`, `/login`, `/settings`, `/wedding/` - a blocked url is never fetched, so the noindex is never read and google keeps listing the bare url from inbound links. that's exactly how those got indexed with zero clicks
+- `autoStaticPathsDiscovery` (on by default) and `crawlLinks` off - between them every static route was being prerendered _and_ published in the sitemap while its own html said noindex. homepage title is no longer the bare wordmark, and `/` canonicals to `/pl` since it serves the same bytes
+
 ### 09.08
 
 - add reset password
+- add forgot password, recovery tokens scrubbed from analytics alongside the invite ones
+
+### 08.08
+
+- posthog autocapture out, declared product events in (`lib/analytics/track.ts`) - imports, exports, seat assigns, assistant, print
+- fill the legal config with the real company data
+
+### 07.08
+
+- proper tos and privacy policy, and the flow around them: a migration records _which_ version a user accepted, `/accept-terms` gates the app from the root route so it survives someone typing a path rather than following the sign-up, legal links in settings
+- split sign-up out of the login route
+- legal configuration extracted into one reviewed file, merged `t()` options memoized
+
+### 06.08
+
+- revoke `execute` on the `security definer` functions from `anon` - hosted supabase's default privileges hand out _explicit_ anon/authenticated grants on top of the implicit PUBLIC one, and `revoke ... from public` doesn't subtract an explicit role grant, so the rpcs stayed anon-callable on remote. looks fine locally because a fresh `db reset` never applies those default privileges. same class of mistake as `revoke update (owner_id)`
+- the three policy helpers are deliberately left out of it: revoking anon's execute there doesn't 42501, it segfaults the backend and crashes again on the next such read
 
 ### 05.08
 
