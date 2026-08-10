@@ -88,6 +88,15 @@ export const Route = createRootRoute({
           name: "description",
           content: description,
         },
+        // Default the whole app to noindex and let the marketing routes opt
+        // back in (localeHead / rootHead emit "index, follow"). Inverted on
+        // purpose: signed-in surfaces vastly outnumber indexable pages, and
+        // Search Console was showing /home and /login ranking for nothing.
+        // A missed opt-in costs one page; a missed opt-out leaks the app.
+        {
+          name: "robots",
+          content: "noindex, nofollow",
+        },
         {
           property: "og:type",
           content: "website",

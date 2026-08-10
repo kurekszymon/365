@@ -5,11 +5,15 @@ User-agent: *
 # a crawled and indexed claim URL hands access to whoever reads the index.
 Disallow: /invite/
 
-# Signed-in surfaces. Nothing here renders without a session, and the URLs
-# carry wedding ids, so there is nothing to index and something to leak.
-Disallow: /wedding/
-Disallow: /settings
+# Auth callbacks carry tokens in the URL fragment and query.
 Disallow: /auth/
 
-# Everything else - the /pl and /en landing, venues and privacy pages - stays
-# crawlable by omission.
+# Note what is deliberately NOT disallowed: /home, /login, /signup, /settings
+# and /wedding/ all serve a noindex meta tag instead. Disallow and noindex do
+# not stack - a blocked URL cannot be fetched, so the noindex is never read and
+# Google keeps listing the bare URL from inbound links. That is exactly how
+# /home, /login and /wedding/local ended up in the index with zero clicks.
+# Letting these be crawled is what gets them removed. They render nothing
+# without a session, so there is no content to leak.
+
+Sitemap: https://easywed.app/sitemap.xml

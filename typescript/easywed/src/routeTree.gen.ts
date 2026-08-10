@@ -17,6 +17,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as EnRouteImport } from './routes/en'
+import { Route as AppShellRouteImport } from './routes/app-shell'
 import { Route as AcceptTermsRouteImport } from './routes/accept-terms'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WeddingLocalRouteImport } from './routes/wedding.local'
@@ -72,6 +73,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 const EnRoute = EnRouteImport.update({
   id: '/en',
   path: '/en',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppShellRoute = AppShellRouteImport.update({
+  id: '/app-shell',
+  path: '/app-shell',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AcceptTermsRoute = AcceptTermsRouteImport.update({
@@ -158,6 +164,7 @@ const WeddingIdPlannerRoute = WeddingIdPlannerRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/accept-terms': typeof AcceptTermsRoute
+  '/app-shell': typeof AppShellRoute
   '/en': typeof EnRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/home': typeof HomeRoute
@@ -184,6 +191,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/accept-terms': typeof AcceptTermsRoute
+  '/app-shell': typeof AppShellRoute
   '/en': typeof EnRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/home': typeof HomeRoute
@@ -209,6 +217,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/accept-terms': typeof AcceptTermsRoute
+  '/app-shell': typeof AppShellRoute
   '/en': typeof EnRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/home': typeof HomeRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/accept-terms'
+    | '/app-shell'
     | '/en'
     | '/forgot-password'
     | '/home'
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/accept-terms'
+    | '/app-shell'
     | '/en'
     | '/forgot-password'
     | '/home'
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/accept-terms'
+    | '/app-shell'
     | '/en'
     | '/forgot-password'
     | '/home'
@@ -314,6 +326,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AcceptTermsRoute: typeof AcceptTermsRoute
+  AppShellRoute: typeof AppShellRoute
   EnRoute: typeof EnRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HomeRoute: typeof HomeRoute
@@ -390,6 +403,13 @@ declare module '@tanstack/react-router' {
       path: '/en'
       fullPath: '/en'
       preLoaderRoute: typeof EnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app-shell': {
+      id: '/app-shell'
+      path: '/app-shell'
+      fullPath: '/app-shell'
+      preLoaderRoute: typeof AppShellRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/accept-terms': {
@@ -538,6 +558,7 @@ const WeddingLocalRouteWithChildren = WeddingLocalRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AcceptTermsRoute: AcceptTermsRoute,
+  AppShellRoute: AppShellRoute,
   EnRoute: EnRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HomeRoute: HomeRoute,
