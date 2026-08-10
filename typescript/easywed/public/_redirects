@@ -1,8 +1,0 @@
-# Cloudflare Pages routing. Static files win over these rules, so every
-# prerendered page (/, /pl, /pl/venues, /home, ...) is served as real HTML and
-# only genuinely dynamic routes - /wedding/$id, /invite/$token - fall through.
-#
-# They fall through to the app shell rather than to index.html: index.html is
-# now the Polish landing, and using it as the fallback would flash the marketing
-# page before the planner hydrated on every deep link.
-/*  /app-shell.html  200

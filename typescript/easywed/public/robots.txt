@@ -8,9 +8,16 @@ Disallow: /invite/
 # Auth callbacks carry tokens in the URL fragment and query.
 Disallow: /auth/
 
-# Note what is deliberately NOT disallowed: /home, /login, /signup, /settings
-# and /wedding/ all serve a noindex meta tag instead. Disallow and noindex do
-# not stack - a blocked URL cannot be fetched, so the noindex is never read and
+# Wedding ids are dynamic, so there is no prerendered HTML for them and they
+# fall back to index.html - which is the landing, and says index,follow. Block
+# the crawl rather than serve marketing copy under a wedding URL. /wedding/local
+# is static and prerendered, so it is allowed through to be read as noindex.
+Disallow: /wedding/
+Allow: /wedding/local
+
+# Note what is deliberately NOT disallowed: /home, /login, /signup and /settings
+# are prerendered with a noindex meta tag instead. Disallow and noindex do not
+# stack - a blocked URL cannot be fetched, so the noindex is never read and
 # Google keeps listing the bare URL from inbound links. That is exactly how
 # /home, /login and /wedding/local ended up in the index with zero clicks.
 # Letting these be crawled is what gets them removed. They render nothing
