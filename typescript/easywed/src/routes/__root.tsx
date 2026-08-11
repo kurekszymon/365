@@ -76,10 +76,17 @@ export const Route = createRootRoute({
         {
           charSet: "utf-8",
         },
+        // Deliberately no maximum-scale / user-scalable=no. Blocking pinch-zoom
+        // is a WCAG 1.4.4 failure, and it was never what protected the planner:
+        // the canvas claims its own two-finger gesture through
+        // `touch-action: none` (the `touch-none` class on the Canvas container
+        // and every draggable), which is what stops the browser applying its
+        // pan/zoom there. iOS Safari has ignored these two directives since
+        // iOS 10 regardless, so they only ever bound Android Chrome - where
+        // they cost zoom on the guest list, forms and dialogs for nothing.
         {
           name: "viewport",
-          content:
-            "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
+          content: "width=device-width, initial-scale=1",
         },
         {
           title,
