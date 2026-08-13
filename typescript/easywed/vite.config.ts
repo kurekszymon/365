@@ -18,6 +18,7 @@ const LOCALES = ["pl", "en"] as const
 const MARKETING = [
   { sub: "", priority: 1.0 },
   { sub: "/venues", priority: 0.8 },
+  { sub: "/changelog", priority: 0.5 },
   { sub: "/privacy", priority: 0.3 },
   { sub: "/terms", priority: 0.3 },
 ]
@@ -65,7 +66,7 @@ const pages = [
         changefreq: "monthly" as const,
         alternateRefs: alternateRefs(sub),
       },
-    })),
+    }))
   ),
   ...APP_ROUTES.map((path) => ({
     path,

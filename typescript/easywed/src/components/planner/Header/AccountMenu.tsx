@@ -3,6 +3,7 @@ import {
   LogOutIcon,
   MenuIcon,
   SettingsIcon,
+  SparklesIcon,
   UserRoundIcon,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -34,7 +35,7 @@ import {
  * specifically about who you are rather than a general overflow.
  */
 export const AccountMenu = () => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const isMobile = useIsMobile()
 
   const session = useAuthStore((state) => state.session)
@@ -61,9 +62,23 @@ export const AccountMenu = () => {
         <DropdownMenuLabel>{displayName ?? label}</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {/* Above the account actions because it's the one entry that works the
-            same signed in or out. */}
+        {/* Above the account actions because these two work the same signed in
+            or out. New tab, like the legal links in Settings: reading the
+            release notes must never cost someone their planner state. The page
+            is language-pinned, so the link picks the locale the app is in. */}
         <ThemeSubmenu />
+        <DropdownMenuItem asChild>
+          <Link
+            to={
+              i18n.language.startsWith("pl") ? "/pl/changelog" : "/en/changelog"
+            }
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <SparklesIcon />
+            {t("account.changelog")}
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
 
         {session ? (

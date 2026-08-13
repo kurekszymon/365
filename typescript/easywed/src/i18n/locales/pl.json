@@ -537,6 +537,7 @@
   "members.set_name": "Ustaw nazwę",
   "members.change_name": "Zmień nazwę",
   "account.menu": "Konto",
+  "account.changelog": "Co nowego",
   "settings.title": "Ustawienia",
   "settings.back": "Wróć",
   "settings.display_name.label": "Nazwa wyświetlana",

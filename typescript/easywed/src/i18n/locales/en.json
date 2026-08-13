@@ -537,6 +537,7 @@
   "members.set_name": "Set your name",
   "members.change_name": "Change name",
   "account.menu": "Account",
+  "account.changelog": "What's new",
   "settings.title": "Settings",
   "settings.back": "Back",
   "settings.display_name.label": "Display name",

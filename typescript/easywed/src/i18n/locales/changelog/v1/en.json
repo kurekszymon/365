@@ -1,0 +1,11 @@
+{
+  "title": "We launched!",
+  "summary": "easywed. is a wedding seating planner: draw your reception hall, arrange the tables in it, and seat every guest - in the browser, together with your partner, with no spreadsheet in sight. Here is everything the first version does.",
+  "i1": "Plan your hall on a drag-and-drop canvas - set its size, add round and rectangular tables with their own capacity, and place the dance floor, bar and other fixtures around them.",
+  "i2": "Keep the whole guest list in one place, with dietary needs, and assign guests to seats by dragging them or picking from a list. The seating progress bar tells you who is still standing.",
+  "i3": "Import your guest list from a CSV or XLSX file - the wizard maps your columns and matches table names against the tables you already have - and export it back out, either as a flat re-importable file or as a report grouped by table.",
+  "i4": "Ask the built-in assistant to lay out the hall, add tables or seat people, and watch it happen on the canvas.",
+  "i5": "Share a wedding with your partner, family or planner by invite link, so everyone works on the same plan.",
+  "i6": "Keep track of what still needs doing with reminders, and print a clean seating report for the venue and the kitchen.",
+  "i7": "Try everything without an account - guest mode keeps the plan on your device - then sign in to save it to the cloud. Available in Polish and English, with three colour themes."
+}

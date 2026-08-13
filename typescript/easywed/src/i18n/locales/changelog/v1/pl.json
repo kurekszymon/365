@@ -1,0 +1,11 @@
+{
+  "title": "Startujemy!",
+  "summary": "easywed. to planer rozsadzenia gości weselnych: rysujesz swoją salę, ustawiasz w niej stoły i sadzasz przy nich gości - w przeglądarce, razem z drugą połówką, bez żadnego arkusza kalkulacyjnego. Oto wszystko, co potrafi pierwsza wersja.",
+  "i1": "Zaplanuj salę na przeciąganej kanwie - ustaw jej wymiary, dodaj okrągłe i prostokątne stoły z własną liczbą miejsc, a wokół nich parkiet, bar i inne elementy sali.",
+  "i2": "Trzymaj całą listę gości w jednym miejscu, razem z dietami, i sadzaj gości przeciągnięciem albo wyborem z listy. Pasek postępu pokazuje, kto wciąż stoi.",
+  "i3": "Wczytaj listę gości z pliku CSV lub XLSX - kreator dopasuje Twoje kolumny i połączy nazwy stołów z tymi, które już masz - a potem wyeksportuj ją z powrotem: jako płaski plik gotowy do ponownego wczytania albo jako raport pogrupowany po stołach.",
+  "i4": "Poproś wbudowanego asystenta, żeby rozstawił salę, dodał stoły albo posadził gości, i patrz, jak dzieje się to na kanwie.",
+  "i5": "Udostępnij wesele drugiej połówce, rodzinie albo wedding plannerce linkiem z zaproszeniem, żeby wszyscy pracowali na tym samym planie.",
+  "i6": "Pilnuj tego, co jeszcze zostało do zrobienia, dzięki przypomnieniom, i wydrukuj czytelny raport rozsadzenia dla sali i kuchni.",
+  "i7": "Sprawdź wszystko bez konta - tryb gościa trzyma plan na Twoim urządzeniu - a potem zaloguj się, żeby zapisać go w chmurze. Aplikacja jest po polsku i po angielsku, w trzech motywach kolorystycznych."
+}

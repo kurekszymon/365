@@ -25,10 +25,12 @@ import { Route as WeddingIdRouteImport } from './routes/wedding.$id'
 import { Route as PlVenuesRouteImport } from './routes/pl_.venues'
 import { Route as PlTermsRouteImport } from './routes/pl_.terms'
 import { Route as PlPrivacyRouteImport } from './routes/pl_.privacy'
+import { Route as PlChangelogRouteImport } from './routes/pl_.changelog'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as EnVenuesRouteImport } from './routes/en_.venues'
 import { Route as EnTermsRouteImport } from './routes/en_.terms'
 import { Route as EnPrivacyRouteImport } from './routes/en_.privacy'
+import { Route as EnChangelogRouteImport } from './routes/en_.changelog'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as WeddingLocalIndexRouteImport } from './routes/wedding.local/index'
 import { Route as WeddingIdIndexRouteImport } from './routes/wedding.$id/index'
@@ -115,6 +117,11 @@ const PlPrivacyRoute = PlPrivacyRouteImport.update({
   path: '/pl/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlChangelogRoute = PlChangelogRouteImport.update({
+  id: '/pl_/changelog',
+  path: '/pl/changelog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InviteTokenRoute = InviteTokenRouteImport.update({
   id: '/invite/$token',
   path: '/invite/$token',
@@ -133,6 +140,11 @@ const EnTermsRoute = EnTermsRouteImport.update({
 const EnPrivacyRoute = EnPrivacyRouteImport.update({
   id: '/en_/privacy',
   path: '/en/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnChangelogRoute = EnChangelogRouteImport.update({
+  id: '/en_/changelog',
+  path: '/en/changelog',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
@@ -174,10 +186,12 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/en/changelog': typeof EnChangelogRoute
   '/en/privacy': typeof EnPrivacyRoute
   '/en/terms': typeof EnTermsRoute
   '/en/venues': typeof EnVenuesRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/pl/changelog': typeof PlChangelogRoute
   '/pl/privacy': typeof PlPrivacyRoute
   '/pl/terms': typeof PlTermsRoute
   '/pl/venues': typeof PlVenuesRoute
@@ -201,10 +215,12 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/en/changelog': typeof EnChangelogRoute
   '/en/privacy': typeof EnPrivacyRoute
   '/en/terms': typeof EnTermsRoute
   '/en/venues': typeof EnVenuesRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/pl/changelog': typeof PlChangelogRoute
   '/pl/privacy': typeof PlPrivacyRoute
   '/pl/terms': typeof PlTermsRoute
   '/pl/venues': typeof PlVenuesRoute
@@ -227,10 +243,12 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/en_/changelog': typeof EnChangelogRoute
   '/en_/privacy': typeof EnPrivacyRoute
   '/en_/terms': typeof EnTermsRoute
   '/en_/venues': typeof EnVenuesRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/pl_/changelog': typeof PlChangelogRoute
   '/pl_/privacy': typeof PlPrivacyRoute
   '/pl_/terms': typeof PlTermsRoute
   '/pl_/venues': typeof PlVenuesRoute
@@ -256,10 +274,12 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/auth/callback'
+    | '/en/changelog'
     | '/en/privacy'
     | '/en/terms'
     | '/en/venues'
     | '/invite/$token'
+    | '/pl/changelog'
     | '/pl/privacy'
     | '/pl/terms'
     | '/pl/venues'
@@ -283,10 +303,12 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/auth/callback'
+    | '/en/changelog'
     | '/en/privacy'
     | '/en/terms'
     | '/en/venues'
     | '/invite/$token'
+    | '/pl/changelog'
     | '/pl/privacy'
     | '/pl/terms'
     | '/pl/venues'
@@ -308,10 +330,12 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/auth/callback'
+    | '/en_/changelog'
     | '/en_/privacy'
     | '/en_/terms'
     | '/en_/venues'
     | '/invite/$token'
+    | '/pl_/changelog'
     | '/pl_/privacy'
     | '/pl_/terms'
     | '/pl_/venues'
@@ -336,10 +360,12 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  EnChangelogRoute: typeof EnChangelogRoute
   EnPrivacyRoute: typeof EnPrivacyRoute
   EnTermsRoute: typeof EnTermsRoute
   EnVenuesRoute: typeof EnVenuesRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  PlChangelogRoute: typeof PlChangelogRoute
   PlPrivacyRoute: typeof PlPrivacyRoute
   PlTermsRoute: typeof PlTermsRoute
   PlVenuesRoute: typeof PlVenuesRoute
@@ -461,6 +487,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlPrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pl_/changelog': {
+      id: '/pl_/changelog'
+      path: '/pl/changelog'
+      fullPath: '/pl/changelog'
+      preLoaderRoute: typeof PlChangelogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/invite/$token': {
       id: '/invite/$token'
       path: '/invite/$token'
@@ -487,6 +520,13 @@ declare module '@tanstack/react-router' {
       path: '/en/privacy'
       fullPath: '/en/privacy'
       preLoaderRoute: typeof EnPrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/en_/changelog': {
+      id: '/en_/changelog'
+      path: '/en/changelog'
+      fullPath: '/en/changelog'
+      preLoaderRoute: typeof EnChangelogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/callback': {
@@ -568,10 +608,12 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  EnChangelogRoute: EnChangelogRoute,
   EnPrivacyRoute: EnPrivacyRoute,
   EnTermsRoute: EnTermsRoute,
   EnVenuesRoute: EnVenuesRoute,
   InviteTokenRoute: InviteTokenRoute,
+  PlChangelogRoute: PlChangelogRoute,
   PlPrivacyRoute: PlPrivacyRoute,
   PlTermsRoute: PlTermsRoute,
   PlVenuesRoute: PlVenuesRoute,
