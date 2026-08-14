@@ -80,6 +80,12 @@ export function VenueLanding({ lang }: { lang: Lang }) {
           </p>
           <nav className="flex items-center gap-6">
             <Link
+              to={lang === "pl" ? "/pl/changelog" : "/en/changelog"}
+              className="transition-colors hover:text-foreground"
+            >
+              {t("landing.footer.changelog", { lng: lang })}
+            </Link>
+            <Link
               to={lang === "pl" ? "/pl/terms" : "/en/terms"}
               className="transition-colors hover:text-foreground"
             >

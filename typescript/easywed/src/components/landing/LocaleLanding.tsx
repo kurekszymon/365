@@ -95,6 +95,12 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
               {t("landing.footer.venues", { lng: lang })}
             </Link>
             <Link
+              to={lang === "pl" ? "/pl/changelog" : "/en/changelog"}
+              className="transition-colors hover:text-foreground"
+            >
+              {t("landing.footer.changelog", { lng: lang })}
+            </Link>
+            <Link
               to={lang === "pl" ? "/pl/terms" : "/en/terms"}
               className="transition-colors hover:text-foreground"
             >
