@@ -1,11 +1,11 @@
 {
   "title": "Startujemy!",
-  "summary": "easywed. to planer rozsadzenia gości weselnych: rysujesz swoją salę, ustawiasz w niej stoły i sadzasz przy nich gości - w przeglądarce, razem z drugą połówką, bez żadnego arkusza kalkulacyjnego. Oto wszystko, co potrafi pierwsza wersja.",
-  "i1": "Zaplanuj salę na przeciąganej kanwie - ustaw jej wymiary, dodaj okrągłe i prostokątne stoły z własną liczbą miejsc, a wokół nich parkiet, bar i inne elementy sali.",
-  "i2": "Trzymaj całą listę gości w jednym miejscu, razem z dietami, i sadzaj gości przeciągnięciem albo wyborem z listy. Pasek postępu pokazuje, kto wciąż stoi.",
-  "i3": "Wczytaj listę gości z pliku CSV lub XLSX - kreator dopasuje Twoje kolumny i połączy nazwy stołów z tymi, które już masz - a potem wyeksportuj ją z powrotem: jako płaski plik gotowy do ponownego wczytania albo jako raport pogrupowany po stołach.",
-  "i4": "Poproś wbudowanego asystenta, żeby rozstawił salę, dodał stoły albo posadził gości, i patrz, jak dzieje się to na kanwie.",
-  "i5": "Udostępnij wesele drugiej połówce, rodzinie albo wedding plannerce linkiem z zaproszeniem, żeby wszyscy pracowali na tym samym planie.",
-  "i6": "Pilnuj tego, co jeszcze zostało do zrobienia, dzięki przypomnieniom, i wydrukuj czytelny raport rozsadzenia dla sali i kuchni.",
-  "i7": "Sprawdź wszystko bez konta - tryb gościa trzyma plan na Twoim urządzeniu - a potem zaloguj się, żeby zapisać go w chmurze. Aplikacja jest po polsku i po angielsku, w trzech motywach kolorystycznych."
+  "summary": "easywed. to planer rozsadzenia gości weselnych. Rysujesz swoją salę, ustawiasz w niej stoły i sadzasz przy nich wszystkich - w przeglądarce, razem z drugą połówką, bez żadnego arkusza kalkulacyjnego. Oto, co potrafi pierwsza wersja.",
+  "i1": "Narysuj salę w jej wymiarach, a potem przeciągnij na nią okrągłe i prostokątne stoły i ustaw, ile osób siada przy każdym. Parkiet, bar i całą resztę dodajesz tak samo.",
+  "i2": "Cała lista gości w jednym miejscu, razem z dietami. Przeciągnij gościa na miejsce albo wybierz go z listy, a pasek postępu przypomni, ile osób wciąż stoi.",
+  "i3": "Masz już listę w arkuszu? Wczytaj ją z pliku CSV albo XLSX - kreator zapyta, która kolumna jest która, i połączy nazwy stołów z tymi, które już masz. W drugą stronę też działa: płaski plik gotowy do ponownego wczytania albo uporządkowany raport z podziałem na stoły.",
+  "i4": "Nie wiesz, od czego zacząć? Poproś asystenta, żeby rozstawił salę, dodał kilka stołów albo posadził gości, i patrz, jak sala zapełnia się na Twoich oczach.",
+  "i5": "Wyślij link z zaproszeniem drugiej połówce, mamie albo wedding plannerowi - i pracujecie już na jednym planie.",
+  "i6": "Przypomnienia pilnują wszystkiego, co jeszcze zostało do zrobienia, a raport rozsadzenia wydrukujesz na tyle czytelnie, żeby rozdać go dalej - sali, kwiaciarni, która układa kwiaty na stołach, i kuchni, z dietami wypisanymi przy nazwiskach: vegan, bez glutenu i resztą, żeby każde danie trafiło na właściwe miejsce.",
+  "i7": "Wszystko możesz sprawdzić bez zakładania konta - tryb gościa trzyma plan na Twoim urządzeniu - a zalogujesz się później, żeby zapisać go w chmurze. Po polsku i po angielsku, w trzech motywach kolorystycznych."
 }
