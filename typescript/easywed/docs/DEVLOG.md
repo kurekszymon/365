@@ -2,6 +2,32 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 15.08
+
+- add sign up link to landing page
+- a failed weddings read no longer renders as "no weddings yet". the `.then` logged the error and carried on into `(data ?? [])`, so a network blip or an rls hiccup put a returning user in front of the empty state - indistinguishable from having lost the lot. list has its own error branch now, with a retry that re-runs the effect, plus a toast
+- and the create button is no longer a dead click on failure - it just re-enabled itself and said nothing. same `toast.error` pattern as `run()` in `mutations/shared.ts`
+- `launchReviewed: true` - read the filled-in legal config end to end, so `legal:check` stops failing and the docs are live as binding
+
+### 14.08
+
+- changelog linked from both landings, next to the existing footer links
+
+### 13.08
+
+- changelog page at `/pl/changelog` and `/en/changelog`, linked from the account menu, prerendered with the rest of the marketing pages and in the sitemap at 0.5. routes are `pl_.`/`en_.` - the locale landing has no `<Outlet />`, so they must not nest under it
+- release notes live in their own `changelog` i18n namespace, one folder per release assembled by a glob, so a version's strings sit together in a small file with both languages side by side instead of growing the app's locale files by a block per release. `page/` contributes its keys unprefixed, being page chrome rather than a release
+- `releases.ts` is the release table, kept apart from the component so `changelogKeys.test.ts` can check both locales against it - same split as `legalStructure.ts`. a missing key doesn't crash, i18next just prints it, and a public page ends up reading "v1.i3"
+
+### 12.08
+
+- security headers via `public/_headers` - hsts with preload, `X-Frame-Options: DENY`, nosniff, `strict-origin-when-cross-origin`, and a permissions-policy that turns camera/mic/geolocation off
+- the csp is **report-only** on purpose: violations land in the console, nothing is blocked, and there's no report collector wired up. `script-src` still needs `unsafe-inline`, so enforcing it today would buy less than it looks like. read the notes above `connect-src` before renaming the header
+
+### 11.08
+
+- dropped `maximum-scale=1, user-scalable=no` from the viewport meta. blocking pinch-zoom is a wcag 1.4.4 failure and it was never the thing protecting the planner - the canvas claims its own two-finger gesture through `touch-action: none`. ios safari has ignored both directives since ios 10 anyway, so they only ever bound android chrome, where they cost zoom on the guest list, forms and dialogs for nothing
+
 ### 10.08
 
 -- deploy
@@ -10,6 +36,13 @@
 - the spa shell was what overwrote it. the plugin appends the shell to `pages` keyed on `spa.maskPath`, so at the default `/` it collided with the homepage entry and won - `/` came out 4kB of scripts against `/pl`'s 28kB of content. shell moved to `app-shell.html`, and since `maskPath` has to resolve to a real 200 route there's a stub route for it
 - head defaults to `noindex` and the marketing routes opt back in. robots.txt stops disallowing `/home`, `/login`, `/settings`, `/wedding/` - a blocked url is never fetched, so the noindex is never read and google keeps listing the bare url from inbound links. that's exactly how those got indexed with zero clicks
 - `autoStaticPathsDiscovery` (on by default) and `crawlLinks` off - between them every static route was being prerendered _and_ published in the sitemap while its own html said noindex. homepage title is no longer the bare wordmark, and `/` canonicals to `/pl` since it serves the same bytes
+
+---
+
+- the `_redirects` wildcard had to go: pages evaluates `_redirects` _before_ static assets and ignores the `200` rewrite, 308ing to the extensionless path, which re-matches the wildcard. every url on the site - robots.txt and sitemap.xml included - was in a redirect loop
+- shell emitted as `404.html` instead, the only hook a static pages deploy gives you for "serve this when no asset matches". left alone pages falls back to `index.html`, which is now a prerendered page - it dehydrates with the index route already matched, so hydrating it at `/wedding/$id` hands the router state for a route the url isn't on. the shell dehydrates with `__root__` alone, which is what makes it safe anywhere. the cost is dynamic deep links answering 404 while rendering fine, which is harmless for `/wedding/$id` and `/invite/$token` - private links nobody should be indexing
+- app surfaces (`/home`, `/login`, `/signup`, `/settings`, `/accept-terms`, the password ones, `/wedding/local`) prerendered by hand and excluded from the sitemap. a crawler can only read a noindex off a page it can actually fetch, and without them the route falls through to the spa fallback and answers with indexable marketing copy
+- `/wedding/` disallowed after all: wedding ids are dynamic, there's no prerendered html for them, and the fallback is the landing saying index,follow. better to block the crawl than serve marketing copy under a wedding url. `/wedding/local` is static, so it's allowed through to be read as noindex
 
 ### 09.08
 
