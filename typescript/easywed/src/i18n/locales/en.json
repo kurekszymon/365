@@ -712,6 +712,7 @@
   "guests.progress": "Seated",
   "guests.search_placeholder": "Search guest…",
   "guests.assign.title": "Seat {{name}}",
+  "guests.assign.action": "Seat guest",
   "guests.assign.no_tables": "No tables yet - add one from the hall first.",
   "guests.assign.pick_seat": "Pick a seat",
   "guests.filter.all": "All {{count}}",

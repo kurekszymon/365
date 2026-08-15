@@ -9,8 +9,11 @@ type OnboardingStepRowProps = {
   /** Live state under the title - "3 tables on the plan", "0/12 seated". */
   detail: string
   done: boolean
-  ctaLabel: string
-  onCta: () => void
+  // Omitted when the step has nothing to act on yet - "seat everyone" with an
+  // empty guest list is a real state, and a button that can only open a list
+  // of nobody is worse than no button.
+  ctaLabel?: string
+  onCta?: () => void
 }
 
 export const OnboardingStepRow = ({
@@ -54,7 +57,7 @@ export const OnboardingStepRow = ({
 
       {/* The CTA retires with the step: a finished row is a receipt, not an
           action, and three permanent buttons would out-shout the canvas. */}
-      {!done && (
+      {!done && ctaLabel && onCta && (
         <Button size="xs" variant="outline" onClick={onCta}>
           {ctaLabel}
         </Button>

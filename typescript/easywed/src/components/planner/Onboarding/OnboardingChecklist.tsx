@@ -44,6 +44,7 @@ export const OnboardingChecklist = () => {
 
   const isMobile = useIsMobile()
   const openTab = useEntityListStore((s) => s.openTab)
+  const hintSeating = useEntityListStore((s) => s.hintSeating)
   const openDialog = useDialogStore((s) => s.open)
 
   const seated = guests.filter((g) => g.tableId !== null).length
@@ -170,7 +171,16 @@ export const OnboardingChecklist = () => {
               }
               done={hasGuests}
               ctaLabel={t("onboarding.guests.cta")}
-              onCta={() => openDialog("Guest.Add")}
+              // Panel *and* dialog: the dialog alone adds one guest and closes
+              // onto the same bare canvas, teaching nothing about where the
+              // list lives. Opening the panel behind it means dismissing the
+              // dialog reveals the guest that was just added, in the place
+              // guests are managed from - and the panel's own Add / Import
+              // buttons for the next one.
+              onCta={() => {
+                openTab("guests")
+                openDialog("Guest.Add")
+              }}
             />
             <OnboardingStepRow
               index={3}
@@ -180,8 +190,13 @@ export const OnboardingChecklist = () => {
                 seated_count: seated,
               })}
               done={allSeated}
-              ctaLabel={t("onboarding.seats.cta")}
-              onCta={() => openTab("guests")}
+              // No one to seat yet - step 2's button is the one to press, and
+              // two live buttons would split the instruction.
+              ctaLabel={hasGuests ? t("onboarding.seats.cta") : undefined}
+              // Not openTab: with the guest panel already open on this tab
+              // that lands as a dead click. hintSeating flashes the per-guest
+              // seat buttons, which is where seating actually happens.
+              onCta={hasGuests ? hintSeating : undefined}
             />
           </ul>
         </>

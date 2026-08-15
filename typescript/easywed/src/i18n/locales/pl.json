@@ -721,6 +721,7 @@
   "guests.progress": "Rozsadzeni",
   "guests.search_placeholder": "Szukaj gościa…",
   "guests.assign.title": "Posadź: {{name}}",
+  "guests.assign.action": "Posadź gościa",
   "guests.assign.no_tables": "Brak stołów - najpierw dodaj stół w sali.",
   "guests.assign.pick_seat": "Wybierz miejsce",
   "guests.filter.all": "Wszyscy {{count}}",

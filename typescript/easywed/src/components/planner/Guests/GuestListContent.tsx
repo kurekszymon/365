@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
 import {
@@ -8,6 +8,7 @@ import {
   PlusIcon,
   SearchIcon,
   Trash2Icon,
+  UtensilsIcon,
   XIcon,
 } from "lucide-react"
 import { getInitials } from "../Canvas/utils"
@@ -18,6 +19,7 @@ import type { Guest } from "@/stores/planner.store"
 import type { TagTone } from "@/lib/tagTone"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useDialogStore } from "@/stores/dialog.store"
+import { useEntityListStore } from "@/stores/entityList.store"
 import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -138,6 +140,18 @@ export const GuestListContent = () => {
   const deleteGuest = usePlannerStore((state) => state.deleteGuest)
   const openDialog = useDialogStore((state) => state.open)
   const canEdit = useGlobalStore(selectCanEdit)
+
+  // Onboarding's "seat everyone" step asks for this highlight; it fades on its
+  // own so the row settles back to three matching icons. The store owns the
+  // flag rather than this component so the request survives the panel being
+  // opened by the same click.
+  const seatHint = useEntityListStore((state) => state.seatHint)
+  const clearSeatHint = useEntityListStore((state) => state.clearSeatHint)
+  useEffect(() => {
+    if (!seatHint) return
+    const timer = setTimeout(clearSeatHint, 2600)
+    return () => clearTimeout(timer)
+  }, [seatHint, clearSeatHint])
 
   const tableById = useMemo(
     () => new Map(tables.map((table, index) => [table.id, { table, index }])),
@@ -375,6 +389,35 @@ export const GuestListContent = () => {
                 </button>
                 {canEdit && (
                   <>
+                    {/* Seating is the row's primary action, but the row itself
+                        was its only trigger - and next to an explicit pencil
+                        and bin, a bare row reads as "open details", not "sit
+                        this guest down". Same handler as the row; this just
+                        makes the affordance sayable. Tinted, unlike its two
+                        neighbours, because it is the action the guest list
+                        exists for.
+
+                        Utensils, not a chair: it is already this app's table
+                        icon (sidebar tab, table list rows), seating means
+                        putting a guest at a table, and lucide's chairs are
+                        dense enough at size-4 to read as filled next to the
+                        line-weight pencil and bin. Same muted palette as those
+                        two - it sits in their row, so a tint of its own just
+                        reads as a mismatch. The onboarding hint below is what
+                        picks it out, and only for a moment. */}
+                    <button
+                      type="button"
+                      onClick={() => setAssigningGuest(guest)}
+                      aria-label={t("guests.assign.action")}
+                      className={cn(
+                        "flex size-9 shrink-0 items-center justify-center rounded-full transition-colors",
+                        seatHint
+                          ? "animate-pulse bg-primary/15 text-primary ring-2 ring-primary/40"
+                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                      )}
+                    >
+                      <UtensilsIcon className="size-4" />
+                    </button>
                     <button
                       type="button"
                       onClick={() =>
