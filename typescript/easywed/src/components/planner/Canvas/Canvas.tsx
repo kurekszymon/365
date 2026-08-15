@@ -55,6 +55,7 @@ import { useClipboardStore } from "@/stores/clipboard.store"
 import { useElementSize } from "@/hooks/useElementSize"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 import { useOpenHalls } from "@/hooks/useOpenHalls"
+import { OnboardingChecklist } from "@/components/planner/Onboarding/OnboardingChecklist"
 
 export const Canvas = () => {
   const { t } = useTranslation()
@@ -536,6 +537,8 @@ export const Canvas = () => {
         )}
 
         <ShapeEditToolbar />
+
+        <OnboardingChecklist />
 
         {!isMobile && (
           <>
