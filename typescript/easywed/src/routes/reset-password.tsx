@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { supabase } from "@/lib/supabase"
+import { authErrorKey } from "@/lib/auth/authErrors"
 import { useAuthStore } from "@/stores/auth.store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/reset-password")({
 type Status =
   | { kind: "idle" }
   | { kind: "loading" }
-  | { kind: "error"; message: string }
+  | { kind: "error"; messageKey: string }
 
 /**
  * Where the recovery email lands.
@@ -35,9 +36,10 @@ function ResetPassword() {
   const [confirmation, setConfirmation] = useState("")
   const [status, setStatus] = useState<Status>({ kind: "idle" })
 
+  // Supabase's own message is English-only, so it is logged rather than shown.
   const handleError = (err: unknown) => {
-    const message = err instanceof Error ? err.message : String(err)
-    setStatus({ kind: "error", message })
+    console.error(err)
+    setStatus({ kind: "error", messageKey: authErrorKey(err) })
   }
 
   const savePassword = async () => {
@@ -137,9 +139,10 @@ function ResetPassword() {
 
             {/* Length and strength are the server's call - config.toml sets
                 minimum_password_length and password_requirements, and
-                duplicating either here would drift the moment one changes. */}
+                duplicating either here would drift the moment one changes.
+                authErrorKey translates the rejection without naming numbers. */}
             {status.kind === "error" && (
-              <p className="text-sm text-destructive">{status.message}</p>
+              <p className="text-sm text-destructive">{t(status.messageKey)}</p>
             )}
           </>
         )}

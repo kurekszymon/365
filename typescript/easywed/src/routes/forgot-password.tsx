@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Link, createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { supabase } from "@/lib/supabase"
+import { authErrorKey } from "@/lib/auth/authErrors"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,7 +15,7 @@ type Status =
   | { kind: "idle" }
   | { kind: "loading" }
   | { kind: "success" }
-  | { kind: "error"; message: string }
+  | { kind: "error"; messageKey: string }
 
 function ForgotPassword() {
   const { t } = useTranslation()
@@ -27,9 +28,10 @@ function ForgotPassword() {
   const resetUrl = () =>
     new URL("/reset-password", window.location.origin).toString()
 
+  // Supabase's own message is English-only, so it is logged rather than shown.
   const handleError = (err: unknown) => {
-    const message = err instanceof Error ? err.message : String(err)
-    setStatus({ kind: "error", message })
+    console.error(err)
+    setStatus({ kind: "error", messageKey: authErrorKey(err) })
   }
 
   const sendLink = async () => {
@@ -88,12 +90,13 @@ function ForgotPassword() {
             of a list of emails is a customer. Supabase already returns no error
             for an unknown address, so this only has to avoid inventing one.
             The errors below are transport and rate-limit failures, which say
-            nothing about the address, so showing them is not the same leak. */}
+            nothing about the address, so showing them is not the same leak -
+            and authErrorKey deliberately has no "no such user" message. */}
         {status.kind === "success" && (
           <p className="text-sm text-green-600">{t("auth.reset_link_sent")}</p>
         )}
         {status.kind === "error" && (
-          <p className="text-sm text-destructive">{status.message}</p>
+          <p className="text-sm text-destructive">{t(status.messageKey)}</p>
         )}
 
         <p className="text-center text-sm text-muted-foreground">

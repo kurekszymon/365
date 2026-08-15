@@ -3,6 +3,7 @@ import { Link, createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { supabase } from "@/lib/supabase"
 import { redirectAuthedAwayFromLogin } from "@/lib/auth/guards"
+import { authErrorKey } from "@/lib/auth/authErrors"
 import { TERMS_VERSION } from "@/lib/legal/dates"
 import { rememberAcceptedTerms } from "@/lib/sync/termsAcceptance"
 import { Button } from "@/components/ui/button"
@@ -28,7 +29,7 @@ type Status =
   | { kind: "idle" }
   | { kind: "loading" }
   | { kind: "success" }
-  | { kind: "error"; message: string }
+  | { kind: "error"; messageKey: string }
 
 function Signup() {
   const { t } = useTranslation()
@@ -44,9 +45,10 @@ function Signup() {
     return url.toString()
   }
 
+  // Supabase's own message is English-only, so it is logged rather than shown.
   const handleError = (err: unknown) => {
-    const message = err instanceof Error ? err.message : String(err)
-    setStatus({ kind: "error", message })
+    console.error(err)
+    setStatus({ kind: "error", messageKey: authErrorKey(err) })
   }
 
   const signUp = async () => {
@@ -179,7 +181,7 @@ function Signup() {
           <p className="text-sm text-green-600">{t("auth.email_sent")}</p>
         )}
         {status.kind === "error" && (
-          <p className="text-sm text-destructive">{status.message}</p>
+          <p className="text-sm text-destructive">{t(status.messageKey)}</p>
         )}
 
         <p className="text-center text-sm text-muted-foreground">
