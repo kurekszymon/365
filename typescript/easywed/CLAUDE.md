@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-Package manager is **pnpm** (see `pnpm-lock.lock`). Scripts are defined in `package.json`:
+Package manager is **pnpm** (see `pnpm-lock.yaml`). Scripts are defined in `package.json`:
 
 - `pnpm dev` - Vite dev server on port 3000
 - `pnpm run build` - production build
@@ -12,6 +12,8 @@ Package manager is **pnpm** (see `pnpm-lock.lock`). Scripts are defined in `pack
 - `pnpm test` - `vitest run`. For a single file: `pnpm test path/to/file.test.ts`. For watch mode: `pnpm dlx vitest`
 - `pnpm run lint` - ESLint (config: `eslint.config.js`, extends `@tanstack/eslint-config`)
 - `pnpm run format` - Prettier
+- `pnpm run legal:check` - `scripts/check-legal-placeholders.mjs`; fails while `src/lib/legal/config.ts` still has `[PLACEHOLDER]`s or `launchReviewed: false`
+- `pnpm run deploy:pages` - legal check → build → `wrangler pages deploy .output/public` (Cloudflare Pages)
 
 Supabase local stack (see `docs/supabase.md` for the full flow):
 
@@ -26,57 +28,116 @@ Supabase local stack (see `docs/supabase.md` for the full flow):
 
 ### Stack
 
-TanStack Start (not plain Vite+React) + React 19 + TypeScript. File-based routing via TanStack Router. Supabase for auth + Postgres + RLS. Zustand for client state. i18next for translations. shadcn/ui primitives under `src/components/ui/`.
+TanStack Start (not plain Vite+React) + React 19 + TypeScript. File-based routing via TanStack Router. Supabase for auth + Postgres + RLS. Zustand for client state. i18next for translations. shadcn/ui primitives under `src/components/ui/`. PostHog for product analytics. Deployed as a mostly-prerendered static site on Cloudflare Pages.
 
 `src/routeTree.gen.ts` is **generated** by `@tanstack/router-plugin` from files in `src/routes/`. Do not edit it by hand.
 
+### Two modes: guest (local) and account (cloud)
+
+The same planner UI serves both. `docs/guest-vs-account.md` is the feature matrix; the mechanics:
+
+- `src/lib/localWedding.ts` defines the sentinel `LOCAL_WEDDING_ID = "local"` plus `createLocalGatedStorage()`. The planner/global/reminders stores use `persist` with that gated storage, which **only writes to localStorage while the local wedding is the active one** - so editing a cloud wedding through the same store instances can't leak into the guest snapshot.
+- `/wedding/local` resets in-memory state, sets `role: "owner"`, and rehydrates from localStorage. `/wedding/$id` calls `loadWedding` instead.
+- Adopting a guest plan into an account goes through `src/lib/sync/migrateLocalWedding.ts` + `MigrateLocalWeddingDialog`, which writes the whole layout atomically via the `replace_planner_layout` RPC (`mutations/layout.ts`).
+
 ### Data flow: stores ↔ Supabase
 
-The app uses a specific pattern that spans three files and is easy to miss:
+The app uses a specific pattern that spans three places and is easy to miss:
 
-1. **Zustand stores** (`src/stores/*.ts`) hold the client state. `planner.store.ts` (tables/guests/hall), `reminders.store.ts`, `global.store.ts` (current `weddingId`), `auth.store.ts`, plus UI stores (`dialog`, `panel`, `view`, `entityList`).
-2. **`src/lib/sync/loadWedding.ts`** hydrates the planner/reminders stores from Supabase in one parallel `Promise.all` call, given a wedding id. Called from `src/routes/wedding.$id.tsx` with an `AbortController`.
-3. **`src/lib/sync/mutations.ts`** exports per-action functions (`insertTable`, `updateGuestTable`, `upsertHall`, …). Store actions optimistically update Zustand state first, then fire-and-forget the matching mutation (`void insertTable(...)`). The mutations currently only `console.error` on failure - there is no toast/rollback layer, so optimistic state can diverge from the DB on error. Keep this in mind when adding new mutations.
+1. **Zustand stores** (`src/stores/*.ts`) hold the client state. Domain: `planner.store.ts` (halls/tables/fixtures/guests/seats, ~1.1k lines - the big one), `reminders.store.ts`, `global.store.ts` (current `weddingId`, wedding name/date, `role`, members, viewport), `auth.store.ts`, `profile.store.ts` (display name + terms status). UI/tooling: `dialog`, `panel`, `view`, `entityList`, `clipboard`, `measures`, `print`, `theme`, `ai` (BYO-key settings), `aiChat`.
+2. **`src/lib/sync/loadWedding.ts`** hydrates the planner/reminders/global stores from Supabase in one parallel `Promise.all`, given a wedding id. Called from `src/routes/wedding.$id.tsx` with an `AbortController`.
+3. **`src/lib/sync/mutations/`** - one module per entity (`wedding`, `hall`, `tables`, `guests`, `fixtures`, `reminders`, `layout`), re-exported from `mutations/index.ts`. Store actions optimistically update Zustand state first, then fire-and-forget the matching mutation (`void insertTable(...)`).
 
-**`updateX` vs `saveX` split:** For tables and fixtures, `updateTable`/`updateFixture` are **local-only** state updates used for live preview while the user edits in an entity form. `saveTable`/`saveFixture` are the ones that call mutations and persist to Supabase. Do not treat the missing mutation call in `updateX` as a bug - it is by design.
+**Everything funnels through `run()` in `mutations/shared.ts`.** It is the contract, and it does four things:
+
+- returns `Promise<boolean>` - `true` = persisted, `false` = failed - so callers can chain on `ok`;
+- on failure (returned error *or* thrown/rejected promise) it `console.error`s and toasts `sync.save_failed` under a fixed toast id, so a burst of failed writes collapses into one toast;
+- short-circuits to `true` for the local wedding, before the Postgrest thenable is ever awaited - no request is sent in guest mode, and the optimistic `set()` + `persist` already counted as the write;
+- short-circuits to `false` with a `console.warn` (no toast) when `selectCanEdit` says the current role is read-only.
+
+There is still **no rollback layer**: a failed cloud write leaves optimistic state diverged from the DB until the next load. The toast is the only signal. `shared.ts` also owns the row mappers (`hallRow`/`tableRow`/`fixtureRow`), the `Geometry → Json` cast, and the table-name-parameterized `updatePos` / `markDeleted` / `markDeletedMany` helpers; it is deliberately **not** re-exported from the barrel.
 
 `global.store.ts` holds the current `weddingId`. Mutations read it via `getWeddingId()` to scope inserts; if none is loaded, they no-op with a warning.
 
-### Auth
+**`updateX` vs `saveX` split:** For tables and fixtures, `updateTable`/`updateFixture` are **local-only** state updates used for live preview while the user edits in an entity form. `saveTable`/`saveFixture` are the ones that call mutations and persist to Supabase. Do not treat the missing mutation call in `updateX` as a bug - it is by design. `saveTable` persists attributes + seat overrides + roster in one `save_table` transaction, because the two capacity triggers want opposite write orderings (see the comment in `mutations/tables.ts`).
 
-`src/components/auth/AuthGate.tsx` wraps the root route. It hydrates the Supabase session on mount, subscribes to `onAuthStateChange`, and redirects unauthenticated users to `/login` (allowlist: `PUBLIC_PATHS = ["/login", "/auth/callback"]`). The app renders nothing until `isReady` is true.
+### Roles and read-only mode
+
+`WeddingRole` is `owner | editor | viewer`. `selectCanEdit(state)` in `global.store.ts` mirrors the RLS predicate (`wedding_role(...) in ('owner','editor')`) and fails closed on `undefined` (pre-load *and* no-membership). The UI gates write affordances on it; `run()` re-checks as defence in depth. Guest mode carries role `"owner"`.
+
+### Auth and route guards
+
+`src/components/auth/AuthGate.tsx` wraps the root route. It hydrates the Supabase session, subscribes to `onAuthStateChange`, keeps the user's display name and terms status in sync, and calls `router.invalidate()` once ready - it **does not redirect**.
+
+Redirect decisions live in `src/lib/auth/guards.ts` and are called from route `beforeLoad`:
+
+- `requireAuth(nextPath)` - bails while `!isReady` (AuthGate's `invalidate()` re-runs it), else redirects to `/login?next=`.
+- `requireAcceptedTerms(pathname)` - mounted on the root route; bounces a signed-in user with an outstanding acceptance to `/accept-terms`. `TERMS_EXEMPT_PATHS` is load-bearing (legal docs, `/reset-password`) - read the comment before trimming it.
+- `redirectAuthedAwayFromLogin`, `sanitizeNextPath`.
+
+Both guards treat "not settled yet" (`!isReady`, `termsStatus === "unknown"`) as pass-through. `AuthGate`'s `PUBLIC_PATHS` is about rendering without waiting, not authorization.
 
 ### Supabase schema and RLS
 
-Schema lives in `supabase/migrations/` - six tables: `weddings`, `wedding_members`, `halls`, `tables`, `guests`, `reminders`. All tables have RLS enabled; access is gated by `public.is_wedding_member(wedding_id)` and `public.wedding_role(wedding_id)` helper functions (both `security definer` to avoid recursion through `wedding_members`' own policies).
+Schema lives in `supabase/migrations/`. Live tables: `weddings`, `wedding_members`, `halls`, `tables`, `fixtures`, `guests`, `reminders`, `wedding_invitations`, and `profiles` (1:1 with `auth.users`, outside the wedding tree). `invitation_orders` was created and later dropped (`20260804000001`) - ignore it.
+
+All tables have RLS enabled; access is gated by `public.is_wedding_member(wedding_id)` and `public.wedding_role(wedding_id)` helper functions (both `security definer` to avoid recursion through `wedding_members`' own policies).
 
 Key hardening already in place:
 
-- `weddings.owner_id` is immutable from the client, enforced by the `enforce_wedding_owner_immutable` trigger (migration `20260731000003`). The older `revoke update (owner_id) ... from authenticated` in `20260418000002` reads like it does this but is a **no-op**: hosted Supabase grants `authenticated` table-level UPDATE, and a column revoke can't subtract from a table grant. Same for `revoke update (id) on public.profiles` - harmless there, since the UPDATE policy's `with check` already pins the column. Ownership transfer must go through a `security definer` RPC.
-- Triggers handle `updated_at`, auto-insert the `owner` row into `wedding_members` on wedding creation, and enforce table capacity server-side (`enforce_table_capacity`).
+- `weddings.owner_id` is immutable from the client, enforced by the `enforce_wedding_owner_immutable` trigger (migration `20260731000003_leave_wedding.sql`). The older `revoke update (owner_id) ... from authenticated` in `20260418000002` reads like it does this but is a **no-op**: hosted Supabase grants `authenticated` table-level UPDATE, and a column revoke can't subtract from a table grant. Same for `revoke update (id) on public.profiles` - harmless there, since the UPDATE policy's `with check` already pins the column. Ownership transfer must go through a `security definer` RPC.
+- Triggers handle `updated_at`, auto-insert the `owner` row into `wedding_members` on wedding creation, and enforce table capacity server-side in both directions (`enforce_table_capacity`, `enforce_table_capacity_floor`).
 - CHECK constraints enforce enum-like fields (`shape`, `dietary`) at the DB layer - the TS unions in `planner.store.ts` mirror them.
+- Table/fixture deletes are **soft** (`deleted_at`; `loadWedding` filters `is null`). The one hard delete is inside the `replace_planner_layout` RPC.
 
-**Gotcha (from project memory):** `.insert().select()` chained together can fail RLS when the SELECT policy depends on a row inserted by an AFTER trigger. Split the insert and select, or run the select separately after the trigger has fired.
+**Gotchas:**
+
+- `.insert().select()` chained together can fail RLS when the SELECT policy depends on a row inserted by an AFTER trigger. Split the insert and select, or run the select separately after the trigger has fired.
+- Don't "fix" the linter warning about `anon` execute on `is_wedding_member` / `wedding_role` / `shares_wedding_with` - revoking it has segfaulted Postgres (see `20260806000001`).
 
 ### i18n
 
-`src/i18n/index.ts` initializes i18next with `LanguageDetector` and Suspense. Translations live in `src/i18n/locales/{en,pl}.json` as **flat dotted keys** (e.g. `"tables.guests_pick": "..."`), not nested objects. Polish plural rules need `_one`/`_few`/`_many` variants; English only uses `_one` + base key.
+`src/i18n/index.ts` initializes i18next with `LanguageDetector` and Suspense, `fallbackLng: "pl"`. Two namespaces:
+
+- `translation` - the app, from `src/i18n/locales/{en,pl}.json` as **flat dotted keys** (e.g. `"tables.guests_pick": "..."`), not nested objects.
+- `changelog` - assembled in `src/i18n/locales/changelog/index.ts` from one folder per release (`v1/`, `v1.1/`, plus `page/`). Referenced as `changelog:<key>`. Only the two marketing changelog pages read it; the menu label stays in `translation` as `account.changelog`.
+
+Polish plural rules need `_one`/`_few`/`_many` variants; English only uses `_one` + base key.
 
 When adding UI strings, add keys to **both** `en.json` and `pl.json`. Polish is the primary user-facing language.
 
 ### Routing
 
-`src/routes/`:
+`src/routes/` splits into a prerendered marketing site, the app, and auth flows.
 
-- `__root.tsx` - root layout, mounts `AuthGate`, devtools, tooltip provider
-- `index.tsx` - wedding list / landing
-- `login.tsx`, `auth.callback.tsx` - auth
-- `wedding.$id.tsx` - loads a wedding via `loadWedding` and renders `<Planner />`
-- `reminders/` - reminders subtree
+Marketing (locale-pinned, prerendered to real HTML - see `vite.config.ts`):
+
+- `index.tsx` - `/` is a language dispatcher that redirects to `/pl` or `/en` on hydration, but renders the Polish landing so crawlers get content.
+- `pl.tsx` / `en.tsx`, and the `_`-escaped siblings `pl_.venues`, `pl_.changelog`, `pl_.privacy`, `pl_.terms` (and the `en_.` set).
+
+App:
+
+- `__root.tsx` - root layout: `AuthGate`, `requireAcceptedTerms`, PostHog provider, devtools, tooltip provider, toaster.
+- `home.tsx` - the wedding list (the signed-in dashboard; **not** `/`).
+- `wedding.$id.tsx` - `requireAuth` + `loadWedding`, renders an `<Outlet />`; `wedding.$id/index.tsx` redirects to `wedding.$id/planner.tsx`, which renders `<Planner />`.
+- `wedding.local.tsx` + `wedding.local/` - the same shape for guest mode, no auth.
+- `settings.tsx`, `invite.$token.tsx` (redeems a `wedding_invitations` token via the `claim_wedding_invitation` RPC), `accept-terms.tsx`.
+- `app-shell.tsx` - renders nothing; it is the `spa.maskPath` target, emitted as `404.html` for Cloudflare's SPA fallback. Read the long comment in `vite.config.ts` before touching prerender/SPA config.
+
+Auth: `login.tsx`, `signup.tsx`, `forgot-password.tsx`, `reset-password.tsx`, `auth.callback.tsx`.
+
+Reminders are **not** a route - they're a tab in the planner sidebar (`components/reminders/`, `entityList.store.ts`).
 
 ### Planner (the main feature)
 
-`src/components/planner/` - split into `Canvas/` (dnd-kit drag surface for tables), `Header/`, `Sidebar/` (desktop rail + mobile bottom tab bar + entity list contents + add/edit dialogs), `Guests/` (guest list, seat-assign sheet, seating progress), and `EntityForms/` (the table/fixture/hall form contents, the add hub, the AI chat, and the mobile `MobilePanelDrawer` that hosts them; `EntityForms/fields/` holds reusable field components, e.g. `GuestAssignmentPicker.tsx`). The same form content renders in `Sidebar/EntityEditDialog` on desktop and `MobilePanelDrawer` on mobile via the shared `PanelBody`. Drag-and-drop uses `@dnd-kit/core`; table shapes are `round` or `rectangular` with `width/height` (round uses `width` as diameter).
+`src/components/planner/`:
+
+- `Canvas/` - the dnd-kit drag surface: halls (`HallView`, `HallSurface`, `HallOutline`), tables/fixtures (`DraggableTable`, `DraggableFixture`), seats (`TableSeats`, `seatLayout.ts`), plus the polygon `ShapeEditOverlay`, measuring tool, minimap, context menu, pan/zoom/snap/clipboard hooks.
+- `Header/`, `Sidebar/` (desktop rail + mobile bottom tab bar + entity list + add/edit dialogs), `Guests/` (guest list, seat-assign sheet, seating progress).
+- `EntityForms/` - table/fixture/hall form contents, the add hub, the AI chat panel, and the mobile `MobilePanelDrawer` that hosts them; `EntityForms/fields/` holds reusable field components (e.g. `GuestAssignmentPicker.tsx`, `TableSeatMap.tsx`). The same form content renders in `Sidebar/EntityEditDialog` on desktop and `MobilePanelDrawer` on mobile via the shared `PanelBody`.
+- `PlannerPrintView.tsx` + `usePrintShortcut.ts` - the print/PDF surface driven by `print.store.ts`.
+
+Multi-hall: entity `position` is **hall-local meters** (top-left origin); the hall's world position is added at render time, so moving a hall never rewrites its children. Table shapes are `round`, `rectangular`, or `custom` (polygon `Geometry`); round uses `width` as diameter. Rotation is only `0 | 90`.
 
 ### Dialogs
 
@@ -86,8 +147,20 @@ When adding UI strings, add keys to **both** `en.json` and `pl.json`. Polish is 
 
 ### Guest list import / export
 
-- **Export** (`src/lib/export/guestsCsv.ts`): two modes - `flat` (one header row, one guest per row) and `grouped` (section headings per table, ragged rows). Only **flat** is re-importable; grouped is a human-readable report. CSV is serialized by hand (small RFC-4180 helper), not a library.
+- **Export**: `src/lib/export/guests.ts` (grouping + sort helpers), `guestsCsv.ts`, `guestsPdf.ts`. CSV has two modes - `flat` (one header row, one guest per row) and `grouped` (section headings per table, ragged rows). Only **flat** is re-importable; grouped is a human-readable report. CSV is serialized by hand (small RFC-4180 helper), not a library. The PDF path renders `PlannerPrintView` through the browser's print dialog via `print.store.ts`.
 - **Import** (`src/lib/import/guestsImport.ts`): parses CSV **and** XLSX via **SheetJS**, which is the unmaintained npm `xlsx` replaced by the maintained CDN tarball (`package.json` → `"xlsx": "https://cdn.sheetjs.com/...tgz"`) and **lazy-loaded** inside `parseGuestFile` (`await import("xlsx")`) so it stays out of the main bundle. The CDN build is CJS, so resolve the API defensively (`mod.read ? mod : mod.default`). `buildGuests` matches table names case/diacritic-insensitively (incl. Polish `ł`) against existing tables, else leaves the guest unassigned - it never creates tables. The wizard expects a simple table with a header row; surface that in the UI rather than a generic "couldn't read" error.
+
+### AI assistant (BYO key)
+
+`src/lib/ai/` - the planner's chat assistant. The user supplies their own OpenAI-compatible endpoint + key + model (`ai.store.ts`, OpenRouter by default, llama.cpp presets included); calls go **browser → user's endpoint**, there is no server route. `runAgent.ts` streams via the Vercel AI SDK and drives a tool loop bounded by `stepCountIs(8)`; `tools.ts` mutates the planner store directly and routes destructive tools through a confirmation in `aiChat.store.ts`. The current layout is injected as a **user** message each turn (`buildLayoutMessage`), never into the system prompt, because it is full of user-supplied names - keep it that way. The key is plaintext in localStorage by design; that's disclosed in the setup UI.
+
+### Analytics and privacy
+
+`src/lib/analytics/track.ts` declares `AnalyticsEvents` as a **closed** map: every property is a count, enum, or boolean we write ourselves, so no user-typed string (guest/table/hall names, notes, AI prompts) can reach PostHog. Autocapture and cookies are off in `__root.tsx`; `scrubInviteTokens.ts` strips invite tokens (bearer credentials in the URL path) from events. If a new event needs a string, make it a literal union in that map.
+
+### Legal documents
+
+`src/lib/legal/config.ts` holds every legal *decision* (trader identity, effective dates, operational facts) in one file; `provider.ts` maps it to i18n interpolation vars and `dates.ts` formats per locale. Prose lives in the locale files. `pnpm run legal:check` blocks deploys while placeholders remain.
 
 ## Reference docs
 
