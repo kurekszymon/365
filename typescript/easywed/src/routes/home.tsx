@@ -5,6 +5,7 @@ import { toast } from "sonner"
 import type { WeddingSummary } from "@/components/weddings/WeddingListItem"
 import type { RemoveMode } from "@/components/weddings/RemoveWeddingDialog"
 import { supabase } from "@/lib/supabase"
+import { seedDefaultHall } from "@/lib/sync/mutations"
 import { useAuthStore } from "@/stores/auth.store"
 import { track } from "@/lib/analytics/track"
 import { Button } from "@/components/ui/button"
@@ -102,14 +103,20 @@ function Home() {
       })
       .select("id")
       .single()
-    setCreating(false)
     if (error) {
+      setCreating(false)
       console.error(error)
       // Without this the click is dead: the button just re-enables and nothing
       // else on screen changes.
       toast.error(t("weddings.create_failed"))
       return
     }
+    // Awaited, not fire-and-forget: navigating first would race loadWedding
+    // against this insert and land the user on the blank canvas anyway - the
+    // exact thing the seed exists to prevent. It's one round-trip, and the
+    // create button stays busy for it.
+    await seedDefaultHall(data.id)
+    setCreating(false)
     track("wedding_created", { source: "wedding_list" })
     navigate({ to: "/wedding/$id", params: { id: data.id } })
   }

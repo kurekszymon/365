@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { Outlet, createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { LOCAL_WEDDING_ID } from "@/lib/localWedding"
-import { usePlannerStore } from "@/stores/planner.store"
+import { DEFAULT_HALL, usePlannerStore } from "@/stores/planner.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { useRemindersStore } from "@/stores/reminders.store"
 
@@ -64,6 +64,24 @@ function LocalWeddingLayout() {
         if (cancelled) return
         // Only now does the local sentinel go live, so subsequent edits persist.
         useGlobalStore.setState({ weddingId: LOCAL_WEDDING_ID })
+
+        // Guest-mode counterpart of seedDefaultHall: a signed-in wedding gets
+        // its starting hall at creation, but a guest plan has no creation
+        // event, so the trigger is "no hall to draw" instead. Must run after
+        // the sentinel is live - the gated storage would otherwise drop the
+        // write.
+        //
+        // Hall count is the whole condition, deliberately. deleteHall takes
+        // its tables and fixtures with it, so zero halls already means zero of
+        // those - but it only *unseats* their guests, who stay on the list.
+        // Also gating on guests would leave anyone holding a stray guest from
+        // an earlier session stuck on the blank canvas, which is the one
+        // outcome this exists to prevent. Same reasoning as loadWedding's
+        // adoptive hall on the cloud side: no hall, make one.
+        const planner = usePlannerStore.getState()
+        if (planner.halls.length === 0)
+          planner.addHall(DEFAULT_HALL, { x: 0, y: 0 })
+
         setResolved(true)
       })
 
