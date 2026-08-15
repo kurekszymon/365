@@ -132,11 +132,17 @@ function Home() {
             </p>
           </div>
 
+          {/* This is where the landing CTA lands, so signing up has to be one
+              of the choices on screen - previously the only route to /signup
+              was a link inside the login form. */}
           <div className="flex flex-col gap-2">
             <Button asChild>
               <Link to="/wedding/local">{t("guest_mode.start_planning")}</Link>
             </Button>
             <Button variant="outline" asChild>
+              <Link to="/signup">{t("auth.sign_up")}</Link>
+            </Button>
+            <Button variant="ghost" asChild>
               <Link to="/login">{t("auth.sign_in")}</Link>
             </Button>
           </div>
