@@ -8,7 +8,6 @@ import { useEntityListStore } from "@/stores/entityList.store"
 import { useOnboardingStore } from "@/stores/onboarding.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
-import { useOpenHalls } from "@/hooks/useOpenHalls"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 import { cn } from "@/lib/utils"
 
@@ -23,11 +22,15 @@ const STEP_COUNT = 3
  * migrate, no welcome modal standing between the user and the canvas, and the
  * card cannot go stale - it is a view of the plan, so finishing the plan is
  * what removes it. `onboarding.store` only records the escape hatch.
+ *
+ * Assumes at least one hall exists, and may rely on it: Canvas renders this
+ * only after its own `halls.length === 0` early return has sent the hall-less
+ * case to CanvasEmptyState, which carries its own single call to action. So
+ * there is no "configure a hall first" step here - it would be unreachable.
  */
 export const OnboardingChecklist = () => {
   const { t } = useTranslation()
 
-  const halls = usePlannerStore((s) => s.halls)
   const tables = usePlannerStore((s) => s.tables)
   const guests = usePlannerStore((s) => s.guests)
 
@@ -39,7 +42,6 @@ export const OnboardingChecklist = () => {
   )
   const dismiss = useOnboardingStore((s) => s.dismiss)
 
-  const openHalls = useOpenHalls()
   const isMobile = useIsMobile()
   const openTab = useEntityListStore((s) => s.openTab)
   const openDialog = useDialogStore((s) => s.open)
@@ -149,22 +151,14 @@ export const OnboardingChecklist = () => {
               detail={
                 hasTables
                   ? t("tables.count", { count: tables.length })
-                  : halls.length === 0
-                    ? t("onboarding.tables.no_hall")
-                    : t("onboarding.tables.todo")
+                  : t("onboarding.tables.todo")
               }
               done={hasTables}
-              // Without a hall there is nothing to put a table in, so the
-              // first click has to build the room - the same init-and-open
-              // flow the header button and canvas empty state use. Otherwise
-              // the tables list, which leads with its add button: `add_hub` is
-              // the mobile FAB's view and renders nothing on desktop.
-              ctaLabel={
-                halls.length === 0
-                  ? t("onboarding.tables.cta_hall")
-                  : t("onboarding.tables.cta")
-              }
-              onCta={halls.length === 0 ? openHalls : () => openTab("tables")}
+              // The tables list, which leads with its add button - not
+              // `openAddHub`: `add_hub` is the mobile FAB's panel view and
+              // renders nothing on desktop.
+              ctaLabel={t("onboarding.tables.cta")}
+              onCta={() => openTab("tables")}
             />
             <OnboardingStepRow
               index={2}

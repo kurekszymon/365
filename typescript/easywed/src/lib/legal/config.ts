@@ -123,5 +123,5 @@ export const LEGAL_CONFIG = {
    * retention figure, an address from before a move. This is the deliberate
    * pause in front of the one action that makes the documents binding.
    */
-  launchReviewed: true,
+  launchReviewed: false,
 } as const
