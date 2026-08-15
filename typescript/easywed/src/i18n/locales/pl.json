@@ -586,6 +586,8 @@
   "weddings.subtitle": "Wybierz wesele do zaplanowania lub utwórz nowe.",
   "weddings.empty": "Brak wesel. Utwórz pierwsze powyżej.",
   "weddings.loading": "Wczytywanie twoich wesel...",
+  "weddings.load_failed": "Nie udało się wczytać twoich wesel. Nadal tam są - sprawdź połączenie i spróbuj ponownie.",
+  "weddings.create_failed": "Nie udało się utworzyć wesela. Spróbuj ponownie.",
   "weddings.actions": "Opcje wesela",
   "weddings.delete": "Usuń wesele",
   "weddings.delete_title": "Usunąć {{name}}?",

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 import type { WeddingSummary } from "@/components/weddings/WeddingListItem"
 import type { RemoveMode } from "@/components/weddings/RemoveWeddingDialog"
 import { supabase } from "@/lib/supabase"
@@ -30,6 +31,14 @@ function Home() {
 
   const [weddings, setWeddings] = useState<Array<WeddingSummary>>([])
   const [loading, setLoading] = useState(true)
+  // A failed read must not fall through to the empty state: "no weddings yet"
+  // is indistinguishable from data loss for a returning user, so the list has
+  // its own error branch with a retry. Bumping `reloadKey` re-runs the effect;
+  // the two flags are reset by the retry handler rather than in the effect
+  // body, which would be a cascading setState on every run.
+  const [loadFailed, setLoadFailed] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
+
   const [creating, setCreating] = useState(false)
   // Kept separate from `removeOpen` so the target outlives the close: the
   // dialog reads its own copy from it while animating out.
@@ -39,6 +48,12 @@ function Home() {
   const openRemove = (wedding: WeddingSummary, mode: RemoveMode) => {
     setRemoveTarget({ wedding, mode })
     setRemoveOpen(true)
+  }
+
+  const retryLoad = () => {
+    setLoadFailed(false)
+    setLoading(true)
+    setReloadKey((k) => k + 1)
   }
 
   useEffect(() => {
@@ -51,10 +66,16 @@ function Home() {
       .select("id, name, owner_id")
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
-        if (error) console.error(error)
+        if (error) {
+          console.error(error)
+          toast.error(t("weddings.load_failed"))
+          setLoadFailed(true)
+          setLoading(false)
+          return
+        }
 
         setWeddings(
-          (data ?? []).map((wedding) => ({
+          data.map((wedding) => ({
             id: wedding.id,
             name: wedding.name,
             isOwner: wedding.owner_id === session.user.id,
@@ -62,7 +83,9 @@ function Home() {
         )
         setLoading(false)
       })
-  }, [session])
+    // `t` is stable across renders unless the language changes; re-reading the
+    // list on a language switch is harmless.
+  }, [session, reloadKey, t])
 
   const handleCreate = async () => {
     if (!session || creating) return
@@ -82,6 +105,9 @@ function Home() {
     setCreating(false)
     if (error) {
       console.error(error)
+      // Without this the click is dead: the button just re-enables and nothing
+      // else on screen changes.
+      toast.error(t("weddings.create_failed"))
       return
     }
     track("wedding_created", { source: "wedding_list" })
@@ -140,6 +166,15 @@ function Home() {
             <p className="text-center text-sm text-muted-foreground">
               {t("weddings.loading")}
             </p>
+          ) : loadFailed ? (
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-center text-sm text-destructive">
+                {t("weddings.load_failed")}
+              </p>
+              <Button variant="outline" size="sm" onClick={retryLoad}>
+                {t("common.try_again")}
+              </Button>
+            </div>
           ) : weddings.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground">
               {t("weddings.empty")}

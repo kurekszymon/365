@@ -585,6 +585,8 @@
   "weddings.subtitle": "Pick a wedding to plan, or create a new one.",
   "weddings.empty": "No weddings yet. Create your first one above.",
   "weddings.loading": "Loading your weddings...",
+  "weddings.load_failed": "Couldn't load your weddings. They're still there - check your connection and try again.",
+  "weddings.create_failed": "Couldn't create the wedding. Please try again.",
   "weddings.actions": "Wedding options",
   "weddings.delete": "Delete wedding",
   "weddings.delete_title": "Delete {{name}}?",
