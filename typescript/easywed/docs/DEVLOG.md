@@ -4,6 +4,16 @@
 
 ### 15.08
 
+- set version in package.json to 1.0.0
+- check legal verification
+- dropped seven dependencies nothing imported - `lz-string`, both spare `@dnd-kit` packages, two fontsource families the css never loads, `@tanstack/react-router-ssr-query`, `web-vitals`. only the fonts were reaching the bundle, the rest were lockfile weight
+- sitemap `x-default` points at `/pl` for the landing too, not `/`. `/` canonicals into `/pl` and is excluded from the sitemap, and an hreflang cluster aimed at a non-canonical url gets its annotations dropped wholesale
+- supabase auth errors translated (`lib/auth/authErrors.ts`). supabase answers in english only, so "Invalid login credentials" was greeting polish users on the busiest screen we have. branches on `error.code`, never the message text - those are explicitly not stable - and an unmapped code falls back to a generic key rather than leaking english through
+- first-run checklist on the canvas. keyed per wedding so a second one still gets its own run, dismissible, and it retires itself on mount when the plan already looks done - an existing wedding must not be greeted with a "plan ready" card. own store on plain localStorage, not the local-gated storage: it holds no plan content, only a per-device flag
+- each step opens what it names instead of pointing at a list - `addDialog` lifted out of `EntityListContent` local state into `entityList.store`, and the seat step highlights the guest row through a nonce so the hint still fires when the panel is already open on guests
+- new weddings start with a hall rather than an empty grid. `seedDefaultHall` is the one write in `mutations/` deliberately outside `run()` - it fires from the wedding list before global.store has switched over, where `run()` would read a stale role, fail closed and drop it silently. failure is non-fatal, the canvas empty state still offers the same hall
+- explicit seat button on guest rows. seating is the row's primary action but the row was its only trigger, and next to a pencil and a bin a bare row reads as "open details"
+- "for free" in the couples landing copy
 - add sign up link to landing page
 - a failed weddings read no longer renders as "no weddings yet". the `.then` logged the error and carried on into `(data ?? [])`, so a network blip or an rls hiccup put a returning user in front of the empty state - indistinguishable from having lost the lot. list has its own error branch now, with a retry that re-runs the effect, plus a toast
 - and the create button is no longer a dead click on failure - it just re-enabled itself and said nothing. same `toast.error` pattern as `run()` in `mutations/shared.ts`

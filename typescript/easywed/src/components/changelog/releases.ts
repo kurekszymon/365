@@ -21,7 +21,7 @@ export type Release = {
 // entry here plus a folder of the same name holding en.json and pl.json; the
 // test fails if the two disagree or if either language is short.
 export const RELEASES: Array<Release> = [
-  { id: "v1", version: "1.0", date: "2026-08-13", items: 7 },
+  { id: "v1", version: "1.0", date: "2026-08-15", items: 7 },
 ]
 
 /** Every key in the `changelog` namespace the page renders, for the test. */

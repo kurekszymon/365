@@ -73,8 +73,8 @@ export const LEGAL_CONFIG = {
    * object), not editing this line.
    */
   dates: {
-    termsEffective: "2026-08-10",
-    privacyUpdated: "2026-08-10",
+    termsEffective: "2026-08-15",
+    privacyUpdated: "2026-08-15",
     /**
      * The day the acceptance gate started running. Deliberately a separate
      * literal rather than `termsEffective`: derived, it would silently absolve
@@ -82,7 +82,7 @@ export const LEGAL_CONFIG = {
      * Accounts created before this are grandfathered - § 16 ust. 2 is their
      * route, not a wall in front of the app.
      */
-    enforcedSince: "2026-08-10",
+    enforcedSince: "2026-08-15",
   },
 
   /**
@@ -123,5 +123,5 @@ export const LEGAL_CONFIG = {
    * retention figure, an address from before a move. This is the deliberate
    * pause in front of the one action that makes the documents binding.
    */
-  launchReviewed: false,
+  launchReviewed: true,
 } as const
