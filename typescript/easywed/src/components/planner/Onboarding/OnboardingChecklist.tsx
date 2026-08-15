@@ -44,6 +44,7 @@ export const OnboardingChecklist = () => {
 
   const isMobile = useIsMobile()
   const openTab = useEntityListStore((s) => s.openTab)
+  const setAddDialog = useEntityListStore((s) => s.setAddDialog)
   const hintSeating = useEntityListStore((s) => s.hintSeating)
   const openDialog = useDialogStore((s) => s.open)
 
@@ -155,11 +156,16 @@ export const OnboardingChecklist = () => {
                   : t("onboarding.tables.todo")
               }
               done={hasTables}
-              // The tables list, which leads with its add button - not
-              // `openAddHub`: `add_hub` is the mobile FAB's panel view and
+              // Straight into the preset picker, panel and all: the step says
+              // "arrange the tables", so stopping at a list and leaving the
+              // user to find its add button is one click of nothing. Not
+              // `openAddHub` - `add_hub` is the mobile FAB's panel view and
               // renders nothing on desktop.
               ctaLabel={t("onboarding.tables.cta")}
-              onCta={() => openTab("tables")}
+              onCta={() => {
+                openTab("tables")
+                setAddDialog("tables")
+              }}
             />
             <OnboardingStepRow
               index={2}

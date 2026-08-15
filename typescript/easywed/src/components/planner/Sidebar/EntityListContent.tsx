@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
 import { LayoutPanelLeftIcon, PlusIcon, UtensilsIcon } from "lucide-react"
 import { AddEntityDialog } from "./AddEntityDialog"
 import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
+import { useEntityListStore } from "@/stores/entityList.store"
 import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 import { Button } from "@/components/ui/button"
 
@@ -21,7 +22,8 @@ type EntityListContentProps = {
  */
 export const EntityListContent = ({ kind }: EntityListContentProps) => {
   const { t } = useTranslation()
-  const [addOpen, setAddOpen] = useState(false)
+  const addDialog = useEntityListStore((state) => state.addDialog)
+  const setAddDialog = useEntityListStore((state) => state.setAddDialog)
 
   const { tables, fixtures, guests, hasHall } = usePlannerStore(
     useShallow((state) => ({
@@ -71,7 +73,7 @@ export const EntityListContent = ({ kind }: EntityListContentProps) => {
         <Button
           variant="outline"
           disabled={!hasHall}
-          onClick={() => setAddOpen(true)}
+          onClick={() => setAddDialog(kind)}
         >
           <PlusIcon />
           {t(isTables ? "tables.add" : "fixtures.add")}
@@ -107,9 +109,12 @@ export const EntityListContent = ({ kind }: EntityListContentProps) => {
         </div>
       )}
 
+      {/* Scoped to this tab's kind: only one EntityListContent is mounted at a
+          time, but switching tabs while the store still holds the other kind
+          must not reopen it here. */}
       <AddEntityDialog
-        open={addOpen}
-        onOpenChange={setAddOpen}
+        open={addDialog === kind}
+        onOpenChange={(open) => setAddDialog(open ? kind : null)}
         initialCategory={kind}
       />
     </div>
