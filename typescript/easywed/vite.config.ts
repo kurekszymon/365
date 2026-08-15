@@ -23,10 +23,14 @@ const MARKETING = [
   { sub: "/terms", priority: 0.3 },
 ]
 
+// Polish is x-default throughout, matching the <link> tags in
+// src/lib/seo/localeHead.ts. "/" is never the x-default target: it canonicals
+// into /pl and is excluded from the sitemap, and an hreflang cluster must point
+// at canonical URLs or Google drops the annotations.
 const alternateRefs = (sub: string) => [
   { href: `${SITE}/pl${sub}`, hreflang: "pl" },
   { href: `${SITE}/en${sub}`, hreflang: "en" },
-  { href: sub ? `${SITE}/pl${sub}` : `${SITE}/`, hreflang: "x-default" },
+  { href: `${SITE}/pl${sub}`, hreflang: "x-default" },
 ]
 
 // App surfaces. Prerendered so the URL returns real HTML - a crawler can only
