@@ -15,6 +15,7 @@ import i18n from "@/i18n"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 import { AuthGate } from "@/components/auth/AuthGate"
+import { TenantGate } from "@/components/tenant/TenantGate"
 import { requireAcceptedTerms } from "@/lib/auth/guards"
 import { LocalWeddingMigrationPrompt } from "@/components/auth/LocalWeddingMigrationPrompt"
 import { ErrorFallback } from "@/components/ErrorFallback"
@@ -227,7 +228,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           options={options}
         >
           <TooltipProvider>
-            <AuthGate>{children}</AuthGate>
+            {/* Inside AuthGate, not beside it: the branding lookup is
+                anonymous, but resolving the caller's tenant role needs a
+                settled session. */}
+            <AuthGate>
+              <TenantGate>{children}</TenantGate>
+            </AuthGate>
             <LocalWeddingMigrationPrompt />
           </TooltipProvider>
           <Toaster richColors position="top-right" />

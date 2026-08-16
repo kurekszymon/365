@@ -118,8 +118,13 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return () => controller.abort()
   }, [userId, router])
 
+  // `p !== "/"` matters: PUBLIC_PATHS contains "/", and every pathname starts
+  // with "/", so without the exclusion `isPublic` was unconditionally true and
+  // this render gate never fired once - the app rendered its signed-out shape
+  // for a frame on every cold load of a private route, then swapped. Same form
+  // as isTermsExempt in guards.ts, which had it right.
   const isPublic = PUBLIC_PATHS.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`)
+    (p) => pathname === p || (p !== "/" && pathname.startsWith(`${p}/`))
   )
   if (!isReady && !isPublic) return null
 
