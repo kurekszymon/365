@@ -50,6 +50,13 @@ const APP_ROUTES = [
   "/reset-password",
   "/wedding/local",
   "/wedding/local/planner",
+  // Tenant-host surfaces. They render nothing without the right host and the
+  // right session, but they still have to answer with real HTML: the noindex
+  // meta tag they inherit from the root route can only be read off a page a
+  // crawler can actually fetch. The rest of the CRM is added here as each
+  // section ships.
+  "/venue",
+  "/crm",
 ]
 
 const pages = [

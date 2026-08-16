@@ -16,6 +16,7 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 import { AuthGate } from "@/components/auth/AuthGate"
 import { TenantGate } from "@/components/tenant/TenantGate"
+import { redirectApexOnlyPathToApex } from "@/lib/tenant/apexRedirect"
 import { requireAcceptedTerms } from "@/lib/auth/guards"
 import { LocalWeddingMigrationPrompt } from "@/components/auth/LocalWeddingMigrationPrompt"
 import { ErrorFallback } from "@/components/ErrorFallback"
@@ -65,6 +66,10 @@ export const Route = createRootRoute({
   // path instead of following the flow - a per-route guard would only cover the
   // routes we remembered to annotate.
   beforeLoad: ({ location }) => {
+    // Before the terms gate, because it leaves this origin entirely: there is
+    // no point deciding whether someone owes an acceptance on a host we are
+    // about to send them off.
+    redirectApexOnlyPathToApex(location.pathname)
     requireAcceptedTerms(location.pathname)
   },
   head: () => {

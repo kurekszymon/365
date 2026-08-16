@@ -15,8 +15,14 @@ Disallow: /auth/
 Disallow: /wedding/
 Allow: /wedding/local
 
-# Note what is deliberately NOT disallowed: /home, /login, /signup and /settings
-# are prerendered with a noindex meta tag instead. Disallow and noindex do not
+# A venue peeking at a linked couple's seat map. Same reasoning as /wedding/:
+# the id is dynamic, so there is no prerendered HTML and it falls back to the
+# shell. Note this is the ONLY /crm path blocked - /crm and /venue are
+# prerendered with noindex instead, for the reason spelled out below.
+Disallow: /crm/wedding/
+
+# Note what is deliberately NOT disallowed: /home, /login, /signup, /settings,
+# /venue and /crm are prerendered with a noindex meta tag instead. Disallow and noindex do not
 # stack - a blocked URL cannot be fetched, so the noindex is never read and
 # Google keeps listing the bare URL from inbound links. That is exactly how
 # /home, /login and /wedding/local ended up in the index with zero clicks.

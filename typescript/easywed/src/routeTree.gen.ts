@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VenueRouteImport } from './routes/venue'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -17,9 +18,11 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as EnRouteImport } from './routes/en'
+import { Route as CrmRouteImport } from './routes/crm'
 import { Route as AppShellRouteImport } from './routes/app-shell'
 import { Route as AcceptTermsRouteImport } from './routes/accept-terms'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CrmIndexRouteImport } from './routes/crm/index'
 import { Route as WeddingLocalRouteImport } from './routes/wedding.local'
 import { Route as WeddingIdRouteImport } from './routes/wedding.$id'
 import { Route as PlVenuesRouteImport } from './routes/pl_.venues'
@@ -37,6 +40,11 @@ import { Route as WeddingIdIndexRouteImport } from './routes/wedding.$id/index'
 import { Route as WeddingLocalPlannerRouteImport } from './routes/wedding.local/planner'
 import { Route as WeddingIdPlannerRouteImport } from './routes/wedding.$id/planner'
 
+const VenueRoute = VenueRouteImport.update({
+  id: '/venue',
+  path: '/venue',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -77,6 +85,11 @@ const EnRoute = EnRouteImport.update({
   path: '/en',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CrmRoute = CrmRouteImport.update({
+  id: '/crm',
+  path: '/crm',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppShellRoute = AppShellRouteImport.update({
   id: '/app-shell',
   path: '/app-shell',
@@ -91,6 +104,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const CrmIndexRoute = CrmIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CrmRoute,
 } as any)
 const WeddingLocalRoute = WeddingLocalRouteImport.update({
   id: '/wedding/local',
@@ -177,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/accept-terms': typeof AcceptTermsRoute
   '/app-shell': typeof AppShellRoute
+  '/crm': typeof CrmRouteWithChildren
   '/en': typeof EnRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/home': typeof HomeRoute
@@ -185,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/venue': typeof VenueRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/en/changelog': typeof EnChangelogRoute
   '/en/privacy': typeof EnPrivacyRoute
@@ -197,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/pl/venues': typeof PlVenuesRoute
   '/wedding/$id': typeof WeddingIdRouteWithChildren
   '/wedding/local': typeof WeddingLocalRouteWithChildren
+  '/crm/': typeof CrmIndexRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
   '/wedding/local/planner': typeof WeddingLocalPlannerRoute
   '/wedding/$id/': typeof WeddingIdIndexRoute
@@ -214,6 +235,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/venue': typeof VenueRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/en/changelog': typeof EnChangelogRoute
   '/en/privacy': typeof EnPrivacyRoute
@@ -224,6 +246,7 @@ export interface FileRoutesByTo {
   '/pl/privacy': typeof PlPrivacyRoute
   '/pl/terms': typeof PlTermsRoute
   '/pl/venues': typeof PlVenuesRoute
+  '/crm': typeof CrmIndexRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
   '/wedding/local/planner': typeof WeddingLocalPlannerRoute
   '/wedding/$id': typeof WeddingIdIndexRoute
@@ -234,6 +257,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/accept-terms': typeof AcceptTermsRoute
   '/app-shell': typeof AppShellRoute
+  '/crm': typeof CrmRouteWithChildren
   '/en': typeof EnRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/home': typeof HomeRoute
@@ -242,6 +266,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/venue': typeof VenueRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/en_/changelog': typeof EnChangelogRoute
   '/en_/privacy': typeof EnPrivacyRoute
@@ -254,6 +279,7 @@ export interface FileRoutesById {
   '/pl_/venues': typeof PlVenuesRoute
   '/wedding/$id': typeof WeddingIdRouteWithChildren
   '/wedding/local': typeof WeddingLocalRouteWithChildren
+  '/crm/': typeof CrmIndexRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
   '/wedding/local/planner': typeof WeddingLocalPlannerRoute
   '/wedding/$id/': typeof WeddingIdIndexRoute
@@ -265,6 +291,7 @@ export interface FileRouteTypes {
     | '/'
     | '/accept-terms'
     | '/app-shell'
+    | '/crm'
     | '/en'
     | '/forgot-password'
     | '/home'
@@ -273,6 +300,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/signup'
+    | '/venue'
     | '/auth/callback'
     | '/en/changelog'
     | '/en/privacy'
@@ -285,6 +313,7 @@ export interface FileRouteTypes {
     | '/pl/venues'
     | '/wedding/$id'
     | '/wedding/local'
+    | '/crm/'
     | '/wedding/$id/planner'
     | '/wedding/local/planner'
     | '/wedding/$id/'
@@ -302,6 +331,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/signup'
+    | '/venue'
     | '/auth/callback'
     | '/en/changelog'
     | '/en/privacy'
@@ -312,6 +342,7 @@ export interface FileRouteTypes {
     | '/pl/privacy'
     | '/pl/terms'
     | '/pl/venues'
+    | '/crm'
     | '/wedding/$id/planner'
     | '/wedding/local/planner'
     | '/wedding/$id'
@@ -321,6 +352,7 @@ export interface FileRouteTypes {
     | '/'
     | '/accept-terms'
     | '/app-shell'
+    | '/crm'
     | '/en'
     | '/forgot-password'
     | '/home'
@@ -329,6 +361,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/signup'
+    | '/venue'
     | '/auth/callback'
     | '/en_/changelog'
     | '/en_/privacy'
@@ -341,6 +374,7 @@ export interface FileRouteTypes {
     | '/pl_/venues'
     | '/wedding/$id'
     | '/wedding/local'
+    | '/crm/'
     | '/wedding/$id/planner'
     | '/wedding/local/planner'
     | '/wedding/$id/'
@@ -351,6 +385,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AcceptTermsRoute: typeof AcceptTermsRoute
   AppShellRoute: typeof AppShellRoute
+  CrmRoute: typeof CrmRouteWithChildren
   EnRoute: typeof EnRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HomeRoute: typeof HomeRoute
@@ -359,6 +394,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
+  VenueRoute: typeof VenueRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   EnChangelogRoute: typeof EnChangelogRoute
   EnPrivacyRoute: typeof EnPrivacyRoute
@@ -375,6 +411,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/venue': {
+      id: '/venue'
+      path: '/venue'
+      fullPath: '/venue'
+      preLoaderRoute: typeof VenueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -431,6 +474,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/crm': {
+      id: '/crm'
+      path: '/crm'
+      fullPath: '/crm'
+      preLoaderRoute: typeof CrmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app-shell': {
       id: '/app-shell'
       path: '/app-shell'
@@ -451,6 +501,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/crm/': {
+      id: '/crm/'
+      path: '/'
+      fullPath: '/crm/'
+      preLoaderRoute: typeof CrmIndexRouteImport
+      parentRoute: typeof CrmRoute
     }
     '/wedding/local': {
       id: '/wedding/local'
@@ -567,6 +624,16 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface CrmRouteChildren {
+  CrmIndexRoute: typeof CrmIndexRoute
+}
+
+const CrmRouteChildren: CrmRouteChildren = {
+  CrmIndexRoute: CrmIndexRoute,
+}
+
+const CrmRouteWithChildren = CrmRoute._addFileChildren(CrmRouteChildren)
+
 interface WeddingIdRouteChildren {
   WeddingIdPlannerRoute: typeof WeddingIdPlannerRoute
   WeddingIdIndexRoute: typeof WeddingIdIndexRoute
@@ -599,6 +666,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AcceptTermsRoute: AcceptTermsRoute,
   AppShellRoute: AppShellRoute,
+  CrmRoute: CrmRouteWithChildren,
   EnRoute: EnRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HomeRoute: HomeRoute,
@@ -607,6 +675,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
+  VenueRoute: VenueRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   EnChangelogRoute: EnChangelogRoute,
   EnPrivacyRoute: EnPrivacyRoute,
