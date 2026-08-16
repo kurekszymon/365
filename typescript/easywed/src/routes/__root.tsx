@@ -34,7 +34,7 @@ const options = {
   cookieless_mode: "always",
   // Off because autocapture reports the text of whatever was clicked, and in
   // the planner that is a wedding guest's name - a third party with no
-  // relationship to us, and beyond what privacy.data.analytics promises.
+  // relationship to us, and beyond what privacy.data.usage promises.
   // Product events are declared explicitly instead; see lib/analytics/track.
   autocapture: false,
   // Invite tokens are bearer credentials and they live in the URL path, which

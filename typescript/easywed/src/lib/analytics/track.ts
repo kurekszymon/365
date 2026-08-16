@@ -7,7 +7,7 @@ import type { TableShape } from "@/stores/planner.store"
  * This map is the replacement for autocapture, which `__root.tsx` turns off.
  * Autocapture reports the text of whatever element was clicked, and in the
  * planner that text is a wedding guest's name - a third party who never agreed
- * to anything and has no relationship with us. `privacy.data.analytics`
+ * to anything and has no relationship with us. `privacy.data.usage`
  * promises only "zdarzenia produktowe (odwiedzone ekrany, uzyte funkcje)":
  * $pageview covers the screens, this covers the features.
  *

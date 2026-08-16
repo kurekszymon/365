@@ -122,7 +122,13 @@ export const TERMS_SECTIONS: Array<TermsSection> = [
   },
   { id: "ip", clauses: [["c1", 4], "c2", "c3"] },
   { id: "disputes", clauses: ["c1", "c2", ["c3", 3]] },
-  { id: "data", clauses: ["c1", "c2", "c3", "c4", "c5"] },
+  // c6-c8 are the venue disclosure flow, *appended* rather than slotted next to
+  // the art. 9 clause they belong with: c5 already cites "ust. 3" and the
+  // Polityka cites "§ 14 ust. 4", so inserting would silently repoint both.
+  {
+    id: "data",
+    clauses: ["c1", "c2", "c3", "c4", "c5", ["c6", 5], "c7", "c8"],
+  },
   {
     id: "service_changes",
     clauses: ["c1", ["c2", 3], "c3", "c4", ["c5", 2], "c6", "c7", "c8"],
@@ -159,7 +165,19 @@ export const PRIVACY_SECTIONS: Array<{ id: string; bullets?: Array<string> }> =
     },
     {
       id: "purposes",
-      bullets: ["service", "account", "analytics", "security", "legal"],
+      // `special` is the art. 9 ust. 2 lifting condition. The policy admitted
+      // in privacy.data.dietary that it holds special-category data while
+      // listing art. 6 bases only, which left that processing with no
+      // condition at all - and v2 discloses those tags to a third party.
+      bullets: [
+        "service",
+        "account",
+        "venue",
+        "analytics",
+        "security",
+        "legal",
+        "special",
+      ],
     },
     { id: "storage" },
     { id: "transfers" },
@@ -168,6 +186,14 @@ export const PRIVACY_SECTIONS: Array<{ id: string; bullets?: Array<string> }> =
     {
       id: "sharing",
       bullets: ["supabase", "cloudflare", "posthog", "google", "ai"],
+    },
+    // Its own section rather than a sixth `sharing` bullet: that list is framed
+    // as art. 28 processors ("na podstawie umów powierzenia"), and a Sala
+    // Weselna receiving a slice of the plan is an independent recipient acting
+    // for its own catering purposes, not a sub-processor.
+    {
+      id: "venue",
+      bullets: ["shared", "hidden", "optin", "recipient", "revoke"],
     },
     { id: "guests" },
     { id: "cookies" },
