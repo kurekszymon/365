@@ -1,11 +1,13 @@
 import i18n from "@/i18n"
+import { SITE_ORIGIN } from "@/lib/site"
 
 // Per-locale <head> for the shareable language-pinned routes (/pl, /en and
 // their subpages). Language is pinned by the route (not detected), so og tags
 // are correct in the server-rendered HTML that social crawlers read - they
 // never run client JS. Overrides the language-specific tags from the root
 // route and adds canonical + hreflang.
-const BASE = "https://easywed.app"
+// Apex even on a tenant host - see the note on SITE_ORIGIN.
+const BASE = SITE_ORIGIN
 const OG_LOCALE = { pl: "pl_PL", en: "en_US" } as const
 
 type Lang = keyof typeof OG_LOCALE

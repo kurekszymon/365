@@ -5,8 +5,9 @@ import viteReact from "@vitejs/plugin-react"
 import viteTsConfigPaths from "vite-tsconfig-paths"
 import tailwindcss from "@tailwindcss/vite"
 import { nitro } from "nitro/vite"
-
-const SITE = "https://easywed.app"
+// Relative, not "@/lib/site": vite-tsconfig-paths applies to the app build,
+// not to this config file, so the alias would not resolve here.
+import { SITE_ORIGIN as SITE } from "./src/lib/site"
 
 // The marketing surface, in both locales. Everything here is prerendered to
 // real HTML at build time; every other route stays a client-rendered SPA served

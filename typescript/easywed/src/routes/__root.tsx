@@ -21,6 +21,7 @@ import { ErrorFallback } from "@/components/ErrorFallback"
 import { useThemeStore } from "@/stores/theme.store"
 import { useAiStore } from "@/stores/ai.store"
 import { scrubInviteTokens } from "@/lib/analytics/scrubInviteTokens"
+import { OG_IMAGE, SITE_ORIGIN } from "@/lib/site"
 
 const options = {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
@@ -114,7 +115,7 @@ export const Route = createRootRoute({
         },
         {
           property: "og:url",
-          content: "https://easywed.app",
+          content: SITE_ORIGIN,
         },
         {
           property: "og:title",
@@ -134,7 +135,7 @@ export const Route = createRootRoute({
         },
         {
           property: "og:image",
-          content: "https://easywed.app/og-image.png",
+          content: OG_IMAGE,
         },
         {
           property: "og:image:type",
@@ -166,7 +167,7 @@ export const Route = createRootRoute({
         },
         {
           name: "twitter:image",
-          content: "https://easywed.app/og-image.png",
+          content: OG_IMAGE,
         },
         {
           name: "twitter:image:alt",
