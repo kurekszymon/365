@@ -2,6 +2,10 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 16.08
+
+- enforce wedding scope on guests.table_id and wedding_id
+
 ### 15.08
 
 - set version in package.json to 1.0.0
