@@ -73,8 +73,18 @@ export const LEGAL_CONFIG = {
    * object), not editing this line.
    */
   dates: {
-    termsEffective: "2026-08-15",
-    privacyUpdated: "2026-08-15",
+    /**
+     * Bumped from 2026-08-15 for the v2 venue-link amendment (§ 14 ust. 4 said
+     * the User must not enter art. 9 data at all, while the product now
+     * discloses dietary tags to a linked Sala Weselna; § 14 ust. 3 had the
+     * controller/processor direction backwards for that flow). § 16 ust. 3
+     * makes a change effective 14 days after notification: notice goes out
+     * 2026-08-16, so the earliest lawful effective date is 2026-08-31.
+     *
+     * Do not move this again without running § 16 ust. 2 from the top.
+     */
+    termsEffective: "2026-08-31",
+    privacyUpdated: "2026-08-31",
     /**
      * The day the acceptance gate started running. Deliberately a separate
      * literal rather than `termsEffective`: derived, it would silently absolve
@@ -122,6 +132,12 @@ export const LEGAL_CONFIG = {
    * a field filled in wrongly - a stale effective date, last quarter's
    * retention figure, an address from before a move. This is the deliberate
    * pause in front of the one action that makes the documents binding.
+   *
+   * Currently false: the v2 venue-link amendment is in flight. `legal:check`
+   * fails while this is false, which is what actually blocks `deploy:pages`
+   * until a human has re-read the amended Regulamin and Polityka, confirmed
+   * the § 16 ust. 2 notice went out, and confirmed the 14 days have run.
+   * Flip back to true only then.
    */
-  launchReviewed: true,
+  launchReviewed: false,
 } as const

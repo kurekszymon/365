@@ -18,9 +18,17 @@
 --   editor@easywed.test  Piotr Nowak        editor of "Anna & Piotr"
 --   viewer@easywed.test  Maria Wisniewska   viewer of "Anna & Piotr" (joined via invite)
 --   solo@easywed.test    Tomasz Zielinski   owner of "Tomasz & Kasia", nobody else on it
+--   venue@easywed.test   Sala Bagatelka     owner  of the `bagatelka` tenant
+--   venue2@easywed.test  Dworek pod Debem   owner  of the `dworek` tenant
 --
 -- The solo account is the one to use for delete-account: the owner account is
 -- deliberately blocked by `delete_own_account` because its wedding is shared.
+--
+-- The two venue accounts exist so the tenant surfaces have something to render
+-- at bagatelka.localhost:3000 and dworek.localhost:3000, and so the RLS matrix
+-- test (src/lib/sync/venueRls.test.ts) has a second tenant to prove isolation
+-- against. "Anna & Piotr" is linked to `bagatelka` and granted; "Tomasz &
+-- Kasia" is linked to nothing.
 
 begin;
 
@@ -87,6 +95,16 @@ values
    'authenticated', 'authenticated', 'solo@easywed.test',
    crypt('password123', gen_salt('bf')), now(),
    '{"provider":"email","providers":["email"]}', '{}',
+   '', '', '', '', now(), now()),
+  ('10000000-0000-4000-8000-000000000005', '00000000-0000-0000-0000-000000000000',
+   'authenticated', 'authenticated', 'venue@easywed.test',
+   crypt('password123', gen_salt('bf')), now(),
+   '{"provider":"email","providers":["email"]}', '{}',
+   '', '', '', '', now(), now()),
+  ('10000000-0000-4000-8000-000000000006', '00000000-0000-0000-0000-000000000000',
+   'authenticated', 'authenticated', 'venue2@easywed.test',
+   crypt('password123', gen_salt('bf')), now(),
+   '{"provider":"email","providers":["email"]}', '{}',
    '', '', '', '', now(), now());
 
 insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
@@ -106,17 +124,60 @@ update public.profiles set display_name = 'Anna Kowalska'    where id = '1000000
 update public.profiles set display_name = 'Piotr Nowak'      where id = '10000000-0000-4000-8000-000000000002';
 update public.profiles set display_name = null               where id = '10000000-0000-4000-8000-000000000003';
 update public.profiles set display_name = 'Tomasz Zielinski' where id = '10000000-0000-4000-8000-000000000004';
+update public.profiles set display_name = 'Sala Bagatelka'   where id = '10000000-0000-4000-8000-000000000005';
+update public.profiles set display_name = 'Dworek pod Debem' where id = '10000000-0000-4000-8000-000000000006';
+
+-- ---------------------------------------------------------------------------
+-- Tenants
+-- ---------------------------------------------------------------------------
+-- Reachable at bagatelka.localhost:3000 and dworek.localhost:3000 - every
+-- browser resolves *.localhost to loopback with no DNS and no hosts-file edit,
+-- so these are complete local reproductions of a tenant host.
+--
+-- This replaces the hand-provisioned `bagatelka` row that used to live only in
+-- the local database and was wiped by every `supabase db reset`.
+--
+-- Branding values are shaped by the CHECK regexes on the table (https:// logo,
+-- #rrggbb colours) - those regexes are the CSS-injection guard for values that
+-- end up in element.style, so anything failing them belongs nowhere near here.
+--
+-- `open_linking` differs between the two on purpose: bagatelka is
+-- invitation-only (the default, and the interesting case - a couple can only
+-- link once the venue has added them as a `customer`), dworek is open so the
+-- open-linking branch of link_wedding_to_venue is exercisable by hand.
+insert into public.tenants (id, slug, name, status, locale, logo_url, primary_color, accent_color, tagline, open_linking) values
+  ('50000000-0000-4000-8000-000000000001', 'bagatelka', 'Sala Bagatelka', 'active', 'pl',
+   null, '#7c3f58', '#e8c3b0', 'Wesela i przyjecia w sercu Mazowsza', false),
+  ('50000000-0000-4000-8000-000000000002', 'dworek', 'Dworek pod Debem', 'active', 'pl',
+   null, '#2f4f3e', '#c8d5c0', 'Kameralne przyjecia w zabytkowym dworku', true);
+
+-- Each venue's own account, plus the couple of "Anna & Piotr" as one of
+-- bagatelka's customers - which is what the invitation-only linking check in
+-- link_wedding_to_venue looks for. tenant_members_one_per_user means every user
+-- here belongs to at most one tenant.
+insert into public.tenant_members (tenant_id, user_id, role) values
+  ('50000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000005', 'owner'),
+  ('50000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000006', 'owner'),
+  ('50000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'customer');
 
 -- ---------------------------------------------------------------------------
 -- Weddings
 -- ---------------------------------------------------------------------------
 -- on_wedding_created inserts the owner's own wedding_members row, so only the
 -- editor and viewer are added by hand below.
-insert into public.weddings (id, owner_id, name, date) values
+--
+-- tenant_id/venue_access are written directly here rather than through
+-- link_wedding_to_venue + set_venue_access, which is fine and is not a way
+-- around the guard: enforce_wedding_tenant_columns only blocks `authenticated`
+-- and `anon`, and this file runs as postgres. "Anna & Piotr" is the granted
+-- peek the RLS matrix test asserts against; "Tomasz & Kasia" stays unlinked, so
+-- it doubles as the "a venue reaches nothing it was not given" case.
+insert into public.weddings (id, owner_id, name, date, tenant_id, venue_access) values
   ('20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001',
-   'Anna & Piotr', current_date + 120),
+   'Anna & Piotr', current_date + 120,
+   '50000000-0000-4000-8000-000000000001', 'granted'),
   ('20000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000004',
-   'Tomasz & Kasia', current_date + 240);
+   'Tomasz & Kasia', current_date + 240, null, 'none');
 
 insert into public.wedding_members (wedding_id, user_id, role) values
   ('20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000002', 'editor'),
@@ -291,6 +352,7 @@ commit;
 -- Summary, printed at the end of `supabase db reset`.
 select
   w.name as wedding,
+  coalesce(t.slug, '-') || ' / ' || w.venue_access as venue,
   (select count(*) from public.wedding_members m where m.wedding_id = w.id) as members,
   (select count(*) from public.halls h where h.wedding_id = w.id) as halls,
   (select count(*) from public.tables t where t.wedding_id = w.id) as tables,
@@ -299,4 +361,5 @@ select
   (select count(*) from public.guests g where g.wedding_id = w.id and g.table_id is not null) as seated,
   (select count(*) from public.reminders r where r.wedding_id = w.id) as reminders
 from public.weddings w
+left join public.tenants t on t.id = w.tenant_id
 order by w.name;

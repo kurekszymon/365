@@ -2,6 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router"
 import { LocaleLanding } from "@/components/landing/LocaleLanding"
 import i18n from "@/i18n"
 import { rootHead } from "@/lib/seo/localeHead"
+import { tenantSlugFromHost } from "@/lib/tenant/host"
 
 // The root path is a language dispatcher: it sends visitors to the
 // language-pinned marketing landing (/pl or /en) based on the detected UI
@@ -13,6 +14,13 @@ export const Route = createFileRoute("/")({
     // isn't available during SSR/prerender - skip on the server so the shell
     // prerenders cleanly and the redirect fires on hydration instead.
     if (typeof window === "undefined") return
+
+    // A venue host's root is the venue's own entry page, not the couple
+    // landing. Must sit above the language dispatch: the redirect below is
+    // unconditional, so anything after it is unreachable.
+    if (tenantSlugFromHost(window.location.hostname, window.location.search)) {
+      throw redirect({ to: "/venue", replace: true })
+    }
 
     const detected =
       i18n.resolvedLanguage || i18n.language || navigator.language || ""

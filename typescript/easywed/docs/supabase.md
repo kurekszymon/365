@@ -48,6 +48,37 @@ Each table has 4 policies: one per operation (SELECT/INSERT/UPDATE/DELETE). `usi
 
 **Why this matters vs Node/Express**: traditionally you'd write `if (user.canEdit(wedding)) { ... }` in every endpoint - easy to forget one route. RLS pushes the check to the data layer - can't be bypassed by a missed middleware.
 
+## Tenants, the derived `venue` role, and the one policy you must not simplify
+
+Migrations `20260817000001`-`20260817000003` add a **tenant** (a wedding venue at `<slug>.easywed.app`) with its own `tenants` / `tenant_members` tables and five policy helpers (`tenant_role`, `is_tenant_member`, `is_tenant_staff`, `my_tenant_id`, `staff_can_view_profile`). Those five keep their `anon` EXECUTE grant for the reason in the segfault section below — they are policy helpers, not RPCs.
+
+A couple can link their wedding to a venue (`weddings.tenant_id`) and then, separately, grant it access (`weddings.venue_access`, one of `none` / `pending` / `granted`). Neither column is client-writable: `enforce_wedding_tenant_columns` blocks `authenticated` and `anon` on **INSERT as well as UPDATE**, so the only ways in are `link_wedding_to_venue` and `set_venue_access`. The INSERT half matters — the weddings INSERT policy only checks `owner_id = auth.uid()`, so without it anyone could POST a wedding that arrives pre-linked and pre-granted, straight past the `open_linking` check.
+
+`wedding_role()` then grows a second branch: `'venue'` when the wedding names a tenant, `venue_access = 'granted'`, and the caller `is_tenant_staff` of it. **No row ever carries that value** — `wedding_members_role_check` is deliberately not widened, because `coalesce` prefers an explicit member row and a hand-written `venue` row would outrank the derived branch and survive `set_venue_access`.
+
+### The `guests` SELECT policy
+
+This is the single highest-risk line in the whole feature, so it is written out here as well as in the migration and in CLAUDE.md.
+
+```sql
+create policy "members can view guests"
+  on public.guests for select
+  using (public.wedding_role(wedding_id) in ('owner', 'editor', 'viewer'));
+```
+
+It names the three member roles **literally**, and must keep doing so. Two edits look like tidying and are a personal-data breach:
+
+- **Reverting it to `is_wedding_member(wedding_id)`.** That is equivalent *today* only because `wedding_role()`'s first branch is a lookup in the same table. The second branch broke the equivalence, and nothing guarantees the first stays a plain lookup. A policy that is safe because of how a helper happens to be implemented is one refactor away from handing every guest name to a third party, silently — nothing errors, the venue simply starts receiving names.
+- **Adding `'venue'` to the list.** `guests` holds full names and the couple's free-text notes about people who never agreed to anything. `privacy.venue.hidden` promises in writing that a venue never receives either.
+
+`reminders` and `wedding_members` are narrowed the same way. `halls`, `tables`, `fixtures` and `weddings` are the ones that gain `'venue'` — the room, and the wedding's name and date, all named in `privacy.venue.shared`.
+
+What the venue reads instead is `wedding_seatmap`, a `security_barrier` view running as its owner (so the `guests` policy above does not filter it) whose entire access control is its own `WHERE`. It projects seat position, `dietary` and `age_group` — **no `name` column and no `note` column exist in it to leak**. The honest limit, disclosed rather than engineered around: `dietary` and `age_group` are free text the couple types, so a name typed into a diet tag reaches the venue. The projection guarantees what *we* send, not what someone put in a field we do send.
+
+`my_wedding_role(p_wedding_id)` exists because narrowing `wedding_members` means the client can no longer derive its own role from the member rows it fetches — a venue reads zero of them, and "no row" is indistinguishable from "no access".
+
+All of this is asserted, not asserted-about: `src/lib/sync/venueRls.test.ts` runs two signed-in clients against the local stack and checks the row counts, the seat map's **key absence**, the write refusals, revocation, and cross-tenant isolation. It skips when Docker is down.
+
 ## `profiles` - and what deliberately isn't in it
 
 `profiles` holds exactly one piece of user-visible identity: a nullable `display_name` the user types themselves (migration `20260731000001`). It exists because the header avatar stack and the members dialog need something human to show, and `wedding_members` only has a `user_id`.

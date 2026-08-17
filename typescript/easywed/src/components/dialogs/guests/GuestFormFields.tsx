@@ -116,7 +116,7 @@ export const GuestFormFields = ({
           {t("guests.add.dietary_preferences")}
           {/* Custom tags are free text, and "why" answers here are Art. 9 GDPR
               special-category data about someone who never signed up. The terms
-              (§ 9 ust. 3) put that obligation on the user - this is where they
+              (§ 14 ust. 4) put that obligation on the user - this is where they
               actually see it. Focusable so the hint is reachable by keyboard
               and tap, not hover only. */}
           <Tooltip>

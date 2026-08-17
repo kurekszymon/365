@@ -1,17 +1,10 @@
-import type {
-  Fixture,
-  FixtureShape,
-  Geometry,
-  Guest,
-  Hall,
-  HallPreset,
-  Seat,
-  Table,
-  TableRotation,
-  TableShape,
-} from "@/stores/planner.store"
+import type { Guest, Hall } from "@/stores/planner.store"
 import type { Reminder } from "@/stores/reminders.store"
-import type { WeddingMember, WeddingRole } from "@/stores/global.store"
+import type {
+  VenueAccess,
+  WeddingMember,
+  WeddingRole,
+} from "@/stores/global.store"
 import { supabase } from "@/lib/supabase"
 import {
   insertHall,
@@ -19,6 +12,7 @@ import {
   updateTablePos,
 } from "@/lib/sync/mutations"
 import { fetchDisplayNames } from "@/lib/sync/profile"
+import { toFixture, toHall, toTable } from "@/lib/sync/rows"
 import { DEFAULT_HALL, usePlannerStore } from "@/stores/planner.store"
 import { useAuthStore } from "@/stores/auth.store"
 import { useGlobalStore } from "@/stores/global.store"
@@ -35,10 +29,17 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     remindersRes,
     memberRes,
     fixturesRes,
+    roleRes,
   ] = await Promise.all([
+    // The `tenants` embed rides on weddings.tenant_id's foreign key and costs
+    // nothing extra: it is null for every unlinked wedding, and for a linked
+    // one it saves the grant dialog a second round trip to learn the venue's
+    // name. RLS still decides - "wedding members can view their linked venue"
+    // (20260817000002) is what makes the row visible to a couple who is not a
+    // member of the tenant.
     supabase
       .from("weddings")
-      .select("id, name, date")
+      .select("id, name, date, venue_access, tenants(id, slug, name)")
       .eq("id", id)
       .abortSignal(signal)
       .single(),
@@ -94,6 +95,20 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
       .eq("wedding_id", id)
       .is("deleted_at", null)
       .abortSignal(signal),
+
+    // The caller's own role, straight from wedding_role(). It used to be read
+    // off the member rows above, and cannot be any more: 20260817000003
+    // narrowed `wedding_members` SELECT to the three explicit member roles, so
+    // a venue reads zero rows there - and "no row" is indistinguishable from
+    // "no access", which is the state selectCanEdit fails closed on. Signed-out
+    // callers never reach here (requireAuth gates the route), but the RPC is
+    // authenticated-only, so the null-session branch skips it rather than
+    // spending a guaranteed 401.
+    userId
+      ? supabase
+          .rpc("my_wedding_role", { p_wedding_id: id })
+          .abortSignal(signal)
+      : Promise.resolve({ data: null, error: null }),
   ])
 
   if (weddingRes.error) throw weddingRes.error
@@ -103,6 +118,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
   if (remindersRes.error) throw remindersRes.error
   if (memberRes.error) throw memberRes.error
   if (fixturesRes.error) throw fixturesRes.error
+  if (roleRes.error) throw roleRes.error
 
   const memberRows = memberRes.data ?? []
 
@@ -112,12 +128,20 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     displayName: null,
   }))
 
+  // PostgREST returns a to-one embed as an object (null when unlinked); the
+  // generated types describe it the same way.
+  const tenant = weddingRes.data.tenants
+
   useGlobalStore.setState({
     weddingId: id,
     name: weddingRes.data.name || undefined,
     date: weddingRes.data.date ? new Date(weddingRes.data.date) : undefined,
-    role: members.find((m) => m.userId === userId)?.role,
+    role: (roleRes.data as WeddingRole | null) ?? undefined,
     members,
+    venue: tenant
+      ? { tenantId: tenant.id, slug: tenant.slug, name: tenant.name }
+      : null,
+    venueAccess: weddingRes.data.venue_access as VenueAccess,
   })
 
   // Names live in profiles, not wedding_members, and there's no FK between
@@ -154,26 +178,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     }))
   })
 
-  const halls: Array<Hall> = hallsRes.data.map((h) => {
-    // Enforce the geometry <=> non-rectangle-preset invariant in both
-    // directions at the load boundary (the DB CHECK guards it too; this
-    // covers rows that predate the constraint): a polygon preset without
-    // geometry falls back to rectangle, a rectangle's stray geometry is
-    // dropped.
-    const geometry =
-      h.preset !== "rectangle"
-        ? (h.geometry as unknown as Geometry | null)
-        : null
-    return {
-      id: h.id,
-      name: h.name,
-      floor: h.floor,
-      preset: geometry ? (h.preset as HallPreset) : "rectangle",
-      size: { width: Number(h.width), height: Number(h.height) },
-      position: { x: Number(h.pos_x), y: Number(h.pos_y) },
-      ...(geometry ? { geometry } : {}),
-    }
-  })
+  const halls: Array<Hall> = hallsRes.data.map(toHall)
 
   // Self-healing for rows whose hall is missing: the migration backfilled
   // hall_id, but a fire-and-forget insert race (or a hall row deleted
@@ -209,21 +214,12 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
   const hasOrphans =
     tablesRes.data.some((t) => isOrphan(t.hall_id)) ||
     fixturesRes.data.some((f) => isOrphan(f.hall_id))
+  // isOrphan's inverse, spelled out rather than negated, so the non-orphan
+  // branch narrows to a non-null string without a cast.
+  const adoptOrphan = (hallId: string | null) =>
+    hallId && hallIds.has(hallId) ? hallId : adoptiveHallId
 
-  const tables: Array<Table> = tablesRes.data.map((t) => ({
-    id: t.id,
-    name: t.name,
-    shape: t.shape as TableShape,
-    capacity: t.capacity,
-    size: { width: Number(t.width), height: Number(t.height) },
-    rotation: t.rotation as TableRotation,
-    position: { x: Number(t.pos_x), y: Number(t.pos_y) },
-    hallId: t.hall_id && hallIds.has(t.hall_id) ? t.hall_id : adoptiveHallId,
-    // Json -> Geometry needs the unknown hop (see toJsonOrNull in
-    // mutations/shared.ts for the inverse cast and why).
-    ...(t.geometry ? { geometry: t.geometry as unknown as Geometry } : {}),
-    seats: (t.seats as unknown as Array<Seat> | null) ?? [],
-  }))
+  const tables = tablesRes.data.map((t) => toTable(t, adoptOrphan))
 
   const guests: Array<Guest> = guestsRes.data.map((g) => ({
     id: g.id,
@@ -236,16 +232,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     note: g.note ?? undefined,
   }))
 
-  const fixtures: Array<Fixture> = fixturesRes.data.map((f) => ({
-    id: f.id,
-    name: f.name,
-    shape: f.shape as FixtureShape,
-    size: { width: Number(f.width), height: Number(f.height) },
-    rotation: f.rotation as TableRotation,
-    position: { x: Number(f.pos_x), y: Number(f.pos_y) },
-    hallId: f.hall_id && hallIds.has(f.hall_id) ? f.hall_id : adoptiveHallId,
-    ...(f.geometry ? { geometry: f.geometry as unknown as Geometry } : {}),
-  }))
+  const fixtures = fixturesRes.data.map((f) => toFixture(f, adoptOrphan))
 
   if (hasOrphans && adoptiveHallId && adoptiveHallPersisted) {
     for (const t of tablesRes.data)

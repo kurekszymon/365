@@ -347,6 +347,80 @@ export type Database = {
           },
         ]
       }
+      tenant_members: {
+        Row: {
+          created_at: string
+          role: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          role: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          role?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_members_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          accent_color: string | null
+          created_at: string
+          id: string
+          locale: string
+          logo_url: string | null
+          name: string
+          open_linking: boolean
+          primary_color: string | null
+          slug: string
+          status: string
+          tagline: string | null
+          updated_at: string
+        }
+        Insert: {
+          accent_color?: string | null
+          created_at?: string
+          id?: string
+          locale?: string
+          logo_url?: string | null
+          name: string
+          open_linking?: boolean
+          primary_color?: string | null
+          slug: string
+          status?: string
+          tagline?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accent_color?: string | null
+          created_at?: string
+          id?: string
+          locale?: string
+          logo_url?: string | null
+          name?: string
+          open_linking?: boolean
+          primary_color?: string | null
+          slug?: string
+          status?: string
+          tagline?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       wedding_invitations: {
         Row: {
           claimed_at: string | null
@@ -427,7 +501,9 @@ export type Database = {
           id: string
           name: string
           owner_id: string
+          tenant_id: string | null
           updated_at: string
+          venue_access: string
         }
         Insert: {
           created_at?: string
@@ -435,7 +511,9 @@ export type Database = {
           id?: string
           name?: string
           owner_id: string
+          tenant_id?: string | null
           updated_at?: string
+          venue_access?: string
         }
         Update: {
           created_at?: string
@@ -443,19 +521,78 @@ export type Database = {
           id?: string
           name?: string
           owner_id?: string
+          tenant_id?: string | null
           updated_at?: string
+          venue_access?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "weddings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
-      [_ in never]: never
+      wedding_seatmap: {
+        Row: {
+          age_group: string | null
+          dietary: string[] | null
+          id: string | null
+          seat_id: string | null
+          table_id: string | null
+          wedding_id: string | null
+        }
+        Insert: {
+          age_group?: string | null
+          dietary?: string[] | null
+          id?: string | null
+          seat_id?: string | null
+          table_id?: string | null
+          wedding_id?: string | null
+        }
+        Update: {
+          age_group?: string | null
+          dietary?: string[] | null
+          id?: string | null
+          seat_id?: string | null
+          table_id?: string | null
+          wedding_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guests_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "tables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guests_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       claim_wedding_invitation: { Args: { _token: string }; Returns: string }
       delete_own_account: { Args: never; Returns: undefined }
       dietary_tags_valid: { Args: { tags: string[] }; Returns: boolean }
+      is_tenant_member: { Args: { _tenant_id: string }; Returns: boolean }
+      is_tenant_staff: { Args: { _tenant_id: string }; Returns: boolean }
       is_wedding_member: { Args: { _wedding_id: string }; Returns: boolean }
+      link_wedding_to_venue: {
+        Args: { p_slug: string; p_wedding_id: string }
+        Returns: string
+      }
+      my_tenant_id: { Args: never; Returns: string }
+      my_wedding_role: { Args: { p_wedding_id: string }; Returns: string }
       replace_planner_layout: {
         Args: {
           p_fixtures: Json
@@ -480,7 +617,26 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_venue_access: {
+        Args: { p_granted: boolean; p_wedding_id: string }
+        Returns: undefined
+      }
       shares_wedding_with: { Args: { _user_id: string }; Returns: boolean }
+      staff_can_view_profile: { Args: { _user_id: string }; Returns: boolean }
+      tenant_public: {
+        Args: { _slug: string }
+        Returns: {
+          accent_color: string
+          id: string
+          logo_url: string
+          name: string
+          primary_color: string
+          slug: string
+          status: string
+          tagline: string
+        }[]
+      }
+      tenant_role: { Args: { _tenant_id: string }; Returns: string }
       wedding_role: { Args: { _wedding_id: string }; Returns: string }
     }
     Enums: {

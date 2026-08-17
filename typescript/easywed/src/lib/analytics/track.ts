@@ -7,7 +7,7 @@ import type { TableShape } from "@/stores/planner.store"
  * This map is the replacement for autocapture, which `__root.tsx` turns off.
  * Autocapture reports the text of whatever element was clicked, and in the
  * planner that text is a wedding guest's name - a third party who never agreed
- * to anything and has no relationship with us. `privacy.data.analytics`
+ * to anything and has no relationship with us. `privacy.data.usage`
  * promises only "zdarzenia produktowe (odwiedzone ekrany, uzyte funkcje)":
  * $pageview covers the screens, this covers the features.
  *
@@ -88,6 +88,29 @@ export type AnalyticsEvents = {
   reminder_created: { has_due_date: boolean }
   /** An invite link redeemed into a membership. */
   invite_claimed: undefined
+  /**
+   * A wedding was pointed at a venue and is now waiting on the couple. Not a
+   * disclosure - `pending` shows the venue nothing.
+   *
+   * `source` is a literal union rather than free text for the reason the whole
+   * map exists: the venue's slug is a name someone chose, and the venue itself
+   * is attributed with a PostHog **group**, never an event property. See
+   * `identifyTenantGroup` below.
+   *
+   * "venue" is declared and not yet emitted: the CRM-initiated request arrives
+   * with the customer roster. Keeping it in the union now means the property
+   * never has to widen from one value to two after the fact, which is the
+   * change that quietly reshapes an existing PostHog insight.
+   */
+  venue_access_requested: { source: "couple" | "venue" }
+  /**
+   * The couple gave a linked venue access to the seat map. This is the
+   * art. 9(2)(a) consent moment, so the event deliberately carries nothing
+   * about *what* was shared - the answer is fixed, and it is in the policy.
+   */
+  venue_access_granted: undefined
+  /** Venue staff opened one customer's seat map in the CRM. */
+  venue_peek_opened: undefined
 }
 
 // Events declared as `undefined` are called bare - `track("invite_claimed")`.
@@ -120,4 +143,26 @@ export const track = <TEvent extends keyof AnalyticsEvents>(
   ]
   if (!posthog.__loaded) return
   posthog.capture(event, properties)
+}
+
+/**
+ * Attributes the current session to a tenant, as a PostHog **group**.
+ *
+ * A group rather than an event property, and the distinction is not stylistic.
+ * A property has to be repeated on every event and would put the tenant id into
+ * the payload of events that have nothing to do with the venue; a group is set
+ * once per session and lets PostHog roll every subsequent event up by venue
+ * without any event declaring it. It also keeps `AnalyticsEvents` closed - no
+ * event above gains a string property to carry this.
+ *
+ * The **id** is the tenant's uuid, never its slug or its name: both of those
+ * are things a person chose and typed, which is exactly what this module keeps
+ * out of the event store. `name` is passed as a group property because that is
+ * the one place a human-readable label is genuinely wanted - the venue is our
+ * customer, not a third party who never agreed to anything, and the id alone
+ * makes the dashboard unreadable.
+ */
+export const identifyTenantGroup = (tenantId: string, name: string): void => {
+  if (!posthog.__loaded) return
+  posthog.group("tenant", tenantId, { name })
 }

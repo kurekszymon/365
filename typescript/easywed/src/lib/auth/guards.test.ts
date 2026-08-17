@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest"
-import { requireAcceptedTerms } from "./guards"
+import { requireAcceptedTerms, requireTenantMember } from "./guards"
 import type { Session } from "@supabase/supabase-js"
 import type { TermsStatus } from "@/stores/profile.store"
+import type { TenantRole, TenantStatus } from "@/stores/tenant.store"
 import { useAuthStore } from "@/stores/auth.store"
 import { useProfileStore } from "@/stores/profile.store"
+import { useTenantStore } from "@/stores/tenant.store"
 
 // Only the presence of a session matters to this guard.
 const SESSION = { user: { id: "u1" } } as Session
@@ -119,4 +121,105 @@ describe("requireAcceptedTerms", () => {
     expect(redirectFrom("/planner")?.to).toBe("/accept-terms")
     expect(redirectFrom("/entertainment")?.to).toBe("/accept-terms")
   })
+})
+
+const setupTenant = (opts: {
+  isReady?: boolean
+  session?: Session | null
+  status?: TenantStatus
+  tenantRole?: TenantRole | null
+}) => {
+  useAuthStore.setState({
+    isReady: opts.isReady ?? true,
+    session: opts.session === undefined ? SESSION : opts.session,
+  })
+  useTenantStore.setState({
+    status: opts.status ?? "resolved",
+    tenantRole: opts.tenantRole,
+  })
+}
+
+const tenantRedirectFrom = (pathname: string) => {
+  try {
+    requireTenantMember(pathname)
+  } catch (thrown) {
+    return (thrown as { options: { to: string; search: { next?: string } } })
+      .options
+  }
+  return null
+}
+
+describe("requireTenantMember", () => {
+  beforeEach(() => {
+    useAuthStore.setState({ isReady: false, session: null })
+    useTenantStore.getState().reset()
+  })
+
+  // Same not-settled-yet contract as the guards above, and the same reason for
+  // it: a redirect on an unresolved state fires on the frame before the answer
+  // arrives and bounces a legitimate user out of the page they asked for.
+  it("lets an unsettled session through", () => {
+    setupTenant({ isReady: false })
+
+    expect(tenantRedirectFrom("/crm")).toBeNull()
+  })
+
+  it("lets an unresolved tenant through", () => {
+    setupTenant({ status: "unknown" })
+
+    expect(tenantRedirectFrom("/crm")).toBeNull()
+  })
+
+  it("sends an apex visitor to /home, since there is no venue to run", () => {
+    setupTenant({ status: "none" })
+
+    expect(tenantRedirectFrom("/crm")?.to).toBe("/home")
+  })
+
+  // Ahead of the session check on purpose: on the apex there is no CRM to sign
+  // in to, so asking for credentials first would be a dead end.
+  it("sends a signed-out apex visitor to /home rather than /login", () => {
+    setupTenant({ status: "none", session: null })
+
+    expect(tenantRedirectFrom("/crm")?.to).toBe("/home")
+  })
+
+  it("sends a signed-out visitor on a venue host to /login", () => {
+    setupTenant({ session: null })
+
+    expect(tenantRedirectFrom("/crm/customers")).toMatchObject({
+      to: "/login",
+      search: { next: "/crm/customers" },
+    })
+  })
+
+  // A guard cannot render, and both of these have to be shown inside the
+  // venue's own shell. Bouncing a customer to /home in particular would read as
+  // "no such page" when the honest answer is "it exists and is not yours".
+  it("leaves an unknown slug to the layout's not-found screen", () => {
+    setupTenant({ status: "not_found" })
+
+    expect(tenantRedirectFrom("/crm")).toBeNull()
+  })
+
+  it.each([null, "customer" as const])(
+    "leaves a non-staff caller (%s) to the layout's 403 screen",
+    (tenantRole) => {
+      setupTenant({ tenantRole })
+
+      expect(tenantRedirectFrom("/crm")).toBeNull()
+    }
+  )
+
+  // The guard never consults tenantRole: it settles a round trip after status,
+  // so blocking on it would stall every /crm navigation to decide something the
+  // layout decides anyway.
+  it.each(["owner" as const, "staff" as const, undefined])(
+    "admits a signed-in caller with role %s",
+    (tenantRole) => {
+      setupTenant({ tenantRole })
+
+      expect(tenantRedirectFrom("/crm")).toBeNull()
+    }
+  )
 })

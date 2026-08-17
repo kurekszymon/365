@@ -15,12 +15,15 @@ import i18n from "@/i18n"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 import { AuthGate } from "@/components/auth/AuthGate"
+import { TenantGate } from "@/components/tenant/TenantGate"
+import { redirectApexOnlyPathToApex } from "@/lib/tenant/apexRedirect"
 import { requireAcceptedTerms } from "@/lib/auth/guards"
 import { LocalWeddingMigrationPrompt } from "@/components/auth/LocalWeddingMigrationPrompt"
 import { ErrorFallback } from "@/components/ErrorFallback"
 import { useThemeStore } from "@/stores/theme.store"
 import { useAiStore } from "@/stores/ai.store"
 import { scrubInviteTokens } from "@/lib/analytics/scrubInviteTokens"
+import { OG_IMAGE, SITE_ORIGIN } from "@/lib/site"
 
 const options = {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
@@ -34,7 +37,7 @@ const options = {
   cookieless_mode: "always",
   // Off because autocapture reports the text of whatever was clicked, and in
   // the planner that is a wedding guest's name - a third party with no
-  // relationship to us, and beyond what privacy.data.analytics promises.
+  // relationship to us, and beyond what privacy.data.usage promises.
   // Product events are declared explicitly instead; see lib/analytics/track.
   autocapture: false,
   // Invite tokens are bearer credentials and they live in the URL path, which
@@ -63,6 +66,10 @@ export const Route = createRootRoute({
   // path instead of following the flow - a per-route guard would only cover the
   // routes we remembered to annotate.
   beforeLoad: ({ location }) => {
+    // Before the terms gate, because it leaves this origin entirely: there is
+    // no point deciding whether someone owes an acceptance on a host we are
+    // about to send them off.
+    redirectApexOnlyPathToApex(location.pathname)
     requireAcceptedTerms(location.pathname)
   },
   head: () => {
@@ -114,7 +121,7 @@ export const Route = createRootRoute({
         },
         {
           property: "og:url",
-          content: "https://easywed.app",
+          content: SITE_ORIGIN,
         },
         {
           property: "og:title",
@@ -134,7 +141,7 @@ export const Route = createRootRoute({
         },
         {
           property: "og:image",
-          content: "https://easywed.app/og-image.png",
+          content: OG_IMAGE,
         },
         {
           property: "og:image:type",
@@ -166,7 +173,7 @@ export const Route = createRootRoute({
         },
         {
           name: "twitter:image",
-          content: "https://easywed.app/og-image.png",
+          content: OG_IMAGE,
         },
         {
           name: "twitter:image:alt",
@@ -226,7 +233,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           options={options}
         >
           <TooltipProvider>
-            <AuthGate>{children}</AuthGate>
+            {/* Inside AuthGate, not beside it: the branding lookup is
+                anonymous, but resolving the caller's tenant role needs a
+                settled session. */}
+            <AuthGate>
+              <TenantGate>{children}</TenantGate>
+            </AuthGate>
             <LocalWeddingMigrationPrompt />
           </TooltipProvider>
           <Toaster richColors position="top-right" />
