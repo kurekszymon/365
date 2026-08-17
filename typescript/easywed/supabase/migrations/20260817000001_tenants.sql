@@ -63,7 +63,26 @@ create table public.tenants (
   -- reach inside jsonb, so a blob would move the guard into client code, where
   -- one forgotten call site is an injection. Same reason tenant_public()
   -- projects the columns explicitly instead of returning a jsonb `brand`.
-  logo_url text check (logo_url is null or logo_url ~ '^https://[a-z0-9.-]+/'),
+  --
+  -- On logo_url, the `$` is as load-bearing as the `https://`: `~` searches
+  -- rather than matches, so a prefix-only pattern pins the origin and leaves
+  -- everything after the first path slash unvalidated. The value
+  --   https://cdn.example.com/logo.png") ; background: url(https://evil/
+  -- satisfies '^https://[a-z0-9.-]+/' completely, which makes a guard that
+  -- reads like one and is not. Anchored, the tail set is RFC-3986 minus every
+  -- character that can terminate a CSS url(...), a CSS declaration or an HTML
+  -- attribute: no quote, paren, semicolon, backslash, angle bracket, comma,
+  -- newline or space. Percent-escapes are still allowed and cost nothing -
+  -- `%22` is three literal characters to a CSS parser - so an exotic logo path
+  -- remains expressible encoded.
+  --
+  -- This is a live boundary, not provisioning hygiene: the "tenant owners can
+  -- update their tenant" policy in section 4 makes all four branding columns
+  -- client-writable by a venue owner.
+  logo_url text check (
+    logo_url is null
+    or logo_url ~ '^https://[a-z0-9.-]+/[A-Za-z0-9._~:/?&=+%@-]*$'
+  ),
   primary_color text
     check (primary_color is null or primary_color ~ '^#[0-9a-f]{6}$'),
   accent_color text

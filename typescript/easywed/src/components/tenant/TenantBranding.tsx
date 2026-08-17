@@ -8,8 +8,10 @@ import type { PublicTenant } from "@/stores/tenant.store"
  * why it is a function with a comment rather than three inline template
  * strings. The safety argument is *entirely* the database CHECK constraints in
  * 20260817000001: `primary_color` and `accent_color` match `^#[0-9a-f]{6}$`,
- * `logo_url` matches `^https://[a-z0-9.-]+/`. Nothing else can be stored, so
- * nothing else can be emitted.
+ * `logo_url` matches `^https://[a-z0-9.-]+/[A-Za-z0-9._~:/?&=+%@-]*$`. Nothing
+ * else can be stored, so nothing else can be emitted. All three are anchored at
+ * both ends, which is the whole guarantee - an unanchored `~` in that migration
+ * would leave the tail of a value free, and this function would emit it.
  *
  * That is also the reason branding is columns rather than one jsonb blob: a
  * CHECK cannot reach inside jsonb, so a blob would move the guard here, into
