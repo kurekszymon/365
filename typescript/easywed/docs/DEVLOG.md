@@ -5,6 +5,16 @@
 ### 17.08
 
 - prerender flat html for better google search console indexing
+- the venue role and the peek. a couple links their wedding to a venue (`weddings.tenant_id`) and then, separately, grants it access (`venue_access`: `none` / `pending` / `granted`). `wedding_role()` derives `'venue'` from those two plus `is_tenant_staff`, so revoking is one column write and takes effect on the next policy evaluation - no cache, no job
+- the two columns are not client-writable at all. `enforce_wedding_tenant_columns` covers **insert** as well as update, which is the half that matters: the weddings insert policy only checks `owner_id = auth.uid()`, so without it anyone could post a wedding that arrives pre-linked and pre-granted, straight past `open_linking`
+- policies narrowed before the role widened, in that order and in that file. `guests`, `reminders` and `wedding_members` select now name `('owner','editor','viewer')` literally instead of leaning on `is_wedding_member` - which was only equivalent because `wedding_role`'s first branch happens to read the same table. that equivalence is exactly what the second branch breaks, and the failure mode is silent: the venue just starts receiving guest names. the reasoning is written in the migration, `docs/supabase.md` and CLAUDE.md
+- what the venue reads instead is `wedding_seatmap`, a `security_barrier` view running as its owner with no `name` and no `note` column in it. `venueRls.test.ts` asserts **key absence** on the response objects, not `toBeUndefined()` - a view returning `name: null` would pass the latter while the column sat there one projection change from being filled
+- `set_venue_access` lets the owner grant or revoke and lets venue staff **only revoke**. granting is the art. 9 ust. 2 lit. a consent, and the recipient of special-category data cannot supply the data subject's consent for them
+- the grant dialog is the in-product half of that, and is not optional: `privacy.venue.optin` already says "aplikacja pokazuje dokładnie tę listę i prosi o potwierdzenie", so shipping the grant without it would make a published document false. it mirrors `privacy.venue.shared`/`hidden` item for item, and repeats the honest limit - `dietary` and `age_group` are free text, so a name typed into a diet tag reaches the venue
+- `loadWeddingForVenue` labels seats `venue.anonymous_guest` at the load boundary, so the canvas, guest list and `PlannerPrintView` all work unchanged and none of them has to know a venue exists. the kitchen report is that same print view with `fields: ["dietary"]` - no second print component
+- role now comes from a `my_wedding_role` rpc rather than the member rows, because a venue reads zero of those and "no row" reads identically to "no access"
+- measured before/after: 50 full planner loads on a 435-guest wedding went 1.96 → 2.87 ms as the owner. the venue's own peek is the expensive side at ~25 ms for the same rows, since the view evaluates the role per guest row and always falls through to the second branch
+- seed.sql grows two tenants (`bagatelka`, `dworek`) and their owner accounts, replacing the hand-provisioned row that every `db reset` was wiping
 
 ### 16.08
 

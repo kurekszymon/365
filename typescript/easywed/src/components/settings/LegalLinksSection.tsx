@@ -8,8 +8,8 @@ import { ExternalLinkIcon, FileTextIcon, ShieldCheckIcon } from "lucide-react"
  * Art. 8 ust. 1 pkt 1 UŚUDE wants them continuously available and retrievable,
  * which the marketing footers alone don't cover - nobody planning a wedding
  * goes back to the landing page to re-read a contract. Settings rather than
- * AccountMenu because that menu only renders inside the planner, so a user on
- * the wedding list would have no route to them.
+ * AccountMenu because that menu only renders inside the planner and the venue
+ * CRM, so a user on the wedding list would have no route to them.
  *
  * New tab, so reading the terms never costs someone their planner state.
  */

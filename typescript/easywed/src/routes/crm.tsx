@@ -4,6 +4,7 @@ import { requireTenantMember } from "@/lib/auth/guards"
 import { SITE_ORIGIN } from "@/lib/site"
 import { selectIsTenantStaff, useTenantStore } from "@/stores/tenant.store"
 import { TenantWordmark, tenantStyle } from "@/components/tenant/TenantBranding"
+import { AccountMenu } from "@/components/account/AccountMenu"
 
 /**
  * The staff CRM shell.
@@ -99,9 +100,18 @@ function CrmLayout() {
             ))}
           </nav>
         </div>
-        <span className="text-sm text-muted-foreground">
-          {t(`crm.role.${tenantRole}`)}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">
+            {t(`crm.role.${tenantRole}`)}
+          </span>
+          {/* The same menu the planner carries. Sessions are per-origin, so
+              staff sign in *here* - and without this there was no way to sign
+              out again, or to reach the legal documents, from a venue host at
+              all. Its two links are safe on a tenant host: /settings is not in
+              APEX_ONLY_PREFIXES, and the changelog is marketing, which every
+              host serves. */}
+          <AccountMenu />
+        </div>
       </header>
 
       <main className="flex-1 p-6">
@@ -121,7 +131,14 @@ function CrmMessage({
   action?: { href: string; label: string }
 }) {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-3 p-6 text-center">
+    <div className="relative flex min-h-svh flex-col items-center justify-center gap-3 p-6 text-center">
+      {/* Especially load-bearing on the 403. "This is not your CRM" with no way
+          to switch accounts is a dead end, and the account most likely to land
+          there is a couple who is a `customer` of this venue - signed in, in
+          the right place, with the wrong identity. */}
+      <div className="absolute top-4 right-4">
+        <AccountMenu />
+      </div>
       <h1 className="font-heading text-2xl font-semibold">{title}</h1>
       {body ? <p className="max-w-md text-muted-foreground">{body}</p> : null}
       {action ? (

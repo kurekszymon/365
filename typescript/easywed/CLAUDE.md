@@ -45,7 +45,7 @@ The same planner UI serves both. `docs/guest-vs-account.md` is the feature matri
 The app uses a specific pattern that spans three places and is easy to miss:
 
 1. **Zustand stores** (`src/stores/*.ts`) hold the client state. Domain: `planner.store.ts` (halls/tables/fixtures/guests/seats, ~1.1k lines - the big one), `reminders.store.ts`, `global.store.ts` (current `weddingId`, wedding name/date, `role`, members, viewport), `auth.store.ts`, `profile.store.ts` (display name + terms status). UI/tooling: `dialog`, `panel`, `view`, `entityList`, `clipboard`, `measures`, `print`, `theme`, `ai` (BYO-key settings), `aiChat`.
-2. **`src/lib/sync/loadWedding.ts`** hydrates the planner/reminders/global stores from Supabase in one parallel `Promise.all`, given a wedding id. Called from `src/routes/wedding.$id.tsx` with an `AbortController`.
+2. **`src/lib/sync/loadWedding.ts`** hydrates the planner/reminders/global stores from Supabase in one parallel `Promise.all`, given a wedding id. Called from `src/routes/wedding.$id.tsx` with an `AbortController`. Its sibling **`loadWeddingForVenue.ts`** does the same for a venue's peek: no guests/reminders/members request at all, seats from the `wedding_seatmap` view, and every seat labelled `venue.anonymous_guest` **at the load boundary** so every downstream renderer (canvas, guest list, `PlannerPrintView`) works unchanged. The row→entity mappers both share live in `sync/rows.ts`; there is deliberately no shared *guest* mapper, because the two paths read different relations.
 3. **`src/lib/sync/mutations/`** - one module per entity (`wedding`, `hall`, `tables`, `guests`, `fixtures`, `reminders`, `layout`), re-exported from `mutations/index.ts`. Store actions optimistically update Zustand state first, then fire-and-forget the matching mutation (`void insertTable(...)`).
 
 **Everything funnels through `run()` in `mutations/shared.ts`.** It is the contract, and it does four things:
@@ -63,7 +63,9 @@ There is still **no rollback layer**: a failed cloud write leaves optimistic sta
 
 ### Roles and read-only mode
 
-`WeddingRole` is `owner | editor | viewer`. `selectCanEdit(state)` in `global.store.ts` mirrors the RLS predicate (`wedding_role(...) in ('owner','editor')`) and fails closed on `undefined` (pre-load *and* no-membership). The UI gates write affordances on it; `run()` re-checks as defence in depth. Guest mode carries role `"owner"`.
+`WeddingRole` is `owner | editor | viewer | venue`. The first three are rows in `wedding_members`; `venue` is **derived** by `wedding_role()` and never stored (see the venue section below). `selectCanEdit(state)` in `global.store.ts` mirrors the RLS predicate (`wedding_role(...) in ('owner','editor')`) and fails closed on `undefined` (pre-load *and* no-membership). It is an **allowlist**, which is why `venue` needed no change there - keep it one, since a `role !== "viewer"` formulation would silently admit the venue. The UI gates write affordances on it; `run()` re-checks as defence in depth. Guest mode carries role `"owner"`.
+
+The role is read from the `my_wedding_role` RPC in `loadWedding.ts`, not from the member rows - a venue reads zero of those.
 
 ### Auth and route guards
 
@@ -79,9 +81,24 @@ Both guards treat "not settled yet" (`!isReady`, `termsStatus === "unknown"`) as
 
 ### Supabase schema and RLS
 
-Schema lives in `supabase/migrations/`. Live tables: `weddings`, `wedding_members`, `halls`, `tables`, `fixtures`, `guests`, `reminders`, `wedding_invitations`, and `profiles` (1:1 with `auth.users`, outside the wedding tree). `invitation_orders` was created and later dropped (`20260804000001`) - ignore it.
+Schema lives in `supabase/migrations/`. Live tables: `weddings`, `wedding_members`, `halls`, `tables`, `fixtures`, `guests`, `reminders`, `wedding_invitations`, `tenants`, `tenant_members`, and `profiles` (1:1 with `auth.users`, outside the wedding tree). One view: `wedding_seatmap`. `invitation_orders` was created and later dropped (`20260804000001`) - ignore it.
 
 All tables have RLS enabled; access is gated by `public.is_wedding_member(wedding_id)` and `public.wedding_role(wedding_id)` helper functions (both `security definer` to avoid recursion through `wedding_members`' own policies).
+
+#### The venue role, and the one policy you must not "simplify"
+
+A tenant (a wedding venue at `<slug>.easywed.app`) can be granted a **peek** at a linked couple's wedding. `wedding_role()` derives `'venue'` when `weddings.tenant_id` is set, `venue_access = 'granted'`, and the caller is `is_tenant_staff` of that tenant. No `wedding_members` row ever carries the value, and `wedding_members_role_check` is deliberately not widened - `coalesce` prefers an explicit member row, so a hand-written `venue` row would outrank the derived branch and survive a revoke.
+
+**`guests`, `reminders` and `wedding_members` SELECT are narrowed to `wedding_role(...) in ('owner','editor','viewer')` and must stay that way.** Two edits look like tidying and are a personal-data breach:
+
+- reverting to `is_wedding_member(wedding_id)` - equivalent only because `wedding_role()`'s *first* branch happens to be a lookup in that same table. The venue branch broke the equivalence; a policy that is safe because of a helper's current implementation is one refactor away from shipping every guest name to a third party, and nothing errors when it does.
+- adding `'venue'` to the list - `guests` holds full names and the couple's notes about people who never agreed to anything, and `privacy.venue.hidden` promises in writing that a venue never receives either.
+
+`halls`, `tables`, `fixtures` and `weddings` are the four that *do* admit `'venue'`. What a venue reads instead of `guests` is `wedding_seatmap`: a `security_barrier` view running as its owner, whose own `WHERE` is its entire access control, projecting seat position + `dietary` + `age_group` and **no `name` or `note` column at all**. Honest limit, disclosed rather than engineered around: those two fields are free text the couple types, so a name typed into a diet tag reaches the venue.
+
+The whole matrix is asserted against the running database in `src/lib/sync/venueRls.test.ts` (skips when the local stack is down). Its seat-map assertion checks **key absence**, not value absence, on purpose. Full write-up in `docs/supabase.md`.
+
+Neither `weddings.tenant_id` nor `weddings.venue_access` is client-writable (`enforce_wedding_tenant_columns`, on INSERT as well as UPDATE); `link_wedding_to_venue` and `set_venue_access` are the only ways in. `set_venue_access` lets the wedding owner grant or revoke and lets venue staff **only revoke** - granting is the art. 9(2)(a) consent, and the recipient of the data cannot supply it for the data subject.
 
 Key hardening already in place:
 
@@ -119,10 +136,15 @@ App:
 
 - `__root.tsx` - root layout: `AuthGate`, `requireAcceptedTerms`, PostHog provider, devtools, tooltip provider, toaster.
 - `home.tsx` - the wedding list (the signed-in dashboard; **not** `/`).
-- `wedding.$id.tsx` - `requireAuth` + `loadWedding`, renders an `<Outlet />`; `wedding.$id/index.tsx` redirects to `wedding.$id/planner.tsx`, which renders `<Planner />`.
+- `wedding.$id.tsx` - `requireAuth` + `loadWedding`, renders an `<Outlet />`; `wedding.$id/index.tsx` redirects to `wedding.$id/planner.tsx`, which renders `<Planner />`. A `venue` role is forwarded to `/crm/wedding/$id` once the role settles.
 - `wedding.local.tsx` + `wedding.local/` - the same shape for guest mode, no auth.
 - `settings.tsx`, `invite.$token.tsx` (redeems a `wedding_invitations` token via the `claim_wedding_invitation` RPC), `accept-terms.tsx`.
 - `app-shell.tsx` - renders nothing; it is the `spa.maskPath` target, emitted as `404.html` for Cloudflare's SPA fallback. Read the long comment in `vite.config.ts` before touching prerender/SPA config.
+
+Tenant hosts (`<slug>.easywed.app`, and `<slug>.localhost:3000` in dev):
+
+- `venue.tsx` - the anonymous branded entry page; `crm.tsx` + `crm/index.tsx` - the staff shell and overview; `crm/wedding.$id.tsx` - the peek at one granted wedding, which reuses `PlannerPrintView` with `fields: ["dietary"]` for the kitchen report rather than growing a second print component.
+- Static tenant routes go in `APP_ROUTES` (`vite.config.ts`) so they answer with real HTML a crawler can read `noindex` off. **`/crm/wedding/$id` must not** - it is dynamic, same as `/wedding/$id`, and `robots.txt` blocks the prefix instead.
 
 Auth: `login.tsx`, `signup.tsx`, `forgot-password.tsx`, `reset-password.tsx`, `auth.callback.tsx`.
 
@@ -156,7 +178,7 @@ Multi-hall: entity `position` is **hall-local meters** (top-left origin); the ha
 
 ### Analytics and privacy
 
-`src/lib/analytics/track.ts` declares `AnalyticsEvents` as a **closed** map: every property is a count, enum, or boolean we write ourselves, so no user-typed string (guest/table/hall names, notes, AI prompts) can reach PostHog. Autocapture and cookies are off in `__root.tsx`; `scrubInviteTokens.ts` strips invite tokens (bearer credentials in the URL path) from events. If a new event needs a string, make it a literal union in that map.
+`src/lib/analytics/track.ts` declares `AnalyticsEvents` as a **closed** map: every property is a count, enum, or boolean we write ourselves, so no user-typed string (guest/table/hall names, notes, AI prompts) can reach PostHog. Autocapture and cookies are off in `__root.tsx`; `scrubInviteTokens.ts` strips invite tokens (bearer credentials in the URL path) from events. If a new event needs a string, make it a literal union in that map. A tenant is attributed with a PostHog **group** (`identifyTenantGroup`, keyed on the tenant's uuid), never an event property - that keeps the map closed and keeps venue slugs and names out of event payloads.
 
 ### Legal documents
 
