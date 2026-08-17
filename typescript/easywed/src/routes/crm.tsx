@@ -29,6 +29,10 @@ export const Route = createFileRoute("/crm")({
 
 const NAV = [{ to: "/crm", label: "crm.nav.overview", exact: true }] as const
 
+// /crm/wedding/$id has no nav entry on purpose: it is reached from the list on
+// the overview, and a top-level "Weddings" link would have nowhere to point
+// until there is a wedding to open.
+
 function CrmLayout() {
   const { t } = useTranslation()
   const status = useTenantStore((s) => s.status)

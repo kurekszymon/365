@@ -39,6 +39,7 @@ import { Route as WeddingLocalIndexRouteImport } from './routes/wedding.local/in
 import { Route as WeddingIdIndexRouteImport } from './routes/wedding.$id/index'
 import { Route as WeddingLocalPlannerRouteImport } from './routes/wedding.local/planner'
 import { Route as WeddingIdPlannerRouteImport } from './routes/wedding.$id/planner'
+import { Route as CrmWeddingIdRouteImport } from './routes/crm/wedding.$id'
 
 const VenueRoute = VenueRouteImport.update({
   id: '/venue',
@@ -190,6 +191,11 @@ const WeddingIdPlannerRoute = WeddingIdPlannerRouteImport.update({
   path: '/planner',
   getParentRoute: () => WeddingIdRoute,
 } as any)
+const CrmWeddingIdRoute = CrmWeddingIdRouteImport.update({
+  id: '/wedding/$id',
+  path: '/wedding/$id',
+  getParentRoute: () => CrmRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -218,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/wedding/$id': typeof WeddingIdRouteWithChildren
   '/wedding/local': typeof WeddingLocalRouteWithChildren
   '/crm/': typeof CrmIndexRoute
+  '/crm/wedding/$id': typeof CrmWeddingIdRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
   '/wedding/local/planner': typeof WeddingLocalPlannerRoute
   '/wedding/$id/': typeof WeddingIdIndexRoute
@@ -247,6 +254,7 @@ export interface FileRoutesByTo {
   '/pl/terms': typeof PlTermsRoute
   '/pl/venues': typeof PlVenuesRoute
   '/crm': typeof CrmIndexRoute
+  '/crm/wedding/$id': typeof CrmWeddingIdRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
   '/wedding/local/planner': typeof WeddingLocalPlannerRoute
   '/wedding/$id': typeof WeddingIdIndexRoute
@@ -280,6 +288,7 @@ export interface FileRoutesById {
   '/wedding/$id': typeof WeddingIdRouteWithChildren
   '/wedding/local': typeof WeddingLocalRouteWithChildren
   '/crm/': typeof CrmIndexRoute
+  '/crm/wedding/$id': typeof CrmWeddingIdRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
   '/wedding/local/planner': typeof WeddingLocalPlannerRoute
   '/wedding/$id/': typeof WeddingIdIndexRoute
@@ -314,6 +323,7 @@ export interface FileRouteTypes {
     | '/wedding/$id'
     | '/wedding/local'
     | '/crm/'
+    | '/crm/wedding/$id'
     | '/wedding/$id/planner'
     | '/wedding/local/planner'
     | '/wedding/$id/'
@@ -343,6 +353,7 @@ export interface FileRouteTypes {
     | '/pl/terms'
     | '/pl/venues'
     | '/crm'
+    | '/crm/wedding/$id'
     | '/wedding/$id/planner'
     | '/wedding/local/planner'
     | '/wedding/$id'
@@ -375,6 +386,7 @@ export interface FileRouteTypes {
     | '/wedding/$id'
     | '/wedding/local'
     | '/crm/'
+    | '/crm/wedding/$id'
     | '/wedding/$id/planner'
     | '/wedding/local/planner'
     | '/wedding/$id/'
@@ -621,15 +633,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WeddingIdPlannerRouteImport
       parentRoute: typeof WeddingIdRoute
     }
+    '/crm/wedding/$id': {
+      id: '/crm/wedding/$id'
+      path: '/wedding/$id'
+      fullPath: '/crm/wedding/$id'
+      preLoaderRoute: typeof CrmWeddingIdRouteImport
+      parentRoute: typeof CrmRoute
+    }
   }
 }
 
 interface CrmRouteChildren {
   CrmIndexRoute: typeof CrmIndexRoute
+  CrmWeddingIdRoute: typeof CrmWeddingIdRoute
 }
 
 const CrmRouteChildren: CrmRouteChildren = {
   CrmIndexRoute: CrmIndexRoute,
+  CrmWeddingIdRoute: CrmWeddingIdRoute,
 }
 
 const CrmRouteWithChildren = CrmRoute._addFileChildren(CrmRouteChildren)

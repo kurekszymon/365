@@ -18,7 +18,38 @@ interface Viewport {
   scale: number
 }
 
-export type WeddingRole = "owner" | "editor" | "viewer"
+/**
+ * `owner`/`editor`/`viewer` are rows in `wedding_members`. `venue` is not: it
+ * is *derived* by `wedding_role()` from the wedding's `tenant_id` plus
+ * `venue_access = 'granted'`, and `wedding_members_role_check` deliberately
+ * refuses to store it, so no member row can ever carry it (see
+ * 20260817000003). It therefore never appears in `members` below - only in
+ * `role`, and only for staff of the linked venue.
+ */
+export type WeddingRole = "owner" | "editor" | "viewer" | "venue"
+
+/**
+ * How much of this wedding the linked venue may see.
+ *
+ * `none` covers both "never linked" and "the couple said no"; `pending` is
+ * linked-and-unanswered and discloses nothing at all; `granted` is the explicit
+ * consent that derives the `venue` role. Mirrors the CHECK on
+ * `weddings.venue_access`.
+ */
+export type VenueAccess = "none" | "pending" | "granted"
+
+/**
+ * The venue this wedding is linked to, as the couple sees it.
+ *
+ * Present whenever `weddings.tenant_id` is set, regardless of `venueAccess` -
+ * a couple who has not granted anything still needs the venue's name to decide
+ * whether to.
+ */
+export type LinkedVenue = {
+  tenantId: string
+  slug: string
+  name: string
+}
 
 /**
  * Whether the current user may change anything in the loaded wedding.
@@ -33,6 +64,11 @@ export type WeddingRole = "owner" | "editor" | "viewer"
  * the "this user has no membership row" state - defaulting either to editable
  * would flash write affordances at a viewer before loadWedding resolves.
  * Guest mode is unaffected: wedding.local.tsx sets role "owner" up front.
+ *
+ * An allowlist, which is why the derived `venue` role needed no change here
+ * when it was added - it is excluded by construction, exactly as it is by every
+ * write policy in the database. Keep it an allowlist for that reason: a
+ * `role !== "viewer"` formulation would have silently admitted the venue.
  */
 export const selectCanEdit = (state: { role?: WeddingRole }): boolean =>
   state.role === "owner" || state.role === "editor"
@@ -54,6 +90,9 @@ type State = {
   date?: Date
   role?: WeddingRole
   members: Array<WeddingMember>
+  /** Null when this wedding is linked to no venue, and in guest mode. */
+  venue: LinkedVenue | null
+  venueAccess: VenueAccess
   viewport: Viewport
 }
 
@@ -62,6 +101,7 @@ type Action = {
   setDate: (date?: Date) => void
   setMembers: (members: Array<WeddingMember>) => void
   setMemberDisplayName: (userId: string, displayName: string | null) => void
+  setVenueLink: (venue: LinkedVenue | null, venueAccess: VenueAccess) => void
 
   setPan: (pan: Pan) => void
   setScale: (scale: number) => void
@@ -76,6 +116,8 @@ export const useGlobalStore = create<State & Action>()(
       date: undefined,
       role: undefined,
       members: [],
+      venue: null,
+      venueAccess: "none",
       viewport: {
         scale: 1,
         pan: {
@@ -96,6 +138,12 @@ export const useGlobalStore = create<State & Action>()(
       },
 
       setMembers: (members) => set({ members }),
+      // Written by loadWedding and by the two venue RPCs, which re-read the
+      // wedding rather than guessing: `venue_access` is server-owned (the
+      // client cannot write the column at all - see
+      // enforce_wedding_tenant_columns), so an optimistic update here would be
+      // asserting something only the database is entitled to say.
+      setVenueLink: (venue, venueAccess) => set({ venue, venueAccess }),
       // Renaming yourself in settings has to reach the avatar stack, which
       // reads the member list loaded with the wedding rather than re-fetching.
       setMemberDisplayName: (userId, displayName) =>
