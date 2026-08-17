@@ -130,6 +130,21 @@ const config = defineConfig({
         enabled: true,
         crawlLinks: false,
         autoStaticPathsDiscovery: false,
+        // Emit `pl.html`, not `pl/index.html`. Cloudflare Pages derives the
+        // trailing slash from the filename: a directory index makes `/pl` a 308
+        // to `/pl/`, and every canonical, hreflang, og:url and sitemap <loc> we
+        // emit is the *extensionless* form (see lib/site.ts + seo/localeHead).
+        // So the whole sitemap answered 308 - "Page with redirect", i.e. not
+        // indexed - and the hreflang cluster pointed at non-canonical URLs,
+        // which is the exact thing the comment in localeHead.ts warns about.
+        // Flat files invert the redirect: `/pl` is 200, `/pl/` 308s into it.
+        //
+        // This is a *Start* prerender option, not Nitro's. Start runs its own
+        // prerenderer and Nitro's never sees these pages, so setting it under
+        // the nitro() plugin is silently inert. Per-page `prerender` blocks in
+        // `pages` above only set `enabled`/`crawlLinks`, and the merge is a
+        // shallow spread, so this global value survives for every page.
+        autoSubfolderIndex: false,
       },
       sitemap: { enabled: true, host: SITE, outputPath: "sitemap.xml" },
     }),

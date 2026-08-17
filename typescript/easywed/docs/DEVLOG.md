@@ -2,6 +2,10 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 17.08
+
+- prerender flat html for better google search console indexing
+
 ### 16.08
 
 - enforce wedding scope on guests.table_id and wedding_id
