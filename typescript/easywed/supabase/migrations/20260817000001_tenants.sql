@@ -312,18 +312,36 @@ create policy "staff view the roster, members view themselves"
   on public.tenant_members for select
   using (public.is_tenant_staff(tenant_id) or user_id = auth.uid());
 
--- Staff may add staff and customers, never an owner. Tightened from the
--- original design, which allowed any role: staff cannot promote *themselves*
--- (the primary key blocks a second row, and there is no UPDATE policy), but
--- without `role <> 'owner'` they could enrol a second account they control as
--- an owner and inherit tenant settings through it. Owners are created by the
--- same manual provisioning that creates the tenant.
-create policy "staff can add members"
-  on public.tenant_members for insert
-  with check (public.is_tenant_staff(tenant_id) and role <> 'owner');
-
--- No UPDATE policy: a role change is a remove-and-re-add, so it goes through
--- the INSERT check above and cannot mint an owner either.
+-- No INSERT policy, and its absence is the design.
+--
+-- There was one - staff could insert any user_id they could name as a
+-- 'customer' or 'staff' of their own tenant. It is gone because membership of a
+-- venue is not a thing a venue may decide about a person:
+--
+--   * `staff_can_view_profile` below keys off exactly this table, so the row
+--     handed the venue that user's `profiles.display_name`;
+--   * `tenant_members_one_per_user` is a unique index, so an unconsented row
+--     also permanently barred its subject from joining any other venue;
+--   * `link_wedding_to_venue` treats the row as the invitation in the
+--     invitation-only branch, so it let a stranger's wedding be attachable.
+--
+-- All three follow from one INSERT that the person named in it never agreed to,
+-- and each of them is done to an account chosen by uuid - the venue never has
+-- to be able to reach that user any other way.
+--
+-- The wedding side never had this shape: joining a wedding needs a token the
+-- owner generated and `claim_wedding_invitation`, which the *joiner* calls. The
+-- tenant side needs the same, and until it exists this table has no
+-- client-reachable write path at all - which is the right direction to be
+-- missing a feature in. The proper invite flow then lands on a closed door
+-- rather than replacing an open one.
+--
+-- Nothing in the app writes here today (`src/lib/sync/tenant.ts` only reads),
+-- and seed.sql runs as postgres, so the removal costs nothing now. Provisioning
+-- a venue's own staff is already manual, the same as creating the tenant.
+--
+-- No UPDATE policy either: with no INSERT, a role change is a hand-run
+-- operation like the rest of provisioning.
 
 -- Staff can remove staff and customers; an owner row is removable only by hand.
 -- Note this lets a staff member delete their own row - that is a resignation,

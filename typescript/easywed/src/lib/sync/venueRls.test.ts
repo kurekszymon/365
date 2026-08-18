@@ -29,6 +29,9 @@ const SUPABASE_KEY =
 
 const GRANTED_WEDDING = "20000000-0000-4000-8000-000000000001"
 const UNLINKED_WEDDING = "20000000-0000-4000-8000-000000000002"
+const BAGATELKA = "50000000-0000-4000-8000-000000000001"
+// solo@easywed.test, who belongs to no tenant.
+const SOLO_USER = "10000000-0000-4000-8000-000000000004"
 const PASSWORD = "password123"
 
 const reachable = await probeLocalStack()
@@ -213,6 +216,34 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
       // call this with `true` would be consenting on the data subject's
       // behalf, and privacy.venue.optin says in writing that it cannot.
       expect(error).not.toBeNull()
+    })
+  })
+
+  describe("what a venue cannot decide about a person", () => {
+    it("cannot enrol an account as one of its members", async () => {
+      // One table further out than the rest of this file, and the same
+      // question: what may a venue do to someone who has agreed to nothing?
+      //
+      // `tenant_members` carried a "staff can add members" INSERT policy, so
+      // any account a venue could name by uuid became its 'customer' on the
+      // venue's say-so alone. One such row disclosed that person's
+      // profiles.display_name to the venue (staff_can_view_profile reads this
+      // very table), barred them from ever joining another venue
+      // (tenant_members_one_per_user is unique), and satisfied the
+      // invitation-only gate in link_wedding_to_venue. The policy is gone. This
+      // is what keeps it gone - a re-added INSERT policy fails here.
+      const { error } = await venue.from("tenant_members").insert({
+        tenant_id: BAGATELKA,
+        // solo@easywed.test: a real account with no connection to this venue,
+        // and not already a member of one - so a refusal here is RLS, not the
+        // one-tenant-per-user index answering first.
+        user_id: SOLO_USER,
+        role: "customer",
+      })
+
+      // INSERT has nothing to filter, so RLS refuses outright rather than
+      // silently writing nothing.
+      expect(error?.code).toBe("42501")
     })
   })
 

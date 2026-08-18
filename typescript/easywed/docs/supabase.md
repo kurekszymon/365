@@ -77,6 +77,16 @@ What the venue reads instead is `wedding_seatmap`, a `security_barrier` view run
 
 `my_wedding_role(p_wedding_id)` exists because narrowing `wedding_members` means the client can no longer derive its own role from the member rows it fetches — a venue reads zero of them, and "no row" is indistinguishable from "no access".
 
+### `tenant_members` has no INSERT policy, on purpose
+
+Membership of a venue is not something a venue may decide about a person. An earlier `"staff can add members"` policy let staff insert any `user_id` they could name as their `customer`, which did three things to an account that had agreed to nothing: handed the venue that user's `profiles.display_name` (`staff_can_view_profile` keys off this table), barred them from ever joining another venue (`tenant_members_one_per_user` is unique), and satisfied the invitation-only gate in `link_wedding_to_venue`.
+
+Joining a *wedding* needs a token the owner generated plus `claim_wedding_invitation`, which the joiner calls. The tenant side needs the same shape, and does not have it yet — so for now the table has **no client-reachable write path at all**, and a venue's customers and staff are provisioned by hand alongside the tenant itself. That is a known gap in the invitation-only linking flow (`open_linking` venues are unaffected), and it is the right direction to be missing a feature in: `claim_tenant_invitation` will land on a closed door instead of replacing an open one. `venueRls.test.ts` asserts the refusal.
+
+### Why `link_wedding_to_venue`'s refusals carry `PT` SQLSTATEs
+
+`PT404` (no such venue), `PT410` (venue not active) and `PT403` (invitation only) — one code per refusal the couple can actually cause, because each renders a different sentence and the SQLSTATE is the only part of a PostgREST error that is a contract. `PTxyz` is PostgREST's convention for "answer with HTTP xyz", so the statuses come out as 404/410/403 rather than a default. This replaces a `error.message.includes("invitation only")` match in `src/lib/sync/venue.ts`: rewording a `raise` would have degraded that case into the generic "could not link, try again" — the one refusal where retrying is exactly the wrong advice. The two refusals a couple cannot trigger from the dialog (no session, not the owner) stay `42501`.
+
 All of this is asserted, not asserted-about: `src/lib/sync/venueRls.test.ts` runs two signed-in clients against the local stack and checks the row counts, the seat map's **key absence**, the write refusals, revocation, and cross-tenant isolation. It skips when Docker is down.
 
 ## `profiles` - and what deliberately isn't in it
