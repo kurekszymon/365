@@ -5,7 +5,10 @@ import { ArrowLeftIcon, PrinterIcon } from "lucide-react"
 import { VenuePeekSummary } from "@/components/crm/VenuePeekSummary"
 import { PlannerPrintView } from "@/components/planner/PlannerPrintView"
 import { Button } from "@/components/ui/button"
-import { loadWeddingForVenue } from "@/lib/sync/loadWeddingForVenue"
+import {
+  clearVenuePeek,
+  loadWeddingForVenue,
+} from "@/lib/sync/loadWeddingForVenue"
 import { triggerPdfExport } from "@/lib/export/guestsPdf"
 import { track } from "@/lib/analytics/track"
 import { useGlobalStore } from "@/stores/global.store"
@@ -50,7 +53,12 @@ function CrmWeddingPeek() {
         setFailedId(id)
       })
 
-    return () => ctrl.abort()
+    return () => {
+      ctrl.abort()
+      // Leaving the peek empties the stores it filled - see clearVenuePeek for
+      // why that is part of the revocation promise and not just tidiness.
+      clearVenuePeek()
+    }
   }, [id])
 
   if (failedId === id) {

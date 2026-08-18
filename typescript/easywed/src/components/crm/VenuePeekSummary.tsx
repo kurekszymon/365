@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react"
+import { useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 import { useShallow } from "zustand/react/shallow"
 import { Button } from "@/components/ui/button"
 import { TagBadge } from "@/components/ui/tag-badge"
@@ -23,6 +25,7 @@ import { usePlannerStore } from "@/stores/planner.store"
  */
 export const VenuePeekSummary = ({ weddingId }: { weddingId: string }) => {
   const { t } = useTranslation()
+  const navigate = useNavigate()
 
   const guests = usePlannerStore((s) => s.guests)
   const { venue, venueAccess } = useGlobalStore(
@@ -30,7 +33,7 @@ export const VenuePeekSummary = ({ weddingId }: { weddingId: string }) => {
   )
 
   const [submitting, setSubmitting] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
+  const [failed, setFailed] = useState(false)
 
   const seated = guests.filter((g) => g.tableId !== null).length
 
@@ -51,10 +54,24 @@ export const VenuePeekSummary = ({ weddingId }: { weddingId: string }) => {
   const release = async () => {
     setSubmitting(true)
     const ok = await setVenueAccess(weddingId, false)
-    setSubmitting(false)
-    setMessage(
-      t(ok ? "crm.wedding.release_done" : "crm.wedding.release_failed")
-    )
+
+    if (!ok) {
+      setSubmitting(false)
+      setFailed(true)
+      return
+    }
+
+    // Leaving is the point, not a courtesy redirect: this screen is a view of
+    // data this venue just gave up, and unmounting it is what clears the store
+    // it was rendered from (clearVenuePeek, in the route's effect cleanup).
+    // Staying put with a success message underneath a live seat map would say
+    // the access is gone while still showing it.
+    //
+    // No setSubmitting(false) on this path - the component is on its way out,
+    // and re-enabling the button first only offers a second click at an RPC
+    // that has already succeeded.
+    toast.success(t("crm.wedding.release_done"))
+    void navigate({ to: "/crm" })
   }
 
   return (
@@ -80,8 +97,10 @@ export const VenuePeekSummary = ({ weddingId }: { weddingId: string }) => {
         )}
       </div>
 
-      {message ? (
-        <p className="text-sm text-muted-foreground">{message}</p>
+      {failed ? (
+        <p className="text-sm text-destructive">
+          {t("crm.wedding.release_failed")}
+        </p>
       ) : null}
 
       {venue && venueAccess === "granted" ? (

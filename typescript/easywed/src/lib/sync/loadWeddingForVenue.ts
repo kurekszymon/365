@@ -175,6 +175,45 @@ export const loadWeddingForVenue = async (id: string, signal: AbortSignal) => {
   useRemindersStore.setState({ reminders: [] })
 }
 
+/**
+ * The inverse of `loadWeddingForVenue`: take the customer's layout back out of
+ * the stores it was hydrated into.
+ *
+ * This is what makes a revocation *visible* rather than merely true. The
+ * database stops answering the moment `set_venue_access(false)` commits - the
+ * derived role is re-evaluated per request, with nothing cached - but that
+ * governs the next request, not the pixels already on screen. Without this, a
+ * staff member who hands back access keeps the seat map, the head count and the
+ * dietary tags rendered from the already-hydrated store until they happen to
+ * navigate somewhere else, and `privacy.venue.revoke`'s "natychmiast i
+ * calkowicie" would be a sentence the UI quietly contradicts.
+ *
+ * Called on unmount rather than only after a release, so leaving the peek by
+ * any route - the back arrow, browser back, a revoke by the couple - ends it
+ * the same way. These stores are module singletons shared with the couple's own
+ * planner, so a venue staff member who also plans their own wedding in this tab
+ * is the second reason not to leave a customer's layout sitting in them.
+ */
+export const clearVenuePeek = () => {
+  usePlannerStore.setState({
+    tables: [],
+    guests: [],
+    halls: [],
+    fixtures: [],
+    hallZOrder: [],
+  })
+  useGlobalStore.setState({
+    weddingId: undefined,
+    name: undefined,
+    date: undefined,
+    role: undefined,
+    members: [],
+    venue: null,
+    venueAccess: "none",
+  })
+  useRemindersStore.setState({ reminders: [] })
+}
+
 // Unassigned rows sort last in both keys. `~` is above every character a uuid
 // can contain, so it puts a null table after every real one without a second
 // comparison branch.
