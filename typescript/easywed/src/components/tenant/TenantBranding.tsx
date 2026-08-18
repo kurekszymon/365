@@ -24,7 +24,15 @@ import type { PublicTenant } from "@/stores/tenant.store"
 export const tenantStyle = (tenant: PublicTenant | null): CSSProperties => {
   if (!tenant) return {}
 
-  const vars: Record<string, string> = {}
+  // Keyed on `--${string}`, not `string`. React sets CSS custom properties at
+  // runtime but csstype does not describe them, so `CSSProperties` has no index
+  // signature to declare these against - which left this a `Record<string,
+  // string>`, assignable to the return type only because a source with no known
+  // properties satisfies a target whose properties are all optional. That
+  // accident also accepted `vars.background = ...`. The pattern key makes the
+  // narrow thing this emits - custom properties, nothing else - the thing the
+  // type actually says, with no assertion to review.
+  const vars: Record<`--${string}`, string> = {}
   if (tenant.primaryColor) vars["--tenant-primary"] = tenant.primaryColor
   if (tenant.accentColor) vars["--tenant-accent"] = tenant.accentColor
 

@@ -86,16 +86,18 @@ function VenueEntry() {
         {/*
           A cross-origin anchor, never router navigation: accounts live on the
           apex and sessions are per-origin, so signing up here would create a
-          session the couple cannot use anywhere they will actually plan. The
-          ?venue= parameter carries the referral across so the sign-up can link
-          the wedding back to this venue.
+          session the couple cannot use anywhere they will actually plan.
+
+          Plain /signup, with no referral attached. This carried a ?venue=<slug>
+          parameter that nothing consumed: signup's validateSearch returns only
+          `next`, so the value was dropped at the route boundary, and there is
+          no store between account creation and VenueAccessDialog for it to sit
+          in. Carrying the referral across is a real feature and this is where
+          it would start - but it has to arrive with the half that reads it,
+          rather than as a parameter that only looks like it works.
         */}
         <Button asChild>
-          <a
-            href={`${SITE_ORIGIN}/signup?venue=${encodeURIComponent(slug ?? "")}`}
-          >
-            {t("venue.cta_couple")}
-          </a>
+          <a href={`${SITE_ORIGIN}/signup`}>{t("venue.cta_couple")}</a>
         </Button>
         <a
           href="/crm"
