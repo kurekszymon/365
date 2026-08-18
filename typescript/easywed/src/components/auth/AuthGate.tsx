@@ -24,6 +24,13 @@ const PUBLIC_PATHS = [
   "/pl",
   "/en",
   "/wedding/local",
+  // The tenant host's own two roots. `/venue` is the anonymous front door, so
+  // waiting on getSession() would blank it for a visitor who has no session to
+  // wait for - and TenantGate is nested inside this component, so the branding
+  // lookup would not even start until auth settled. `/crm` renders its own
+  // loading and 403 states, and requireTenantMember owns the redirect.
+  "/venue",
+  "/crm",
 ]
 
 // Hydrates the Supabase session into the auth store and re-runs router

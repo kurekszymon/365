@@ -2,7 +2,11 @@ import type { Guest, Hall } from "@/stores/planner.store"
 import type { VenueAccess } from "@/stores/global.store"
 import { supabase } from "@/lib/supabase"
 import { toFixture, toHall, toTable } from "@/lib/sync/rows"
-import { seatIndexFromId, usePlannerStore } from "@/stores/planner.store"
+import {
+  DEFAULT_HALL,
+  seatIndexFromId,
+  usePlannerStore,
+} from "@/stores/planner.store"
 import { useGlobalStore } from "@/stores/global.store"
 import { useRemindersStore } from "@/stores/reminders.store"
 import i18n from "@/i18n"
@@ -113,6 +117,25 @@ export const loadWeddingForVenue = async (id: string, signal: AbortSignal) => {
   // Display-only orphan adoption: a table whose hall is missing still has to
   // render somewhere, and halls[0] is where loadWedding would have put it.
   // Unlike there, nothing is written back.
+  //
+  // Which is why the hall-less case needs its own branch. `loadWedding` makes
+  // halls[0] exist by *inserting* a default hall; a venue cannot write, so the
+  // same hall is built here in memory only. Without it there is no halls[0] to
+  // adopt into, every row comes back with an undefined hallId, and the peek at
+  // a wedding whose tables were never assigned a hall renders an empty canvas -
+  // which reads as "the couple has planned nothing" rather than as the data
+  // anomaly it is. Condition mirrors loadWedding's, fixtures included.
+  if (
+    halls.length === 0 &&
+    (tablesRes.data.length > 0 || fixturesRes.data.length > 0)
+  ) {
+    halls.push({
+      ...DEFAULT_HALL,
+      id: crypto.randomUUID(),
+      position: { x: 0, y: 0 },
+    })
+  }
+
   const hallIds = new Set(halls.map((h) => h.id))
   const fallbackHallId = halls[0]?.id
   const adoptOrphan = (hallId: string | null) =>
