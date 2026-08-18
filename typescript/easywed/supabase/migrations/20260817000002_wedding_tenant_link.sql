@@ -120,13 +120,40 @@ create trigger weddings_tenant_columns_immutable
 -- same kind of act.
 --
 -- `tenants.open_linking` defaults to false, meaning invitation-only, and the
--- invitation is a `tenant_members` row: the venue adds the couple as a
--- 'customer' from its CRM ("staff can add members" in 20260817000001), and that
--- row is what is_tenant_member finds here. Without this, slugs being public
--- hostnames means any account could attach a junk wedding to any venue.
+-- invitation is a `tenant_members` row with role 'customer', which is what
+-- is_tenant_member finds here. Without this, slugs being public hostnames means
+-- any account could attach a junk wedding to any venue.
+--
+-- Known gap, and a deliberate one: that row currently has to be inserted by
+-- hand. 20260817000001 has no INSERT policy on tenant_members - see the comment
+-- there for why a venue naming a stranger's uuid is not an invitation - so
+-- until a token-based `claim_tenant_invitation` exists (mirroring
+-- `claim_wedding_invitation`), the invitation-only branch is only reachable via
+-- provisioning. `open_linking` venues are unaffected.
 --
 -- Returns the tenant id so the caller can re-read the venue it just linked to
 -- in one round trip instead of two.
+--
+-- The three refusals a couple can actually cause carry three distinct
+-- SQLSTATEs, because the client renders a different sentence for each and a
+-- SQLSTATE is the only part of a PostgREST error that is a contract:
+--
+--   PT404  no venue at that slug
+--   PT410  the venue exists but is not active
+--   PT403  the venue links by invitation only
+--
+-- `PTxyz` is PostgREST's own convention for "answer with HTTP xyz", so each
+-- code states its status rather than falling to a default, and no two refusals
+-- share one. The alternative - matching on the message text - is what this
+-- replaces: rewording a `raise` here, or a change in how PostgREST wraps
+-- messages, would have silently degraded the invitation-only case into the
+-- generic "could not link" toast, which is the one refusal where the user typed
+-- exactly the right thing and needs to be told to ask the venue instead of
+-- retyping the slug.
+--
+-- The two refusals below that a couple cannot trigger from the dialog - no
+-- session, not the owner - keep plain 42501. They are programming errors, not
+-- messages.
 create function public.link_wedding_to_venue(p_wedding_id uuid, p_slug text)
 returns uuid
 language plpgsql
@@ -151,16 +178,16 @@ begin
   select * into v_tenant from public.tenants where slug = p_slug;
 
   if not found then
-    raise exception 'No such venue' using errcode = 'P0002';
+    raise exception 'No such venue' using errcode = 'PT404';
   end if;
 
   if v_tenant.status <> 'active' then
-    raise exception 'Venue is not active' using errcode = '42501';
+    raise exception 'Venue is not active' using errcode = 'PT410';
   end if;
 
   if not v_tenant.open_linking and not public.is_tenant_member(v_tenant.id) then
     raise exception 'This venue accepts links by invitation only'
-      using errcode = '42501';
+      using errcode = 'PT403';
   end if;
 
   -- 'pending' unconditionally, including when re-linking a wedding that was

@@ -31,7 +31,27 @@ import { useGlobalStore } from "@/stores/global.store"
 /** Discriminated so the dialog can render a reason rather than a shrug. */
 export type VenueLinkResult =
   | { ok: true; venue: LinkedVenue }
-  | { ok: false; reason: "not_found" | "invitation_only" | "failed" }
+  | { ok: false; reason: VenueLinkFailure }
+
+type VenueLinkFailure = "not_found" | "suspended" | "invitation_only" | "failed"
+
+/**
+ * The SQLSTATEs `link_wedding_to_venue` raises for the three refusals a couple
+ * can cause, mapped to the reason the dialog renders. Each reason is a
+ * `venue.link.error.<reason>` key, so a code missing here falls to "failed" and
+ * a generic retry prompt.
+ *
+ * A lookup on `error.code` rather than a match on `error.message`, which is
+ * what this replaces: the message is prose the migration is free to reword and
+ * PostgREST is free to wrap, so every refusal was one edit away from silently
+ * becoming "failed" - including the invitation-only one, where retrying is
+ * precisely the wrong advice.
+ */
+const LINK_FAILURES: Record<string, VenueLinkFailure> = {
+  PT404: "not_found",
+  PT410: "suspended",
+  PT403: "invitation_only",
+}
 
 /**
  * Points a wedding at a venue and leaves it in `pending`.
@@ -51,14 +71,7 @@ export const linkWeddingToVenue = async (
 
   if (error) {
     console.error("[venue] linkWeddingToVenue failed", error)
-    // The RPC raises P0002 for an unknown slug and 42501 for everything else it
-    // refuses; only the invitation-only refusal is worth its own message,
-    // because it is the only one where the user typed the right thing.
-    if (error.code === "P0002") return { ok: false, reason: "not_found" }
-    if (error.message.includes("invitation only")) {
-      return { ok: false, reason: "invitation_only" }
-    }
-    return { ok: false, reason: "failed" }
+    return { ok: false, reason: LINK_FAILURES[error.code] ?? "failed" }
   }
 
   const venue = await fetchLinkedVenue(data)

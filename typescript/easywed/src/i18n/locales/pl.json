@@ -630,6 +630,7 @@
   "venue.link.slug_help": "Fragment adresu przed „.easywed.app” - dla bagatelka.easywed.app wpisz „bagatelka”.",
   "venue.link.submit": "Powiąż z salą",
   "venue.link.error.not_found": "Nie ma sali pod tym adresem. Sprawdź pisownię.",
+  "venue.link.error.suspended": "Ta sala w tej chwili nie przyjmuje powiązań. Skontaktuj się z nią bezpośrednio.",
   "venue.link.error.invitation_only": "Ta sala przyjmuje powiązania tylko na zaproszenie. Poproś ją, żeby najpierw dodała Cię jako parę młodą.",
   "venue.link.error.failed": "Nie udało się powiązać sali. Spróbuj ponownie.",
   "venue.status.none": "Sala {{name}} nie ma dostępu do Twojego planu.",
