@@ -52,6 +52,15 @@ describe.skipIf(!reachable)("tenant branding constraints", () => {
       .select("logo_url")
   }
 
+  const setColor = (primaryColor: string) => {
+    if (!owner) throw new Error("owner client was never signed in")
+    return owner
+      .from("tenants")
+      .update({ primary_color: primaryColor })
+      .eq("id", BAGATELKA)
+      .select("primary_color")
+  }
+
   beforeAll(async () => {
     const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_KEY, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -112,10 +121,7 @@ describe.skipIf(!reachable)("tenant branding constraints", () => {
 
   describe("the colour columns, which were already anchored", () => {
     it("rejects a colour carrying a second declaration", async () => {
-      const { error } = await owner
-        .from("tenants")
-        .update({ primary_color: "#ffffff;background:url(https://evil/x)" })
-        .eq("id", BAGATELKA)
+      const { error } = await setColor("#ffffff;background:url(https://evil/x)")
       expect(error?.code).toBe(CHECK_VIOLATION)
     })
   })

@@ -312,6 +312,10 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
  * always names `127.0.0.1:54321`, so their presence says nothing about whether
  * Docker is running. The timeout keeps a stopped stack from costing five
  * seconds per suite run.
+ *
+ * A skip is visible in vitest's own summary - `410 passed | 24 skipped` rather
+ * than `434 passed` - which is the only place it can be seen: console output
+ * from a file whose tests are all skipped is not printed by the reporter.
  */
 async function probeLocalStack(): Promise<boolean> {
   if (!SUPABASE_URL || !SUPABASE_KEY) return false
