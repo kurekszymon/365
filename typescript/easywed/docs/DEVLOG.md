@@ -2,6 +2,14 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 19.08
+
+- add password reset email template
+
+### 18.08
+
+- harden crm implementation
+
 ### 17.08
 
 - prerender flat html for better google search console indexing

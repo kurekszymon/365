@@ -242,6 +242,16 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# Branded templates. content_path is relative to the project root (where the CLI runs),
+# and these are the same files pasted into Dashboard -> Authentication -> Emails.
+[auth.email.template.confirmation]
+subject = "Potwierdź swój adres e-mail"
+content_path = "./templates/email-confirm-signup.html"
+
+[auth.email.template.recovery]
+subject = "Zresetuj hasło do easywed."
+content_path = "./templates/email-reset-password.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"
