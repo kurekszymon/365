@@ -150,10 +150,8 @@ export function tenantSlugFromHost(
 ): string | null {
   if (!hostname) return null
 
-  const host = hostname.toLowerCase()
-
   // A trailing dot is a fully-qualified name and addresses the same host.
-  const normalized = host.endsWith(".") ? host.slice(0, -1) : host
+  const normalized = normalizeHost(hostname)
 
   if (APEX_HOSTS.has(normalized)) return null
 
@@ -177,6 +175,67 @@ export function tenantSlugFromHost(
 /** Whether a bare string is shaped like, and permitted to be, a tenant slug. */
 export function isTenantSlug(value: string): boolean {
   return TENANT_SLUG_RE.test(value) && !RESERVED_SUBDOMAINS.has(value)
+}
+
+/**
+ * The apex origin *as this browser can reach it*, and the tenant origin for one
+ * slug.
+ *
+ * Both exist because `SITE_ORIGIN` is a constant - `https://easywed.app` - and
+ * that is the right answer for canonical URLs and exactly the wrong one for a
+ * link the user is about to click. A venue invitation is copied out of the CRM,
+ * which is served from a tenant host, and it has to point at whichever origin
+ * the *recipient* needs: the apex for a couple, the venue's own host for staff.
+ * Hardcoding either breaks `pnpm dev`, where the two are
+ * `http://localhost:3000` and `http://bagatelka.localhost:3000`.
+ *
+ * So the rule is "keep the scheme and port you are on, change only the label".
+ *
+ * Both fall back to the production origin when there is no `window` - they are
+ * only ever called from event handlers and effects, so that branch is for
+ * prerender safety rather than a real code path.
+ */
+export function apexOrigin(): string {
+  if (typeof window === "undefined") return `https://${SITE_HOST}`
+
+  const { protocol, hostname, port, origin } = window.location
+  const slug = tenantSlugFromHost(hostname, window.location.search)
+
+  // Not on a tenant host: already the apex, whatever it is called locally.
+  // Covers *.pages.dev too, where the apex is the bare preview origin and the
+  // tenant is expressed as ?tenant= rather than as a label.
+  if (!slug) return origin
+
+  const host = normalizeHost(hostname)
+  return `${protocol}//${host.slice(slug.length + 1)}${port ? `:${port}` : ""}`
+}
+
+export function tenantOrigin(slug: string): string {
+  if (typeof window === "undefined") return `https://${slug}.${SITE_HOST}`
+
+  const { protocol, hostname, port, origin } = window.location
+
+  // A preview deploy cannot have a tenant subdomain - the leading label is a
+  // build hash - so `?tenant=` stands in, the same escape hatch
+  // tenantSlugFromHost honours there and nowhere else.
+  if (normalizeHost(hostname).endsWith(PREVIEW_SUFFIX)) {
+    return `${origin}/?tenant=${slug}`
+  }
+
+  const apex = new URL(apexOrigin())
+
+  // `www` is an apex host but not a usable base - bagatelka.www.easywed.app is
+  // nobody's certificate. Everything else passes through, including `localhost`,
+  // which every browser resolves as *.localhost without DNS.
+  const base = apex.hostname === `www.${SITE_HOST}` ? SITE_HOST : apex.hostname
+
+  return `${protocol}//${slug}.${base}${port ? `:${port}` : ""}`
+}
+
+/** Lowercased, with the trailing dot of a fully-qualified name removed. */
+function normalizeHost(hostname: string): string {
+  const host = hostname.toLowerCase()
+  return host.endsWith(".") ? host.slice(0, -1) : host
 }
 
 function slugFromSearch(search: string): string | null {

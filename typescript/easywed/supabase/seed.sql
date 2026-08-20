@@ -160,6 +160,21 @@ insert into public.tenant_members (tenant_id, user_id, role) values
   ('50000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000006', 'owner'),
   ('50000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'customer');
 
+-- One spent tenant invitation (how Anna became bagatelka's customer, as far as
+-- the CRM roster is concerned) and one still live, so /crm/roster has both
+-- states and the claim route is reachable:
+--   http://localhost:3000/venue/invite/seed-live-customer-invite
+--
+-- The live one is claimable by solo@easywed.test, the only seeded account that
+-- belongs to no tenant - every other one trips tenant_members_one_per_user,
+-- which is itself the PT409 branch worth exercising by hand.
+insert into public.tenant_invitations (tenant_id, token, role, invited_by, claimed_by, claimed_at, expires_at) values
+  ('50000000-0000-4000-8000-000000000001', 'seed-claimed-customer-invite', 'customer',
+   '10000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-000000000001',
+   now() - interval '5 days', now() + interval '9 days'),
+  ('50000000-0000-4000-8000-000000000001', 'seed-live-customer-invite', 'customer',
+   '10000000-0000-4000-8000-000000000005', null, null, now() + interval '14 days');
+
 -- ---------------------------------------------------------------------------
 -- Weddings
 -- ---------------------------------------------------------------------------

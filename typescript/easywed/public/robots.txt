@@ -5,6 +5,13 @@ User-agent: *
 # a crawled and indexed claim URL hands access to whoever reads the index.
 Disallow: /invite/
 
+# The same, for a venue's roster invitations. A separate line and not covered by
+# the one above: Disallow is a prefix match from the root, so /invite/ does not
+# reach /venue/invite/. (The shared `/invite/` *segment* is what makes
+# scrubInviteTokens cover both without a second pattern - that one matches
+# anywhere in the string, this one does not.)
+Disallow: /venue/invite/
+
 # Auth callbacks carry tokens in the URL fragment and query.
 Disallow: /auth/
 

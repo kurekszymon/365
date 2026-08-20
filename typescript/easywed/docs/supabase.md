@@ -81,7 +81,22 @@ What the venue reads instead is `wedding_seatmap`, a `security_barrier` view run
 
 Membership of a venue is not something a venue may decide about a person. An earlier `"staff can add members"` policy let staff insert any `user_id` they could name as their `customer`, which did three things to an account that had agreed to nothing: handed the venue that user's `profiles.display_name` (`staff_can_view_profile` keys off this table), barred them from ever joining another venue (`tenant_members_one_per_user` is unique), and satisfied the invitation-only gate in `link_wedding_to_venue`.
 
-Joining a *wedding* needs a token the owner generated plus `claim_wedding_invitation`, which the joiner calls. The tenant side needs the same shape, and does not have it yet — so for now the table has **no client-reachable write path at all**, and a venue's customers and staff are provisioned by hand alongside the tenant itself. That is a known gap in the invitation-only linking flow (`open_linking` venues are unaffected), and it is the right direction to be missing a feature in: `claim_tenant_invitation` will land on a closed door instead of replacing an open one. `venueRls.test.ts` asserts the refusal.
+Joining a *wedding* needs a token the owner generated plus `claim_wedding_invitation`, which the joiner calls. The tenant side now has the same shape — see below — so the INSERT policy is still absent and the only write path is a definer RPC the *recipient* calls.
+
+### `tenant_invitations` and `claim_tenant_invitation` (`20260820000001`)
+
+The token flow that closes the gap the previous section used to describe. Until this migration, `tenants.open_linking` defaulted to false, the invitation-only branch of `link_wedding_to_venue` looked for a `tenant_members` row with role `customer`, and nothing but hand-written SQL could produce one — so **no couple could link to an invitation-only venue at all**.
+
+`tenant_invitations` mirrors `wedding_invitations` field for field (token, `invited_by`, 14-day `expires_at`, `claimed_at` / `claimed_by`), and the three properties that make that shape safe carry over: the row names no user, the claim is made by the recipient with their own session, and invitees need no SELECT because the definer function reads the row itself.
+
+Two things are **not** symmetrical with the wedding side, and both are deliberate:
+
+- **The role split on INSERT.** Any staff member may invite a `customer`; only the owner may invite `staff` (`role = 'customer' or tenant_role(tenant_id) = 'owner'`). A customer row buys exactly one thing — the ability to call `link_wedding_to_venue` for this venue — while a staff row is a key to the whole CRM, including the seat map of every granted wedding. Note this is the *opposite* asymmetry to the DELETE policy from `20260817000001`, where any staff member may remove another: removal subtracts access and the owner can undo it, creation does neither. `owner` is absent from the CHECK entirely.
+- **`PT409`.** `tenant_members_one_per_user` allows one membership per account, so claiming into a second venue cannot succeed. It gets its own SQLSTATE because retrying cannot fix it — the only ways forward are leaving the other venue or using a different account, and a generic failure says neither. Checked before the insert *and* caught as a `unique_violation` around it, since the pre-check races and the unique index is not the one `on conflict` absorbs.
+
+The same migration adds `"members can leave their tenant"` (`user_id = auth.uid() and role <> 'owner'`) on `tenant_members`. It belongs with this change rather than with `20260817000001`: until a couple could put themselves on a roster by consent, nobody was stuck on one, and a membership with no exit would bar them from every other venue permanently. Leaving touches no wedding — membership and `venue_access` are separate decisions with separate RPCs, and neither implies the other.
+
+Client side: `claimTenantInvitation` in `src/lib/sync/tenant.ts`, the claim page at `/venue/invite/$token`, and the CRM roster at `/crm/roster`. The claim route lives under the `/invite/` segment on purpose — `scrubInviteTokens` matches that substring anywhere, so both token routes are redacted out of PostHog by one pattern. `robots.txt` cannot share the trick and needs its own `Disallow: /venue/invite/`, because Disallow is a prefix match from the root. `src/lib/sync/tenantInvitations.test.ts` asserts the whole matrix against the running database.
 
 ### Why `link_wedding_to_venue`'s refusals carry `PT` SQLSTATEs
 

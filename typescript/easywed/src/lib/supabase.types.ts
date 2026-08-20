@@ -347,6 +347,50 @@ export type Database = {
           },
         ]
       }
+      tenant_invitations: {
+        Row: {
+          claimed_at: string | null
+          claimed_by: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: string
+          tenant_id: string
+          token: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          role: string
+          tenant_id: string
+          token?: string
+        }
+        Update: {
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role?: string
+          tenant_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_invitations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_members: {
         Row: {
           created_at: string
@@ -581,6 +625,7 @@ export type Database = {
       }
     }
     Functions: {
+      claim_tenant_invitation: { Args: { _token: string }; Returns: string }
       claim_wedding_invitation: { Args: { _token: string }; Returns: string }
       delete_own_account: { Args: never; Returns: undefined }
       dietary_tags_valid: { Args: { tags: string[] }; Returns: boolean }

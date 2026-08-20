@@ -111,6 +111,24 @@ export type AnalyticsEvents = {
   venue_access_granted: undefined
   /** Venue staff opened one customer's seat map in the CRM. */
   venue_peek_opened: undefined
+  /**
+   * A venue issued an invitation link from the CRM roster.
+   *
+   * `role` is the whole payload, and it is the useful cut: 'customer' is the
+   * daily booking flow, 'staff' is the venue growing its own team, and the two
+   * have nothing to do with each other. No token, no uuid, no email - the token
+   * is a bearer credential (see scrubInviteTokens) and the invitation names
+   * nobody until it is claimed.
+   */
+  tenant_invite_created: { role: "staff" | "customer" }
+  /**
+   * Someone spent a venue invitation and joined the roster.
+   *
+   * Not the same event as `invite_claimed`, which is a wedding membership. This
+   * one only lets a couple *ask* an invitation-only venue for a link; the
+   * disclosure decision is still `venue_access_granted`, separately and later.
+   */
+  tenant_invite_claimed: { role: "staff" | "customer" }
 }
 
 // Events declared as `undefined` are called bare - `track("invite_claimed")`.

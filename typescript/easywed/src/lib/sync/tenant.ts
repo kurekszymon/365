@@ -90,3 +90,99 @@ export const fetchTenantRole = async (
     ? role
     : null
 }
+
+/** The venue a claim landed in, plus what it made the caller. */
+export type ClaimedTenant = {
+  id: string
+  slug: string
+  name: string
+  role: TenantRole
+}
+
+/** Discriminated so the claim page can name the reason rather than shrug. */
+export type TenantClaimResult =
+  | { ok: true; tenant: ClaimedTenant }
+  | { ok: false; reason: TenantClaimFailure }
+
+type TenantClaimFailure = "invalid" | "other_venue" | "failed"
+
+/**
+ * The SQLSTATEs `claim_tenant_invitation` raises, mapped to the sentence the
+ * page renders. A code missing here falls to "failed" and a generic retry.
+ *
+ * Keyed on `error.code`, not `error.message`, for the reason spelled out on
+ * LINK_FAILURES in venue.ts: the message is prose the migration is free to
+ * reword and PostgREST is free to wrap.
+ *
+ * PT409 is the one that must not collapse into the generic case.
+ * `tenant_members_one_per_user` allows one membership per account, so an
+ * account already attached to another venue cannot fix this by retrying - the
+ * only ways forward are leaving that venue or using a different account, and
+ * nothing in "something went wrong" says so.
+ */
+const CLAIM_FAILURES: Record<string, TenantClaimFailure> = {
+  PT404: "invalid",
+  PT409: "other_venue",
+}
+
+/**
+ * Spends an invitation token, joining the caller to the venue that issued it.
+ *
+ * The claim is the consent. A `tenant_members` row is what hands the venue this
+ * person's `profiles.display_name` through `staff_can_view_profile`, which is
+ * why `tenant_members` has no INSERT policy and why this goes through a definer
+ * RPC called with the *recipient's* session - see 20260820000001.
+ *
+ * Joining as `customer` buys exactly one thing: the ability to call
+ * `link_wedding_to_venue` for an invitation-only venue. It is emphatically not
+ * the art. 9(2)(a) consent for the guest list - that is still a separate
+ * `set_venue_access(true)` against a dialog that names what is disclosed.
+ */
+export const claimTenantInvitation = async (
+  token: string,
+  signal?: AbortSignal
+): Promise<TenantClaimResult> => {
+  const query = supabase.rpc("claim_tenant_invitation", { _token: token })
+  const { data, error } = await (signal ? query.abortSignal(signal) : query)
+
+  if (error || !data) {
+    console.error("[tenant] claimTenantInvitation failed", error)
+    return { ok: false, reason: CLAIM_FAILURES[error?.code ?? ""] ?? "failed" }
+  }
+
+  // Two reads rather than a wider RPC return, because both are now ordinary
+  // member reads: the row just written makes `is_tenant_member` true, which is
+  // exactly what the `tenants` SELECT policy and the `tenant_members` "members
+  // view themselves" policy ask for.
+  const [tenantRes, roleRes] = await Promise.all([
+    supabase.from("tenants").select("id, slug, name").eq("id", data).single(),
+    supabase
+      .from("tenant_members")
+      .select("role")
+      .eq("tenant_id", data)
+      .maybeSingle(),
+  ])
+
+  // `.single()` turns "no row" into an error rather than a null row, so the
+  // error check is the whole guard - and the generated types agree, which is
+  // why a `!tenantRes.data` here reads as always-false to the linter.
+  if (tenantRes.error) {
+    console.error("[tenant] claimed venue lookup failed", tenantRes.error)
+    return { ok: false, reason: "failed" }
+  }
+
+  const role = roleRes.data?.role
+  return {
+    ok: true,
+    tenant: {
+      id: tenantRes.data.id,
+      slug: tenantRes.data.slug,
+      name: tenantRes.data.name,
+      // Narrowed rather than asserted - the CHECK pins the column but the
+      // generated type widens it to string. "customer" is the conservative
+      // fallback: it is the role that offers the fewest onward doors, so an
+      // unexpected value cannot advertise a CRM the caller may not reach.
+      role: role === "owner" || role === "staff" ? role : "customer",
+    },
+  }
+}

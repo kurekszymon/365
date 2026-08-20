@@ -9,6 +9,13 @@ import type { BeforeSendFn, CaptureResult } from "posthog-js"
 //
 // The segment is replaced rather than the event dropped, so an invite open
 // stays countable while the recorded URL is worthless to anyone reading events.
+//
+// Unanchored, so it covers /venue/invite/<token> as well - the venue roster's
+// claim link, which is a bearer credential for the same reason
+// (claim_tenant_invitation puts the holder on a venue's roster). That route is
+// filed under the shared `/invite/` segment deliberately, so both are redacted
+// by one pattern instead of two that can drift. Note robots.txt cannot share
+// the trick: Disallow is a prefix match from the root and needs its own line.
 const INVITE_TOKEN = /(\/invite\/)[^/?#]+/g
 
 export const redactInviteToken = (value: string): string =>
