@@ -1,5 +1,6 @@
 import type { PublicTenant, TenantRole } from "@/stores/tenant.store"
 import { supabase } from "@/lib/supabase"
+import { useAuthStore } from "@/stores/auth.store"
 
 /**
  * The venue's public face, by slug. Callable with no session at all - it goes
@@ -152,15 +153,20 @@ export const claimTenantInvitation = async (
 
   // Two reads rather than a wider RPC return, because both are now ordinary
   // member reads: the row just written makes `is_tenant_member` true, which is
-  // exactly what the `tenants` SELECT policy and the `tenant_members` "members
-  // view themselves" policy ask for.
-  const [tenantRes, roleRes] = await Promise.all([
+  // exactly what the `tenants` SELECT policy asks for.
+  //
+  // The role read goes through `fetchTenantRole` so it carries the `user_id`
+  // filter. The `tenant_members` SELECT policy is *not* "members view
+  // themselves" alone - it is `is_tenant_staff(tenant_id) or user_id =
+  // auth.uid()`, so the moment a staff claim succeeds the caller can see the
+  // venue's whole roster. An unfiltered `.maybeSingle()` would then error on
+  // multiple rows and fall back to "customer", which is precisely backwards:
+  // the new staff member would be shown the couple's card and sent to /home.
+  const userId = useAuthStore.getState().session?.user.id
+
+  const [tenantRes, role] = await Promise.all([
     supabase.from("tenants").select("id, slug, name").eq("id", data).single(),
-    supabase
-      .from("tenant_members")
-      .select("role")
-      .eq("tenant_id", data)
-      .maybeSingle(),
+    userId ? fetchTenantRole(data, userId, signal) : Promise.resolve(null),
   ])
 
   // `.single()` turns "no row" into an error rather than a null row, so the
@@ -171,18 +177,18 @@ export const claimTenantInvitation = async (
     return { ok: false, reason: "failed" }
   }
 
-  const role = roleRes.data?.role
   return {
     ok: true,
     tenant: {
       id: tenantRes.data.id,
       slug: tenantRes.data.slug,
       name: tenantRes.data.name,
-      // Narrowed rather than asserted - the CHECK pins the column but the
-      // generated type widens it to string. "customer" is the conservative
-      // fallback: it is the role that offers the fewest onward doors, so an
-      // unexpected value cannot advertise a CRM the caller may not reach.
-      role: role === "owner" || role === "staff" ? role : "customer",
+      // `fetchTenantRole` already narrows the column; what is left to decide is
+      // the `null` it returns for a failed read (or the session vanishing
+      // mid-claim). "customer" is the conservative fallback: it is the role
+      // that offers the fewest onward doors, so a failed read cannot advertise
+      // a CRM the caller may not reach.
+      role: role ?? "customer",
     },
   }
 }

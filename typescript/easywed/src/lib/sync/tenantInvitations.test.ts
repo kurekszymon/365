@@ -318,6 +318,39 @@ describe.skipIf(!reachable)("tenant invitations", () => {
       expect(data).toEqual([{ user_id: SOLO_USER }])
     })
 
+    /**
+     * The other half of the same policy, and the reason `fetchTenantRole` takes
+     * a `userId`: for a *staff* claimer the first disjunct fires, so the very
+     * same unfiltered select returns the venue's whole roster. A caller reading
+     * "my role" without the `user_id` filter gets multiple rows, which
+     * `.maybeSingle()` reports as an error - and a fail-closed fallback then
+     * renders a fresh staff member as a customer.
+     */
+    it("shows a staff claimer the whole roster, not just their row", async () => {
+      await solo.rpc("claim_tenant_invitation", {
+        _token: await mintInvitation("staff"),
+      })
+
+      const { data } = await solo
+        .from("tenant_members")
+        .select("user_id")
+        .eq("tenant_id", BAGATELKA)
+
+      expect(data!.length).toBeGreaterThan(1)
+
+      // Filtering on both columns is what makes the read answer the question
+      // the caller actually asked.
+      const own = await solo
+        .from("tenant_members")
+        .select("role")
+        .eq("tenant_id", BAGATELKA)
+        .eq("user_id", SOLO_USER)
+        .maybeSingle()
+
+      expect(own.error).toBeNull()
+      expect(own.data).toEqual({ role: "staff" })
+    })
+
     it("lets staff read the display name of someone who joined", async () => {
       const bare = await venue.from("profiles").select("id").eq("id", SOLO_USER)
       expect(bare.data).toEqual([])
