@@ -57,6 +57,7 @@ const APP_ROUTES = [
   // section ships.
   "/venue",
   "/crm",
+  "/crm/roster",
 ]
 
 const pages = [

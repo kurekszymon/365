@@ -81,7 +81,7 @@ Both guards treat "not settled yet" (`!isReady`, `termsStatus === "unknown"`) as
 
 ### Supabase schema and RLS
 
-Schema lives in `supabase/migrations/`. Live tables: `weddings`, `wedding_members`, `halls`, `tables`, `fixtures`, `guests`, `reminders`, `wedding_invitations`, `tenants`, `tenant_members`, and `profiles` (1:1 with `auth.users`, outside the wedding tree). One view: `wedding_seatmap`. `invitation_orders` was created and later dropped (`20260804000001`) - ignore it.
+Schema lives in `supabase/migrations/`. Live tables: `weddings`, `wedding_members`, `halls`, `tables`, `fixtures`, `guests`, `reminders`, `wedding_invitations`, `tenants`, `tenant_members`, `tenant_invitations`, and `profiles` (1:1 with `auth.users`, outside the wedding tree). One view: `wedding_seatmap`. `invitation_orders` was created and later dropped (`20260804000001`) - ignore it.
 
 All tables have RLS enabled; access is gated by `public.is_wedding_member(wedding_id)` and `public.wedding_role(wedding_id)` helper functions (both `security definer` to avoid recursion through `wedding_members`' own policies).
 
@@ -99,6 +99,8 @@ A tenant (a wedding venue at `<slug>.easywed.app`) can be granted a **peek** at 
 The whole matrix is asserted against the running database in `src/lib/sync/venueRls.test.ts` (skips when the local stack is down). Its seat-map assertion checks **key absence**, not value absence, on purpose. Full write-up in `docs/supabase.md`.
 
 Neither `weddings.tenant_id` nor `weddings.venue_access` is client-writable (`enforce_wedding_tenant_columns`, on INSERT as well as UPDATE); `link_wedding_to_venue` and `set_venue_access` are the only ways in. `set_venue_access` lets the wedding owner grant or revoke and lets venue staff **only revoke** - granting is the art. 9(2)(a) consent, and the recipient of the data cannot supply it for the data subject.
+
+**Joining a venue is the recipient's act, never the venue's.** `tenant_members` has no INSERT policy and must not grow one - a row written by the venue hands it a stranger's `display_name`, bars that account from every other venue (`tenant_members_one_per_user` is unique), and makes their wedding attachable. `tenant_invitations` + `claim_tenant_invitation` (`20260820000001`) are the door, mirroring `wedding_invitations` + `claim_wedding_invitation`: the row names nobody, the *claimer* calls the definer RPC, and invitees get no SELECT on the table. Two asymmetries with the wedding side are load-bearing - only a tenant **owner** may invite `staff` (any staff member may invite a `customer`), and `PT409` is its own SQLSTATE because one account can belong to one venue and retrying cannot fix that. Surfaced as `/crm/roster` (issue and revoke links, see who joined) and `/venue/invite/$token` (claim one). Asserted in `src/lib/sync/tenantInvitations.test.ts`.
 
 Key hardening already in place:
 
@@ -143,8 +145,10 @@ App:
 
 Tenant hosts (`<slug>.easywed.app`, and `<slug>.localhost:3000` in dev):
 
-- `venue.tsx` - the anonymous branded entry page; `crm.tsx` + `crm/index.tsx` - the staff shell and overview; `crm/wedding.$id.tsx` - the peek at one granted wedding, which reuses `PlannerPrintView` with `fields: ["dietary"]` for the kitchen report rather than growing a second print component.
+- `venue.tsx` - the anonymous branded entry page; `crm.tsx` + `crm/index.tsx` - the staff shell and overview; `crm/roster.tsx` - the venue's couples and staff, plus the invitation links that put them there; `crm/wedding.$id.tsx` - the peek at one granted wedding, which reuses `PlannerPrintView` with `fields: ["dietary"]` for the kitchen report rather than growing a second print component.
 - Static tenant routes go in `APP_ROUTES` (`vite.config.ts`) so they answer with real HTML a crawler can read `noindex` off. **`/crm/wedding/$id` must not** - it is dynamic, same as `/wedding/$id`, and `robots.txt` blocks the prefix instead.
+
+`venue_.invite.$token.tsx` (`/venue/invite/$token`) is the odd one out: it serves on **both** the apex and a tenant host, because a couple's session lives on the apex and staff sign in on the venue's. `apexOrigin()` / `tenantOrigin(slug)` in `lib/tenant/host.ts` build the link for whichever origin the recipient needs - `SITE_ORIGIN` is a constant and would break `pnpm dev`. The `_` escape keeps it out of `venue.tsx`, and the shared `/invite/` segment is what makes `scrubInviteTokens` cover it for free.
 
 Auth: `login.tsx`, `signup.tsx`, `forgot-password.tsx`, `reset-password.tsx`, `auth.callback.tsx`.
 

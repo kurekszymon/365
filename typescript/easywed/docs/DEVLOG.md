@@ -2,6 +2,19 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 20.08
+
+- venue invitations, which is the thing that made invitation-only venues usable at all. `open_linking` defaults false, the invitation-only branch of `link_wedding_to_venue` looks for a `tenant_members` row with role `customer`, and `20260817000001` removed the only policy that could write one - correctly, but it left the default configuration with **no couple able to link to it**. hand-inserted rows were the workaround
+- `tenant_invitations` + `claim_tenant_invitation` mirror `wedding_invitations` + `claim_wedding_invitation` field for field, and the three properties that make that shape safe are why: the row names nobody until claimed, the *recipient* spends it with their own session, and invitees get no select on the table because the definer function reads it. `tenant_members` still has no insert policy and must not grow one
+- two asymmetries with the wedding side, both deliberate. any staff member may invite a `customer`; only the owner may invite `staff` - a customer row buys the ability to link one wedding, a staff row is a key to the whole crm including every granted seat map. that is the *opposite* asymmetry to the existing delete policy, where any staff may remove any non-owner: removal subtracts access and is undoable, creation is neither
+- `PT409` for "this account already belongs to another venue". `tenant_members_one_per_user` allows one membership per account, so retrying cannot fix it and the generic "something went wrong" would send someone in a circle. checked before the insert and caught as a `unique_violation` around it, since the pre-check races and the unique index is not the one `on conflict (tenant_id, user_id)` absorbs
+- `"members can leave their tenant"` ships in the same migration rather than the original one, and belongs there: until a couple could join by consent nobody was stuck, and a membership with no exit would have barred them from every other venue permanently. leaving touches no wedding - membership and `venue_access` are separate decisions with separate rpcs
+- claim page at `/venue/invite/$token`, filed as `venue_.invite.$token` so it does not nest under the anonymous entry page. the shared `/invite/` segment is load-bearing: `scrubInviteTokens` matches that substring anywhere, so both token routes are redacted out of posthog by one pattern instead of two that can drift. `robots.txt` cannot share it - disallow is a prefix match from the root - so it gets its own line
+- it ends on a card rather than a redirect, unlike the wedding claim. joining is not the end of the flow: a `customer` row only makes linking *possible*, and the disclosure decision is still a separate grant. redirecting to `/home` would leave someone who did the right thing looking at an unchanged wedding list
+- `apexOrigin()` / `tenantOrigin(slug)` build the invite url for whoever it is for - the apex for a couple, the venue's host for staff. sessions are per-origin, so the wrong one is a sign-in screen for no reason, and `SITE_ORIGIN` is a constant that would have broken `pnpm dev` entirely
+- `/crm/roster` is the venue's side: issue a link, revoke an unclaimed one, see who joined, remove them. expired invitations stay listed rather than vanishing - one that disappears reads as "i never sent it" and gets sent again
+- 20 assertions in `tenantInvitations.test.ts` against the running database, and the sharp one is that a venue still cannot insert a `tenant_members` row or read a stranger's `display_name`. re-adding that insert policy would make the whole feature "work" and turn several of them red
+
 ### 19.08
 
 - add password reset email template

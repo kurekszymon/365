@@ -34,11 +34,13 @@ import { Route as EnVenuesRouteImport } from './routes/en_.venues'
 import { Route as EnTermsRouteImport } from './routes/en_.terms'
 import { Route as EnPrivacyRouteImport } from './routes/en_.privacy'
 import { Route as EnChangelogRouteImport } from './routes/en_.changelog'
+import { Route as CrmRosterRouteImport } from './routes/crm/roster'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as WeddingLocalIndexRouteImport } from './routes/wedding.local/index'
 import { Route as WeddingIdIndexRouteImport } from './routes/wedding.$id/index'
 import { Route as WeddingLocalPlannerRouteImport } from './routes/wedding.local/planner'
 import { Route as WeddingIdPlannerRouteImport } from './routes/wedding.$id/planner'
+import { Route as VenueInviteTokenRouteImport } from './routes/venue_.invite.$token'
 import { Route as CrmWeddingIdRouteImport } from './routes/crm/wedding.$id'
 
 const VenueRoute = VenueRouteImport.update({
@@ -166,6 +168,11 @@ const EnChangelogRoute = EnChangelogRouteImport.update({
   path: '/en/changelog',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CrmRosterRoute = CrmRosterRouteImport.update({
+  id: '/roster',
+  path: '/roster',
+  getParentRoute: () => CrmRoute,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
@@ -191,6 +198,11 @@ const WeddingIdPlannerRoute = WeddingIdPlannerRouteImport.update({
   path: '/planner',
   getParentRoute: () => WeddingIdRoute,
 } as any)
+const VenueInviteTokenRoute = VenueInviteTokenRouteImport.update({
+  id: '/venue_/invite/$token',
+  path: '/venue/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CrmWeddingIdRoute = CrmWeddingIdRouteImport.update({
   id: '/wedding/$id',
   path: '/wedding/$id',
@@ -212,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/venue': typeof VenueRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/crm/roster': typeof CrmRosterRoute
   '/en/changelog': typeof EnChangelogRoute
   '/en/privacy': typeof EnPrivacyRoute
   '/en/terms': typeof EnTermsRoute
@@ -225,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/wedding/local': typeof WeddingLocalRouteWithChildren
   '/crm/': typeof CrmIndexRoute
   '/crm/wedding/$id': typeof CrmWeddingIdRoute
+  '/venue/invite/$token': typeof VenueInviteTokenRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
   '/wedding/local/planner': typeof WeddingLocalPlannerRoute
   '/wedding/$id/': typeof WeddingIdIndexRoute
@@ -244,6 +258,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/venue': typeof VenueRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/crm/roster': typeof CrmRosterRoute
   '/en/changelog': typeof EnChangelogRoute
   '/en/privacy': typeof EnPrivacyRoute
   '/en/terms': typeof EnTermsRoute
@@ -255,6 +270,7 @@ export interface FileRoutesByTo {
   '/pl/venues': typeof PlVenuesRoute
   '/crm': typeof CrmIndexRoute
   '/crm/wedding/$id': typeof CrmWeddingIdRoute
+  '/venue/invite/$token': typeof VenueInviteTokenRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
   '/wedding/local/planner': typeof WeddingLocalPlannerRoute
   '/wedding/$id': typeof WeddingIdIndexRoute
@@ -276,6 +292,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/venue': typeof VenueRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/crm/roster': typeof CrmRosterRoute
   '/en_/changelog': typeof EnChangelogRoute
   '/en_/privacy': typeof EnPrivacyRoute
   '/en_/terms': typeof EnTermsRoute
@@ -289,6 +306,7 @@ export interface FileRoutesById {
   '/wedding/local': typeof WeddingLocalRouteWithChildren
   '/crm/': typeof CrmIndexRoute
   '/crm/wedding/$id': typeof CrmWeddingIdRoute
+  '/venue_/invite/$token': typeof VenueInviteTokenRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
   '/wedding/local/planner': typeof WeddingLocalPlannerRoute
   '/wedding/$id/': typeof WeddingIdIndexRoute
@@ -311,6 +329,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/venue'
     | '/auth/callback'
+    | '/crm/roster'
     | '/en/changelog'
     | '/en/privacy'
     | '/en/terms'
@@ -324,6 +343,7 @@ export interface FileRouteTypes {
     | '/wedding/local'
     | '/crm/'
     | '/crm/wedding/$id'
+    | '/venue/invite/$token'
     | '/wedding/$id/planner'
     | '/wedding/local/planner'
     | '/wedding/$id/'
@@ -343,6 +363,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/venue'
     | '/auth/callback'
+    | '/crm/roster'
     | '/en/changelog'
     | '/en/privacy'
     | '/en/terms'
@@ -354,6 +375,7 @@ export interface FileRouteTypes {
     | '/pl/venues'
     | '/crm'
     | '/crm/wedding/$id'
+    | '/venue/invite/$token'
     | '/wedding/$id/planner'
     | '/wedding/local/planner'
     | '/wedding/$id'
@@ -374,6 +396,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/venue'
     | '/auth/callback'
+    | '/crm/roster'
     | '/en_/changelog'
     | '/en_/privacy'
     | '/en_/terms'
@@ -387,6 +410,7 @@ export interface FileRouteTypes {
     | '/wedding/local'
     | '/crm/'
     | '/crm/wedding/$id'
+    | '/venue_/invite/$token'
     | '/wedding/$id/planner'
     | '/wedding/local/planner'
     | '/wedding/$id/'
@@ -419,6 +443,7 @@ export interface RootRouteChildren {
   PlVenuesRoute: typeof PlVenuesRoute
   WeddingIdRoute: typeof WeddingIdRouteWithChildren
   WeddingLocalRoute: typeof WeddingLocalRouteWithChildren
+  VenueInviteTokenRoute: typeof VenueInviteTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -598,6 +623,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EnChangelogRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/crm/roster': {
+      id: '/crm/roster'
+      path: '/roster'
+      fullPath: '/crm/roster'
+      preLoaderRoute: typeof CrmRosterRouteImport
+      parentRoute: typeof CrmRoute
+    }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/auth/callback'
@@ -633,6 +665,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WeddingIdPlannerRouteImport
       parentRoute: typeof WeddingIdRoute
     }
+    '/venue_/invite/$token': {
+      id: '/venue_/invite/$token'
+      path: '/venue/invite/$token'
+      fullPath: '/venue/invite/$token'
+      preLoaderRoute: typeof VenueInviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/crm/wedding/$id': {
       id: '/crm/wedding/$id'
       path: '/wedding/$id'
@@ -644,11 +683,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface CrmRouteChildren {
+  CrmRosterRoute: typeof CrmRosterRoute
   CrmIndexRoute: typeof CrmIndexRoute
   CrmWeddingIdRoute: typeof CrmWeddingIdRoute
 }
 
 const CrmRouteChildren: CrmRouteChildren = {
+  CrmRosterRoute: CrmRosterRoute,
   CrmIndexRoute: CrmIndexRoute,
   CrmWeddingIdRoute: CrmWeddingIdRoute,
 }
@@ -709,6 +750,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlVenuesRoute: PlVenuesRoute,
   WeddingIdRoute: WeddingIdRouteWithChildren,
   WeddingLocalRoute: WeddingLocalRouteWithChildren,
+  VenueInviteTokenRoute: VenueInviteTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
