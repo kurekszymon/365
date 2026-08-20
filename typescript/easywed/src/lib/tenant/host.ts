@@ -172,6 +172,23 @@ export function tenantSlugFromHost(
   return isTenantSlug(label) ? label : null
 }
 
+/**
+ * Whether the browser is currently on a venue host.
+ *
+ * The window read is here rather than at each call site because every caller
+ * wants the same thing - "is this origin a venue's" - and every one of them
+ * also has to survive prerender, where there is no host to read. The apex is
+ * the right answer there: the prerendered HTML is host-independent by design.
+ */
+export function isTenantHost(): boolean {
+  if (typeof window === "undefined") return false
+
+  return (
+    tenantSlugFromHost(window.location.hostname, window.location.search) !==
+    null
+  )
+}
+
 /** Whether a bare string is shaped like, and permitted to be, a tenant slug. */
 export function isTenantSlug(value: string): boolean {
   return TENANT_SLUG_RE.test(value) && !RESERVED_SUBDOMAINS.has(value)

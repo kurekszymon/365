@@ -2,6 +2,14 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 21.08
+
+- signing in on a venue host sent staff to the apex. `redirectAuthedAwayFromLogin` defaulted to `/home`, `/home` is in `APEX_ONLY_PREFIXES`, so the root guard replaced the origin - and sessions are per-origin, so the sign-in that had just succeeded ended on the signed-out landing. every auth terminus had its own hardcoded `/home`: the login and signup guards, the oauth callback, both exits from the terms gate
+- one `authLandingPath(next)` now answers for all four. `next` first, since that is somebody's interrupted destination; then `/crm` on a tenant host; then `/home`. the tenant branch deliberately does not read the role - it is a round trip away, and the crm shell already renders a named 403 for a `customer` who arrives there, with a link back to the apex
+- the apex has no hostname to read, so it arms a one-shot marker and `/home` spends it on one `fetchMyStaffTenant` lookup. a marker rather than a check on every render, and the second reason is the load-bearing one: an unconditional check would bounce the venue owner who also plans a wedding of their own off their list every single time they reached it, with no way to say "not this time"
+- the hop is `window.location.replace` to `tenantOrigin(slug)/crm` and lands on that host's `/login?next=/crm`, because sessions are per-origin and a token handed across origins in a url is not a trade worth making. still better than the wedding list, which for a venue account is either empty or - via the `venue` role on `weddings` select - a list of couples whose planner it cannot open
+- `fetchMyStaffTenant` filters `role in ('owner','staff')` and embeds the slug. a `my_tenant_id()`-shaped lookup would answer for any membership, which is exactly wrong here: a venue's `customer` is a couple, and forwarding them to the crm would take someone who signed in to plan their wedding and drop them in a 403 at their own venue. four assertions in `staffTenant.test.ts` against the running database, plus `authLanding.test.ts` for the host split
+
 ### 20.08
 
 - venue invitations, which is the thing that made invitation-only venues usable at all. `open_linking` defaults false, the invitation-only branch of `link_wedding_to_venue` looks for a `tenant_members` row with role `customer`, and `20260817000001` removed the only policy that could write one - correctly, but it left the default configuration with **no couple able to link to it**. hand-inserted rows were the workaround

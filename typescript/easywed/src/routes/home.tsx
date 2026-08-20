@@ -6,6 +6,7 @@ import type { WeddingSummary } from "@/components/weddings/WeddingListItem"
 import type { RemoveMode } from "@/components/weddings/RemoveWeddingDialog"
 import { supabase } from "@/lib/supabase"
 import { seedDefaultHall } from "@/lib/sync/mutations"
+import { useVenueStaffLanding } from "@/hooks/useVenueStaffLanding"
 import { useAuthStore } from "@/stores/auth.store"
 import { track } from "@/lib/analytics/track"
 import { Button } from "@/components/ui/button"
@@ -29,6 +30,11 @@ function Home() {
   const session = useAuthStore((s) => s.session)
   const isReady = useAuthStore((s) => s.isReady)
   const navigate = useNavigate()
+
+  // A venue's staff have no wedding list; this is where the apex works out that
+  // it is looking at one of them and hands them over to their CRM. Only ever
+  // does anything on an arrival from an auth surface - see venueLanding.ts.
+  const venueLanding = useVenueStaffLanding()
 
   const [weddings, setWeddings] = useState<Array<WeddingSummary>>([])
   const [loading, setLoading] = useState(true)
@@ -124,7 +130,10 @@ function Home() {
   // Wait for the first getSession() to resolve before deciding which landing
   // to show - otherwise an already-authenticated user reloading this page would
   // flash the signed-out screen before flipping to their dashboard below.
-  if (!isReady) return null
+  //
+  // Same reasoning for the venue check: showing the wedding list to someone we
+  // are about to send to a CRM is the flash this page already avoids for auth.
+  if (!isReady || venueLanding === "checking") return null
 
   if (!session) {
     return (

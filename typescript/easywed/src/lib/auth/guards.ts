@@ -2,11 +2,47 @@ import { redirect } from "@tanstack/react-router"
 import { useAuthStore } from "@/stores/auth.store"
 import { useProfileStore } from "@/stores/profile.store"
 import { useTenantStore } from "@/stores/tenant.store"
+import { armVenueLanding } from "@/lib/auth/venueLanding"
+import { isTenantHost } from "@/lib/tenant/host"
 
 export const sanitizeNextPath = (next: unknown): string | undefined => {
   if (typeof next !== "string") return undefined
   if (!next.startsWith("/") || next.startsWith("//")) return undefined
   return next
+}
+
+/**
+ * Where an authenticated caller belongs when nothing asked for a page by name.
+ *
+ * The one place that answers "signed in - now what?", shared by every auth
+ * terminus: the /login and /signup guards, the OAuth callback, and the terms
+ * gate. They used to hardcode "/home" each, which is right for a couple and
+ * wrong for everyone who works at a venue.
+ *
+ * Three answers, in order:
+ *
+ *   - an explicit `next`, which is someone's interrupted destination and beats
+ *     any guess made here;
+ *   - "/crm" on a venue host, because a tenant origin has no couple-facing
+ *     surface at all. /home is apex-only, so the old default sent staff through
+ *     `redirectApexOnlyPathToApex` to an origin where their session does not
+ *     exist - signing in worked and landed them on the signed-out landing. The
+ *     role is deliberately not consulted: it is a round trip away, and the CRM
+ *     shell already renders the right thing for a customer who arrives (a named
+ *     403 with a way back to the apex);
+ *   - "/home" on the apex, with the venue check armed. The hostname says
+ *     nothing there, so whether this account runs a wedding hall costs a query -
+ *     see venueLanding.ts for why it is spent once, here, rather than on every
+ *     render of the wedding list.
+ */
+export const authLandingPath = (next?: unknown): string => {
+  const explicit = sanitizeNextPath(next)
+  if (explicit) return explicit
+
+  if (isTenantHost()) return "/crm"
+
+  armVenueLanding()
+  return "/home"
 }
 
 export const requireAuth = (nextPath: string) => {
@@ -115,8 +151,12 @@ export const requireTenantMember = (pathname: string) => {
 
   // The apex has no CRM. Cross-origin is not involved - /crm simply is not a
   // page here - so an ordinary in-app redirect is right.
+  //
+  // Armed rather than bare, because whoever typed this asked for a CRM by name:
+  // if the account belongs to a venue's staff, /home forwards them to the one
+  // they actually meant instead of dropping them on a wedding list.
   if (status === "none") {
-    throw redirect({ to: "/home", replace: true })
+    throw redirect({ to: authLandingPath(), replace: true })
   }
 
   if (session) return
@@ -136,7 +176,7 @@ export const redirectAuthedAwayFromLogin = (next?: unknown) => {
   if (!isReady || !session) return
 
   throw redirect({
-    to: sanitizeNextPath(next) ?? "/home",
+    to: authLandingPath(next),
     replace: true,
   })
 }

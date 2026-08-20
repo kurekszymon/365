@@ -1,5 +1,5 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
-import { requireAuth, sanitizeNextPath } from "@/lib/auth/guards"
+import { authLandingPath, requireAuth } from "@/lib/auth/guards"
 import { supabase } from "@/lib/supabase"
 import { useAuthStore } from "@/stores/auth.store"
 import { useProfileStore } from "@/stores/profile.store"
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/accept-terms")({
     // still resolving and will invalidate when it knows.
     if (useProfileStore.getState().termsStatus === "accepted") {
       throw redirect({
-        to: sanitizeNextPath(search.next) ?? "/home",
+        to: authLandingPath(search.next),
         replace: true,
       })
     }
@@ -42,7 +42,7 @@ function AcceptTerms() {
     // The store is what requireAcceptedTerms reads, so it has to move before
     // the navigation - otherwise the root guard bounces them right back here.
     useProfileStore.getState().setTermsStatus("accepted")
-    navigate({ to: sanitizeNextPath(next) ?? "/home", replace: true })
+    navigate({ to: authLandingPath(next), replace: true })
   }
 
   const onDeclined = async () => {
