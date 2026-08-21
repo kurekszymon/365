@@ -76,6 +76,9 @@ Redirect decisions live in `src/lib/auth/guards.ts` and are called from route `b
 - `requireAuth(nextPath)` - bails while `!isReady` (AuthGate's `invalidate()` re-runs it), else redirects to `/login?next=`.
 - `requireAcceptedTerms(pathname)` - mounted on the root route; bounces a signed-in user with an outstanding acceptance to `/accept-terms`. `TERMS_EXEMPT_PATHS` is load-bearing (legal docs, `/reset-password`) - read the comment before trimming it.
 - `redirectAuthedAwayFromLogin`, `sanitizeNextPath`.
+- `authLandingPath(next)` - the single answer to "signed in, now what?", shared by the `/login` and `/signup` guards, `/auth/callback` and `/accept-terms`. **Do not hardcode `/home` at an auth terminus again**: `/home` is in `APEX_ONLY_PREFIXES`, so on a venue host the root guard carried the caller to an origin their session does not exist on - signing in worked and landed staff on the signed-out landing. Order is `next` → `/crm` on a tenant host (the role is deliberately not consulted; it is a round trip away and the CRM shell renders its own 403) → `/home` on the apex.
+
+The apex cannot read a venue off the hostname, so `authLandingPath` arms a one-shot marker (`lib/auth/venueLanding.ts`) that `useVenueStaffLanding` spends on the next `/home`: one `fetchMyStaffTenant` lookup, then `window.location.replace` to `tenantOrigin(slug)/crm`. Marker rather than a check on every render, for two reasons - every couple would otherwise pay a query for an answer that is "no", and the venue owner who also plans their own wedding would be bounced off their list every time they reached it. Sessions are per-origin, so the hop lands on the venue host's `/login?next=/crm` rather than straight in the CRM; that is inherent, not a bug to fix by moving tokens across origins.
 
 Both guards treat "not settled yet" (`!isReady`, `termsStatus === "unknown"`) as pass-through. `AuthGate`'s `PUBLIC_PATHS` is about rendering without waiting, not authorization.
 

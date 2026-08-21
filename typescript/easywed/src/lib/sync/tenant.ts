@@ -92,6 +92,48 @@ export const fetchTenantRole = async (
     : null
 }
 
+/**
+ * The venue this account works for, or null - including for a `customer`, who
+ * is somebody's client rather than their staff and reaches none of the CRM.
+ *
+ * The apex's half of the sign-in landing: on a venue host the hostname already
+ * names the tenant, and this is what stands in when it does not. One indexed
+ * lookup on the caller's own `tenant_members` row, with the slug embedded
+ * because the CRM lives on `<slug>.easywed.app` and an id cannot be navigated
+ * to. Both reads are ordinary member reads - `tenant_members` SELECT admits
+ * `user_id = auth.uid()`, and `tenants` SELECT admits any member of the row.
+ *
+ * `maybeSingle` is safe because of `tenant_members_one_per_user`; if that index
+ * ever goes, this has to pick a venue rather than error into null - the same
+ * caveat `my_tenant_id()` carries.
+ *
+ * Null on failure as well as on non-membership. The caller is a couple far more
+ * often than not, and the cost of failing that way is a wedding list rather
+ * than a bounce nobody can undo.
+ */
+export const fetchMyStaffTenant = async (
+  userId: string,
+  signal?: AbortSignal
+): Promise<{ id: string; slug: string } | null> => {
+  const query = supabase
+    .from("tenant_members")
+    .select("tenants (id, slug)")
+    .eq("user_id", userId)
+    .in("role", ["owner", "staff"])
+
+  const { data, error } = await (
+    signal ? query.abortSignal(signal) : query
+  ).maybeSingle()
+
+  if (error) {
+    console.error("[tenant] fetchMyStaffTenant failed", error)
+    return null
+  }
+
+  const tenant = data?.tenants
+  return tenant ? { id: tenant.id, slug: tenant.slug } : null
+}
+
 /** The venue a claim landed in, plus what it made the caller. */
 export type ClaimedTenant = {
   id: string
