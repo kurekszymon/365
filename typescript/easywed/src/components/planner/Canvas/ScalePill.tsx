@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next"
-import { useGlobalStore } from "@/stores/global.store"
 import {
   Tooltip,
   TooltipContent,
@@ -10,7 +9,8 @@ type ScalePillProps = {
   reset: () => void
   zoomIn: () => void
   zoomOut: () => void
-  scale?: number
+  /** Live zoom from view.store.ts - the pill renders it, it does not own it. */
+  scale: number
 }
 
 export const ScalePill = ({
@@ -20,8 +20,6 @@ export const ScalePill = ({
   zoomOut,
 }: ScalePillProps) => {
   const { t } = useTranslation()
-  const viewport = useGlobalStore((state) => state.viewport)
-  const currentScale = scale ?? viewport.scale
 
   return (
     <div className="flex shrink-0 items-center rounded-full border bg-card text-[10px] text-muted-foreground tabular-nums shadow-[0_8px_20px_-12px_rgba(40,60,45,0.4)]">
@@ -40,7 +38,7 @@ export const ScalePill = ({
             className="w-[3rem] cursor-pointer py-1 text-center hover:text-foreground max-md:py-2"
             onClick={reset}
           >
-            {Math.round(currentScale * 100)}%
+            {Math.round(scale * 100)}%
           </button>
         </TooltipTrigger>
         <TooltipContent side="bottom">

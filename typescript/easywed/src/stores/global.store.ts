@@ -8,16 +8,6 @@ import {
   registerActiveWeddingIdGetter,
 } from "@/lib/localWedding"
 
-interface Pan {
-  x: number
-  y: number
-}
-
-interface Viewport {
-  pan: Pan
-  scale: number
-}
-
 /**
  * `owner`/`editor`/`viewer` are rows in `wedding_members`. `venue` is not: it
  * is *derived* by `wedding_role()` from the wedding's `tenant_id` plus
@@ -93,7 +83,6 @@ type State = {
   /** Null when this wedding is linked to no venue, and in guest mode. */
   venue: LinkedVenue | null
   venueAccess: VenueAccess
-  viewport: Viewport
 }
 
 type Action = {
@@ -102,10 +91,6 @@ type Action = {
   setMembers: (members: Array<WeddingMember>) => void
   setMemberDisplayName: (userId: string, displayName: string | null) => void
   setVenueLink: (venue: LinkedVenue | null, venueAccess: VenueAccess) => void
-
-  setPan: (pan: Pan) => void
-  setScale: (scale: number) => void
-  setViewport: (viewport: Viewport) => void
 }
 
 export const useGlobalStore = create<State & Action>()(
@@ -118,13 +103,6 @@ export const useGlobalStore = create<State & Action>()(
       members: [],
       venue: null,
       venueAccess: "none",
-      viewport: {
-        scale: 1,
-        pan: {
-          x: 0,
-          y: 0,
-        },
-      },
 
       setName: (name) => {
         set({ name })
@@ -152,12 +130,6 @@ export const useGlobalStore = create<State & Action>()(
             member.userId === userId ? { ...member, displayName } : member
           ),
         })),
-
-      setPan: (pan) =>
-        set((state) => ({ viewport: { ...state.viewport, pan } })),
-      setScale: (scale) =>
-        set((state) => ({ viewport: { ...state.viewport, scale } })),
-      setViewport: (viewport) => set({ viewport }),
     }),
     {
       name: GLOBAL_STORAGE_KEY,
@@ -165,8 +137,9 @@ export const useGlobalStore = create<State & Action>()(
       storage: localGlobalStorage,
       // Only name/date are guest-editable content worth persisting locally -
       // weddingId/role are route-derived (set explicitly by wedding.local.tsx
-      // / loadWedding.ts) and viewport is already persisted per-wedding by
-      // view.store.ts.
+      // / loadWedding.ts). Pan/zoom is not this store's business at all: it
+      // lives in view.store.ts, which persists it per device under its own
+      // key rather than per wedding.
       partialize: (state) => ({ name: state.name, date: state.date }),
       // rehydrate() is only ever called for the local wedding (skipHydration is
       // true and wedding.local.tsx is the sole caller), so this merge runs
