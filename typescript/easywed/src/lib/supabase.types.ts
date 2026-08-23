@@ -679,11 +679,45 @@ export type Database = {
           },
         ]
       }
+      wedding_menu_selections: {
+        Row: {
+          created_at: string
+          menu_option_id: string
+          wedding_id: string
+        }
+        Insert: {
+          created_at?: string
+          menu_option_id: string
+          wedding_id: string
+        }
+        Update: {
+          created_at?: string
+          menu_option_id?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wedding_menu_selections_menu_option_id_fkey"
+            columns: ["menu_option_id"]
+            isOneToOne: false
+            referencedRelation: "menu_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wedding_menu_selections_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weddings: {
         Row: {
           created_at: string
           date: string | null
           id: string
+          menu_package_id: string | null
           name: string
           owner_id: string
           tenant_id: string | null
@@ -694,6 +728,7 @@ export type Database = {
           created_at?: string
           date?: string | null
           id?: string
+          menu_package_id?: string | null
           name?: string
           owner_id: string
           tenant_id?: string | null
@@ -704,6 +739,7 @@ export type Database = {
           created_at?: string
           date?: string | null
           id?: string
+          menu_package_id?: string | null
           name?: string
           owner_id?: string
           tenant_id?: string | null
@@ -711,6 +747,13 @@ export type Database = {
           venue_access?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "weddings_menu_package_id_fkey"
+            columns: ["menu_package_id"]
+            isOneToOne: false
+            referencedRelation: "menu_packages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "weddings_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -776,6 +819,14 @@ export type Database = {
       link_wedding_to_venue: {
         Args: { p_slug: string; p_wedding_id: string }
         Returns: string
+      }
+      menu_option_in_package: {
+        Args: {
+          _option: string
+          _package: string
+          _require_per_guest?: boolean
+        }
+        Returns: boolean
       }
       my_tenant_id: { Args: never; Returns: string }
       my_wedding_role: { Args: { p_wedding_id: string }; Returns: string }

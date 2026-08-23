@@ -332,6 +332,30 @@ insert into public.weddings (id, owner_id, name, date, tenant_id, venue_access) 
   ('20000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000004',
    'Tomasz & Kasia', current_date + 240, null, 'none');
 
+-- "Anna & Piotr" orders MENU SERWOWANE - the package with the plated course,
+-- so the planner's Menu tab, the per-guest picker and the kitchen tally all
+-- have something real to render. Written directly rather than through an
+-- UPDATE by the couple, for the same reason tenant_id is: this file runs as
+-- postgres, and enforce_wedding_menu_package holds it to the same rule anyway
+-- (the package belongs to bagatelka, which is what this wedding is linked to).
+--
+-- "Tomasz & Kasia" deliberately gets none. It is linked to no venue, so it is
+-- also the "no Menu tab at all" case.
+update public.weddings
+set menu_package_id = '60000000-0000-4000-8000-000000000004'
+where id = '20000000-0000-4000-8000-000000000001';
+
+-- The served set: one dish per buffet course, and three of the six plated mains
+-- (Danie glowne has choose_count 3, per_guest_choice true). The three survivors
+-- are what guests get assigned in 20260822000003's seed.
+insert into public.wedding_menu_selections (wedding_id, menu_option_id) values
+  ('20000000-0000-4000-8000-000000000001', '62000000-0000-4000-8000-000000040101'),
+  ('20000000-0000-4000-8000-000000000001', '62000000-0000-4000-8000-000000040201'),
+  ('20000000-0000-4000-8000-000000000001', '62000000-0000-4000-8000-000000040301'),
+  ('20000000-0000-4000-8000-000000000001', '62000000-0000-4000-8000-000000040302'),
+  ('20000000-0000-4000-8000-000000000001', '62000000-0000-4000-8000-000000040303'),
+  ('20000000-0000-4000-8000-000000000001', '62000000-0000-4000-8000-000000040401');
+
 insert into public.wedding_members (wedding_id, user_id, role) values
   ('20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000002', 'editor'),
   ('20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000003', 'viewer');
@@ -512,7 +536,10 @@ select
   (select count(*) from public.fixtures f where f.wedding_id = w.id) as fixtures,
   (select count(*) from public.guests g where g.wedding_id = w.id) as guests,
   (select count(*) from public.guests g where g.wedding_id = w.id and g.table_id is not null) as seated,
-  (select count(*) from public.reminders r where r.wedding_id = w.id) as reminders
+  (select count(*) from public.reminders r where r.wedding_id = w.id) as reminders,
+  coalesce(p.name, '-') as menu,
+  (select count(*) from public.wedding_menu_selections s where s.wedding_id = w.id) as dishes
 from public.weddings w
 left join public.tenants t on t.id = w.tenant_id
+left join public.menu_packages p on p.id = w.menu_package_id
 order by w.name;

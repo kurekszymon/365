@@ -1,0 +1,75 @@
+import { supabase } from "@/lib/supabase"
+import { getWeddingId, run } from "@/lib/sync/mutations/shared"
+
+/**
+ * The couple's three menu writes.
+ *
+ * These *are* wedding-tree writes - `weddings` and `wedding_menu_selections` -
+ * so unlike the CRM's `useTenantMenus`, which talks to Supabase directly, they
+ * go through `run()` like every other mutation in this folder. The role gate
+ * and the guest-mode short-circuit both apply and both are wanted here: a
+ * viewer must not be able to reorder somebody's dinner, and a local wedding has
+ * no venue to have a menu at all.
+ *
+ * Nothing writes the catalogue. `menu_packages` / `menu_courses` /
+ * `menu_options` are the venue's, and the couple holds SELECT and nothing else
+ * (20260822000002 section 4).
+ */
+
+/**
+ * Point the wedding at a package, or clear it.
+ *
+ * Destructive server-side, and deliberately so: the
+ * `weddings_menu_package_changed` trigger deletes every selection for the
+ * wedding, because every option row belongs to exactly one package and a
+ * "keep what still fits" sweep would keep nothing. The store mirrors that
+ * locally and the UI confirms before calling.
+ *
+ * `enforce_wedding_menu_package` refuses a package belonging to a venue this
+ * wedding is not linked to, with 23514 - which is what makes an ordinary UPDATE
+ * policy on the column safe.
+ */
+export const setWeddingMenuPackage = (
+  packageId: string | null
+): Promise<boolean> => {
+  const weddingId = getWeddingId()
+  if (!weddingId) return Promise.resolve(false)
+  return run(
+    "setWeddingMenuPackage",
+    supabase
+      .from("weddings")
+      .update({ menu_package_id: packageId })
+      .eq("id", weddingId)
+  )
+}
+
+/**
+ * Add one dish to the served set.
+ *
+ * Idempotent by primary key: picking a dish twice is one row either way, so a
+ * double click cannot produce a duplicate to clean up later.
+ */
+export const insertMenuSelection = (optionId: string): Promise<boolean> => {
+  const weddingId = getWeddingId()
+  if (!weddingId) return Promise.resolve(false)
+  return run(
+    "insertMenuSelection",
+    supabase
+      .from("wedding_menu_selections")
+      .insert({ wedding_id: weddingId, menu_option_id: optionId })
+  )
+}
+
+/** Remove one dish from the served set. Idempotent for the same reason. */
+export const deleteMenuSelection = (optionId: string): Promise<boolean> => {
+  const weddingId = getWeddingId()
+  if (!weddingId) return Promise.resolve(false)
+  return run(
+    "deleteMenuSelection",
+    supabase
+      .from("wedding_menu_selections")
+      .delete()
+      .eq("wedding_id", weddingId)
+      .eq("menu_option_id", optionId)
+  )
+}

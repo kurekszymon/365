@@ -3,6 +3,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { useShallow } from "zustand/react/shallow"
 import { GuestListContent } from "../Guests/GuestListContent"
 import { AiChatPanelContent } from "../EntityForms/AiChatPanelContent"
+import { MenuPanelContent } from "../Menu/MenuPanelContent"
 import { RemindersPanelContent } from "../../reminders/RemindersPanelContent"
 import { EntityListContent } from "./EntityListContent"
 import { TabBadgeIcon } from "./TabBadgeIcon"
@@ -17,14 +18,26 @@ const TAB_ORDER: Array<EntityListTab> = [
   "tables",
   "fixtures",
   "reminders",
+  "menu",
   "ai_chat",
 ]
 
-// Every assistant tool mutates the planner, so a viewer's assistant would be a
-// chat that narrates changes it can't make. The tab goes away entirely rather
-// than answering with refusals.
-const tabsFor = (canEdit: boolean): Array<EntityListTab> =>
-  canEdit ? TAB_ORDER : TAB_ORDER.filter((tab) => tab !== "ai_chat")
+/**
+ * Two tabs are conditional, for two unrelated reasons.
+ *
+ * `ai_chat` goes away for a viewer: every assistant tool mutates the planner,
+ * so a read-only assistant would be a chat that narrates changes it cannot
+ * make. Refusals would be a worse answer than absence.
+ *
+ * `menu` goes away when the wedding is linked to no venue - which covers guest
+ * mode for free, since a local wedding has no tenant. It is *not* gated on
+ * `canEdit`: a viewer may read the menu the couple chose, the same way they
+ * read the seating plan, and the controls inside the panel are what disable.
+ */
+const tabsFor = (canEdit: boolean, hasVenue: boolean): Array<EntityListTab> =>
+  TAB_ORDER.filter(
+    (tab) => (canEdit || tab !== "ai_chat") && (hasVenue || tab !== "menu")
+  )
 
 /**
  * Desktop-only unified sidebar: a ~60px icon strip - Guests / Tables /
@@ -47,11 +60,13 @@ export const SidebarRail = () => {
   )
   const badgeCount = useTabBadgeCounts()
   const canEdit = useGlobalStore(selectCanEdit)
-  const tabs = tabsFor(canEdit)
+  const hasVenue = useGlobalStore((state) => state.venue !== null)
+  const tabs = tabsFor(canEdit, hasVenue)
 
   const tabLabel = (tab: EntityListTab) => {
     if (tab === "ai_chat") return t("assistant.title")
     if (tab === "reminders") return t("reminders.title")
+    if (tab === "menu") return t("menu.title")
     return t(tab)
   }
 
@@ -78,6 +93,7 @@ export const SidebarRail = () => {
     tables: <EntityListContent kind="tables" />,
     fixtures: <EntityListContent kind="fixtures" />,
     reminders: <RemindersPanelContent />,
+    menu: <MenuPanelContent />,
     ai_chat: <AiChatPanelContent />,
   }[visibleTab]
 

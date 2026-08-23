@@ -1,0 +1,444 @@
+-- The couple's menu: which package this wedding ordered, and which dishes of it
+-- are being served.
+--
+-- The second of three. 20260822000001 gave the venue a catalogue nobody else
+-- could read; this migration lets a linked couple read it and record a choice
+-- against it. Still nothing per-guest, and still nothing about any *guest*
+-- reaches the venue - `guests` is untouched here, and the column that changes
+-- that lands alone in 20260822000003 so it can be reviewed on its own.
+--
+-- Two firsts worth stating plainly, because both are boundaries:
+--
+--   * `wedding_menu_selections` is the first relation in the wedding tree that
+--     the derived 'venue' role may SELECT *and* the couple writes. That is safe
+--     here and only here: every value in the table is a uuid of the venue's own
+--     catalogue, so the venue learns nothing it did not author. It stays
+--     read-only for the venue - see section 3 for why that is a decision and
+--     not an omission.
+--
+--   * The catalogue becomes readable by people who are not staff of the tenant.
+--     Section 4 explains why that predicate is *not* the mistake
+--     20260817000003 warns about: it runs the other way round.
+--
+-- No policy helper is introduced. `menu_option_in_package` in section 5 is
+-- `security definer` and will look like one - it is not, nothing evaluates it
+-- inside an RLS expression, so the segfault caveat in 20260817000001's header
+-- does not apply and it gets the standard full revoke.
+
+-- ---------------------------------------------------------------------------
+-- 1. weddings.menu_package_id
+-- ---------------------------------------------------------------------------
+-- An ordinary column with an ordinary UPDATE policy, unlike `tenant_id` and
+-- `venue_access`. Those two are unwritable because one attaches a wedding to a
+-- venue and the other discloses special-category data; choosing a package
+-- discloses nothing and grants nobody anything - it is a planning decision, the
+-- same kind as naming a table.
+--
+-- `enforce_wedding_tenant_columns` names `tenant_id` and `venue_access`
+-- literally in both its branches (20260817000002 section 2), so this column
+-- does not trip it. **Do not add it there.**
+--
+-- `on delete set null` rather than cascade, matching `tenant_id`: a venue
+-- hard-deleting a package must not delete anybody's wedding. The couple is left
+-- with no package, which the trigger in section 5 tolerates and the UI renders
+-- as "pick a menu".
+alter table public.weddings
+  add column menu_package_id uuid references public.menu_packages(id)
+    on delete set null;
+
+-- ---------------------------------------------------------------------------
+-- 2. wedding_menu_selections
+-- ---------------------------------------------------------------------------
+-- A table, not a `uuid[]` on `weddings`, and the three reasons are all things
+-- the array shape gets wrong rather than a preference:
+--
+--   * no referential integrity - a deleted dish leaves a dangling uuid with
+--     nothing to clean it up, and no `on delete` clause to hang the cleanup on;
+--   * pick and unpick become read-modify-write, so two devices editing the menu
+--     lose each other's changes with no conflict to detect;
+--   * the composite primary key below makes both operations idempotent single
+--     statements instead.
+--
+-- No `updated_at`, no trigger: the row is its own key with no mutable payload.
+create table public.wedding_menu_selections (
+  wedding_id uuid not null references public.weddings(id) on delete cascade,
+  menu_option_id uuid not null references public.menu_options(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (wedding_id, menu_option_id)
+);
+
+-- The primary key already indexes (wedding_id, ...) for "what is this wedding
+-- serving"; this one is for the other direction, which the cleanup trigger in
+-- 20260822000003 and any "is this dish in use" question both walk.
+create index wedding_menu_selections_option_idx
+  on public.wedding_menu_selections (menu_option_id);
+
+-- ---------------------------------------------------------------------------
+-- 3. RLS on the selections
+-- ---------------------------------------------------------------------------
+alter table public.wedding_menu_selections enable row level security;
+
+-- Explicit role lists rather than `is_wedding_member`, so every SELECT policy
+-- in the wedding tree reads the same and differs only in which roles it names -
+-- the shape 20260817000003 established, and for the reason it gives: a
+-- predicate that is correct only because of how a helper happens to be
+-- implemented is one refactor from being wrong with nothing to catch it.
+create policy "members and the venue can view menu selections"
+  on public.wedding_menu_selections for select
+  using (
+    public.wedding_role(wedding_id) in ('owner', 'editor', 'viewer', 'venue')
+  );
+
+create policy "editors can insert menu selections"
+  on public.wedding_menu_selections for insert
+  with check (public.wedding_role(wedding_id) in ('owner', 'editor'));
+
+create policy "editors can delete menu selections"
+  on public.wedding_menu_selections for delete
+  using (public.wedding_role(wedding_id) in ('owner', 'editor'));
+
+-- No UPDATE policy: both columns are the primary key. Changing a selection is a
+-- delete plus an insert, which is also what makes the pair idempotent.
+--
+-- ## Should the venue be able to write the served set?
+--
+-- Called out because it is the obvious next request - Bagatelka's staff
+-- plausibly take the menu order over the phone - and the answer is **no, not in
+-- this phase**, for three reasons that compound:
+--
+--   * 20260817000003 section 2 states that the derived role is "read-only by
+--     construction rather than by a rule someone has to remember". One writable
+--     relation makes that sentence false for every future reader of it, and the
+--     next person weighing a write policy has no principle left to weigh it
+--     against.
+--   * `selectCanEdit` in global.store mirrors that allowlist, and CLAUDE.md
+--     forbids it becoming anything else.
+--   * a venue that can set the menu can change what the couple is billed for.
+--     That is a different kind of act from "hand back access I no longer need",
+--     which is the only write `set_venue_access` gives staff.
+--
+-- If phone ordering turns out to be the daily workflow, the shape that fits is
+-- a definer `venue_propose_menu_selection(...)` the couple confirms - the same
+-- two-step link-then-grant vocabulary this codebase already speaks. Ship the
+-- closed door; it is the one that can be opened later.
+
+-- ---------------------------------------------------------------------------
+-- 4. The couple can read the catalogue
+-- ---------------------------------------------------------------------------
+-- One policy per table, structurally identical to "wedding members can view
+-- their linked venue" (20260817000002 section 5).
+--
+-- Deliberately **not** gated on `venue_access = 'granted'`. A menu is the
+-- venue's own data, published in order to be read, with no art. 9 consent
+-- anywhere near it - and a couple deciding whether to grant access needs to see
+-- the offer first. It stays readable after a revoke, because `tenant_id` still
+-- carries the link and the wedding is still being held there.
+--
+-- `is_wedding_member` here is **not** the mistake 20260817000003 warns about,
+-- and the difference is the direction of the question. That warning is about
+-- never letting the derived 'venue' role reach `guests`: there, the predicate
+-- asks "is the caller a member of this wedding", and the derived role sneaks in
+-- through `wedding_role`'s second branch. This predicate asks whether the
+-- **caller** is a member of some wedding linked to this tenant, and it is
+-- evaluated against a row of the venue's catalogue. No wedding-tree row is
+-- reachable through it, and the derived role plays no part.
+create policy "wedding members can view their venue's menus"
+  on public.menu_packages for select
+  using (
+    exists (
+      select 1 from public.weddings w
+      where w.tenant_id = menu_packages.tenant_id
+        and public.is_wedding_member(w.id)
+    )
+  );
+
+create policy "wedding members can view their venue's courses"
+  on public.menu_courses for select
+  using (
+    exists (
+      select 1 from public.weddings w
+      where w.tenant_id = menu_courses.tenant_id
+        and public.is_wedding_member(w.id)
+    )
+  );
+
+create policy "wedding members can view their venue's dishes"
+  on public.menu_options for select
+  using (
+    exists (
+      select 1 from public.weddings w
+      where w.tenant_id = menu_options.tenant_id
+        and public.is_wedding_member(w.id)
+    )
+  );
+
+-- Read only. The couple gains no INSERT, UPDATE or DELETE on any of the three,
+-- and 20260822000001's staff policies are untouched.
+
+-- ---------------------------------------------------------------------------
+-- 5. Integrity: a choice has to be a choice from this wedding's menu
+-- ---------------------------------------------------------------------------
+-- The three functions below are `security definer`, and that is about the
+-- *question* rather than about privilege. An invoker-rights trigger asking "does
+-- this package belong to this tenant?" is really asking "can you see a package
+-- that belongs to this tenant?", and those two answers part company the moment
+-- a policy changes. An integrity check must be told the truth, so it reads the
+-- rows as their owner.
+--
+-- None of them is a policy helper. Nothing evaluates them inside an RLS
+-- expression, so 20260817000001's segfault caveat does not apply, and all three
+-- get the standard full revoke in section 7.
+--
+-- They are also not gated on `current_user`, unlike
+-- `enforce_wedding_tenant_columns`: this is a data-integrity invariant rather
+-- than a client-writability rule, so seed.sql and the definer RPCs are held to
+-- it too.
+
+-- Shared by the selection trigger here and by the per-guest trigger in
+-- 20260822000003, which is why it takes the `_require_per_guest` flag it does
+-- not need yet.
+create function public.menu_option_in_package(
+  _option uuid,
+  _package uuid,
+  _require_per_guest boolean default false
+)
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
+    select 1
+    from public.menu_options o
+    join public.menu_courses c on c.id = o.menu_course_id
+    where o.id = _option
+      and c.menu_package_id = _package
+      and (not _require_per_guest or c.per_guest_choice)
+  );
+$$;
+
+-- (1) The package a wedding orders must belong to the venue it is linked to.
+create function public.enforce_wedding_menu_package()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- No package is always fine, including the wedding that had one and lost its
+  -- venue: `tenants ... on delete set null` leaves a null tenant_id, and a
+  -- wedding must not become un-editable because its venue was retired.
+  if new.menu_package_id is null then
+    return new;
+  end if;
+
+  -- Short-circuit when neither column moved, so an unrelated rename does not
+  -- pay for a lookup - and, more importantly, so a row that is already in an
+  -- odd state (a package left behind by a retired venue) does not start
+  -- refusing every subsequent update to any other column.
+  if tg_op = 'UPDATE'
+    and new.menu_package_id is not distinct from old.menu_package_id
+    and new.tenant_id is not distinct from old.tenant_id
+  then
+    return new;
+  end if;
+
+  if new.tenant_id is null
+    or not exists (
+      select 1 from public.menu_packages p
+      where p.id = new.menu_package_id
+        and p.tenant_id = new.tenant_id
+    )
+  then
+    raise exception 'menu package does not belong to this wedding''s venue'
+      using errcode = '23514';
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger weddings_menu_package_scope
+  before insert or update of menu_package_id, tenant_id on public.weddings
+  for each row execute function public.enforce_wedding_menu_package();
+
+-- (2) Switching package clears the old choice.
+--
+-- A **wipe, not a "keep what still fits" sweep**, and the data model is what
+-- decides that: every option row belongs to exactly one course of exactly one
+-- package, so MENU II's "Rosol" and MENU III's "Rosol" are different rows with
+-- different ids. A partial sweep would therefore keep nothing in practice while
+-- adding a whole class of half-applied states to reason about.
+--
+-- In the database rather than the client because there is no rollback layer:
+-- from the client this is N fire-and-forget deletes whose half-applied state is
+-- "a guest is seated at a dish the kitchen is not cooking", and it cannot run
+-- at all when the switch arrives from another device or from
+-- `link_wedding_to_venue`.
+--
+-- 20260822000003 replaces this function to null `guests.menu_option_id` as
+-- well. It cannot do that here - the column does not exist yet.
+create function public.reset_wedding_menu_on_package_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.menu_package_id is not distinct from old.menu_package_id then
+    return null;
+  end if;
+
+  delete from public.wedding_menu_selections
+  where wedding_id = new.id;
+
+  return null;
+end;
+$$;
+
+create trigger weddings_menu_package_changed
+  after update of menu_package_id on public.weddings
+  for each row execute function public.reset_wedding_menu_on_package_change();
+
+-- (3) A selected dish has to be in the package this wedding ordered.
+create function public.enforce_menu_selection_in_package()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_package uuid;
+begin
+  select w.menu_package_id into v_package
+  from public.weddings w
+  where w.id = new.wedding_id;
+
+  if v_package is null
+    or not public.menu_option_in_package(new.menu_option_id, v_package)
+  then
+    raise exception 'menu option does not belong to this wedding''s package'
+      using errcode = '23514';
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger wedding_menu_selections_in_package
+  before insert on public.wedding_menu_selections
+  for each row execute function public.enforce_menu_selection_in_package();
+
+-- ## What is deliberately *not* enforced here: choose_count
+--
+-- No trigger counts the selections against `menu_courses.choose_count`, and the
+-- omission is deliberate rather than pending:
+--
+--   * it needs a counting subquery on every insert, for a rule that changes
+--     nothing about what is stored;
+--   * it refuses a legitimate transient state - swapping a dish is a delete and
+--     an insert, and one of those two orders would always be refused;
+--   * the failure mode is benign in a way over-capacity is not. An
+--     over-capacity table silently drops guests from the canvas while still
+--     printing them, which is a rendering lie; six soups renders correctly as
+--     six soups.
+--
+-- The client enforces it in the picker ("4 z 5 wybranych"). If that ever
+-- becomes unacceptable, the shape that fits is a definer RPC committing the
+-- whole served set in one call - not a per-row trigger.
+
+-- ---------------------------------------------------------------------------
+-- 6. link_wedding_to_venue has to clear the package
+-- ---------------------------------------------------------------------------
+-- **This replace is not optional, and leaving it out breaks an existing
+-- feature.**
+--
+-- That RPC re-links an already-linked wedding on purpose - its own comment says
+-- so, because consent is given to *a* recipient and pointing the link elsewhere
+-- has to withdraw it. Its `UPDATE weddings SET tenant_id = ..., venue_access =
+-- 'pending'` now fires the trigger in section 5, and a wedding still holding the
+-- *old* venue's package fails that check with 23514. Changing venue would simply
+-- stop working, and the first person to find out would be a customer.
+--
+-- Clearing the package in the same statement fixes it and is also the correct
+-- behaviour on its own terms: the new venue does not serve the old venue's menu.
+-- Trigger 2 then fires and clears the selections.
+--
+-- Verbatim from 20260817000002 apart from that one line; the comments there
+-- still apply and are not repeated.
+create or replace function public.link_wedding_to_venue(p_wedding_id uuid, p_slug text)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_tenant public.tenants%rowtype;
+begin
+  if auth.uid() is null then
+    raise exception 'Not authenticated' using errcode = '42501';
+  end if;
+
+  if not exists (
+    select 1 from public.weddings w
+    where w.id = p_wedding_id and w.owner_id = auth.uid()
+  ) then
+    raise exception 'Only the wedding owner can link it to a venue'
+      using errcode = '42501';
+  end if;
+
+  select * into v_tenant from public.tenants where slug = p_slug;
+
+  if not found then
+    raise exception 'No such venue' using errcode = 'PT404';
+  end if;
+
+  if v_tenant.status <> 'active' then
+    raise exception 'Venue is not active' using errcode = 'PT410';
+  end if;
+
+  if not v_tenant.open_linking and not public.is_tenant_member(v_tenant.id) then
+    raise exception 'This venue accepts links by invitation only'
+      using errcode = 'PT403';
+  end if;
+
+  -- 'pending' unconditionally, including when re-linking a wedding that was
+  -- already granted to a different venue: consent is given to *a* recipient, so
+  -- pointing the link somewhere else has to withdraw it.
+  --
+  -- menu_package_id goes with it, for the same reason and one more: the old
+  -- venue's package would fail enforce_wedding_menu_package against the new
+  -- tenant, so without this line the whole statement raises 23514.
+  update public.weddings
+  set tenant_id = v_tenant.id,
+      venue_access = 'pending',
+      menu_package_id = null
+  where id = p_wedding_id;
+
+  return v_tenant.id;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- 7. Grants
+-- ---------------------------------------------------------------------------
+-- The three functions above are called only by triggers and by each other.
+-- PostgreSQL checks EXECUTE at CREATE TRIGGER time, not when the trigger fires,
+-- so revoking from every client role leaves them working - the same treatment
+-- the trigger functions in 20260806000001, 20260816000001 and 20260817000001
+-- get.
+--
+-- `menu_option_in_package` is included even though it is `security definer` and
+-- reads two tables: it is reachable only from the two trigger functions, and a
+-- client that could call it directly would have an oracle for "does this uuid
+-- name a dish in that package" against catalogues it cannot read.
+revoke all on function
+  public.menu_option_in_package(uuid, uuid, boolean)
+  from public, anon, authenticated;
+revoke all on function public.enforce_wedding_menu_package()
+  from public, anon, authenticated;
+revoke all on function public.reset_wedding_menu_on_package_change()
+  from public, anon, authenticated;
+revoke all on function public.enforce_menu_selection_in_package()
+  from public, anon, authenticated;

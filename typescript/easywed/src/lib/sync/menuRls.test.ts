@@ -38,6 +38,35 @@ const DWOREK = "50000000-0000-4000-8000-000000000002"
 const SERVED_PACKAGE = "60000000-0000-4000-8000-000000000004"
 const PLATED_COURSE = "61000000-0000-4000-8000-000000000403"
 const DWOREK_PACKAGE = "60000000-0000-4000-8000-000000000009"
+// MENU II, the buffet-shaped package. Used as "some other package of the same
+// venue", which is the interesting negative - a package the couple can read and
+// still may not draw dishes from.
+const BUFFET_PACKAGE = "60000000-0000-4000-8000-000000000002"
+// MENU I's first soup: a real dish of this same venue, in a package this
+// wedding did not order.
+const MENU_I_SOUP = "62000000-0000-4000-8000-000000010101"
+
+// Three of the six plated mains. A/B/C are what seed.sql picks; D and E are the
+// unpicked ones, so a test can add and remove one without disturbing the
+// fixture the client work is demoed on.
+const PLATED_MAIN_A = "62000000-0000-4000-8000-000000040301"
+const PLATED_MAIN_D = "62000000-0000-4000-8000-000000040304"
+const PLATED_MAIN_E = "62000000-0000-4000-8000-000000040305"
+
+// "Anna & Piotr" - linked to bagatelka, granted, and ordering MENU SERWOWANE.
+const COUPLE_WEDDING = "20000000-0000-4000-8000-000000000001"
+// "Tomasz & Kasia" - linked to nothing, owned by solo@.
+const SOLO_WEDDING = "20000000-0000-4000-8000-000000000002"
+
+/** Exactly what seed.sql writes as the served set, for restoring after a wipe. */
+const SEEDED_SELECTION_IDS = [
+  "62000000-0000-4000-8000-000000040101",
+  "62000000-0000-4000-8000-000000040201",
+  PLATED_MAIN_A,
+  "62000000-0000-4000-8000-000000040302",
+  "62000000-0000-4000-8000-000000040303",
+  "62000000-0000-4000-8000-000000040401",
+]
 
 const PASSWORD = "password123"
 
@@ -67,14 +96,45 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
   let otherVenue: SupabaseClient<Database>
   // owner@easywed.test: a couple, and a 'customer' of bagatelka.
   let couple: SupabaseClient<Database>
+  // The other two roles on that same wedding.
+  let editor: SupabaseClient<Database>
+  let viewer: SupabaseClient<Database>
 
   let venueUserId: string
 
+  /**
+   * Puts the seeded order back: the package first, then the served set.
+   *
+   * Switching package wipes the selections by design, so the test that proves
+   * it has to put them back - a suite that only passes on a freshly reset
+   * database is a suite people stop running. Same rule as
+   * tenantInvitations.test.ts: every test restores the fixture.
+   *
+   * The order of the two statements is the whole helper. Selections are refused
+   * with 23514 while the wedding holds no package, so restoring them first
+   * silently does nothing and every later assertion reads an empty menu.
+   */
+  const restoreSeededMenu = async () => {
+    await couple
+      .from("weddings")
+      .update({ menu_package_id: SERVED_PACKAGE })
+      .eq("id", COUPLE_WEDDING)
+
+    await couple.from("wedding_menu_selections").insert(
+      SEEDED_SELECTION_IDS.map((menu_option_id) => ({
+        wedding_id: COUPLE_WEDDING,
+        menu_option_id,
+      }))
+    )
+  }
+
   beforeAll(async () => {
-    ;[venue, otherVenue, couple] = await Promise.all([
+    ;[venue, otherVenue, couple, editor, viewer] = await Promise.all([
       signIn("venue@easywed.test"),
       signIn("venue2@easywed.test"),
       signIn("owner@easywed.test"),
+      signIn("editor@easywed.test"),
+      signIn("viewer@easywed.test"),
     ])
     venueUserId = (await venue.auth.getUser()).data.user!.id
   })
@@ -319,37 +379,375 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
   })
 
   /**
-   * What this migration deliberately does *not* open.
+   * The couple's read, opened by 20260822000002.
    *
-   * A couple reads the venue's menu through their wedding's link to the tenant,
-   * and that policy lands in 20260822000002 with the planner surface that needs
-   * it. Until then the blast radius of the catalogue is exactly "staff of this
-   * tenant", which is what makes this migration a no-op for every existing user.
+   * In the previous migration these three assertions were `toEqual([])` - the
+   * catalogue's whole blast radius was "staff of this tenant". They read `>0`
+   * now, and the route in is the **wedding's link to the tenant**, not a
+   * `tenant_members` row: `solo@` belongs to no tenant and owns a wedding linked
+   * to none, and reads zero of all three.
    *
-   * These three flip to ">0" in the next PR of the stack, and the flip is meant
-   * to be visible in that diff.
+   * Deliberately not gated on `venue_access = 'granted'`. A menu is the venue's
+   * own data, published to be read, and a couple deciding whether to grant
+   * anything needs to see the offer first.
    */
-  describe("what a couple cannot read yet", () => {
-    it("reads no packages, courses or options", async () => {
+  describe("what a linked couple can read", () => {
+    it("reads the venue's packages, courses and options", async () => {
       const [packages, courses, options] = await Promise.all([
-        couple.from("menu_packages").select("id"),
+        couple.from("menu_packages").select("id, tenant_id"),
         couple.from("menu_courses").select("id"),
         couple.from("menu_options").select("id"),
       ])
 
-      // A 'customer' of the venue, and still nothing: every policy in this
-      // migration gates on `is_tenant_staff`, which excludes 'customer'.
+      expect(packages.data!.length).toBeGreaterThan(0)
+      expect(courses.data!.length).toBeGreaterThan(0)
+      expect(options.data!.length).toBeGreaterThan(0)
+
+      // Their venue's, and only their venue's. dworek's package is linked to no
+      // wedding of theirs, so the predicate finds nothing for it.
+      expect(packages.data!.every((row) => row.tenant_id === BAGATELKA)).toBe(
+        true
+      )
+    })
+
+    /**
+     * The other half of the same policy: the link scopes the read, so a couple
+     * reaches their own venue's catalogue and no other venue's.
+     *
+     * Asserted against dworek's rows rather than by signing in as a couple
+     * linked to nothing, and the reason is worth writing down so nobody
+     * "restores" the simpler version. The only seeded account in that state is
+     * solo@, and tenantInvitations.test.ts deliberately leaves their wedding
+     * linked to `bagatelka` in 'pending' - documented residue, harmless there,
+     * and fatal here: the couple-read policy is deliberately not gated on
+     * `venue_access`, so a linked-but-not-granted wedding reads the menu by
+     * design. Vitest runs the two files concurrently against one database, so a
+     * "solo reads zero" assertion passes or fails depending on which suite got
+     * there first.
+     */
+    it("reads nothing belonging to a venue it is not linked to", async () => {
+      const [packages, courses, options] = await Promise.all([
+        couple.from("menu_packages").select("id").eq("tenant_id", DWOREK),
+        couple.from("menu_courses").select("id").eq("tenant_id", DWOREK),
+        couple.from("menu_options").select("id").eq("tenant_id", DWOREK),
+      ])
+
       expect(packages.data).toEqual([])
       expect(courses.data).toEqual([])
       expect(options.data).toEqual([])
     })
 
-    it("cannot write one either", async () => {
-      const { error } = await couple
+    // Read-only, asserted per table for the reason the isolation block is:
+    // three tables, three sets of policies, and the couple gains SELECT on all
+    // three and nothing else on any of them.
+    it("cannot write a package", async () => {
+      const insert = await couple
         .from("menu_packages")
         .insert({ tenant_id: BAGATELKA, name: "Menu pary mlodej" })
+      expect(insert.error?.code).toBe("42501")
 
-      expect(error?.code).toBe("42501")
+      const update = await couple
+        .from("menu_packages")
+        .update({ price_per_person_minor: 1 })
+        .eq("id", SERVED_PACKAGE)
+        .select("id")
+      expect(update.data).toEqual([])
+
+      const remove = await couple
+        .from("menu_packages")
+        .delete()
+        .eq("id", SERVED_PACKAGE)
+        .select("id")
+      expect(remove.data).toEqual([])
+    })
+
+    it("cannot write a course", async () => {
+      const insert = await couple.from("menu_courses").insert({
+        tenant_id: BAGATELKA,
+        menu_package_id: SERVED_PACKAGE,
+        name: "Danie pary mlodej",
+      })
+      expect(insert.error?.code).toBe("42501")
+
+      const update = await couple
+        .from("menu_courses")
+        .update({ choose_count: 9 })
+        .eq("id", PLATED_COURSE)
+        .select("id")
+      expect(update.data).toEqual([])
+
+      const remove = await couple
+        .from("menu_courses")
+        .delete()
+        .eq("id", PLATED_COURSE)
+        .select("id")
+      expect(remove.data).toEqual([])
+    })
+
+    it("cannot write a dish", async () => {
+      const insert = await couple.from("menu_options").insert({
+        tenant_id: BAGATELKA,
+        menu_course_id: PLATED_COURSE,
+        name: "Danie pary mlodej",
+      })
+      expect(insert.error?.code).toBe("42501")
+
+      const update = await couple
+        .from("menu_options")
+        .update({ name: "Przemianowane" })
+        .eq("id", PLATED_MAIN_A)
+        .select("id")
+      expect(update.data).toEqual([])
+
+      const remove = await couple
+        .from("menu_options")
+        .delete()
+        .eq("id", PLATED_MAIN_A)
+        .select("id")
+      expect(remove.data).toEqual([])
+    })
+  })
+
+  describe("the wedding's package", () => {
+    /**
+     * The assertion that makes an ordinary UPDATE policy on
+     * `weddings.menu_package_id` safe.
+     *
+     * The column is client-writable, unlike `tenant_id` and `venue_access`,
+     * because choosing a package discloses nothing. What keeps it honest is
+     * `enforce_wedding_menu_package`: a package from a venue this wedding is
+     * not linked to is refused outright, so the couple cannot point their
+     * wedding at a catalogue they have no relationship with.
+     */
+    it("refuses a package belonging to another venue", async () => {
+      const { error } = await couple
+        .from("weddings")
+        .update({ menu_package_id: DWOREK_PACKAGE })
+        .eq("id", COUPLE_WEDDING)
+
+      expect(error?.code).toBe("23514")
+    })
+
+    it("keeps the seeded package on the wedding", async () => {
+      const { data } = await couple
+        .from("weddings")
+        .select("menu_package_id")
+        .eq("id", COUPLE_WEDDING)
+        .single()
+
+      expect(data?.menu_package_id).toBe(SERVED_PACKAGE)
+    })
+
+    /**
+     * The re-link case, and the single most likely thing in this stack to have
+     * been missed.
+     *
+     * `link_wedding_to_venue` re-links an already-linked wedding on purpose,
+     * and its UPDATE now fires `enforce_wedding_menu_package`. Without the
+     * `menu_package_id = null` that 20260822000002 adds to that statement, a
+     * wedding still holding the old venue's package fails with 23514 and
+     * changing venue simply stops working - discovered by a customer, not by a
+     * test.
+     *
+     * Runs against a **throwaway wedding this test creates and deletes**, not
+     * the seeded one, and that is not tidiness. Re-linking rewrites `tenant_id`
+     * and lands `venue_access` back in 'pending' - consent is given to *a*
+     * recipient - which is exactly the state venueRls.test.ts asserts its peek
+     * against. Vitest runs the two files concurrently against one database, so
+     * borrowing the shared fixture here makes that suite fail at random, in a
+     * way that reads as a policy bug.
+     *
+     * `dworek` has `open_linking = true` and owner@ is already a `customer` of
+     * `bagatelka`, so both legs of the round trip are reachable with no
+     * invitation to mint or clean up.
+     */
+    it("survives a re-link to another venue, clearing the menu", async () => {
+      const scratchId = crypto.randomUUID()
+      const userId = (await couple.auth.getUser()).data.user!.id
+
+      const created = await couple
+        .from("weddings")
+        .insert({ id: scratchId, owner_id: userId, name: "Re-link probe" })
+      expect(created.error).toBeNull()
+
+      try {
+        const linked = await couple.rpc("link_wedding_to_venue", {
+          p_wedding_id: scratchId,
+          p_slug: "dworek",
+        })
+        expect(linked.error).toBeNull()
+
+        // A package of the venue it is linked to *now*, so the state under test
+        // is the real one: a wedding holding one venue's package at the moment
+        // it is pointed at another.
+        const picked = await couple
+          .from("weddings")
+          .update({ menu_package_id: DWOREK_PACKAGE })
+          .eq("id", scratchId)
+        expect(picked.error).toBeNull()
+
+        const relinked = await couple.rpc("link_wedding_to_venue", {
+          p_wedding_id: scratchId,
+          p_slug: "bagatelka",
+        })
+        // The assertion this whole test exists for. Without the
+        // `menu_package_id = null` in the replaced RPC, this is 23514 and
+        // changing venue is broken.
+        expect(relinked.error).toBeNull()
+
+        const { data: after } = await couple
+          .from("weddings")
+          .select("tenant_id, menu_package_id")
+          .eq("id", scratchId)
+          .single()
+
+        expect(after?.tenant_id).toBe(BAGATELKA)
+        expect(after?.menu_package_id).toBeNull()
+      } finally {
+        await couple.from("weddings").delete().eq("id", scratchId)
+      }
+    })
+  })
+
+  describe("selections", () => {
+    it("lets the owner pick and unpick a dish", async () => {
+      const insert = await couple
+        .from("wedding_menu_selections")
+        .insert({
+          wedding_id: COUPLE_WEDDING,
+          menu_option_id: PLATED_MAIN_D,
+        })
+        .select("menu_option_id")
+
+      expect(insert.error).toBeNull()
+      expect(insert.data).toEqual([{ menu_option_id: PLATED_MAIN_D }])
+
+      const remove = await couple
+        .from("wedding_menu_selections")
+        .delete()
+        .eq("wedding_id", COUPLE_WEDDING)
+        .eq("menu_option_id", PLATED_MAIN_D)
+        .select("menu_option_id")
+
+      expect(remove.data).toEqual([{ menu_option_id: PLATED_MAIN_D }])
+    })
+
+    it("lets an editor write, and a viewer neither", async () => {
+      const asEditor = await editor
+        .from("wedding_menu_selections")
+        .insert({ wedding_id: COUPLE_WEDDING, menu_option_id: PLATED_MAIN_D })
+      expect(asEditor.error).toBeNull()
+
+      const asViewerInsert = await viewer
+        .from("wedding_menu_selections")
+        .insert({ wedding_id: COUPLE_WEDDING, menu_option_id: PLATED_MAIN_E })
+      expect(asViewerInsert.error?.code).toBe("42501")
+
+      const asViewerDelete = await viewer
+        .from("wedding_menu_selections")
+        .delete()
+        .eq("wedding_id", COUPLE_WEDDING)
+        .eq("menu_option_id", PLATED_MAIN_D)
+        .select("menu_option_id")
+      expect(asViewerDelete.data).toEqual([])
+
+      // Cleanup through a role that may.
+      await couple
+        .from("wedding_menu_selections")
+        .delete()
+        .eq("wedding_id", COUPLE_WEDDING)
+        .eq("menu_option_id", PLATED_MAIN_D)
+    })
+
+    /**
+     * A stranger reads nothing, and the stranger is dworek's owner rather than
+     * solo@ for the same cross-suite reason the catalogue block explains - with
+     * a sharper edge here. tenantInvitations.test.ts has solo@ claim a *staff*
+     * invitation to bagatelka mid-run, and staff of the linked tenant is
+     * exactly what `wedding_role()` derives 'venue' from, so for the length of
+     * that test solo@ can legitimately read this wedding's selections. dworek
+     * has no relationship to this wedding in any suite.
+     */
+    it("reads nothing for a caller with no relationship to the wedding", async () => {
+      const { data } = await otherVenue
+        .from("wedding_menu_selections")
+        .select("menu_option_id")
+        .eq("wedding_id", COUPLE_WEDDING)
+
+      expect(data).toEqual([])
+    })
+
+    /**
+     * `enforce_menu_selection_in_package`. MENU I's soup is a perfectly real
+     * dish of this same venue, and it is still refused: the wedding ordered
+     * MENU SERWOWANE, and every option row belongs to exactly one course of
+     * exactly one package.
+     */
+    it("refuses a dish from a package this wedding did not order", async () => {
+      const { error } = await couple.from("wedding_menu_selections").insert({
+        wedding_id: COUPLE_WEDDING,
+        menu_option_id: MENU_I_SOUP,
+      })
+
+      expect(error?.code).toBe("23514")
+    })
+
+    /**
+     * Switching package is destructive by design, and the wipe happens in the
+     * database rather than the client - there is no rollback layer, and the
+     * switch can arrive from another device.
+     */
+    it("wipes the selections when the package changes", async () => {
+      try {
+        const { error } = await couple
+          .from("weddings")
+          .update({ menu_package_id: BUFFET_PACKAGE })
+          .eq("id", COUPLE_WEDDING)
+        expect(error).toBeNull()
+
+        const { data } = await couple
+          .from("wedding_menu_selections")
+          .select("menu_option_id")
+          .eq("wedding_id", COUPLE_WEDDING)
+        expect(data).toEqual([])
+      } finally {
+        await restoreSeededMenu()
+      }
+    })
+
+    /**
+     * The assertion that keeps "read-only by construction" true for the derived
+     * role. This is the first relation in the wedding tree that admits 'venue'
+     * on SELECT *and* the couple writes, so the write half has to be pinned.
+     */
+    it("lets the granted venue read them and write none", async () => {
+      const { data: read } = await venue
+        .from("wedding_menu_selections")
+        .select("menu_option_id")
+        .eq("wedding_id", COUPLE_WEDDING)
+      expect(read!.length).toBeGreaterThan(0)
+
+      const insert = await venue.from("wedding_menu_selections").insert({
+        wedding_id: COUPLE_WEDDING,
+        menu_option_id: PLATED_MAIN_D,
+      })
+      expect(insert.error?.code).toBe("42501")
+
+      const remove = await venue
+        .from("wedding_menu_selections")
+        .delete()
+        .eq("wedding_id", COUPLE_WEDDING)
+        .select("menu_option_id")
+      expect(remove.data).toEqual([])
+    })
+
+    it("shows the venue nothing for a wedding it was not linked to", async () => {
+      const { data } = await venue
+        .from("wedding_menu_selections")
+        .select("menu_option_id")
+        .eq("wedding_id", SOLO_WEDDING)
+
+      expect(data).toEqual([])
     })
   })
 
@@ -368,6 +766,19 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
       price_per_person_minor: 45500,
     })
     expect(venueUserId).toBeTruthy()
+
+    // And the couple's order, which two tests above deliberately destroy and
+    // restore. Six dishes, and the wedding still on MENU SERWOWANE.
+    const { data: order } = await couple
+      .from("weddings")
+      .select("menu_package_id, wedding_menu_selections(menu_option_id)")
+      .eq("id", COUPLE_WEDDING)
+      .single()
+
+    expect(order?.menu_package_id).toBe(SERVED_PACKAGE)
+    expect(order?.wedding_menu_selections.length).toBe(
+      SEEDED_SELECTION_IDS.length
+    )
   })
 })
 

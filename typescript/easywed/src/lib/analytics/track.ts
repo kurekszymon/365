@@ -144,6 +144,26 @@ export type AnalyticsEvents = {
     option_count: number
     per_guest_courses: number
   }
+  /**
+   * A couple pointed their wedding at one of the venue's packages.
+   *
+   * Fires on a switch as well as a first choice - both are the same decision -
+   * so the shape of what they chose is the payload, and nothing identifies
+   * which package it was. `per_guest_courses` is the interesting cut: it is
+   * how many plated courses a real order carries, which is the question the
+   * per-guest half of this feature exists to answer.
+   */
+  menu_package_selected: { course_count: number; per_guest_courses: number }
+  /**
+   * Every course now has at least the number of dishes the venue asked for.
+   *
+   * Fired on the transition into that state, not on every pick, so it counts
+   * weddings that finished choosing rather than clicks. `options_picked` can
+   * exceed the sum of the `choose_count`s: the database deliberately does not
+   * cap it, and a couple who talked the venue into a seventh main is a fact
+   * worth seeing rather than an anomaly to clamp.
+   */
+  menu_selection_completed: { courses: number; options_picked: number }
 }
 
 // Events declared as `undefined` are called bare - `track("invite_claimed")`.

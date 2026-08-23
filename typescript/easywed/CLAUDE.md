@@ -46,7 +46,7 @@ The app uses a specific pattern that spans three places and is easy to miss:
 
 1. **Zustand stores** (`src/stores/*.ts`) hold the client state. Domain: `planner.store.ts` (halls/tables/fixtures/guests/seats, ~1.1k lines - the big one), `reminders.store.ts`, `global.store.ts` (current `weddingId`, wedding name/date, `role`, members, viewport), `auth.store.ts`, `profile.store.ts` (display name + terms status). UI/tooling: `dialog`, `panel`, `view`, `entityList`, `clipboard`, `measures`, `print`, `theme`, `ai` (BYO-key settings), `aiChat`.
 2. **`src/lib/sync/loadWedding.ts`** hydrates the planner/reminders/global stores from Supabase in one parallel `Promise.all`, given a wedding id. Called from `src/routes/wedding.$id.tsx` with an `AbortController`. Its sibling **`loadWeddingForVenue.ts`** does the same for a venue's peek: no guests/reminders/members request at all, seats from the `wedding_seatmap` view, and every seat labelled `venue.anonymous_guest` **at the load boundary** so every downstream renderer (canvas, guest list, `PlannerPrintView`) works unchanged. The row→entity mappers both share live in `sync/rows.ts`; there is deliberately no shared *guest* mapper, because the two paths read different relations.
-3. **`src/lib/sync/mutations/`** - one module per entity (`wedding`, `hall`, `tables`, `guests`, `fixtures`, `reminders`, `layout`), re-exported from `mutations/index.ts`. Store actions optimistically update Zustand state first, then fire-and-forget the matching mutation (`void insertTable(...)`).
+3. **`src/lib/sync/mutations/`** - one module per entity (`wedding`, `hall`, `tables`, `guests`, `fixtures`, `reminders`, `layout`, `menu`), re-exported from `mutations/index.ts`. Store actions optimistically update Zustand state first, then fire-and-forget the matching mutation (`void insertTable(...)`).
 
 **Everything funnels through `run()` in `mutations/shared.ts`.** It is the contract, and it does four things:
 
@@ -84,7 +84,7 @@ Both guards treat "not settled yet" (`!isReady`, `termsStatus === "unknown"`) as
 
 ### Supabase schema and RLS
 
-Schema lives in `supabase/migrations/`. Live tables: `weddings`, `wedding_members`, `halls`, `tables`, `fixtures`, `guests`, `reminders`, `wedding_invitations`, `tenants`, `tenant_members`, `tenant_invitations`, `menu_packages`, `menu_courses`, `menu_options`, and `profiles` (1:1 with `auth.users`, outside the wedding tree). One view: `wedding_seatmap`. `invitation_orders` was created and later dropped (`20260804000001`) - ignore it.
+Schema lives in `supabase/migrations/`. Live tables: `weddings`, `wedding_members`, `halls`, `tables`, `fixtures`, `guests`, `reminders`, `wedding_invitations`, `tenants`, `tenant_members`, `tenant_invitations`, `menu_packages`, `menu_courses`, `menu_options`, `wedding_menu_selections`, and `profiles` (1:1 with `auth.users`, outside the wedding tree). One view: `wedding_seatmap`. `invitation_orders` was created and later dropped (`20260804000001`) - ignore it.
 
 All tables have RLS enabled; access is gated by `public.is_wedding_member(wedding_id)` and `public.wedding_role(wedding_id)` helper functions (both `security definer` to avoid recursion through `wedding_members`' own policies).
 
@@ -155,7 +155,7 @@ Tenant hosts (`<slug>.easywed.app`, and `<slug>.localhost:3000` in dev):
 
 Auth: `login.tsx`, `signup.tsx`, `forgot-password.tsx`, `reset-password.tsx`, `auth.callback.tsx`.
 
-Reminders are **not** a route - they're a tab in the planner sidebar (`components/reminders/`, `entityList.store.ts`).
+Reminders are **not** a route - they're a tab in the planner sidebar (`components/reminders/`, `entityList.store.ts`). Neither is the couple's **menu** (`components/planner/Menu/`, `menu.store.ts`): `/wedding` stays apex-only, and the tab is dropped entirely when `global.store.venue` is null - which is what gives guest mode and unlinked weddings no Menu tab for free, since a local wedding has no tenant.
 
 ### Planner (the main feature)
 

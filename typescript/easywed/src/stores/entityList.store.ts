@@ -7,12 +7,12 @@ import { create } from "zustand"
 // `panel.store`'s `ai_chat` view (the bottom drawer) rather than the list
 // panel; that duplication is deliberate, the two surfaces have different
 // chrome.
+// `menu` is conditional in a way the others are not: it exists only for a
+// wedding linked to a venue, so guest mode and unlinked weddings never see it.
+// That filtering lives in `tabsFor` (SidebarRail) and `visibleTabs`
+// (MobileTabBar), not here - this type is the vocabulary, not the policy.
 export type EntityListTab =
-  | "guests"
-  | "tables"
-  | "fixtures"
-  | "reminders"
-  | "ai_chat"
+  "guests" | "tables" | "fixtures" | "reminders" | "menu" | "ai_chat"
 
 // The subset the mobile bottom bar offers.
 export type MobileListTab = Exclude<EntityListTab, "ai_chat">

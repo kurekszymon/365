@@ -111,6 +111,23 @@ Four things in it are decisions rather than defaults:
 
 `tenants.currency` (shape CHECK `^[A-Z]{3}$`, not an ISO allowlist) arrives with it and is deliberately **not** added to `tenant_public()` — prices are for staff and linked couples, and that projection is the anonymous branding lookup. Prices are integer minor units; `src/lib/money.ts` owns the formatting and the parser, which is hand-written because `Math.round(4.055 * 100)` is 405.
 
+### The couple's menu (`20260822000002`)
+
+`weddings.menu_package_id` plus `wedding_menu_selections (wedding_id, menu_option_id)`. The column is an **ordinary client-writable one** with an ordinary UPDATE policy, unlike `tenant_id` and `venue_access` — choosing a package discloses nothing and grants nobody anything. `enforce_wedding_tenant_columns` names those two literally in both branches, so this column does not trip it and **must not be added there**.
+
+`wedding_menu_selections` is a table rather than a `uuid[]` on `weddings` because an array has no referential integrity, makes pick/unpick a read-modify-write that two devices lose each other's changes through, and gives a cleanup trigger nothing to hang off. The composite primary key makes both operations idempotent single statements.
+
+Two boundaries move here, and both are stated in the migration header:
+
+- It is the **first relation in the wedding tree that the derived `venue` role may SELECT and the couple writes**. Safe here and only here: every value in it is a uuid of the venue's own catalogue. Staff stay read-only — that is asserted, not assumed, because "read-only by construction" (`20260817000003`) stops being true the moment one writable relation exists. If phone ordering ever needs it, the shape is a definer `venue_propose_menu_selection(...)` the couple confirms, not a write policy.
+- The catalogue becomes readable by people who are not tenant staff, via one `exists (select 1 from weddings w where w.tenant_id = <table>.tenant_id and is_wedding_member(w.id))` per table. That `is_wedding_member` is **not** the mistake `20260817000003` warns about: it runs the other way round, asking whether the *caller* is a member of a wedding linked to this tenant, and no wedding-tree row is reachable through it. Deliberately not gated on `venue_access` — a menu is the venue's own published data, and a couple deciding whether to grant access needs to see the offer first.
+
+Three `security definer` trigger functions keep a choice a choice from this wedding's menu: `enforce_wedding_menu_package` (the package belongs to the linked tenant), `reset_wedding_menu_on_package_change` (switching package wipes the selections — a wipe, not a "keep what still fits" sweep, since every option row belongs to exactly one package), and `enforce_menu_selection_in_package`. Definer because an invoker-rights integrity check is really asking "can you *see* such a row", and those answers part company the moment a policy changes.
+
+**`link_wedding_to_venue` is replaced in this migration**, adding `menu_package_id = null` to its UPDATE. That RPC re-links an already-linked wedding on purpose, its UPDATE now fires the first trigger, and a wedding still holding the old venue's package would fail with `23514` — changing venue would simply stop working. `menuRls.test.ts` covers exactly that round trip, on a throwaway wedding rather than the seeded one, because re-linking resets `venue_access` to `'pending'` and `venueRls.test.ts` runs concurrently against the same database.
+
+`choose_count` is deliberately **not** enforced in the database: it needs a counting subquery per insert, it would refuse the transient state of swapping a dish (a delete plus an insert), and the failure mode is benign — six soups renders correctly as six soups, unlike an over-capacity table, which silently drops guests from the canvas while still printing them. The client counts it in the picker.
+
 ### Why `link_wedding_to_venue`'s refusals carry `PT` SQLSTATEs
 
 `PT404` (no such venue), `PT410` (venue not active) and `PT403` (invitation only) — one code per refusal the couple can actually cause, because each renders a different sentence and the SQLSTATE is the only part of a PostgREST error that is a contract. `PTxyz` is PostgREST's convention for "answer with HTTP xyz", so the statuses come out as 404/410/403 rather than a default. This replaces a `error.message.includes("invitation only")` match in `src/lib/sync/venue.ts`: rewording a `raise` would have degraded that case into the generic "could not link, try again" — the one refusal where retrying is exactly the wrong advice. The two refusals a couple cannot trigger from the dialog (no session, not the owner) stay `42501`.

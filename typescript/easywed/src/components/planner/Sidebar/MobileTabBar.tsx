@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
 import { GuestListContent } from "../Guests/GuestListContent"
+import { MenuPanelContent } from "../Menu/MenuPanelContent"
 import { RemindersPanelContent } from "../../reminders/RemindersPanelContent"
 import { EntityListContent } from "./EntityListContent"
 import { TabBadgeIcon } from "./TabBadgeIcon"
@@ -13,7 +14,31 @@ import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer"
 import { cn } from "@/lib/utils"
 
-const TABS: Array<MobileListTab> = ["guests", "tables", "fixtures", "reminders"]
+const TABS: Array<MobileListTab> = [
+  "guests",
+  "tables",
+  "fixtures",
+  "reminders",
+  // Only for a wedding linked to a venue - see `visibleTabs` below, and
+  // `tabsFor` in SidebarRail for the same rule on desktop.
+  "menu",
+]
+
+/**
+ * Column counts, spelled out rather than interpolated.
+ *
+ * Tailwind v4's scanner only sees class names written verbatim in the source,
+ * so `` `grid-cols-${n}` `` compiles to nothing at all - the same reason
+ * TAG_TONE_BADGE and the theme SWATCH are literal maps. The bar now has three
+ * variables driving its width (four fixed tabs, plus menu, plus the assistant),
+ * which is exactly when a second inline ternary stops being readable and starts
+ * being wrong.
+ */
+const GRID_COLS: Record<number, string> = {
+  4: "grid-cols-4",
+  5: "grid-cols-5",
+  6: "grid-cols-6",
+}
 
 /**
  * Mobile counterpart of the desktop `Sidebar/SidebarRail`: a fixed bottom bar
@@ -38,9 +63,19 @@ export const MobileTabBar = () => {
       close: state.close,
     }))
   )
-  // `ai_chat` is desktop-only; if the shared store still points at it (e.g.
-  // after a desktop → mobile resize) fall back to the default list tab.
-  const listTab: MobileListTab = activeTab === "ai_chat" ? "guests" : activeTab
+  // A wedding linked to no venue has no menu, so it gets no Menu tab - which
+  // covers guest mode for free, since a local wedding has no tenant.
+  const hasVenue = useGlobalStore((state) => state.venue !== null)
+  const visibleTabs = TABS.filter((tab) => hasVenue || tab !== "menu")
+
+  // `ai_chat` is desktop-only, and `menu` can disappear under a wedding that is
+  // unlinked; if the shared store still points at either (e.g. after a desktop
+  // → mobile resize, or navigating to a wedding with no venue) fall back to the
+  // default list tab.
+  const listTab: MobileListTab =
+    activeTab === "ai_chat" || !visibleTabs.includes(activeTab)
+      ? "guests"
+      : activeTab
   // When a panel view opens (tapping a list row → edit form, the add hub, the
   // AI chat), it renders in `MobilePanelDrawer` - close this list drawer
   // so the two don't stack.
@@ -56,14 +91,18 @@ export const MobileTabBar = () => {
 
   const badgeCount = useTabBadgeCounts()
 
-  const tabLabel = (tab: MobileListTab) =>
-    tab === "reminders" ? t("reminders.title") : t(tab)
+  const tabLabel = (tab: MobileListTab) => {
+    if (tab === "reminders") return t("reminders.title")
+    if (tab === "menu") return t("menu.title")
+    return t(tab)
+  }
 
   const listContent: Record<MobileListTab, React.ReactNode> = {
     guests: <GuestListContent />,
     tables: <EntityListContent kind="tables" />,
     fixtures: <EntityListContent kind="fixtures" />,
     reminders: <RemindersPanelContent />,
+    menu: <MenuPanelContent />,
   }
 
   return (
@@ -71,10 +110,10 @@ export const MobileTabBar = () => {
       <nav
         className={cn(
           "fixed inset-x-0 bottom-0 z-40 grid rounded-t-3xl border-t bg-background pb-[env(safe-area-inset-bottom)] shadow-[0_-14px_30px_-22px_rgba(40,60,45,0.4)]",
-          canEdit ? "grid-cols-5" : "grid-cols-4"
+          GRID_COLS[visibleTabs.length + (canEdit ? 1 : 0)]
         )}
       >
-        {TABS.map((tab) => (
+        {visibleTabs.map((tab) => (
           <button
             key={tab}
             type="button"
@@ -107,8 +146,13 @@ export const MobileTabBar = () => {
           className="max-h-[88dvh] gap-0"
         >
           <DrawerTitle className="sr-only">{tabLabel(listTab)}</DrawerTitle>
-          <div className="grid grid-cols-4 gap-2 px-4 pt-4 pb-4">
-            {TABS.map((tab) => (
+          <div
+            className={cn(
+              "grid gap-2 px-4 pt-4 pb-4",
+              GRID_COLS[visibleTabs.length]
+            )}
+          >
+            {visibleTabs.map((tab) => (
               <button
                 key={tab}
                 type="button"

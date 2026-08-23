@@ -12,10 +12,12 @@ import {
   updateTablePos,
 } from "@/lib/sync/mutations"
 import { fetchDisplayNames } from "@/lib/sync/profile"
+import { loadMenuCatalogue } from "@/lib/sync/menuCatalogue"
 import { toFixture, toHall, toTable } from "@/lib/sync/rows"
 import { DEFAULT_HALL, usePlannerStore } from "@/stores/planner.store"
 import { useAuthStore } from "@/stores/auth.store"
 import { useGlobalStore } from "@/stores/global.store"
+import { useMenuStore } from "@/stores/menu.store"
 import { useRemindersStore } from "@/stores/reminders.store"
 
 export const loadWedding = async (id: string, signal: AbortSignal) => {
@@ -30,6 +32,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     memberRes,
     fixturesRes,
     roleRes,
+    menuSelectionsRes,
   ] = await Promise.all([
     // The `tenants` embed rides on weddings.tenant_id's foreign key and costs
     // nothing extra: it is null for every unlinked wedding, and for a linked
@@ -39,7 +42,9 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     // member of the tenant.
     supabase
       .from("weddings")
-      .select("id, name, date, venue_access, tenants(id, slug, name)")
+      .select(
+        "id, name, date, venue_access, menu_package_id, tenants(id, slug, name)"
+      )
       .eq("id", id)
       .abortSignal(signal)
       .single(),
@@ -109,6 +114,15 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
           .rpc("my_wedding_role", { p_wedding_id: id })
           .abortSignal(signal)
       : Promise.resolve({ data: null, error: null }),
+
+    // The served set. This one *can* ride the batch - it is keyed on the
+    // wedding id, which we already have. The catalogue those uuids point into
+    // cannot: it needs weddings.tenant_id, so it is a second round trip below.
+    supabase
+      .from("wedding_menu_selections")
+      .select("menu_option_id")
+      .eq("wedding_id", id)
+      .abortSignal(signal),
   ])
 
   if (weddingRes.error) throw weddingRes.error
@@ -119,6 +133,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
   if (memberRes.error) throw memberRes.error
   if (fixturesRes.error) throw fixturesRes.error
   if (roleRes.error) throw roleRes.error
+  if (menuSelectionsRes.error) throw menuSelectionsRes.error
 
   const memberRows = memberRes.data ?? []
 
@@ -143,6 +158,24 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
       : null,
     venueAccess: weddingRes.data.venue_access as VenueAccess,
   })
+
+  // The order is known now; the catalogue it points into is one round trip
+  // away. Reset first so a previously loaded wedding's menu is never briefly
+  // shown against this one.
+  useMenuStore.getState().clear()
+  useMenuStore.getState().setOrder(
+    weddingRes.data.menu_package_id,
+    menuSelectionsRes.data.map((row) => row.menu_option_id)
+  )
+
+  // Deliberately not awaited, for the same reason fetchDisplayNames is not: the
+  // Menu tab is one tab of the planner, and holding up the canvas for it would
+  // make every wedding open pay a serial request. The tab renders a spinner
+  // until this lands - `status` starts "idle" and goes "loading" inside.
+  //
+  // Unlinked weddings skip it entirely and stay "idle", which is also the state
+  // the Menu tab is hidden on. Guest mode never reaches here.
+  if (tenant) void loadMenuCatalogue(tenant.id, signal)
 
   // Names live in profiles, not wedding_members, and there's no FK between
   // them (both point at auth.users), so PostgREST can't embed them in the
