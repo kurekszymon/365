@@ -11,12 +11,12 @@ import {
   UtensilsIcon,
   XIcon,
 } from "lucide-react"
-import { getInitials } from "../Canvas/utils"
 import { SeatingProgress } from "./SeatingProgress"
 import { SeatAssignSheet } from "./SeatAssignSheet"
 import type { ReactNode } from "react"
 import type { Guest } from "@/stores/planner.store"
 import type { TagTone } from "@/lib/tagTone"
+import { getInitials } from "@/lib/memberIdentity"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useDialogStore } from "@/stores/dialog.store"
 import { useEntityListStore } from "@/stores/entityList.store"

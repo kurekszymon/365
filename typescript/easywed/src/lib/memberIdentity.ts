@@ -2,6 +2,13 @@
  * Turning a member into an avatar: initials and a stable color. Both derive
  * only from what we're allowed to know (a self-chosen display name and the
  * user id) - never from an email.
+ *
+ * `getInitials` also labels *guest* avatars all over the planner (seat markers,
+ * guest list rows, the assign sheet). It used to have a second copy in
+ * Canvas/utils.ts that indexed with `word[0]` and bare `.toUpperCase()`, which
+ * halved an emoji into a lone surrogate and threw away the casing rules argued
+ * for below - so the planner is pointed here instead. Nothing about it is
+ * member-specific; it maps a name to at most two glyphs.
  */
 
 /**
@@ -15,9 +22,14 @@
  * must not render as "İK" to one member and "IK" to another. "pl" and "en"
  * agree on every letter this touches, so pinning costs nothing today and keeps
  * the function pure.
+ *
+ * A name with no letters in it at all yields "•": these render inside a fixed
+ * avatar circle, and an empty one reads as a rendering bug rather than as a
+ * guest whose name the couple hasn't filled in yet.
  */
 export const getInitials = (displayName: string): string => {
   const words = displayName.trim().split(/\s+/).filter(Boolean)
+  if (words.length === 0) return "•"
 
   return words
     .slice(0, 2)

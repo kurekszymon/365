@@ -26,6 +26,13 @@ describe("getInitials", () => {
   it("keeps a multi-code-unit character whole", () => {
     expect(getInitials("🦫 Planner")).toBe("🦫P")
   })
+
+  // Guest names are free text the couple types and can be left blank; the
+  // planner's avatar circles are fixed-size, so they need *something* in them.
+  it("falls back to a bullet for a name with no letters", () => {
+    expect(getInitials("")).toBe("•")
+    expect(getInitials("   ")).toBe("•")
+  })
 })
 
 describe("getAvatarTone", () => {
