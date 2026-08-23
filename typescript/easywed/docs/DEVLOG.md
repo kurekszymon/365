@@ -2,6 +2,17 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 22.08
+
+- venue menus, part one: the catalogue. `menu_packages` → `menu_courses` → `menu_options` at `/crm/menus`, and nothing else in the app moves - no couple can read a byte of it yet, which is what keeps this migration a no-op for every existing user. the whole reason it exists is that a venue's product *is* its menu, and until now the only food-shaped field in the app was `guests.dietary`
+- the denormalised `tenant_id` on courses and options is held correct by composite foreign keys against `unique (tenant_id, id)` on the parent, not by a scope trigger. same guarantee `20260816000001` needed a definer trigger for, with nothing to execute and nothing to keep in step - and it is what lets all twelve policies be one `is_tenant_staff(tenant_id)` call with no join
+- one boolean instead of two data models: `menu_courses.per_guest_choice`. off is a buffet, on is `MENU SERWOWANE` - the couple narrows six mains to three and each guest is then assigned one of the three. the per-guest half lands in the third migration of the stack; the flag is in the first because the shape is what everything after it reads
+- `archived_at`, not a soft delete, and the distinction is real: retiring last year's offer must not blank the choices of a couple who already ordered from it. hard delete stays reachable behind a two-click confirm, because typos happen before anyone has ordered
+- the two reorder rpcs are **invoker-rights**, not definer. staff already hold update through rls, so a cross-tenant id filters to nothing rather than needing hand-written authorization - which also means a "successful" call can be a silent no-op, so `menuRls.test.ts` re-reads the positions rather than trusting `error === null`. two functions instead of one with a `p_kind text` switch: a text parameter that selects a table is one refactor from dynamic sql
+- `parsePriceInput` is hand-written because `Math.round(4.055 * 100)` is 405 - `4.055 * 100` is `405.49999999999994`. it strips U+00A0 as well as spaces, so a price copied out of the ui in polish (`435,50 zł`, no-break spaces and all) pastes back in and round-trips
+- `formatMoney`'s try/catch turned out to guard the *locale*, not the currency: `^[A-Z]{3}$` is exactly Intl's own well-formedness rule, so a stored `ZZZ` formats as `405,00 ZZZ` rather than throwing. the tag from i18next's browser detector is the one that raises `RangeError`. the test says so, since the plan said otherwise
+- 17 assertions in `menuRls.test.ts`, isolation asserted **per table** rather than once - three tables, three policies, and a missing one on `menu_options` would leave the other two green
+
 ### 21.08
 
 - signing in on a venue host sent staff to the apex. `redirectAuthedAwayFromLogin` defaulted to `/home`, `/home` is in `APEX_ONLY_PREFIXES`, so the root guard replaced the origin - and sessions are per-origin, so the sign-in that had just succeeded ended on the signed-out landing. every auth terminus had its own hardcoded `/home`: the login and signup guards, the oauth callback, both exits from the terms gate

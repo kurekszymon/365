@@ -31,6 +31,7 @@ export const Route = createFileRoute("/crm")({
 const NAV = [
   { to: "/crm", label: "crm.nav.overview", exact: true },
   { to: "/crm/roster", label: "crm.nav.roster", exact: false },
+  { to: "/crm/menus", label: "crm.nav.menus", exact: false },
 ] as const
 
 // /crm/wedding/$id has no nav entry on purpose: it is reached from the list on

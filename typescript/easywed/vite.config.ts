@@ -58,6 +58,7 @@ const APP_ROUTES = [
   "/venue",
   "/crm",
   "/crm/roster",
+  "/crm/menus",
 ]
 
 const pages = [

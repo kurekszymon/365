@@ -210,6 +210,144 @@ export type Database = {
           },
         ]
       }
+      menu_courses: {
+        Row: {
+          archived_at: string | null
+          choose_count: number
+          created_at: string
+          id: string
+          menu_package_id: string
+          name: string
+          per_guest_choice: boolean
+          position: number
+          serving_note: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          choose_count?: number
+          created_at?: string
+          id?: string
+          menu_package_id: string
+          name: string
+          per_guest_choice?: boolean
+          position?: number
+          serving_note?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          choose_count?: number
+          created_at?: string
+          id?: string
+          menu_package_id?: string
+          name?: string
+          per_guest_choice?: boolean
+          position?: number
+          serving_note?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_courses_tenant_id_menu_package_id_fkey"
+            columns: ["tenant_id", "menu_package_id"]
+            isOneToOne: false
+            referencedRelation: "menu_packages"
+            referencedColumns: ["tenant_id", "id"]
+          },
+        ]
+      }
+      menu_options: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          id: string
+          menu_course_id: string
+          name: string
+          note: string | null
+          position: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          id?: string
+          menu_course_id: string
+          name: string
+          note?: string | null
+          position?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          id?: string
+          menu_course_id?: string
+          name?: string
+          note?: string | null
+          position?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_options_tenant_id_menu_course_id_fkey"
+            columns: ["tenant_id", "menu_course_id"]
+            isOneToOne: false
+            referencedRelation: "menu_courses"
+            referencedColumns: ["tenant_id", "id"]
+          },
+        ]
+      }
+      menu_packages: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          position: number
+          price_per_person_minor: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          position?: number
+          price_per_person_minor?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          position?: number
+          price_per_person_minor?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_packages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -424,6 +562,7 @@ export type Database = {
         Row: {
           accent_color: string | null
           created_at: string
+          currency: string
           id: string
           locale: string
           logo_url: string | null
@@ -438,6 +577,7 @@ export type Database = {
         Insert: {
           accent_color?: string | null
           created_at?: string
+          currency?: string
           id?: string
           locale?: string
           logo_url?: string | null
@@ -452,6 +592,7 @@ export type Database = {
         Update: {
           accent_color?: string | null
           created_at?: string
+          currency?: string
           id?: string
           locale?: string
           logo_url?: string | null
@@ -638,6 +779,14 @@ export type Database = {
       }
       my_tenant_id: { Args: never; Returns: string }
       my_wedding_role: { Args: { p_wedding_id: string }; Returns: string }
+      reorder_menu_courses: {
+        Args: { p_ids: string[]; p_menu_package_id: string }
+        Returns: undefined
+      }
+      reorder_menu_options: {
+        Args: { p_course_id: string; p_ids: string[] }
+        Returns: undefined
+      }
       replace_planner_layout: {
         Args: {
           p_fixtures: Json

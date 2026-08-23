@@ -129,6 +129,21 @@ export type AnalyticsEvents = {
    * disclosure decision is still `venue_access_granted`, separately and later.
    */
   tenant_invite_claimed: { role: "staff" | "customer" }
+  /**
+   * A venue saved one menu package in the CRM.
+   *
+   * Counts only, and the shape of the catalogue is the whole question worth
+   * asking of it: how many courses a real offer has, how many dishes it runs
+   * to, and how many venues use the plated shape at all. The package's name,
+   * its price and every dish in it are strings a venue typed, which is what
+   * this map exists to keep out of the event store; the venue itself is
+   * attributed with a PostHog group, never a property.
+   */
+  menu_package_saved: {
+    course_count: number
+    option_count: number
+    per_guest_courses: number
+  }
 }
 
 // Events declared as `undefined` are called bare - `track("invite_claimed")`.

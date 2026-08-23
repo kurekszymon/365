@@ -84,7 +84,7 @@ Both guards treat "not settled yet" (`!isReady`, `termsStatus === "unknown"`) as
 
 ### Supabase schema and RLS
 
-Schema lives in `supabase/migrations/`. Live tables: `weddings`, `wedding_members`, `halls`, `tables`, `fixtures`, `guests`, `reminders`, `wedding_invitations`, `tenants`, `tenant_members`, `tenant_invitations`, and `profiles` (1:1 with `auth.users`, outside the wedding tree). One view: `wedding_seatmap`. `invitation_orders` was created and later dropped (`20260804000001`) - ignore it.
+Schema lives in `supabase/migrations/`. Live tables: `weddings`, `wedding_members`, `halls`, `tables`, `fixtures`, `guests`, `reminders`, `wedding_invitations`, `tenants`, `tenant_members`, `tenant_invitations`, `menu_packages`, `menu_courses`, `menu_options`, and `profiles` (1:1 with `auth.users`, outside the wedding tree). One view: `wedding_seatmap`. `invitation_orders` was created and later dropped (`20260804000001`) - ignore it.
 
 All tables have RLS enabled; access is gated by `public.is_wedding_member(wedding_id)` and `public.wedding_role(wedding_id)` helper functions (both `security definer` to avoid recursion through `wedding_members`' own policies).
 
@@ -148,7 +148,7 @@ App:
 
 Tenant hosts (`<slug>.easywed.app`, and `<slug>.localhost:3000` in dev):
 
-- `venue.tsx` - the anonymous branded entry page; `crm.tsx` + `crm/index.tsx` - the staff shell and overview; `crm/roster.tsx` - the venue's couples and staff, plus the invitation links that put them there; `crm/wedding.$id.tsx` - the peek at one granted wedding, which reuses `PlannerPrintView` with `fields: ["dietary"]` for the kitchen report rather than growing a second print component.
+- `venue.tsx` - the anonymous branded entry page; `crm.tsx` + `crm/index.tsx` - the staff shell and overview; `crm/roster.tsx` - the venue's couples and staff, plus the invitation links that put them there; `crm/menus.tsx` - the menu catalogue (`menu_packages` → `menu_courses` → `menu_options`), whose hook `useTenantMenus.ts` calls `supabase` **directly and never `run()`**, because `run()` gates on `selectCanEdit` and no wedding is loaded in the CRM - the same reason `sync/venue.ts` stands outside it; `crm/wedding.$id.tsx` - the peek at one granted wedding, which reuses `PlannerPrintView` with `fields: ["dietary"]` for the kitchen report rather than growing a second print component.
 - Static tenant routes go in `APP_ROUTES` (`vite.config.ts`) so they answer with real HTML a crawler can read `noindex` off. **`/crm/wedding/$id` must not** - it is dynamic, same as `/wedding/$id`, and `robots.txt` blocks the prefix instead.
 
 `venue_.invite.$token.tsx` (`/venue/invite/$token`) is the odd one out: it serves on **both** the apex and a tenant host, because a couple's session lives on the apex and staff sign in on the venue's. `apexOrigin()` / `tenantOrigin(slug)` in `lib/tenant/host.ts` build the link for whichever origin the recipient needs - `SITE_ORIGIN` is a constant and would break `pnpm dev`. The `_` escape keeps it out of `venue.tsx`, and the shared `/invite/` segment is what makes `scrubInviteTokens` cover it for free.
