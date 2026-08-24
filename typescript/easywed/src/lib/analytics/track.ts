@@ -129,6 +129,51 @@ export type AnalyticsEvents = {
    * disclosure decision is still `venue_access_granted`, separately and later.
    */
   tenant_invite_claimed: { role: "staff" | "customer" }
+  /**
+   * A venue saved one menu package in the CRM.
+   *
+   * Counts only, and the shape of the catalogue is the whole question worth
+   * asking of it: how many courses a real offer has, how many dishes it runs
+   * to, and how many venues use the plated shape at all. The package's name,
+   * its price and every dish in it are strings a venue typed, which is what
+   * this map exists to keep out of the event store; the venue itself is
+   * attributed with a PostHog group, never a property.
+   */
+  menu_package_saved: {
+    course_count: number
+    option_count: number
+    per_guest_courses: number
+  }
+  /**
+   * A couple pointed their wedding at one of the venue's packages.
+   *
+   * Fires on a switch as well as a first choice - both are the same decision -
+   * so the shape of what they chose is the payload, and nothing identifies
+   * which package it was. `per_guest_courses` is the interesting cut: it is
+   * how many plated courses a real order carries, which is the question the
+   * per-guest half of this feature exists to answer.
+   */
+  menu_package_selected: { course_count: number; per_guest_courses: number }
+  /**
+   * Every course now has at least the number of dishes the venue asked for.
+   *
+   * Fired on the transition into that state, not on every pick, so it counts
+   * weddings that finished choosing rather than clicks. `options_picked` can
+   * exceed the sum of the `choose_count`s: the database deliberately does not
+   * cap it, and a couple who talked the venue into a seventh main is a fact
+   * worth seeing rather than an anomaly to clamp.
+   */
+  menu_selection_completed: { courses: number; options_picked: number }
+  /**
+   * One guest was assigned one dish from a per-guest course.
+   *
+   * `source` is a literal union because it answers a design question - whether
+   * couples assign dishes one guest at a time from the guest list, or work
+   * through the Menu tab - and because it is the only string this event could
+   * plausibly want. The dish itself is a uuid of the venue's catalogue and the
+   * guest is a third party; neither belongs in an event payload.
+   */
+  menu_guest_dish_assigned: { source: "menu_tab" | "guest_list" }
 }
 
 // Events declared as `undefined` are called bare - `track("invite_claimed")`.

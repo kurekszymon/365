@@ -18,6 +18,8 @@ import type { Guest } from "@/stores/planner.store"
 import type { TagTone } from "@/lib/tagTone"
 import { getInitials } from "@/lib/memberIdentity"
 import { usePlannerStore } from "@/stores/planner.store"
+import { useMenuStore } from "@/stores/menu.store"
+import { menuOptionTone, tallyByOption } from "@/lib/menu"
 import { useDialogStore } from "@/stores/dialog.store"
 import { useEntityListStore } from "@/stores/entityList.store"
 import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
@@ -52,6 +54,10 @@ type Filter =
   | { kind: "unseated" }
   | { kind: "kids" }
   | { kind: "dietary"; tag: string }
+  // The per-guest dish. Keyed on the option id rather than the name, unlike the
+  // dietary arm: two dishes of two packages can share a name, and the id is
+  // what the guest row actually holds.
+  | { kind: "menu"; optionId: string }
 
 // True if every char of `needle` appears in `haystack` in order (a classic
 // fuzzy subsequence match), so "vgn" still finds "vegan" and a dropped letter
@@ -140,6 +146,10 @@ export const GuestListContent = () => {
   const deleteGuest = usePlannerStore((state) => state.deleteGuest)
   const openDialog = useDialogStore((state) => state.open)
   const canEdit = useGlobalStore(selectCanEdit)
+  // Empty for every wedding with no venue, so the dish badge, the dish filter
+  // chips and the dish half of the search haystack all cost nothing and render
+  // nothing in guest mode.
+  const menuOptions = useMenuStore((state) => state.options)
 
   // Onboarding's "seat everyone" step asks for this highlight; it fades on its
   // own so the row settles back to three matching icons. The store owns the
@@ -177,16 +187,47 @@ export const GuestListContent = () => {
   // Only tags actually in use, presets-first then alphabetical.
   const activeDietaryFilters = sortDietaryTags(dietaryCounts.keys(), t)
 
+  // Dish names, resolved from the venue's catalogue.
+  //
+  // Read **unfiltered by `archived_at`**: a dish the venue retired after this
+  // couple ordered it still has to be nameable on the row of every guest
+  // holding it. Filtering is for pickers, which offer a choice; this is
+  // rendering one that was already made.
+  const dishNameById = useMemo(
+    () => new Map(menuOptions.map((option) => [option.id, option.name])),
+    [menuOptions]
+  )
+
+  // Only dishes somebody is actually having, biggest group first - the same
+  // helper the kitchen tally and the printed report use, so the count-then-name
+  // sort and the drop-unresolved-ids rule live in exactly one tested place.
+  // Empty for a buffet menu, an unlinked wedding and all of guest mode, where
+  // nothing carries a dish.
+  const dishCounts = useMemo(
+    () =>
+      tallyByOption(
+        guests.map((g) => g.menuOptionId),
+        (id) => dishNameById.get(id) ?? null
+      ),
+    [guests, dishNameById]
+  )
+
   // Fold the name, each dietary preference - both the raw tag ("vegan") and
-  // its displayed label ("Wegańska") - and the age bracket into one normalized
-  // blob so a fuzzy query can hit any of them.
+  // its displayed label ("Wegańska") - the age bracket and the assigned dish
+  // into one normalized blob so a fuzzy query can hit any of them. Searching
+  // "kaczka" to find everyone having the duck is the whole point of the last
+  // one.
   const guestHaystack = (guest: Guest) => {
     const child = childAgeGroup(guest.ageGroup)
+    const dish = guest.menuOptionId
+      ? dishNameById.get(guest.menuOptionId)
+      : null
     return normalize(
       [
         guest.name,
         ...guest.dietary.flatMap((d) => [d, dietaryLabel(t, d)]),
         ...(child ? [child, ageGroupLabel(t, child)] : []),
+        ...(dish ? [dish] : []),
       ].join(" ")
     )
   }
@@ -196,6 +237,8 @@ export const GuestListContent = () => {
     if (filter.kind === "unseated" && guest.tableId) return false
     if (filter.kind === "kids" && !isKidAgeGroup(guest.ageGroup)) return false
     if (filter.kind === "dietary" && !guest.dietary.includes(filter.tag))
+      return false
+    if (filter.kind === "menu" && guest.menuOptionId !== filter.optionId)
       return false
     if (normalizedQuery && !fuzzyMatch(normalizedQuery, guestHaystack(guest)))
       return false
@@ -298,6 +341,16 @@ export const GuestListContent = () => {
               {dietaryLabel(t, d)} ({dietaryCounts.get(d)})
             </FilterChip>
           ))}
+          {dishCounts.map((dish) => (
+            <FilterChip
+              key={dish.id}
+              active={filter.kind === "menu" && filter.optionId === dish.id}
+              onClick={() => setFilter({ kind: "menu", optionId: dish.id })}
+              tone={menuOptionTone(dish.name)}
+            >
+              {dish.name} ({dish.count})
+            </FilterChip>
+          ))}
         </div>
 
         {canEdit && (
@@ -331,6 +384,9 @@ export const GuestListContent = () => {
           {filteredGuests.map((guest) => {
             const seatedAt = seatedTableLabel(guest)
             const ageBadge = childAgeGroup(guest.ageGroup)
+            const dishName = guest.menuOptionId
+              ? (dishNameById.get(guest.menuOptionId) ?? null)
+              : null
             return (
               <div
                 key={guest.id}
@@ -376,13 +432,20 @@ export const GuestListContent = () => {
                     {/* Sorted rather than shown in storage order, so the same
                         two diets always appear in the same order - and
                         therefore the same color order - on every row. */}
-                    {guest.dietary.length > 0 && (
+                    {(guest.dietary.length > 0 || dishName) && (
                       <div className="mt-1 flex flex-wrap gap-1">
                         {sortDietaryTags(guest.dietary, t).map((d) => (
                           <TagBadge key={d} tone={dietaryTone(d)}>
                             {dietaryLabel(t, d)}
                           </TagBadge>
                         ))}
+                        {/* Last, after the diets: what the guest eats is the
+                            diet's consequence, and the badge is long. */}
+                        {dishName && (
+                          <TagBadge tone={menuOptionTone(dishName)}>
+                            {dishName}
+                          </TagBadge>
+                        )}
                       </div>
                     )}
                   </div>

@@ -8,7 +8,9 @@ import {
   usePlannerStore,
 } from "@/stores/planner.store"
 import { useGlobalStore } from "@/stores/global.store"
+import { useMenuStore } from "@/stores/menu.store"
 import { useRemindersStore } from "@/stores/reminders.store"
+import { loadMenuCatalogue } from "@/lib/sync/menuCatalogue"
 import i18n from "@/i18n"
 
 /**
@@ -44,7 +46,9 @@ export const loadWeddingForVenue = async (id: string, signal: AbortSignal) => {
     await Promise.all([
       supabase
         .from("weddings")
-        .select("id, name, date, venue_access, tenants(id, slug, name)")
+        .select(
+          "id, name, date, venue_access, menu_package_id, tenants(id, slug, name)"
+        )
         .eq("id", id)
         .abortSignal(signal)
         .single(),
@@ -81,7 +85,7 @@ export const loadWeddingForVenue = async (id: string, signal: AbortSignal) => {
       // into by a human. The view already filters soft-deleted guests.
       supabase
         .from("wedding_seatmap")
-        .select("id, table_id, seat_id, dietary, age_group")
+        .select("id, table_id, seat_id, dietary, age_group, menu_option_id")
         .eq("wedding_id", id)
         .abortSignal(signal),
     ])
@@ -165,9 +169,27 @@ export const loadWeddingForVenue = async (id: string, signal: AbortSignal) => {
     ageGroup: row.age_group ?? undefined,
     tableId: row.table_id,
     seatId: row.seat_id,
+    // A uuid of this venue's own catalogue. It is deliberately *not* resolved
+    // to a dish name by the view - the seat map's whole safety argument is that
+    // there is no text in the projection to redact - so the name is looked up
+    // client-side from the catalogue loaded below, which this venue wrote.
+    menuOptionId: row.menu_option_id,
   }))
 
   usePlannerStore.setState({ tables, guests, halls, fixtures, hallZOrder: [] })
+
+  // The catalogue, so those uuids can be named. Read through the *staff*
+  // policies from 20260822000001 - this is the venue's own data - and
+  // unfiltered by `archived_at`, so a dish archived after a couple ordered it
+  // is still nameable on the kitchen report.
+  //
+  // The wedding's package id comes along so the report can group by course. The
+  // served set deliberately does not: what the kitchen cooks is what the guests
+  // actually hold, and a dish the couple unpicked has already been cleared off
+  // every guest by the trigger in 20260822000003.
+  useMenuStore.getState().clear()
+  useMenuStore.getState().setOrder(weddingRes.data.menu_package_id, [])
+  if (tenant) void loadMenuCatalogue(tenant.id, signal)
 
   // Cleared rather than left alone: these stores are module singletons, so a
   // staff member who also plans their own wedding in the same tab would
@@ -212,6 +234,11 @@ export const clearVenuePeek = () => {
     venueAccess: "none",
   })
   useRemindersStore.setState({ reminders: [] })
+  // Same reason as the reminders reset above, and the same reason this function
+  // exists at all: menu.store is a module singleton, so a staff member who also
+  // plans their own wedding in this tab must not be left holding a customer's
+  // menu - nor the catalogue keyed to it.
+  useMenuStore.getState().clear()
 }
 
 // Unassigned rows sort last in both keys. `~` is above every character a uuid

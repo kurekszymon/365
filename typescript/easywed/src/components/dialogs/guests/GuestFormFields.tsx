@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { CheckIcon, Info, PlusIcon } from "lucide-react"
 import { useShallow } from "zustand/react/shallow"
 import { GuestAgeGroupField } from "./GuestAgeGroupField"
+import { GuestMenuChoiceField } from "./GuestMenuChoiceField"
 import { DeletableTagPill } from "./DeletableTagPill"
 import type { Dietary } from "@/stores/planner.store"
 import { usePlannerStore } from "@/stores/planner.store"
@@ -38,12 +39,19 @@ export type GuestFormValues = {
 // Controlled name/dietary/age-group/note fields shared by the add and edit
 // guest dialogs so the two stay in sync. The parent owns the values and
 // persistence.
+//
+// `guestId` is the one thing the two dialogs do not share: the edit dialog has
+// a row to write against, the add dialog does not. It gates the dish field,
+// which is the only control here that persists itself rather than going through
+// `value`/`onChange`.
 export const GuestFormFields = ({
   value,
   onChange,
+  guestId,
 }: {
   value: GuestFormValues
   onChange: (value: GuestFormValues) => void
+  guestId?: string
 }) => {
   const { t } = useTranslation()
   const guests = usePlannerStore(useShallow((state) => state.guests))
@@ -217,6 +225,12 @@ export const GuestFormFields = ({
         value={value.ageGroup}
         onChange={(ageGroup) => onChange({ ...value, ageGroup })}
       />
+      {/* Only when editing an existing guest. The dish is deliberately not part
+          of `GuestFormValues` - it is written by its own mutation the moment it
+          is clicked, so a form submitted from a stale dialog cannot blank it -
+          and a guest being added has no id to write against yet. It renders
+          nothing unless the wedding's package has a per-guest course. */}
+      {guestId ? <GuestMenuChoiceField guestId={guestId} /> : null}
       <Field>
         <FieldLabel>{t("guests.add.note")}</FieldLabel>
         <FieldContent>

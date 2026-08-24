@@ -107,6 +107,7 @@ export type Database = {
           deleted_at: string | null
           dietary: string[]
           id: string
+          menu_option_id: string | null
           name: string
           note: string | null
           seat_id: string | null
@@ -120,6 +121,7 @@ export type Database = {
           deleted_at?: string | null
           dietary?: string[]
           id: string
+          menu_option_id?: string | null
           name?: string
           note?: string | null
           seat_id?: string | null
@@ -133,6 +135,7 @@ export type Database = {
           deleted_at?: string | null
           dietary?: string[]
           id?: string
+          menu_option_id?: string | null
           name?: string
           note?: string | null
           seat_id?: string | null
@@ -141,6 +144,13 @@ export type Database = {
           wedding_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "guests_menu_option_id_fkey"
+            columns: ["menu_option_id"]
+            isOneToOne: false
+            referencedRelation: "menu_options"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "guests_table_id_fkey"
             columns: ["table_id"]
@@ -206,6 +216,144 @@ export type Database = {
             columns: ["wedding_id"]
             isOneToOne: false
             referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_courses: {
+        Row: {
+          archived_at: string | null
+          choose_count: number
+          created_at: string
+          id: string
+          menu_package_id: string
+          name: string
+          per_guest_choice: boolean
+          position: number
+          serving_note: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          choose_count?: number
+          created_at?: string
+          id?: string
+          menu_package_id: string
+          name: string
+          per_guest_choice?: boolean
+          position?: number
+          serving_note?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          choose_count?: number
+          created_at?: string
+          id?: string
+          menu_package_id?: string
+          name?: string
+          per_guest_choice?: boolean
+          position?: number
+          serving_note?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_courses_tenant_id_menu_package_id_fkey"
+            columns: ["tenant_id", "menu_package_id"]
+            isOneToOne: false
+            referencedRelation: "menu_packages"
+            referencedColumns: ["tenant_id", "id"]
+          },
+        ]
+      }
+      menu_options: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          id: string
+          menu_course_id: string
+          name: string
+          note: string | null
+          position: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          id?: string
+          menu_course_id: string
+          name: string
+          note?: string | null
+          position?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          id?: string
+          menu_course_id?: string
+          name?: string
+          note?: string | null
+          position?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_options_tenant_id_menu_course_id_fkey"
+            columns: ["tenant_id", "menu_course_id"]
+            isOneToOne: false
+            referencedRelation: "menu_courses"
+            referencedColumns: ["tenant_id", "id"]
+          },
+        ]
+      }
+      menu_packages: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          position: number
+          price_per_person_minor: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          position?: number
+          price_per_person_minor?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          position?: number
+          price_per_person_minor?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_packages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -424,6 +572,7 @@ export type Database = {
         Row: {
           accent_color: string | null
           created_at: string
+          currency: string
           id: string
           locale: string
           logo_url: string | null
@@ -438,6 +587,7 @@ export type Database = {
         Insert: {
           accent_color?: string | null
           created_at?: string
+          currency?: string
           id?: string
           locale?: string
           logo_url?: string | null
@@ -452,6 +602,7 @@ export type Database = {
         Update: {
           accent_color?: string | null
           created_at?: string
+          currency?: string
           id?: string
           locale?: string
           logo_url?: string | null
@@ -538,11 +689,45 @@ export type Database = {
           },
         ]
       }
+      wedding_menu_selections: {
+        Row: {
+          created_at: string
+          menu_option_id: string
+          wedding_id: string
+        }
+        Insert: {
+          created_at?: string
+          menu_option_id: string
+          wedding_id: string
+        }
+        Update: {
+          created_at?: string
+          menu_option_id?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wedding_menu_selections_menu_option_id_fkey"
+            columns: ["menu_option_id"]
+            isOneToOne: false
+            referencedRelation: "menu_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wedding_menu_selections_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weddings: {
         Row: {
           created_at: string
           date: string | null
           id: string
+          menu_package_id: string | null
           name: string
           owner_id: string
           tenant_id: string | null
@@ -553,6 +738,7 @@ export type Database = {
           created_at?: string
           date?: string | null
           id?: string
+          menu_package_id?: string | null
           name?: string
           owner_id: string
           tenant_id?: string | null
@@ -563,6 +749,7 @@ export type Database = {
           created_at?: string
           date?: string | null
           id?: string
+          menu_package_id?: string | null
           name?: string
           owner_id?: string
           tenant_id?: string | null
@@ -570,6 +757,13 @@ export type Database = {
           venue_access?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "weddings_menu_package_id_fkey"
+            columns: ["menu_package_id"]
+            isOneToOne: false
+            referencedRelation: "menu_packages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "weddings_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -586,6 +780,7 @@ export type Database = {
           age_group: string | null
           dietary: string[] | null
           id: string | null
+          menu_option_id: string | null
           seat_id: string | null
           table_id: string | null
           wedding_id: string | null
@@ -594,6 +789,7 @@ export type Database = {
           age_group?: string | null
           dietary?: string[] | null
           id?: string | null
+          menu_option_id?: string | null
           seat_id?: string | null
           table_id?: string | null
           wedding_id?: string | null
@@ -602,11 +798,19 @@ export type Database = {
           age_group?: string | null
           dietary?: string[] | null
           id?: string | null
+          menu_option_id?: string | null
           seat_id?: string | null
           table_id?: string | null
           wedding_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "guests_menu_option_id_fkey"
+            columns: ["menu_option_id"]
+            isOneToOne: false
+            referencedRelation: "menu_options"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "guests_table_id_fkey"
             columns: ["table_id"]
@@ -636,8 +840,24 @@ export type Database = {
         Args: { p_slug: string; p_wedding_id: string }
         Returns: string
       }
+      menu_option_in_package: {
+        Args: {
+          _option: string
+          _package: string
+          _require_per_guest?: boolean
+        }
+        Returns: boolean
+      }
       my_tenant_id: { Args: never; Returns: string }
       my_wedding_role: { Args: { p_wedding_id: string }; Returns: string }
+      reorder_menu_courses: {
+        Args: { p_ids: string[]; p_menu_package_id: string }
+        Returns: undefined
+      }
+      reorder_menu_options: {
+        Args: { p_course_id: string; p_ids: string[] }
+        Returns: undefined
+      }
       replace_planner_layout: {
         Args: {
           p_fixtures: Json

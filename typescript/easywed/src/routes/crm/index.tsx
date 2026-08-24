@@ -8,8 +8,8 @@ import { useTenantStore } from "@/stores/tenant.store"
 /**
  * The CRM overview.
  *
- * Still thin: hall templates and the menu each arrive with the migration that
- * gives them a table, and each will add its own nav entry in crm.tsx. What is
+ * Still thin: hall templates arrive with the migration that gives them a table,
+ * and will add their own nav entry in crm.tsx the way /crm/menus did. What is
  * here now is the one list the venue role makes possible - the weddings whose
  * couples granted access - and it is what makes /crm/wedding/$id reachable
  * without anyone pasting an id.

@@ -19,6 +19,8 @@ import { usePrintStore } from "@/stores/print.store"
 import { useViewStore } from "@/stores/view.store"
 import { useMeasuresStore } from "@/stores/measures.store"
 import { groupGuestsByTable } from "@/lib/export/guests"
+import { tallyByOption } from "@/lib/menu"
+import { useMenuStore } from "@/stores/menu.store"
 import { dietaryLabel } from "@/lib/dietary"
 import { ageGroupLabel, childAgeGroup } from "@/lib/ageGroup"
 import { cn } from "@/lib/utils"
@@ -34,18 +36,26 @@ const SECTION_PADDING_PX = 48
 // styles.css. A portrait print job is left to the engine's shrink-to-fit.
 
 // The "table" column is never passed here (grouping carries it), so only the
-// other three fields are handled.
+// other four fields are handled.
+//
+// `dishName` is a parameter rather than a store read so this helper stays pure
+// - it is called once per guest per render, and the component builds the lookup
+// once. Same reason `t` is passed in.
 const renderGuestFields = (
   g: Guest,
   fields: Array<GuestField>,
-  t: TFunction
+  t: TFunction,
+  dishName: (id: string) => string | null
 ) => {
   const parts: Array<string> = []
   for (const f of fields) {
     if (f === "name") parts.push(g.name)
     else if (f === "dietary" && g.dietary.length > 0)
       parts.push(g.dietary.map((d) => dietaryLabel(t, d)).join(", "))
-    else if (f === "note" && g.note) parts.push(g.note)
+    else if (f === "dish" && g.menuOptionId) {
+      const dish = dishName(g.menuOptionId)
+      if (dish) parts.push(dish)
+    } else if (f === "note" && g.note) parts.push(g.note)
   }
   return parts
 }
@@ -97,6 +107,10 @@ export const PlannerPrintView = () => {
       halls: s.halls,
     }))
   )
+
+  // Empty for every wedding with no venue, so the dish column and the tally
+  // below both disappear on their own rather than needing to be gated.
+  const menuOptions = useMenuStore((s) => s.options)
 
   const hallsById = useMemo(() => new Map(halls.map((h) => [h.id, h])), [halls])
   // Union of the hall rects in world meters - the print frame in full mode.
@@ -242,6 +256,38 @@ export const PlannerPrintView = () => {
   }, [guests, includeSeats])
 
   const unassignedLabel = t("export.unassigned")
+
+  // Dish names for the `dish` field and the tally below.
+  //
+  // Unfiltered by `archived_at`: a dish the venue retired after this couple
+  // ordered it still has to print. Empty for every wedding with no venue, so
+  // both the field and the tally disappear on their own in guest mode rather
+  // than needing to be gated.
+  const dishNameById = useMemo(
+    () => new Map(menuOptions.map((option) => [option.id, option.name])),
+    [menuOptions]
+  )
+  const dishName = (id: string) => dishNameById.get(id) ?? null
+
+  // How many portions of each dish, and how many guests still have none. The
+  // number the kitchen actually cooks from, so it sits on the printed page
+  // rather than only on screen.
+  //
+  // Rendered only when the `dish` field is in the export - the couple's own
+  // print job does not carry it by default (DEFAULT_PRINT_FIELDS), and a tally
+  // of a column that is not shown would be a puzzle.
+  const dishTally = useMemo(
+    () =>
+      fields.includes("dish")
+        ? tallyByOption(
+            guests.map((g) => g.menuOptionId),
+            dishName
+          )
+        : [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [fields, guests, dishNameById]
+  )
+  const withDish = guests.filter((g) => g.menuOptionId).length
 
   const generatedStr = new Date().toLocaleDateString(i18n.language)
   const weddingDateStr = date ? date.toLocaleDateString(i18n.language) : null
@@ -410,6 +456,31 @@ export const PlannerPrintView = () => {
       <section className="p-6 print:break-before-page">
         <h2 className="mb-4 text-lg font-semibold">{t("guests")}</h2>
 
+        {/* The kitchen's number, above the list rather than after it: a chef
+            reading this wants the portion counts, and the per-guest rows are
+            the backing detail. Absent unless the dish column was asked for. */}
+        {dishTally.length > 0 && (
+          <div className="mb-5 break-inside-avoid rounded border border-gray-300 p-3">
+            <h3 className="mb-1 text-sm font-semibold">
+              {t("export.dish_tally")}
+            </h3>
+            <p className="mb-2 text-xs text-gray-500">
+              {t("export.dish_assigned", {
+                count: withDish,
+                total: guests.length,
+              })}
+            </p>
+            <ul className="grid grid-cols-2 gap-x-6 gap-y-0.5 text-xs">
+              {dishTally.map((dish) => (
+                <li key={dish.id} className="flex justify-between gap-2">
+                  <span>{dish.name}</span>
+                  <span className="font-semibold">{dish.count}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="columns-2 gap-8 [&>*]:mb-5">
           {groups.map(({ table, guests: tableGuests }) => (
             <div key={table.id} className="break-inside-avoid">
@@ -427,7 +498,7 @@ export const PlannerPrintView = () => {
               ) : (
                 <ol className="grid grid-cols-1 gap-y-1 text-xs">
                   {tableGuests.map((g, idx) => {
-                    const parts = renderGuestFields(g, fields, t)
+                    const parts = renderGuestFields(g, fields, t, dishName)
                     const age = ageSuffix(g, includeAgeGroups, t)
                     return (
                       <li key={g.id} className="flex gap-1">
@@ -458,7 +529,7 @@ export const PlannerPrintView = () => {
               </h3>
               <ol className="grid grid-cols-1 gap-y-1 text-xs">
                 {unassigned.map((g, idx) => {
-                  const parts = renderGuestFields(g, fields, t)
+                  const parts = renderGuestFields(g, fields, t, dishName)
                   const age = ageSuffix(g, includeAgeGroups, t)
                   return (
                     <li key={g.id} className="flex gap-1">

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { LOCAL_WEDDING_ID } from "@/lib/localWedding"
 import { DEFAULT_HALL, usePlannerStore } from "@/stores/planner.store"
 import { useGlobalStore } from "@/stores/global.store"
+import { useMenuStore } from "@/stores/menu.store"
 import { useRemindersStore } from "@/stores/reminders.store"
 
 // No requireAuth: this is the guest (no-login) planning route. State comes
@@ -46,8 +47,17 @@ function LocalWeddingLayout() {
       // A local wedding has no members table behind it - clearing this stops
       // the previous cloud wedding's avatar stack showing in guest mode.
       members: [],
+      // Nor a venue. Left over from a cloud wedding it would offer guest mode
+      // the whole venue surface - including the Menu tab, which `tabsFor` keys
+      // off exactly this being null.
+      venue: null,
+      venueAccess: "none",
     })
     useRemindersStore.setState({ reminders: [] })
+    // Not persisted, so there is nothing to rehydrate below - a guest wedding
+    // has no venue and therefore no menu, which is the whole reason
+    // menu.store is a plain `create`.
+    useMenuStore.getState().clear()
 
     void Promise.all([
       usePlannerStore.persist.rehydrate(),

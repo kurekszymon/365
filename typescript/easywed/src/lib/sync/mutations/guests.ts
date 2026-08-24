@@ -18,6 +18,7 @@ export const insertGuest = (guest: Guest): Promise<boolean> => {
       note: guest.note ?? null,
       table_id: guest.tableId,
       seat_id: guest.seatId ?? null,
+      menu_option_id: guest.menuOptionId ?? null,
     })
   )
 }
@@ -40,6 +41,7 @@ export const insertGuests = (guests: Array<Guest>): Promise<boolean> => {
         note: guest.note ?? null,
         table_id: guest.tableId,
         seat_id: guest.seatId ?? null,
+        menu_option_id: guest.menuOptionId ?? null,
       }))
     )
   )
@@ -57,8 +59,9 @@ export const softDeleteGuest = (id: string): Promise<boolean> =>
   )
 
 // Persists a guest's editable details (name, dietary, age group, note).
-// Seat/table assignment is handled separately by `updateGuestSeat`, so this
-// never touches table_id/seat_id.
+// Seat/table assignment is handled separately by `updateGuestSeat`, and the
+// per-guest dish by `updateGuestMenuOption`, so this touches neither
+// table_id/seat_id nor menu_option_id.
 export const updateGuestDetails = (
   guest: Pick<Guest, "id" | "name" | "dietary" | "ageGroup" | "note">
 ): Promise<boolean> =>
@@ -89,6 +92,30 @@ export const updateGuestSeat = (
     supabase
       .from("guests")
       .update({ table_id: tableId, seat_id: seatId })
+      .eq("id", guestId)
+  )
+
+/**
+ * Sets (or clears) one guest's dish.
+ *
+ * Its own mutation rather than a field folded into `updateGuestDetails`, for
+ * exactly the reason `updateGuestSeat` is separate: the guest edit dialog
+ * submits its whole form state, so folding this in would let a dialog opened
+ * before a dish was assigned - or one open on another device - overwrite that
+ * dish with a stale `null` the user never chose.
+ *
+ * `enforce_guest_menu_option` refuses anything that is not a dish of a
+ * per-guest course of this wedding's package, with 23514.
+ */
+export const updateGuestMenuOption = (
+  guestId: string,
+  optionId: string | null
+): Promise<boolean> =>
+  run(
+    "updateGuestMenuOption",
+    supabase
+      .from("guests")
+      .update({ menu_option_id: optionId })
       .eq("id", guestId)
   )
 

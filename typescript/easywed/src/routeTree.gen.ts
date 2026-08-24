@@ -35,6 +35,7 @@ import { Route as EnTermsRouteImport } from './routes/en_.terms'
 import { Route as EnPrivacyRouteImport } from './routes/en_.privacy'
 import { Route as EnChangelogRouteImport } from './routes/en_.changelog'
 import { Route as CrmRosterRouteImport } from './routes/crm/roster'
+import { Route as CrmMenusRouteImport } from './routes/crm/menus'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as WeddingLocalIndexRouteImport } from './routes/wedding.local/index'
 import { Route as WeddingIdIndexRouteImport } from './routes/wedding.$id/index'
@@ -173,6 +174,11 @@ const CrmRosterRoute = CrmRosterRouteImport.update({
   path: '/roster',
   getParentRoute: () => CrmRoute,
 } as any)
+const CrmMenusRoute = CrmMenusRouteImport.update({
+  id: '/menus',
+  path: '/menus',
+  getParentRoute: () => CrmRoute,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
@@ -224,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/venue': typeof VenueRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/crm/menus': typeof CrmMenusRoute
   '/crm/roster': typeof CrmRosterRoute
   '/en/changelog': typeof EnChangelogRoute
   '/en/privacy': typeof EnPrivacyRoute
@@ -258,6 +265,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/venue': typeof VenueRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/crm/menus': typeof CrmMenusRoute
   '/crm/roster': typeof CrmRosterRoute
   '/en/changelog': typeof EnChangelogRoute
   '/en/privacy': typeof EnPrivacyRoute
@@ -292,6 +300,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/venue': typeof VenueRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/crm/menus': typeof CrmMenusRoute
   '/crm/roster': typeof CrmRosterRoute
   '/en_/changelog': typeof EnChangelogRoute
   '/en_/privacy': typeof EnPrivacyRoute
@@ -329,6 +338,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/venue'
     | '/auth/callback'
+    | '/crm/menus'
     | '/crm/roster'
     | '/en/changelog'
     | '/en/privacy'
@@ -363,6 +373,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/venue'
     | '/auth/callback'
+    | '/crm/menus'
     | '/crm/roster'
     | '/en/changelog'
     | '/en/privacy'
@@ -396,6 +407,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/venue'
     | '/auth/callback'
+    | '/crm/menus'
     | '/crm/roster'
     | '/en_/changelog'
     | '/en_/privacy'
@@ -630,6 +642,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrmRosterRouteImport
       parentRoute: typeof CrmRoute
     }
+    '/crm/menus': {
+      id: '/crm/menus'
+      path: '/menus'
+      fullPath: '/crm/menus'
+      preLoaderRoute: typeof CrmMenusRouteImport
+      parentRoute: typeof CrmRoute
+    }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/auth/callback'
@@ -683,12 +702,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface CrmRouteChildren {
+  CrmMenusRoute: typeof CrmMenusRoute
   CrmRosterRoute: typeof CrmRosterRoute
   CrmIndexRoute: typeof CrmIndexRoute
   CrmWeddingIdRoute: typeof CrmWeddingIdRoute
 }
 
 const CrmRouteChildren: CrmRouteChildren = {
+  CrmMenusRoute: CrmMenusRoute,
   CrmRosterRoute: CrmRosterRoute,
   CrmIndexRoute: CrmIndexRoute,
   CrmWeddingIdRoute: CrmWeddingIdRoute,

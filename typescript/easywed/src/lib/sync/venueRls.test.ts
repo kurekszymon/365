@@ -34,6 +34,12 @@ const BAGATELKA = "50000000-0000-4000-8000-000000000001"
 const SOLO_USER = "10000000-0000-4000-8000-000000000004"
 const PASSWORD = "password123"
 
+// For the seat map's `menu_option_id`: what makes that column safe is that it
+// is a key into the venue's own catalogue rather than a label, so the shape is
+// the thing worth asserting.
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 const reachable = await probeLocalStack()
 
 const client = () =>
@@ -160,6 +166,33 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
         expect(Object.keys(row)).not.toContain("note")
         expect(row).not.toHaveProperty("name")
         expect(row).not.toHaveProperty("note")
+
+        // The per-guest dish, added by 20260822000003. A **uuid or null**, and
+        // that is the assertion: the column is a foreign key into the venue's
+        // own catalogue, so unlike `dietary` and `age_group` it is structurally
+        // incapable of carrying a name somebody typed. This fails the moment
+        // anyone "helpfully" changes the projection to join the dish label in.
+        expect(Object.keys(row)).toContain("menu_option_id")
+        expect(
+          row.menu_option_id === null || UUID_RE.test(row.menu_option_id)
+        ).toBe(true)
+
+        // The real upgrade over the four assertions above: they only forbid two
+        // names, so *any* third column could be added to this view silently.
+        // Pinning the whole set makes every future change to the projection a
+        // deliberate edit to this file - which is the only place the "there is
+        // nothing here to redact" argument is actually checked.
+        expect(new Set(Object.keys(row))).toEqual(
+          new Set([
+            "id",
+            "wedding_id",
+            "table_id",
+            "seat_id",
+            "dietary",
+            "age_group",
+            "menu_option_id",
+          ])
+        )
       }
     })
   })
@@ -253,8 +286,12 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
         venue.from("weddings").select("id").eq("id", UNLINKED_WEDDING),
         venue.from("halls").select("id").eq("wedding_id", UNLINKED_WEDDING),
         venue
+          // `menu_option_id` named explicitly, here and in the two blocks
+          // below: the per-guest dish is the newest thing the seat map carries,
+          // so every "reaches nothing" assertion has to be about it too rather
+          // than only about the columns that predate it.
           .from("wedding_seatmap")
-          .select("id")
+          .select("id, menu_option_id")
           .eq("wedding_id", UNLINKED_WEDDING),
       ])
 
@@ -277,7 +314,7 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
           .eq("wedding_id", GRANTED_WEDDING),
         otherVenue
           .from("wedding_seatmap")
-          .select("id")
+          .select("id, menu_option_id")
           .eq("wedding_id", GRANTED_WEDDING),
       ])
 
@@ -305,7 +342,7 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
           venue.from("fixtures").select("id").eq("wedding_id", GRANTED_WEDDING),
           venue
             .from("wedding_seatmap")
-            .select("id")
+            .select("id, menu_option_id")
             .eq("wedding_id", GRANTED_WEDDING),
         ])
 
