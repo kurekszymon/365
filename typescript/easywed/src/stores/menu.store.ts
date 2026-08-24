@@ -8,6 +8,7 @@ import {
   setWeddingMenuPackage,
 } from "@/lib/sync/mutations"
 import { track } from "@/lib/analytics/track"
+import { usePlannerStore } from "@/stores/planner.store"
 
 /**
  * The venue's catalogue, and what this wedding has ordered from it.
@@ -73,6 +74,32 @@ const initial: State = {
   status: "idle",
 }
 
+/**
+ * Mirrors the two triggers that clear `guests.menu_option_id`.
+ *
+ * Local only - it writes no mutation, because the database has already done
+ * this by the time the write it accompanies returns. It exists so the guest
+ * list, the dish filter chips, the printed report and the CSV export stop
+ * naming a dish the couple just took away, instead of waiting for a reload.
+ *
+ * Reaches into `planner.store` rather than the reverse: the menu is what
+ * changed, the guests are what it changed. `planner.store` does not import this
+ * module, so there is no cycle to create.
+ */
+const clearGuestDishes = (optionId?: string) => {
+  const { guests } = usePlannerStore.getState()
+  if (!guests.some((g) => g.menuOptionId)) return
+
+  usePlannerStore.setState({
+    guests: guests.map((guest) =>
+      guest.menuOptionId &&
+      (optionId === undefined || guest.menuOptionId === optionId)
+        ? { ...guest, menuOptionId: null }
+        : guest
+    ),
+  })
+}
+
 export const useMenuStore = create<State & Action>((set, get) => ({
   ...initial,
 
@@ -92,6 +119,12 @@ export const useMenuStore = create<State & Action>((set, get) => ({
    * wedding. Not mirroring it here would leave the picker showing dishes that
    * no longer exist server-side until the next load.
    *
+   * The same trigger also nulls every `guests.menu_option_id`, so the guests in
+   * `planner.store` are cleared too. That half is easy to forget and shows up
+   * everywhere at once - the guest list badge, the dish filter chips, the
+   * printed report and the CSV export would all keep naming a dish the database
+   * has already taken away, and only a reload would correct them.
+   *
    * The confirm belongs to the caller, not here - this is a data-losing action
    * and the UI names what it will clear before calling.
    */
@@ -100,6 +133,7 @@ export const useMenuStore = create<State & Action>((set, get) => ({
     if (state.packageId === packageId) return
 
     set({ packageId, selectedOptionIds: [] })
+    clearGuestDishes()
 
     const courses = state.courses.filter(
       (course) => course.menu_package_id === packageId && isLive(course)
@@ -130,6 +164,12 @@ export const useMenuStore = create<State & Action>((set, get) => ({
     set({ selectedOptionIds: next })
 
     if (picked) {
+      // Unpicking releases every guest who was assigned this dish, because the
+      // `menu_selections_deleted_clear_guests` trigger does exactly that
+      // server-side. Repair rather than refusal is the database's choice (see
+      // 20260822000003), and the client has to show the repair or it goes on
+      // naming a dish nobody is serving.
+      clearGuestDishes(optionId)
       void deleteMenuSelection(optionId)
       return
     }

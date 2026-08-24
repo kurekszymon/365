@@ -19,7 +19,7 @@ import type { TagTone } from "@/lib/tagTone"
 import { getInitials } from "@/lib/memberIdentity"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useMenuStore } from "@/stores/menu.store"
-import { menuOptionTone } from "@/lib/menu"
+import { menuOptionTone, tallyByOption } from "@/lib/menu"
 import { useDialogStore } from "@/stores/dialog.store"
 import { useEntityListStore } from "@/stores/entityList.store"
 import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
@@ -199,22 +199,18 @@ export const GuestListContent = () => {
   )
 
   // Only dishes somebody is actually having, biggest group first - the same
-  // rule the kitchen tally sorts by, so the two read the same way. Absent
-  // entirely for a buffet menu, an unlinked wedding and all of guest mode,
-  // where nothing carries a dish.
-  const dishCounts = useMemo(() => {
-    const counts = new Map<string, number>()
-    for (const guest of guests) {
-      if (!guest.menuOptionId) continue
-      counts.set(guest.menuOptionId, (counts.get(guest.menuOptionId) ?? 0) + 1)
-    }
-    return [...counts.entries()]
-      .map(([id, count]) => ({ id, name: dishNameById.get(id) ?? null, count }))
-      .filter((row): row is { id: string; name: string; count: number } =>
-        Boolean(row.name)
-      )
-      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
-  }, [guests, dishNameById])
+  // helper the kitchen tally and the printed report use, so the count-then-name
+  // sort and the drop-unresolved-ids rule live in exactly one tested place.
+  // Empty for a buffet menu, an unlinked wedding and all of guest mode, where
+  // nothing carries a dish.
+  const dishCounts = useMemo(
+    () =>
+      tallyByOption(
+        guests.map((g) => g.menuOptionId),
+        (id) => dishNameById.get(id) ?? null
+      ),
+    [guests, dishNameById]
+  )
 
   // Fold the name, each dietary preference - both the raw tag ("vegan") and
   // its displayed label ("Wegańska") - the age bracket and the assigned dish

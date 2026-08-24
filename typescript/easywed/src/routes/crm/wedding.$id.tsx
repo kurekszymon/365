@@ -104,7 +104,14 @@ function CrmWeddingPeek() {
               // "dish" alongside "dietary": the kitchen report is the one
               // document that wants both, and DEFAULT_PRINT_FIELDS is left
               // alone so the couple's own print job is unchanged.
-              triggerPdfExport(["dietary", "dish"], {
+              //
+              // "name" is the seat's pseudonym here - loadWeddingForVenue
+              // labels every row `venue.anonymous_guest` at the load boundary -
+              // so the printed line reads "Gosc 12 - wegetarianska - Kaczka
+              // pieczona". Without it the kitchen gets a diet and a dish with
+              // no way to tell which seat they belong to, since the list's
+              // numbering restarts under every table heading.
+              triggerPdfExport(["name", "dietary", "dish"], {
                 sort: "seat",
                 includeAgeGroups: true,
                 includeSeats: true,
