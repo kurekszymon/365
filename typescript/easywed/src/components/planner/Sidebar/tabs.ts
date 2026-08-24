@@ -10,10 +10,7 @@ import { useShallow } from "zustand/react/shallow"
 import type { EntityListTab } from "@/stores/entityList.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useRemindersStore } from "@/stores/reminders.store"
-import {
-  selectIncompleteCourseCount,
-  useMenuStore,
-} from "@/stores/menu.store"
+import { selectIncompleteCourseCount, useMenuStore } from "@/stores/menu.store"
 
 // Single source for tab icons, shared by the desktop `SidebarRail` and the
 // mobile `MobileTabBar` (which uses the entity-list subset) so the two

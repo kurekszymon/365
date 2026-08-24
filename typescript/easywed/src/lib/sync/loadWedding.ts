@@ -67,7 +67,9 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
 
     supabase
       .from("guests")
-      .select("id, name, dietary, age_group, note, table_id, seat_id")
+      .select(
+        "id, name, dietary, age_group, note, table_id, seat_id, menu_option_id"
+      )
       .eq("wedding_id", id)
       .is("deleted_at", null)
       .abortSignal(signal),
@@ -263,6 +265,7 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     tableId: g.table_id,
     seatId: g.seat_id,
     note: g.note ?? undefined,
+    menuOptionId: g.menu_option_id,
   }))
 
   const fixtures = fixturesRes.data.map((f) => toFixture(f, adoptOrphan))

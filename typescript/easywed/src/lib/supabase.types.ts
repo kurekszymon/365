@@ -107,6 +107,7 @@ export type Database = {
           deleted_at: string | null
           dietary: string[]
           id: string
+          menu_option_id: string | null
           name: string
           note: string | null
           seat_id: string | null
@@ -120,6 +121,7 @@ export type Database = {
           deleted_at?: string | null
           dietary?: string[]
           id: string
+          menu_option_id?: string | null
           name?: string
           note?: string | null
           seat_id?: string | null
@@ -133,6 +135,7 @@ export type Database = {
           deleted_at?: string | null
           dietary?: string[]
           id?: string
+          menu_option_id?: string | null
           name?: string
           note?: string | null
           seat_id?: string | null
@@ -141,6 +144,13 @@ export type Database = {
           wedding_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "guests_menu_option_id_fkey"
+            columns: ["menu_option_id"]
+            isOneToOne: false
+            referencedRelation: "menu_options"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "guests_table_id_fkey"
             columns: ["table_id"]
@@ -770,6 +780,7 @@ export type Database = {
           age_group: string | null
           dietary: string[] | null
           id: string | null
+          menu_option_id: string | null
           seat_id: string | null
           table_id: string | null
           wedding_id: string | null
@@ -778,6 +789,7 @@ export type Database = {
           age_group?: string | null
           dietary?: string[] | null
           id?: string | null
+          menu_option_id?: string | null
           seat_id?: string | null
           table_id?: string | null
           wedding_id?: string | null
@@ -786,11 +798,19 @@ export type Database = {
           age_group?: string | null
           dietary?: string[] | null
           id?: string | null
+          menu_option_id?: string | null
           seat_id?: string | null
           table_id?: string | null
           wedding_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "guests_menu_option_id_fkey"
+            columns: ["menu_option_id"]
+            isOneToOne: false
+            referencedRelation: "menu_options"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "guests_table_id_fkey"
             columns: ["table_id"]

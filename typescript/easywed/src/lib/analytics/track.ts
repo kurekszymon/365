@@ -164,6 +164,16 @@ export type AnalyticsEvents = {
    * worth seeing rather than an anomaly to clamp.
    */
   menu_selection_completed: { courses: number; options_picked: number }
+  /**
+   * One guest was assigned one dish from a per-guest course.
+   *
+   * `source` is a literal union because it answers a design question - whether
+   * couples assign dishes one guest at a time from the guest list, or work
+   * through the Menu tab - and because it is the only string this event could
+   * plausibly want. The dish itself is a uuid of the venue's catalogue and the
+   * guest is a third party; neither belongs in an event payload.
+   */
+  menu_guest_dish_assigned: { source: "menu_tab" | "guest_list" }
 }
 
 // Events declared as `undefined` are called bare - `track("invite_claimed")`.

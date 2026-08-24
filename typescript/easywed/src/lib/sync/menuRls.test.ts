@@ -45,6 +45,9 @@ const BUFFET_PACKAGE = "60000000-0000-4000-8000-000000000002"
 // MENU I's first soup: a real dish of this same venue, in a package this
 // wedding did not order.
 const MENU_I_SOUP = "62000000-0000-4000-8000-000000010101"
+// MENU SERWOWANE's first starter: a dish of the package this wedding *did*
+// order, on a course that is not per-guest. The sharper negative of the two.
+const SERVED_STARTER = "62000000-0000-4000-8000-000000040101"
 
 // Three of the six plated mains. A/B/C are what seed.sql picks; D and E are the
 // unpicked ones, so a test can add and remove one without disturbing the
@@ -126,6 +129,50 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
         menu_option_id,
       }))
     )
+  }
+
+  /**
+   * The guests' dishes, for the tests that destroy them.
+   *
+   * Needed from 20260822000003 onwards and not before: switching package used
+   * to clear only the selections, and now clears `guests.menu_option_id` too.
+   * Snapshotting beats recomputing - the seed assigns dishes round-robin over
+   * the seated guests, and duplicating that rule here would be a second copy to
+   * keep in step for no benefit.
+   */
+  const guestDishes = async (): Promise<
+    Array<{ id: string; menu_option_id: string | null }>
+  > => {
+    const { data } = await couple
+      .from("guests")
+      .select("id, menu_option_id")
+      .eq("wedding_id", COUPLE_WEDDING)
+      .not("menu_option_id", "is", null)
+    return data!
+  }
+
+  /**
+   * Puts them back, one statement per distinct dish.
+   *
+   * Order matters as much as it does in `restoreSeededMenu`: the package has to
+   * be back first, or `enforce_guest_menu_option` refuses every one of these
+   * with 23514 and the restore silently does nothing.
+   */
+  const restoreGuestDishes = async (
+    rows: Array<{ id: string; menu_option_id: string | null }>
+  ) => {
+    const byDish = new Map<string, Array<string>>()
+    for (const row of rows) {
+      if (!row.menu_option_id) continue
+      byDish.set(row.menu_option_id, [
+        ...(byDish.get(row.menu_option_id) ?? []),
+        row.id,
+      ])
+    }
+
+    for (const [menu_option_id, ids] of byDish) {
+      await couple.from("guests").update({ menu_option_id }).in("id", ids)
+    }
   }
 
   beforeAll(async () => {
@@ -698,6 +745,11 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
      * switch can arrive from another device.
      */
     it("wipes the selections when the package changes", async () => {
+      // Captured before the switch, because from 20260822000003 the same
+      // trigger also clears every guest's dish - which is the point, and which
+      // makes this the one test that has to restore three things.
+      const dishes = await guestDishes()
+
       try {
         const { error } = await couple
           .from("weddings")
@@ -710,8 +762,15 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
           .select("menu_option_id")
           .eq("wedding_id", COUPLE_WEDDING)
         expect(data).toEqual([])
+
+        // And the guests with it. Leaving them holding a dish from a package
+        // the wedding no longer orders is the exact state the trigger exists
+        // to prevent - it would print on the kitchen report as food nobody
+        // agreed to cook.
+        expect(await guestDishes()).toEqual([])
       } finally {
         await restoreSeededMenu()
+        await restoreGuestDishes(dishes)
       }
     })
 
@@ -748,6 +807,146 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
         .eq("wedding_id", SOLO_WEDDING)
 
       expect(data).toEqual([])
+    })
+  })
+
+  describe("the per-guest dish", () => {
+    /** One seated guest of the granted wedding, and their dish. */
+    const someGuest = async (): Promise<{
+      id: string
+      menu_option_id: string | null
+    }> => {
+      const { data } = await couple
+        .from("guests")
+        .select("id, menu_option_id")
+        .eq("wedding_id", COUPLE_WEDDING)
+        .not("menu_option_id", "is", null)
+        .limit(1)
+        .single()
+      return data!
+    }
+
+    it("assigns a dish from the plated course", async () => {
+      const guest = await someGuest()
+
+      try {
+        const { error } = await couple
+          .from("guests")
+          .update({ menu_option_id: PLATED_MAIN_A })
+          .eq("id", guest.id)
+
+        expect(error).toBeNull()
+      } finally {
+        await couple
+          .from("guests")
+          .update({ menu_option_id: guest.menu_option_id })
+          .eq("id", guest.id)
+      }
+    })
+
+    /**
+     * The `per_guest_choice` half of `enforce_guest_menu_option`, and the half
+     * that would be silently wrong if it were dropped.
+     *
+     * MENU SERWOWANE's Przystawka is a dish of the very package this wedding
+     * ordered - the package half of the check passes - but its course is a
+     * buffet course, where nobody is plating anything per guest. Assigned to a
+     * guest it would tally as a portion the kitchen has to plate, and it would
+     * look right on the report.
+     */
+    it("refuses a dish from a course that is not per-guest", async () => {
+      const guest = await someGuest()
+
+      const { error } = await couple
+        .from("guests")
+        .update({ menu_option_id: SERVED_STARTER })
+        .eq("id", guest.id)
+
+      expect(error?.code).toBe("23514")
+    })
+
+    it("refuses a dish from another package entirely", async () => {
+      const guest = await someGuest()
+
+      const { error } = await couple
+        .from("guests")
+        .update({ menu_option_id: MENU_I_SOUP })
+        .eq("id", guest.id)
+
+      expect(error?.code).toBe("23514")
+    })
+
+    /**
+     * Repair, not refusal. Unpicking a dish four guests already hold releases
+     * those guests rather than rejecting the unpick with a message about people
+     * the couple would then have to hunt down - the same direction as soft
+     * deletes and orphan adoption.
+     */
+    it("clears the guests holding a dish when it is unpicked", async () => {
+      const { data: before } = await couple
+        .from("guests")
+        .select("id")
+        .eq("wedding_id", COUPLE_WEDDING)
+        .eq("menu_option_id", PLATED_MAIN_A)
+
+      expect(before!.length).toBeGreaterThan(0)
+
+      try {
+        const { error } = await couple
+          .from("wedding_menu_selections")
+          .delete()
+          .eq("wedding_id", COUPLE_WEDDING)
+          .eq("menu_option_id", PLATED_MAIN_A)
+        expect(error).toBeNull()
+
+        const { data: after } = await couple
+          .from("guests")
+          .select("id")
+          .eq("wedding_id", COUPLE_WEDDING)
+          .eq("menu_option_id", PLATED_MAIN_A)
+
+        expect(after).toEqual([])
+      } finally {
+        await couple.from("wedding_menu_selections").insert({
+          wedding_id: COUPLE_WEDDING,
+          menu_option_id: PLATED_MAIN_A,
+        })
+        await couple
+          .from("guests")
+          .update({ menu_option_id: PLATED_MAIN_A })
+          .in(
+            "id",
+            before!.map((row) => row.id)
+          )
+      }
+    })
+
+    /**
+     * Re-asserted here as well as in venueRls.test.ts, deliberately.
+     *
+     * This is the migration that gives the venue a new per-guest column, so a
+     * reviewer of *this* feature should be able to see, in *this* file, that it
+     * bought them nothing on `guests` itself. What the venue reads is
+     * `wedding_seatmap`, whose projection has no name and no note to leak.
+     */
+    it("still shows the venue zero guest rows", async () => {
+      const { data, error } = await venue
+        .from("guests")
+        .select("*")
+        .eq("wedding_id", COUPLE_WEDDING)
+
+      expect(error).toBeNull()
+      expect(data).toEqual([])
+    })
+
+    it("shows the venue the dish through the seat map instead", async () => {
+      const { data } = await venue
+        .from("wedding_seatmap")
+        .select("menu_option_id")
+        .eq("wedding_id", COUPLE_WEDDING)
+        .not("menu_option_id", "is", null)
+
+      expect(data!.length).toBeGreaterThan(0)
     })
   })
 

@@ -23,6 +23,7 @@ import {
   updateFixturePos,
   updateFixtureRow,
   updateGuestDetails,
+  updateGuestMenuOption,
   updateGuestSeat,
   updateHallPos,
   updateHallRow,
@@ -180,6 +181,12 @@ export interface Guest {
   // seat in order. Always null when `tableId` is null.
   seatId?: string | null
   note?: string
+  // Which dish this guest is having, for a course the venue marked
+  // `per_guest_choice`. A `menu_options` uuid, and deliberately not a label:
+  // it is the only per-guest field a linked venue reads that cannot carry a
+  // name somebody typed. Undefined/null means "not chosen"; it is null for
+  // every wedding with no venue, which is all of guest mode.
+  menuOptionId?: string | null
 }
 
 // Stable, index-derived seat id. Default (never-dragged) seats use these so a
@@ -231,6 +238,16 @@ type Action = {
     id: string,
     details: Pick<Guest, "name" | "dietary" | "ageGroup" | "note">
   ) => void
+  /**
+   * Sets (or clears) one guest's dish.
+   *
+   * Separate from `updateGuest` rather than one more field on its `details`,
+   * mirroring the split `updateGuestSeat` already has: the guest edit dialog
+   * submits its whole form state, so folding the dish in would let a dialog
+   * that was opened before the dish was chosen - or one open on another device
+   * - overwrite it with a stale null.
+   */
+  setGuestMenuOption: (id: string, optionId: string | null) => void
   deleteGuest: (id: string) => void
   addHall: (hall: Omit<Hall, "id" | "position">, position?: Position) => string
   updateHall: (id: string, patch: Partial<Omit<Hall, "id">>) => void
@@ -674,6 +691,14 @@ const createPlannerStore = (
       guests: state.guests.map((g) => (g.id === id ? { ...g, ...details } : g)),
     }))
     void updateGuestDetails({ id, ...details })
+  },
+  setGuestMenuOption: (id, optionId) => {
+    set((state) => ({
+      guests: state.guests.map((g) =>
+        g.id === id ? { ...g, menuOptionId: optionId } : g
+      ),
+    }))
+    void updateGuestMenuOption(id, optionId)
   },
   deleteGuest: (id) => {
     set((state) => ({

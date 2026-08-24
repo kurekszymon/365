@@ -70,6 +70,11 @@ export const VenueGrantStep = ({
         items={[
           t("venue.grant.shared_1"),
           t("venue.grant.shared_2"),
+          // The per-guest dish, added with 20260822000003. This list is not
+          // decoration: privacy.venue.optin promises in writing that "the app
+          // shows you exactly this list", so a column the venue reads and this
+          // list does not name makes a published document false.
+          t("venue.grant.shared_4"),
           t("venue.grant.shared_3"),
         ]}
       />

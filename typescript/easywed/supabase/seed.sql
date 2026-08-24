@@ -498,6 +498,38 @@ insert into public.guests (id, wedding_id, table_id, name, seat_id, dietary, age
   (gen_random_uuid(), '20000000-0000-4000-8000-000000000001', null, 'Beata Cieslak',     null, '{gluten-free}', null,  null),
   (gen_random_uuid(), '20000000-0000-4000-8000-000000000001', null, 'Waldemar Cieslak',  null, '{}',            null,  null);
 
+-- Per-guest dishes, for the three plated mains the couple picked above.
+--
+-- Assigned by position rather than by name so the fixture survives an edit to
+-- the guest list: seated guests are dealt the three mains round-robin, and the
+-- last few are deliberately left unassigned so "N z M gosci ma przypisane
+-- danie" has a real fraction to show and the kitchen tally has a remainder.
+--
+-- Only guests of *this* wedding, and only from the served set - the
+-- guests_menu_option_scope trigger holds this file to the same rule as a
+-- client, since it is a data-integrity invariant rather than a
+-- client-writability one.
+with seated as (
+  select g.id, row_number() over (order by g.name) as n
+  from public.guests g
+  where g.wedding_id = '20000000-0000-4000-8000-000000000001'
+    and g.table_id is not null
+),
+dish as (
+  select * from (values
+    (0, '62000000-0000-4000-8000-000000040301'::uuid),
+    (1, '62000000-0000-4000-8000-000000040302'::uuid),
+    (2, '62000000-0000-4000-8000-000000040303'::uuid)
+  ) as t(slot, option_id)
+)
+update public.guests g
+set menu_option_id = dish.option_id
+from seated
+join dish on dish.slot = seated.n % 3
+where g.id = seated.id
+  -- Four seated guests left without a dish, on purpose.
+  and seated.n <= (select count(*) - 4 from seated);
+
 -- Guests - "Tomasz & Kasia"
 insert into public.guests (id, wedding_id, table_id, name, seat_id, dietary, age_group, note) values
   (gen_random_uuid(), '20000000-0000-4000-8000-000000000002', '40000000-0000-4000-8000-000000000009', 'Tomasz Zielinski', 'seat-0', '{}',           null,  'Pan mlody'),

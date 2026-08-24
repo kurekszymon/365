@@ -12,7 +12,12 @@ import { create } from "zustand"
 // That filtering lives in `tabsFor` (SidebarRail) and `visibleTabs`
 // (MobileTabBar), not here - this type is the vocabulary, not the policy.
 export type EntityListTab =
-  "guests" | "tables" | "fixtures" | "reminders" | "menu" | "ai_chat"
+  | "guests"
+  | "tables"
+  | "fixtures"
+  | "reminders"
+  | "menu"
+  | "ai_chat"
 
 // The subset the mobile bottom bar offers.
 export type MobileListTab = Exclude<EntityListTab, "ai_chat">
