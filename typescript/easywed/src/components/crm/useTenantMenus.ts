@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 
 import type { MenuCourse, MenuOption, MenuPackage } from "@/lib/menu"
+import { byPosition } from "@/lib/menu"
 import { supabase } from "@/lib/supabase"
 import { track } from "@/lib/analytics/track"
 import i18n from "@/i18n"
@@ -12,6 +13,32 @@ type MenuTable = "menu_packages" | "menu_courses" | "menu_options"
 export type CrmMenuPackage = MenuPackage & { created_at: string }
 export type CrmMenuCourse = MenuCourse & { created_at: string }
 export type CrmMenuOption = MenuOption & { created_at: string }
+
+/**
+ * Applies a persisted order to the local rows.
+ *
+ * Two halves, and the second is the one that is easy to leave out: the
+ * positions are renumbered 1..n to match what `with ordinality` wrote
+ * server-side, **and the array is re-sorted**. Every consumer renders in array
+ * order - `CrmMenuPackageEditor` does `menus.courses.filter(...)`, and a filter
+ * preserves the order it was given - so patching `position` alone persists the
+ * reorder and shows nothing. Staff click ▲, the row does not move, they click
+ * again, and the list ends up two places from where it looked.
+ *
+ * Sorts with `byPosition`, the same comparator the reads order by, so the local
+ * order after a move is identical to the order the next load produces rather
+ * than merely similar.
+ */
+const applyOrder = <T extends { id: string; position: number }>(
+  list: Array<T>,
+  ids: Array<string>
+): Array<T> =>
+  list
+    .map((row) => {
+      const at = ids.indexOf(row.id)
+      return at === -1 ? row : { ...row, position: at + 1 }
+    })
+    .sort(byPosition)
 
 const PACKAGE_COLUMNS =
   "id, name, description, price_per_person_minor, position, archived_at, created_at"
@@ -284,7 +311,11 @@ export function useTenantMenus(tenantId: string | undefined) {
       // state has to do the same or the screen keeps rendering orphans.
       setPackages((list) => list.filter((row) => row.id !== id))
       setCourses((list) => list.filter((row) => row.menu_package_id !== id))
-      setOptions((list) => list.filter((row) => !courseIds.has(row.id)))
+      // `menu_course_id`, not `id` - an option is dropped because of the course
+      // it belongs to, not because it happens to share an id with one.
+      setOptions((list) =>
+        list.filter((row) => !courseIds.has(row.menu_course_id))
+      )
 
       if (!(await writeDelete("menu_packages", id))) {
         setPackages(previous.packages)
@@ -487,14 +518,7 @@ export function useTenantMenus(tenantId: string | undefined) {
         return
       }
 
-      // `with ordinality` numbers the persisted rows 1..n, so the local state
-      // is set to the same thing rather than to a swap of two old values.
-      setCourses((list) =>
-        list.map((row) => {
-          const at = ids.indexOf(row.id)
-          return at === -1 ? row : { ...row, position: at + 1 }
-        })
-      )
+      setCourses((list) => applyOrder(list, ids))
     },
     [courses, fail]
   )
@@ -518,12 +542,7 @@ export function useTenantMenus(tenantId: string | undefined) {
         return
       }
 
-      setOptions((list) =>
-        list.map((row) => {
-          const at = ids.indexOf(row.id)
-          return at === -1 ? row : { ...row, position: at + 1 }
-        })
-      )
+      setOptions((list) => applyOrder(list, ids))
     },
     [options, fail]
   )

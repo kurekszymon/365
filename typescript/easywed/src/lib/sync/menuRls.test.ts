@@ -679,6 +679,43 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
       expect(remove.data).toEqual([{ menu_option_id: PLATED_MAIN_D }])
     })
 
+    /**
+     * The write shape `insertMenuSelection` uses, and why it is an upsert.
+     *
+     * `(wedding_id, menu_option_id)` is the primary key, so a plain insert of a
+     * dish already picked raises 23505 - which `run()` turns into a
+     * "could not save" toast for a write the database is already consistent
+     * with. Two people editing the menu at once hit that, and so does a single
+     * client doing pick → unpick → pick, since the writes are fire-and-forget
+     * with no ordering guarantee.
+     */
+    it("absorbs a duplicate pick instead of failing it", async () => {
+      const duplicate = await couple
+        .from("wedding_menu_selections")
+        .upsert(
+          { wedding_id: COUPLE_WEDDING, menu_option_id: PLATED_MAIN_A },
+          { ignoreDuplicates: true }
+        )
+      expect(duplicate.error).toBeNull()
+
+      // Still one row, not two - the primary key saw to that either way; what
+      // changed is that the caller is not told it failed.
+      const { data } = await couple
+        .from("wedding_menu_selections")
+        .select("menu_option_id")
+        .eq("wedding_id", COUPLE_WEDDING)
+        .eq("menu_option_id", PLATED_MAIN_A)
+
+      expect(data).toEqual([{ menu_option_id: PLATED_MAIN_A }])
+
+      // The contrast, so the reason for the upsert is visible here rather than
+      // only in a comment.
+      const plain = await couple
+        .from("wedding_menu_selections")
+        .insert({ wedding_id: COUPLE_WEDDING, menu_option_id: PLATED_MAIN_A })
+      expect(plain.error?.code).toBe("23505")
+    })
+
     it("lets an editor write, and a viewer neither", async () => {
       const asEditor = await editor
         .from("wedding_menu_selections")

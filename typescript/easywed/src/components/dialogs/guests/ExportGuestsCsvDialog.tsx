@@ -16,7 +16,7 @@ import {
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 import { Button } from "@/components/ui/button"
 import { useDialogStore } from "@/stores/dialog.store"
-import { useMenuStore } from "@/stores/menu.store"
+import { liveCourses, useMenuStore } from "@/stores/menu.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { track } from "@/lib/analytics/track"
 import {
@@ -48,13 +48,16 @@ export const ExportGuestsCsvDialog = () => {
     )
   }
 
-  const hasDishes = useMenuStore((s) => s.options.length > 0)
+  // "has a per-guest course", not "the venue has any dish at all": a couple
+  // on a buffet-only package can still see the whole catalogue in the store,
+  // so the looser check offers a Dish checkbox that could only ever export an
+  // empty column. Same predicate GuestMenuChoiceField gates on.
+  const hasDishes = useMenuStore((s) =>
+    liveCourses(s).some((course) => course.per_guest_choice)
+  )
 
   const tableDisabled = formatMode === "grouped"
   const orderedSelected = GUEST_FIELDS.filter((f) => selected.includes(f))
-  // The dish column only exists for a wedding whose venue has a menu. Offering
-  // it in guest mode, or for an unlinked wedding, would be a checkbox that can
-  // only ever export an empty column.
   const fieldChoices = GUEST_FIELDS.filter((f) => f !== "dish" || hasDishes)
   const hasExportableColumn = effectiveFields(selected, formatMode).length > 0
 

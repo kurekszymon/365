@@ -46,8 +46,16 @@ export const setWeddingMenuPackage = (
 /**
  * Add one dish to the served set.
  *
- * Idempotent by primary key: picking a dish twice is one row either way, so a
- * double click cannot produce a duplicate to clean up later.
+ * `upsert` with `ignoreDuplicates`, not a plain `insert`, and the difference is
+ * a toast the user should never see. `(wedding_id, menu_option_id)` is the
+ * primary key, so a second pick of the same dish is a `23505` - which `run()`
+ * turns into a "could not save" toast for a write the database is already
+ * consistent with. That is reachable two ways: two people editing the menu at
+ * once, and a single client doing pick → unpick → pick, since all three writes
+ * are fire-and-forget with no ordering guarantee between them.
+ *
+ * Ignoring the duplicate makes the operation genuinely idempotent, which is
+ * what the optimistic store already assumes it is.
  */
 export const insertMenuSelection = (optionId: string): Promise<boolean> => {
   const weddingId = getWeddingId()
@@ -56,7 +64,10 @@ export const insertMenuSelection = (optionId: string): Promise<boolean> => {
     "insertMenuSelection",
     supabase
       .from("wedding_menu_selections")
-      .insert({ wedding_id: weddingId, menu_option_id: optionId })
+      .upsert(
+        { wedding_id: weddingId, menu_option_id: optionId },
+        { ignoreDuplicates: true }
+      )
   )
 }
 
