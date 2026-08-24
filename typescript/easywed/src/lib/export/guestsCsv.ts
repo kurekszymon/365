@@ -2,6 +2,7 @@ import type { TFunction } from "i18next"
 import type { Guest } from "@/stores/planner.store"
 import type { GuestSort } from "@/lib/export/guests"
 import { useGlobalStore } from "@/stores/global.store"
+import { useMenuStore } from "@/stores/menu.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import {
   DEFAULT_GUEST_SORT,
@@ -10,7 +11,24 @@ import {
 } from "@/lib/export/guests"
 import { downloadBlob } from "@/lib/export/downloadBlob"
 
-export const GUEST_FIELDS = ["name", "table", "dietary", "note"] as const
+/**
+ * The columns an export may carry, in emitted order.
+ *
+ * `dish` is the per-guest menu choice, and adding it is **safe for
+ * re-import**: `guestsImport` maps by column *index* over its own closed
+ * `GUEST_IMPORT_FIELDS` list and ignores any header it does not recognise, so a
+ * flat export with this column round-trips exactly as it did before, with the
+ * dish simply dropped. Checked rather than assumed - it would have been a
+ * silent regression, and "the file I exported yesterday no longer imports" is
+ * about the worst bug this feature could have caused.
+ */
+export const GUEST_FIELDS = [
+  "name",
+  "table",
+  "dietary",
+  "dish",
+  "note",
+] as const
 export type GuestField = (typeof GUEST_FIELDS)[number]
 
 export const FORMAT_MODES = ["flat", "grouped"] as const
@@ -64,6 +82,17 @@ export const buildRows = (
   const active = effectiveFields(fields, formatMode)
   const { tables, guests } = usePlannerStore.getState()
   const tableNameById = new Map(tables.map((tbl) => [tbl.id, tbl.name]))
+  // Read from the store the way `buildFilename` reads global.store: this module
+  // is called from dialogs and from the print path, and threading the catalogue
+  // through every caller would buy nothing.
+  //
+  // Unfiltered by `archived_at` on purpose - a dish the venue retired after
+  // this couple ordered it still has to be named on their export. Empty for
+  // every wedding with no venue, which is what makes the column blank rather
+  // than broken in guest mode.
+  const dishNameById = new Map(
+    useMenuStore.getState().options.map((option) => [option.id, option.name])
+  )
   const unassignedLabel = t("export.unassigned")
 
   const header = active.map((f) => t(`export.col.${f}`))
@@ -76,6 +105,9 @@ export const buildRows = (
         : unassignedLabel
     }
     if (f === "dietary") return g.dietary.join(", ")
+    if (f === "dish") {
+      return g.menuOptionId ? (dishNameById.get(g.menuOptionId) ?? "") : ""
+    }
     return g.note ?? ""
   }
 

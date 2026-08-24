@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { Link, createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { ArrowLeftIcon, PrinterIcon } from "lucide-react"
+import { KitchenMenuTally } from "@/components/crm/KitchenMenuTally"
 import { VenuePeekSummary } from "@/components/crm/VenuePeekSummary"
 import { PlannerPrintView } from "@/components/planner/PlannerPrintView"
 import { Button } from "@/components/ui/button"
@@ -100,7 +101,10 @@ function CrmWeddingPeek() {
           <Button
             variant="outline"
             onClick={() =>
-              triggerPdfExport(["dietary"], {
+              // "dish" alongside "dietary": the kitchen report is the one
+              // document that wants both, and DEFAULT_PRINT_FIELDS is left
+              // alone so the couple's own print job is unchanged.
+              triggerPdfExport(["dietary", "dish"], {
                 sort: "seat",
                 includeAgeGroups: true,
                 includeSeats: true,
@@ -121,6 +125,7 @@ function CrmWeddingPeek() {
         </p>
 
         <VenuePeekSummary weddingId={id} />
+        <KitchenMenuTally />
       </div>
     </>
   )

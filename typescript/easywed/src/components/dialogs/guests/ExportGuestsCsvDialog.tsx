@@ -16,6 +16,7 @@ import {
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 import { Button } from "@/components/ui/button"
 import { useDialogStore } from "@/stores/dialog.store"
+import { useMenuStore } from "@/stores/menu.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { track } from "@/lib/analytics/track"
 import {
@@ -47,8 +48,14 @@ export const ExportGuestsCsvDialog = () => {
     )
   }
 
+  const hasDishes = useMenuStore((s) => s.options.length > 0)
+
   const tableDisabled = formatMode === "grouped"
   const orderedSelected = GUEST_FIELDS.filter((f) => selected.includes(f))
+  // The dish column only exists for a wedding whose venue has a menu. Offering
+  // it in guest mode, or for an unlinked wedding, would be a checkbox that can
+  // only ever export an empty column.
+  const fieldChoices = GUEST_FIELDS.filter((f) => f !== "dish" || hasDishes)
   const hasExportableColumn = effectiveFields(selected, formatMode).length > 0
 
   return (
@@ -85,7 +92,7 @@ export const ExportGuestsCsvDialog = () => {
           <Field>
             <FieldLabel>{t("export.csv.fields")}</FieldLabel>
             <FieldContent className="flex-row flex-wrap gap-1.5">
-              {GUEST_FIELDS.map((field) => {
+              {fieldChoices.map((field) => {
                 const disabled = field === "table" && tableDisabled
                 return (
                   <Button

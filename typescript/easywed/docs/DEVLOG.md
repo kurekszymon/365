@@ -13,6 +13,18 @@
 - `formatMoney`'s try/catch turned out to guard the *locale*, not the currency: `^[A-Z]{3}$` is exactly Intl's own well-formedness rule, so a stored `ZZZ` formats as `405,00 ZZZ` rather than throwing. the tag from i18next's browser detector is the one that raises `RangeError`. the test says so, since the plan said otherwise
 - 17 assertions in `menuRls.test.ts`, isolation asserted **per table** rather than once - three tables, three policies, and a missing one on `menu_options` would leave the other two green
 
+### 22.08 (4)
+
+- venue menus, part four: the kitchen report. render only - no migration, no policy, no new column, which is why it is its own pr rather than tacked onto the one that moved the privacy boundary
+- `KitchenMenuTally` counts `menuOptionId` across the **pseudonymous guests already in `planner.store`** and resolves names from the catalogue the venue itself wrote. no second query, and that is the property worth stating rather than assuming: this component sits one careless `select` away from being the place a guest name enters the crm, so it carries the same docblock `VenuePeekSummary` has
+- `renderGuestFields` takes a `dishName` resolver as a 4th parameter instead of reading the store, so the helper stays pure - it runs once per guest per render and the component builds the lookup once. same reason `t` is already threaded through it
+- the printed tally sits **above** the per-guest list, not after it: a chef reading this wants portion counts, and the rows are the backing detail. only rendered when the `dish` field was actually asked for - a tally of a column that is not shown is a puzzle
+- `DEFAULT_PRINT_FIELDS` deliberately unchanged, so the couple's own print job is exactly what it was. the crm's button passes `["dietary", "dish"]` explicitly - the kitchen report is the one document that wants both
+- **checked, not assumed: adding a `dish` column does not break flat re-import.** `guestsImport` maps by column *index* over its own closed `GUEST_IMPORT_FIELDS` list driven by `HEADER_ALIASES`, and neither "Danie" nor "Dish" matches an alias, so the column is ignored and the other three still land where they did. a regression test now asserts that against the literal header strings each locale emits - the stub `t` in that file passes keys through, which would have made the assertion vacuous. "the file i exported yesterday no longer imports" is the worst bug this feature could have shipped, and it would have been silent
+- no `dish` alias added to `HEADER_ALIASES`, though the plan allowed it. dish names are long and near-identical ("poledwiczki wieprzowe duszone w porach" vs "…w sosie ziolowym"), so anything short of an exact normalised match against the served set guesses at what a couple meant to serve. importing dishes is a feature, not a free side effect of exporting them
+- both export dialogs hide the dish checkbox when `menu.store` has no options, so guest mode and unlinked weddings never see a column that could only ever come out empty
+- archived dishes still print. a dish retired after this couple ordered it is read unfiltered by `archived_at` everywhere it is *rendered*, and filtered only where a choice is being *offered* - that split is the whole reason `archived_at` exists instead of a delete
+
 ### 22.08 (3)
 
 - venue menus, part three: the per-guest dish. `guests.menu_option_id`, and the one migration in the stack that moves the privacy boundary - so it ships alone, with the disclosure copy in the same diff rather than as a follow-up nobody writes
