@@ -38,6 +38,14 @@ describe("apexOrigin", () => {
       "https://a1b2c3d4.easywed.pages.dev/crm",
       "https://a1b2c3d4.easywed.pages.dev",
     ],
+    // ...including when `?tenant=` puts the preview *in* a tenant context. The
+    // slug is real there but the hostname never carried it, so stripping a
+    // label off the front hands out `https://pages.dev` - somebody else's
+    // origin, in a link carrying an invitation token.
+    [
+      "https://a1b2c3d4.easywed.pages.dev/crm?tenant=bagatelka",
+      "https://a1b2c3d4.easywed.pages.dev",
+    ],
   ])("%s -> %s", (href, expected) => {
     at(href)
     expect(apexOrigin()).toBe(expected)

@@ -217,13 +217,19 @@ export function apexOrigin(): string {
 
   const { protocol, hostname, port, origin } = window.location
   const slug = tenantSlugFromHost(hostname, window.location.search)
+  const host = normalizeHost(hostname)
 
   // Not on a tenant host: already the apex, whatever it is called locally.
-  // Covers *.pages.dev too, where the apex is the bare preview origin and the
-  // tenant is expressed as ?tenant= rather than as a label.
-  if (!slug) return origin
+  //
+  // The second half of the condition is not belt-and-braces. On *.pages.dev the
+  // slug comes from `?tenant=` rather than from a label, so it is non-null on a
+  // hostname that never carried it, and stripping `slug.length + 1` characters
+  // off `x.easywed.pages.dev` yields `pages.dev` - a third party's origin. That
+  // string is what a copied invitation URL is built on, and the token in it is a
+  // bearer credential. Guarding on the label rather than on the preview suffix
+  // keeps this correct for any future slug source that is not the hostname.
+  if (!slug || !host.startsWith(`${slug}.`)) return origin
 
-  const host = normalizeHost(hostname)
   return `${protocol}//${host.slice(slug.length + 1)}${port ? `:${port}` : ""}`
 }
 
