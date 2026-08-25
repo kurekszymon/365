@@ -89,6 +89,8 @@ The token flow that closes the gap the previous section used to describe. Until 
 
 `tenant_invitations` mirrors `wedding_invitations` field for field (token, `invited_by`, 14-day `expires_at`, `claimed_at` / `claimed_by`), and the three properties that make that shape safe carry over: the row names no user, the claim is made by the recipient with their own session, and invitees need no SELECT because the definer function reads the row itself.
 
+One field is mirrored from the **repaired** `wedding_invitations`, not the original: `claimed_by` is `on delete set null` inline. Copied literally from `20260422000001` it would have been `ON DELETE NO ACTION` and would have reintroduced the exact undeletable-account bug `20260731000002` exists to fix — anyone who claimed a venue invite gets 23503 out of `delete_own_account`. When copying a table shape, copy the migrations that repaired it too: an FK to `auth.users` is `cascade` or `set null`, never `no action`, and `delete_own_account` is what breaks when it is.
+
 Two things are **not** symmetrical with the wedding side, and both are deliberate:
 
 - **The role split on INSERT.** Any staff member may invite a `customer`; only the owner may invite `staff` (`role = 'customer' or tenant_role(tenant_id) = 'owner'`). A customer row buys exactly one thing — the ability to call `link_wedding_to_venue` for this venue — while a staff row is a key to the whole CRM, including the seat map of every granted wedding. Note this is the *opposite* asymmetry to the DELETE policy from `20260817000001`, where any staff member may remove another: removal subtracts access and the owner can undo it, creation does neither. `owner` is absent from the CHECK entirely.

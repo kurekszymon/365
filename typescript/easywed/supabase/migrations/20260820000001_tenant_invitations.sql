@@ -59,7 +59,14 @@ create table public.tenant_invitations (
   invited_by uuid not null references auth.users(id) on delete cascade,
   expires_at timestamptz not null default (now() + interval '14 days'),
   claimed_at timestamptz,
-  claimed_by uuid references auth.users(id),
+  -- `set null`, not the bare `references` wedding_invitations shipped with in
+  -- 20260422000001: that one was ON DELETE NO ACTION, which made every user who
+  -- had ever claimed a link undeletable (23503 out of delete_own_account), and
+  -- 20260731000002 had to repair it. Not cascade - the row is the venue's audit
+  -- record of a burned link, and staff should keep seeing it was spent once the
+  -- claimer is gone. `invited_by` above cascades because that row is the
+  -- departing staff member's own.
+  claimed_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now()
 );
 
