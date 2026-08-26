@@ -54,8 +54,72 @@ export const formatMoney = (
 }
 
 /**
+ * Digits in groups of three - the only shape a thousands separator ever takes,
+ * in every locale that has one. Used to tell grouping apart from a decimal
+ * mark, never to guess which character a given locale would have used.
+ */
+const GROUPED = {
+  ".": /^\d{1,3}(?:\.\d{3})+$/,
+  ",": /^\d{1,3}(?:,\d{3})+$/,
+} as const
+
+/**
+ * A cleaned-up amount into its integer and fraction digits, or `null` when the
+ * two are not knowable from the string alone.
+ *
+ * Both `.` and `,` mean "decimal mark" to somebody, so the separators have to
+ * be classified before anything can be added up. Two of the three cases are
+ * decidable:
+ *
+ * - **Both characters present.** The rightmost is the decimal mark and the
+ *   other is grouping, because no locale writes its group separator *after* the
+ *   decimal mark. `1.405,50` and `1,405.50` are both 1405.50, and that is a
+ *   fact about how numbers are written rather than a guess about who typed it.
+ *   The grouped side still has to be grouped, so `1.4,05` is refused.
+ * - **One character, repeated.** Only grouping repeats: `1,234,567`.
+ *
+ * The third case is the trap. A single separator with **exactly three** digits
+ * behind it and a plausible leading group in front - `1,405`, `10,000`,
+ * `4,055` - reads as 1405 to an English venue and as 1.405 to a Polish one, and
+ * the two readings are a factor of 1000 apart. Nothing in the string breaks the
+ * tie, and a price is not a field to be wrong about by 1000x, so it is refused
+ * and the form asks for it again: refusing `1,405` is strictly better than
+ * silently storing 1,40.
+ */
+const splitAmount = (candidate: string): [string, string] | null => {
+  const lastDot = candidate.lastIndexOf(".")
+  const lastComma = candidate.lastIndexOf(",")
+
+  if (lastDot < 0 && lastComma < 0) return [candidate, ""]
+
+  if (lastDot >= 0 && lastComma >= 0) {
+    const at = Math.max(lastDot, lastComma)
+    const decimal = lastDot > lastComma ? "." : ","
+    const group = decimal === "." ? "," : "."
+    // A decimal mark cannot repeat: `1.2.3,4` is not an amount.
+    if (candidate.indexOf(decimal) !== at) return null
+    const int = candidate.slice(0, at)
+    if (!GROUPED[group].test(int)) return null
+    return [int.split(group).join(""), candidate.slice(at + 1)]
+  }
+
+  const sep = lastDot >= 0 ? "." : ","
+  const parts = candidate.split(sep)
+
+  if (parts.length > 2) {
+    if (!GROUPED[sep].test(candidate)) return null
+    return [parts.join(""), ""]
+  }
+
+  const [int = "", frac = ""] = parts
+  if (frac.length === 3 && /^[1-9]\d{0,2}$/.test(int)) return null
+  return [int, frac]
+}
+
+/**
  * A typed price back into minor units. `null` for anything that is not a
- * non-negative amount this app will store.
+ * non-negative amount this app will store, **including an amount whose
+ * thousands separator is ambiguous** - see `splitAmount`.
  *
  * Deliberately **not** `Math.round(Number(raw) * 100)`. That expression is
  * wrong for values a user can plainly type: `4.055 * 100` is
@@ -64,14 +128,18 @@ export const formatMoney = (
  * instead and never multiplies a fraction.
  *
  * The whitespace strip covers U+00A0 and U+202F as well as ordinary spaces, and
- * that is what makes a value round-trip: Polish `Intl` output uses a no-break
- * space as the group separator *and* before `zł`, so `formatMoney`'s own result
- * pasted back into the field must parse. It reads like over-thinking until the
- * first bug report from someone who copied a price out of the UI.
+ * that is part of what makes a value round-trip: French and Polish `Intl`
+ * output use a no-break space as the group separator *and* before the symbol,
+ * so `formatMoney`'s own result pasted back into the field must parse. The
+ * separator classification in `splitAmount` is the rest of it -
+ * `CrmMenuPackageEditor` seeds the price field with
+ * `formatMoney(…, i18n.language)`, which on an English UI is `PLN 1,405.00`, so
+ * a parser that cannot read grouping is one an English venue cannot edit a
+ * four-figure price in.
  *
  * The fraction is **truncated** to two digits rather than rounded. A third
- * digit in a price is a typo, and silently rounding 4,055 up to 4,06 invents an
- * amount nobody typed; taking 4,05 is at least a prefix of what they wrote.
+ * digit in a price is a typo, and silently rounding 4,0559 up to 4,06 invents
+ * an amount nobody typed; taking 4,05 is at least a prefix of what they wrote.
  */
 export const parsePriceInput = (raw: string): number | null => {
   // \s already covers both no-break spaces in JavaScript; they are spelled
@@ -82,16 +150,16 @@ export const parsePriceInput = (raw: string): number | null => {
   // Everything that is not a digit, a separator or a sign is currency
   // decoration - `zł`, `PLN`, `€`. Dropped rather than rejected, so a pasted
   // formatted price is accepted.
-  const candidate = stripped.replace(/[^\d.,-]/g, "").replace(/,/g, ".")
+  const candidate = stripped.replace(/[^\d.,-]/g, "")
 
   // A minus survives the strip on purpose: a negative price is a mistake worth
   // refusing, not decoration worth ignoring.
   if (candidate.includes("-")) return null
 
-  const parts = candidate.split(".")
-  if (parts.length > 2) return null
+  const split = splitAmount(candidate)
+  if (split === null) return null
 
-  const [int = "", frac = ""] = parts
+  const [int, frac] = split
   if (int.length === 0 && frac.length === 0) return null
 
   const minor =
