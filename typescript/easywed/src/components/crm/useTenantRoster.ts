@@ -4,7 +4,7 @@ import { useAuthStore } from "@/stores/auth.store"
 import { useTenantStore } from "@/stores/tenant.store"
 import { supabase } from "@/lib/supabase"
 import { fetchDisplayNames } from "@/lib/sync/profile"
-import { apexOrigin, tenantOrigin } from "@/lib/tenant/host"
+import { apexOrigin, tenantUrl } from "@/lib/tenant/host"
 import { track } from "@/lib/analytics/track"
 import i18n from "@/i18n"
 
@@ -243,10 +243,12 @@ export function useTenantRoster(tenantId: string | undefined) {
       // copied from. Sessions are per-origin: a couple's account lives on the
       // apex, staff sign in on the venue's own host, and handing either the
       // other's URL is a sign-in screen for no reason. This is the whole
-      // reason apexOrigin/tenantOrigin exist rather than SITE_ORIGIN.
-      const origin =
-        invitation.role === "staff" && slug ? tenantOrigin(slug) : apexOrigin()
-      const url = `${origin}/venue/invite/${invitation.token}`
+      // reason apexOrigin/tenantUrl exist rather than SITE_ORIGIN.
+      const path = `/venue/invite/${invitation.token}`
+      const url =
+        invitation.role === "staff" && slug
+          ? tenantUrl(slug, path)
+          : `${apexOrigin()}${path}`
 
       try {
         await navigator.clipboard.writeText(url)

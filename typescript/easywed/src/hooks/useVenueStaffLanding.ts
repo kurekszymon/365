@@ -4,7 +4,7 @@ import {
   clearVenueLanding,
   isVenueLandingPending,
 } from "@/lib/auth/venueLanding"
-import { tenantOrigin } from "@/lib/tenant/host"
+import { tenantUrl } from "@/lib/tenant/host"
 import { useAuthStore } from "@/stores/auth.store"
 
 /**
@@ -61,7 +61,7 @@ export const useVenueStaffLanding = (): "idle" | "checking" => {
         return
       }
 
-      window.location.replace(`${tenantOrigin(tenant.slug)}/crm`)
+      window.location.replace(tenantUrl(tenant.slug, "/crm"))
     })
 
     return () => controller.abort()

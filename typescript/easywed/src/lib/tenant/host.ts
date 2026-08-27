@@ -195,8 +195,7 @@ export function isTenantSlug(value: string): boolean {
 }
 
 /**
- * The apex origin *as this browser can reach it*, and the tenant origin for one
- * slug.
+ * The apex origin *as this browser can reach it*, and a URL on one tenant's.
  *
  * Both exist because `SITE_ORIGIN` is a constant - `https://easywed.app` - and
  * that is the right answer for canonical URLs and exactly the wrong one for a
@@ -233,8 +232,24 @@ export function apexOrigin(): string {
   return `${protocol}//${host.slice(slug.length + 1)}${port ? `:${port}` : ""}`
 }
 
-export function tenantOrigin(slug: string): string {
-  if (typeof window === "undefined") return `https://${slug}.${SITE_HOST}`
+/**
+ * A URL in one tenant's context, for a path this browser can actually reach.
+ *
+ * It takes the path rather than handing back an origin to concatenate, and the
+ * signature is the fix rather than a style choice: on a preview deploy there is
+ * no tenant origin to hand back, because the tenant is carried by `?tenant=` -
+ * a query parameter, not a host. A caller appending `/venue/invite/<token>` to
+ * a string ending in `?tenant=bagatelka` buries the token inside the query
+ * value and lands on `/`, so the invitation link 404s and the claim route never
+ * runs. Every caller had that bug; none can have it now.
+ *
+ * @param path an absolute path beginning with `/`, optionally with its own
+ *   query string - `?tenant=` is appended with the right separator.
+ */
+export function tenantUrl(slug: string, path: string): string {
+  if (typeof window === "undefined") {
+    return `https://${slug}.${SITE_HOST}${path}`
+  }
 
   const { protocol, hostname, port, origin } = window.location
 
@@ -242,7 +257,8 @@ export function tenantOrigin(slug: string): string {
   // build hash - so `?tenant=` stands in, the same escape hatch
   // tenantSlugFromHost honours there and nowhere else.
   if (normalizeHost(hostname).endsWith(PREVIEW_SUFFIX)) {
-    return `${origin}/?tenant=${slug}`
+    const sep = path.includes("?") ? "&" : "?"
+    return `${origin}${path}${sep}tenant=${encodeURIComponent(slug)}`
   }
 
   const apex = new URL(apexOrigin())
@@ -252,7 +268,7 @@ export function tenantOrigin(slug: string): string {
   // which every browser resolves as *.localhost without DNS.
   const base = apex.hostname === `www.${SITE_HOST}` ? SITE_HOST : apex.hostname
 
-  return `${protocol}//${slug}.${base}${port ? `:${port}` : ""}`
+  return `${protocol}//${slug}.${base}${port ? `:${port}` : ""}${path}`
 }
 
 /** Lowercased, with the trailing dot of a fully-qualified name removed. */

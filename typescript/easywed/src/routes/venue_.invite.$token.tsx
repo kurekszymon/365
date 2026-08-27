@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 import type { ClaimedTenant, TenantClaimResult } from "@/lib/sync/tenant"
 import { requireAuth } from "@/lib/auth/guards"
 import { claimTenantInvitation } from "@/lib/sync/tenant"
-import { apexOrigin, tenantOrigin } from "@/lib/tenant/host"
+import { apexOrigin, tenantUrl } from "@/lib/tenant/host"
 import { track } from "@/lib/analytics/track"
 import { Button } from "@/components/ui/button"
 
@@ -105,12 +105,10 @@ function TenantInviteClaim() {
       // Staff work in the CRM on the venue's own host; a couple plans on the
       // apex. Sessions are per-origin, so sending either to the other's origin
       // lands them on a sign-in screen for no reason - which is the whole
-      // reason apexOrigin/tenantOrigin exist rather than a SITE_ORIGIN
+      // reason apexOrigin/tenantUrl exist rather than a SITE_ORIGIN
       // constant.
       action={{
-        href: isStaff
-          ? `${tenantOrigin(tenant.slug)}/crm`
-          : `${apexOrigin()}/home`,
+        href: isStaff ? tenantUrl(tenant.slug, "/crm") : `${apexOrigin()}/home`,
         label: t(
           isStaff
             ? "venue_invite.joined_cta_staff"
