@@ -97,6 +97,20 @@ describe("parsePriceInput", () => {
   })
 
   /**
+   * The same round trip for a currency whose own minor-unit exponent is not 2.
+   * `tenants.currency` is shape-checked rather than allowlisted, so JPY and KWD
+   * are reachable, and Intl's defaults would print `¥1,405` (no decimal mark
+   * left to disambiguate the group comma) and `KWD 405.000` (three digits
+   * behind a lone separator) - both of which this parser refuses, on purpose.
+   * `formatMoney` pins two digits so its own output stays readable; every price
+   * here is stored as hundredths regardless of the currency anyway.
+   */
+  it("parses its own output for a currency Intl would print without cents", () => {
+    expect(parsePriceInput(formatMoney(140500, "JPY", "en"))).toBe(140500)
+    expect(parsePriceInput(formatMoney(40500, "KWD", "en"))).toBe(40500)
+  })
+
+  /**
    * With both characters present there is nothing to guess: no locale writes
    * its group separator after the decimal mark, so the rightmost one is the
    * decimal mark. That is what makes German `1.405,00 €` round-trip too.

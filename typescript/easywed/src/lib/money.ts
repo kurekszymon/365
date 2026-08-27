@@ -37,6 +37,17 @@ export const MAX_PRICE_MINOR = 100_000_000
  *
  * The fallback puts the code after the number rather than guessing a symbol,
  * which is both honest and what most of Europe does anyway.
+ *
+ * The two fraction digits are pinned rather than left to the currency's own
+ * minor-unit exponent, and that is not cosmetic. Every price here is stored as
+ * hundredths (`minor / 100` above) whatever the currency is, so two digits is
+ * what the app actually holds - and Intl's default would otherwise print a
+ * value `parsePriceInput` cannot read back. `¥1,405` for JPY has no decimal
+ * mark left to tell its group comma apart from one, and `KWD 405.000` lands
+ * exactly on the three-digits-behind-a-lone-separator trap; both parse to
+ * `null`, so a venue on such a currency would be refused a price the app
+ * itself printed into the field. `tenants.currency` is shape-checked, not
+ * allowlisted, so those currencies are reachable today.
  */
 export const formatMoney = (
   minor: number,
@@ -47,6 +58,8 @@ export const formatMoney = (
     return new Intl.NumberFormat(locale, {
       style: "currency",
       currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(minor / 100)
   } catch {
     return `${(minor / 100).toFixed(2)} ${currency}`
