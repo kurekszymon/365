@@ -988,6 +988,121 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
   })
 
   /**
+   * `archived_at`, from the two sides that must not agree.
+   *
+   * Archiving is how a venue retires an offer without cancelling an order, so
+   * the same flag has to mean "no longer pickable" and "still perfectly
+   * servable" at once. `menu_option_in_package`'s `_require_active` is where
+   * those two part company, and these tests are the pair that pins the
+   * asymmetry: drop the flag and the first two go green, pass it everywhere and
+   * the third goes red.
+   *
+   * Every case restores the catalogue, including on failure - the venue's
+   * `archived_at` is shared fixture and `venueRls.test.ts` runs against the
+   * same database.
+   */
+  describe("archived dishes", () => {
+    const setArchived = async (
+      table: "menu_options" | "menu_courses",
+      id: string,
+      at: string | null
+    ) => {
+      const { error } = await venue
+        .from(table)
+        .update({ archived_at: at })
+        .eq("id", id)
+        .select("id")
+      expect(error).toBeNull()
+    }
+
+    const NOW = "2026-08-28T00:00:00Z"
+
+    it("refuses a new pick of an archived dish", async () => {
+      await setArchived("menu_options", PLATED_MAIN_D, NOW)
+
+      try {
+        const { error } = await couple.from("wedding_menu_selections").insert({
+          wedding_id: COUPLE_WEDDING,
+          menu_option_id: PLATED_MAIN_D,
+        })
+
+        expect(error?.code).toBe("23514")
+      } finally {
+        await setArchived("menu_options", PLATED_MAIN_D, null)
+      }
+
+      // And the same insert with nothing else changed: `archived_at` was the
+      // reason, not something else about this dish.
+      const { error } = await couple
+        .from("wedding_menu_selections")
+        .insert({ wedding_id: COUPLE_WEDDING, menu_option_id: PLATED_MAIN_D })
+
+      expect(error).toBeNull()
+
+      await couple
+        .from("wedding_menu_selections")
+        .delete()
+        .eq("wedding_id", COUPLE_WEDDING)
+        .eq("menu_option_id", PLATED_MAIN_D)
+    })
+
+    it("refuses a new pick from an archived course", async () => {
+      // Archiving a course retires the dishes on it, and the couple's picker
+      // agrees - `liveCourses` drops the whole course. The dish row itself is
+      // untouched here, so this fails only if the check reads the course too.
+      await setArchived("menu_courses", PLATED_COURSE, NOW)
+
+      try {
+        const { error } = await couple.from("wedding_menu_selections").insert({
+          wedding_id: COUPLE_WEDDING,
+          menu_option_id: PLATED_MAIN_E,
+        })
+
+        expect(error?.code).toBe("23514")
+      } finally {
+        await setArchived("menu_courses", PLATED_COURSE, null)
+      }
+    })
+
+    /**
+     * The half that must keep working, and the reason `_require_active` is a
+     * flag rather than part of the predicate.
+     *
+     * The venue archives a main this wedding is already serving - next
+     * season's catalogue, edited mid-planning. The couple still has guests to
+     * seat, and every one of them has to be assignable to the dish the wedding
+     * ordered. Refusing here would freeze planning on a wedding that did
+     * nothing wrong.
+     */
+    it("still assigns a guest to a selected dish the venue archived", async () => {
+      const { data: guest } = await couple
+        .from("guests")
+        .select("id, menu_option_id")
+        .eq("wedding_id", COUPLE_WEDDING)
+        .not("menu_option_id", "is", null)
+        .limit(1)
+        .single()
+
+      await setArchived("menu_options", PLATED_MAIN_A, NOW)
+
+      try {
+        const { error } = await couple
+          .from("guests")
+          .update({ menu_option_id: PLATED_MAIN_A })
+          .eq("id", guest!.id)
+
+        expect(error).toBeNull()
+      } finally {
+        await couple
+          .from("guests")
+          .update({ menu_option_id: guest!.menu_option_id })
+          .eq("id", guest!.id)
+        await setArchived("menu_options", PLATED_MAIN_A, null)
+      }
+    })
+  })
+
+  /**
    * The three `on delete restrict` FKs, asserted from the side that hits them.
    *
    * These are the only tests in the file where staff pass RLS and are refused

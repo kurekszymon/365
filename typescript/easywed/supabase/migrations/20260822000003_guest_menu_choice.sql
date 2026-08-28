@@ -70,6 +70,14 @@ create index guests_menu_option_id_idx
 -- it here would turn an unpick into a refusal the couple cannot act on. The
 -- statement-level trigger in section 3 repairs that state instead of refusing
 -- it, the same direction as soft deletes and orphan adoption.
+--
+-- It also does **not** pass `_require_active`, unlike the selection trigger in
+-- 20260822000002 section 5. The asymmetry is the point: a couple must not newly
+-- *pick* a dish the venue has retired, but seating the rest of the guests on a
+-- dish the wedding already ordered has to keep working after the venue archives
+-- it for next season - otherwise a catalogue edit freezes planning on a wedding
+-- that did nothing wrong. Archiving retires an offer; it does not cancel an
+-- order.
 create function public.enforce_guest_menu_option()
 returns trigger
 language plpgsql
@@ -97,7 +105,9 @@ begin
   where w.id = new.wedding_id;
 
   if v_package is null
-    or not public.menu_option_in_package(new.menu_option_id, v_package, true)
+    or not public.menu_option_in_package(
+      new.menu_option_id, v_package, _require_per_guest => true
+    )
   then
     raise exception 'dish is not a per-guest choice of this wedding''s menu'
       using errcode = '23514';

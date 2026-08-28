@@ -236,10 +236,35 @@ create policy "wedding members can view their venue's dishes"
 -- Shared by the selection trigger here and by the per-guest trigger in
 -- 20260822000003, which is why it takes the `_require_per_guest` flag it does
 -- not need yet.
+--
+-- ## Why `_require_active` is a flag and not just part of the predicate
+--
+-- Archived rows are filtered out of the *picker* and out of nothing else - the
+-- couple keeps seeing the name of a dish they already chose, which is the whole
+-- point of `archived_at` over a delete (`liveOptions` in menu.store says the
+-- same thing on the client). So "is this dish still on offer" and "is this dish
+-- one of the ones this wedding is serving" are two different questions, and the
+-- two callers ask different ones:
+--
+--   * a **new selection** must be refused if the venue has retired the dish -
+--     picking something no longer offered is exactly what archiving prevents,
+--     and the picker never showed it, so a request naming it did not come from
+--     the UI. That caller passes `true`.
+--   * a **guest assignment** must not be, even for an archived dish, as long as
+--     the wedding already selected it. Otherwise a venue archiving a main
+--     mid-planning freezes guest edits on a wedding that legitimately ordered
+--     it - a couple would be unable to seat their remaining guests because of a
+--     catalogue edit made for next year. `enforce_guest_menu_option` in
+--     20260822000003 keeps passing the default.
+--
+-- The course's own `archived_at` counts too: archiving a course retires its
+-- dishes with it, and the picker already agrees (`liveCourses`). The join is
+-- there for `per_guest_choice` anyway, so this costs nothing.
 create function public.menu_option_in_package(
   _option uuid,
   _package uuid,
-  _require_per_guest boolean default false
+  _require_per_guest boolean default false,
+  _require_active boolean default false
 )
 returns boolean
 language sql
@@ -254,6 +279,10 @@ as $$
     where o.id = _option
       and c.menu_package_id = _package
       and (not _require_per_guest or c.per_guest_choice)
+      and (
+        not _require_active
+        or (o.archived_at is null and c.archived_at is null)
+      )
   );
 $$;
 
@@ -404,7 +433,9 @@ create trigger weddings_menu_package_changed
   when (new.menu_package_id is distinct from old.menu_package_id)
   execute function public.reset_wedding_menu_on_package_change();
 
--- (3) A selected dish has to be in the package this wedding ordered.
+-- (3) A selected dish has to be in the package this wedding ordered, and still
+-- be on offer. The `_require_active => true` is the only place that flag is
+-- passed; see the function's own comment for why the guest trigger must not.
 create function public.enforce_menu_selection_in_package()
 returns trigger
 language plpgsql
@@ -419,7 +450,9 @@ begin
   where w.id = new.wedding_id;
 
   if v_package is null
-    or not public.menu_option_in_package(new.menu_option_id, v_package)
+    or not public.menu_option_in_package(
+      new.menu_option_id, v_package, _require_active => true
+    )
   then
     raise exception 'menu option does not belong to this wedding''s package'
       using errcode = '23514';
@@ -537,7 +570,7 @@ $$;
 -- client that could call it directly would have an oracle for "does this uuid
 -- name a dish in that package" against catalogues it cannot read.
 revoke all on function
-  public.menu_option_in_package(uuid, uuid, boolean)
+  public.menu_option_in_package(uuid, uuid, boolean, boolean)
   from public, anon, authenticated;
 revoke all on function public.enforce_wedding_menu_package()
   from public, anon, authenticated;
