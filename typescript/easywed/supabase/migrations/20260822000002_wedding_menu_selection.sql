@@ -38,13 +38,36 @@
 -- literally in both its branches (20260817000002 section 2), so this column
 -- does not trip it. **Do not add it there.**
 --
--- `on delete set null` rather than cascade, matching `tenant_id`: a venue
--- hard-deleting a package must not delete anybody's wedding. The couple is left
--- with no package, which the trigger in section 5 tolerates and the UI renders
--- as "pick a menu".
+-- `on delete restrict`, and the reasoning is the same for all three FKs the
+-- menu stack points at the venue's catalogue (the other two are the one in
+-- section 2 and `guests.menu_option_id` in 20260822000003).
+--
+-- Cascade was never a candidate: a venue hard-deleting a package must not
+-- delete anybody's wedding. `set null` was, and it is what this column shipped
+-- with - but it is a **write into the couple's row performed on the venue's
+-- behalf**. Staff hold DELETE on `menu_packages` (20260822000001 section 4) and
+-- no policy on `weddings` at all, so a referential action was reaching where
+-- the policies deliberately do not: 20260817000003 section 2 calls the derived
+-- venue role "read-only by construction", and a referential action is exactly
+-- the construction it was not read across. Restrict makes the sentence true.
+--
+-- What staff lose is only the delete of a package somebody ordered from, which
+-- is the case `archived_at` exists for and the case the CRM already offers
+-- first. Deleting a package nobody holds still works - the typo before anyone
+-- ordered, which is all 20260822000001 section 4 ever claimed DELETE was for.
+--
+-- **Checked against tenant retirement, in both referential orders.** Deleting a
+-- tenant cascades into `menu_packages` while linked weddings still hold one, so
+-- this restrict and the retirement branch of `enforce_wedding_menu_package`
+-- (section 5) walk the same delete. The restrict check is an after-row event
+-- appended to the same trigger queue as that clear, so it evaluates after the
+-- package has been nulled and the delete succeeds - `restrict` behaves like
+-- `no action` in this timing. Recreating the FK so its RI triggers sort after
+-- the others gives the identical end state. Do not change either side without
+-- re-checking the other; docs/supabase.md carries the psql transcript.
 alter table public.weddings
   add column menu_package_id uuid references public.menu_packages(id)
-    on delete set null;
+    on delete restrict;
 
 -- A referencing column with no index of its own: the `set null` above has to
 -- find the weddings holding a package on every delete of one, including the
@@ -71,7 +94,14 @@ create index weddings_menu_package_id_idx
 -- No `updated_at`, no trigger: the row is its own key with no mutable payload.
 create table public.wedding_menu_selections (
   wedding_id uuid not null references public.weddings(id) on delete cascade,
-  menu_option_id uuid not null references public.menu_options(id) on delete cascade,
+  -- `restrict`, not the cascade this shipped with, for the reason section 1
+  -- gives in full. The cascade was the worst of the three: it fired
+  -- `clear_guests_menu_option`, which is `security definer` and updates
+  -- `public.guests` unscoped - so a venue deleting one dish wrote guest rows of
+  -- every wedding holding it, RLS not consulted and `venue_access` not
+  -- consulted either. Checked against tenant retirement in both referential
+  -- orders along with the other two; see section 1.
+  menu_option_id uuid not null references public.menu_options(id) on delete restrict,
   created_at timestamptz not null default now(),
   primary key (wedding_id, menu_option_id)
 );

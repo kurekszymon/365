@@ -26,14 +26,21 @@
 -- ---------------------------------------------------------------------------
 -- 1. guests.menu_option_id
 -- ---------------------------------------------------------------------------
--- `on delete set null` rather than cascade, for the reason that runs through
--- this whole feature: a venue hard-deleting a dish must not delete a guest.
--- It blanks their choice, which is why `archived_at` exists and why the CRM
--- offers it as the default action - but a lost dinner choice is recoverable and
--- a lost guest is not.
+-- `on delete restrict`. Cascade is unthinkable here for the reason that runs
+-- through the whole feature - a venue hard-deleting a dish must not delete a
+-- guest - but `set null`, which this column shipped with, was not the safe
+-- middle it looked like: it let venue staff **write `guests`**, the one table
+-- in the tree whose SELECT policy names the three member roles literally so
+-- that no venue ever reads it. Being unable to see the rows it blanked did not
+-- make it not a write.
+--
+-- Restrict is the third of the three flips; 20260822000002 section 1 carries
+-- the full reasoning and the tenant-retirement check that covers all three. A
+-- dish somebody is eating can now only be archived, and a lost dinner choice
+-- being recoverable is no longer the argument that has to hold.
 alter table public.guests
   add column menu_option_id uuid references public.menu_options(id)
-    on delete set null;
+    on delete restrict;
 
 -- Partial, because the interesting reads are all "who is having this dish" and
 -- the null rows are noise: a wedding that has not assigned dishes at all - the
@@ -115,6 +122,14 @@ create trigger guests_menu_option_scope
 -- unpick - and, more to the point, the package wipe in section 4, which deletes
 -- every selection the wedding has - becomes one UPDATE over the joined
 -- transition table instead of one per deleted row.
+--
+-- The unscoped `update public.guests` below is `security definer` and consults
+-- no policy, which is only tolerable because of who can reach it. Since
+-- `wedding_menu_selections.menu_option_id` became `on delete restrict`
+-- (20260822000002 section 1) that is two callers, both acting for the couple:
+-- their own unpick, and `reset_wedding_menu_on_package_change` in section 4. A
+-- venue deleting a dish no longer reaches it - restoring a cascade there hands
+-- this function back to them.
 create function public.clear_guests_menu_option()
 returns trigger
 language plpgsql

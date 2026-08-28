@@ -61,7 +61,9 @@ create table public.menu_packages (
 
   -- Archived, not soft-deleted, and the distinction is real: a venue retiring
   -- last year's offer must not blank the choices of a couple who already
-  -- ordered from it. Hard DELETE stays available for a typo; the FKs clean up.
+  -- ordered from it. Hard DELETE stays available for a typo caught before
+  -- anyone ordered - and only for that, because the FKs in 20260822000002 and
+  -- 20260822000003 are `on delete restrict` and refuse the rest.
   archived_at timestamptz,
 
   created_at timestamptz not null default now(),
@@ -176,11 +178,14 @@ alter table public.menu_options enable row level security;
 -- the row may become - here, that would let staff move a package into another
 -- tenant.
 --
--- DELETE is granted, and the risk is real and accepted: hard-deleting a dish a
--- couple already chose blanks their choice (the FKs in 20260822000003 are
--- `on delete set null`). `archived_at` is the mitigation and the CRM's default
--- action; DELETE exists because typos happen before anyone has ordered, and it
--- sits behind a secondary action and a confirm in the UI.
+-- DELETE is granted, and it reaches exactly as far as the sentence above says:
+-- a typo caught before anyone ordered. The three FKs pointing here from the
+-- wedding tree are `on delete restrict` (20260822000002 section 1 carries the
+-- reasoning for all three), so a dish or package a couple holds refuses the
+-- delete with `23503` and `archived_at` is the only way to retire it - the
+-- mitigation is now enforced rather than merely offered. DELETE still sits
+-- behind a secondary action and a confirm in the UI, and `useTenantMenus`
+-- turns the `23503` into "this is on a couple's menu; archive it instead".
 create policy "staff view their tenant's menu packages"
   on public.menu_packages for select
   using (public.is_tenant_staff(tenant_id));

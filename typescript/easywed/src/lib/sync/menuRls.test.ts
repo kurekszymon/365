@@ -987,6 +987,121 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
     })
   })
 
+  /**
+   * The three `on delete restrict` FKs, asserted from the side that hits them.
+   *
+   * These are the only tests in the file where staff pass RLS and are refused
+   * anyway. Every "does not let another tenant..." case above expects an empty
+   * filtered result, because a policy declined to show the row; here the policy
+   * says yes - it is this venue's own dish - and referential integrity says no,
+   * which is what makes `23503` the assertion rather than `[]`.
+   *
+   * What they are protecting is not the catalogue but the *wedding tree*: while
+   * these FKs were `set null` / `cascade`, this same delete wrote `guests`,
+   * `wedding_menu_selections` and `weddings` rows of a couple, through a role
+   * that holds no policy on any of them. So each case checks the couple's side
+   * is untouched, not merely that the statement failed.
+   *
+   * The tenant-retirement path is the one interaction not testable here:
+   * deleting a `tenants` row needs privileges no anon-key session has, the same
+   * limit `20260822000002` section 5 records. Verified with psql instead, in
+   * both referential orders - see docs/supabase.md.
+   */
+  describe("hard delete once a couple has ordered", () => {
+    /** Sorted, because neither query promises an order. */
+    const byId = (rows: Array<{ id: string; menu_option_id: string | null }>) =>
+      [...rows].sort((a, b) => a.id.localeCompare(b.id))
+
+    it("refuses to delete a dish the couple is serving", async () => {
+      const before = await guestDishes()
+
+      const { data, error } = await venue
+        .from("menu_options")
+        .delete()
+        .eq("id", PLATED_MAIN_A)
+        .select("id")
+
+      expect(error?.code).toBe("23503")
+      expect(data).toBeNull()
+
+      const { data: selection } = await couple
+        .from("wedding_menu_selections")
+        .select("menu_option_id")
+        .eq("wedding_id", COUPLE_WEDDING)
+        .eq("menu_option_id", PLATED_MAIN_A)
+
+      expect(selection!.length).toBe(1)
+      // The guests who were eating it are still eating it. This is the
+      // assertion the whole phase is for: `set null` here was a venue writing
+      // `guests`, a table its role may not even SELECT.
+      expect(byId(await guestDishes())).toEqual(byId(before))
+    })
+
+    it("refuses to delete the course that dish is on", async () => {
+      const { error } = await venue
+        .from("menu_courses")
+        .delete()
+        .eq("id", PLATED_COURSE)
+        .select("id")
+
+      // The course itself is referenced by nothing in the wedding tree - the
+      // delete cascades down to its options and the restrict fires there. Same
+      // code, one level further in, which is why the CRM's `23503` branch is on
+      // all three deletes and not just the dish.
+      expect(error?.code).toBe("23503")
+
+      const { data: course } = await venue
+        .from("menu_courses")
+        .select("id")
+        .eq("id", PLATED_COURSE)
+      expect(course!.length).toBe(1)
+    })
+
+    it("refuses to delete the package the couple ordered", async () => {
+      const { error } = await venue
+        .from("menu_packages")
+        .delete()
+        .eq("id", SERVED_PACKAGE)
+        .select("id")
+
+      expect(error?.code).toBe("23503")
+
+      const { data: order } = await couple
+        .from("weddings")
+        .select("menu_package_id")
+        .eq("id", COUPLE_WEDDING)
+        .single()
+      expect(order?.menu_package_id).toBe(SERVED_PACKAGE)
+    })
+
+    it("still deletes a dish nobody has ordered", async () => {
+      // The other half of the claim, and the one that keeps `archived_at` from
+      // becoming the only way out of a typo: a dish no selection and no guest
+      // points at is still deletable. Created here rather than borrowing an
+      // unpicked seeded main, so a failure leaves the fixture alone.
+      const { data: created, error: insertError } = await venue
+        .from("menu_options")
+        .insert({
+          tenant_id: BAGATELKA,
+          menu_course_id: PLATED_COURSE,
+          name: "Literowka",
+        })
+        .select("id")
+        .single()
+
+      expect(insertError).toBeNull()
+
+      const { data, error } = await venue
+        .from("menu_options")
+        .delete()
+        .eq("id", created!.id)
+        .select("id")
+
+      expect(error).toBeNull()
+      expect(data).toEqual([{ id: created!.id }])
+    })
+  })
+
   it("leaves the seeded fixture as it found it", async () => {
     // Cheap guard for the suites sharing this database: everything above either
     // restores what it changed or was refused outright, so the catalogue must
