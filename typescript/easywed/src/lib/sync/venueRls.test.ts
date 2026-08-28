@@ -65,12 +65,16 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
   // The couple who own "Anna & Piotr" - the only account that can grant.
   // Explicitly optional, because afterAll runs even when beforeAll threw.
   let couple: SupabaseClient<Database> | undefined
+  // solo@easywed.test: owns "Tomasz & Kasia", belongs to no tenant. The owner
+  // of an *unlinked* wedding, which is a state only they can ask about.
+  let solo: SupabaseClient<Database>
 
   beforeAll(async () => {
-    ;[venue, otherVenue, couple] = await Promise.all([
+    ;[venue, otherVenue, couple, solo] = await Promise.all([
       signIn("venue@easywed.test"),
       signIn("venue2@easywed.test"),
       signIn("owner@easywed.test"),
+      signIn("solo@easywed.test"),
     ])
   })
 
@@ -323,6 +327,73 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
       expect(tables.data).toEqual([])
       expect(fixtures.data).toEqual([])
       expect(seatmap.data).toEqual([])
+    })
+  })
+
+  /**
+   * `set_venue_access` authorizes before it answers.
+   *
+   * A `security definer` function reads the whole table, so every refusal it
+   * can raise *before* it knows who is calling is a question anyone may ask
+   * about any wedding id. This one used to raise three distinguishable ones -
+   * `P0002` for an id that names nothing, "not linked to a venue" for a real
+   * unlinked wedding, and the generic refusal for a real linked one - so a
+   * stranger with a list of uuids could sort them into "not a wedding", "a
+   * wedding", and "a wedding with a venue" without being allowed to touch any
+   * of them.
+   *
+   * The fix is ordering, not a new check: the owner and staff branches still
+   * answer in detail, because reaching either one means the caller has already
+   * been placed on this wedding. Everything else collapses.
+   */
+  describe("set_venue_access answers strangers with one refusal", () => {
+    // A syntactically valid uuid that names nothing.
+    const NO_SUCH_WEDDING = "00000000-0000-4000-8000-0000000000ff"
+
+    const refusalFor = async (weddingId: string) => {
+      const { error } = await otherVenue.rpc("set_venue_access", {
+        p_wedding_id: weddingId,
+        p_granted: false,
+      })
+      return error
+    }
+
+    it("cannot be told apart across linked, unlinked and absent weddings", async () => {
+      // `dworek`'s staff: real venue staff, and a stranger to all three ids -
+      // which is what makes this a statement about scope rather than about
+      // being signed out.
+      const [linked, unlinked, missing] = await Promise.all([
+        refusalFor(GRANTED_WEDDING),
+        refusalFor(UNLINKED_WEDDING),
+        refusalFor(NO_SUCH_WEDDING),
+      ])
+
+      expect(linked?.code).toBe("42501")
+      // Pinned so the three comparisons below cannot pass by all being
+      // undefined together.
+      expect(linked?.message).toBe(
+        "Not permitted to change venue access for this wedding"
+      )
+
+      // Identical, not merely all-failing. Three refusals that differ are three
+      // answers, and the message is as much of an answer as the code.
+      expect(unlinked?.code).toBe(linked?.code)
+      expect(missing?.code).toBe(linked?.code)
+      expect(unlinked?.message).toBe(linked?.message)
+      expect(missing?.message).toBe(linked?.message)
+    })
+
+    it("still tells an owner that their own wedding has no venue", async () => {
+      // The other half: collapsing the refusals must not cost the one caller
+      // who is entitled to the specific answer. solo@ owns this wedding, so
+      // "it is not linked" tells them nothing they do not already own.
+      const { error } = await solo.rpc("set_venue_access", {
+        p_wedding_id: UNLINKED_WEDDING,
+        p_granted: true,
+      })
+
+      expect(error?.code).toBe("42501")
+      expect(error?.message).toContain("not linked to a venue")
     })
   })
 
