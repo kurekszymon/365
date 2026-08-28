@@ -75,6 +75,15 @@ create index tenant_invitations_tenant_id_idx
 create index tenant_invitations_token_idx
   on public.tenant_invitations (token);
 
+-- The two `auth.users` references, indexed because deleting an account walks
+-- both of them - `delete_own_account` (20260731000002) has to cascade the rows
+-- a departing staff member issued and null the ones they claimed, and neither
+-- referential action can use the indexes above.
+create index tenant_invitations_invited_by_idx
+  on public.tenant_invitations (invited_by);
+create index tenant_invitations_claimed_by_idx
+  on public.tenant_invitations (claimed_by);
+
 -- ---------------------------------------------------------------------------
 -- 2. RLS
 -- ---------------------------------------------------------------------------

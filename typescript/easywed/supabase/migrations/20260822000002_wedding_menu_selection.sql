@@ -46,6 +46,15 @@ alter table public.weddings
   add column menu_package_id uuid references public.menu_packages(id)
     on delete set null;
 
+-- A referencing column with no index of its own: the `set null` above has to
+-- find the weddings holding a package on every delete of one, including the
+-- cascade a retired tenant runs down into `menu_packages`. Without this that is
+-- a sequential scan of `weddings` per deleted package.
+-- Partial for the reason `guests_menu_option_id_idx` is (20260822000003:41):
+-- most weddings have picked no package, and those rows answer no question here.
+create index weddings_menu_package_id_idx
+  on public.weddings (menu_package_id) where menu_package_id is not null;
+
 -- ---------------------------------------------------------------------------
 -- 2. wedding_menu_selections
 -- ---------------------------------------------------------------------------
