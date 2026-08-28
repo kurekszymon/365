@@ -144,6 +144,12 @@ create trigger menu_selections_deleted_clear_guests
 -- selections: `guests.menu_option_id` did not exist yet. The comment there says
 -- this replacement is coming.
 --
+-- It runs on every change of `weddings.menu_package_id` and not only on the
+-- couple's own switch - the trigger there carries a `when` clause rather than
+-- an `update of` list, so the package cleared by `enforce_wedding_menu_package`
+-- when a venue is retired lands here too, and the guests' dishes go with the
+-- selections instead of being left to the FK cascade to blank.
+--
 -- Strictly speaking the DELETE below now fires the statement-level trigger in
 -- section 3, which would clear the guests on its own. The explicit UPDATE stays
 -- anyway, and the ordering is the reason: it runs *first*, so the wedding is

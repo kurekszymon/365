@@ -219,6 +219,40 @@ as $$
 $$;
 
 -- (1) The package a wedding orders must belong to the venue it is linked to.
+--
+-- ## The one case that is a clear rather than a refusal
+--
+-- `weddings.tenant_id` is `on delete set null` (20260817000002 section 1) and
+-- `menu_packages.tenant_id` is `on delete cascade` (20260822000001), so one
+-- `delete from tenants` fires both, in an order nothing specifies - referential
+-- triggers run in name order, which is creation order, which is a fact about
+-- when two unrelated migrations happened to be written.
+--
+-- Without the third branch below, the older FK wins and `UPDATE ONLY weddings
+-- SET tenant_id = NULL` reaches this trigger while `menu_package_id` still
+-- names a package of the venue being deleted - so the refusal fires and **the
+-- whole delete aborts with 23514**. Retiring a venue any couple ordered a menu
+-- from would simply be impossible, which falsifies the sentence 20260817000002
+-- is built on: "a retired venue must not take a couple's wedding with it. The
+-- wedding survives unlinked." This trigger is deliberately not `current_user`-
+-- gated the way `enforce_wedding_tenant_columns` is, so `psql` provisioning -
+-- the only way a tenant is deleted at all, there being no DELETE policy on
+-- `tenants` - hits the same wall.
+--
+-- So "the row's tenant is *becoming* null" is treated as a clear: there is no
+-- correct value for `menu_package_id` to hold, refusing offers the caller
+-- nothing to do, and a package-less wedding is already the tolerated state this
+-- function's first branch exists for. Repair rather than refusal, the same
+-- direction as soft deletes and orphan adoption.
+--
+-- The branch is narrow on purpose, and each of its three conditions carries
+-- weight: an INSERT naming a package with no tenant is still a caller bug;
+-- `old.tenant_id is not null` is what makes it "losing a venue" rather than
+-- "already had none"; and an unchanged `menu_package_id` is what keeps a
+-- statement that nulls the tenant *and* names a new package a refusal. In
+-- particular the tenant A -> tenant B case is untouched, so
+-- `link_wedding_to_venue`'s own `menu_package_id = null` (section 6) stays
+-- load-bearing - do not delete it on the strength of this branch.
 create function public.enforce_wedding_menu_package()
 returns trigger
 language plpgsql
@@ -241,6 +275,18 @@ begin
     and new.menu_package_id is not distinct from old.menu_package_id
     and new.tenant_id is not distinct from old.tenant_id
   then
+    return new;
+  end if;
+
+  -- The venue was retired out from under this wedding: clear the package
+  -- rather than refuse the statement. Trigger 2 wipes the selections that go
+  -- with it - see its `when` clause, which is what makes that true here.
+  if tg_op = 'UPDATE'
+    and new.tenant_id is null
+    and old.tenant_id is not null
+    and new.menu_package_id is not distinct from old.menu_package_id
+  then
+    new.menu_package_id := null;
     return new;
   end if;
 
@@ -297,9 +343,27 @@ begin
 end;
 $$;
 
+-- `when (... is distinct from ...)` rather than `after update of
+-- menu_package_id`, and the difference is load-bearing rather than stylistic.
+-- `update of <column>` matches the **statement's SET list**, not the row that
+-- ends up stored, so it would miss the clear performed by trigger 1 above: the
+-- statement that reaches it is the referential `UPDATE ONLY weddings SET
+-- tenant_id = NULL`, whose SET list names one column and not this one. A
+-- retired venue would leave the couple's selections behind, pointing at a
+-- package the wedding no longer orders.
+--
+-- The `when` clause is evaluated after BEFORE triggers have had NEW, so it sees
+-- the cleared value and fires. It also makes the trigger *more* accurate on the
+-- ordinary path - an `update ... set menu_package_id = <the same package>` no
+-- longer wipes a menu it did not change - and costs one comparison on every
+-- other write to `weddings`, with no lookup. The equality guard inside the
+-- function is now redundant and stays anyway: it is what keeps the function
+-- correct on its own terms rather than because of how it happens to be wired.
 create trigger weddings_menu_package_changed
-  after update of menu_package_id on public.weddings
-  for each row execute function public.reset_wedding_menu_on_package_change();
+  after update on public.weddings
+  for each row
+  when (new.menu_package_id is distinct from old.menu_package_id)
+  execute function public.reset_wedding_menu_on_package_change();
 
 -- (3) A selected dish has to be in the package this wedding ordered.
 create function public.enforce_menu_selection_in_package()
