@@ -190,6 +190,28 @@ begin
       using errcode = 'PT403';
   end if;
 
+  -- Re-linking to the venue this wedding is *already* linked to is a no-op.
+  --
+  -- Everything below this line exists to move a wedding from one recipient to
+  -- another, and the reset that follows is how the previous recipient's consent
+  -- is withdrawn. When the answer is the same venue there is nobody to withdraw
+  -- it from: the couple opening the dialog and picking the venue they are
+  -- already with would revoke a live grant and be asked to answer a question
+  -- they have already answered - and staff would watch a granted wedding drop
+  -- back to 'pending' for no act of the couple's that meant anything.
+  --
+  -- The checks above still run first, so this is not a way past them: an
+  -- inactive venue, or one that has closed its linking, still refuses. Only the
+  -- write is skipped, and the return value is the same tenant id the caller
+  -- gets on a real link.
+  if exists (
+    select 1 from public.weddings w
+    where w.id = p_wedding_id
+      and w.tenant_id is not distinct from v_tenant.id
+  ) then
+    return v_tenant.id;
+  end if;
+
   -- 'pending' unconditionally, including when re-linking a wedding that was
   -- already granted to a different venue: consent is given to *a* recipient,
   -- so pointing the link somewhere else has to withdraw it.

@@ -1,4 +1,4 @@
-import type { LinkedVenue } from "@/stores/global.store"
+import type { LinkedVenue, VenueAccess } from "@/stores/global.store"
 import { supabase } from "@/lib/supabase"
 import { useGlobalStore } from "@/stores/global.store"
 
@@ -74,10 +74,20 @@ export const linkWeddingToVenue = async (
     return { ok: false, reason: LINK_FAILURES[error.code] ?? "failed" }
   }
 
-  const venue = await fetchLinkedVenue(data)
-  if (!venue) return { ok: false, reason: "failed" }
+  // `venue_access` is read back rather than assumed to be 'pending', which is
+  // what this used to hardcode. Since `link_wedding_to_venue` returns early
+  // when the wedding is already linked to the venue named (20260817000002
+  // section 3), a call that changes nothing must not tell the store that a live
+  // 'granted' has dropped to 'pending' - the dialog would then offer a consent
+  // the couple has already given, and nothing would correct it until the next
+  // load. The RPC's other paths still land in 'pending' and this reads that.
+  const [venue, access] = await Promise.all([
+    fetchLinkedVenue(data),
+    fetchVenueAccess(weddingId),
+  ])
+  if (!venue || !access) return { ok: false, reason: "failed" }
 
-  useGlobalStore.getState().setVenueLink(venue, "pending")
+  useGlobalStore.getState().setVenueLink(venue, access)
   return { ok: true, venue }
 }
 
@@ -133,4 +143,30 @@ const fetchLinkedVenue = async (
   }
 
   return { tenantId: data.id, slug: data.slug, name: data.name }
+}
+
+/**
+ * What the database decided the access is, after a link.
+ *
+ * A separate read because `fetchLinkedVenue` asks `tenants` and this asks the
+ * wedding - there is no join to fold it into, and the two run in parallel. The
+ * column is unwritable from the client (`enforce_wedding_tenant_columns`), so
+ * reading it is the only way to know it, which is the rule this module states
+ * at the top and now actually follows on both paths.
+ */
+const fetchVenueAccess = async (
+  weddingId: string
+): Promise<VenueAccess | null> => {
+  const { data, error } = await supabase
+    .from("weddings")
+    .select("venue_access")
+    .eq("id", weddingId)
+    .maybeSingle()
+
+  if (error || !data) {
+    console.error("[venue] fetchVenueAccess failed", error)
+    return null
+  }
+
+  return data.venue_access as VenueAccess
 }

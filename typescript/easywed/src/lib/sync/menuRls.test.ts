@@ -38,6 +38,9 @@ const DWOREK = "50000000-0000-4000-8000-000000000002"
 const SERVED_PACKAGE = "60000000-0000-4000-8000-000000000004"
 const PLATED_COURSE = "61000000-0000-4000-8000-000000000403"
 const DWOREK_PACKAGE = "60000000-0000-4000-8000-000000000009"
+// A soup of that package, so the re-link tests can put a real selection on a
+// throwaway wedding linked to dworek.
+const DWOREK_SOUP = "62000000-0000-4000-8000-000000090101"
 // MENU II, the buffet-shaped package. Used as "some other package of the same
 // venue", which is the interesting negative - a package the couple can read and
 // still may not draw dishes from.
@@ -651,6 +654,138 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
         expect(after?.tenant_id).toBe(BAGATELKA)
         expect(after?.menu_package_id).toBeNull()
       } finally {
+        await couple.from("weddings").delete().eq("id", scratchId)
+      }
+    })
+
+    /**
+     * The other half of that RPC's re-link behaviour, and the one that was
+     * wrong: pointing a wedding at the venue it is *already* linked to.
+     *
+     * Nothing about the dialog stops a couple doing it - it is a picker of
+     * venues, and theirs is in the list. Before the guard, choosing it reset
+     * `venue_access` to 'pending' and, from this migration on, dropped
+     * `menu_package_id`, which took every selection with it through trigger 2
+     * and every guest's dish through 20260822000003. A finished menu and a live
+     * consent, both gone, for an act that meant nothing.
+     *
+     * Note what does *not* rescue it: trigger 2's
+     * `when (new.menu_package_id is distinct from old.menu_package_id)` fires
+     * here precisely because null is distinct from the package they hold.
+     *
+     * Same throwaway-wedding rule as the test above, and for the same reason -
+     * `venueRls.test.ts` runs concurrently and asserts against the seeded
+     * wedding's granted peek.
+     */
+    it("makes re-linking the same venue a no-op", async () => {
+      const scratchId = crypto.randomUUID()
+      const userId = (await couple.auth.getUser()).data.user!.id
+
+      const created = await couple
+        .from("weddings")
+        .insert({ id: scratchId, owner_id: userId, name: "Same-venue probe" })
+      expect(created.error).toBeNull()
+
+      try {
+        const linked = await couple.rpc("link_wedding_to_venue", {
+          p_wedding_id: scratchId,
+          p_slug: "dworek",
+        })
+        expect(linked.error).toBeNull()
+
+        // The state a couple mid-planning is actually in: a package chosen, a
+        // dish picked from it, and access granted to the venue.
+        await couple
+          .from("weddings")
+          .update({ menu_package_id: DWOREK_PACKAGE })
+          .eq("id", scratchId)
+
+        const picked = await couple
+          .from("wedding_menu_selections")
+          .insert({ wedding_id: scratchId, menu_option_id: DWOREK_SOUP })
+        expect(picked.error).toBeNull()
+
+        const granted = await couple.rpc("set_venue_access", {
+          p_wedding_id: scratchId,
+          p_granted: true,
+        })
+        expect(granted.error).toBeNull()
+
+        const again = await couple.rpc("link_wedding_to_venue", {
+          p_wedding_id: scratchId,
+          p_slug: "dworek",
+        })
+
+        // Still a success, and still answering with the tenant id, so no caller
+        // has to learn a new shape for "you were already linked".
+        expect(again.error).toBeNull()
+        expect(again.data).toBe(DWOREK)
+
+        const { data: after } = await couple
+          .from("weddings")
+          .select("tenant_id, menu_package_id, venue_access")
+          .eq("id", scratchId)
+          .single()
+
+        expect(after?.tenant_id).toBe(DWOREK)
+        expect(after?.menu_package_id).toBe(DWOREK_PACKAGE)
+        expect(after?.venue_access).toBe("granted")
+
+        const { data: selections } = await couple
+          .from("wedding_menu_selections")
+          .select("menu_option_id")
+          .eq("wedding_id", scratchId)
+
+        expect(selections).toEqual([{ menu_option_id: DWOREK_SOUP }])
+      } finally {
+        await couple.from("weddings").delete().eq("id", scratchId)
+      }
+    })
+
+    /**
+     * The guard skips the write, not the checks. A venue that has closed its
+     * linking still refuses a couple who is already linked to it - otherwise
+     * "already linked" would be a way past `PT403`, and the early return would
+     * be an authorization hole rather than a no-op.
+     */
+    it("still runs the venue checks before returning early", async () => {
+      const scratchId = crypto.randomUUID()
+      const userId = (await couple.auth.getUser()).data.user!.id
+
+      /** dworek's own owner, closing and reopening its door. */
+      const setOpenLinking = async (open: boolean) => {
+        const { data } = await otherVenue
+          .from("tenants")
+          .update({ open_linking: open })
+          .eq("id", DWOREK)
+          .select("id")
+        expect(data).toEqual([{ id: DWOREK }])
+      }
+
+      await couple
+        .from("weddings")
+        .insert({ id: scratchId, owner_id: userId, name: "Closed-venue probe" })
+
+      try {
+        await couple.rpc("link_wedding_to_venue", {
+          p_wedding_id: scratchId,
+          p_slug: "dworek",
+        })
+
+        await setOpenLinking(false)
+
+        const again = await couple.rpc("link_wedding_to_venue", {
+          p_wedding_id: scratchId,
+          p_slug: "dworek",
+        })
+
+        // owner@ is a 'customer' of bagatelka, never of dworek, so with the
+        // door closed `is_tenant_member` is false and the refusal stands - the
+        // early return is reached only by callers who would have been allowed
+        // to link for real.
+        expect(again.error?.code).toBe("PT403")
+      } finally {
+        await setOpenLinking(true)
         await couple.from("weddings").delete().eq("id", scratchId)
       }
     })

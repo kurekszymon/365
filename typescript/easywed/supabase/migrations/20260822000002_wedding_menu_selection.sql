@@ -501,6 +501,20 @@ create trigger wedding_menu_selections_in_package
 -- behaviour on its own terms: the new venue does not serve the old venue's menu.
 -- Trigger 2 then fires and clears the selections.
 --
+-- **That is also what makes the same-tenant guard load-bearing here rather than
+-- merely tidy.** In 20260817000002 a re-link of the venue you are already with
+-- cost a `granted` -> `pending` reset; from this migration on it additionally
+-- drops `menu_package_id`, and trigger 2 takes every selection with it - and,
+-- from 20260822000003, every guest's dish. A couple re-opening the venue dialog
+-- and picking the same venue would lose a menu they had finished choosing. The
+-- `when (new.menu_package_id is distinct from old.menu_package_id)` clause on
+-- trigger 2 does not save them: on a same-venue re-link it fires *precisely
+-- because* null is distinct from the package they hold.
+--
+-- The guard skips the whole UPDATE, so `menu_package_id = null` below stays
+-- exactly as load-bearing as it was for the tenant A -> tenant B case. Do not
+-- delete that line on the strength of the guard.
+--
 -- Verbatim from 20260817000002 apart from that one line; the comments there
 -- still apply and are not repeated.
 create or replace function public.link_wedding_to_venue(p_wedding_id uuid, p_slug text)
@@ -537,6 +551,28 @@ begin
   if not v_tenant.open_linking and not public.is_tenant_member(v_tenant.id) then
     raise exception 'This venue accepts links by invitation only'
       using errcode = 'PT403';
+  end if;
+
+  -- Re-linking to the venue this wedding is *already* linked to is a no-op.
+  --
+  -- Everything below this line exists to move a wedding from one recipient to
+  -- another, and the reset that follows is how the previous recipient's consent
+  -- is withdrawn. When the answer is the same venue there is nobody to withdraw
+  -- it from: the couple opening the dialog and picking the venue they are
+  -- already with would revoke a live grant and be asked to answer a question
+  -- they have already answered - and staff would watch a granted wedding drop
+  -- back to 'pending' for no act of the couple's that meant anything.
+  --
+  -- The checks above still run first, so this is not a way past them: an
+  -- inactive venue, or one that has closed its linking, still refuses. Only the
+  -- write is skipped, and the return value is the same tenant id the caller
+  -- gets on a real link.
+  if exists (
+    select 1 from public.weddings w
+    where w.id = p_wedding_id
+      and w.tenant_id is not distinct from v_tenant.id
+  ) then
+    return v_tenant.id;
   end if;
 
   -- 'pending' unconditionally, including when re-linking a wedding that was
