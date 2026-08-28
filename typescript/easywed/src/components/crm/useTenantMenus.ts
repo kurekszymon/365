@@ -218,16 +218,28 @@ export function useTenantMenus(tenantId: string | undefined) {
     return !patchError && data.length > 0
   }
 
+  /**
+   * The one write that has to say *why* it failed.
+   *
+   * The three FKs the wedding tree points at this catalogue are
+   * `on delete restrict` (20260822000002 section 1), so "a couple has ordered
+   * this" is a routine outcome of the delete button rather than a fault, and
+   * `delete_failed` - "please try again" - is the wrong thing to say about it:
+   * trying again cannot work, and archiving is what the staff member wants.
+   * `23503` is `foreign_key_violation`; it arrives for a package too, because
+   * the delete cascades down to the options and the restrict fires there.
+   */
   const writeDelete = async (
     table: MenuTable,
     id: string
-  ): Promise<boolean> => {
+  ): Promise<{ ok: boolean; inUse: boolean }> => {
     const { data, error: deleteError } = await supabase
       .from(table)
       .delete()
       .eq("id", id)
       .select("id")
-    return !deleteError && data.length > 0
+    if (deleteError) return { ok: false, inUse: deleteError.code === "23503" }
+    return { ok: data.length > 0, inUse: false }
   }
 
   // ---------------------------------------------------------------------
@@ -317,11 +329,18 @@ export function useTenantMenus(tenantId: string | undefined) {
         list.filter((row) => !courseIds.has(row.menu_course_id))
       )
 
-      if (!(await writeDelete("menu_packages", id))) {
+      const result = await writeDelete("menu_packages", id)
+      if (!result.ok) {
         setPackages(previous.packages)
         setCourses(previous.courses)
         setOptions(previous.options)
-        fail("delete package failed", null, "crm.menus.delete_failed")
+        fail(
+          "delete package failed",
+          null,
+          result.inUse
+            ? "crm.menus.delete_package_in_use"
+            : "crm.menus.delete_failed"
+        )
       }
     },
     [packages, courses, options, fail]
@@ -387,10 +406,17 @@ export function useTenantMenus(tenantId: string | undefined) {
       setCourses((list) => list.filter((row) => row.id !== id))
       setOptions((list) => list.filter((row) => row.menu_course_id !== id))
 
-      if (!(await writeDelete("menu_courses", id))) {
+      const result = await writeDelete("menu_courses", id)
+      if (!result.ok) {
         setCourses(previous.courses)
         setOptions(previous.options)
-        fail("delete course failed", null, "crm.menus.delete_failed")
+        fail(
+          "delete course failed",
+          null,
+          result.inUse
+            ? "crm.menus.delete_course_in_use"
+            : "crm.menus.delete_failed"
+        )
       }
     },
     [courses, options, fail]
@@ -453,9 +479,16 @@ export function useTenantMenus(tenantId: string | undefined) {
       const previous = options
       setOptions((list) => list.filter((row) => row.id !== id))
 
-      if (!(await writeDelete("menu_options", id))) {
+      const result = await writeDelete("menu_options", id)
+      if (!result.ok) {
         setOptions(previous)
-        fail("delete option failed", null, "crm.menus.delete_failed")
+        fail(
+          "delete option failed",
+          null,
+          result.inUse
+            ? "crm.menus.delete_dish_in_use"
+            : "crm.menus.delete_failed"
+        )
       }
     },
     [options, fail]

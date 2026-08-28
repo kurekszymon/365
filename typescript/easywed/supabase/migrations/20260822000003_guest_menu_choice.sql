@@ -26,14 +26,21 @@
 -- ---------------------------------------------------------------------------
 -- 1. guests.menu_option_id
 -- ---------------------------------------------------------------------------
--- `on delete set null` rather than cascade, for the reason that runs through
--- this whole feature: a venue hard-deleting a dish must not delete a guest.
--- It blanks their choice, which is why `archived_at` exists and why the CRM
--- offers it as the default action - but a lost dinner choice is recoverable and
--- a lost guest is not.
+-- `on delete restrict`. Cascade is unthinkable here for the reason that runs
+-- through the whole feature - a venue hard-deleting a dish must not delete a
+-- guest - but `set null`, which this column shipped with, was not the safe
+-- middle it looked like: it let venue staff **write `guests`**, the one table
+-- in the tree whose SELECT policy names the three member roles literally so
+-- that no venue ever reads it. Being unable to see the rows it blanked did not
+-- make it not a write.
+--
+-- Restrict is the third of the three flips; 20260822000002 section 1 carries
+-- the full reasoning and the tenant-retirement check that covers all three. A
+-- dish somebody is eating can now only be archived, and a lost dinner choice
+-- being recoverable is no longer the argument that has to hold.
 alter table public.guests
   add column menu_option_id uuid references public.menu_options(id)
-    on delete set null;
+    on delete restrict;
 
 -- Partial, because the interesting reads are all "who is having this dish" and
 -- the null rows are noise: a wedding that has not assigned dishes at all - the
@@ -63,6 +70,14 @@ create index guests_menu_option_id_idx
 -- it here would turn an unpick into a refusal the couple cannot act on. The
 -- statement-level trigger in section 3 repairs that state instead of refusing
 -- it, the same direction as soft deletes and orphan adoption.
+--
+-- It also does **not** pass `_require_active`, unlike the selection trigger in
+-- 20260822000002 section 5. The asymmetry is the point: a couple must not newly
+-- *pick* a dish the venue has retired, but seating the rest of the guests on a
+-- dish the wedding already ordered has to keep working after the venue archives
+-- it for next season - otherwise a catalogue edit freezes planning on a wedding
+-- that did nothing wrong. Archiving retires an offer; it does not cancel an
+-- order.
 create function public.enforce_guest_menu_option()
 returns trigger
 language plpgsql
@@ -90,7 +105,9 @@ begin
   where w.id = new.wedding_id;
 
   if v_package is null
-    or not public.menu_option_in_package(new.menu_option_id, v_package, true)
+    or not public.menu_option_in_package(
+      new.menu_option_id, v_package, _require_per_guest => true
+    )
   then
     raise exception 'dish is not a per-guest choice of this wedding''s menu'
       using errcode = '23514';
@@ -115,6 +132,14 @@ create trigger guests_menu_option_scope
 -- unpick - and, more to the point, the package wipe in section 4, which deletes
 -- every selection the wedding has - becomes one UPDATE over the joined
 -- transition table instead of one per deleted row.
+--
+-- The unscoped `update public.guests` below is `security definer` and consults
+-- no policy, which is only tolerable because of who can reach it. Since
+-- `wedding_menu_selections.menu_option_id` became `on delete restrict`
+-- (20260822000002 section 1) that is two callers, both acting for the couple:
+-- their own unpick, and `reset_wedding_menu_on_package_change` in section 4. A
+-- venue deleting a dish no longer reaches it - restoring a cascade there hands
+-- this function back to them.
 create function public.clear_guests_menu_option()
 returns trigger
 language plpgsql
@@ -143,6 +168,12 @@ create trigger menu_selections_deleted_clear_guests
 -- Replaces the function from 20260822000002, which could only delete the
 -- selections: `guests.menu_option_id` did not exist yet. The comment there says
 -- this replacement is coming.
+--
+-- It runs on every change of `weddings.menu_package_id` and not only on the
+-- couple's own switch - the trigger there carries a `when` clause rather than
+-- an `update of` list, so the package cleared by `enforce_wedding_menu_package`
+-- when a venue is retired lands here too, and the guests' dishes go with the
+-- selections instead of being left to the FK cascade to blank.
 --
 -- Strictly speaking the DELETE below now fires the statement-level trigger in
 -- section 3, which would clear the guests on its own. The explicit UPDATE stays

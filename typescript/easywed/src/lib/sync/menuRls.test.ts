@@ -38,6 +38,9 @@ const DWOREK = "50000000-0000-4000-8000-000000000002"
 const SERVED_PACKAGE = "60000000-0000-4000-8000-000000000004"
 const PLATED_COURSE = "61000000-0000-4000-8000-000000000403"
 const DWOREK_PACKAGE = "60000000-0000-4000-8000-000000000009"
+// A soup of that package, so the re-link tests can put a real selection on a
+// throwaway wedding linked to dworek.
+const DWOREK_SOUP = "62000000-0000-4000-8000-000000090101"
 // MENU II, the buffet-shaped package. Used as "some other package of the same
 // venue", which is the interesting negative - a package the couple can read and
 // still may not draw dishes from.
@@ -654,6 +657,138 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
         await couple.from("weddings").delete().eq("id", scratchId)
       }
     })
+
+    /**
+     * The other half of that RPC's re-link behaviour, and the one that was
+     * wrong: pointing a wedding at the venue it is *already* linked to.
+     *
+     * Nothing about the dialog stops a couple doing it - it is a picker of
+     * venues, and theirs is in the list. Before the guard, choosing it reset
+     * `venue_access` to 'pending' and, from this migration on, dropped
+     * `menu_package_id`, which took every selection with it through trigger 2
+     * and every guest's dish through 20260822000003. A finished menu and a live
+     * consent, both gone, for an act that meant nothing.
+     *
+     * Note what does *not* rescue it: trigger 2's
+     * `when (new.menu_package_id is distinct from old.menu_package_id)` fires
+     * here precisely because null is distinct from the package they hold.
+     *
+     * Same throwaway-wedding rule as the test above, and for the same reason -
+     * `venueRls.test.ts` runs concurrently and asserts against the seeded
+     * wedding's granted peek.
+     */
+    it("makes re-linking the same venue a no-op", async () => {
+      const scratchId = crypto.randomUUID()
+      const userId = (await couple.auth.getUser()).data.user!.id
+
+      const created = await couple
+        .from("weddings")
+        .insert({ id: scratchId, owner_id: userId, name: "Same-venue probe" })
+      expect(created.error).toBeNull()
+
+      try {
+        const linked = await couple.rpc("link_wedding_to_venue", {
+          p_wedding_id: scratchId,
+          p_slug: "dworek",
+        })
+        expect(linked.error).toBeNull()
+
+        // The state a couple mid-planning is actually in: a package chosen, a
+        // dish picked from it, and access granted to the venue.
+        await couple
+          .from("weddings")
+          .update({ menu_package_id: DWOREK_PACKAGE })
+          .eq("id", scratchId)
+
+        const picked = await couple
+          .from("wedding_menu_selections")
+          .insert({ wedding_id: scratchId, menu_option_id: DWOREK_SOUP })
+        expect(picked.error).toBeNull()
+
+        const granted = await couple.rpc("set_venue_access", {
+          p_wedding_id: scratchId,
+          p_granted: true,
+        })
+        expect(granted.error).toBeNull()
+
+        const again = await couple.rpc("link_wedding_to_venue", {
+          p_wedding_id: scratchId,
+          p_slug: "dworek",
+        })
+
+        // Still a success, and still answering with the tenant id, so no caller
+        // has to learn a new shape for "you were already linked".
+        expect(again.error).toBeNull()
+        expect(again.data).toBe(DWOREK)
+
+        const { data: after } = await couple
+          .from("weddings")
+          .select("tenant_id, menu_package_id, venue_access")
+          .eq("id", scratchId)
+          .single()
+
+        expect(after?.tenant_id).toBe(DWOREK)
+        expect(after?.menu_package_id).toBe(DWOREK_PACKAGE)
+        expect(after?.venue_access).toBe("granted")
+
+        const { data: selections } = await couple
+          .from("wedding_menu_selections")
+          .select("menu_option_id")
+          .eq("wedding_id", scratchId)
+
+        expect(selections).toEqual([{ menu_option_id: DWOREK_SOUP }])
+      } finally {
+        await couple.from("weddings").delete().eq("id", scratchId)
+      }
+    })
+
+    /**
+     * The guard skips the write, not the checks. A venue that has closed its
+     * linking still refuses a couple who is already linked to it - otherwise
+     * "already linked" would be a way past `PT403`, and the early return would
+     * be an authorization hole rather than a no-op.
+     */
+    it("still runs the venue checks before returning early", async () => {
+      const scratchId = crypto.randomUUID()
+      const userId = (await couple.auth.getUser()).data.user!.id
+
+      /** dworek's own owner, closing and reopening its door. */
+      const setOpenLinking = async (open: boolean) => {
+        const { data } = await otherVenue
+          .from("tenants")
+          .update({ open_linking: open })
+          .eq("id", DWOREK)
+          .select("id")
+        expect(data).toEqual([{ id: DWOREK }])
+      }
+
+      await couple
+        .from("weddings")
+        .insert({ id: scratchId, owner_id: userId, name: "Closed-venue probe" })
+
+      try {
+        await couple.rpc("link_wedding_to_venue", {
+          p_wedding_id: scratchId,
+          p_slug: "dworek",
+        })
+
+        await setOpenLinking(false)
+
+        const again = await couple.rpc("link_wedding_to_venue", {
+          p_wedding_id: scratchId,
+          p_slug: "dworek",
+        })
+
+        // owner@ is a 'customer' of bagatelka, never of dworek, so with the
+        // door closed `is_tenant_member` is false and the refusal stands - the
+        // early return is reached only by callers who would have been allowed
+        // to link for real.
+        expect(again.error?.code).toBe("PT403")
+      } finally {
+        await setOpenLinking(true)
+        await couple.from("weddings").delete().eq("id", scratchId)
+      }
+    })
   })
 
   describe("selections", () => {
@@ -984,6 +1119,236 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
         .not("menu_option_id", "is", null)
 
       expect(data!.length).toBeGreaterThan(0)
+    })
+  })
+
+  /**
+   * `archived_at`, from the two sides that must not agree.
+   *
+   * Archiving is how a venue retires an offer without cancelling an order, so
+   * the same flag has to mean "no longer pickable" and "still perfectly
+   * servable" at once. `menu_option_in_package`'s `_require_active` is where
+   * those two part company, and these tests are the pair that pins the
+   * asymmetry: drop the flag and the first two go green, pass it everywhere and
+   * the third goes red.
+   *
+   * Every case restores the catalogue, including on failure - the venue's
+   * `archived_at` is shared fixture and `venueRls.test.ts` runs against the
+   * same database.
+   */
+  describe("archived dishes", () => {
+    const setArchived = async (
+      table: "menu_options" | "menu_courses",
+      id: string,
+      at: string | null
+    ) => {
+      const { error } = await venue
+        .from(table)
+        .update({ archived_at: at })
+        .eq("id", id)
+        .select("id")
+      expect(error).toBeNull()
+    }
+
+    const NOW = "2026-08-28T00:00:00Z"
+
+    it("refuses a new pick of an archived dish", async () => {
+      await setArchived("menu_options", PLATED_MAIN_D, NOW)
+
+      try {
+        const { error } = await couple.from("wedding_menu_selections").insert({
+          wedding_id: COUPLE_WEDDING,
+          menu_option_id: PLATED_MAIN_D,
+        })
+
+        expect(error?.code).toBe("23514")
+      } finally {
+        await setArchived("menu_options", PLATED_MAIN_D, null)
+      }
+
+      // And the same insert with nothing else changed: `archived_at` was the
+      // reason, not something else about this dish.
+      const { error } = await couple
+        .from("wedding_menu_selections")
+        .insert({ wedding_id: COUPLE_WEDDING, menu_option_id: PLATED_MAIN_D })
+
+      expect(error).toBeNull()
+
+      await couple
+        .from("wedding_menu_selections")
+        .delete()
+        .eq("wedding_id", COUPLE_WEDDING)
+        .eq("menu_option_id", PLATED_MAIN_D)
+    })
+
+    it("refuses a new pick from an archived course", async () => {
+      // Archiving a course retires the dishes on it, and the couple's picker
+      // agrees - `liveCourses` drops the whole course. The dish row itself is
+      // untouched here, so this fails only if the check reads the course too.
+      await setArchived("menu_courses", PLATED_COURSE, NOW)
+
+      try {
+        const { error } = await couple.from("wedding_menu_selections").insert({
+          wedding_id: COUPLE_WEDDING,
+          menu_option_id: PLATED_MAIN_E,
+        })
+
+        expect(error?.code).toBe("23514")
+      } finally {
+        await setArchived("menu_courses", PLATED_COURSE, null)
+      }
+    })
+
+    /**
+     * The half that must keep working, and the reason `_require_active` is a
+     * flag rather than part of the predicate.
+     *
+     * The venue archives a main this wedding is already serving - next
+     * season's catalogue, edited mid-planning. The couple still has guests to
+     * seat, and every one of them has to be assignable to the dish the wedding
+     * ordered. Refusing here would freeze planning on a wedding that did
+     * nothing wrong.
+     */
+    it("still assigns a guest to a selected dish the venue archived", async () => {
+      const { data: guest } = await couple
+        .from("guests")
+        .select("id, menu_option_id")
+        .eq("wedding_id", COUPLE_WEDDING)
+        .not("menu_option_id", "is", null)
+        .limit(1)
+        .single()
+
+      await setArchived("menu_options", PLATED_MAIN_A, NOW)
+
+      try {
+        const { error } = await couple
+          .from("guests")
+          .update({ menu_option_id: PLATED_MAIN_A })
+          .eq("id", guest!.id)
+
+        expect(error).toBeNull()
+      } finally {
+        await couple
+          .from("guests")
+          .update({ menu_option_id: guest!.menu_option_id })
+          .eq("id", guest!.id)
+        await setArchived("menu_options", PLATED_MAIN_A, null)
+      }
+    })
+  })
+
+  /**
+   * The three `on delete restrict` FKs, asserted from the side that hits them.
+   *
+   * These are the only tests in the file where staff pass RLS and are refused
+   * anyway. Every "does not let another tenant..." case above expects an empty
+   * filtered result, because a policy declined to show the row; here the policy
+   * says yes - it is this venue's own dish - and referential integrity says no,
+   * which is what makes `23503` the assertion rather than `[]`.
+   *
+   * What they are protecting is not the catalogue but the *wedding tree*: while
+   * these FKs were `set null` / `cascade`, this same delete wrote `guests`,
+   * `wedding_menu_selections` and `weddings` rows of a couple, through a role
+   * that holds no policy on any of them. So each case checks the couple's side
+   * is untouched, not merely that the statement failed.
+   *
+   * The tenant-retirement path is the one interaction not testable here:
+   * deleting a `tenants` row needs privileges no anon-key session has, the same
+   * limit `20260822000002` section 5 records. Verified with psql instead, in
+   * both referential orders - see docs/supabase.md.
+   */
+  describe("hard delete once a couple has ordered", () => {
+    /** Sorted, because neither query promises an order. */
+    const byId = (rows: Array<{ id: string; menu_option_id: string | null }>) =>
+      [...rows].sort((a, b) => a.id.localeCompare(b.id))
+
+    it("refuses to delete a dish the couple is serving", async () => {
+      const before = await guestDishes()
+
+      const { data, error } = await venue
+        .from("menu_options")
+        .delete()
+        .eq("id", PLATED_MAIN_A)
+        .select("id")
+
+      expect(error?.code).toBe("23503")
+      expect(data).toBeNull()
+
+      const { data: selection } = await couple
+        .from("wedding_menu_selections")
+        .select("menu_option_id")
+        .eq("wedding_id", COUPLE_WEDDING)
+        .eq("menu_option_id", PLATED_MAIN_A)
+
+      expect(selection!.length).toBe(1)
+      // The guests who were eating it are still eating it. This is the
+      // assertion the whole phase is for: `set null` here was a venue writing
+      // `guests`, a table its role may not even SELECT.
+      expect(byId(await guestDishes())).toEqual(byId(before))
+    })
+
+    it("refuses to delete the course that dish is on", async () => {
+      const { error } = await venue
+        .from("menu_courses")
+        .delete()
+        .eq("id", PLATED_COURSE)
+        .select("id")
+
+      // The course itself is referenced by nothing in the wedding tree - the
+      // delete cascades down to its options and the restrict fires there. Same
+      // code, one level further in, which is why the CRM's `23503` branch is on
+      // all three deletes and not just the dish.
+      expect(error?.code).toBe("23503")
+
+      const { data: course } = await venue
+        .from("menu_courses")
+        .select("id")
+        .eq("id", PLATED_COURSE)
+      expect(course!.length).toBe(1)
+    })
+
+    it("refuses to delete the package the couple ordered", async () => {
+      const { error } = await venue
+        .from("menu_packages")
+        .delete()
+        .eq("id", SERVED_PACKAGE)
+        .select("id")
+
+      expect(error?.code).toBe("23503")
+
+      const { data: order } = await couple
+        .from("weddings")
+        .select("menu_package_id")
+        .eq("id", COUPLE_WEDDING)
+        .single()
+      expect(order?.menu_package_id).toBe(SERVED_PACKAGE)
+    })
+
+    it("still deletes a dish nobody has ordered", async () => {
+      // The other half of the claim, and the one that keeps `archived_at` from
+      // becoming the only way out of a typo: a dish no selection and no guest
+      // points at is still deletable. Created here rather than borrowing an
+      // unpicked seeded main, so a failure leaves the fixture alone.
+      const { data: created, error: insertError } = await venue
+        .from("menu_options")
+        .insert({
+          tenant_id: BAGATELKA,
+          menu_course_id: PLATED_COURSE,
+          name: "Literowka",
+        })
+        .select("id")
+        .single()
+
+      expect(insertError).toBeNull()
+
+      const { data, error } = await venue
+        .from("menu_options")
+        .delete()
+        .eq("id", created!.id)
+        .select("id")
+
+      expect(error).toBeNull()
+      expect(data).toEqual([{ id: created!.id }])
     })
   })
 

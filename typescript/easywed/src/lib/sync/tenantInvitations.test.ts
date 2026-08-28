@@ -45,8 +45,18 @@ const PASSWORD = "password123"
  * policy on purpose, so a client cannot un-claim a row, and the second run of
  * the suite would find every claim returning PT404. The seeded token exists for
  * clicking through the flow in a browser; the suite makes its own.
+ *
+ * Hex, and sixteen characters of it, because the INSERT policy pins the token
+ * to `^[0-9a-f]{64}$` - a client that supplies its own token has to supply one
+ * shaped like the default. A readable marker would be nicer to grep for; a
+ * marker this long is what keeps the `like` cleanup below from ever matching a
+ * real invitation, which at 1 in 2^64 it will not.
  */
-const TEST_TOKEN_PREFIX = "test-invite-"
+const TEST_TOKEN_PREFIX = "7e577e577e577e57"
+
+/** That prefix plus a counter, padded out to the 64 hex characters required. */
+const testToken = (seq: number) =>
+  `${TEST_TOKEN_PREFIX}${String(seq).padStart(48, "0")}`
 
 const reachable = await probeLocalStack()
 
@@ -88,7 +98,7 @@ describe.skipIf(!reachable)("tenant invitations", () => {
   const mintInvitation = async (
     role: "customer" | "staff" = "customer"
   ): Promise<string> => {
-    const token = `${TEST_TOKEN_PREFIX}${++tokenSeq}`
+    const token = testToken(++tokenSeq)
     const { error } = await venue.from("tenant_invitations").insert({
       tenant_id: BAGATELKA,
       role,
@@ -437,6 +447,100 @@ describe.skipIf(!reachable)("tenant invitations", () => {
         .select("token")
 
       expect(data?.some((row) => row.token === token)).toBe(false)
+    })
+  })
+
+  /**
+   * The columns the INSERT policy has to pin, one test each.
+   *
+   * Every one of these is `bagatelka`'s own owner writing a row into
+   * `bagatelka`'s own table, so `invited_by`, `tenant_id` and `role` - the three
+   * the policy originally constrained - are all correct. What is being asserted
+   * is that being allowed to insert *a* row is not being allowed to insert *any*
+   * row: a `with check` says nothing about the columns it does not name, and
+   * defaults are defaults rather than guarantees.
+   *
+   * All five are refusals, so none of them leaves a row for `afterEach` to reap.
+   */
+  describe("the columns an inserter must not choose", () => {
+    const forge = async (row: Record<string, unknown>) => {
+      const { error } = await venue.from("tenant_invitations").insert({
+        tenant_id: BAGATELKA,
+        role: "customer",
+        invited_by: venueUserId,
+        ...row,
+      } as never)
+      return error
+    }
+
+    it("refuses an invitation minted already claimed", async () => {
+      // The forgery worth naming: a row that reads "this account joined on that
+      // date", in the venue's own roster, about someone who never clicked
+      // anything. `claimed_by` is an `auth.users` FK, so the uuid has to name a
+      // real account - the forger picks whose acceptance to fabricate.
+      const error = await forge({
+        claimed_at: new Date().toISOString(),
+        claimed_by: SOLO_USER,
+      })
+
+      expect(error?.code).toBe("42501")
+    })
+
+    it("refuses a claimed_at with no claimer", async () => {
+      const error = await forge({ claimed_at: new Date().toISOString() })
+      expect(error?.code).toBe("42501")
+    })
+
+    it("refuses a claimed_by with no timestamp", async () => {
+      const error = await forge({ claimed_by: SOLO_USER })
+      expect(error?.code).toBe("42501")
+    })
+
+    it("refuses an invitation that would outlive the bound", async () => {
+      const error = await forge({
+        expires_at: new Date("2099-01-01T00:00:00Z").toISOString(),
+      })
+
+      expect(error?.code).toBe("42501")
+    })
+
+    it("refuses an invitation born expired", async () => {
+      // Not an attack - a support ticket. A link that never worked, and no
+      // message that says why.
+      const error = await forge({
+        expires_at: new Date(Date.now() - 60_000).toISOString(),
+      })
+
+      expect(error?.code).toBe("42501")
+    })
+
+    it("refuses a chosen token", async () => {
+      // The one that matters most. A token's entire security is that nobody who
+      // was not sent it can guess it, and `guess-me` is as good as no token.
+      const error = await forge({ token: "guess-me" })
+      expect(error?.code).toBe("42501")
+    })
+
+    it("still accepts a row that takes every default", async () => {
+      // The other half: the hardening must not have broken the only insert the
+      // application actually makes. `useTenantRoster` sends these three columns
+      // and nothing else.
+      const { data, error } = await venue
+        .from("tenant_invitations")
+        .insert({
+          tenant_id: BAGATELKA,
+          role: "customer",
+          invited_by: venueUserId,
+        })
+        .select("token, expires_at, claimed_at, claimed_by")
+        .single()
+
+      expect(error).toBeNull()
+      expect(data!.token).toMatch(/^[0-9a-f]{64}$/)
+      expect(data!.claimed_at).toBeNull()
+      expect(data!.claimed_by).toBeNull()
+
+      await venue.from("tenant_invitations").delete().eq("token", data!.token)
     })
   })
 

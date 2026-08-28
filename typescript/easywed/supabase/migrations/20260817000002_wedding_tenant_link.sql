@@ -190,6 +190,28 @@ begin
       using errcode = 'PT403';
   end if;
 
+  -- Re-linking to the venue this wedding is *already* linked to is a no-op.
+  --
+  -- Everything below this line exists to move a wedding from one recipient to
+  -- another, and the reset that follows is how the previous recipient's consent
+  -- is withdrawn. When the answer is the same venue there is nobody to withdraw
+  -- it from: the couple opening the dialog and picking the venue they are
+  -- already with would revoke a live grant and be asked to answer a question
+  -- they have already answered - and staff would watch a granted wedding drop
+  -- back to 'pending' for no act of the couple's that meant anything.
+  --
+  -- The checks above still run first, so this is not a way past them: an
+  -- inactive venue, or one that has closed its linking, still refuses. Only the
+  -- write is skipped, and the return value is the same tenant id the caller
+  -- gets on a real link.
+  if exists (
+    select 1 from public.weddings w
+    where w.id = p_wedding_id
+      and w.tenant_id is not distinct from v_tenant.id
+  ) then
+    return v_tenant.id;
+  end if;
+
   -- 'pending' unconditionally, including when re-linking a wedding that was
   -- already granted to a different venue: consent is given to *a* recipient,
   -- so pointing the link somewhere else has to withdraw it.
@@ -226,6 +248,27 @@ $$;
 -- link, so the wedding stays attached to its venue and the couple can grant
 -- again; 'none' is "no access", 'pending' is "asked and unanswered", and a
 -- revoked grant must not read to anyone as an outstanding request.
+--
+-- ## Authorize first, then answer
+--
+-- The order of the branches below is load-bearing, and `link_wedding_to_venue`
+-- above is the model. A `security definer` function reads every row in the
+-- table, so each distinct refusal it can raise before it knows who is asking is
+-- a question anyone may ask about any wedding id. Written the obvious way -
+-- "not found" first, then "not linked", then the permission check - this
+-- returned three distinguishable answers to a stranger holding an arbitrary
+-- uuid: no such wedding, one that exists but is unlinked, one that exists and
+-- is linked. Wedding ids are not secrets, but which of them are real and which
+-- have a venue attached is not a stranger's business to enumerate.
+--
+-- So nothing specific is said until the caller is placed. The owner branch and
+-- the staff branch each answer in detail, because both have already proved they
+-- belong to this wedding; everything else - unknown id, someone else's wedding,
+-- a wedding linked to a venue the caller is not staff of - collapses into the
+-- one generic 42501 at the end, indistinguishable from each other.
+--
+-- "Not found" is folded into that generic refusal rather than kept as `P0002`,
+-- which is why no caller in `src/` has to change: nothing branched on it.
 create function public.set_venue_access(p_wedding_id uuid, p_granted boolean)
 returns void
 language plpgsql
@@ -244,23 +287,31 @@ begin
   from public.weddings w
   where w.id = p_wedding_id;
 
-  if not found then
-    raise exception 'No such wedding' using errcode = 'P0002';
-  end if;
-
-  if v_tenant_id is null then
-    raise exception 'This wedding is not linked to a venue'
-      using errcode = '42501';
-  end if;
-
+  -- `v_owner_id is null` is "no such wedding": the column is `not null`, so it
+  -- can only be null because the row was not there. Tested that way rather than
+  -- on FOUND, which is a shared flag any later statement may reset - a footgun
+  -- to leave in a function whose branch order is its access control.
+  --
+  -- The owner branch. Authorized, so it is free to be specific: an owner
+  -- calling this on an unlinked wedding of their own has made a caller error
+  -- and telling them so reveals nothing they do not own.
   if v_owner_id = auth.uid() then
+    if v_tenant_id is null then
+      raise exception 'This wedding is not linked to a venue'
+        using errcode = '42501';
+    end if;
+
     update public.weddings
     set venue_access = case when p_granted then 'granted' else 'none' end
     where id = p_wedding_id;
     return;
   end if;
 
-  if public.is_tenant_staff(v_tenant_id) then
+  -- The staff branch. `v_tenant_id is not null` short-circuits before
+  -- `is_tenant_staff` so the null case never reaches it; the grant refusal
+  -- inside is specific for the same reason the owner's is - by here the caller
+  -- is staff of the venue this wedding is actually linked to.
+  if v_tenant_id is not null and public.is_tenant_staff(v_tenant_id) then
     if p_granted then
       raise exception 'Only the couple can grant a venue access to their wedding'
         using errcode = '42501';
@@ -272,6 +323,9 @@ begin
     return;
   end if;
 
+  -- Everyone else, and every shape of "everyone else", gets this one answer.
+  -- A stranger must not be able to tell a wedding that does not exist from one
+  -- that does, nor an unlinked wedding from a linked one.
   raise exception 'Not permitted to change venue access for this wedding'
     using errcode = '42501';
 end;

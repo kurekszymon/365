@@ -38,13 +38,45 @@
 -- literally in both its branches (20260817000002 section 2), so this column
 -- does not trip it. **Do not add it there.**
 --
--- `on delete set null` rather than cascade, matching `tenant_id`: a venue
--- hard-deleting a package must not delete anybody's wedding. The couple is left
--- with no package, which the trigger in section 5 tolerates and the UI renders
--- as "pick a menu".
+-- `on delete restrict`, and the reasoning is the same for all three FKs the
+-- menu stack points at the venue's catalogue (the other two are the one in
+-- section 2 and `guests.menu_option_id` in 20260822000003).
+--
+-- Cascade was never a candidate: a venue hard-deleting a package must not
+-- delete anybody's wedding. `set null` was, and it is what this column shipped
+-- with - but it is a **write into the couple's row performed on the venue's
+-- behalf**. Staff hold DELETE on `menu_packages` (20260822000001 section 4) and
+-- no policy on `weddings` at all, so a referential action was reaching where
+-- the policies deliberately do not: 20260817000003 section 2 calls the derived
+-- venue role "read-only by construction", and a referential action is exactly
+-- the construction it was not read across. Restrict makes the sentence true.
+--
+-- What staff lose is only the delete of a package somebody ordered from, which
+-- is the case `archived_at` exists for and the case the CRM already offers
+-- first. Deleting a package nobody holds still works - the typo before anyone
+-- ordered, which is all 20260822000001 section 4 ever claimed DELETE was for.
+--
+-- **Checked against tenant retirement, in both referential orders.** Deleting a
+-- tenant cascades into `menu_packages` while linked weddings still hold one, so
+-- this restrict and the retirement branch of `enforce_wedding_menu_package`
+-- (section 5) walk the same delete. The restrict check is an after-row event
+-- appended to the same trigger queue as that clear, so it evaluates after the
+-- package has been nulled and the delete succeeds - `restrict` behaves like
+-- `no action` in this timing. Recreating the FK so its RI triggers sort after
+-- the others gives the identical end state. Do not change either side without
+-- re-checking the other; docs/supabase.md carries the psql transcript.
 alter table public.weddings
   add column menu_package_id uuid references public.menu_packages(id)
-    on delete set null;
+    on delete restrict;
+
+-- A referencing column with no index of its own: the `set null` above has to
+-- find the weddings holding a package on every delete of one, including the
+-- cascade a retired tenant runs down into `menu_packages`. Without this that is
+-- a sequential scan of `weddings` per deleted package.
+-- Partial for the reason `guests_menu_option_id_idx` is (20260822000003:41):
+-- most weddings have picked no package, and those rows answer no question here.
+create index weddings_menu_package_id_idx
+  on public.weddings (menu_package_id) where menu_package_id is not null;
 
 -- ---------------------------------------------------------------------------
 -- 2. wedding_menu_selections
@@ -62,7 +94,14 @@ alter table public.weddings
 -- No `updated_at`, no trigger: the row is its own key with no mutable payload.
 create table public.wedding_menu_selections (
   wedding_id uuid not null references public.weddings(id) on delete cascade,
-  menu_option_id uuid not null references public.menu_options(id) on delete cascade,
+  -- `restrict`, not the cascade this shipped with, for the reason section 1
+  -- gives in full. The cascade was the worst of the three: it fired
+  -- `clear_guests_menu_option`, which is `security definer` and updates
+  -- `public.guests` unscoped - so a venue deleting one dish wrote guest rows of
+  -- every wedding holding it, RLS not consulted and `venue_access` not
+  -- consulted either. Checked against tenant retirement in both referential
+  -- orders along with the other two; see section 1.
+  menu_option_id uuid not null references public.menu_options(id) on delete restrict,
   created_at timestamptz not null default now(),
   primary key (wedding_id, menu_option_id)
 );
@@ -197,10 +236,35 @@ create policy "wedding members can view their venue's dishes"
 -- Shared by the selection trigger here and by the per-guest trigger in
 -- 20260822000003, which is why it takes the `_require_per_guest` flag it does
 -- not need yet.
+--
+-- ## Why `_require_active` is a flag and not just part of the predicate
+--
+-- Archived rows are filtered out of the *picker* and out of nothing else - the
+-- couple keeps seeing the name of a dish they already chose, which is the whole
+-- point of `archived_at` over a delete (`liveOptions` in menu.store says the
+-- same thing on the client). So "is this dish still on offer" and "is this dish
+-- one of the ones this wedding is serving" are two different questions, and the
+-- two callers ask different ones:
+--
+--   * a **new selection** must be refused if the venue has retired the dish -
+--     picking something no longer offered is exactly what archiving prevents,
+--     and the picker never showed it, so a request naming it did not come from
+--     the UI. That caller passes `true`.
+--   * a **guest assignment** must not be, even for an archived dish, as long as
+--     the wedding already selected it. Otherwise a venue archiving a main
+--     mid-planning freezes guest edits on a wedding that legitimately ordered
+--     it - a couple would be unable to seat their remaining guests because of a
+--     catalogue edit made for next year. `enforce_guest_menu_option` in
+--     20260822000003 keeps passing the default.
+--
+-- The course's own `archived_at` counts too: archiving a course retires its
+-- dishes with it, and the picker already agrees (`liveCourses`). The join is
+-- there for `per_guest_choice` anyway, so this costs nothing.
 create function public.menu_option_in_package(
   _option uuid,
   _package uuid,
-  _require_per_guest boolean default false
+  _require_per_guest boolean default false,
+  _require_active boolean default false
 )
 returns boolean
 language sql
@@ -215,10 +279,48 @@ as $$
     where o.id = _option
       and c.menu_package_id = _package
       and (not _require_per_guest or c.per_guest_choice)
+      and (
+        not _require_active
+        or (o.archived_at is null and c.archived_at is null)
+      )
   );
 $$;
 
 -- (1) The package a wedding orders must belong to the venue it is linked to.
+--
+-- ## The one case that is a clear rather than a refusal
+--
+-- `weddings.tenant_id` is `on delete set null` (20260817000002 section 1) and
+-- `menu_packages.tenant_id` is `on delete cascade` (20260822000001), so one
+-- `delete from tenants` fires both, in an order nothing specifies - referential
+-- triggers run in name order, which is creation order, which is a fact about
+-- when two unrelated migrations happened to be written.
+--
+-- Without the third branch below, the older FK wins and `UPDATE ONLY weddings
+-- SET tenant_id = NULL` reaches this trigger while `menu_package_id` still
+-- names a package of the venue being deleted - so the refusal fires and **the
+-- whole delete aborts with 23514**. Retiring a venue any couple ordered a menu
+-- from would simply be impossible, which falsifies the sentence 20260817000002
+-- is built on: "a retired venue must not take a couple's wedding with it. The
+-- wedding survives unlinked." This trigger is deliberately not `current_user`-
+-- gated the way `enforce_wedding_tenant_columns` is, so `psql` provisioning -
+-- the only way a tenant is deleted at all, there being no DELETE policy on
+-- `tenants` - hits the same wall.
+--
+-- So "the row's tenant is *becoming* null" is treated as a clear: there is no
+-- correct value for `menu_package_id` to hold, refusing offers the caller
+-- nothing to do, and a package-less wedding is already the tolerated state this
+-- function's first branch exists for. Repair rather than refusal, the same
+-- direction as soft deletes and orphan adoption.
+--
+-- The branch is narrow on purpose, and each of its three conditions carries
+-- weight: an INSERT naming a package with no tenant is still a caller bug;
+-- `old.tenant_id is not null` is what makes it "losing a venue" rather than
+-- "already had none"; and an unchanged `menu_package_id` is what keeps a
+-- statement that nulls the tenant *and* names a new package a refusal. In
+-- particular the tenant A -> tenant B case is untouched, so
+-- `link_wedding_to_venue`'s own `menu_package_id = null` (section 6) stays
+-- load-bearing - do not delete it on the strength of this branch.
 create function public.enforce_wedding_menu_package()
 returns trigger
 language plpgsql
@@ -241,6 +343,18 @@ begin
     and new.menu_package_id is not distinct from old.menu_package_id
     and new.tenant_id is not distinct from old.tenant_id
   then
+    return new;
+  end if;
+
+  -- The venue was retired out from under this wedding: clear the package
+  -- rather than refuse the statement. Trigger 2 wipes the selections that go
+  -- with it - see its `when` clause, which is what makes that true here.
+  if tg_op = 'UPDATE'
+    and new.tenant_id is null
+    and old.tenant_id is not null
+    and new.menu_package_id is not distinct from old.menu_package_id
+  then
+    new.menu_package_id := null;
     return new;
   end if;
 
@@ -297,11 +411,31 @@ begin
 end;
 $$;
 
+-- `when (... is distinct from ...)` rather than `after update of
+-- menu_package_id`, and the difference is load-bearing rather than stylistic.
+-- `update of <column>` matches the **statement's SET list**, not the row that
+-- ends up stored, so it would miss the clear performed by trigger 1 above: the
+-- statement that reaches it is the referential `UPDATE ONLY weddings SET
+-- tenant_id = NULL`, whose SET list names one column and not this one. A
+-- retired venue would leave the couple's selections behind, pointing at a
+-- package the wedding no longer orders.
+--
+-- The `when` clause is evaluated after BEFORE triggers have had NEW, so it sees
+-- the cleared value and fires. It also makes the trigger *more* accurate on the
+-- ordinary path - an `update ... set menu_package_id = <the same package>` no
+-- longer wipes a menu it did not change - and costs one comparison on every
+-- other write to `weddings`, with no lookup. The equality guard inside the
+-- function is now redundant and stays anyway: it is what keeps the function
+-- correct on its own terms rather than because of how it happens to be wired.
 create trigger weddings_menu_package_changed
-  after update of menu_package_id on public.weddings
-  for each row execute function public.reset_wedding_menu_on_package_change();
+  after update on public.weddings
+  for each row
+  when (new.menu_package_id is distinct from old.menu_package_id)
+  execute function public.reset_wedding_menu_on_package_change();
 
--- (3) A selected dish has to be in the package this wedding ordered.
+-- (3) A selected dish has to be in the package this wedding ordered, and still
+-- be on offer. The `_require_active => true` is the only place that flag is
+-- passed; see the function's own comment for why the guest trigger must not.
 create function public.enforce_menu_selection_in_package()
 returns trigger
 language plpgsql
@@ -316,7 +450,9 @@ begin
   where w.id = new.wedding_id;
 
   if v_package is null
-    or not public.menu_option_in_package(new.menu_option_id, v_package)
+    or not public.menu_option_in_package(
+      new.menu_option_id, v_package, _require_active => true
+    )
   then
     raise exception 'menu option does not belong to this wedding''s package'
       using errcode = '23514';
@@ -365,6 +501,20 @@ create trigger wedding_menu_selections_in_package
 -- behaviour on its own terms: the new venue does not serve the old venue's menu.
 -- Trigger 2 then fires and clears the selections.
 --
+-- **That is also what makes the same-tenant guard load-bearing here rather than
+-- merely tidy.** In 20260817000002 a re-link of the venue you are already with
+-- cost a `granted` -> `pending` reset; from this migration on it additionally
+-- drops `menu_package_id`, and trigger 2 takes every selection with it - and,
+-- from 20260822000003, every guest's dish. A couple re-opening the venue dialog
+-- and picking the same venue would lose a menu they had finished choosing. The
+-- `when (new.menu_package_id is distinct from old.menu_package_id)` clause on
+-- trigger 2 does not save them: on a same-venue re-link it fires *precisely
+-- because* null is distinct from the package they hold.
+--
+-- The guard skips the whole UPDATE, so `menu_package_id = null` below stays
+-- exactly as load-bearing as it was for the tenant A -> tenant B case. Do not
+-- delete that line on the strength of the guard.
+--
 -- Verbatim from 20260817000002 apart from that one line; the comments there
 -- still apply and are not repeated.
 create or replace function public.link_wedding_to_venue(p_wedding_id uuid, p_slug text)
@@ -403,6 +553,28 @@ begin
       using errcode = 'PT403';
   end if;
 
+  -- Re-linking to the venue this wedding is *already* linked to is a no-op.
+  --
+  -- Everything below this line exists to move a wedding from one recipient to
+  -- another, and the reset that follows is how the previous recipient's consent
+  -- is withdrawn. When the answer is the same venue there is nobody to withdraw
+  -- it from: the couple opening the dialog and picking the venue they are
+  -- already with would revoke a live grant and be asked to answer a question
+  -- they have already answered - and staff would watch a granted wedding drop
+  -- back to 'pending' for no act of the couple's that meant anything.
+  --
+  -- The checks above still run first, so this is not a way past them: an
+  -- inactive venue, or one that has closed its linking, still refuses. Only the
+  -- write is skipped, and the return value is the same tenant id the caller
+  -- gets on a real link.
+  if exists (
+    select 1 from public.weddings w
+    where w.id = p_wedding_id
+      and w.tenant_id is not distinct from v_tenant.id
+  ) then
+    return v_tenant.id;
+  end if;
+
   -- 'pending' unconditionally, including when re-linking a wedding that was
   -- already granted to a different venue: consent is given to *a* recipient, so
   -- pointing the link somewhere else has to withdraw it.
@@ -434,7 +606,7 @@ $$;
 -- client that could call it directly would have an oracle for "does this uuid
 -- name a dish in that package" against catalogues it cannot read.
 revoke all on function
-  public.menu_option_in_package(uuid, uuid, boolean)
+  public.menu_option_in_package(uuid, uuid, boolean, boolean)
   from public, anon, authenticated;
 revoke all on function public.enforce_wedding_menu_package()
   from public, anon, authenticated;

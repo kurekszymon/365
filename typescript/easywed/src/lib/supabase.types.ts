@@ -844,6 +844,7 @@ export type Database = {
         Args: {
           _option: string
           _package: string
+          _require_active?: boolean
           _require_per_guest?: boolean
         }
         Returns: boolean
