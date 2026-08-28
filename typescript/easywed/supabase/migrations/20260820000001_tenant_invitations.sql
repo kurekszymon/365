@@ -55,6 +55,10 @@ create table public.tenant_invitations (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
   role text not null check (role in ('staff', 'customer')),
+  -- Two uuids with the dashes stripped: 64 hex characters, the same randomness
+  -- `gen_random_uuid` gives everything else here. The *shape* is enforced in
+  -- the INSERT policy below rather than as a CHECK on this column - see the
+  -- note there for why the distinction is deliberate.
   token text not null unique default replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''),
   invited_by uuid not null references auth.users(id) on delete cascade,
   expires_at timestamptz not null default (now() + interval '14 days'),
@@ -117,12 +121,62 @@ create policy "staff view their tenant's invitations"
 -- `invited_by = auth.uid()` mirrors wedding_invitations and keeps the audit
 -- column honest - without it the inserter could attribute the invite to a
 -- colleague.
+--
+-- ## Every column a client can supply is pinned, not just the three that decide
+-- ## who gets in
+--
+-- A `with check` constrains the columns it names and says nothing about the
+-- rest, and every column of this table is client-supplied on INSERT - the
+-- defaults are defaults, not guarantees. Constraining only `invited_by`,
+-- `tenant_id` and `role` left three separate forgeries available to an ordinary
+-- staff member, all of them within their own tenant and so all of them past the
+-- checks above:
+--
+--   * `claimed_at` / `claimed_by` set at insert time mints an audit record of a
+--     join that never happened - a row reading "this account accepted on that
+--     date", in the venue's own records, naming a person who never clicked
+--     anything. The roster renders exactly this row.
+--   * `expires_at` far in the future turns a link meant to live 14 days into a
+--     standing key to the CRM. 30 days is the outer bound rather than an exact
+--     equality so the default can be tuned without revisiting the policy.
+--   * a chosen `token` is the one that matters most. A token is a bearer
+--     credential and its entire security is that nobody can guess it; an
+--     inserter free to write `token = 'abc'` has a link anyone can walk
+--     through. The default is 64 hex characters and the check pins that shape.
+--
+-- `expires_at > now()` also refuses an invitation born expired, which is not an
+-- attack but is a support ticket: a link that never worked and no message
+-- saying why.
+--
+-- **The token shape is a policy clause, not a CHECK on the column, and that is
+-- a decision.** A CHECK would additionally bind psql and any future definer
+-- function; a policy binds the client, which is where the threat is - the whole
+-- forgery is "a caller supplies a column instead of taking its default". Going
+-- the other way would also outlaw `supabase/seed.sql`'s deliberately
+-- hand-typeable fixtures (`seed-live-customer-invite`), which exist so
+-- `/venue/invite/$token` can be reached by typing it during development, and
+-- that is a real affordance to trade away for a hypothetical. What it does not
+-- cover: an RPC added later that mints tokens itself. Neither claim function
+-- writes this column today; one that did would need its own discipline.
+--
+-- **Considered and rejected: moving minting into a definer
+-- `create_tenant_invitation(p_role)`.** It would make every column
+-- server-written and the shape of `claim_tenant_invitation`'s counterpart. It
+-- is not worth it here: `CrmRosterInvitations` inserts directly today, a token's
+-- only power is being spendable once, and the policy plus the CHECK already pin
+-- everything the RPC would have set. Reach for the RPC if this table ever grows
+-- a column whose correct value the client genuinely cannot know.
 create policy "staff create invitations"
   on public.tenant_invitations for insert
   with check (
     invited_by = auth.uid()
     and public.is_tenant_staff(tenant_id)
     and (role = 'customer' or public.tenant_role(tenant_id) = 'owner')
+    and claimed_at is null
+    and claimed_by is null
+    and expires_at > now()
+    and expires_at <= now() + interval '30 days'
+    and token ~ '^[0-9a-f]{64}$'
   );
 
 -- Revoking an unclaimed invitation is ordinary roster work, so any staff member

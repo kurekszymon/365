@@ -385,15 +385,36 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
 
     it("still tells an owner that their own wedding has no venue", async () => {
       // The other half: collapsing the refusals must not cost the one caller
-      // who is entitled to the specific answer. solo@ owns this wedding, so
-      // "it is not linked" tells them nothing they do not already own.
-      const { error } = await solo.rpc("set_venue_access", {
-        p_wedding_id: UNLINKED_WEDDING,
-        p_granted: true,
-      })
+      // entitled to the specific answer. An owner asking about their own
+      // unlinked wedding learns nothing they do not already own.
+      //
+      // On a **throwaway wedding**, not the seeded unlinked one. That one is
+      // "Tomasz & Kasia", and tenantInvitations.test.ts links it to bagatelka
+      // and deliberately leaves it linked - it says so in its own afterEach,
+      // because nothing a client can call unlinks a wedding. The two files run
+      // concurrently against one database, so borrowing it makes this test's
+      // result depend on which suite got there first, and a `p_granted: true`
+      // that lands on a *linked* wedding does not refuse at all: it grants, and
+      // hands a venue a wedding the rest of this file asserts it cannot see.
+      const scratchId = crypto.randomUUID()
+      const userId = (await solo.auth.getUser()).data.user!.id
 
-      expect(error?.code).toBe("42501")
-      expect(error?.message).toContain("not linked to a venue")
+      const created = await solo
+        .from("weddings")
+        .insert({ id: scratchId, owner_id: userId, name: "Unlinked probe" })
+      expect(created.error).toBeNull()
+
+      try {
+        const { error } = await solo.rpc("set_venue_access", {
+          p_wedding_id: scratchId,
+          p_granted: true,
+        })
+
+        expect(error?.code).toBe("42501")
+        expect(error?.message).toContain("not linked to a venue")
+      } finally {
+        await solo.from("weddings").delete().eq("id", scratchId)
+      }
     })
   })
 
