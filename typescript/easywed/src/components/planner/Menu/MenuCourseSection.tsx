@@ -87,10 +87,15 @@ export const MenuCourseSection = ({
                   className={cn(
                     "flex w-full items-start gap-2 rounded-md border px-3 py-2 text-left text-sm",
                     isPicked && "border-primary bg-accent/40",
-                    retired && "opacity-60",
                     canEdit
                       ? "cursor-pointer hover:bg-accent/50"
-                      : "cursor-default opacity-90"
+                      : "cursor-default opacity-90",
+                    // After the read-only `opacity-90`, not before it: `cn` runs
+                    // through tailwind-merge, so two `opacity-*` utilities
+                    // collapse to whichever is last. Ordered the other way, a
+                    // viewer or a venue saw a retired dish at the same opacity
+                    // as a live one.
+                    retired && "opacity-60"
                   )}
                 >
                   <span
