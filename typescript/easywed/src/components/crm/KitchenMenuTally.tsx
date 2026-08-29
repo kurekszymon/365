@@ -62,12 +62,15 @@ export const KitchenMenuTally = () => {
 
   // Nothing ordered per guest: a buffet package, or a couple who has not
   // assigned dishes yet. Rendering an empty box would read as a fault.
-  if (tally.length === 0) return null
+  //
+  // `unnamed` counts too: portions nobody can name are still portions, and a
+  // kitchen that sees nothing here would cook nothing for them.
+  if (tally.rows.length === 0 && tally.unnamed === 0) return null
 
   const assigned = guests.filter((g) => g.menuOptionId).length
 
-  const byCourse = new Map<string, typeof tally>()
-  for (const row of tally) {
+  const byCourse = new Map<string, typeof tally.rows>()
+  for (const row of tally.rows) {
     const course = courseNameByOption.get(row.id) ?? ""
     byCourse.set(course, [...(byCourse.get(course) ?? []), row])
   }
@@ -98,6 +101,16 @@ export const KitchenMenuTally = () => {
           </div>
         </div>
       ))}
+
+      {/* Portions this venue's own catalogue could not name - a dish deleted
+          rather than archived, out from under an assignment. Shown rather than
+          dropped, because the line above counts them and the kitchen has to
+          cook them. */}
+      {tally.unnamed > 0 ? (
+        <p className="text-xs text-muted-foreground">
+          {t("crm.wedding.dishes_unnamed", { count: tally.unnamed })}
+        </p>
+      ) : null}
     </div>
   )
 }

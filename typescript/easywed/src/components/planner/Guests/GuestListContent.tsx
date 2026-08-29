@@ -203,12 +203,15 @@ export const GuestListContent = () => {
   // sort and the drop-unresolved-ids rule live in exactly one tested place.
   // Empty for a buffet menu, an unlinked wedding and all of guest mode, where
   // nothing carries a dish.
+  // `.rows` only: these are filter chips, and there is no filtering by a name
+  // the catalogue could not produce. The tally's `unnamed` count belongs on the
+  // documents that have to add up - the printed report and the kitchen tally.
   const dishCounts = useMemo(
     () =>
       tallyByOption(
         guests.map((g) => g.menuOptionId),
         (id) => dishNameById.get(id) ?? null
-      ),
+      ).rows,
     [guests, dishNameById]
   )
 

@@ -138,41 +138,58 @@ describe("tallyByOption", () => {
   it("counts assignments and sorts by count, biggest first", () => {
     expect(
       tallyByOption(["beef", "duck", "beef", "fish", "beef", "duck"], nameOf)
-    ).toEqual([
-      { id: "beef", name: "Poledwica wolowa", count: 3 },
-      { id: "duck", name: "Kaczka pieczona", count: 2 },
-      { id: "fish", name: "Filet z halibuta", count: 1 },
-    ])
+    ).toEqual({
+      rows: [
+        { id: "beef", name: "Poledwica wolowa", count: 3 },
+        { id: "duck", name: "Kaczka pieczona", count: 2 },
+        { id: "fish", name: "Filet z halibuta", count: 1 },
+      ],
+      unnamed: 0,
+    })
   })
 
   it("breaks equal counts alphabetically, so the list does not reshuffle", () => {
     const first = tallyByOption(["beef", "duck"], nameOf)
     const second = tallyByOption(["duck", "beef"], nameOf)
     expect(first).toEqual(second)
-    expect(first.map((row) => row.name)).toEqual([
+    expect(first.rows.map((row) => row.name)).toEqual([
       "Kaczka pieczona",
       "Poledwica wolowa",
     ])
   })
 
   it("ignores guests with no dish assigned", () => {
-    expect(tallyByOption([null, undefined, "beef", null], nameOf)).toEqual([
-      { id: "beef", name: "Poledwica wolowa", count: 1 },
-    ])
+    expect(tallyByOption([null, undefined, "beef", null], nameOf)).toEqual({
+      rows: [{ id: "beef", name: "Poledwica wolowa", count: 1 }],
+      unnamed: 0,
+    })
   })
 
   /**
-   * A dish hard-deleted out from under an assignment resolves to no name. It is
-   * dropped rather than printed as a uuid - a raw id on a kitchen document is
-   * worse than a shorter list, and `archived_at` exists so this stays rare.
+   * A dish hard-deleted out from under an assignment resolves to no name. It
+   * gets no row - a raw uuid on a kitchen document is worse than a shorter
+   * list - but it is still counted, because the "X of Y guests have a dish"
+   * line above it counts the same portions and the two have to add up.
    */
-  it("drops ids that no longer resolve to a dish", () => {
-    expect(tallyByOption(["beef", "deleted-id"], nameOf)).toEqual([
-      { id: "beef", name: "Poledwica wolowa", count: 1 },
-    ])
+  it("counts ids that no longer resolve to a dish, without naming them", () => {
+    expect(tallyByOption(["beef", "deleted-id", "deleted-id"], nameOf)).toEqual(
+      {
+        rows: [{ id: "beef", name: "Poledwica wolowa", count: 1 }],
+        unnamed: 2,
+      }
+    )
   })
 
-  it("returns an empty list for an empty guest list", () => {
-    expect(tallyByOption([], nameOf)).toEqual([])
+  // Every portion unnamed is the shape a wedding takes when it loses its venue:
+  // the catalogue goes empty and `guests.menu_option_id` stays put.
+  it("reports a tally with nothing nameable in it", () => {
+    expect(tallyByOption(["gone", "gone"], () => null)).toEqual({
+      rows: [],
+      unnamed: 2,
+    })
+  })
+
+  it("returns an empty tally for an empty guest list", () => {
+    expect(tallyByOption([], nameOf)).toEqual({ rows: [], unnamed: 0 })
   })
 })

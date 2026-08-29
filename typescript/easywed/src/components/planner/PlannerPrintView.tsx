@@ -283,7 +283,7 @@ export const PlannerPrintView = () => {
             guests.map((g) => g.menuOptionId),
             dishName
           )
-        : [],
+        : { rows: [], unnamed: 0 },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [fields, guests, dishNameById]
   )
@@ -459,7 +459,7 @@ export const PlannerPrintView = () => {
         {/* The kitchen's number, above the list rather than after it: a chef
             reading this wants the portion counts, and the per-guest rows are
             the backing detail. Absent unless the dish column was asked for. */}
-        {dishTally.length > 0 && (
+        {dishTally.rows.length + dishTally.unnamed > 0 && (
           <div className="mb-5 break-inside-avoid rounded border border-gray-300 p-3">
             <h3 className="mb-1 text-sm font-semibold">
               {t("export.dish_tally")}
@@ -471,12 +471,23 @@ export const PlannerPrintView = () => {
               })}
             </p>
             <ul className="grid grid-cols-2 gap-x-6 gap-y-0.5 text-xs">
-              {dishTally.map((dish) => (
+              {dishTally.rows.map((dish) => (
                 <li key={dish.id} className="flex justify-between gap-2">
                   <span>{dish.name}</span>
                   <span className="font-semibold">{dish.count}</span>
                 </li>
               ))}
+              {/* Portions whose dish the catalogue could not name. Listed, so
+                  the line above adds up: without this the header counted every
+                  guest holding a dish while the list counted only the nameable
+                  ones, and the difference was invisible on a page the kitchen
+                  cooks from. */}
+              {dishTally.unnamed > 0 && (
+                <li className="flex justify-between gap-2 text-gray-500">
+                  <span>{t("export.dish_unnamed")}</span>
+                  <span className="font-semibold">{dishTally.unnamed}</span>
+                </li>
+              )}
             </ul>
           </div>
         )}

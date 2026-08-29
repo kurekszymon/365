@@ -136,6 +136,22 @@ export const courseIsComplete = (
   pickedCount: number
 ): boolean => pickedCount >= course.choose_count
 
+/** Portions per dish, plus the ones whose dish could not be named. */
+export type DishTally = {
+  rows: Array<{ id: string; name: string; count: number }>
+  /**
+   * Portions whose option id resolved to no name, summed.
+   *
+   * Not a row, because there is nothing to call it and a raw uuid on a kitchen
+   * printout is worse than a shorter list. Not silence either: these are
+   * dinners somebody is expecting. Reachable when a dish was hard-deleted out
+   * from under an assignment, and wholesale when a wedding lost its venue - the
+   * catalogue goes empty while `guests.menu_option_id` stays put, so *every*
+   * portion lands here.
+   */
+  unnamed: number
+}
+
 /**
  * Count how many times each option id occurs, resolved to a label and sorted
  * for reading: biggest commitment first, then alphabetically so equal counts do
@@ -145,24 +161,31 @@ export const courseIsComplete = (
  * because this is a kitchen document: the number the chef cooks most of belongs
  * at the top.
  *
- * Ids that resolve to no name are dropped rather than shown as a uuid. That
- * happens exactly when a dish was hard-deleted out from under an assignment,
- * and a raw uuid on a kitchen printout is worse than a shorter list.
+ * The unresolvable ids are returned as a count rather than dropped on the
+ * floor. Dropping them silently is what let a printed report say "31 of 40
+ * guests have a dish" over a list of portions summing to 19, with no sign of
+ * where the other twelve went.
  */
 export const tallyByOption = (
   optionIds: Iterable<string | null | undefined>,
   nameOf: (id: string) => string | null
-): Array<{ id: string; name: string; count: number }> => {
+): DishTally => {
   const counts = new Map<string, number>()
   for (const id of optionIds) {
     if (!id) continue
     counts.set(id, (counts.get(id) ?? 0) + 1)
   }
 
-  return [...counts.entries()]
-    .map(([id, count]) => ({ id, name: nameOf(id), count }))
-    .filter((row): row is { id: string; name: string; count: number } =>
-      Boolean(row.name)
-    )
-    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+  const rows: DishTally["rows"] = []
+  let unnamed = 0
+
+  for (const [id, count] of counts) {
+    const name = nameOf(id)
+    if (name) rows.push({ id, name, count })
+    else unnamed += count
+  }
+
+  rows.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+
+  return { rows, unnamed }
 }
