@@ -53,6 +53,14 @@ export const GuestMenuChoiceField = ({ guestId }: { guestId: string }) => {
   const course = liveCourses(menu).find((c) => c.per_guest_choice)
   if (!course || !guest) return null
 
+  // Selection, and deliberately **not** `isLive` on top of it. A dish the venue
+  // archived after this wedding ordered it is still being cooked, and the
+  // database says so: `enforce_guest_menu_option` passes
+  // `menu_option_in_package`'s default `_require_active => false`, where a new
+  // *selection* passes `true` (20260822000002). Filtering archived dishes out
+  // here would freeze guest edits on a wedding whose main course the venue
+  // retired for next season - the couple could not finish assigning dinners
+  // because of a catalogue edit that has nothing to do with them.
   const options = menu.options.filter(
     (option) => option.menu_course_id === course.id && selected.has(option.id)
   )

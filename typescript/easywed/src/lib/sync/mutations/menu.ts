@@ -50,12 +50,14 @@ export const setWeddingMenuPackage = (
  * a toast the user should never see. `(wedding_id, menu_option_id)` is the
  * primary key, so a second pick of the same dish is a `23505` - which `run()`
  * turns into a "could not save" toast for a write the database is already
- * consistent with. That is reachable two ways: two people editing the menu at
- * once, and a single client doing pick → unpick → pick, since all three writes
- * are fire-and-forget with no ordering guarantee between them.
+ * consistent with.
  *
- * Ignoring the duplicate makes the operation genuinely idempotent, which is
- * what the optimistic store already assumes it is.
+ * What reaches that state is two people editing the menu at once. It used to be
+ * reachable from a single client too, by pick → unpick → pick, because all
+ * three writes were fire-and-forget with no ordering between them; that is now
+ * `queueOptionWrite`'s job in menu.store, and it is a different problem -
+ * ordering, not idempotence. Neither fix substitutes for the other, and this
+ * one is still the reason a second editor's pick is quiet.
  */
 export const insertMenuSelection = (optionId: string): Promise<boolean> => {
   const weddingId = getWeddingId()
