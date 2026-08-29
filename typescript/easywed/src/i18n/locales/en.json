@@ -1033,6 +1033,7 @@
   "menu.pick_package": "Choose a menu from what {{venue}} offers.",
   "menu.per_person": "{{price}} per person",
   "menu.change_package": "Change menu",
+  "menu.clear_package": "Clear our choice",
   "menu.change_warning": "Changing the menu clears {{count}} chosen dishes. You will have to pick them again.",
   "menu.change_warning_one": "Changing the menu clears {{count}} chosen dish. You will have to pick it again.",
   "menu.choose_count": "Choose {{count}} dishes",

@@ -134,14 +134,31 @@ export const MenuPanelContent = () => {
                 void menu.choosePackage(id)
               }}
             />
-            <Button
-              variant="ghost"
-              size="sm"
-              className="self-start"
-              onClick={() => setConfirming(null)}
-            >
-              {t("common.cancel")}
-            </Button>
+            <div className="flex flex-wrap items-center gap-2 self-start">
+              {/* The way back out of a menu chosen by mistake, and the only
+                  one: `link_wedding_to_venue` clears the package on a re-link,
+                  but a couple who picked the wrong package at the right venue
+                  has nothing to re-link. Same warning covers it - the database
+                  wipes the selections for a clear exactly as it does for a
+                  switch. */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setConfirming(null)
+                  void menu.choosePackage(null)
+                }}
+              >
+                {t("menu.clear_package")}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setConfirming(null)}
+              >
+                {t("common.cancel")}
+              </Button>
+            </div>
           </div>
         )
       ) : null}

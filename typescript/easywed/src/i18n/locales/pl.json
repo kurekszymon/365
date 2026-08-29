@@ -1058,6 +1058,7 @@
   "menu.pick_package": "Wybierzcie menu z oferty sali {{venue}}.",
   "menu.per_person": "{{price}} od osoby",
   "menu.change_package": "Zmień menu",
+  "menu.clear_package": "Wyczyść nasz wybór",
   "menu.change_warning": "Zmiana menu skasuje {{count}} wybranych dań. Trzeba będzie wybrać je od nowa.",
   "menu.change_warning_one": "Zmiana menu skasuje {{count}} wybrane danie. Trzeba będzie wybrać je od nowa.",
   "menu.change_warning_few": "Zmiana menu skasuje {{count}} wybrane dania. Trzeba będzie wybrać je od nowa.",

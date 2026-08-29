@@ -172,6 +172,7 @@ describe("choosePackage", () => {
   }
 
   beforeEach(() => {
+    vi.clearAllMocks()
     vi.mocked(setWeddingMenuPackage).mockResolvedValue(true)
     useMenuStore.getState().clear()
     usePlannerStore.setState({ guests: [] })
@@ -223,6 +224,39 @@ describe("choosePackage", () => {
     expect(
       usePlannerStore.getState().guests.map((g) => g.menuOptionId)
     ).toEqual([null, null])
+  })
+
+  // The way back out of a package chosen by mistake. Same operation as a
+  // switch, all the way down to the trigger, so it clears the same three things.
+  it("clears the package", async () => {
+    ordered()
+
+    await useMenuStore.getState().choosePackage(null)
+
+    expect(useMenuStore.getState().packageId).toBeNull()
+    expect(useMenuStore.getState().selectedOptionIds).toEqual([])
+    expect(
+      usePlannerStore.getState().guests.map((g) => g.menuOptionId)
+    ).toEqual([null, null])
+  })
+
+  it("rolls a refused clear back too", async () => {
+    ordered()
+    vi.mocked(setWeddingMenuPackage).mockResolvedValue(false)
+
+    await useMenuStore.getState().choosePackage(null)
+
+    expect(useMenuStore.getState().packageId).toBe(PACKAGE)
+    expect(useMenuStore.getState().selectedOptionIds).toEqual(["beef", "duck"])
+    expect(
+      usePlannerStore.getState().guests.map((g) => g.menuOptionId)
+    ).toEqual(["beef", "duck"])
+  })
+
+  it("does nothing when there was no package to clear", async () => {
+    await useMenuStore.getState().choosePackage(null)
+
+    expect(vi.mocked(setWeddingMenuPackage)).not.toHaveBeenCalled()
   })
 
   // Restoring the guests array wholesale would revert every edit made during

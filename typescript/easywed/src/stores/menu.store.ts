@@ -59,7 +59,8 @@ type Action = {
   setStatus: (status: MenuStatus) => void
   /** The order, as `loadWedding` read it off the wedding row. */
   setOrder: (packageId: string | null, selectedOptionIds: Array<string>) => void
-  choosePackage: (packageId: string) => Promise<void>
+  /** Order a package, or `null` to order none. */
+  choosePackage: (packageId: string | null) => Promise<void>
   toggleOption: (optionId: string) => void
   clear: () => void
 }
@@ -150,7 +151,13 @@ export const useMenuStore = create<State & Action>((set, get) => ({
     set({ packageId, selectedOptionIds }),
 
   /**
-   * Switch package.
+   * Switch package, or clear it with `null`.
+   *
+   * Clearing is the way back out of a menu chosen by mistake, and it is the
+   * same operation as a switch rather than a special case: the database treats
+   * every `menu_package_id is distinct from` as a change and wipes the
+   * selections and the guests' dishes either way (20260822000002's `when`
+   * clause is written to catch exactly the null it is cleared to).
    *
    * Clears the served set locally as well, because the database does: the
    * `weddings_menu_package_changed` trigger deletes every selection for the
@@ -208,6 +215,15 @@ export const useMenuStore = create<State & Action>((set, get) => ({
     // After the write, so it counts packages this wedding is actually ordering
     // rather than clicks the database refused - the same rule
     // `menu_selection_completed` follows below.
+    //
+    // A clear fires nothing. The event's payload is the shape of the package
+    // chosen, and there is no package; a zero-course row would sit in the same
+    // series as real orders and drag `course_count` down, answering a question
+    // nobody asked. `AnalyticsEvents` is closed by design, so widening the
+    // event to carry "this was a clear" is a deliberate edit to that map on the
+    // day somebody actually needs the number.
+    if (packageId === null) return
+
     const courses = state.courses.filter(
       (course) => course.menu_package_id === packageId && isLive(course)
     )
