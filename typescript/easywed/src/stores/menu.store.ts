@@ -205,21 +205,48 @@ export const liveCourses = (state: State): Array<MenuCourse> =>
       )
 
 /**
- * Live dishes of one course.
+ * The dishes of one course the picker renders: still on offer, **or** already
+ * ordered by this wedding.
  *
- * Archived dishes are filtered out of the *picker*, not out of the app: a dish
- * the couple already selected keeps its name everywhere it is displayed, which
- * is the whole reason `archived_at` exists rather than a delete.
+ * The second half is not a nicety. Archiving is what a venue does instead of
+ * deleting a dish somebody is eating, so a live-only filter here takes an
+ * archived dish the couple *selected* off the screen while it is still in the
+ * served set - which means it cannot be unpicked, and the couple is left
+ * serving something they can no longer see.
+ *
+ * The database draws the same line, from the other side:
+ * `menu_option_in_package(_require_active => true)` refuses a **new** selection
+ * of an archived dish - the picker never offered it, so a request naming it did
+ * not come from this UI - while `enforce_guest_menu_option` passes the default
+ * `false`, so a dish already selected stays assignable to guests. See
+ * 20260822000002 on why those are two different questions.
+ *
+ * An archived dish therefore only ever appears here while it is selected, and
+ * unpicking it is the last thing that can happen to it: the row leaves the list
+ * on the same click, which is the intended one-way door.
  */
-export const liveOptions = (
+export const pickableOptions = (
   state: State,
   courseId: string
-): Array<MenuOption> =>
-  state.options.filter(
-    (option) => option.menu_course_id === courseId && isLive(option)
+): Array<MenuOption> => {
+  const selected = new Set(state.selectedOptionIds)
+  return state.options.filter(
+    (option) =>
+      option.menu_course_id === courseId &&
+      (isLive(option) || selected.has(option.id))
   )
+}
 
-/** How many dishes are picked for one course. */
+/**
+ * How many dishes are picked for one course.
+ *
+ * Counts every selected option of the course, archived included - which is the
+ * same set as the selected members of `pickableOptions`, because selection is
+ * exactly what admits an archived row there. That equality is what keeps the
+ * sidebar badge (this) and the course section's own count (the rendered list)
+ * from disagreeing after a venue archives a dish the couple had picked, where
+ * the badge used to read "nothing left to do" over a section reading "4 of 5".
+ */
 export const pickedCount = (state: State, courseId: string): number => {
   const selected = new Set(state.selectedOptionIds)
   return state.options.filter(

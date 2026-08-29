@@ -1067,6 +1067,7 @@
   "menu.choose_count_few": "Do wyboru {{count}} pozycje",
   "menu.choose_count_many": "Do wyboru {{count}} pozycji",
   "menu.picked_of": "Wybrano {{count}} z {{total}}",
+  "menu.archived_dish": "Wycofane z oferty — możecie je jeszcze usunąć",
   "menu.per_guest_badge": "Każdy gość wybiera sam",
 
   "reminders.title": "Przypo\u00admnienia",

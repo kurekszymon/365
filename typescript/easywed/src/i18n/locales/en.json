@@ -1038,6 +1038,7 @@
   "menu.choose_count": "Choose {{count}} dishes",
   "menu.choose_count_one": "Choose {{count}} dish",
   "menu.picked_of": "{{count}} of {{total}} chosen",
+  "menu.archived_dish": "No longer offered — you can still remove it",
   "menu.per_guest_badge": "Each guest picks their own",
 
   "reminders.title": "Reminders",

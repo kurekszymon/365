@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next"
 import { CheckIcon } from "lucide-react"
 
 import type { MenuCourse, MenuOption } from "@/lib/menu"
-import { courseIsComplete, dishLabel } from "@/lib/menu"
+import { courseIsComplete, dishLabel, isLive } from "@/lib/menu"
 import { TagBadge } from "@/components/ui/tag-badge"
 import { cn } from "@/lib/utils"
 
@@ -19,6 +19,13 @@ import { cn } from "@/lib/utils"
  * the transient state of swapping one dish for another), so this counts and
  * says where they are rather than blocking - "4 z 5 wybranych", and the badge
  * clears once the count is met.
+ *
+ * `options` is `pickableOptions`, so a row here can be an archived dish this
+ * wedding had already selected. It is dimmed and labelled rather than hidden -
+ * the same treatment `CrmMenuPackageList` gives an archived package - because
+ * hiding it would leave a dish in the served set with nothing on screen to
+ * unpick it with. Unpicking is all it is still good for; it drops out of
+ * `pickableOptions` on that same click.
  */
 export const MenuCourseSection = ({
   course,
@@ -68,6 +75,7 @@ export const MenuCourseSection = ({
         <ul className="flex flex-col gap-1.5">
           {options.map((option) => {
             const isPicked = selectedIds.has(option.id)
+            const retired = !isLive(option)
 
             return (
               <li key={option.id}>
@@ -79,6 +87,7 @@ export const MenuCourseSection = ({
                   className={cn(
                     "flex w-full items-start gap-2 rounded-md border px-3 py-2 text-left text-sm",
                     isPicked && "border-primary bg-accent/40",
+                    retired && "opacity-60",
                     canEdit
                       ? "cursor-pointer hover:bg-accent/50"
                       : "cursor-default opacity-90"
@@ -101,6 +110,11 @@ export const MenuCourseSection = ({
                       <span className="text-muted-foreground">
                         {" "}
                         {option.note}
+                      </span>
+                    ) : null}
+                    {retired ? (
+                      <span className="block text-xs text-muted-foreground">
+                        {t("menu.archived_dish")}
                       </span>
                     ) : null}
                   </span>

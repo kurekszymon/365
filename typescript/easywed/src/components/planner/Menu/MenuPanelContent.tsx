@@ -9,7 +9,7 @@ import { formatMoney } from "@/lib/money"
 import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 import {
   liveCourses,
-  liveOptions,
+  pickableOptions,
   selectOrderedPackage,
   useMenuStore,
 } from "@/stores/menu.store"
@@ -153,7 +153,7 @@ export const MenuPanelContent = () => {
           <MenuCourseSection
             key={course.id}
             course={course}
-            options={liveOptions(menu, course.id)}
+            options={pickableOptions(menu, course.id)}
             selectedIds={selectedIds}
             canEdit={canEdit}
             onToggle={(optionId) => menu.toggleOption(optionId)}
