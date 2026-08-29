@@ -74,7 +74,7 @@ export const MenuPanelContent = () => {
           currency={currency}
           selectedId={null}
           canEdit={canEdit}
-          onSelect={(id) => menu.choosePackage(id)}
+          onSelect={(id) => void menu.choosePackage(id)}
         />
       </div>
     )
@@ -131,7 +131,7 @@ export const MenuPanelContent = () => {
               canEdit
               onSelect={(id) => {
                 setConfirming(null)
-                menu.choosePackage(id)
+                void menu.choosePackage(id)
               }}
             />
             <Button

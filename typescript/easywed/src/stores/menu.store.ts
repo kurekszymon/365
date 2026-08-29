@@ -59,7 +59,7 @@ type Action = {
   setStatus: (status: MenuStatus) => void
   /** The order, as `loadWedding` read it off the wedding row. */
   setOrder: (packageId: string | null, selectedOptionIds: Array<string>) => void
-  choosePackage: (packageId: string) => void
+  choosePackage: (packageId: string) => Promise<void>
   toggleOption: (optionId: string) => void
   clear: () => void
 }
@@ -74,6 +74,9 @@ const initial: State = {
   status: "idle",
 }
 
+/** A guest's dish, as it was before the store cleared it. */
+type ClearedDish = { guestId: string; menuOptionId: string }
+
 /**
  * Mirrors the two triggers that clear `guests.menu_option_id`.
  *
@@ -85,18 +88,53 @@ const initial: State = {
  * Reaches into `planner.store` rather than the reverse: the menu is what
  * changed, the guests are what it changed. `planner.store` does not import this
  * module, so there is no cycle to create.
+ *
+ * Returns what it took, so a caller whose write is *refused* can put it back -
+ * "the database has already done this" is only true once that write lands.
  */
-const clearGuestDishes = (optionId?: string) => {
+const clearGuestDishes = (optionId?: string): Array<ClearedDish> => {
   const { guests } = usePlannerStore.getState()
-  if (!guests.some((g) => g.menuOptionId)) return
 
+  const cleared = guests.flatMap((guest) =>
+    guest.menuOptionId &&
+    (optionId === undefined || guest.menuOptionId === optionId)
+      ? [{ guestId: guest.id, menuOptionId: guest.menuOptionId }]
+      : []
+  )
+  if (cleared.length === 0) return cleared
+
+  const ids = new Set(cleared.map((entry) => entry.guestId))
   usePlannerStore.setState({
     guests: guests.map((guest) =>
-      guest.menuOptionId &&
-      (optionId === undefined || guest.menuOptionId === optionId)
-        ? { ...guest, menuOptionId: null }
-        : guest
+      ids.has(guest.id) ? { ...guest, menuOptionId: null } : guest
     ),
+  })
+
+  return cleared
+}
+
+/**
+ * Undo a `clearGuestDishes`, guest by guest.
+ *
+ * Per guest rather than by restoring the whole array, because the array is a
+ * live object: the round trip this compensates for is long enough to have added
+ * a guest, renamed one, or seated one, and swapping in a snapshot would revert
+ * all of it. Each guest is only touched if they are *still* dishless, so a dish
+ * assigned in the meantime outranks the one being restored.
+ */
+const restoreGuestDishes = (cleared: Array<ClearedDish>) => {
+  if (cleared.length === 0) return
+
+  const byId = new Map(
+    cleared.map((entry) => [entry.guestId, entry.menuOptionId])
+  )
+  usePlannerStore.setState({
+    guests: usePlannerStore.getState().guests.map((guest) => {
+      const previous = byId.get(guest.id)
+      return previous && guest.menuOptionId === null
+        ? { ...guest, menuOptionId: previous }
+        : guest
+    }),
   })
 }
 
@@ -127,14 +165,49 @@ export const useMenuStore = create<State & Action>((set, get) => ({
    *
    * The confirm belongs to the caller, not here - this is a data-losing action
    * and the UI names what it will clear before calling.
+   *
+   * ## Why this one awaits, when every other store action fires and forgets
+   *
+   * The optimistic pattern in `planner.store` writes one thing and leaves it
+   * diverged if the write fails - a toast, and the next load repairs it. This
+   * action clears *three* things on the strength of a trigger that only runs if
+   * the write lands: the package, the served set, and every guest's dish. A
+   * refused write left the couple looking at an emptied menu and an emptied
+   * guest list while the database still held all three, and every subsequent
+   * pick then failed too, because `enforce_menu_selection_in_package` was
+   * measuring against the package the database still had.
+   *
+   * So it rolls back - all three, under one guard. If the couple picked a
+   * different package while this was in flight, that later choice owns the
+   * state and this failure has nothing left to restore: its own `set` would
+   * revive a package the couple has moved off, and its `restoreGuestDishes`
+   * would hand every guest back a dish belonging to a package nobody ordered.
    */
-  choosePackage: (packageId) => {
+  choosePackage: async (packageId) => {
     const state = get()
     if (state.packageId === packageId) return
 
-    set({ packageId, selectedOptionIds: [] })
-    clearGuestDishes()
+    const previous = {
+      packageId: state.packageId,
+      selectedOptionIds: state.selectedOptionIds,
+    }
 
+    set({ packageId, selectedOptionIds: [] })
+    const cleared = clearGuestDishes()
+
+    const ok = await setWeddingMenuPackage(packageId)
+
+    if (!ok) {
+      if (get().packageId === packageId) {
+        set(previous)
+        restoreGuestDishes(cleared)
+      }
+      return
+    }
+
+    // After the write, so it counts packages this wedding is actually ordering
+    // rather than clicks the database refused - the same rule
+    // `menu_selection_completed` follows below.
     const courses = state.courses.filter(
       (course) => course.menu_package_id === packageId && isLive(course)
     )
@@ -142,8 +215,6 @@ export const useMenuStore = create<State & Action>((set, get) => ({
       course_count: courses.length,
       per_guest_courses: courses.filter((c) => c.per_guest_choice).length,
     })
-
-    void setWeddingMenuPackage(packageId)
   },
 
   /**

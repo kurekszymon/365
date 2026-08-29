@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
   pickableOptions,
   pickedCount,
@@ -7,6 +7,18 @@ import {
   useMenuStore,
 } from "./menu.store"
 import type { MenuCourse, MenuOption } from "@/lib/menu"
+import type { Guest } from "@/stores/planner.store"
+import { setWeddingMenuPackage } from "@/lib/sync/mutations"
+import { usePlannerStore } from "@/stores/planner.store"
+
+// The store's three writes, stubbed. `run()` is what normally decides the
+// boolean; here the tests decide it, because the whole point of these cases is
+// what the store does with a `false` it cannot otherwise provoke.
+vi.mock("@/lib/sync/mutations", () => ({
+  setWeddingMenuPackage: vi.fn(() => Promise.resolve(true)),
+  insertMenuSelection: vi.fn(() => Promise.resolve(true)),
+  deleteMenuSelection: vi.fn(() => Promise.resolve(true)),
+}))
 
 const PACKAGE = "pkg-1"
 const COURSE = "course-1"
@@ -21,6 +33,14 @@ const course = (patch: Partial<MenuCourse> = {}): MenuCourse => ({
   position: 1,
   archived_at: null,
   ...patch,
+})
+
+const guest = (id: string, menuOptionId: string | null): Guest => ({
+  id,
+  name: id,
+  dietary: [],
+  tableId: null,
+  menuOptionId,
 })
 
 const dish = (id: string, archived = false): MenuOption => ({
@@ -135,5 +155,95 @@ describe("pickedCount", () => {
     expect(pickedCount(useMenuStore.getState(), COURSE)).toBe(1)
     expect(renderedPickedCount(COURSE)).toBe(1)
     expect(selectIncompleteCourseCount(useMenuStore.getState())).toBe(1)
+  })
+})
+
+describe("choosePackage", () => {
+  const ordered = () => {
+    useMenuStore.setState({
+      courses: [course()],
+      options: [dish("beef"), dish("duck")],
+      packageId: PACKAGE,
+      selectedOptionIds: ["beef", "duck"],
+    })
+    usePlannerStore.setState({
+      guests: [guest("anna", "beef"), guest("piotr", "duck")],
+    })
+  }
+
+  beforeEach(() => {
+    vi.mocked(setWeddingMenuPackage).mockResolvedValue(true)
+    useMenuStore.getState().clear()
+    usePlannerStore.setState({ guests: [] })
+  })
+
+  it("mirrors the triggers when the write lands", async () => {
+    ordered()
+
+    await useMenuStore.getState().choosePackage("pkg-2")
+
+    expect(useMenuStore.getState().packageId).toBe("pkg-2")
+    expect(useMenuStore.getState().selectedOptionIds).toEqual([])
+    expect(
+      usePlannerStore.getState().guests.map((g) => g.menuOptionId)
+    ).toEqual([null, null])
+  })
+
+  // The case this rollback exists for: the store had emptied the menu and every
+  // guest's dish while the database still held all three, and the only signal
+  // was one generic "could not save" toast.
+  it("puts the package, the served set and the dishes back when it fails", async () => {
+    ordered()
+    vi.mocked(setWeddingMenuPackage).mockResolvedValue(false)
+
+    await useMenuStore.getState().choosePackage("pkg-2")
+
+    expect(useMenuStore.getState().packageId).toBe(PACKAGE)
+    expect(useMenuStore.getState().selectedOptionIds).toEqual(["beef", "duck"])
+    expect(
+      usePlannerStore.getState().guests.map((g) => g.menuOptionId)
+    ).toEqual(["beef", "duck"])
+  })
+
+  // A failure must not undo a *later* choice. The couple picked again while the
+  // first write was in flight; that second package is the one they are looking
+  // at, and reviving the first one's snapshot would be a worse lie than the
+  // bug - including the guests, who would each get a dish back that belongs to
+  // a package nobody has ordered.
+  it("leaves a package chosen while the write was in flight alone", async () => {
+    ordered()
+    vi.mocked(setWeddingMenuPackage).mockImplementation(() => {
+      useMenuStore.setState({ packageId: "pkg-3", selectedOptionIds: [] })
+      return Promise.resolve(false)
+    })
+
+    await useMenuStore.getState().choosePackage("pkg-2")
+
+    expect(useMenuStore.getState().packageId).toBe("pkg-3")
+    expect(
+      usePlannerStore.getState().guests.map((g) => g.menuOptionId)
+    ).toEqual([null, null])
+  })
+
+  // Restoring the guests array wholesale would revert every edit made during
+  // the round trip - a guest added, renamed, seated, or handed a dish.
+  it("restores dish by dish, keeping edits made during the write", async () => {
+    ordered()
+    vi.mocked(setWeddingMenuPackage).mockImplementation(() => {
+      usePlannerStore.setState({
+        guests: [...usePlannerStore.getState().guests, guest("zofia", "duck")],
+      })
+      return Promise.resolve(false)
+    })
+
+    await useMenuStore.getState().choosePackage("pkg-2")
+
+    expect(
+      usePlannerStore.getState().guests.map((g) => [g.id, g.menuOptionId])
+    ).toEqual([
+      ["anna", "beef"],
+      ["piotr", "duck"],
+      ["zofia", "duck"],
+    ])
   })
 })
