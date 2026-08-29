@@ -173,7 +173,7 @@ export const MenuPanelContent = () => {
             options={pickableOptions(menu, course.id)}
             selectedIds={selectedIds}
             canEdit={canEdit}
-            onToggle={(optionId) => menu.toggleOption(optionId)}
+            onToggle={(optionId) => void menu.toggleOption(optionId)}
           />
         ))
       )}

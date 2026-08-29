@@ -8,7 +8,11 @@ import {
 } from "./menu.store"
 import type { MenuCourse, MenuOption } from "@/lib/menu"
 import type { Guest } from "@/stores/planner.store"
-import { setWeddingMenuPackage } from "@/lib/sync/mutations"
+import {
+  deleteMenuSelection,
+  insertMenuSelection,
+  setWeddingMenuPackage,
+} from "@/lib/sync/mutations"
 import { usePlannerStore } from "@/stores/planner.store"
 
 // The store's three writes, stubbed. `run()` is what normally decides the
@@ -279,5 +283,131 @@ describe("choosePackage", () => {
       ["piotr", "duck"],
       ["zofia", "duck"],
     ])
+  })
+})
+
+describe("toggleOption", () => {
+  const offered = () => {
+    useMenuStore.setState({
+      courses: [course({ choose_count: 2 })],
+      options: [dish("beef"), dish("duck")],
+      packageId: PACKAGE,
+      selectedOptionIds: [],
+    })
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(insertMenuSelection).mockResolvedValue(true)
+    vi.mocked(deleteMenuSelection).mockResolvedValue(true)
+    useMenuStore.getState().clear()
+    usePlannerStore.setState({ guests: [] })
+  })
+
+  // The race this queue exists for. Both writes were fire-and-forget, so the
+  // DELETE could reach Postgres before the INSERT it was undoing, match no row,
+  // and leave the dish in the served set with nothing on screen saying so.
+  it("holds the unpick until the pick it undoes has landed", async () => {
+    offered()
+    const order: Array<string> = []
+    let releaseInsert: (() => void) | undefined
+
+    vi.mocked(insertMenuSelection).mockImplementation(() => {
+      order.push("insert:start")
+      return new Promise<boolean>((resolve) => {
+        releaseInsert = () => {
+          order.push("insert:end")
+          resolve(true)
+        }
+      })
+    })
+    vi.mocked(deleteMenuSelection).mockImplementation(() => {
+      order.push("delete:start")
+      return Promise.resolve(true)
+    })
+
+    const pick = useMenuStore.getState().toggleOption("beef")
+    const unpick = useMenuStore.getState().toggleOption("beef")
+
+    // Enough microtasks for an unqueued delete to have gone out.
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(order).toEqual(["insert:start"])
+
+    releaseInsert?.()
+    await Promise.all([pick, unpick])
+
+    expect(order).toEqual(["insert:start", "insert:end", "delete:start"])
+    expect(useMenuStore.getState().selectedOptionIds).toEqual([])
+  })
+
+  // Per option, not one chain for the whole menu: two dishes have no ordering
+  // relationship, and serializing them would make a burst of picks as slow as
+  // the sum of its round trips.
+  it("does not serialize two different dishes", async () => {
+    offered()
+    const started: Array<string> = []
+    const release: Array<() => void> = []
+
+    vi.mocked(insertMenuSelection).mockImplementation((optionId) => {
+      started.push(optionId)
+      return new Promise<boolean>((resolve) =>
+        release.push(() => resolve(true))
+      )
+    })
+
+    const first = useMenuStore.getState().toggleOption("beef")
+    const second = useMenuStore.getState().toggleOption("duck")
+
+    await Promise.resolve()
+    expect(started).toEqual(["beef", "duck"])
+
+    release.forEach((fn) => fn())
+    await Promise.all([first, second])
+  })
+
+  it("drops the dish again when the pick is refused", async () => {
+    offered()
+    vi.mocked(insertMenuSelection).mockResolvedValue(false)
+
+    await useMenuStore.getState().toggleOption("beef")
+
+    expect(useMenuStore.getState().selectedOptionIds).toEqual([])
+  })
+
+  // The heavier half: an unpick releases every guest holding the dish, so a
+  // refused DELETE was erasing dinners the database still had.
+  it("puts the dish and its guests back when the unpick is refused", async () => {
+    offered()
+    useMenuStore.setState({ selectedOptionIds: ["beef", "duck"] })
+    usePlannerStore.setState({
+      guests: [guest("anna", "beef"), guest("piotr", "duck")],
+    })
+    vi.mocked(deleteMenuSelection).mockResolvedValue(false)
+
+    await useMenuStore.getState().toggleOption("beef")
+
+    expect(useMenuStore.getState().selectedOptionIds).toContain("beef")
+    expect(
+      usePlannerStore.getState().guests.map((g) => [g.id, g.menuOptionId])
+    ).toEqual([
+      ["anna", "beef"],
+      ["piotr", "duck"],
+    ])
+  })
+
+  // A toggle made while the write was in flight owns the state. Reviving what
+  // the failed call saw would undo a click the couple made after it.
+  it("leaves a later pick of the same dish alone", async () => {
+    offered()
+    useMenuStore.setState({ selectedOptionIds: ["beef"] })
+    vi.mocked(deleteMenuSelection).mockImplementation(() => {
+      useMenuStore.setState({ selectedOptionIds: ["beef"] })
+      return Promise.resolve(false)
+    })
+
+    await useMenuStore.getState().toggleOption("beef")
+
+    expect(useMenuStore.getState().selectedOptionIds).toEqual(["beef"])
   })
 })

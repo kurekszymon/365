@@ -61,7 +61,7 @@ type Action = {
   setOrder: (packageId: string | null, selectedOptionIds: Array<string>) => void
   /** Order a package, or `null` to order none. */
   choosePackage: (packageId: string | null) => Promise<void>
-  toggleOption: (optionId: string) => void
+  toggleOption: (optionId: string) => Promise<void>
   clear: () => void
 }
 
@@ -137,6 +137,48 @@ const restoreGuestDishes = (cleared: Array<ClearedDish>) => {
         : guest
     }),
   })
+}
+
+/**
+ * One write chain per dish, so a pick and an unpick of the same dish cannot
+ * land out of order.
+ *
+ * Both writes were fire-and-forget with nothing sequencing them, so pick →
+ * unpick raced: the DELETE could reach Postgres before the INSERT it was
+ * undoing, delete nothing, and leave the row behind. The store then showed a
+ * dish nobody had picked as unpicked while the wedding was still serving it,
+ * and no error was raised anywhere - the two statements each succeeded.
+ * `ignoreDuplicates` on the insert never covered this; it makes a *second*
+ * pick idempotent, which is a different race.
+ *
+ * Keyed per option rather than one global chain, because two different dishes
+ * have no ordering relationship at all and serializing them would make a burst
+ * of picks as slow as the sum of its round trips.
+ *
+ * The map holds a *neutralized* promise - settled either way - so one refused
+ * write cannot reject the chain and strand every later toggle of that dish.
+ * The entry deletes itself once it is the tail, so this does not grow with the
+ * catalogue.
+ */
+const optionWrites = new Map<string, Promise<void>>()
+
+const queueOptionWrite = (
+  optionId: string,
+  write: () => Promise<boolean>
+): Promise<boolean> => {
+  const previous = optionWrites.get(optionId) ?? Promise.resolve()
+  const result = previous.then(write, write)
+  const settled = result.then(
+    () => {},
+    () => {}
+  )
+
+  optionWrites.set(optionId, settled)
+  void settled.then(() => {
+    if (optionWrites.get(optionId) === settled) optionWrites.delete(optionId)
+  })
+
+  return result
 }
 
 export const useMenuStore = create<State & Action>((set, get) => ({
@@ -239,8 +281,19 @@ export const useMenuStore = create<State & Action>((set, get) => ({
    * `choose_count` is not enforced here beyond what the UI renders, and it is
    * not enforced in the database either - see 20260822000002 for why. Picking a
    * seventh main when the venue asked for six is allowed and shows as such.
+   *
+   * Both writes go through `queueOptionWrite`, which is what keeps a pick and
+   * the unpick that follows it in the order the couple clicked them, and both
+   * roll their optimistic change back when the write is refused - for the same
+   * reason `choosePackage` does, with the unpick carrying the heavier half:
+   * it releases every guest holding the dish.
+   *
+   * Each rollback is guarded on the dish still being where this call left it.
+   * A later toggle of the same dish is queued behind this one and owns the
+   * state by the time this failure is known; reviving what this call saw would
+   * undo a click the couple made after it.
    */
-  toggleOption: (optionId) => {
+  toggleOption: async (optionId) => {
     const state = get()
     const picked = state.selectedOptionIds.includes(optionId)
 
@@ -256,13 +309,26 @@ export const useMenuStore = create<State & Action>((set, get) => ({
       // server-side. Repair rather than refusal is the database's choice (see
       // 20260822000003), and the client has to show the repair or it goes on
       // naming a dish nobody is serving.
-      clearGuestDishes(optionId)
-      void deleteMenuSelection(optionId)
+      const cleared = clearGuestDishes(optionId)
+
+      const ok = await queueOptionWrite(optionId, () =>
+        deleteMenuSelection(optionId)
+      )
+      if (!ok && !get().selectedOptionIds.includes(optionId)) {
+        // Appended rather than restored from the snapshot, so dishes toggled
+        // while this was in flight keep their state. Nothing renders in
+        // selection order - the lists come off `options` - so the position is
+        // free.
+        set({ selectedOptionIds: [...get().selectedOptionIds, optionId] })
+        restoreGuestDishes(cleared)
+      }
       return
     }
 
-    void insertMenuSelection(optionId)
-
+    // Computed here, off the state this call produced, and only *fired* once
+    // the write lands. Reading it after the await would attribute the
+    // transition to whatever the store looked like when a round trip returned.
+    //
     // Fired on the transition into "every course has what it needs", not on
     // every pick, so it counts weddings that finished choosing rather than
     // clicks. Counts only - a dish name is text the venue typed.
@@ -271,6 +337,21 @@ export const useMenuStore = create<State & Action>((set, get) => ({
       ...state,
       selectedOptionIds: next,
     }).length
+
+    const ok = await queueOptionWrite(optionId, () =>
+      insertMenuSelection(optionId)
+    )
+    if (!ok) {
+      if (get().selectedOptionIds.includes(optionId)) {
+        set({
+          selectedOptionIds: get().selectedOptionIds.filter(
+            (id) => id !== optionId
+          ),
+        })
+      }
+      return
+    }
+
     if (before > 0 && after === 0) {
       const courses = liveCourses({ ...state, selectedOptionIds: next })
       track("menu_selection_completed", {
