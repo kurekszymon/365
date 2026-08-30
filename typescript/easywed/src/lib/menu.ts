@@ -99,6 +99,25 @@ export const canonicalizeDishName = (raw: string): string | null => {
   return cleaned.length > 0 ? cleaned : null
 }
 
+/**
+ * The `choose_count` a typed field commits, clamped to the CHECK's range so an
+ * out-of-range number is refused by the form rather than by PostgREST.
+ *
+ * Returns null for a blank or unparseable field - "nothing to commit", the same
+ * null `canonicalizeDishName` returns - so blurring an emptied field leaves the
+ * stored number alone instead of snapping it to a bound. Takes the raw text
+ * rather than a number precisely so it can tell "" apart from 0.
+ */
+export const parseChooseCount = (raw: string): number | null => {
+  const parsed = Number(raw)
+  if (raw.trim() === "" || !Number.isFinite(parsed)) return null
+
+  return Math.min(
+    MAX_CHOOSE_COUNT,
+    Math.max(MIN_CHOOSE_COUNT, Math.round(parsed))
+  )
+}
+
 /** Live rows only. Archived ones stay readable, but never offered for picking. */
 export const isLive = <T extends { archived_at: string | null }>(
   row: T

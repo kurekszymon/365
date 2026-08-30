@@ -7,6 +7,7 @@ import {
   dishLabel,
   isLive,
   menuOptionTone,
+  parseChooseCount,
   tallyByOption,
 } from "./menu"
 
@@ -191,5 +192,34 @@ describe("tallyByOption", () => {
 
   it("returns an empty tally for an empty guest list", () => {
     expect(tallyByOption([], nameOf)).toEqual({ rows: [], unnamed: 0 })
+  })
+})
+
+describe("parseChooseCount", () => {
+  it("takes a number the venue can actually have", () => {
+    expect(parseChooseCount("5")).toBe(5)
+    expect(parseChooseCount(" 5 ")).toBe(5)
+  })
+
+  // The bug this whole field was rewritten for: typing "60" used to write 6 on
+  // the first keystroke and a clamped 50 on the second. Clamping is now one
+  // decision made once, when the field is committed.
+  it("clamps to the range the CHECK allows", () => {
+    expect(parseChooseCount("60")).toBe(50)
+    expect(parseChooseCount("0")).toBe(1)
+    expect(parseChooseCount("-3")).toBe(1)
+  })
+
+  it("rounds a fractional entry", () => {
+    expect(parseChooseCount("2.6")).toBe(3)
+  })
+
+  // Nothing to commit, so the caller leaves the stored number alone. Reverting
+  // an emptied field is `NumberInput`'s stated contract, and this is what keeps
+  // it true once the write moved to blur.
+  it("returns null for a field with nothing in it", () => {
+    expect(parseChooseCount("")).toBeNull()
+    expect(parseChooseCount("   ")).toBeNull()
+    expect(parseChooseCount("abc")).toBeNull()
   })
 })
