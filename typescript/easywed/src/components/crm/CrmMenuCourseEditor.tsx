@@ -148,6 +148,7 @@ export const CrmMenuCourseEditor = ({
         ) : null}
 
         <CrmConfirmButton
+          disabled={menus.saving}
           onConfirm={() => void menus.deleteCourse(course.id)}
           label={t("crm.menus.delete_course")}
           confirmLabel={t("crm.menus.delete_confirm")}
@@ -227,6 +228,7 @@ export const CrmMenuCourseEditor = ({
               void menus.moveOption(course.id, option.id, delta)
             }
             onDelete={() => void menus.deleteOption(option.id)}
+            saving={menus.saving}
           />
         ))}
       </ul>

@@ -659,6 +659,7 @@
   "crm.menus.body": "Whatever you write here is what a couple sees in their wedding plan and picks from. Prices are visible to staff and to couples linked to your venue only - we never show them on your venue page.",
   "crm.menus.empty": "You have no menus yet.",
   "crm.menus.load_failed": "Could not load the menus.",
+  "crm.menus.retry": "Try again",
   "crm.menus.save_failed": "Could not save the change. Please try again.",
   "crm.menus.delete_failed": "Could not delete it. Please try again.",
   "crm.menus.delete_dish_in_use": "A couple is already serving this dish, so it cannot be deleted. Archive it instead - everyone who ordered it keeps their choice.",

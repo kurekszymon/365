@@ -64,8 +64,22 @@ function CrmMenus() {
         </p>
       </div>
 
+      {/* Retry beside the message, not just the message. A failed load used to
+          be terminal for this screen - the banner sat there and the only way
+          back was a page reload. The next successful write clears it too, so
+          this is the way out of a *load* failure specifically. */}
       {menus.error ? (
-        <p className="text-sm text-destructive">{menus.error}</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-sm text-destructive">{menus.error}</p>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={menus.saving}
+            onClick={() => void menus.refresh()}
+          >
+            {t("crm.menus.retry")}
+          </Button>
+        </div>
       ) : null}
 
       {!menus.loaded ? (

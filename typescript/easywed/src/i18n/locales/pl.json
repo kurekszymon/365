@@ -665,6 +665,7 @@
   "crm.menus.body": "To, co tu zapiszecie, para młoda zobaczy w swoim planie wesela i z tego wybierze. Ceny widzą tylko obsługa i pary młode powiązane z Waszą salą - na stronie sali nie pokazujemy ich nikomu.",
   "crm.menus.empty": "Nie macie jeszcze żadnego menu.",
   "crm.menus.load_failed": "Nie udało się wczytać menu.",
+  "crm.menus.retry": "Spróbuj ponownie",
   "crm.menus.save_failed": "Nie udało się zapisać zmiany. Spróbujcie ponownie.",
   "crm.menus.delete_failed": "Nie udało się usunąć. Spróbujcie ponownie.",
   "crm.menus.delete_dish_in_use": "To danie jest już w menu pary młodej, więc nie można go usunąć. Zarchiwizujcie je - każdy, kto je zamówił, zachowa swój wybór.",

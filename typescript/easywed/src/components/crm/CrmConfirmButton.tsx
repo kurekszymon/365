@@ -23,6 +23,7 @@ export const CrmConfirmButton = ({
   label,
   confirmLabel,
   icon,
+  disabled = false,
 }: {
   onConfirm: () => void
   /** Accessible name in the resting state. */
@@ -30,6 +31,14 @@ export const CrmConfirmButton = ({
   /** Visible text once armed - it has to say what is about to happen. */
   confirmLabel: string
   icon: React.ReactNode
+  /**
+   * Held while another write is in flight.
+   *
+   * These are the hard deletes, and they cascade: firing a second one at a
+   * screen whose optimistic state is mid-repair is how a restore-on-failure
+   * puts back a row the next delete has already taken away.
+   */
+  disabled?: boolean
 }) => {
   const { t } = useTranslation()
   const [armed, setArmed] = useState(false)
@@ -42,6 +51,7 @@ export const CrmConfirmButton = ({
       <Button
         size="sm"
         variant="destructive"
+        disabled={disabled}
         onClick={() => {
           if (timer.current) clearTimeout(timer.current)
           setArmed(false)
@@ -59,6 +69,7 @@ export const CrmConfirmButton = ({
       variant="ghost"
       aria-label={label}
       title={label}
+      disabled={disabled}
       onClick={() => {
         setArmed(true)
         // Disarms itself, so a half-pressed delete does not sit waiting for a

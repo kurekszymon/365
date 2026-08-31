@@ -123,6 +123,7 @@ export const CrmMenuPackageEditor = ({
         </Button>
 
         <CrmConfirmButton
+          disabled={menus.saving}
           onConfirm={() => void menus.deletePackage(pkg.id)}
           label={t("crm.menus.delete_package")}
           confirmLabel={t("crm.menus.delete_confirm")}

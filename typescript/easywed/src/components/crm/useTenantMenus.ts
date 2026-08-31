@@ -40,6 +40,25 @@ const applyOrder = <T extends { id: string; position: number }>(
     })
     .sort(byPosition)
 
+/**
+ * What a write reports back: whether it took, and what to log when it did not.
+ *
+ * `cause` is the PostgrestError when there was one. The helpers used to return
+ * a bare boolean and drop it, so every `fail()` call site logged `null` where
+ * the SQLSTATE and the constraint name should have been.
+ */
+type WriteResult = { ok: boolean; cause: unknown }
+
+/**
+ * The refusal that arrives with nothing in it.
+ *
+ * An UPDATE or DELETE that RLS filters to nothing is a clean 204 - no error, no
+ * rows - so there is no error object to log and the console would otherwise say
+ * the same `null` this change is removing. A string, because that is genuinely
+ * all that is known.
+ */
+const NO_ROWS = "no rows matched - RLS refused it, or the row is already gone"
+
 const PACKAGE_COLUMNS =
   "id, name, description, price_per_person_minor, position, archived_at, created_at"
 const COURSE_COLUMNS =
@@ -84,6 +103,15 @@ export function useTenantMenus(tenantId: string | undefined) {
   const [currency, setCurrency] = useState("PLN")
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  /**
+   * How many writes are in flight, not whether one is.
+   *
+   * A counter because these overlap: blurring a name while a dish delete is
+   * still going is ordinary use, and a boolean would have the first write to
+   * finish declare the screen idle while the second is still out. Exposed as
+   * the boolean `saving` - callers only ever ask the yes/no question.
+   */
+  const [writesInFlight, setWritesInFlight] = useState(0)
 
   const refresh = useCallback(
     async (signal?: AbortSignal) => {
@@ -169,18 +197,59 @@ export function useTenantMenus(tenantId: string | undefined) {
 
   useEffect(() => {
     if (!tenantId) return
+
+    // Everything from the previous tenant goes first. `loaded` stays true
+    // between tenants otherwise, so the screen renders one venue's packages
+    // under another venue's name until the fetch lands - and staff who switch
+    // venues are staff who are about to edit the wrong catalogue.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoaded(false)
+    setPackages([])
+    setCourses([])
+    setOptions([])
+    setError(null)
+
     const controller = new AbortController()
     // refresh() only setState()s after awaiting the fetch - a legitimate
     // external-data sync, not a synchronous cascading render.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh(controller.signal)
     return () => controller.abort()
   }, [tenantId, refresh])
 
+  /**
+   * Report a refused write.
+   *
+   * `cause` is the PostgrestError the helpers below now hand back rather than
+   * swallow. It used to be null at every call site, so the console logged
+   * `[crm] save option failed null` - the message, the constraint name and the
+   * SQLSTATE all thrown away at the one moment somebody needs them.
+   */
   const fail = useCallback((scope: string, cause: unknown, key: string) => {
     console.error(`[crm] ${scope}`, cause)
     setError(i18n.t(key))
   }, [])
+
+  /**
+   * Wrap one write: count it in, clear the last failure, count it out.
+   *
+   * The `setError(null)` is here rather than on success, matching
+   * `useTenantRoster`: a stale red banner belongs to the action that produced
+   * it, and the next action is the moment it stops being true. Clearing only on
+   * success would leave one transient failure on screen for the rest of the
+   * session, which is what this replaces.
+   */
+  const tracked = useCallback(
+    async <T>(write: () => Promise<T>): Promise<T> => {
+      setWritesInFlight((n) => n + 1)
+      setError(null)
+      try {
+        return await write()
+      } finally {
+        setWritesInFlight((n) => n - 1)
+      }
+    },
+    []
+  )
 
   /**
    * The three write primitives, parameterized by table.
@@ -193,30 +262,36 @@ export function useTenantMenus(tenantId: string | undefined) {
    * constraints, and by the callers below, which build every payload from a
    * typed row.
    */
-  const writeInsert = async (
-    table: MenuTable,
-    row: Record<string, unknown>
-  ): Promise<boolean> => {
-    const { error: insertError } = await supabase
-      .from(table)
-      .insert(row as never)
-    return !insertError
-  }
+  const writeInsert = useCallback(
+    (table: MenuTable, row: Record<string, unknown>): Promise<WriteResult> =>
+      tracked(async () => {
+        const { error: insertError } = await supabase
+          .from(table)
+          .insert(row as never)
+        return { ok: !insertError, cause: insertError }
+      }),
+    [tracked]
+  )
 
-  const writePatch = async (
-    table: MenuTable,
-    id: string,
-    patch: Record<string, unknown>
-  ): Promise<boolean> => {
-    const { data, error: patchError } = await supabase
-      .from(table)
-      .update(patch as never)
-      .eq("id", id)
-      .select("id")
-    // `data` is only read once `patchError` is known null, which is the only
-    // state PostgREST guarantees it in.
-    return !patchError && data.length > 0
-  }
+  const writePatch = useCallback(
+    (
+      table: MenuTable,
+      id: string,
+      patch: Record<string, unknown>
+    ): Promise<WriteResult> =>
+      tracked(async () => {
+        const { data, error: patchError } = await supabase
+          .from(table)
+          .update(patch as never)
+          .eq("id", id)
+          .select("id")
+        // `data` is only read once `patchError` is known null, which is the only
+        // state PostgREST guarantees it in.
+        if (patchError) return { ok: false, cause: patchError }
+        return { ok: data.length > 0, cause: data.length > 0 ? null : NO_ROWS }
+      }),
+    [tracked]
+  )
 
   /**
    * The one write that has to say *why* it failed.
@@ -229,18 +304,29 @@ export function useTenantMenus(tenantId: string | undefined) {
    * `23503` is `foreign_key_violation`; it arrives for a package too, because
    * the delete cascades down to the options and the restrict fires there.
    */
-  const writeDelete = async (
-    table: MenuTable,
-    id: string
-  ): Promise<{ ok: boolean; inUse: boolean }> => {
-    const { data, error: deleteError } = await supabase
-      .from(table)
-      .delete()
-      .eq("id", id)
-      .select("id")
-    if (deleteError) return { ok: false, inUse: deleteError.code === "23503" }
-    return { ok: data.length > 0, inUse: false }
-  }
+  const writeDelete = useCallback(
+    (table: MenuTable, id: string): Promise<WriteResult & { inUse: boolean }> =>
+      tracked(async () => {
+        const { data, error: deleteError } = await supabase
+          .from(table)
+          .delete()
+          .eq("id", id)
+          .select("id")
+        if (deleteError) {
+          return {
+            ok: false,
+            inUse: deleteError.code === "23503",
+            cause: deleteError,
+          }
+        }
+        return {
+          ok: data.length > 0,
+          inUse: false,
+          cause: data.length > 0 ? null : NO_ROWS,
+        }
+      }),
+    [tracked]
+  )
 
   // ---------------------------------------------------------------------
   // Packages
@@ -266,7 +352,7 @@ export function useTenantMenus(tenantId: string | undefined) {
       const previous = packages
       setPackages((list) => [...list, row])
 
-      const ok = await writeInsert("menu_packages", {
+      const { ok, cause } = await writeInsert("menu_packages", {
         id: row.id,
         tenant_id: tenantId,
         name: row.name,
@@ -275,13 +361,13 @@ export function useTenantMenus(tenantId: string | undefined) {
 
       if (!ok) {
         setPackages(previous)
-        fail("create package failed", null, "crm.menus.save_failed")
+        fail("create package failed", cause, "crm.menus.save_failed")
         return null
       }
 
       return row.id
     },
-    [tenantId, packages, fail]
+    [tenantId, packages, fail, writeInsert]
   )
 
   const savePackage = useCallback(
@@ -291,9 +377,10 @@ export function useTenantMenus(tenantId: string | undefined) {
         list.map((row) => (row.id === id ? { ...row, ...patch } : row))
       )
 
-      if (!(await writePatch("menu_packages", id, patch))) {
+      const { ok, cause } = await writePatch("menu_packages", id, patch)
+      if (!ok) {
         setPackages(previous)
-        fail("save package failed", null, "crm.menus.save_failed")
+        fail("save package failed", cause, "crm.menus.save_failed")
         return
       }
 
@@ -309,7 +396,7 @@ export function useTenantMenus(tenantId: string | undefined) {
         per_guest_courses: courseRows.filter((c) => c.per_guest_choice).length,
       })
     },
-    [packages, courses, options, fail]
+    [packages, courses, options, fail, writePatch]
   )
 
   const deletePackage = useCallback(
@@ -336,14 +423,14 @@ export function useTenantMenus(tenantId: string | undefined) {
         setOptions(previous.options)
         fail(
           "delete package failed",
-          null,
+          result.cause,
           result.inUse
             ? "crm.menus.delete_package_in_use"
             : "crm.menus.delete_failed"
         )
       }
     },
-    [packages, courses, options, fail]
+    [packages, courses, options, fail, writeDelete]
   )
 
   // ---------------------------------------------------------------------
@@ -369,7 +456,7 @@ export function useTenantMenus(tenantId: string | undefined) {
       const previous = courses
       setCourses((list) => [...list, row])
 
-      const ok = await writeInsert("menu_courses", {
+      const { ok, cause } = await writeInsert("menu_courses", {
         id: row.id,
         tenant_id: tenantId,
         menu_package_id: row.menu_package_id,
@@ -379,10 +466,10 @@ export function useTenantMenus(tenantId: string | undefined) {
 
       if (!ok) {
         setCourses(previous)
-        fail("create course failed", null, "crm.menus.save_failed")
+        fail("create course failed", cause, "crm.menus.save_failed")
       }
     },
-    [tenantId, courses, fail]
+    [tenantId, courses, fail, writeInsert]
   )
 
   const saveCourse = useCallback(
@@ -392,12 +479,13 @@ export function useTenantMenus(tenantId: string | undefined) {
         list.map((row) => (row.id === id ? { ...row, ...patch } : row))
       )
 
-      if (!(await writePatch("menu_courses", id, patch))) {
+      const { ok, cause } = await writePatch("menu_courses", id, patch)
+      if (!ok) {
         setCourses(previous)
-        fail("save course failed", null, "crm.menus.save_failed")
+        fail("save course failed", cause, "crm.menus.save_failed")
       }
     },
-    [courses, fail]
+    [courses, fail, writePatch]
   )
 
   const deleteCourse = useCallback(
@@ -412,14 +500,14 @@ export function useTenantMenus(tenantId: string | undefined) {
         setOptions(previous.options)
         fail(
           "delete course failed",
-          null,
+          result.cause,
           result.inUse
             ? "crm.menus.delete_course_in_use"
             : "crm.menus.delete_failed"
         )
       }
     },
-    [courses, options, fail]
+    [courses, options, fail, writeDelete]
   )
 
   // ---------------------------------------------------------------------
@@ -443,7 +531,7 @@ export function useTenantMenus(tenantId: string | undefined) {
       const previous = options
       setOptions((list) => [...list, row])
 
-      const ok = await writeInsert("menu_options", {
+      const { ok, cause } = await writeInsert("menu_options", {
         id: row.id,
         tenant_id: tenantId,
         menu_course_id: row.menu_course_id,
@@ -453,10 +541,10 @@ export function useTenantMenus(tenantId: string | undefined) {
 
       if (!ok) {
         setOptions(previous)
-        fail("create option failed", null, "crm.menus.save_failed")
+        fail("create option failed", cause, "crm.menus.save_failed")
       }
     },
-    [tenantId, options, fail]
+    [tenantId, options, fail, writeInsert]
   )
 
   const saveOption = useCallback(
@@ -466,12 +554,13 @@ export function useTenantMenus(tenantId: string | undefined) {
         list.map((row) => (row.id === id ? { ...row, ...patch } : row))
       )
 
-      if (!(await writePatch("menu_options", id, patch))) {
+      const { ok, cause } = await writePatch("menu_options", id, patch)
+      if (!ok) {
         setOptions(previous)
-        fail("save option failed", null, "crm.menus.save_failed")
+        fail("save option failed", cause, "crm.menus.save_failed")
       }
     },
-    [options, fail]
+    [options, fail, writePatch]
   )
 
   const deleteOption = useCallback(
@@ -484,14 +573,14 @@ export function useTenantMenus(tenantId: string | undefined) {
         setOptions(previous)
         fail(
           "delete option failed",
-          null,
+          result.cause,
           result.inUse
             ? "crm.menus.delete_dish_in_use"
             : "crm.menus.delete_failed"
         )
       }
     },
-    [options, fail]
+    [options, fail, writeDelete]
   )
 
   // ---------------------------------------------------------------------
@@ -509,34 +598,48 @@ export function useTenantMenus(tenantId: string | undefined) {
    * the state is restored on the *positions* not matching rather than on an
    * error.
    */
-  const moveWithin = async <T extends { id: string; position: number }>(
-    rpc: "reorder_menu_courses" | "reorder_menu_options",
-    scopeKey: "p_menu_package_id" | "p_course_id",
-    scopeId: string,
-    siblings: Array<T>,
-    id: string,
-    delta: -1 | 1
-  ): Promise<Array<string> | null> => {
-    const index = siblings.findIndex((row) => row.id === id)
-    const target = index + delta
-    if (index === -1 || target < 0 || target >= siblings.length) return null
+  const moveWithin = useCallback(
+    async <T extends { id: string; position: number }>(
+      rpc: "reorder_menu_courses" | "reorder_menu_options",
+      scopeKey: "p_menu_package_id" | "p_course_id",
+      scopeId: string,
+      siblings: Array<T>,
+      id: string,
+      delta: -1 | 1
+    ): Promise<{ ids: Array<string> | null; cause: unknown }> => {
+      const index = siblings.findIndex((row) => row.id === id)
+      const target = index + delta
+      if (index === -1 || target < 0 || target >= siblings.length) {
+        // Nothing to move: the row is at the end of the list, or gone. Not a
+        // failure, and the callers below tell the two apart by re-checking that
+        // the row is still there.
+        return { ids: null, cause: null }
+      }
 
-    const ids = siblings.map((row) => row.id)
-    ;[ids[index], ids[target]] = [ids[target], ids[index]]
+      const ids = siblings.map((row) => row.id)
+      ;[ids[index], ids[target]] = [ids[target], ids[index]]
 
-    const { error: rpcError } = await supabase.rpc(rpc, {
-      [scopeKey]: scopeId,
-      p_ids: ids,
-    } as never)
+      // `async () => await` rather than passing the builder straight through:
+      // supabase-js returns a thenable, not a Promise, and `tracked` needs
+      // something with a `finally` to decrement on.
+      const { error: rpcError } = await tracked(
+        async () =>
+          await supabase.rpc(rpc, {
+            [scopeKey]: scopeId,
+            p_ids: ids,
+          } as never)
+      )
 
-    return rpcError ? null : ids
-  }
+      return rpcError ? { ids: null, cause: rpcError } : { ids, cause: null }
+    },
+    [tracked]
+  )
 
   const moveCourse = useCallback(
     async (packageId: string, id: string, delta: -1 | 1) => {
       const siblings = courses.filter((c) => c.menu_package_id === packageId)
 
-      const ids = await moveWithin(
+      const { ids, cause } = await moveWithin(
         "reorder_menu_courses",
         "p_menu_package_id",
         packageId,
@@ -546,21 +649,21 @@ export function useTenantMenus(tenantId: string | undefined) {
       )
       if (!ids) {
         if (siblings.some((c) => c.id === id)) {
-          fail("reorder courses failed", null, "crm.menus.save_failed")
+          fail("reorder courses failed", cause, "crm.menus.save_failed")
         }
         return
       }
 
       setCourses((list) => applyOrder(list, ids))
     },
-    [courses, fail]
+    [courses, fail, moveWithin]
   )
 
   const moveOption = useCallback(
     async (courseId: string, id: string, delta: -1 | 1) => {
       const siblings = options.filter((o) => o.menu_course_id === courseId)
 
-      const ids = await moveWithin(
+      const { ids, cause } = await moveWithin(
         "reorder_menu_options",
         "p_course_id",
         courseId,
@@ -570,19 +673,30 @@ export function useTenantMenus(tenantId: string | undefined) {
       )
       if (!ids) {
         if (siblings.some((o) => o.id === id)) {
-          fail("reorder options failed", null, "crm.menus.save_failed")
+          fail("reorder options failed", cause, "crm.menus.save_failed")
         }
         return
       }
 
       setOptions((list) => applyOrder(list, ids))
     },
-    [options, fail]
+    [options, fail, moveWithin]
   )
 
   return {
     loaded,
     error,
+    /** True while any write is out. Gates the destructive buttons. */
+    saving: writesInFlight > 0,
+    /**
+     * Re-read the catalogue.
+     *
+     * Returned so the error banner can offer a retry. Without it a failed load
+     * was terminal for the screen: the message sat there and the only way back
+     * was a full page reload, which is not something a staff member should have
+     * to work out for themselves.
+     */
+    refresh,
     currency,
     packages,
     courses,

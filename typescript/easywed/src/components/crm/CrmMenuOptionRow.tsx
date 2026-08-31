@@ -36,6 +36,7 @@ export const CrmMenuOptionRow = ({
   onSave,
   onMove,
   onDelete,
+  saving,
 }: {
   option: CrmMenuOption
   isFirst: boolean
@@ -43,6 +44,8 @@ export const CrmMenuOptionRow = ({
   onSave: (patch: Partial<CrmMenuOption>) => void
   onMove: (delta: -1 | 1) => void
   onDelete: () => void
+  /** A write is in flight somewhere on this screen - see CrmConfirmButton. */
+  saving: boolean
 }) => {
   const { t } = useTranslation()
   const [name, setName] = useState<string | null>(null)
@@ -131,6 +134,7 @@ export const CrmMenuOptionRow = ({
       </Button>
 
       <CrmConfirmButton
+        disabled={saving}
         onConfirm={onDelete}
         label={t("crm.menus.delete_dish")}
         confirmLabel={t("crm.menus.delete_confirm")}
