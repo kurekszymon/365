@@ -41,6 +41,75 @@ const applyOrder = <T extends { id: string; position: number }>(
     .sort(byPosition)
 
 /**
+ * Undoing an optimistic edit, one row at a time.
+ *
+ * All three take the *current* list and change the one thing this write
+ * touched, rather than reinstating an array captured before the round trip.
+ * The snapshot version was the easy way to write it and quietly wrong: a menu
+ * editor is a screen of small independent writes, so between the optimistic
+ * edit and the refusal a staff member has typically renamed a dish, added
+ * another, or toggled an archive - and putting the old array back threw all of
+ * it away to undo one field. The same rule the planner's stores follow when a
+ * write is refused mid-edit.
+ */
+const withoutRow = <T extends { id: string }>(
+  list: Array<T>,
+  id: string
+): Array<T> => list.filter((row) => row.id !== id)
+
+const withRows = <T extends { id: string; position: number }>(
+  list: Array<T>,
+  rows: Array<T>
+): Array<T> =>
+  [
+    ...list,
+    // Only the ones that are actually gone. A row somebody re-created in the
+    // meantime keeps its newer version rather than being duplicated.
+    ...rows.filter((row) => !list.some((item) => item.id === row.id)),
+  ].sort(byPosition)
+
+/**
+ * Put back exactly the fields this write tried to change, and no others - so a
+ * refused rename does not also revert an archive toggled while it was in
+ * flight.
+ */
+const revertPatch = <T extends { id: string }>(
+  list: Array<T>,
+  id: string,
+  before: T | undefined,
+  patch: Partial<T>
+): Array<T> => {
+  if (!before) return list
+  const keys = Object.keys(patch) as Array<keyof T>
+
+  return list.map((row) =>
+    row.id === id
+      ? keys.reduce((acc, key) => ({ ...acc, [key]: before[key] }), row)
+      : row
+  )
+}
+
+/**
+ * The sibling ids after moving one row by `delta`, or null when it cannot move.
+ *
+ * Pure, and separate from the write, so the new order can be shown before the
+ * RPC is asked to persist it.
+ */
+const reorderedIds = <T extends { id: string }>(
+  siblings: Array<T>,
+  id: string,
+  delta: -1 | 1
+): Array<string> | null => {
+  const index = siblings.findIndex((row) => row.id === id)
+  const target = index + delta
+  if (index === -1 || target < 0 || target >= siblings.length) return null
+
+  const ids = siblings.map((row) => row.id)
+  ;[ids[index], ids[target]] = [ids[target], ids[index]]
+  return ids
+}
+
+/**
  * What a write reports back: whether it took, and what to log when it did not.
  *
  * `cause` is the PostgrestError when there was one. The helpers used to return
@@ -86,10 +155,12 @@ const OPTION_COLUMNS =
  * the same reason.
  *
  * What replaces it is the pattern below: optimistic state change, direct write,
- * restore the previous array and set a message if the write is refused. Every
- * mutating call asks for `.select("id")` back, because an UPDATE or DELETE that
- * RLS filters to nothing is a clean 204 - no error, no rows - and treating that
- * as success would leave the screen showing an edit the database refused.
+ * and on a refusal undo *that row* - see `withoutRow` / `withRows` /
+ * `revertPatch` - rather than reinstating an array captured before the round
+ * trip. Every mutating call asks for `.select("id")` back, because an UPDATE or
+ * DELETE that RLS filters to nothing is a clean 204 - no error, no rows - and
+ * treating that as success would leave the screen showing an edit the database
+ * refused.
  *
  * The currency is read off `tenants` rather than the resolved `PublicTenant`,
  * because `tenant_public()` deliberately does not project it: that RPC is the
@@ -339,6 +410,14 @@ export function useTenantMenus(tenantId: string | undefined) {
       // the real row - the same thing planner.store does for every entity.
       // `created_at` is the local guess at what the database will stamp; it is
       // only ever used as a sort tiebreaker, and the next load corrects it.
+      //
+      // `position` is read off the render's list, so two adds in the same tick
+      // can land on the same number. Deliberately not chased: the column is
+      // non-unique by design and every read orders `position, created_at, id`,
+      // so a tie costs an arbitrary but *stable* order and nothing else (see
+      // 20260822000001). Threading an exact position out of a setState updater
+      // would be a second source of truth for a number the next reorder
+      // rewrites anyway.
       const row: CrmMenuPackage = {
         id: crypto.randomUUID(),
         name,
@@ -349,7 +428,6 @@ export function useTenantMenus(tenantId: string | undefined) {
         created_at: new Date().toISOString(),
       }
 
-      const previous = packages
       setPackages((list) => [...list, row])
 
       const { ok, cause } = await writeInsert("menu_packages", {
@@ -360,7 +438,7 @@ export function useTenantMenus(tenantId: string | undefined) {
       })
 
       if (!ok) {
-        setPackages(previous)
+        setPackages((list) => withoutRow(list, row.id))
         fail("create package failed", cause, "crm.menus.save_failed")
         return null
       }
@@ -372,14 +450,14 @@ export function useTenantMenus(tenantId: string | undefined) {
 
   const savePackage = useCallback(
     async (id: string, patch: Partial<CrmMenuPackage>) => {
-      const previous = packages
+      const before = packages.find((row) => row.id === id)
       setPackages((list) =>
         list.map((row) => (row.id === id ? { ...row, ...patch } : row))
       )
 
       const { ok, cause } = await writePatch("menu_packages", id, patch)
       if (!ok) {
-        setPackages(previous)
+        setPackages((list) => revertPatch(list, id, before, patch))
         fail("save package failed", cause, "crm.menus.save_failed")
         return
       }
@@ -401,10 +479,16 @@ export function useTenantMenus(tenantId: string | undefined) {
 
   const deletePackage = useCallback(
     async (id: string) => {
-      const previous = { packages, courses, options }
       const courseIds = new Set(
         courses.filter((c) => c.menu_package_id === id).map((c) => c.id)
       )
+      // Captured to be put back one row at a time if the delete is refused -
+      // "a couple has ordered this" is a routine outcome here, not a fault.
+      const removed = {
+        packages: packages.filter((p) => p.id === id),
+        courses: courses.filter((c) => c.menu_package_id === id),
+        options: options.filter((o) => courseIds.has(o.menu_course_id)),
+      }
 
       // The FK cascade removes the children in the database; the optimistic
       // state has to do the same or the screen keeps rendering orphans.
@@ -418,9 +502,9 @@ export function useTenantMenus(tenantId: string | undefined) {
 
       const result = await writeDelete("menu_packages", id)
       if (!result.ok) {
-        setPackages(previous.packages)
-        setCourses(previous.courses)
-        setOptions(previous.options)
+        setPackages((list) => withRows(list, removed.packages))
+        setCourses((list) => withRows(list, removed.courses))
+        setOptions((list) => withRows(list, removed.options))
         fail(
           "delete package failed",
           result.cause,
@@ -453,7 +537,6 @@ export function useTenantMenus(tenantId: string | undefined) {
         created_at: new Date().toISOString(),
       }
 
-      const previous = courses
       setCourses((list) => [...list, row])
 
       const { ok, cause } = await writeInsert("menu_courses", {
@@ -465,7 +548,7 @@ export function useTenantMenus(tenantId: string | undefined) {
       })
 
       if (!ok) {
-        setCourses(previous)
+        setCourses((list) => withoutRow(list, row.id))
         fail("create course failed", cause, "crm.menus.save_failed")
       }
     },
@@ -474,14 +557,14 @@ export function useTenantMenus(tenantId: string | undefined) {
 
   const saveCourse = useCallback(
     async (id: string, patch: Partial<CrmMenuCourse>) => {
-      const previous = courses
+      const before = courses.find((row) => row.id === id)
       setCourses((list) =>
         list.map((row) => (row.id === id ? { ...row, ...patch } : row))
       )
 
       const { ok, cause } = await writePatch("menu_courses", id, patch)
       if (!ok) {
-        setCourses(previous)
+        setCourses((list) => revertPatch(list, id, before, patch))
         fail("save course failed", cause, "crm.menus.save_failed")
       }
     },
@@ -490,14 +573,17 @@ export function useTenantMenus(tenantId: string | undefined) {
 
   const deleteCourse = useCallback(
     async (id: string) => {
-      const previous = { courses, options }
+      const removed = {
+        courses: courses.filter((c) => c.id === id),
+        options: options.filter((o) => o.menu_course_id === id),
+      }
       setCourses((list) => list.filter((row) => row.id !== id))
       setOptions((list) => list.filter((row) => row.menu_course_id !== id))
 
       const result = await writeDelete("menu_courses", id)
       if (!result.ok) {
-        setCourses(previous.courses)
-        setOptions(previous.options)
+        setCourses((list) => withRows(list, removed.courses))
+        setOptions((list) => withRows(list, removed.options))
         fail(
           "delete course failed",
           result.cause,
@@ -528,7 +614,6 @@ export function useTenantMenus(tenantId: string | undefined) {
         created_at: new Date().toISOString(),
       }
 
-      const previous = options
       setOptions((list) => [...list, row])
 
       const { ok, cause } = await writeInsert("menu_options", {
@@ -540,7 +625,7 @@ export function useTenantMenus(tenantId: string | undefined) {
       })
 
       if (!ok) {
-        setOptions(previous)
+        setOptions((list) => withoutRow(list, row.id))
         fail("create option failed", cause, "crm.menus.save_failed")
       }
     },
@@ -549,14 +634,14 @@ export function useTenantMenus(tenantId: string | undefined) {
 
   const saveOption = useCallback(
     async (id: string, patch: Partial<CrmMenuOption>) => {
-      const previous = options
+      const before = options.find((row) => row.id === id)
       setOptions((list) =>
         list.map((row) => (row.id === id ? { ...row, ...patch } : row))
       )
 
       const { ok, cause } = await writePatch("menu_options", id, patch)
       if (!ok) {
-        setOptions(previous)
+        setOptions((list) => revertPatch(list, id, before, patch))
         fail("save option failed", cause, "crm.menus.save_failed")
       }
     },
@@ -565,12 +650,12 @@ export function useTenantMenus(tenantId: string | undefined) {
 
   const deleteOption = useCallback(
     async (id: string) => {
-      const previous = options
+      const removed = options.filter((o) => o.id === id)
       setOptions((list) => list.filter((row) => row.id !== id))
 
       const result = await writeDelete("menu_options", id)
       if (!result.ok) {
-        setOptions(previous)
+        setOptions((list) => withRows(list, removed))
         fail(
           "delete option failed",
           result.cause,
@@ -587,38 +672,26 @@ export function useTenantMenus(tenantId: string | undefined) {
   // Reordering
   // ---------------------------------------------------------------------
   /**
-   * Move one row up or down among its siblings, and persist the whole new order
-   * in a single RPC.
+   * Persist a whole sibling order in one RPC.
    *
    * One statement per gesture rather than two UPDATEs, which is the point of
    * `reorder_menu_courses` / `reorder_menu_options`: a dropped connection
    * between two writes leaves a list with two rows claiming the same position.
+   *
    * The RPCs are invoker-rights, so a caller who is not staff of the owning
-   * tenant renumbers nothing - the call succeeds and does nothing, which is why
-   * the state is restored on the *positions* not matching rather than on an
-   * error.
+   * tenant renumbers nothing and gets no error for it. That is not a case this
+   * screen can produce - the /crm shell has already established staff before
+   * any of this renders - and the honest statement of the limit is that such a
+   * call would leave the moved row where the optimistic update put it until the
+   * next load.
    */
-  const moveWithin = useCallback(
-    async <T extends { id: string; position: number }>(
+  const persistOrder = useCallback(
+    async (
       rpc: "reorder_menu_courses" | "reorder_menu_options",
       scopeKey: "p_menu_package_id" | "p_course_id",
       scopeId: string,
-      siblings: Array<T>,
-      id: string,
-      delta: -1 | 1
-    ): Promise<{ ids: Array<string> | null; cause: unknown }> => {
-      const index = siblings.findIndex((row) => row.id === id)
-      const target = index + delta
-      if (index === -1 || target < 0 || target >= siblings.length) {
-        // Nothing to move: the row is at the end of the list, or gone. Not a
-        // failure, and the callers below tell the two apart by re-checking that
-        // the row is still there.
-        return { ids: null, cause: null }
-      }
-
-      const ids = siblings.map((row) => row.id)
-      ;[ids[index], ids[target]] = [ids[target], ids[index]]
-
+      ids: Array<string>
+    ): Promise<WriteResult> => {
       // `async () => await` rather than passing the builder straight through:
       // supabase-js returns a thenable, not a Promise, and `tracked` needs
       // something with a `finally` to decrement on.
@@ -630,57 +703,69 @@ export function useTenantMenus(tenantId: string | undefined) {
           } as never)
       )
 
-      return rpcError ? { ids: null, cause: rpcError } : { ids, cause: null }
+      return { ok: !rpcError, cause: rpcError }
     },
     [tracked]
   )
 
+  /**
+   * Move one row among its siblings.
+   *
+   * The new order is applied **before** the RPC, not after it. Waiting for the
+   * round trip meant clicking ▲ did nothing visible for as long as the network
+   * took, which is exactly what teaches somebody to click it again - and the
+   * second click was computed from a sibling list that had not moved yet, so
+   * the two gestures fought over the same pair of positions.
+   *
+   * On a refusal the original order goes back the same way, through
+   * `applyOrder` over the ids as they were, so nothing else on the screen is
+   * disturbed.
+   */
   const moveCourse = useCallback(
     async (packageId: string, id: string, delta: -1 | 1) => {
       const siblings = courses.filter((c) => c.menu_package_id === packageId)
+      const before = siblings.map((c) => c.id)
+      const ids = reorderedIds(siblings, id, delta)
+      // Already at the end of its list, or gone. Not a failure.
+      if (!ids) return
 
-      const { ids, cause } = await moveWithin(
+      setCourses((list) => applyOrder(list, ids))
+
+      const { ok, cause } = await persistOrder(
         "reorder_menu_courses",
         "p_menu_package_id",
         packageId,
-        siblings,
-        id,
-        delta
+        ids
       )
-      if (!ids) {
-        if (siblings.some((c) => c.id === id)) {
-          fail("reorder courses failed", cause, "crm.menus.save_failed")
-        }
-        return
+      if (!ok) {
+        setCourses((list) => applyOrder(list, before))
+        fail("reorder courses failed", cause, "crm.menus.save_failed")
       }
-
-      setCourses((list) => applyOrder(list, ids))
     },
-    [courses, fail, moveWithin]
+    [courses, fail, persistOrder]
   )
 
   const moveOption = useCallback(
     async (courseId: string, id: string, delta: -1 | 1) => {
       const siblings = options.filter((o) => o.menu_course_id === courseId)
+      const before = siblings.map((o) => o.id)
+      const ids = reorderedIds(siblings, id, delta)
+      if (!ids) return
 
-      const { ids, cause } = await moveWithin(
+      setOptions((list) => applyOrder(list, ids))
+
+      const { ok, cause } = await persistOrder(
         "reorder_menu_options",
         "p_course_id",
         courseId,
-        siblings,
-        id,
-        delta
+        ids
       )
-      if (!ids) {
-        if (siblings.some((o) => o.id === id)) {
-          fail("reorder options failed", cause, "crm.menus.save_failed")
-        }
-        return
+      if (!ok) {
+        setOptions((list) => applyOrder(list, before))
+        fail("reorder options failed", cause, "crm.menus.save_failed")
       }
-
-      setOptions((list) => applyOrder(list, ids))
     },
-    [options, fail, moveWithin]
+    [options, fail, persistOrder]
   )
 
   return {

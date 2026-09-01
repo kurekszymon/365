@@ -220,7 +220,12 @@ export const CrmMenuPackageEditor = ({
             onChange={(e) => setNewCourse(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addCourse()}
           />
-          <Button size="sm" variant="outline" onClick={addCourse}>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={menus.saving}
+            onClick={addCourse}
+          >
             <PlusIcon />
             {t("crm.menus.add_course")}
           </Button>

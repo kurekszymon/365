@@ -241,7 +241,12 @@ export const CrmMenuCourseEditor = ({
           onChange={(e) => setNewDish(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addDish()}
         />
-        <Button size="sm" variant="outline" onClick={addDish}>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={menus.saving}
+          onClick={addDish}
+        >
           <PlusIcon />
           {t("crm.menus.add_dish")}
         </Button>

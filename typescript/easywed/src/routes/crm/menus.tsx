@@ -97,6 +97,9 @@ function CrmMenus() {
               size="sm"
               variant="outline"
               className="self-start"
+              // Held while a write is out, so a double-click cannot mint two
+              // packages from one intent.
+              disabled={menus.saving}
               onClick={() => void addPackage()}
             >
               <PlusIcon />
