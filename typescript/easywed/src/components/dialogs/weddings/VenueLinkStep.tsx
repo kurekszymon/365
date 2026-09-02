@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import type { LinkedVenue } from "@/stores/global.store"
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -19,7 +20,26 @@ import { track } from "@/lib/analytics/track"
  * disabled on obvious nonsense; the database's CHECK constraint is the
  * guarantee, and the reserved-label list here mirrors it.
  */
-export const VenueLinkStep = ({ weddingId }: { weddingId: string }) => {
+export const VenueLinkStep = ({
+  weddingId,
+  replacing = null,
+  onLinked,
+  onCancel,
+}: {
+  weddingId: string
+  /**
+   * The venue being replaced, when this is a change rather than a first link.
+   *
+   * Only used to say what is about to be lost. The write is identical -
+   * `link_wedding_to_venue` resets `venue_access` to 'pending' and clears the
+   * ordered package on any real change of `tenant_id`, so a re-link needs no
+   * second RPC and gets no second code path here.
+   */
+  replacing?: LinkedVenue | null
+  onLinked?: () => void
+  /** Only offered on a change - a first link has nothing to go back to. */
+  onCancel?: () => void
+}) => {
   const { t } = useTranslation()
   const [slug, setSlug] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -37,6 +57,7 @@ export const VenueLinkStep = ({ weddingId }: { weddingId: string }) => {
     setSubmitting(false)
     if (result.ok) {
       track("venue_access_requested", { source: "couple" })
+      onLinked?.()
       return
     }
     setError(t(`venue.link.error.${result.reason}`))
@@ -50,6 +71,12 @@ export const VenueLinkStep = ({ weddingId }: { weddingId: string }) => {
         if (canSubmit) void submit()
       }}
     >
+      {replacing ? (
+        <p className="text-sm text-muted-foreground">
+          {t("venue.link.replacing", { name: replacing.name })}
+        </p>
+      ) : null}
+
       <Field>
         <FieldLabel htmlFor="venue-slug">
           {t("venue.link.slug_label")}
@@ -67,9 +94,21 @@ export const VenueLinkStep = ({ weddingId }: { weddingId: string }) => {
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-      <Button type="submit" disabled={!canSubmit} className="self-start">
-        {t("venue.link.submit")}
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="submit" disabled={!canSubmit}>
+          {t("venue.link.submit")}
+        </Button>
+        {onCancel ? (
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={submitting}
+            onClick={onCancel}
+          >
+            {t("common.cancel")}
+          </Button>
+        ) : null}
+      </div>
     </form>
   )
 }

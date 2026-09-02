@@ -721,6 +721,8 @@
   "venue.link.slug_label": "Venue address",
   "venue.link.slug_help": "The part of the address before \".easywed.app\" - for bagatelka.easywed.app, type \"bagatelka\".",
   "venue.link.submit": "Link to the venue",
+  "venue.link.replacing": "You are currently linked to {{name}}. Linking a different venue clears the menu you chose there, and the dish assigned to each guest.",
+  "venue.change": "Change venue",
   "venue.link.error.not_found": "No venue at that address. Check the spelling.",
   "venue.link.error.suspended": "This venue is not accepting links at the moment. Contact them directly.",
   "venue.link.error.invitation_only": "This venue accepts links by invitation only. Ask them to add you as one of their couples first.",

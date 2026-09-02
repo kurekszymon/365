@@ -63,6 +63,7 @@ type Action = {
   choosePackage: (packageId: string | null) => Promise<void>
   toggleOption: (optionId: string) => Promise<void>
   clear: () => void
+  clearForVenueChange: () => void
 }
 
 const initial: State = {
@@ -362,6 +363,25 @@ export const useMenuStore = create<State & Action>((set, get) => ({
   },
 
   clear: () => set({ ...initial }),
+
+  /**
+   * The wedding has been pointed at a *different* venue.
+   *
+   * `clear()` plus the guests, and the difference is the whole reason this is a
+   * second action: `clear()` runs on every wedding load, where blanking guest
+   * dishes would destroy the wedding being opened. This runs after a re-link,
+   * where the database has already done all three - `link_wedding_to_venue`
+   * nulls `menu_package_id` (20260822000002 section 6), the
+   * `weddings_menu_package_changed` trigger deletes the selections, and
+   * `menu_selections_deleted_clear_guests` blanks `guests.menu_option_id`.
+   *
+   * Writes nothing, like `clearGuestDishes`: the RPC that calls this has
+   * already landed, and this is the client catching up to what it did.
+   */
+  clearForVenueChange: () => {
+    clearGuestDishes()
+    set({ ...initial })
+  },
 }))
 
 /** Live courses of the ordered package, in the order the venue arranged them. */

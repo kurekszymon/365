@@ -1,6 +1,7 @@
 import type { LinkedVenue, VenueAccess } from "@/stores/global.store"
 import { supabase } from "@/lib/supabase"
 import { useGlobalStore } from "@/stores/global.store"
+import { useMenuStore } from "@/stores/menu.store"
 
 /**
  * The couple's side of the venue link.
@@ -81,6 +82,8 @@ export const linkWeddingToVenue = async (
   // 'granted' has dropped to 'pending' - the dialog would then offer a consent
   // the couple has already given, and nothing would correct it until the next
   // load. The RPC's other paths still land in 'pending' and this reads that.
+  const previousTenantId = useGlobalStore.getState().venue?.tenantId ?? null
+
   const [venue, access] = await Promise.all([
     fetchLinkedVenue(data),
     fetchVenueAccess(weddingId),
@@ -88,6 +91,17 @@ export const linkWeddingToVenue = async (
   if (!venue || !access) return { ok: false, reason: "failed" }
 
   useGlobalStore.getState().setVenueLink(venue, access)
+
+  // A *different* venue, so everything the old one supplied is stale: the
+  // database has already nulled the ordered package and deleted the selections
+  // (20260822000002 section 6), and the catalogue still in the store belongs to
+  // a venue this wedding no longer reads. Skipped when the id is unchanged,
+  // because that call is the RPC's documented no-op and must not throw away a
+  // menu the couple is in the middle of choosing.
+  if (previousTenantId !== null && previousTenantId !== venue.tenantId) {
+    useMenuStore.getState().clearForVenueChange()
+  }
+
   return { ok: true, venue }
 }
 

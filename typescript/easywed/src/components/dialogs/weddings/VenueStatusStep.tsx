@@ -15,17 +15,27 @@ import { setVenueAccess } from "@/lib/sync/venue"
  * Revoking does not go through the disclosure screen. Consent needs to be
  * informed; withdrawing it needs to be *easy*, and putting a wall of text in
  * front of "stop sharing my guests' dietary data" would be the wrong asymmetry.
+ *
+ * There is no "no venue at all" button, deliberately. Changing venue covers the
+ * case this screen was missing - a couple linked to the wrong one - and a
+ * revoke already stops every byte reaching the venue, because the derived role
+ * in 20260817000003 requires `granted`. Dropping `tenant_id` outright would
+ * need its own RPC (the column is not client-writable) to delete the couple's
+ * menu selections and blank every guest's dish, for the one case where the new
+ * venue is not on easywed at all. Worth building when somebody asks for it.
  */
 export const VenueStatusStep = ({
   weddingId,
   venue,
   access,
   onGrantRequested,
+  onChangeRequested,
 }: {
   weddingId: string
   venue: LinkedVenue
   access: VenueAccess
   onGrantRequested: () => void
+  onChangeRequested: () => void
 }) => {
   const { t } = useTranslation()
   const [submitting, setSubmitting] = useState(false)
@@ -67,6 +77,14 @@ export const VenueStatusStep = ({
         ) : (
           <Button onClick={onGrantRequested}>{t("venue.grant.open")}</Button>
         )}
+
+        <Button
+          variant="ghost"
+          disabled={submitting}
+          onClick={onChangeRequested}
+        >
+          {t("venue.change")}
+        </Button>
       </div>
     </div>
   )

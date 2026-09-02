@@ -729,6 +729,8 @@
   "venue.link.slug_label": "Adres sali",
   "venue.link.slug_help": "Fragment adresu przed „.easywed.app” - dla bagatelka.easywed.app wpisz „bagatelka”.",
   "venue.link.submit": "Powiąż z salą",
+  "venue.link.replacing": "Plan jest teraz powiązany z salą {{name}}. Powiązanie innej sali skasuje wybrane tam menu oraz danie przypisane do każdego gościa.",
+  "venue.change": "Zmień salę",
   "venue.link.error.not_found": "Nie ma sali pod tym adresem. Sprawdź pisownię.",
   "venue.link.error.suspended": "Ta sala w tej chwili nie przyjmuje powiązań. Skontaktuj się z nią bezpośrednio.",
   "venue.link.error.invitation_only": "Ta sala przyjmuje powiązania tylko na zaproszenie. Poproś ją, żeby najpierw dodała Cię jako parę młodą.",

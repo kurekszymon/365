@@ -57,6 +57,12 @@ export const VenueAccessDialog = () => {
   // `opened` names it, so closing unmounts it and the state goes with it.
   const [confirming, setConfirming] = useState(false)
 
+  // Same rule for "I want a different venue": transient, and gone on close.
+  // The link form is the *first* step for a wedding with no venue and a
+  // deliberate step backwards for one that has - so it is one flag over one
+  // component rather than a second form.
+  const [relinking, setRelinking] = useState(false)
+
   return (
     <ResponsiveDialog
       open={isOpen}
@@ -74,8 +80,16 @@ export const VenueAccessDialog = () => {
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <ResponsiveDialogBody>
-          {!weddingId ? null : !venue ? (
-            <VenueLinkStep weddingId={weddingId} />
+          {!weddingId ? null : !venue || relinking ? (
+            <VenueLinkStep
+              weddingId={weddingId}
+              // Non-null only when this is a *change* of venue, which is what
+              // lets the step warn that the current one - and the menu chosen
+              // from it - is about to go.
+              replacing={relinking ? venue : null}
+              onLinked={() => setRelinking(false)}
+              onCancel={relinking ? () => setRelinking(false) : undefined}
+            />
           ) : confirming ? (
             <VenueGrantStep
               weddingId={weddingId}
@@ -89,6 +103,7 @@ export const VenueAccessDialog = () => {
               venue={venue}
               access={venueAccess}
               onGrantRequested={() => setConfirming(true)}
+              onChangeRequested={() => setRelinking(true)}
             />
           )}
         </ResponsiveDialogBody>
