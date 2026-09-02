@@ -50,9 +50,11 @@ export const isVenueLandingPending = (): boolean =>
 /**
  * Spends the marker.
  *
- * Called once the lookup has answered - either way. A marker that survives a
- * "no" would re-ask on the next arrival for as long as the tab lives, and the
- * answer cannot change without a sign-out.
+ * Called when the landing *starts* looking, not when the lookup answers. Either
+ * answer spends it - a marker that survived a "no" would re-ask on every
+ * arrival for as long as the tab lives, and the answer cannot change without a
+ * sign-out - and so does no answer at all, because an unmount mid-lookup leaves
+ * nobody to spend it later. See the comment in useVenueStaffLanding.
  */
 export const clearVenueLanding = (): void => {
   try {

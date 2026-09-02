@@ -32,10 +32,8 @@ export const useVenueStaffLanding = (): "idle" | "checking" => {
   const userId = useAuthStore((s) => s.session?.user.id)
 
   // Read at mount rather than set from the effect, so the very first render of
-  // an arrival already knows to hold the list back. A pure read: the marker is
-  // only spent once the answer lands, which leaves it for the run that
-  // finishes if an abort (StrictMode's second mount, a fast navigation away)
-  // cuts this one short.
+  // an arrival already knows to hold the list back. A pure read - the effect
+  // below is what spends it.
   const [pending, setPending] = useState(() => isVenueLandingPending())
 
   useEffect(() => {
@@ -51,10 +49,24 @@ export const useVenueStaffLanding = (): "idle" | "checking" => {
 
     const controller = new AbortController()
 
+    // Spent when the lookup *starts*, not when it answers.
+    //
+    // Spending it in the callback looks safer and is not: the callback returns
+    // early on an abort, and an unmount is an abort with no later run to spend
+    // it. Navigate off /home while this is in flight and the marker sits in
+    // sessionStorage for the life of the tab, firing at the next arrival on the
+    // wedding list - the exact bounce venueLanding.ts exists to prevent.
+    //
+    // StrictMode's double mount is unaffected: `pending` is component state and
+    // survives the simulated remount, so the second effect run still looks up.
+    //
+    // The cost is that signing in and then clicking into a wedding before the
+    // answer lands forwards nobody. That is the right way round - the user
+    // navigated somewhere on purpose - and typing /crm on the apex re-arms.
+    clearVenueLanding()
+
     void fetchMyStaffTenant(userId, controller.signal).then((tenant) => {
       if (controller.signal.aborted) return
-
-      clearVenueLanding()
 
       if (!tenant) {
         setPending(false)
