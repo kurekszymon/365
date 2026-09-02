@@ -88,6 +88,15 @@ export const CrmRosterInvitations = ({
                 </Button>
               )}
 
+              {/* The button's own label already flips to "copied", but a name
+                  change on the element the user is still focused on is not
+                  reliably announced - so the confirmation is spoken here
+                  instead. Only the copied row renders text, so exactly one
+                  region speaks. */}
+              <span role="status" className="sr-only">
+                {copiedId === invitation.id ? t("crm.roster.copied") : ""}
+              </span>
+
               <Button
                 size="sm"
                 variant="ghost"
