@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 import { useAuthStore } from "@/stores/auth.store"
 import { useTenantStore } from "@/stores/tenant.store"
@@ -65,6 +65,21 @@ export function useTenantRoster(tenantId: string | undefined) {
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // The load effect's controller, kept where the handlers can reach it: a
+  // refresh fired from one of them has to be cancellable by the same unmount
+  // that cancels the initial load, and `refresh()` with no signal falls into a
+  // throwaway controller that nothing ever aborts.
+  const loadController = useRef<AbortController | null>(null)
+
+  // Cleared on unmount and at the top of each copy, so a second copy does not
+  // leave the first timer racing it - same shape as CrmConfirmButton's.
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(
+    () => () => void (copyTimer.current && clearTimeout(copyTimer.current)),
+    []
+  )
+
   const refresh = useCallback(
     async (signal?: AbortSignal) => {
       if (!tenantId) return
@@ -128,11 +143,15 @@ export function useTenantRoster(tenantId: string | undefined) {
   useEffect(() => {
     if (!tenantId) return
     const controller = new AbortController()
+    loadController.current = controller
     // refresh() only setState()s after awaiting the fetch - a legitimate
     // external-data sync, not a synchronous cascading render.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh(controller.signal)
-    return () => controller.abort()
+    return () => {
+      controller.abort()
+      loadController.current = null
+    }
   }, [tenantId, refresh])
 
   const handleCreate = useCallback(async () => {
@@ -165,8 +184,13 @@ export function useTenantRoster(tenantId: string | undefined) {
     // nobody until it is claimed.
     track("tenant_invite_created", { role })
 
-    // Re-fetch to pick up the token the database generated.
-    await refresh()
+    // Re-fetch to pick up the token the database generated - on the load
+    // effect's signal, so navigating away mid-refresh cancels it rather than
+    // landing a roster (and the two resets below) on an unmounted screen.
+    const signal = loadController.current?.signal
+    await refresh(signal)
+    if (signal?.aborted) return
+
     setSubmitting(false)
     setRole("customer")
   }, [tenantId, session, submitting, role, canInviteStaff, refresh])
@@ -252,9 +276,10 @@ export function useTenantRoster(tenantId: string | undefined) {
 
       try {
         await navigator.clipboard.writeText(url)
+        if (copyTimer.current) clearTimeout(copyTimer.current)
         setCopiedId(invitation.id)
         setFallbackUrl(null)
-        setTimeout(
+        copyTimer.current = setTimeout(
           () => setCopiedId((v) => (v === invitation.id ? null : v)),
           1500
         )

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 import { useAuthStore } from "@/stores/auth.store"
 import { useGlobalStore } from "@/stores/global.store"
@@ -50,6 +50,16 @@ export function useWeddingMembers(isOpen: boolean) {
     url: string
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Cleared on unmount and at the top of each copy. This one lives in a dialog,
+  // so closing it inside the 1500 ms window is the ordinary case rather than an
+  // edge one - same shape as useTenantRoster's.
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(
+    () => () => void (copyTimer.current && clearTimeout(copyTimer.current)),
+    []
+  )
 
   // Free plan = guest mode: a device-local wedding has no Supabase row, so
   // there is nothing to attach members or invitations to. Signing in (which
@@ -307,9 +317,10 @@ export function useWeddingMembers(isOpen: boolean) {
     const url = `${window.location.origin}/invite/${invitation.token}`
     try {
       await navigator.clipboard.writeText(url)
+      if (copyTimer.current) clearTimeout(copyTimer.current)
       setCopiedId(invitation.id)
       setFallbackUrl(null)
-      setTimeout(
+      copyTimer.current = setTimeout(
         () => setCopiedId((v) => (v === invitation.id ? null : v)),
         1500
       )

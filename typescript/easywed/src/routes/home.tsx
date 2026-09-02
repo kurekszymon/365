@@ -66,20 +66,34 @@ function Home() {
   useEffect(() => {
     if (!session) return
 
-    // owner_id decides which exit the row offers: owners delete the wedding
-    // for everyone, invited members only drop their own access.
-    supabase
-      .from("weddings")
-      .select("id, name, owner_id")
-      .order("created_at", { ascending: false })
-      .then(({ data, error }) => {
-        if (error) {
-          console.error(error)
-          toast.error(t("weddings.load_failed"))
-          setLoadFailed(true)
-          setLoading(false)
-          return
-        }
+    // The effect re-runs on a retry and on a language switch, so without this
+    // two reads can be in flight at once and the older one can land last,
+    // overwriting the newer list. Aborting the previous run is what orders
+    // them - and it is also what keeps the resolution off an unmounted screen.
+    const controller = new AbortController()
+
+    const fail = (cause: unknown) => {
+      console.error(cause)
+      toast.error(t("weddings.load_failed"))
+      setLoadFailed(true)
+      setLoading(false)
+    }
+
+    void (async () => {
+      try {
+        // owner_id decides which exit the row offers: owners delete the wedding
+        // for everyone, invited members only drop their own access.
+        const { data, error } = await supabase
+          .from("weddings")
+          .select("id, name, owner_id")
+          .order("created_at", { ascending: false })
+          .abortSignal(controller.signal)
+
+        // Before the error check: an aborted PostgREST request comes back as an
+        // error *result*, so without this a retry would toast and park the
+        // failure state on the read it just replaced.
+        if (controller.signal.aborted) return
+        if (error) return fail(error)
 
         setWeddings(
           data.map((wedding) => ({
@@ -89,7 +103,17 @@ function Home() {
           }))
         )
         setLoading(false)
-      })
+      } catch (e) {
+        // A request that never completed at all - offline, DNS, a dropped
+        // connection - rejects instead of returning an error result, and
+        // without this branch the list sits on "loading" forever with no retry
+        // in reach.
+        if (controller.signal.aborted) return
+        fail(e)
+      }
+    })()
+
+    return () => controller.abort()
     // `t` is stable across renders unless the language changes; re-reading the
     // list on a language switch is harmless.
   }, [session, reloadKey, t])
