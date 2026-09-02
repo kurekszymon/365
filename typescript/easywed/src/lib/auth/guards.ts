@@ -5,10 +5,36 @@ import { useTenantStore } from "@/stores/tenant.store"
 import { armVenueLanding } from "@/lib/auth/venueLanding"
 import { isTenantHost } from "@/lib/tenant/host"
 
+/**
+ * A `?next=` value, reduced to something that can only ever be a path here.
+ *
+ * The single chokepoint for attacker-controllable navigation targets, so it
+ * validates what the *browser* will see rather than what the string looks like:
+ *
+ *   - tab, newline and carriage return are stripped from anywhere in a URL
+ *     before it is parsed, so "/\tevil.example" is not the path it resembles;
+ *   - a backslash in the authority position is normalised to a slash, so
+ *     "/\evil.example" resolves as "//evil.example" - protocol-relative, i.e.
+ *     somebody else's origin, on this browser's current scheme.
+ *
+ * Every consumer today feeds TanStack's `redirect({ to })`, which builds
+ * against the current origin, and the two `window.location.replace` sites
+ * (`useVenueStaffLanding`, `apexRedirect`) compose their URLs from a constant
+ * or from `tenantUrl` and never touch this. So the second rule is hardening
+ * rather than a live hole - and the reason to keep it here is that this is the
+ * function the next cross-origin caller will reasonably trust.
+ */
 export const sanitizeNextPath = (next: unknown): string | undefined => {
   if (typeof next !== "string") return undefined
-  if (!next.startsWith("/") || next.startsWith("//")) return undefined
-  return next
+
+  // Normalise to what a browser would resolve, then validate *that* - the
+  // stripped value is also what gets returned, so no consumer re-introduces
+  // the characters this just decided about.
+  const path = next.replace(/[\t\n\r]/g, "")
+
+  if (!path.startsWith("/") || /^\/[/\\]/.test(path)) return undefined
+
+  return path
 }
 
 /**

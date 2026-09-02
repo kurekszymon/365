@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest"
-import { requireAcceptedTerms, requireTenantMember } from "./guards"
+import {
+  requireAcceptedTerms,
+  requireTenantMember,
+  sanitizeNextPath,
+} from "./guards"
 import type { Session } from "@supabase/supabase-js"
 import type { TermsStatus } from "@/stores/profile.store"
 import type { TenantRole, TenantStatus } from "@/stores/tenant.store"
@@ -35,6 +39,48 @@ const redirectFrom = (pathname: string) => {
   }
   return null
 }
+
+/**
+ * The one chokepoint every `?next=` passes through, so it is worth pinning the
+ * shapes that *look* like paths and are not. A browser strips tab/newline/CR
+ * from a URL and normalises a backslash in the authority position to a slash,
+ * so the rejected cases below all resolve to somebody else's origin despite
+ * starting with a single "/".
+ */
+describe("sanitizeNextPath", () => {
+  it.each([
+    ["/home", "/home"],
+    ["/wedding/abc?tab=guests", "/wedding/abc?tab=guests"],
+    ["/", "/"],
+    // Stripped rather than rejected: the result is still a plain path, and it
+    // is the value the browser would have resolved anyway.
+    ["/ho\tme", "/home"],
+  ])("accepts %j as %j", (input, expected) => {
+    expect(sanitizeNextPath(input)).toBe(expected)
+  })
+
+  it.each([
+    ["//evil.example"],
+    ["/\\evil.example"],
+    ["/\\/evil.example"],
+    ["/\t/evil.example"],
+    ["/\n/evil.example"],
+    ["/\r\\evil.example"],
+    ["https://evil.example"],
+    ["evil.example"],
+    ["../home"],
+    [""],
+  ])("rejects %j", (input) => {
+    expect(sanitizeNextPath(input)).toBeUndefined()
+  })
+
+  it.each([[undefined], [null], [42], [{ to: "/home" }], [["/home"]]])(
+    "rejects the non-string %j",
+    (input) => {
+      expect(sanitizeNextPath(input)).toBeUndefined()
+    }
+  )
+})
 
 describe("requireAcceptedTerms", () => {
   beforeEach(() => {
