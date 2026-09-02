@@ -3,6 +3,40 @@ import { supabase } from "@/lib/supabase"
 import { useAuthStore } from "@/stores/auth.store"
 
 /**
+ * The transport half of every "null on failure" contract in this file.
+ *
+ * PostgREST reports a refused or malformed query as an error *result*, and each
+ * helper below already turns that into its documented fallback. What it cannot
+ * report that way is a request that never completed at all - offline, DNS,
+ * CORS, a dropped connection - which arrives as a rejected promise instead.
+ *
+ * Every caller in the tenant tree is a fire-and-forget `void x.then(...)` inside
+ * an effect, so an escaping rejection is not a logged failure: it is a screen
+ * that never leaves its loading state. The CRM shell holds on `crm.loading`,
+ * /home renders null, the claim page sits on "claiming", and nothing short of a
+ * reload recovers. The contract has to be total, and this is where it is made
+ * total - once, rather than in a `.catch()` at each call site that would put the
+ * fallback decision in two places.
+ *
+ * An `abortSignal` cancellation is deliberately *not* what this catches:
+ * supabase-js surfaces that as an error result too, so the callers' existing
+ * `signal.aborted` guards keep doing the cancellation work and this fallback
+ * never reaches a screen that has already navigated away.
+ */
+const total = async <T>(
+  where: string,
+  work: () => Promise<T>,
+  fallback: T
+): Promise<T> => {
+  try {
+    return await work()
+  } catch (err) {
+    console.error(`[tenant] ${where} threw`, err)
+    return fallback
+  }
+}
+
+/**
  * The venue's public face, by slug. Callable with no session at all - it goes
  * through the `tenant_public` definer RPC rather than reading `tenants`, whose
  * SELECT policy is member-only, because a signed-out visitor landing on
@@ -16,44 +50,51 @@ import { useAuthStore } from "@/stores/auth.store"
  * that exists-but-is-broken is worse than one that renders as absent. The
  * error is still logged.
  */
-export const fetchPublicTenant = async (
+export const fetchPublicTenant = (
   slug: string,
   signal?: AbortSignal
-): Promise<PublicTenant | null> => {
-  const query = supabase.rpc("tenant_public", { _slug: slug })
+): Promise<PublicTenant | null> =>
+  total(
+    "fetchPublicTenant",
+    async () => {
+      const query = supabase.rpc("tenant_public", { _slug: slug })
 
-  const { data, error } = await (signal ? query.abortSignal(signal) : query)
+      const { data, error } = await (signal ? query.abortSignal(signal) : query)
 
-  if (error) {
-    console.error("[tenant] fetchPublicTenant failed", error)
-    return null
-  }
+      if (error) {
+        console.error("[tenant] fetchPublicTenant failed", error)
+        return null
+      }
 
-  // Set-returning, so an unknown slug is an empty array rather than a null row.
-  //
-  // `.at(0)` rather than `[0]` because the generated types index as `T`, not
-  // `T | undefined` - so the guard below reads as dead code to the linter while
-  // being exactly what catches the empty case at runtime. `.at()` types the
-  // absence honestly instead of asserting it away.
-  const row = data.at(0)
-  if (!row) return null
+      // Set-returning, so an unknown slug is an empty array rather than a null
+      // row.
+      //
+      // `.at(0)` rather than `[0]` because the generated types index as `T`,
+      // not `T | undefined` - so the guard below reads as dead code to the
+      // linter while being exactly what catches the empty case at runtime.
+      // `.at()` types the absence honestly instead of asserting it away.
+      const row = data.at(0)
+      if (!row) return null
 
-  return {
-    id: row.id,
-    slug: row.slug,
-    name: row.name,
-    // The CHECK constraint pins this to one of two values; the generated type
-    // widens it to string because Postgres CHECKs do not survive into the
-    // schema types. Narrowed here rather than asserted, so an unexpected value
-    // reads as "suspended" - the conservative direction, since the alternative
-    // is presenting a suspended venue as open for business.
-    status: row.status === "active" ? "active" : "suspended",
-    logoUrl: row.logo_url,
-    primaryColor: row.primary_color,
-    accentColor: row.accent_color,
-    tagline: row.tagline,
-  }
-}
+      return {
+        id: row.id,
+        slug: row.slug,
+        name: row.name,
+        // The CHECK constraint pins this to one of two values; the generated
+        // type widens it to string because Postgres CHECKs do not survive into
+        // the schema types. Narrowed here rather than asserted, so an
+        // unexpected value reads as "suspended" - the conservative direction,
+        // since the alternative is presenting a suspended venue as open for
+        // business.
+        status: row.status === "active" ? "active" : "suspended",
+        logoUrl: row.logo_url,
+        primaryColor: row.primary_color,
+        accentColor: row.accent_color,
+        tagline: row.tagline,
+      }
+    },
+    null
+  )
 
 /**
  * The signed-in user's role in this tenant, or `null` if they are not a member.
@@ -66,31 +107,36 @@ export const fetchPublicTenant = async (
  * `null` on failure as well as on non-membership, which is the fail-closed
  * direction - the CRM layout turns both into a 403 rather than a blank shell.
  */
-export const fetchTenantRole = async (
+export const fetchTenantRole = (
   tenantId: string,
   userId: string,
   signal?: AbortSignal
-): Promise<TenantRole | null> => {
-  const query = supabase
-    .from("tenant_members")
-    .select("role")
-    .eq("tenant_id", tenantId)
-    .eq("user_id", userId)
+): Promise<TenantRole | null> =>
+  total(
+    "fetchTenantRole",
+    async () => {
+      const query = supabase
+        .from("tenant_members")
+        .select("role")
+        .eq("tenant_id", tenantId)
+        .eq("user_id", userId)
 
-  const { data, error } = await (
-    signal ? query.abortSignal(signal) : query
-  ).maybeSingle()
+      const { data, error } = await (
+        signal ? query.abortSignal(signal) : query
+      ).maybeSingle()
 
-  if (error) {
-    console.error("[tenant] fetchTenantRole failed", error)
-    return null
-  }
+      if (error) {
+        console.error("[tenant] fetchTenantRole failed", error)
+        return null
+      }
 
-  const role = data?.role
-  return role === "owner" || role === "staff" || role === "customer"
-    ? role
-    : null
-}
+      const role = data?.role
+      return role === "owner" || role === "staff" || role === "customer"
+        ? role
+        : null
+    },
+    null
+  )
 
 /**
  * The venue this account works for, or null - including for a `customer`, who
@@ -111,28 +157,33 @@ export const fetchTenantRole = async (
  * often than not, and the cost of failing that way is a wedding list rather
  * than a bounce nobody can undo.
  */
-export const fetchMyStaffTenant = async (
+export const fetchMyStaffTenant = (
   userId: string,
   signal?: AbortSignal
-): Promise<{ id: string; slug: string } | null> => {
-  const query = supabase
-    .from("tenant_members")
-    .select("tenants (id, slug)")
-    .eq("user_id", userId)
-    .in("role", ["owner", "staff"])
+): Promise<{ id: string; slug: string } | null> =>
+  total(
+    "fetchMyStaffTenant",
+    async () => {
+      const query = supabase
+        .from("tenant_members")
+        .select("tenants (id, slug)")
+        .eq("user_id", userId)
+        .in("role", ["owner", "staff"])
 
-  const { data, error } = await (
-    signal ? query.abortSignal(signal) : query
-  ).maybeSingle()
+      const { data, error } = await (
+        signal ? query.abortSignal(signal) : query
+      ).maybeSingle()
 
-  if (error) {
-    console.error("[tenant] fetchMyStaffTenant failed", error)
-    return null
-  }
+      if (error) {
+        console.error("[tenant] fetchMyStaffTenant failed", error)
+        return null
+      }
 
-  const tenant = data?.tenants
-  return tenant ? { id: tenant.id, slug: tenant.slug } : null
-}
+      const tenant = data?.tenants
+      return tenant ? { id: tenant.id, slug: tenant.slug } : null
+    },
+    null
+  )
 
 /** The venue a claim landed in, plus what it made the caller. */
 export type ClaimedTenant = {
@@ -181,56 +232,72 @@ const CLAIM_FAILURES: Record<string, TenantClaimFailure> = {
  * the art. 9(2)(a) consent for the guest list - that is still a separate
  * `set_venue_access(true)` against a dialog that names what is disclosed.
  */
-export const claimTenantInvitation = async (
+export const claimTenantInvitation = (
   token: string,
   signal?: AbortSignal
-): Promise<TenantClaimResult> => {
-  const query = supabase.rpc("claim_tenant_invitation", { _token: token })
-  const { data, error } = await (signal ? query.abortSignal(signal) : query)
+): Promise<TenantClaimResult> =>
+  // The whole body, not just the RPC: the two follow-up reads below can fail at
+  // the transport layer just as easily, and a rejection out of either leaves
+  // the claim page on "claiming" with no way forward.
+  total<TenantClaimResult>(
+    "claimTenantInvitation",
+    async () => {
+      const query = supabase.rpc("claim_tenant_invitation", { _token: token })
+      const { data, error } = await (signal ? query.abortSignal(signal) : query)
 
-  if (error || !data) {
-    console.error("[tenant] claimTenantInvitation failed", error)
-    return { ok: false, reason: CLAIM_FAILURES[error?.code ?? ""] ?? "failed" }
-  }
+      if (error || !data) {
+        console.error("[tenant] claimTenantInvitation failed", error)
+        return {
+          ok: false,
+          reason: CLAIM_FAILURES[error?.code ?? ""] ?? "failed",
+        }
+      }
 
-  // Two reads rather than a wider RPC return, because both are now ordinary
-  // member reads: the row just written makes `is_tenant_member` true, which is
-  // exactly what the `tenants` SELECT policy asks for.
-  //
-  // The role read goes through `fetchTenantRole` so it carries the `user_id`
-  // filter. The `tenant_members` SELECT policy is *not* "members view
-  // themselves" alone - it is `is_tenant_staff(tenant_id) or user_id =
-  // auth.uid()`, so the moment a staff claim succeeds the caller can see the
-  // venue's whole roster. An unfiltered `.maybeSingle()` would then error on
-  // multiple rows and fall back to "customer", which is precisely backwards:
-  // the new staff member would be shown the couple's card and sent to /home.
-  const userId = useAuthStore.getState().session?.user.id
+      // Two reads rather than a wider RPC return, because both are now ordinary
+      // member reads: the row just written makes `is_tenant_member` true, which
+      // is exactly what the `tenants` SELECT policy asks for.
+      //
+      // The role read goes through `fetchTenantRole` so it carries the
+      // `user_id` filter. The `tenant_members` SELECT policy is *not* "members
+      // view themselves" alone - it is `is_tenant_staff(tenant_id) or user_id =
+      // auth.uid()`, so the moment a staff claim succeeds the caller can see
+      // the venue's whole roster. An unfiltered `.maybeSingle()` would then
+      // error on multiple rows and fall back to "customer", which is precisely
+      // backwards: the new staff member would be shown the couple's card and
+      // sent to /home.
+      const userId = useAuthStore.getState().session?.user.id
 
-  const [tenantRes, role] = await Promise.all([
-    supabase.from("tenants").select("id, slug, name").eq("id", data).single(),
-    userId ? fetchTenantRole(data, userId, signal) : Promise.resolve(null),
-  ])
+      const [tenantRes, role] = await Promise.all([
+        supabase
+          .from("tenants")
+          .select("id, slug, name")
+          .eq("id", data)
+          .single(),
+        userId ? fetchTenantRole(data, userId, signal) : Promise.resolve(null),
+      ])
 
-  // `.single()` turns "no row" into an error rather than a null row, so the
-  // error check is the whole guard - and the generated types agree, which is
-  // why a `!tenantRes.data` here reads as always-false to the linter.
-  if (tenantRes.error) {
-    console.error("[tenant] claimed venue lookup failed", tenantRes.error)
-    return { ok: false, reason: "failed" }
-  }
+      // `.single()` turns "no row" into an error rather than a null row, so the
+      // error check is the whole guard - and the generated types agree, which
+      // is why a `!tenantRes.data` here reads as always-false to the linter.
+      if (tenantRes.error) {
+        console.error("[tenant] claimed venue lookup failed", tenantRes.error)
+        return { ok: false, reason: "failed" }
+      }
 
-  return {
-    ok: true,
-    tenant: {
-      id: tenantRes.data.id,
-      slug: tenantRes.data.slug,
-      name: tenantRes.data.name,
-      // `fetchTenantRole` already narrows the column; what is left to decide is
-      // the `null` it returns for a failed read (or the session vanishing
-      // mid-claim). "customer" is the conservative fallback: it is the role
-      // that offers the fewest onward doors, so a failed read cannot advertise
-      // a CRM the caller may not reach.
-      role: role ?? "customer",
+      return {
+        ok: true,
+        tenant: {
+          id: tenantRes.data.id,
+          slug: tenantRes.data.slug,
+          name: tenantRes.data.name,
+          // `fetchTenantRole` already narrows the column; what is left to
+          // decide is the `null` it returns for a failed read (or the session
+          // vanishing mid-claim). "customer" is the conservative fallback: it
+          // is the role that offers the fewest onward doors, so a failed read
+          // cannot advertise a CRM the caller may not reach.
+          role: role ?? "customer",
+        },
+      }
     },
-  }
-}
+    { ok: false, reason: "failed" }
+  )
