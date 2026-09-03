@@ -189,7 +189,7 @@ export const AppFrame: React.FC<Props> = ({ activeRail, children }) => {
                 }}
               >
                 <Icon name="landmark" color={colors.ink} size={15 * s} />
-                Configure hall
+                Skonfiguruj salę
               </div>
             )}
             <HeaderButton name="upload" scale={s} />
@@ -201,7 +201,9 @@ export const AppFrame: React.FC<Props> = ({ activeRail, children }) => {
             {tall ? null : (
               <nav
                 style={{
-                  width: 60 * s,
+                  // Wider than the app's 60px strip: "Przypomnienia" spills out
+                  // of it at this type size, and a rail label can't wrap.
+                  width: 76 * s,
                   padding: `${14 * s}px 0`,
                   display: "flex",
                   flexDirection: "column",
@@ -243,7 +245,7 @@ export const AppFrame: React.FC<Props> = ({ activeRail, children }) => {
                     <span
                       style={{
                         fontFamily: fonts.sans,
-                        fontSize: 10 * s,
+                        fontSize: 9 * s,
                         fontWeight: 700,
                         lineHeight: 1.15,
                         color: colors.inkSoft,

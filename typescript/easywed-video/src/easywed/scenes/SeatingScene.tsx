@@ -59,9 +59,9 @@ export const SeatingScene: React.FC = () => {
       >
         <div style={{ width: tall ? "100%" : 540, paddingTop: tall ? 8 : 40, flexShrink: 0 }}>
           <SceneLabel
-            step="Step 03"
-            title="Seat everyone"
-            subtitle="Drag guests onto seats, balance the tables, and export a printable plan for the venue."
+            step="Krok 03"
+            title="Posadź wszystkich"
+            subtitle="Przeciągnij gości na miejsca, wyrównaj obłożenie stołów i wyeksportuj gotowy plan do druku dla sali."
             from={4}
           />
 
@@ -87,7 +87,7 @@ export const SeatingScene: React.FC = () => {
                 {Math.round(seated)}
               </span>
               <span style={{ fontFamily: fonts.sans, fontSize: type.body, color: colors.inkSoft }}>
-                of {hall.totalSeats} guests seated
+                z {hall.totalSeats} gości przy stołach
               </span>
             </div>
             <div
@@ -118,8 +118,8 @@ export const SeatingScene: React.FC = () => {
                 color: colors.inkSoft,
               }}
             >
-              <Legend color={colors.seatEmpty} label="Free seat" />
-              <Legend color={colors.seatFilled} label="Taken" />
+              <Legend color={colors.seatEmpty} label="Wolne miejsce" />
+              <Legend color={colors.seatFilled} label="Zajęte" />
             </div>
           </div>
         </div>

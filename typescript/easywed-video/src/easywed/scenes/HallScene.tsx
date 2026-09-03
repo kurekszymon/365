@@ -97,7 +97,7 @@ export const HallScene: React.FC = () => {
         opacity: outline,
       }}
     >
-      <span style={{ color: colors.inkSoft }}>Venue</span>
+      <span style={{ color: colors.inkSoft }}>Twoja sala</span>
       <strong style={{ fontWeight: 600 }}>
         {`${hall.name} · ${hall.meters.width} × ${hall.meters.height} m`}
       </strong>
@@ -118,9 +118,9 @@ export const HallScene: React.FC = () => {
       >
         <div style={{ width: tall ? "100%" : 540, paddingTop: tall ? 8 : 40, flexShrink: 0 }}>
           <SceneLabel
-            step="Step 01"
-            title="Sketch the hall"
-            subtitle="Round and rectangular tables, the dance floor, fixtures - lay out the room exactly as it will look on the day."
+            step="Krok 01"
+            title="Naszkicuj salę"
+            subtitle="Stoły okrągłe i prostokątne, parkiet i wyposażenie - ustaw salę dokładnie tak, jak będzie wyglądać w dniu wesela."
             from={10}
           />
           {venuePill}

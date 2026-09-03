@@ -131,9 +131,9 @@ export const PlannerCanvas: React.FC<{
         }}
       >
         <Stepper value="1 m" scale={scale} />
-        <Tool icon="grid" label="Grid" scale={scale} />
-        {tall ? null : <Tool icon="ruler" label="Measure" scale={scale} />}
-        <Tool icon="armchair" label="Seats" active scale={scale} />
+        <Tool icon="grid" label="Siatka" scale={scale} />
+        {tall ? null : <Tool icon="ruler" label="Mierzenie" scale={scale} />}
+        <Tool icon="armchair" label="Miejsca" active scale={scale} />
       </div>
 
       <div style={{ position: "absolute", left: 12 * scale, bottom: 12 * scale }}>

@@ -189,9 +189,9 @@ export type NavKind = "guests" | "tables" | "fixtures" | "reminders" | "assistan
 
 /** The planner's tab strip, in the app's order, with its badge counts. */
 export const NAV_ITEMS: { kind: NavKind; label: string; badge?: number }[] = [
-  { kind: "guests", label: "Guests" },
-  { kind: "tables", label: "Tables", badge: 7 },
-  { kind: "fixtures", label: "Elements", badge: 2 },
-  { kind: "reminders", label: "Reminders", badge: 1 },
-  { kind: "assistant", label: "Assistant" },
+  { kind: "guests", label: "Goście" },
+  { kind: "tables", label: "Stoły", badge: 7 },
+  { kind: "fixtures", label: "Elementy", badge: 2 },
+  { kind: "reminders", label: "Przypomnienia", badge: 1 },
+  { kind: "assistant", label: "Asystent" },
 ];

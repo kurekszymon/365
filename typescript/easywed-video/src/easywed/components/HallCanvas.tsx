@@ -179,7 +179,7 @@ export const HallCanvas: React.FC<Props> = ({
           y={danceFloor.y}
           width={danceFloor.width}
           height={danceFloor.height}
-          label="Dance floor"
+          label="Parkiet"
           radius={24}
         />
         {hall.fixtures.map((fixture) => (

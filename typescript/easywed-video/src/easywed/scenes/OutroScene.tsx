@@ -7,11 +7,11 @@ import { useFormat } from "../format";
 import { colors, fonts, shadow } from "../theme";
 
 const FEATURES = [
-  "Drag & drop floor plan",
-  "CSV & XLSX import",
-  "PDF export for printing",
-  "Rooms & floors",
-  "Plan together",
+  "Plan sali „przeciągnij i upuść”",
+  "Import CSV i XLSX",
+  "Eksport PDF do druku",
+  "Sale i piętra",
+  "Planujcie razem",
 ];
 
 export const OutroScene: React.FC = () => {
@@ -49,7 +49,7 @@ export const OutroScene: React.FC = () => {
             transform: `translateY(${interpolate(titleIn, [0, 1], [26, 0])}px)`,
           }}
         >
-          Every guest in the right seat
+          Każdy gość na właściwym miejscu
         </div>
 
         <div style={{ marginTop: 44, display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center" }}>
@@ -101,7 +101,7 @@ export const OutroScene: React.FC = () => {
             easywed.app
           </div>
           <div style={{ fontFamily: fonts.sans, fontSize: 26, color: colors.inkSoft }}>
-            Start in guest mode - no sign-up needed.
+            Zacznij w trybie gościa - bez zakładania konta.
           </div>
         </div>
       </AbsoluteFill>

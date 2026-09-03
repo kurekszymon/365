@@ -49,7 +49,7 @@ export const IntroScene: React.FC = () => {
             color: colors.inkSoft,
           }}
         >
-          Wedding planning made easy.
+          Plan stołów weselnych - prościej się nie da.
         </div>
       </AbsoluteFill>
     </Backdrop>

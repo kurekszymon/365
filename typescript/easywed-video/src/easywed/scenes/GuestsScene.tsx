@@ -75,7 +75,7 @@ const GuestRow: React.FC<{ guest: (typeof GUESTS)[number]; enter: number; scale:
         }}
       >
         <Icon name="check" color={colors.inkSoft} size={11 * scale} />
-        {`At table: ${guest.table}`}
+        {`Przy stole: ${guest.table}`}
       </div>
     </div>
     <Icon name="pencil" color={colors.inkSoft} size={15 * scale} />
@@ -168,9 +168,9 @@ export const GuestsScene: React.FC = () => {
       >
         <div style={{ width: tall ? "100%" : 560, paddingTop: tall ? 8 : 40, flexShrink: 0 }}>
           <SceneLabel
-            step="Step 02"
-            title="Add your guests"
-            subtitle="Dietary needs, plus-ones and seat assignments live next to every name - no more cross-checking three spreadsheets."
+            step="Krok 02"
+            title="Dodaj gości"
+            subtitle="Diety, osoby towarzyszące i przypisane miejsca są zawsze przy nazwisku - koniec z trzema arkuszami naraz."
             from={6}
           />
 
@@ -185,8 +185,8 @@ export const GuestsScene: React.FC = () => {
             }}
           >
             {[
-              { icon: "fileUp" as IconName, label: "Import CSV or XLSX" },
-              { icon: "printer" as IconName, label: "Export a PDF to print" },
+              { icon: "fileUp" as IconName, label: "Import z CSV lub Excela" },
+              { icon: "printer" as IconName, label: "Eksport PDF do druku" },
             ].map(({ icon, label }) => (
               <div
                 key={label}
@@ -239,7 +239,7 @@ export const GuestsScene: React.FC = () => {
               borderBottom: `1px solid ${colors.border}`,
             }}
           >
-            Guests
+            Goście
           </div>
 
           <div
@@ -259,12 +259,12 @@ export const GuestsScene: React.FC = () => {
                   color: colors.ink,
                 }}
               >
-                Guest list
+                Lista gości
               </span>
               <span
                 style={{ fontFamily: fonts.sans, fontSize: 14 * scale, color: colors.inkSoft }}
               >
-                {`${counter} of ${hall.totalSeats} guests added`}
+                {`dodano ${counter} z ${hall.totalSeats} gości`}
               </span>
             </div>
             <div
@@ -302,18 +302,18 @@ export const GuestsScene: React.FC = () => {
             }}
           >
             <Icon name="search" color={colors.inkSoft} size={15 * scale} />
-            Search a guest...
+            Szukaj gościa…
           </div>
 
           <div style={{ display: "flex", gap: 8 * scale }}>
-            <FilterChip label={`All ${hall.totalSeats}`} active scale={scale} />
-            <FilterChip label="No seat 0" scale={scale} />
-            <FilterChip label="Vege 7" tone={colors.brandGreen} scale={scale} />
+            <FilterChip label={`Wszyscy ${hall.totalSeats}`} active scale={scale} />
+            <FilterChip label="Bez miejsca 0" scale={scale} />
+            <FilterChip label="Wege 7" tone={colors.brandGreen} scale={scale} />
           </div>
 
           <div style={{ display: "flex", gap: 8 * scale }}>
-            <PanelButton icon="plus" label="Add guest" scale={scale} />
-            <PanelButton icon="fileUp" label="Import guests" scale={scale} />
+            <PanelButton icon="plus" label="Dodaj gościa" scale={scale} />
+            <PanelButton icon="fileUp" label="Importuj gości" scale={scale} />
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 7 * scale, minHeight: 0 }}>
@@ -329,7 +329,7 @@ export const GuestsScene: React.FC = () => {
                 opacity: rows[visibleGuests.length - 1],
               }}
             >
-              {`+ ${hall.totalSeats - visibleGuests.length} more guests`}
+              {`+ ${hall.totalSeats - visibleGuests.length} gości więcej`}
             </div>
           </div>
         </div>
