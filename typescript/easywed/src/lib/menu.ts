@@ -49,6 +49,27 @@ export type MenuOption = {
   archived_at: string | null
 }
 
+/**
+ * The columns a catalogue read asks for, in one place because there are two
+ * readers of the same three tables: the couple's `loadMenuCatalogue` and the
+ * CRM's `useTenantMenus`, both through `fetchMenuCatalogue`.
+ *
+ * Plain `const` strings and not arrays: supabase-js resolves the row type from
+ * the literal handed to `.select()`, so these have to stay string literals to
+ * type anything at all.
+ *
+ * `created_at` is in all three for both readers. It is `byPosition`'s first
+ * tiebreaker, so a reader that drops it sorts rows in memory differently from
+ * the way the database ordered them - which is the whole thing that comparator
+ * exists to prevent.
+ */
+export const MENU_PACKAGE_COLUMNS =
+  "id, name, description, price_per_person_minor, position, archived_at, created_at"
+export const MENU_COURSE_COLUMNS =
+  "id, menu_package_id, name, choose_count, serving_note, per_guest_choice, position, archived_at, created_at"
+export const MENU_OPTION_COLUMNS =
+  "id, menu_course_id, name, note, position, archived_at, created_at"
+
 // Bounds, mirroring the CHECK constraints in 20260822000001. Enforced
 // client-side as well so a too-long dish name is caught by the form rather than
 // coming back as a PostgREST constraint violation nobody can read.
@@ -155,6 +176,25 @@ export const courseIsComplete = (
   pickedCount: number
 ): boolean => pickedCount >= course.choose_count
 
+/**
+ * Dish ids to their names, for the four surfaces that have to resolve one: the
+ * kitchen tally, the guest list, the printed report and the CSV export.
+ *
+ * Built over the catalogue **unfiltered by `archived_at`**, always. A dish the
+ * venue retired after this couple ordered it still has to be nameable on every
+ * row that holds it; `isLive` is for pickers, which offer a choice, not for
+ * rendering one already made. Every call site had that comment on its own copy
+ * of this one-liner, which is the sign it belonged here.
+ *
+ * The returned map's `get` is exactly `tallyByOption`'s `nameOf` - it hands
+ * back `undefined` for an id the catalogue cannot name, which that function
+ * counts into `unnamed`.
+ */
+export const dishNameIndex = (
+  options: Array<Pick<MenuOption, "id" | "name">>
+): Map<string, string> =>
+  new Map(options.map((option) => [option.id, option.name]))
+
 /** Portions per dish, plus the ones whose dish could not be named. */
 export type DishTally = {
   rows: Array<{ id: string; name: string; count: number }>
@@ -187,7 +227,9 @@ export type DishTally = {
  */
 export const tallyByOption = (
   optionIds: Iterable<string | null | undefined>,
-  nameOf: (id: string) => string | null
+  // `undefined` as well as `null`, so a `dishNameIndex` map's `get` can be
+  // passed straight in rather than through a `?? null` wrapper at every site.
+  nameOf: (id: string) => string | null | undefined
 ): DishTally => {
   const counts = new Map<string, number>()
   for (const id of optionIds) {

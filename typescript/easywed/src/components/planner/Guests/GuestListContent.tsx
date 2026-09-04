@@ -19,7 +19,7 @@ import type { TagTone } from "@/lib/tagTone"
 import { getInitials } from "@/lib/memberIdentity"
 import { usePlannerStore } from "@/stores/planner.store"
 import { useMenuStore } from "@/stores/menu.store"
-import { menuOptionTone, tallyByOption } from "@/lib/menu"
+import { dishNameIndex, menuOptionTone, tallyByOption } from "@/lib/menu"
 import { useDialogStore } from "@/stores/dialog.store"
 import { useEntityListStore } from "@/stores/entityList.store"
 import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
@@ -187,16 +187,9 @@ export const GuestListContent = () => {
   // Only tags actually in use, presets-first then alphabetical.
   const activeDietaryFilters = sortDietaryTags(dietaryCounts.keys(), t)
 
-  // Dish names, resolved from the venue's catalogue.
-  //
-  // Read **unfiltered by `archived_at`**: a dish the venue retired after this
-  // couple ordered it still has to be nameable on the row of every guest
-  // holding it. Filtering is for pickers, which offer a choice; this is
-  // rendering one that was already made.
-  const dishNameById = useMemo(
-    () => new Map(menuOptions.map((option) => [option.id, option.name])),
-    [menuOptions]
-  )
+  // Dish names, resolved from the venue's catalogue - unfiltered by
+  // `archived_at`, for the reason on `dishNameIndex`.
+  const dishNameById = useMemo(() => dishNameIndex(menuOptions), [menuOptions])
 
   // Only dishes somebody is actually having, biggest group first - the same
   // helper the kitchen tally and the printed report use, so the count-then-name
@@ -210,7 +203,7 @@ export const GuestListContent = () => {
     () =>
       tallyByOption(
         guests.map((g) => g.menuOptionId),
-        (id) => dishNameById.get(id) ?? null
+        (id) => dishNameById.get(id)
       ).rows,
     [guests, dishNameById]
   )

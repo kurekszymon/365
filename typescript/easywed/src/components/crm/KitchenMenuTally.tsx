@@ -2,7 +2,7 @@ import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 
 import { TagBadge } from "@/components/ui/tag-badge"
-import { menuOptionTone, tallyByOption } from "@/lib/menu"
+import { dishNameIndex, menuOptionTone, tallyByOption } from "@/lib/menu"
 import { useMenuStore } from "@/stores/menu.store"
 import { usePlannerStore } from "@/stores/planner.store"
 
@@ -35,10 +35,7 @@ export const KitchenMenuTally = () => {
   const options = useMenuStore((s) => s.options)
   const courses = useMenuStore((s) => s.courses)
 
-  const dishNameById = useMemo(
-    () => new Map(options.map((option) => [option.id, option.name])),
-    [options]
-  )
+  const dishNameById = useMemo(() => dishNameIndex(options), [options])
   const courseNameByOption = useMemo(() => {
     const courseName = new Map(
       courses.map((course) => [course.id, course.name])
@@ -55,7 +52,7 @@ export const KitchenMenuTally = () => {
     () =>
       tallyByOption(
         guests.map((g) => g.menuOptionId),
-        (id) => dishNameById.get(id) ?? null
+        (id) => dishNameById.get(id)
       ),
     [guests, dishNameById]
   )

@@ -5,6 +5,7 @@ import {
   canonicalizeDishName,
   courseIsComplete,
   dishLabel,
+  dishNameIndex,
   isLive,
   menuOptionTone,
   parseChooseCount,
@@ -125,6 +126,33 @@ describe("courseIsComplete", () => {
    */
   it("stays true past the count", () => {
     expect(courseIsComplete({ choose_count: 5 }, 7)).toBe(true)
+  })
+})
+
+describe("dishNameIndex", () => {
+  it("indexes archived dishes too", () => {
+    // The property the four call sites each used to state in a comment of their
+    // own: a dish retired after a couple ordered it still has to be nameable.
+    const index = dishNameIndex([
+      { id: "beef", name: "Poledwica wolowa" },
+      { id: "duck", name: "Kaczka pieczona" },
+    ])
+
+    expect(index.get("beef")).toBe("Poledwica wolowa")
+    expect(index.get("duck")).toBe("Kaczka pieczona")
+  })
+
+  it("hands `tallyByOption` its `nameOf` directly", () => {
+    // `get` returns undefined, not null, for an id the catalogue cannot name -
+    // which is why that signature accepts both.
+    const index = dishNameIndex([{ id: "beef", name: "Poledwica wolowa" }])
+
+    expect(
+      tallyByOption(["beef", "beef", "gone"], (id) => index.get(id))
+    ).toEqual({
+      rows: [{ id: "beef", name: "Poledwica wolowa", count: 2 }],
+      unnamed: 1,
+    })
   })
 })
 

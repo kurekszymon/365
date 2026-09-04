@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next"
 import type { Guest } from "@/stores/planner.store"
 import type { GuestSort } from "@/lib/export/guests"
+import { dishNameIndex } from "@/lib/menu"
 import { useGlobalStore } from "@/stores/global.store"
 import { useMenuStore } from "@/stores/menu.store"
 import { usePlannerStore } from "@/stores/planner.store"
@@ -86,13 +87,10 @@ export const buildRows = (
   // is called from dialogs and from the print path, and threading the catalogue
   // through every caller would buy nothing.
   //
-  // Unfiltered by `archived_at` on purpose - a dish the venue retired after
-  // this couple ordered it still has to be named on their export. Empty for
+  // Unfiltered by `archived_at`, for the reason on `dishNameIndex`. Empty for
   // every wedding with no venue, which is what makes the column blank rather
   // than broken in guest mode.
-  const dishNameById = new Map(
-    useMenuStore.getState().options.map((option) => [option.id, option.name])
-  )
+  const dishNameById = dishNameIndex(useMenuStore.getState().options)
   const unassignedLabel = t("export.unassigned")
 
   const header = active.map((f) => t(`export.col.${f}`))

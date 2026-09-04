@@ -19,7 +19,7 @@ import { usePrintStore } from "@/stores/print.store"
 import { useViewStore } from "@/stores/view.store"
 import { useMeasuresStore } from "@/stores/measures.store"
 import { groupGuestsByTable } from "@/lib/export/guests"
-import { tallyByOption } from "@/lib/menu"
+import { dishNameIndex, tallyByOption } from "@/lib/menu"
 import { useMenuStore } from "@/stores/menu.store"
 import { dietaryLabel } from "@/lib/dietary"
 import { ageGroupLabel, childAgeGroup } from "@/lib/ageGroup"
@@ -257,16 +257,11 @@ export const PlannerPrintView = () => {
 
   const unassignedLabel = t("export.unassigned")
 
-  // Dish names for the `dish` field and the tally below.
-  //
-  // Unfiltered by `archived_at`: a dish the venue retired after this couple
-  // ordered it still has to print. Empty for every wedding with no venue, so
-  // both the field and the tally disappear on their own in guest mode rather
-  // than needing to be gated.
-  const dishNameById = useMemo(
-    () => new Map(menuOptions.map((option) => [option.id, option.name])),
-    [menuOptions]
-  )
+  // Dish names for the `dish` field and the tally below, unfiltered by
+  // `archived_at` for the reason on `dishNameIndex`. Empty for every wedding
+  // with no venue, so both the field and the tally disappear on their own in
+  // guest mode rather than needing to be gated.
+  const dishNameById = useMemo(() => dishNameIndex(menuOptions), [menuOptions])
   const dishName = (id: string) => dishNameById.get(id) ?? null
 
   // How many portions of each dish, and how many guests still have none. The
