@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next"
 
 import type { CrmMenuPackage } from "./useTenantMenus"
+import { isLive } from "@/lib/menu"
 import { formatMoney } from "@/lib/money"
 import { cn } from "@/lib/utils"
 
@@ -40,7 +41,7 @@ export const CrmMenuPackageList = ({
             className={cn(
               "flex w-full flex-col items-start gap-0.5 rounded-md border p-3 text-left text-sm hover:bg-accent/50",
               pkg.id === selectedId && "border-primary bg-accent/40",
-              pkg.archived_at !== null && "opacity-60"
+              !isLive(pkg) && "opacity-60"
             )}
           >
             <span className="font-medium">{pkg.name}</span>
@@ -56,7 +57,7 @@ export const CrmMenuPackageList = ({
                 ),
               })}
             </span>
-            {pkg.archived_at !== null ? (
+            {!isLive(pkg) ? (
               <span className="text-xs text-muted-foreground">
                 {t("crm.menus.archived")}
               </span>

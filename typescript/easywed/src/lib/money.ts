@@ -17,6 +17,19 @@
 export const MAX_PRICE_MINOR = 100_000_000
 
 /**
+ * The currency assumed before `tenants.currency` has been read, or when the
+ * read fails.
+ *
+ * Mirrors the column's own default, which is what makes it the right guess
+ * rather than a hardcoded home market: a price rendered in the wrong symbol for
+ * the length of one round trip is a smaller problem than a price rendered bare,
+ * and for every venue on the column default it is not wrong at all. It was the
+ * same literal in the store, the CRM hook and the catalogue read - three places
+ * that must not be able to disagree about what a number means.
+ */
+export const DEFAULT_CURRENCY = "PLN"
+
+/**
  * A price for display: `40500, "PLN", "pl"` → `405,00 zł`.
  *
  * The try/catch is load-bearing, and the argument that throws is the **locale**,

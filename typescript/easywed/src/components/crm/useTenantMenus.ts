@@ -7,7 +7,8 @@ import type {
   CatalogueMenuOption,
   CatalogueMenuPackage,
 } from "@/lib/sync/menuCatalogue"
-import { byPosition } from "@/lib/menu"
+import { byPosition, coursesOf, optionsOf } from "@/lib/menu"
+import { DEFAULT_CURRENCY } from "@/lib/money"
 import { fetchMenuCatalogue } from "@/lib/sync/menuCatalogue"
 import { supabase } from "@/lib/supabase"
 import { track } from "@/lib/analytics/track"
@@ -157,7 +158,7 @@ export function useTenantMenus(tenantId: string | undefined) {
   const [packages, setPackages] = useState<Array<CrmMenuPackage>>([])
   const [courses, setCourses] = useState<Array<CrmMenuCourse>>([])
   const [options, setOptions] = useState<Array<CrmMenuOption>>([])
-  const [currency, setCurrency] = useState("PLN")
+  const [currency, setCurrency] = useState(DEFAULT_CURRENCY)
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   /**
@@ -455,7 +456,7 @@ export function useTenantMenus(tenantId: string | undefined) {
       // Counts only. The package's *name* is a string the venue typed, and
       // `AnalyticsEvents` is closed precisely so nothing like it can reach
       // PostHog; the venue itself is attributed with a PostHog group.
-      const courseRows = courses.filter((c) => c.menu_package_id === id)
+      const courseRows = coursesOf(courses, id)
       const courseIds = new Set(courseRows.map((c) => c.id))
       track("menu_package_saved", {
         course_count: courseRows.length,
@@ -469,14 +470,13 @@ export function useTenantMenus(tenantId: string | undefined) {
 
   const deletePackage = useCallback(
     async (id: string) => {
-      const courseIds = new Set(
-        courses.filter((c) => c.menu_package_id === id).map((c) => c.id)
-      )
+      const packageCourses = coursesOf(courses, id)
+      const courseIds = new Set(packageCourses.map((c) => c.id))
       // Captured to be put back one row at a time if the delete is refused -
       // "a couple has ordered this" is a routine outcome here, not a fault.
       const removed = {
         packages: packages.filter((p) => p.id === id),
-        courses: courses.filter((c) => c.menu_package_id === id),
+        courses: packageCourses,
         options: options.filter((o) => courseIds.has(o.menu_course_id)),
       }
 
@@ -514,7 +514,7 @@ export function useTenantMenus(tenantId: string | undefined) {
     async (packageId: string, name: string) => {
       if (!tenantId) return
 
-      const siblings = courses.filter((c) => c.menu_package_id === packageId)
+      const siblings = coursesOf(courses, packageId)
       const row: CrmMenuCourse = {
         id: crypto.randomUUID(),
         menu_package_id: packageId,
@@ -555,7 +555,7 @@ export function useTenantMenus(tenantId: string | undefined) {
     async (id: string) => {
       const removed = {
         courses: courses.filter((c) => c.id === id),
-        options: options.filter((o) => o.menu_course_id === id),
+        options: optionsOf(options, id),
       }
 
       await deleteRow(
@@ -583,7 +583,7 @@ export function useTenantMenus(tenantId: string | undefined) {
     async (courseId: string, name: string) => {
       if (!tenantId) return
 
-      const siblings = options.filter((o) => o.menu_course_id === courseId)
+      const siblings = optionsOf(options, courseId)
       const row: CrmMenuOption = {
         id: crypto.randomUUID(),
         menu_course_id: courseId,
@@ -694,7 +694,7 @@ export function useTenantMenus(tenantId: string | undefined) {
    */
   const moveCourse = useCallback(
     async (packageId: string, id: string, delta: -1 | 1) => {
-      const siblings = courses.filter((c) => c.menu_package_id === packageId)
+      const siblings = coursesOf(courses, packageId)
       const before = siblings.map((c) => c.id)
       const ids = reorderedIds(siblings, id, delta)
       // Already at the end of its list, or gone. Not a failure.
@@ -716,7 +716,7 @@ export function useTenantMenus(tenantId: string | undefined) {
 
   const moveOption = useCallback(
     async (courseId: string, id: string, delta: -1 | 1) => {
-      const siblings = options.filter((o) => o.menu_course_id === courseId)
+      const siblings = optionsOf(options, courseId)
       const before = siblings.map((o) => o.id)
       const ids = reorderedIds(siblings, id, delta)
       if (!ids) return

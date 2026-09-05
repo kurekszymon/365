@@ -23,9 +23,10 @@ import { TagBadge } from "@/components/ui/tag-badge"
 import {
   MAX_CHOOSE_COUNT,
   MAX_COURSE_NAME_LENGTH,
+  MAX_DISH_NAME_LENGTH,
   MAX_SERVING_NOTE_LENGTH,
   MIN_CHOOSE_COUNT,
-  canonicalizeDishName,
+  canonicalizeLine,
   parseChooseCount,
 } from "@/lib/menu"
 
@@ -60,16 +61,20 @@ export const CrmMenuCourseEditor = ({
   const [newDish, setNewDish] = useState("")
 
   const commitName = () => {
-    const next = (name ?? "").trim().slice(0, MAX_COURSE_NAME_LENGTH)
+    if (name === null) return
+    const next = canonicalizeLine(name, MAX_COURSE_NAME_LENGTH)
     setName(null)
-    if (next.length > 0 && next !== course.name) {
+    if (next && next !== course.name) {
       void menus.saveCourse(course.id, { name: next })
     }
   }
 
+  // The `null` bail matters on a nullable field: with no draft there is nothing
+  // to commit, and canonicalizing the absent one produced `null` - so tabbing
+  // through an untouched serving note wrote an UPDATE clearing it.
   const commitServingNote = () => {
-    const raw = (servingNote ?? "").trim().slice(0, MAX_SERVING_NOTE_LENGTH)
-    const next = raw.length > 0 ? raw : null
+    if (servingNote === null) return
+    const next = canonicalizeLine(servingNote, MAX_SERVING_NOTE_LENGTH)
     setServingNote(null)
     if (next !== course.serving_note) {
       void menus.saveCourse(course.id, { serving_note: next })
@@ -97,7 +102,7 @@ export const CrmMenuCourseEditor = ({
   }
 
   const addDish = () => {
-    const next = canonicalizeDishName(newDish)
+    const next = canonicalizeLine(newDish, MAX_DISH_NAME_LENGTH)
     if (!next) return
     setNewDish("")
     void menus.createOption(course.id, next)

@@ -31,3 +31,27 @@ export const SITE_ORIGIN = `https://${SITE_HOST}`
 
 /** The 1200x630 social card, referenced absolutely because crawlers require it. */
 export const OG_IMAGE = `${SITE_ORIGIN}/og-image.png`
+
+/** The marketing pages that exist once per locale, as real prerendered routes. */
+type LocaleDoc = "terms" | "privacy" | "changelog" | "venues"
+
+/**
+ * The path to one of those pages, in the language the caller is rendering in.
+ *
+ * These pages are **language-pinned** - `/pl/terms` and `/en/terms` are two
+ * routes, not one route with a detector - so every link into them has to choose,
+ * and six files were choosing with their own copy of the same ternary. Two of
+ * them read a `lang` prop and four read `i18n.language`, which is why this takes
+ * the language as a plain string rather than reaching for i18next: keeping this
+ * file dependency-free is load-bearing (see the note at the top), and
+ * `startsWith` answers both callers.
+ *
+ * The return type stays a union of two literals so `<Link to>` still type-checks
+ * against the generated route tree - a widened `string` would silently give up
+ * that check at every call site this replaces.
+ */
+export const localeDocPath = <TDoc extends LocaleDoc>(
+  doc: TDoc,
+  language: string
+): `/pl/${TDoc}` | `/en/${TDoc}` =>
+  language.startsWith("pl") ? `/pl/${doc}` : `/en/${doc}`

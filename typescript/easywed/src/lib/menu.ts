@@ -110,15 +110,30 @@ export const dishLabel = (option: Pick<MenuOption, "name">): string =>
 export const menuOptionTone = (name: string): TagTone => toneFromKey(name)
 
 /**
- * Clean up a typed dish name before storing it: trim, collapse internal
- * whitespace, cap at the column's length. Returns null for blanks, so a caller
- * can treat "nothing to save" and "invalid" as one case. Mirrors
- * `canonicalizeDietary`.
+ * Clean up a typed field before storing it: trim, cap at the column's length.
+ * Returns null for blanks, so a caller can treat "nothing to save" and
+ * "invalid" as one case. Mirrors `canonicalizeDietary`.
+ *
+ * Every commit-on-blur handler in the CRM editor is one of these two functions
+ * with a different bound - they were eight copies of the same three lines, and
+ * the copies had already drifted apart on whether whitespace is collapsed.
  */
-export const canonicalizeDishName = (raw: string): string | null => {
-  const cleaned = raw.trim().replace(/\s+/g, " ").slice(0, MAX_DISH_NAME_LENGTH)
+export const canonicalizeText = (raw: string, max: number): string | null => {
+  const cleaned = raw.trim().slice(0, max)
   return cleaned.length > 0 ? cleaned : null
 }
+
+/**
+ * The same, for a **single-line** field: runs of whitespace collapse to one
+ * space first.
+ *
+ * Two functions rather than a flag, because the distinction is a property of the
+ * control and not of the call. Every `<Input>` on the menu screen wants this
+ * one; the package description is a `<Textarea>` and wants `canonicalizeText`,
+ * since collapsing there would eat the newlines a venue deliberately typed.
+ */
+export const canonicalizeLine = (raw: string, max: number): string | null =>
+  canonicalizeText(raw.replace(/\s+/g, " "), max)
 
 /**
  * The `choose_count` a typed field commits, clamped to the CHECK's range so an
@@ -143,6 +158,38 @@ export const parseChooseCount = (raw: string): number | null => {
 export const isLive = <T extends { archived_at: string | null }>(
   row: T
 ): boolean => row.archived_at === null
+
+/**
+ * What an archive button writes: a timestamp, or null to restore.
+ *
+ * One expression rather than a ternary per row type, so "archive" and "restore"
+ * cannot end up meaning different things on packages and on dishes - and so the
+ * one place that decides it is next to `isLive`, which is what every reader of
+ * the column goes through.
+ */
+export const toggleArchivedAt = (row: {
+  archived_at: string | null
+}): string | null => (isLive(row) ? new Date().toISOString() : null)
+
+/**
+ * The children of one parent row.
+ *
+ * The catalogue is held as three flat arrays - by the CRM hook, by `menu.store`
+ * and by every component either hands rows to - so descending one level is a
+ * `filter` on a foreign key, and it was written out at a dozen sites. Two named
+ * functions instead, because `c.menu_package_id === id` and
+ * `o.menu_course_id === id` are exactly similar enough to be typed into each
+ * other's place without anything failing to compile.
+ */
+export const coursesOf = <T extends { menu_package_id: string }>(
+  courses: Array<T>,
+  packageId: string
+): Array<T> => courses.filter((course) => course.menu_package_id === packageId)
+
+export const optionsOf = <T extends { menu_course_id: string }>(
+  options: Array<T>,
+  courseId: string
+): Array<T> => options.filter((option) => option.menu_course_id === courseId)
 
 /**
  * The one sort order every menu read uses: `position`, then `created_at`, then

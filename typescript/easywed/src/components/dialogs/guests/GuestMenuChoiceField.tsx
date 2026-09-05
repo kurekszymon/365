@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
 
-import { dishLabel, menuOptionTone } from "@/lib/menu"
+import { dishLabel, menuOptionTone, optionsOf } from "@/lib/menu"
 import { track } from "@/lib/analytics/track"
 import { TAG_TONE_BADGE, TAG_TONE_SOLID } from "@/lib/tagTone"
 import { cn } from "@/lib/utils"
@@ -61,8 +61,8 @@ export const GuestMenuChoiceField = ({ guestId }: { guestId: string }) => {
   // here would freeze guest edits on a wedding whose main course the venue
   // retired for next season - the couple could not finish assigning dinners
   // because of a catalogue edit that has nothing to do with them.
-  const options = menu.options.filter(
-    (option) => option.menu_course_id === course.id && selected.has(option.id)
+  const options = optionsOf(menu.options, course.id).filter((option) =>
+    selected.has(option.id)
   )
   if (options.length === 0) return null
 

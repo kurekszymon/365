@@ -2,6 +2,8 @@ import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { ExternalLinkIcon, FileTextIcon, ShieldCheckIcon } from "lucide-react"
 
+import { localeDocPath } from "@/lib/site"
+
 /**
  * The Regulamin and Polityka prywatności, reachable from inside the app.
  *
@@ -15,18 +17,17 @@ import { ExternalLinkIcon, FileTextIcon, ShieldCheckIcon } from "lucide-react"
  */
 export const LegalLinksSection = () => {
   const { t, i18n } = useTranslation()
-  const isPolish = i18n.language.startsWith("pl")
 
   const documents = [
     {
       key: "terms",
-      to: isPolish ? "/pl/terms" : "/en/terms",
+      to: localeDocPath("terms", i18n.language),
       icon: FileTextIcon,
       label: t("settings.legal.terms"),
     },
     {
       key: "privacy",
-      to: isPolish ? "/pl/privacy" : "/en/privacy",
+      to: localeDocPath("privacy", i18n.language),
       icon: ShieldCheckIcon,
       label: t("settings.legal.privacy"),
     },
