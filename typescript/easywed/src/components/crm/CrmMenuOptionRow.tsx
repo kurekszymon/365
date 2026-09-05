@@ -15,7 +15,9 @@ import { Input } from "@/components/ui/input"
 import {
   MAX_DISH_NAME_LENGTH,
   MAX_DISH_NOTE_LENGTH,
-  canonicalizeDishName,
+  canonicalizeLine,
+  isLive,
+  toggleArchivedAt,
 } from "@/lib/menu"
 
 /**
@@ -51,19 +53,23 @@ export const CrmMenuOptionRow = ({
   const [name, setName] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
 
-  const archived = option.archived_at !== null
+  const archived = !isLive(option)
 
   const commitName = () => {
-    const next = canonicalizeDishName(name ?? "")
+    if (name === null) return
+    const next = canonicalizeLine(name, MAX_DISH_NAME_LENGTH)
     setName(null)
     // A blank is a cancelled edit, not a request to store an empty dish - the
     // CHECK would refuse it anyway.
     if (next && next !== option.name) onSave({ name: next })
   }
 
+  // The `null` bail matters on a nullable field: with no draft there is nothing
+  // to commit, and canonicalizing the absent one produced `null` - so tabbing
+  // through an untouched note wrote an UPDATE clearing it.
   const commitNote = () => {
-    const raw = (note ?? "").trim().slice(0, MAX_DISH_NOTE_LENGTH)
-    const next = raw.length > 0 ? raw : null
+    if (note === null) return
+    const next = canonicalizeLine(note, MAX_DISH_NOTE_LENGTH)
     setNote(null)
     if (next !== option.note) onSave({ note: next })
   }
@@ -126,9 +132,7 @@ export const CrmMenuOptionRow = ({
         variant="ghost"
         aria-label={archived ? t("crm.menus.restore") : t("crm.menus.archive")}
         title={archived ? t("crm.menus.restore") : t("crm.menus.archive")}
-        onClick={() =>
-          onSave({ archived_at: archived ? null : new Date().toISOString() })
-        }
+        onClick={() => onSave({ archived_at: toggleArchivedAt(option) })}
       >
         {archived ? <ArchiveRestoreIcon /> : <ArchiveIcon />}
       </Button>

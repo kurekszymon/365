@@ -7,6 +7,7 @@ import { LandingSteps } from "./LandingSteps"
 import { LandingCta } from "./LandingCta"
 import { VenueOwnersBanner } from "./VenueOwnersBanner"
 import { Button } from "@/components/ui/button"
+import { localeDocPath } from "@/lib/site"
 import { useAuthStore } from "@/stores/auth.store"
 import i18n from "@/i18n"
 
@@ -89,25 +90,25 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
           </p>
           <nav className="flex items-center gap-6">
             <Link
-              to={lang === "pl" ? "/pl/venues" : "/en/venues"}
+              to={localeDocPath("venues", lang)}
               className="transition-colors hover:text-foreground"
             >
               {t("landing.footer.venues", { lng: lang })}
             </Link>
             <Link
-              to={lang === "pl" ? "/pl/changelog" : "/en/changelog"}
+              to={localeDocPath("changelog", lang)}
               className="transition-colors hover:text-foreground"
             >
               {t("landing.footer.changelog", { lng: lang })}
             </Link>
             <Link
-              to={lang === "pl" ? "/pl/terms" : "/en/terms"}
+              to={localeDocPath("terms", lang)}
               className="transition-colors hover:text-foreground"
             >
               {t("landing.footer.terms", { lng: lang })}
             </Link>
             <Link
-              to={lang === "pl" ? "/pl/privacy" : "/en/privacy"}
+              to={localeDocPath("privacy", lang)}
               className="transition-colors hover:text-foreground"
             >
               {t("landing.footer.privacy", { lng: lang })}

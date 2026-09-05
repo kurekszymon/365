@@ -2,14 +2,18 @@ import { describe, expect, it } from "vitest"
 import {
   MAX_DISH_NAME_LENGTH,
   byPosition,
-  canonicalizeDishName,
+  canonicalizeLine,
+  canonicalizeText,
   courseIsComplete,
+  coursesOf,
   dishLabel,
   dishNameIndex,
   isLive,
   menuOptionTone,
+  optionsOf,
   parseChooseCount,
   tallyByOption,
+  toggleArchivedAt,
 } from "./menu"
 
 describe("dishLabel", () => {
@@ -47,28 +51,65 @@ describe("menuOptionTone", () => {
   })
 })
 
-describe("canonicalizeDishName", () => {
+describe("canonicalizeLine", () => {
   it("trims and collapses whitespace", () => {
-    expect(canonicalizeDishName("  Kotlet   schabowy  ")).toBe(
+    expect(canonicalizeLine("  Kotlet   schabowy  ", MAX_DISH_NAME_LENGTH)).toBe(
       "Kotlet schabowy"
     )
   })
 
   it("returns null for a blank", () => {
-    expect(canonicalizeDishName("")).toBeNull()
-    expect(canonicalizeDishName("   ")).toBeNull()
+    expect(canonicalizeLine("", MAX_DISH_NAME_LENGTH)).toBeNull()
+    expect(canonicalizeLine("   ", MAX_DISH_NAME_LENGTH)).toBeNull()
   })
 
   it("caps at the column's length", () => {
     const long = "a".repeat(MAX_DISH_NAME_LENGTH + 40)
-    expect(canonicalizeDishName(long)!.length).toBe(MAX_DISH_NAME_LENGTH)
+    expect(canonicalizeLine(long, MAX_DISH_NAME_LENGTH)!.length).toBe(
+      MAX_DISH_NAME_LENGTH
+    )
   })
 
   it("leaves a real 96-character dish name intact", () => {
     // The name the 120-character bound was chosen for.
     const real =
       "Placki z makaronu ryzowego z dodatkiem zoltego sera i pesto na rukoli z sosem balsamicznym"
-    expect(canonicalizeDishName(real)).toBe(real)
+    expect(canonicalizeLine(real, MAX_DISH_NAME_LENGTH)).toBe(real)
+  })
+})
+
+describe("canonicalizeText", () => {
+  it("keeps the newlines a multi-line field was typed with", () => {
+    // The reason the textarea does not go through `canonicalizeLine`: a
+    // package description is written in lines, and collapsing them would eat a
+    // layout the venue chose.
+    expect(canonicalizeText("Zupa\n\nDanie glowne  ", 400)).toBe(
+      "Zupa\n\nDanie glowne"
+    )
+  })
+})
+
+describe("toggleArchivedAt", () => {
+  it("stamps a live row and clears an archived one", () => {
+    expect(toggleArchivedAt({ archived_at: null })).not.toBeNull()
+    expect(toggleArchivedAt({ archived_at: "2026-06-01T00:00:00Z" })).toBeNull()
+  })
+})
+
+describe("coursesOf / optionsOf", () => {
+  it("takes only the children of the named parent", () => {
+    const courses = [
+      { id: "a", menu_package_id: "p1" },
+      { id: "b", menu_package_id: "p2" },
+      { id: "c", menu_package_id: "p1" },
+    ]
+    expect(coursesOf(courses, "p1").map((c) => c.id)).toEqual(["a", "c"])
+
+    const options = [
+      { id: "x", menu_course_id: "a" },
+      { id: "y", menu_course_id: "b" },
+    ]
+    expect(optionsOf(options, "b").map((o) => o.id)).toEqual(["y"])
   })
 })
 

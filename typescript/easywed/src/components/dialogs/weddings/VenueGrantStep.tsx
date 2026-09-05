@@ -1,8 +1,10 @@
 import { useState } from "react"
+import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { VenueDisclosureList } from "./VenueDisclosureList"
 import type { LinkedVenue } from "@/stores/global.store"
 import { Button } from "@/components/ui/button"
+import { localeDocPath } from "@/lib/site"
 import { setVenueAccess } from "@/lib/sync/venue"
 import { track } from "@/lib/analytics/track"
 
@@ -54,10 +56,6 @@ export const VenueGrantStep = ({
     onDone()
   }
 
-  const privacyHref = i18n.language.startsWith("pl")
-    ? "/pl/privacy"
-    : "/en/privacy"
-
   return (
     <div className="flex flex-col gap-4">
       <p className="font-medium">
@@ -93,15 +91,18 @@ export const VenueGrantStep = ({
       <p className="text-sm text-muted-foreground">{t("venue.grant.legal")}</p>
 
       {/* New tab, like every other legal link in the app: reading the policy
-          must never cost someone the plan they have open. */}
-      <a
-        href={privacyHref}
+          must never cost someone the plan they have open. `<Link>` rather than
+          a bare `<a href>` - this was the one legal link in the app doing a
+          full document load, which throws away the planner state the new tab
+          was opened to preserve. */}
+      <Link
+        to={localeDocPath("privacy", i18n.language)}
         target="_blank"
         rel="noopener noreferrer"
         className="text-sm underline underline-offset-4"
       >
         {t("venue.grant.policy")}
-      </a>
+      </Link>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 

@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router"
 import { Trans, useTranslation } from "react-i18next"
 
+import { localeDocPath } from "@/lib/site"
+
 /**
  * "I accept the <terms> and confirm I have read the <privacy>."
  *
@@ -10,7 +12,6 @@ import { Trans, useTranslation } from "react-i18next"
  */
 export function TermsConsentText() {
   const { i18n } = useTranslation()
-  const locale = i18n.language.startsWith("pl") ? "pl" : "en"
 
   return (
     <Trans
@@ -18,7 +19,7 @@ export function TermsConsentText() {
       components={{
         terms: (
           <Link
-            to={locale === "pl" ? "/pl/terms" : "/en/terms"}
+            to={localeDocPath("terms", i18n.language)}
             target="_blank"
             rel="noopener noreferrer"
             className="underline underline-offset-2 hover:text-foreground"
@@ -26,7 +27,7 @@ export function TermsConsentText() {
         ),
         privacy: (
           <Link
-            to={locale === "pl" ? "/pl/privacy" : "/en/privacy"}
+            to={localeDocPath("privacy", i18n.language)}
             target="_blank"
             rel="noopener noreferrer"
             className="underline underline-offset-2 hover:text-foreground"

@@ -9,6 +9,7 @@ import {
 import { useTranslation } from "react-i18next"
 import { Link } from "@tanstack/react-router"
 import { ThemeSubmenu } from "./ThemeSubmenu"
+import { localeDocPath } from "@/lib/site"
 import { supabase } from "@/lib/supabase"
 import { useAuthStore } from "@/stores/auth.store"
 import { useProfileStore } from "@/stores/profile.store"
@@ -69,9 +70,7 @@ export const AccountMenu = () => {
         <ThemeSubmenu />
         <DropdownMenuItem asChild>
           <Link
-            to={
-              i18n.language.startsWith("pl") ? "/pl/changelog" : "/en/changelog"
-            }
+            to={localeDocPath("changelog", i18n.language)}
             target="_blank"
             rel="noopener noreferrer"
           >

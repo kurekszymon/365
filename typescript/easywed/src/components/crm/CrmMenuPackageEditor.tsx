@@ -18,6 +18,12 @@ import {
   MAX_COURSE_NAME_LENGTH,
   MAX_PACKAGE_DESCRIPTION_LENGTH,
   MAX_PACKAGE_NAME_LENGTH,
+  canonicalizeLine,
+  canonicalizeText,
+  coursesOf,
+  isLive,
+  optionsOf,
+  toggleArchivedAt,
 } from "@/lib/menu"
 import { formatMoney, parsePriceInput } from "@/lib/money"
 
@@ -49,22 +55,30 @@ export const CrmMenuPackageEditor = ({
   const [priceInvalid, setPriceInvalid] = useState(false)
   const [newCourse, setNewCourse] = useState("")
 
-  const archived = pkg.archived_at !== null
-  const courses = menus.courses.filter((c) => c.menu_package_id === pkg.id)
+  const archived = !isLive(pkg)
+  const courses = coursesOf(menus.courses, pkg.id)
 
   const commitName = () => {
-    const next = (name ?? "").trim().slice(0, MAX_PACKAGE_NAME_LENGTH)
+    if (name === null) return
+    const next = canonicalizeLine(name, MAX_PACKAGE_NAME_LENGTH)
     setName(null)
-    if (next.length > 0 && next !== pkg.name) {
+    if (next && next !== pkg.name) {
       void menus.savePackage(pkg.id, { name: next })
     }
   }
 
+  /**
+   * `canonicalizeText`, not `canonicalizeLine`: this one is a textarea, and the
+   * line breaks in a package description are the venue's own formatting.
+   *
+   * The `null` bail is the same one `commitPrice` has always had, and on a
+   * nullable field it is load-bearing rather than tidy: with no draft there is
+   * nothing to commit, and canonicalizing the absent draft produced `null` -
+   * so tabbing through an untouched description wrote an UPDATE clearing it.
+   */
   const commitDescription = () => {
-    const raw = (description ?? "")
-      .trim()
-      .slice(0, MAX_PACKAGE_DESCRIPTION_LENGTH)
-    const next = raw.length > 0 ? raw : null
+    if (description === null) return
+    const next = canonicalizeText(description, MAX_PACKAGE_DESCRIPTION_LENGTH)
     setDescription(null)
     if (next !== pkg.description) {
       void menus.savePackage(pkg.id, { description: next })
@@ -90,8 +104,8 @@ export const CrmMenuPackageEditor = ({
   }
 
   const addCourse = () => {
-    const next = newCourse.trim().slice(0, MAX_COURSE_NAME_LENGTH)
-    if (next.length === 0) return
+    const next = canonicalizeLine(newCourse, MAX_COURSE_NAME_LENGTH)
+    if (!next) return
     setNewCourse("")
     void menus.createCourse(pkg.id, next)
   }
@@ -114,7 +128,7 @@ export const CrmMenuPackageEditor = ({
           variant="outline"
           onClick={() =>
             void menus.savePackage(pkg.id, {
-              archived_at: archived ? null : new Date().toISOString(),
+              archived_at: toggleArchivedAt(pkg),
             })
           }
         >
@@ -201,9 +215,7 @@ export const CrmMenuPackageEditor = ({
               <CrmMenuCourseEditor
                 key={course.id}
                 course={course}
-                options={menus.options.filter(
-                  (option) => option.menu_course_id === course.id
-                )}
+                options={optionsOf(menus.options, course.id)}
                 isFirst={index === 0}
                 isLast={index === courses.length - 1}
                 menus={menus}

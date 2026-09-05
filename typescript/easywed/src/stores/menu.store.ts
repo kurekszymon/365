@@ -1,7 +1,8 @@
 import { create } from "zustand"
 
 import type { MenuCourse, MenuOption, MenuPackage } from "@/lib/menu"
-import { courseIsComplete, isLive } from "@/lib/menu"
+import { courseIsComplete, coursesOf, isLive, optionsOf } from "@/lib/menu"
+import { DEFAULT_CURRENCY } from "@/lib/money"
 import {
   deleteMenuSelection,
   insertMenuSelection,
@@ -72,7 +73,7 @@ const initial: State = {
   options: [],
   packageId: null,
   selectedOptionIds: [],
-  currency: "PLN",
+  currency: DEFAULT_CURRENCY,
   status: "idle",
 }
 
@@ -267,9 +268,7 @@ export const useMenuStore = create<State & Action>((set, get) => ({
     // day somebody actually needs the number.
     if (packageId === null) return
 
-    const courses = state.courses.filter(
-      (course) => course.menu_package_id === packageId && isLive(course)
-    )
+    const courses = coursesOf(state.courses, packageId).filter(isLive)
     track("menu_package_selected", {
       course_count: courses.length,
       per_guest_courses: courses.filter((c) => c.per_guest_choice).length,
@@ -388,9 +387,7 @@ export const useMenuStore = create<State & Action>((set, get) => ({
 export const liveCourses = (state: State): Array<MenuCourse> =>
   state.packageId === null
     ? []
-    : state.courses.filter(
-        (course) => course.menu_package_id === state.packageId && isLive(course)
-      )
+    : coursesOf(state.courses, state.packageId).filter(isLive)
 
 /**
  * The dishes of one course the picker renders: still on offer, **or** already
@@ -418,10 +415,8 @@ export const pickableOptions = (
   courseId: string
 ): Array<MenuOption> => {
   const selected = new Set(state.selectedOptionIds)
-  return state.options.filter(
-    (option) =>
-      option.menu_course_id === courseId &&
-      (isLive(option) || selected.has(option.id))
+  return optionsOf(state.options, courseId).filter(
+    (option) => isLive(option) || selected.has(option.id)
   )
 }
 
@@ -437,8 +432,8 @@ export const pickableOptions = (
  */
 export const pickedCount = (state: State, courseId: string): number => {
   const selected = new Set(state.selectedOptionIds)
-  return state.options.filter(
-    (option) => option.menu_course_id === courseId && selected.has(option.id)
+  return optionsOf(state.options, courseId).filter((option) =>
+    selected.has(option.id)
   ).length
 }
 

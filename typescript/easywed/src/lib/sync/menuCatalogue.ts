@@ -4,6 +4,7 @@ import {
   MENU_OPTION_COLUMNS,
   MENU_PACKAGE_COLUMNS,
 } from "@/lib/menu"
+import { DEFAULT_CURRENCY } from "@/lib/money"
 import { supabase } from "@/lib/supabase"
 import { useMenuStore } from "@/stores/menu.store"
 
@@ -42,8 +43,8 @@ export type MenuCatalogueResult =
  * One function for both readers - the couple's Menu tab (`loadMenuCatalogue`
  * below) and the venue's own editor (`useTenantMenus`) - because they were the
  * same four-way `Promise.all` twice, down to the triple `.order()` and the
- * `?? "PLN"`. The two differ in what they do with the rows, not in how they get
- * them, and that is the seam.
+ * currency fallback. The two differ in what they do with the rows, not in how
+ * they get them, and that is the seam.
  *
  * Archived rows are fetched, not filtered out. A dish the couple already chose
  * has to keep its name everywhere it is displayed; the pickers filter with
@@ -125,7 +126,7 @@ export const fetchMenuCatalogue = async (
       // A failed currency read is not worth failing the whole tab for: the
       // fallback matches the column's default, and a price in the wrong symbol
       // is a smaller problem than no menu at all.
-      currency: tenantRes.data?.currency ?? "PLN",
+      currency: tenantRes.data?.currency ?? DEFAULT_CURRENCY,
     },
   }
 }
