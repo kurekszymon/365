@@ -66,8 +66,15 @@ export const MenuPanelContent = () => {
   if (!orderedPackage) {
     return (
       <div className="flex flex-col gap-3">
+        {/* Two sentences rather than one with an empty slot. `venue` is only
+            null when no venue is linked - which the tab gating already
+            prevents - but interpolating "" for it rendered "Choose a menu from
+            what  offers.", a double space and a missing subject, at exactly the
+            moment the couple is being asked to trust the list below. */}
         <p className="text-sm text-muted-foreground">
-          {t("menu.pick_package", { venue: venueName ?? "" })}
+          {venueName
+            ? t("menu.pick_package", { venue: venueName })
+            : t("menu.pick_package_generic")}
         </p>
         <MenuPackagePicker
           packages={livePackages}

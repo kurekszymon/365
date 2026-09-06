@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 
 import type { Dispatch, SetStateAction } from "react"
 
@@ -12,7 +13,6 @@ import { DEFAULT_CURRENCY } from "@/lib/money"
 import { fetchMenuCatalogue } from "@/lib/sync/menuCatalogue"
 import { supabase } from "@/lib/supabase"
 import { track } from "@/lib/analytics/track"
-import i18n from "@/i18n"
 
 /** The three tables this screen owns, and the only ones it writes. */
 type MenuTable = "menu_packages" | "menu_courses" | "menu_options"
@@ -155,12 +155,22 @@ const NO_ROWS = "no rows matched - RLS refused it, or the row is already gone"
  * couple's Menu tab, which asks the same three tables the same questions.
  */
 export function useTenantMenus(tenantId: string | undefined) {
+  const { t } = useTranslation()
   const [packages, setPackages] = useState<Array<CrmMenuPackage>>([])
   const [courses, setCourses] = useState<Array<CrmMenuCourse>>([])
   const [options, setOptions] = useState<Array<CrmMenuOption>>([])
   const [currency, setCurrency] = useState(DEFAULT_CURRENCY)
   const [loaded, setLoaded] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  /**
+   * The *key* of the current failure, not its sentence.
+   *
+   * State outlives a language switch, so translating at the point of failure
+   * froze whichever language was current when the write was refused - the rest
+   * of the screen switched and the red banner did not. Every other file in this
+   * feature goes through `useTranslation`; this one now does too, and resolves
+   * the key on each render instead.
+   */
+  const [errorKey, setErrorKey] = useState<string | null>(null)
   /**
    * How many writes are in flight, not whether one is.
    *
@@ -195,12 +205,12 @@ export function useTenantMenus(tenantId: string | undefined) {
 
       if (result.status === "failed") {
         console.error("[crm] menu load failed", result.errors)
-        setError(i18n.t("crm.menus.load_failed"))
+        setErrorKey("crm.menus.load_failed")
         setLoaded(true)
         return
       }
 
-      setError(null)
+      setErrorKey(null)
       setCurrency(result.catalogue.currency)
       setPackages(result.catalogue.packages)
       setCourses(result.catalogue.courses)
@@ -222,7 +232,7 @@ export function useTenantMenus(tenantId: string | undefined) {
     setPackages([])
     setCourses([])
     setOptions([])
-    setError(null)
+    setErrorKey(null)
 
     const controller = new AbortController()
     // refresh() only setState()s after awaiting the fetch - a legitimate
@@ -241,13 +251,13 @@ export function useTenantMenus(tenantId: string | undefined) {
    */
   const fail = useCallback((scope: string, cause: unknown, key: string) => {
     console.error(`[crm] ${scope}`, cause)
-    setError(i18n.t(key))
+    setErrorKey(key)
   }, [])
 
   /**
    * Wrap one write: count it in, clear the last failure, count it out.
    *
-   * The `setError(null)` is here rather than on success, matching
+   * The `setErrorKey(null)` is here rather than on success, matching
    * `useTenantRoster`: a stale red banner belongs to the action that produced
    * it, and the next action is the moment it stops being true. Clearing only on
    * success would leave one transient failure on screen for the rest of the
@@ -256,7 +266,7 @@ export function useTenantMenus(tenantId: string | undefined) {
   const tracked = useCallback(
     async <T>(write: () => Promise<T>): Promise<T> => {
       setWritesInFlight((n) => n + 1)
-      setError(null)
+      setErrorKey(null)
       try {
         return await write()
       } finally {
@@ -737,7 +747,8 @@ export function useTenantMenus(tenantId: string | undefined) {
 
   return {
     loaded,
-    error,
+    /** The current failure as a sentence, resolved in the current language. */
+    error: errorKey ? t(errorKey) : null,
     /** True while any write is out. Gates the destructive buttons. */
     saving: writesInFlight > 0,
     /**

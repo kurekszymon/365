@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 
 import { useAuthStore } from "@/stores/auth.store"
 import { useTenantStore } from "@/stores/tenant.store"
@@ -6,7 +7,6 @@ import { supabase } from "@/lib/supabase"
 import { fetchDisplayNames } from "@/lib/sync/profile"
 import { apexOrigin, tenantUrl } from "@/lib/tenant/host"
 import { track } from "@/lib/analytics/track"
-import i18n from "@/i18n"
 
 /** The two roles an invitation may carry. 'owner' is provisioned, never invited. */
 export type TenantInviteRole = "staff" | "customer"
@@ -47,6 +47,7 @@ export type TenantMember = {
  *     and `venue_access` are separate decisions with separate RPCs.
  */
 export function useTenantRoster(tenantId: string | undefined) {
+  const { t } = useTranslation()
   const session = useAuthStore((s) => s.session)
   const tenantRole = useTenantStore((s) => s.tenantRole)
   const slug = useTenantStore((s) => s.tenant?.slug)
@@ -63,7 +64,15 @@ export function useTenantRoster(tenantId: string | undefined) {
     id: string
     url: string
   } | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  /**
+   * The *key* of the current failure, not its sentence.
+   *
+   * State outlives a language switch, so translating at the point of failure
+   * froze whichever language was current when the write was refused - the rest
+   * of the screen switched and the red banner did not. Resolved on each render
+   * instead, through the hook's `t`. `useTenantMenus` holds the same rule.
+   */
+  const [errorKey, setErrorKey] = useState<string | null>(null)
 
   // The load effect's controller, kept where the handlers can reach it: a
   // refresh fired from one of them has to be cancellable by the same unmount
@@ -115,7 +124,7 @@ export function useTenantRoster(tenantId: string | undefined) {
           invitations: invitationsRes.error,
           members: membersRes.error,
         })
-        setError(i18n.t("crm.roster.load_failed"))
+        setErrorKey("crm.roster.load_failed")
         setLoaded(true)
         return
       }
@@ -127,7 +136,7 @@ export function useTenantRoster(tenantId: string | undefined) {
 
       if (isAborted()) return
 
-      setError(null)
+      setErrorKey(null)
       setInvitations(invitationsRes.data as Array<TenantInvitation>)
       setMembers(
         membersRes.data.map((member) => ({
@@ -157,7 +166,7 @@ export function useTenantRoster(tenantId: string | undefined) {
   const handleCreate = useCallback(async () => {
     if (!tenantId || !session || submitting) return
     setSubmitting(true)
-    setError(null)
+    setErrorKey(null)
 
     const { error: insertError } = await supabase
       .from("tenant_invitations")
@@ -170,12 +179,10 @@ export function useTenantRoster(tenantId: string | undefined) {
       // the owner-only staff invite, and the RLS message for it is a PostgREST
       // policy string nobody should be shown. `canInviteStaff` already hides
       // the option, so this is the defence-in-depth path.
-      setError(
-        i18n.t(
-          role === "staff" && !canInviteStaff
-            ? "crm.roster.staff_owner_only"
-            : "crm.roster.create_failed"
-        )
+      setErrorKey(
+        role === "staff" && !canInviteStaff
+          ? "crm.roster.staff_owner_only"
+          : "crm.roster.create_failed"
       )
       return
     }
@@ -197,7 +204,7 @@ export function useTenantRoster(tenantId: string | undefined) {
 
   const handleRevoke = useCallback(
     async (id: string) => {
-      setError(null)
+      setErrorKey(null)
       const revoked = invitations.find((invitation) => invitation.id === id)
       setInvitations((list) => list.filter((i) => i.id !== id))
 
@@ -216,7 +223,7 @@ export function useTenantRoster(tenantId: string | undefined) {
               new Date(a.created_at).getTime()
           )
         })
-        setError(i18n.t("crm.roster.revoke_failed"))
+        setErrorKey("crm.roster.revoke_failed")
       }
     },
     [invitations]
@@ -226,7 +233,7 @@ export function useTenantRoster(tenantId: string | undefined) {
     async (member: TenantMember) => {
       if (!tenantId || member.role === "owner") return
 
-      setError(null)
+      setErrorKey(null)
       setMembers((list) =>
         list.filter((item) => item.user_id !== member.user_id)
       )
@@ -255,7 +262,7 @@ export function useTenantRoster(tenantId: string | undefined) {
               new Date(b.created_at).getTime()
           )
         })
-        setError(i18n.t("crm.roster.remove_failed"))
+        setErrorKey("crm.roster.remove_failed")
       }
     },
     [tenantId]
@@ -303,7 +310,8 @@ export function useTenantRoster(tenantId: string | undefined) {
     // what matters now, and that is in the member list.
     pending: invitations.filter((i) => !i.claimed_at),
     members,
-    error,
+    /** The current failure as a sentence, resolved in the current language. */
+    error: errorKey ? t(errorKey) : null,
     copiedId,
     fallbackUrl,
     currentUserId: session?.user.id,

@@ -66,7 +66,13 @@ export const MenuCourseSection = ({
           complete ? "text-muted-foreground" : "text-foreground"
         )}
       >
-        {t("menu.picked_of", { count: picked, total: course.choose_count })}
+        {/* `picked`, not `count`. Nothing in either sentence inflects - "N of M
+            chosen", "Wybrano N z M" - so the number is a plain interpolation,
+            and naming it `count` would enrol the key in i18next's plural
+            resolution and leave it one added Polish noun away from silently
+            wanting `_one`/`_few`/`_many` forms it does not have. `choose_count`
+            above is the one here that does inflect, and it carries them. */}
+        {t("menu.picked_of", { picked, total: course.choose_count })}
       </p>
 
       {options.length === 0 ? (
