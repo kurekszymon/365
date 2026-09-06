@@ -2,20 +2,33 @@
 
 Personal notes on what's in the schema, why, and how the Supabase CLI flow works. Written from a frontend-proficient perspective.
 
-## What the migration does
+## What the migrations do
 
-6 tables across 2 migration files:
+Sixteen tables and one view, across 31 migration files:
 
 ```
-weddings              ← top-level project
-  ├─ wedding_members  ← join table: who has access, what role
-  ├─ halls            ← 1:1 with wedding (the floor plan)
-  ├─ tables           ← 1:N (seating tables)
-  ├─ guests           ← 1:N, optionally FK → tables
-  └─ reminders        ← 1:N (wedding todo list)
+weddings                     ← top-level project
+  ├─ wedding_members         ← join table: who has access, what role
+  ├─ wedding_invitations     ← join tokens the owner issues
+  ├─ halls                   ← 1:N (the floor plan; usually one)
+  ├─ tables                  ← 1:N (seating tables)
+  ├─ fixtures                ← 1:N (bar, stage, dancefloor - no seats)
+  ├─ guests                  ← 1:N, optionally FK → tables
+  ├─ reminders               ← 1:N (wedding todo list)
+  └─ wedding_menu_selections ← 1:N, FK → menu_options (the dishes ordered)
 
-profiles              ← 1:1 with auth.users, outside the wedding tree
+tenants                      ← a venue, at <slug>.easywed.app
+  ├─ tenant_members          ← staff, and the couples linked to them
+  ├─ tenant_invitations      ← join tokens, mirroring the wedding side
+  └─ menu_packages           ← the catalogue the venue authors
+       └─ menu_courses
+            └─ menu_options
+
+profiles                     ← 1:1 with auth.users, outside both trees
+wedding_seatmap              ← view over guests; all a venue reads of them
 ```
+
+`invitation_orders` was created in `20260425000001` and dropped again in `20260804000001` - ignore it if the history hands it to you.
 
 Frontend analogy: like setting up Zustand stores' TypeScript types once upfront, but enforced at the database level so no client bug can corrupt the shape.
 
@@ -39,18 +52,24 @@ Single most important Postgres concept for SaaS. Without RLS, any authenticated 
 alter table public.halls enable row level security;
 create policy "members can view halls"
   on public.halls for select
-  using (public.is_wedding_member(wedding_id));
+  using (
+    public.wedding_role(wedding_id) in ('owner', 'editor', 'viewer', 'venue')
+  );
 ```
 
-At runtime: when the React app does `supabase.from("halls").select()`, Postgres rewrites it to `SELECT * FROM halls WHERE is_wedding_member(wedding_id)`. Can't forget to add the filter - impossible to leak data.
+At runtime: when the React app does `supabase.from("halls").select()`, Postgres rewrites it to `SELECT * FROM halls WHERE wedding_role(wedding_id) in (...)`. Can't forget to add the filter - impossible to leak data.
 
-Each table has 4 policies: one per operation (SELECT/INSERT/UPDATE/DELETE). `using` applies to reads; `with check` applies to writes. `members can view` vs `editors can modify` is the role gate.
+That policy read `using (public.is_wedding_member(wedding_id))` until `20260817000003` replaced it. The spelling is gone from the whole wedding tree now, and on `guests` restoring it is a personal-data breach - see the venue section below before writing it anywhere.
+
+`using` applies to reads; `with check` applies to writes, and `members can view` vs `editors can modify` is the role gate. The wedding-tree tables run to roughly four policies each, one per operation - but do not read that as a rule, because on the newer tables the **missing** ones are load-bearing: `tenant_members` has no INSERT policy and must not grow one, `tenants` has neither INSERT nor DELETE (provisioning is a psql job), `wedding_menu_selections` has no UPDATE at all (a composite primary key, picked and unpicked), and each of the three menu tables has *two* SELECT policies - one for the venue's own staff, one for couples linked to it.
 
 **Why this matters vs Node/Express**: traditionally you'd write `if (user.canEdit(wedding)) { ... }` in every endpoint - easy to forget one route. RLS pushes the check to the data layer - can't be bypassed by a missed middleware.
 
 ## Tenants, the derived `venue` role, and the one policy you must not simplify
 
-Migrations `20260817000001`-`20260817000003` add a **tenant** (a wedding venue at `<slug>.easywed.app`) with its own `tenants` / `tenant_members` tables and five policy helpers (`tenant_role`, `is_tenant_member`, `is_tenant_staff`, `my_tenant_id`, `staff_can_view_profile`). Those five keep their `anon` EXECUTE grant for the reason in the segfault section below — they are policy helpers, not RPCs.
+Migrations `20260817000001`-`20260817000003` add a **tenant** (a wedding venue at `<slug>.easywed.app`) with its own `tenants` / `tenant_members` tables and five `security definer` functions (`tenant_role`, `is_tenant_member`, `is_tenant_staff`, `my_tenant_id`, `staff_can_view_profile`). Four of them are policy helpers and keep their `anon` EXECUTE grant for the reason in the segfault section below.
+
+`my_tenant_id` is the exception, and the reason written in `20260817000001` does not actually cover it: it appears in **no policy** — it is an RPC in shape, and today it has no caller at all, in SQL or in TypeScript. `fetchMyStaffTenant` does the job instead, because it filters on `role in ('owner','staff')` and `my_tenant_id()` answers for any membership, including a venue's `customer` (`staffTenant.test.ts` pins that difference). So the segfault argument cannot apply to it and revoking `anon` here would be safe. The grant is left alone anyway because there is nothing to buy — the function reads `auth.uid()` and returns null for an anonymous caller — and a blanket "these five stay granted" is one fewer exception for the next person to re-litigate. Worth knowing which argument really applies, in a section that otherwise forbids revisiting the grant.
 
 A couple can link their wedding to a venue (`weddings.tenant_id`) and then, separately, grant it access (`weddings.venue_access`, one of `none` / `pending` / `granted`). Neither column is client-writable: `enforce_wedding_tenant_columns` blocks `authenticated` and `anon` on **INSERT as well as UPDATE**, so the only ways in are `link_wedding_to_venue` and `set_venue_access`. The INSERT half matters — the weddings INSERT policy only checks `owner_id = auth.uid()`, so without it anyone could POST a wedding that arrives pre-linked and pre-granted, straight past the `open_linking` check.
 
@@ -71,11 +90,13 @@ It names the three member roles **literally**, and must keep doing so. Two edits
 - **Reverting it to `is_wedding_member(wedding_id)`.** That is equivalent *today* only because `wedding_role()`'s first branch is a lookup in the same table. The second branch broke the equivalence, and nothing guarantees the first stays a plain lookup. A policy that is safe because of how a helper happens to be implemented is one refactor away from handing every guest name to a third party, silently — nothing errors, the venue simply starts receiving names.
 - **Adding `'venue'` to the list.** `guests` holds full names and the couple's free-text notes about people who never agreed to anything. `privacy.venue.hidden` promises in writing that a venue never receives either.
 
-`reminders` and `wedding_members` are narrowed the same way. `halls`, `tables`, `fixtures` and `weddings` are the ones that gain `'venue'` — the room, and the wedding's name and date, all named in `privacy.venue.shared`.
+`reminders` and `wedding_members` are narrowed the same way. `halls`, `tables`, `fixtures` and `weddings` are the ones that gain `'venue'` here — the room, and the wedding's name and date, all named in `privacy.venue.shared`. `wedding_menu_selections` joined them later (`20260822000002`) and is the only addition to that list; every value in it is a uuid of the venue's own catalogue, and it is the first relation in the tree that a venue reads and the couple writes.
 
 A policy admits **rows, not columns**, so `'venue'` on `weddings` puts the whole row within reach, `owner_id` included — a stable `auth.users` uuid that the disclosure did not name. It is reachable rather than disclosed: both venue-side reads project explicit column lists and neither asks for it (`loadWeddingForVenue.ts`, `CrmWeddingList.tsx`). **The answer taken was to name it in the copy** — in `privacy.venue.shared`, and deliberately *not* in the grant dialog's `venue.grant.shared_3`. As content the uuid is nothing: no name, no email, nothing the couple typed, and nothing the venue can resolve against a system of its own. Its one real property is that it is **stable**, so a venue hosting two weddings by the same account sees the same value twice — which is worth a clause on the policy page and is not sayable in a consent bullet without more words than it is worth. `VenueDisclosureList` exists to give the "never sees" half equal weight to the "sees" half, and padding the latter with a random string dilutes the sentence that screen is actually for. That trade cost one more edit: `privacy.venue.optin` used to promise the app shows "exactly this list", which was literally true item-for-item, and now says it shows a short version of both halves with the policy page as the complete one. The alternative — a `wedding_venue_summary` view mirroring `wedding_seatmap`, with `'venue'` dropped from the `weddings` policy — was considered and not taken: it costs `loadWeddingForVenue` its `tenants(id, slug, name)` embed, since PostgREST will not traverse an FK from a view, and buys the concealment of an opaque identifier that carries no name, no address and nothing the couple typed. Revisit it if `weddings` ever grows a column that does.
 
-What the venue reads instead is `wedding_seatmap`, a `security_barrier` view running as its owner (so the `guests` policy above does not filter it) whose entire access control is its own `WHERE`. It projects seat position, `dietary` and `age_group` — **no `name` column and no `note` column exist in it to leak**. The honest limit, disclosed rather than engineered around: `dietary` and `age_group` are free text the couple types, so a name typed into a diet tag reaches the venue. The projection guarantees what *we* send, not what someone put in a field we do send.
+What the venue reads instead is `wedding_seatmap`, a `security_barrier` view running as its owner (so the `guests` policy above does not filter it) whose entire access control is its own `WHERE`. It projects seat position, `dietary`, `age_group` and — appended by `20260822000003`, since `create or replace view` may only add columns at the end — `menu_option_id`. **No `name` column and no `note` column exist in it to leak**, and the dish is a uuid rather than a label for exactly that reason: a text column here would degrade `venueRls.test.ts`'s blunt "no `name` key" assertion into an allowlist.
+
+The honest limit, disclosed rather than engineered around: **every free-text field the venue does receive is a channel for a name the projection cannot close.** `dietary` and `age_group` are the two the migration names, and they are the sharpest because they sit on a person — a name typed into a diet tag reaches the venue attached to a seat. They are not the only ones. `halls.name` and `tables.name` come across whole through section 2's widening (`rows.ts` copies both onto the venue's canvas), and in this product a table is routinely called "Stół Kowalskich" — a surname, volunteered, sitting on the floor plan. That is disclosed in `20260817000003` section 2 and covered by `privacy.venue.shared`'s "layout of halls, tables and other plan elements", but it is absent from the HONEST LIMIT block itself, which is the place someone goes to enumerate the channels. Treat this paragraph as the complete list until a migration can restate it. The projection guarantees what *we* send, not what someone put in a field we do send.
 
 `my_wedding_role(p_wedding_id)` exists because narrowing `wedding_members` means the client can no longer derive its own role from the member rows it fetches — a venue reads zero of them, and "no row" is indistinguishable from "no access".
 

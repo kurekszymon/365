@@ -78,11 +78,20 @@ function CrmWeddingPeek() {
 
   return (
     <>
-      {/* Reused verbatim, with `fields: ["dietary"]`. It reads guests out of
-          planner.store, and loadWeddingForVenue put pseudonymous ones there -
-          so the kitchen report is the couple's own print view with the names
-          replaced at the load boundary, not a second component that has to be
-          kept in step with it. */}
+      {/* Reused verbatim. It reads guests out of planner.store, and
+          loadWeddingForVenue put pseudonymous ones there - so the kitchen
+          report is the couple's own print view with the names replaced at the
+          load boundary, not a second component that has to be kept in step
+          with it.
+
+          It takes no props: the field list and every layout option come from
+          print.store, which the button below writes through triggerPdfExport
+          just before window.print(). So the kitchen's three fields are chosen
+          down there, not here, and until that click the store still holds
+          DEFAULT_PRINT_FIELDS - a browser-initiated Ctrl+P on this page prints
+          ["name", "dietary"]. That store is plain in-memory Zustand and the
+          CRM lives on the tenant host, so nothing a staff member set up while
+          printing their own wedding on the apex can reach it. */}
       <PlannerPrintView />
 
       <div className="flex flex-col gap-4 print:hidden">
