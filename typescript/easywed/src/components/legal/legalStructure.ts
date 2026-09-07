@@ -142,8 +142,8 @@ export const TERMS_SECTIONS: Array<TermsSection> = [
 
 // The model withdrawal form (załącznik nr 2 to the Ustawa o prawach
 // konsumenta), which art. 12 ust. 1 pkt 9 requires the trader to supply rather
-// than just cite. Rendered after the last § as an appendix - it isn't a section
-// of the contract and carries no § number of its own.
+// than cite. Rendered after the last § as an appendix: not a section of the
+// contract, and carrying no § number of its own.
 export const TERMS_APPENDIX = { id: "withdrawal_form", lines: 8 } as const
 
 // Sections with `bullets` render `privacy.<id>.intro` + a list; the rest
@@ -165,10 +165,10 @@ export const PRIVACY_SECTIONS: Array<{ id: string; bullets?: Array<string> }> =
     },
     {
       id: "purposes",
-      // `special` is the art. 9 ust. 2 lifting condition. The policy admitted
-      // in privacy.data.dietary that it holds special-category data while
-      // listing art. 6 bases only, which left that processing with no
-      // condition at all - and v2 discloses those tags to a third party.
+      // `special` is the art. 9 ust. 2 lifting condition. privacy.data.dietary
+      // admits the policy holds special-category data, so listing art. 6 bases
+      // alone would leave that processing with no condition - and v2 discloses
+      // those tags to a third party.
       bullets: [
         "service",
         "account",

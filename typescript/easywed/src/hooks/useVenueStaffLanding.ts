@@ -11,21 +11,18 @@ import { useAuthStore } from "@/stores/auth.store"
  * Forwards a venue's staff from the apex landing to their own CRM.
  *
  * The other half of `authLandingPath`: a tenant host answers "where does this
- * person belong?" from the hostname, and the apex has to ask. It asks here,
- * once, and only when the marker armed at an auth surface says this arrival
- * came straight off signing in (or off typing /crm on the apex). Every other
- * visit to the wedding list issues no query and redirects nobody - which is
- * what keeps the list reachable for a venue owner who is also planning a
- * wedding of their own.
+ * person belong?" from the hostname, and the apex has to ask. It asks once, and
+ * only when the marker armed at an auth surface says this arrival came straight
+ * off signing in (or off typing /crm on the apex). Every other visit issues no
+ * query and redirects nobody, which keeps the list reachable for a venue owner
+ * planning a wedding of their own.
  *
  * `window.location.replace`, not the router: the CRM is on another origin, and
- * TanStack's `redirect()` builds paths against the current one. `replace` keeps
- * the apex out of history, so Back goes where the user actually came from
- * rather than into a bounce.
+ * TanStack's `redirect()` builds against the current one. `replace` keeps the
+ * apex out of history, so Back goes where the user came from.
  *
- * Returns "checking" while the lookup is in flight *and* for the whole life of
- * a successful hop - the caller renders nothing in that state, so the wedding
- * list never flashes on its way to somewhere else.
+ * Returns "checking" while the lookup is in flight *and* for the whole life of a
+ * successful hop, so the wedding list never flashes on its way elsewhere.
  */
 export const useVenueStaffLanding = (): "idle" | "checking" => {
   const isReady = useAuthStore((s) => s.isReady)
@@ -49,20 +46,17 @@ export const useVenueStaffLanding = (): "idle" | "checking" => {
 
     const controller = new AbortController()
 
-    // Spent when the lookup *starts*, not when it answers.
-    //
-    // Spending it in the callback looks safer and is not: the callback returns
-    // early on an abort, and an unmount is an abort with no later run to spend
-    // it. Navigate off /home while this is in flight and the marker sits in
-    // sessionStorage for the life of the tab, firing at the next arrival on the
-    // wedding list - the exact bounce venueLanding.ts exists to prevent.
+    // Spent when the lookup *starts*, not when it answers. Spending it in the
+    // callback looks safer and is not: the callback returns early on an abort,
+    // and an unmount is an abort with no later run to spend it, so the marker
+    // would sit in sessionStorage for the life of the tab and fire at the next
+    // arrival - the bounce venueLanding.ts exists to prevent.
     //
     // StrictMode's double mount is unaffected: `pending` is component state and
-    // survives the simulated remount, so the second effect run still looks up.
+    // survives the simulated remount.
     //
-    // The cost is that signing in and then clicking into a wedding before the
-    // answer lands forwards nobody. That is the right way round - the user
-    // navigated somewhere on purpose - and typing /crm on the apex re-arms.
+    // The cost is that clicking into a wedding before the answer lands forwards
+    // nobody - the right way round, and typing /crm on the apex re-arms.
     clearVenueLanding()
 
     void fetchMyStaffTenant(userId, controller.signal).then((tenant) => {

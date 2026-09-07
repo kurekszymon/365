@@ -61,15 +61,13 @@ export const VenuePeekSummary = ({ weddingId }: { weddingId: string }) => {
       return
     }
 
-    // Leaving is the point, not a courtesy redirect: this screen is a view of
-    // data this venue just gave up, and unmounting it is what clears the store
-    // it was rendered from (clearVenuePeek, in the route's effect cleanup).
-    // Staying put with a success message underneath a live seat map would say
-    // the access is gone while still showing it.
+    // Leaving is the point, not a courtesy redirect: this screen views data the
+    // venue just gave up, and unmounting is what clears the store it rendered
+    // from (clearVenuePeek, in the route's effect cleanup). A success message
+    // under a live seat map would say the access is gone while showing it.
     //
-    // No setSubmitting(false) on this path - the component is on its way out,
-    // and re-enabling the button first only offers a second click at an RPC
-    // that has already succeeded.
+    // No setSubmitting(false) here - the component is on its way out, and
+    // re-enabling the button only offers a second click at a succeeded RPC.
     toast.success(t("crm.wedding.release_done"))
     void navigate({ to: "/crm" })
   }

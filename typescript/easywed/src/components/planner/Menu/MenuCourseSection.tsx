@@ -9,23 +9,19 @@ import { cn } from "@/lib/utils"
 /**
  * One course, and the dishes the couple picks from it.
  *
- * `choose_count` is rendered as a sentence the client builds from the number -
- * "(do wyboru 5 pozycji)" - because the venue types a number, not a sentence.
- * That is what makes the Polish `_one`/`_few`/`_many` forms load-bearing here
- * and not in `serving_note`, which is free text shown verbatim.
+ * `choose_count` is rendered as a sentence built from the number - "(do wyboru 5
+ * pozycji)" - because the venue types a number, not a sentence. That is what
+ * makes the Polish `_one`/`_few`/`_many` forms load-bearing here and not in
+ * `serving_note`, which is free text shown verbatim.
  *
- * Nothing stops a couple picking more than `choose_count`. The database
- * deliberately does not enforce it (20260822000002 says why: it would refuse
- * the transient state of swapping one dish for another), so this counts and
- * says where they are rather than blocking - "4 z 5 wybranych", and the badge
- * clears once the count is met.
+ * Nothing stops a couple picking more than `choose_count`: the database does not
+ * enforce it (20260822000002 - it would refuse the transient state of swapping
+ * one dish for another), so this counts rather than blocks.
  *
- * `options` is `pickableOptions`, so a row here can be an archived dish this
- * wedding had already selected. It is dimmed and labelled rather than hidden -
- * the same treatment `CrmMenuPackageList` gives an archived package - because
- * hiding it would leave a dish in the served set with nothing on screen to
- * unpick it with. Unpicking is all it is still good for; it drops out of
- * `pickableOptions` on that same click.
+ * `options` is `pickableOptions`, so a row can be an archived dish this wedding
+ * already selected. Dimmed and labelled rather than hidden, because hiding it
+ * would leave a dish in the served set with nothing on screen to unpick it with
+ * - and it drops out of `pickableOptions` on that same click.
  */
 export const MenuCourseSection = ({
   course,

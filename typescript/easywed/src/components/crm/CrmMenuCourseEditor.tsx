@@ -82,17 +82,13 @@ export const CrmMenuCourseEditor = ({
   }
 
   /**
-   * `choose_count`, committed on blur like every other field on this screen.
-   *
-   * It used to save on every keystroke, because `NumberInput` reports each
-   * parseable value as the user types. Typing "60" therefore wrote 6, then
-   * clamped 60 down and wrote 50 - two writes of a rule no staff member chose,
-   * the second of them landing while the field still read "60". A couple
-   * looking at the menu in between was told to pick six dishes.
+   * `choose_count`, committed on blur like every other field here. Saving per
+   * keystroke would write a rule no staff member chose: `NumberInput` reports
+   * each parseable value, so typing "60" writes 6, then clamps to 50 - and a
+   * couple looking at the menu in between is told to pick six dishes.
    *
    * Reads the raw text off the event rather than a parsed draft, so an emptied
-   * field reverts instead of committing whatever was last parseable out of it -
-   * the contract `NumberInput` states for its own draft, kept here.
+   * field reverts instead of committing the last parseable value.
    */
   const commitChooseCount = (raw: string) => {
     const next = parseChooseCount(raw)
@@ -172,11 +168,10 @@ export const CrmMenuCourseEditor = ({
             min={MIN_CHOOSE_COUNT}
             max={MAX_CHOOSE_COUNT}
             value={course.choose_count}
-            // Nothing on change, deliberately. `NumberInput` already holds the
-            // raw text in its own draft while the field has focus, so `value`
-            // is not read until it is committed - there is no second draft to
-            // keep here, and the one thing a change handler could do is the
-            // per-keystroke write this field is being taken off.
+            // Nothing on change, deliberately: `NumberInput` holds the raw text
+            // in its own draft while focused, so `value` is not read until
+            // committed. A change handler here could only do the per-keystroke
+            // write this field is being taken off.
             onValueChange={() => {}}
             onBlur={(e) => commitChooseCount(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}

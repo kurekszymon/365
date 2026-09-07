@@ -17,29 +17,24 @@ import i18n from "@/i18n"
  * The venue's peek: the same wedding, hydrated into the same stores, with the
  * people taken out.
  *
- * Shaped exactly like `loadWedding` - one `Promise.all`, one `AbortSignal`,
- * the same store writes - and differs in three ways, each of which is a
- * decision rather than an omission:
+ * Shaped exactly like `loadWedding` - one `Promise.all`, one `AbortSignal`, the
+ * same store writes - and differs in three ways, each deliberate:
  *
  *   1. **No guests, reminders or members request at all.** 20260817000003
- *      narrows those three SELECT policies to the explicit member roles, so
- *      asking would return zero rows; not asking says why in the code instead
- *      of leaving three empty results to be explained.
+ *      narrows those SELECT policies to the explicit member roles, so asking
+ *      would return zero rows; not asking says why in the code.
  *   2. **Seats come from `wedding_seatmap`**, a definer view whose projection
- *      has no `name` column and no `note` column. There is nothing to redact
- *      here because there is nothing to redact *with* - the guarantee is the
- *      shape of the view, not the discipline of this file.
- *   3. **Seats are labelled here, at the load boundary.** Every renderer
- *      downstream - the canvas, the guest list, `PlannerPrintView` - takes a
- *      `Guest` with a `name`, so giving them "Gosc 12" rather than a special
- *      anonymous mode means none of them needs to know a venue exists. The
- *      alternative was a nullable name threaded through a dozen components,
- *      each of which could forget.
+ *      has no `name` and no `note` column. Nothing is redacted here because
+ *      there is nothing to redact *with* - the guarantee is the view's shape,
+ *      not this file's discipline.
+ *   3. **Seats are labelled at the load boundary.** Every downstream renderer
+ *      takes a `Guest` with a `name`, so handing them "Gosc 12" means none of
+ *      them needs to know a venue exists - the alternative is a nullable name
+ *      threaded through a dozen components, each of which could forget.
  *
- * No self-healing. `loadWedding` adopts hall-less rows into the first hall and
- * repairs them in the background; a venue is read-only in the database and must
- * stay read-only here, so orphans are adopted for display only and nothing is
- * written back.
+ * No self-healing: `loadWedding` repairs hall-less rows in the background, but a
+ * venue is read-only in the database and stays read-only here, so orphans are
+ * adopted for display only.
  */
 export const loadWeddingForVenue = async (id: string, signal: AbortSignal) => {
   const [weddingRes, hallsRes, tablesRes, fixturesRes, seatsRes] =
@@ -80,9 +75,8 @@ export const loadWeddingForVenue = async (id: string, signal: AbortSignal) => {
         .is("deleted_at", null)
         .abortSignal(signal),
 
-      // Columns listed rather than `*`, for the same reason every other query
-      // here lists them: so a column added to the view later has to be opted
-      // into by a human. The view already filters soft-deleted guests.
+      // Columns listed rather than `*`, so a column added to the view later has
+      // to be opted into by a human. The view already filters soft-deleted rows.
       supabase
         .from("wedding_seatmap")
         .select("id, table_id, seat_id, dietary, age_group, menu_option_id")
@@ -102,11 +96,10 @@ export const loadWeddingForVenue = async (id: string, signal: AbortSignal) => {
     weddingId: id,
     name: weddingRes.data.name || undefined,
     date: weddingRes.data.date ? new Date(weddingRes.data.date) : undefined,
-    // Pinned rather than read back from my_wedding_role, the same way
-    // wedding.local.tsx pins "owner": this load path exists only inside the
-    // CRM, so the surface is read-only regardless of what else the caller
-    // might happen to be. selectCanEdit excludes "venue", which disables every
-    // write affordance and every dnd-kit sensor in the planner.
+    // Pinned rather than read from my_wedding_role, as wedding.local.tsx pins
+    // "owner": this path exists only inside the CRM, so the surface is read-only
+    // whatever else the caller might be. selectCanEdit excludes "venue", which
+    // disables every write affordance and dnd-kit sensor in the planner.
     role: "venue",
     // The venue is not a member of the wedding and cannot read who is.
     members: [],
@@ -119,16 +112,14 @@ export const loadWeddingForVenue = async (id: string, signal: AbortSignal) => {
   const halls: Array<Hall> = hallsRes.data.map(toHall)
 
   // Display-only orphan adoption: a table whose hall is missing still has to
-  // render somewhere, and halls[0] is where loadWedding would have put it.
-  // Unlike there, nothing is written back.
+  // render somewhere, and halls[0] is where loadWedding would have put it -
+  // except nothing is written back.
   //
-  // Which is why the hall-less case needs its own branch. `loadWedding` makes
-  // halls[0] exist by *inserting* a default hall; a venue cannot write, so the
-  // same hall is built here in memory only. Without it there is no halls[0] to
-  // adopt into, every row comes back with an undefined hallId, and the peek at
-  // a wedding whose tables were never assigned a hall renders an empty canvas -
-  // which reads as "the couple has planned nothing" rather than as the data
-  // anomaly it is. Condition mirrors loadWedding's, fixtures included.
+  // Hence the hall-less branch. `loadWedding` makes halls[0] exist by *inserting*
+  // a default hall; a venue cannot write, so the same hall is built in memory.
+  // Without it every row comes back with an undefined hallId and the peek
+  // renders an empty canvas, which reads as "the couple has planned nothing".
+  // Condition mirrors loadWedding's, fixtures included.
   if (
     halls.length === 0 &&
     (tablesRes.data.length > 0 || fixturesRes.data.length > 0)
@@ -148,11 +139,10 @@ export const loadWeddingForVenue = async (id: string, signal: AbortSignal) => {
   const tables = tablesRes.data.map((t) => toTable(t, adoptOrphan))
   const fixtures = fixturesRes.data.map((f) => toFixture(f, adoptOrphan))
 
-  // Stable numbering. Sorted by table, then by seat *index* rather than by the
-  // seat id as a string - "seat-10" sorts before "seat-2" lexically - so the
-  // same guest carries the same label across reloads and across the printed
-  // report. Unseated guests trail the list; they are still a head count the
-  // kitchen needs.
+  // Stable numbering: by table, then by seat *index* rather than seat id as a
+  // string ("seat-10" sorts before "seat-2" lexically), so the same guest keeps
+  // the same label across reloads and the printed report. Unseated guests trail
+  // the list - still a head count the kitchen needs.
   const seatRows = [...seatsRes.data].sort(
     (a, b) =>
       tableOrder(a.table_id).localeCompare(tableOrder(b.table_id)) ||
@@ -169,31 +159,29 @@ export const loadWeddingForVenue = async (id: string, signal: AbortSignal) => {
     ageGroup: row.age_group ?? undefined,
     tableId: row.table_id,
     seatId: row.seat_id,
-    // A uuid of this venue's own catalogue. It is deliberately *not* resolved
-    // to a dish name by the view - the seat map's whole safety argument is that
-    // there is no text in the projection to redact - so the name is looked up
-    // client-side from the catalogue loaded below, which this venue wrote.
+    // A uuid of this venue's own catalogue, deliberately *not* resolved to a
+    // name by the view - the seat map's safety argument is that there is no text
+    // in the projection to redact. Named client-side from the catalogue below.
     menuOptionId: row.menu_option_id,
   }))
 
   usePlannerStore.setState({ tables, guests, halls, fixtures, hallZOrder: [] })
 
   // The catalogue, so those uuids can be named. Read through the *staff*
-  // policies from 20260822000001 - this is the venue's own data - and
-  // unfiltered by `archived_at`, so a dish archived after a couple ordered it
-  // is still nameable on the kitchen report.
+  // policies from 20260822000001 - the venue's own data - and unfiltered by
+  // `archived_at`, so a dish archived after a couple ordered it is still
+  // nameable on the kitchen report.
   //
-  // The wedding's package id comes along so the report can group by course. The
-  // served set deliberately does not: what the kitchen cooks is what the guests
-  // actually hold, and a dish the couple unpicked has already been cleared off
-  // every guest by the trigger in 20260822000003.
+  // The package id comes along so the report can group by course. The served set
+  // deliberately does not: the kitchen cooks what the guests hold, and an
+  // unpicked dish is already cleared off every guest by 20260822000003.
   useMenuStore.getState().clear()
   useMenuStore.getState().setOrder(weddingRes.data.menu_package_id, [])
   if (tenant) void loadMenuCatalogue(tenant.id, signal)
 
   // Cleared rather than left alone: these stores are module singletons, so a
-  // staff member who also plans their own wedding in the same tab would
-  // otherwise see their own reminders under a customer's name.
+  // staff member planning their own wedding in the same tab would otherwise see
+  // their own reminders under a customer's name.
   useRemindersStore.setState({ reminders: [] })
 }
 
@@ -201,20 +189,17 @@ export const loadWeddingForVenue = async (id: string, signal: AbortSignal) => {
  * The inverse of `loadWeddingForVenue`: take the customer's layout back out of
  * the stores it was hydrated into.
  *
- * This is what makes a revocation *visible* rather than merely true. The
- * database stops answering the moment `set_venue_access(false)` commits - the
- * derived role is re-evaluated per request, with nothing cached - but that
- * governs the next request, not the pixels already on screen. Without this, a
- * staff member who hands back access keeps the seat map, the head count and the
- * dietary tags rendered from the already-hydrated store until they happen to
- * navigate somewhere else, and `privacy.venue.revoke`'s "natychmiast i
- * calkowicie" would be a sentence the UI quietly contradicts.
+ * What makes a revocation *visible* rather than merely true. The database stops
+ * answering the moment `set_venue_access(false)` commits, but that governs the
+ * next request, not the pixels already on screen - without this, a staff member
+ * who hands back access keeps the seat map and dietary tags rendered from the
+ * hydrated store, and `privacy.venue.revoke`'s "natychmiast i calkowicie" would
+ * be a sentence the UI contradicts.
  *
- * Called on unmount rather than only after a release, so leaving the peek by
- * any route - the back arrow, browser back, a revoke by the couple - ends it
- * the same way. These stores are module singletons shared with the couple's own
- * planner, so a venue staff member who also plans their own wedding in this tab
- * is the second reason not to leave a customer's layout sitting in them.
+ * Called on unmount rather than only after a release, so every route out of the
+ * peek ends it the same way. These stores are module singletons shared with the
+ * couple's own planner, which is the second reason not to leave a customer's
+ * layout in them.
  */
 export const clearVenuePeek = () => {
   usePlannerStore.setState({
@@ -234,10 +219,9 @@ export const clearVenuePeek = () => {
     venueAccess: "none",
   })
   useRemindersStore.setState({ reminders: [] })
-  // Same reason as the reminders reset above, and the same reason this function
-  // exists at all: menu.store is a module singleton, so a staff member who also
-  // plans their own wedding in this tab must not be left holding a customer's
-  // menu - nor the catalogue keyed to it.
+  // Same reason as the reminders reset above: menu.store is a module singleton,
+  // so a staff member who also plans their own wedding here must not be left
+  // holding a customer's menu, nor the catalogue keyed to it.
   useMenuStore.getState().clear()
 }
 

@@ -25,7 +25,9 @@ import { dietaryLabel } from "@/lib/dietary"
 import { ageGroupLabel, childAgeGroup } from "@/lib/ageGroup"
 import { cn } from "@/lib/utils"
 
-// TODO: only planner is printable - other pages would be blank
+// TODO: the print stylesheet only covers the planner - printing any other route
+// produces a blank page.
+
 // A4 landscape minus 10mm margins ≈ 277mm × 190mm.
 // At 96 CSS DPI that's ~1047 × 718 px.
 const PRINT_AREA_PX = { width: 1047, height: 718 }
@@ -36,11 +38,8 @@ const SECTION_PADDING_PX = 48
 // styles.css. A portrait print job is left to the engine's shrink-to-fit.
 
 // The "table" column is never passed here (grouping carries it), so only the
-// other four fields are handled.
-//
-// `dishName` is a parameter rather than a store read so this helper stays pure
-// - it is called once per guest per render, and the component builds the lookup
-// once. Same reason `t` is passed in.
+// other four fields are handled. `dishName` and `t` are parameters rather than
+// store/hook reads so this helper stays pure - it runs once per guest per render.
 const renderGuestFields = (
   g: Guest,
   fields: Array<GuestField>,
@@ -60,9 +59,9 @@ const renderGuestFields = (
   return parts
 }
 
-// Adults are the default, so a guest only carries an age annotation when they
-// fall in a child bracket - a printed list of 120 "(adult)" suffixes helps
-// nobody, while "(0-3 years)" is exactly what catering needs.
+// Adults are the default, so only child brackets get an age annotation: a
+// printed list of 120 "(adult)" suffixes helps nobody, while "(0-3 years)" is
+// what catering needs.
 const ageSuffix = (g: Guest, enabled: boolean, t: TFunction): string | null => {
   if (!enabled) return null
   const group = childAgeGroup(g.ageGroup)
@@ -108,8 +107,8 @@ export const PlannerPrintView = () => {
     }))
   )
 
-  // Empty for every wedding with no venue, so the dish column and the tally
-  // below both disappear on their own rather than needing to be gated.
+  // Empty for a wedding with no venue, so the dish column and the tally below
+  // both disappear on their own rather than needing to be gated.
   const menuOptions = useMenuStore((s) => s.options)
 
   const hallsById = useMemo(() => new Map(halls.map((h) => [h.id, h])), [halls])
@@ -176,8 +175,8 @@ export const PlannerPrintView = () => {
   )
 
   // Tightest rect (meters) around the placed tables + fixtures, padded so seat
-  // markers (which sit outside the table edge) aren't clipped. Falls back to the
-  // full hall when there's nothing to frame. Used only in fit-to-content mode.
+  // markers are not clipped. Falls back to the full hall when there is nothing
+  // to frame. Fit-to-content mode only.
   const contentBounds = useMemo(() => {
     let minX = Infinity
     let minY = Infinity
@@ -258,19 +257,15 @@ export const PlannerPrintView = () => {
   const unassignedLabel = t("export.unassigned")
 
   // Dish names for the `dish` field and the tally below, unfiltered by
-  // `archived_at` for the reason on `dishNameIndex`. Empty for every wedding
-  // with no venue, so both the field and the tally disappear on their own in
-  // guest mode rather than needing to be gated.
+  // `archived_at` for the reason on `dishNameIndex`. Empty for a wedding with no
+  // venue, so both disappear on their own rather than needing to be gated.
   const dishNameById = useMemo(() => dishNameIndex(menuOptions), [menuOptions])
   const dishName = (id: string) => dishNameById.get(id) ?? null
 
-  // How many portions of each dish, and how many guests still have none. The
-  // number the kitchen actually cooks from, so it sits on the printed page
-  // rather than only on screen.
-  //
-  // Rendered only when the `dish` field is in the export - the couple's own
-  // print job does not carry it by default (DEFAULT_PRINT_FIELDS), and a tally
-  // of a column that is not shown would be a puzzle.
+  // How many portions of each dish, and how many guests have none - the number
+  // the kitchen cooks from, so it belongs on the printed page. Rendered only
+  // when the `dish` field is in the export: DEFAULT_PRINT_FIELDS omits it, and a
+  // tally of a column that is not shown would be a puzzle.
   const dishTally = useMemo(
     () =>
       fields.includes("dish")

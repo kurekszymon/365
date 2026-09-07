@@ -7,16 +7,13 @@ import { Button } from "@/components/ui/button"
  * A destructive action that asks twice: the first click arms it, the second
  * performs it, and it disarms itself after a few seconds.
  *
- * Used for the three hard deletes in the menu editor, where the risk is real
- * and stated in the migration: deleting a dish a couple already chose blanks
- * their choice, because `guests.menu_option_id` is `on delete set null`.
- * Archiving is the default action offered beside this one and costs nobody
- * anything; DELETE exists because typos happen before anyone has ordered.
+ * Used for the three hard deletes in the menu editor. Archiving is the default
+ * action beside this one and costs nobody anything; DELETE exists because typos
+ * happen before anyone has ordered.
  *
- * Two clicks rather than a modal deliberately. A dialog for every row in a
- * thirty-dish list is the kind of friction people learn to click through
- * without reading, and this screen is a list of small, individually cheap
- * destructive actions rather than one big one.
+ * Two clicks rather than a modal, deliberately: a dialog for every row in a
+ * thirty-dish list is the friction people learn to click through without
+ * reading, and this screen is a list of small cheap destructive actions.
  */
 export const CrmConfirmButton = ({
   onConfirm,
@@ -32,11 +29,9 @@ export const CrmConfirmButton = ({
   confirmLabel: string
   icon: React.ReactNode
   /**
-   * Held while another write is in flight.
-   *
-   * These are the hard deletes, and they cascade: firing a second one at a
-   * screen whose optimistic state is mid-repair is how a restore-on-failure
-   * puts back a row the next delete has already taken away.
+   * Held while another write is in flight. These deletes cascade: firing a
+   * second at a screen whose optimistic state is mid-repair is how a
+   * restore-on-failure puts back a row the next delete already took away.
    */
   disabled?: boolean
 }) => {
@@ -47,31 +42,25 @@ export const CrmConfirmButton = ({
 
   useEffect(() => () => void (timer.current && clearTimeout(timer.current)), [])
 
-  // One button across both states rather than a branch that returns two.
+  // One button across both states, not a branch returning two: two elements
+  // meant the click that armed it unmounted the thing under the user's finger,
+  // dropping keyboard and screen-reader focus at the moment the label changed.
   //
-  // Two elements meant the click that armed it unmounted the thing under the
-  // user's finger, so keyboard and screen-reader focus was dropped on the floor
-  // at exactly the moment the label changed. Keeping the element mounted keeps
-  // focus on it, and the live region below is then what says what happened.
-  //
-  // Both sr-only spans sit outside the button, not inside it. Inside, they
-  // would be part of the name computation in the armed state (where there is no
-  // aria-label to override them), and a live region nested in the control that
-  // is currently focused is the case assistive tech handles least reliably.
-  // `sr-only` is absolutely positioned, so neither affects the parent's layout.
+  // Both sr-only spans sit *outside* the button. Inside, they would join the
+  // name computation in the armed state (no aria-label to override them), and a
+  // live region nested in the focused control is what assistive tech handles
+  // least reliably. `sr-only` is absolutely positioned, so neither affects layout.
   return (
     <>
       <Button
         size="sm"
         variant={armed ? "destructive" : "ghost"}
-        // Resting, the button is an icon and needs a name given to it. Armed,
-        // it has visible text, and that text has to *be* the name - an
-        // aria-label saying something else is the Label-in-Name failure where a
+        // Resting, the button is an icon and needs a name given to it. Armed, it
+        // has visible text, and that text has to *be* the name - an aria-label
+        // saying something else is the Label-in-Name failure where a
         // voice-control user reads "delete permanently" and says it to nothing.
-        //
-        // The hint is a description either way, which is the actual fix for the
-        // original bug: aria-label overrides inner content, so the sr-only hint
-        // that used to live inside the button was announced to nobody.
+        // The hint is a description either way, since aria-label overrides inner
+        // content.
         aria-label={armed ? undefined : label}
         aria-describedby={armed ? undefined : hintId}
         title={armed ? confirmLabel : label}

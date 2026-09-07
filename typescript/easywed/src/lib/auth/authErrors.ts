@@ -4,21 +4,16 @@ import {
 } from "@supabase/supabase-js"
 
 /**
- * Maps a Supabase auth failure to a translation key.
+ * Maps a Supabase auth failure to a translation key. Supabase's messages are
+ * English only, so `error.message` would put "Invalid login credentials" in
+ * front of a Polish user; the raw message is never shown, only logged.
  *
- * Supabase returns its messages in English only, so rendering `error.message`
- * puts "Invalid login credentials" in front of a Polish user on the busiest
- * screen we have. Every branch here returns a key instead; the raw message is
- * never shown, only logged by the caller.
+ * Only codes the four auth screens can produce are mapped - anything else falls
+ * back to `auth.error.unknown` rather than leaking English through.
  *
- * Only codes the four auth screens (login, signup, forgot-password,
- * reset-password) can actually produce are mapped - anything else falls back to
- * `auth.error.unknown` rather than leaking English through.
- *
- * Codes and their meanings are from
- * https://supabase.com/docs/guides/auth/debugging/error-codes, which is also
- * where the rule to branch on `error.code` rather than match on the message
- * text comes from - the messages are explicitly not stable.
+ * Codes from https://supabase.com/docs/guides/auth/debugging/error-codes, which
+ * is also where the rule to branch on `error.code` rather than the message text
+ * comes from: the messages are explicitly not stable.
  */
 export const authErrorKey = (err: unknown): string => {
   // Thrown before any response came back - offline, DNS, CORS, aborted fetch.
@@ -45,11 +40,10 @@ export const authErrorKey = (err: unknown): string => {
       return "auth.error.email_not_confirmed"
     case "user_banned":
       return "auth.error.user_banned"
-    // Deliberately no `user_not_found` branch. Supabase answers a wrong
+    // No `user_not_found` branch, deliberately. Supabase answers a wrong
     // password with `invalid_credentials` and an unknown reset address with
-    // success, both to avoid account enumeration; translating "no such user"
-    // here would hand that back on /forgot-password. It falls through to the
-    // generic message below.
+    // success, to avoid account enumeration; translating "no such user" would
+    // hand that back on /forgot-password.
 
     // Sign up
     case "user_already_exists":
@@ -81,10 +75,9 @@ export const authErrorKey = (err: unknown): string => {
     case "session_not_found":
     case "bad_jwt":
       return "auth.error.session_expired"
-    // Not an expired session: the server wants the password change confirmed
-    // out of band ("secure password change"). A recovery session normally
-    // satisfies that, so this is a corner - but "your session expired" would
-    // misdescribe it, and the fix is a fresh link either way.
+    // Not an expired session: the server wants the change confirmed out of band
+    // ("secure password change"). A recovery session normally satisfies that, so
+    // this is a corner - but "your session expired" would misdescribe it.
     case "reauthentication_needed":
       return "auth.error.reauthentication_needed"
 
@@ -116,9 +109,8 @@ export const authErrorKey = (err: unknown): string => {
 }
 
 /**
- * `isAuthError` only recognises errors built by auth-js itself. Supabase also
- * hands back plain objects with a `code` in some paths (and our own callers may
- * pass anything through), so read the field structurally instead.
+ * `isAuthError` only recognises errors auth-js built itself, but Supabase also
+ * hands back plain objects with a `code`, so read the field structurally.
  */
 const errorCode = (err: unknown): string | undefined => {
   if (typeof err !== "object" || err === null) return undefined

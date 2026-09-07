@@ -38,39 +38,30 @@ export type MenuCatalogueResult =
   | { status: "failed"; errors: Record<string, unknown> }
 
 /**
- * The venue's catalogue, read in one round trip.
+ * The venue's catalogue, read in one round trip. One function for both readers -
+ * the couple's Menu tab (`loadMenuCatalogue` below) and the venue's own editor
+ * (`useTenantMenus`) - which differ in what they do with the rows, not in how
+ * they get them.
  *
- * One function for both readers - the couple's Menu tab (`loadMenuCatalogue`
- * below) and the venue's own editor (`useTenantMenus`) - because they were the
- * same four-way `Promise.all` twice, down to the triple `.order()` and the
- * currency fallback. The two differ in what they do with the rows, not in how
- * they get them, and that is the seam.
- *
- * Archived rows are fetched, not filtered out. A dish the couple already chose
- * has to keep its name everywhere it is displayed; the pickers filter with
- * `isLive` at the point of offering a choice.
- *
- * The sort order is the same in all three reads, and it is the one every menu
- * read uses. `position` is not unique - see `byPosition` in @/lib/menu - so the
- * two tiebreakers are what make an arbitrary order a *stable* one across loads
- * and devices.
+ * Archived rows are fetched, not filtered out: a dish the couple already chose
+ * has to keep its name wherever it is displayed. Pickers filter with `isLive` at
+ * the point of offering a choice.
  *
  * The three reads are spelled out rather than driven through one
  * table-name-parameterized helper: supabase-js resolves the row type from the
  * literal table name, and a union of three collapses every column into a "does
- * not exist on" error type. Repetition here buys three correctly typed results.
+ * not exist on" error.
  */
 export const fetchMenuCatalogue = async (
   tenantId: string,
   signal: AbortSignal
 ): Promise<MenuCatalogueResult> => {
   const [tenantRes, packagesRes, coursesRes, optionsRes] = await Promise.all([
-    // The currency the prices are denominated in. Not available from
-    // `tenant_public()` - that RPC is the anonymous branding lookup and prices
-    // are not anonymous data - so it is read off `tenants`. The couple reads it
-    // through "wedding members can view their linked venue" (20260817000002
-    // section 5), the same policy that already lets the grant dialog name the
-    // venue; staff hold an ordinary member SELECT on the row.
+    // The currency the prices are denominated in. Not on `tenant_public()` -
+    // that RPC is the anonymous branding lookup and prices are not anonymous
+    // data - so it is read off `tenants`, through "wedding members can view
+    // their linked venue" (20260817000002 §5) for a couple, and an ordinary
+    // member SELECT for staff.
     supabase
       .from("tenants")
       .select("currency")
@@ -123,9 +114,8 @@ export const fetchMenuCatalogue = async (
       packages: packagesRes.data,
       courses: coursesRes.data,
       options: optionsRes.data,
-      // A failed currency read is not worth failing the whole tab for: the
-      // fallback matches the column's default, and a price in the wrong symbol
-      // is a smaller problem than no menu at all.
+      // Not worth failing the whole tab for: the fallback matches the column's
+      // default, and a price in the wrong symbol beats no menu at all.
       currency: tenantRes.data?.currency ?? DEFAULT_CURRENCY,
     },
   }
@@ -134,20 +124,15 @@ export const fetchMenuCatalogue = async (
 /**
  * The venue's catalogue, read by a couple and put in `menu.store`.
  *
- * A read module rather than part of `loadWedding`'s batch, and the reason is
- * structural rather than stylistic: this needs `weddings.tenant_id`, which is
- * only known once the wedding row has come back. It cannot ride the
- * `Promise.all` - it is a strictly later round trip, the way `fetchDisplayNames`
- * already is.
+ * Outside `loadWedding`'s batch for a structural reason: it needs
+ * `weddings.tenant_id`, known only once the wedding row is back, so it is a
+ * strictly later round trip the way `fetchDisplayNames` is. That is why the Menu
+ * tab spins on a cold load while the rest of the planner is painted.
  *
- * That is why the Menu tab shows a spinner on a cold load while the rest of the
- * planner is already painted. It is the honest consequence of the data
- * dependency, not a loading state somebody forgot to remove.
- *
- * Reads through the couple-read policies added in 20260822000002, which are
- * scoped by the wedding's link to the tenant and deliberately *not* by
- * `venue_access`: a menu is the venue's own data, published to be read, and a
- * couple deciding whether to grant access needs to see the offer first.
+ * Reads through the couple-read policies added in 20260822000002, scoped by the
+ * wedding's link to the tenant and deliberately *not* by `venue_access`: a menu
+ * is the venue's own published data, and a couple deciding whether to grant
+ * access needs to see the offer first.
  */
 export const loadMenuCatalogue = async (
   tenantId: string,

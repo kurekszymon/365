@@ -53,9 +53,9 @@ describe("menuOptionTone", () => {
 
 describe("canonicalizeLine", () => {
   it("trims and collapses whitespace", () => {
-    expect(canonicalizeLine("  Kotlet   schabowy  ", MAX_DISH_NAME_LENGTH)).toBe(
-      "Kotlet schabowy"
-    )
+    expect(
+      canonicalizeLine("  Kotlet   schabowy  ", MAX_DISH_NAME_LENGTH)
+    ).toBe("Kotlet schabowy")
   })
 
   it("returns null for a blank", () => {

@@ -11,41 +11,36 @@ export const ADULT_AGE_GROUP = "adult"
 // a "12-18" is kids, an "18-25" (a couple grouping young adults) is not.
 const ADULT_AGE = 18
 
-// The brackets offered out of the box in the guest form. Anything else is a
-// bracket the user typed (e.g. "6-12"), which is how the ranges stay editable
-// without a per-wedding settings table. Kept as a pure module (no store import)
-// so it stays testable, mirroring @/lib/dietary.
+// The brackets offered out of the box in the guest form. Anything else is one
+// the user typed (e.g. "6-12"), which is how ranges stay editable without a
+// per-wedding settings table. Pure module, mirroring @/lib/dietary.
 export const AGE_GROUP_PRESETS = [ADULT_AGE_GROUP, "0-3", "3-6"] as const
 
 const PRESET_SET: ReadonlySet<string> = new Set(AGE_GROUP_PRESETS)
 
-// One tone for every child bracket, custom ones included - the badge says "this
+// One tone for every child bracket, custom ones included: the badge says "this
 // guest is a kid" and the label carries which bracket, so per-bracket hues would
-// only compete with the dietary tags for attention. Reserved here and left out
-// of @/lib/dietary's preset map. Adults never render a badge (`childAgeGroup`
-// returns null), so there is nothing else to color.
+// only compete with the dietary tags. Reserved here and left out of
+// @/lib/dietary's preset map. Adults never render a badge.
 export const AGE_GROUP_TONE: TagTone = "violet"
 
-// Mirrors the DB `guests_age_group_shape` constraint. Enforced client-side too
-// so guest-mode (localStorage) values stay within range and survive the
-// sign-in migration into Postgres.
+// Mirrors the DB `guests_age_group_shape` constraint, enforced client-side too
+// so guest-mode values survive the sign-in migration into Postgres.
 export const MAX_AGE_GROUP_LENGTH = 24
 
 export const isAgeGroupPreset = (group: string): boolean =>
   PRESET_SET.has(group)
 
-// True when the guest is an adult - the default - which is the case for a
-// missing/blank value as well as the explicit "adult" preset. Everything that
-// renders a badge checks this first, so adults stay unlabelled.
+// True when the guest is an adult - the default - covering a missing or blank
+// value as well as the explicit "adult" preset. Every badge checks this first.
 export const isAdultAgeGroup = (group: string | null | undefined): boolean =>
   !group || group === ADULT_AGE_GROUP
 
-// True when the guest is a kid (under 18). Inferred from whichever bracket they
-// were tagged with rather than a separate "kid" flag: a numeric bracket is
-// judged by its lower bound, so the "0-3"/"3-6" presets and a custom "12-18"
-// count while an "18-25" doesn't, and a non-numeric custom label ("baby",
-// "teen") counts since the adult default is the only non-kid group. This is the
-// rule behind every "how many children" number in the app.
+// True when the guest is a kid (under 18), inferred from their bracket rather
+// than a separate flag: a numeric bracket is judged by its lower bound, so
+// "0-3"/"3-6"/"12-18" count and "18-25" does not, and a non-numeric label
+// ("baby", "teen") counts since the adult default is the only non-kid group.
+// The rule behind every "how many children" number in the app.
 export const isKidAgeGroup = (group: string | null | undefined): boolean => {
   if (isAdultAgeGroup(group)) return false
   const lowerBound = /^(\d{1,2})/.exec(group as string)
@@ -58,9 +53,9 @@ export const countKids = (
   guests: ReadonlyArray<{ ageGroup?: string | null }>
 ): number => guests.filter((guest) => isKidAgeGroup(guest.ageGroup)).length
 
-// The guest's group when it's worth showing (a child bracket), else null.
-// Adults are the default, so every badge/print surface renders nothing for
-// them; this keeps that check and the narrowing in one place.
+// The guest's group when it's worth showing (a child bracket), else null - so
+// every badge and print surface renders nothing for adults, with the check and
+// the narrowing in one place.
 export const childAgeGroup = (
   group: string | null | undefined
 ): string | null => (isAdultAgeGroup(group) ? null : (group ?? null))
@@ -71,9 +66,9 @@ export const childAgeGroup = (
 export const ageGroupLabel = (t: TFunction, group: string): string =>
   PRESET_SET.has(group) ? t(`guests.age_group.${group}`) : group
 
-// Clean up a raw value before storing it: trim, collapse internal whitespace,
-// cap length, and snap to a known preset when it means the same thing, so
-// "0 - 3" or "Adult" can't create a near-duplicate. Returns null for blanks.
+// Clean up a raw value before storing: trim, collapse whitespace, cap length,
+// and snap to a known preset when it means the same thing, so "0 - 3" or
+// "Adult" cannot create a near-duplicate. Null for blanks.
 export const canonicalizeAgeGroup = (raw: string): string | null => {
   const cleaned = raw.trim().replace(/\s+/g, " ")
   if (cleaned.length === 0) return null
@@ -104,9 +99,9 @@ export const collectAgeGroups = (
   return [...seen]
 }
 
-// Presets first (in declaration order, so "adult" leads), then custom brackets.
-// Custom ones sort numerically by their lower bound when they have one, else
-// alphabetically, so "6-12" lands after "3-6" rather than between "0-3" and it.
+// Presets first, in declaration order so "adult" leads, then custom brackets:
+// numerically by lower bound where they have one, else alphabetically, so "6-12"
+// lands after "3-6" rather than between "0-3" and it.
 export const sortAgeGroups = (
   groups: Iterable<string>,
   t: TFunction

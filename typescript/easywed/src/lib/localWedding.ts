@@ -21,11 +21,9 @@ export const GLOBAL_STORAGE_KEY = "easywed.global.local"
 export const REMINDERS_STORAGE_KEY = "easywed.reminders.local"
 
 // Resolves the currently-active weddingId for the gate below. global.store.ts
-// registers its own getter right after declaring itself (registerActiveWeddingIdGetter,
-// below) - that indirection, rather than importing useGlobalStore here, is
-// what lets global.store.ts wrap *itself* in this same gated storage without
-// a same-file circular type-inference error (TS can't type-check a store
-// referencing its own not-yet-fully-typed self inside its own persist config).
+// registers its own getter right after declaring itself; that indirection,
+// rather than importing useGlobalStore here, is what lets global.store.ts wrap
+// *itself* in this gated storage without a circular type-inference error.
 let getActiveWeddingId = (): string | undefined => undefined
 
 export const registerActiveWeddingIdGetter = (
@@ -85,13 +83,11 @@ export const localPlannerStorage = createJSONStorage(() =>
   createLocalGatedStorage()
 )
 
-// A malformed/hand-edited persisted date string must not become an Invalid
-// Date - downstream code (MigrateLocalWeddingDialog, PlannerPrintView) calls
-// .toISOString()/date formatting on global.store's `date`, which throws for
-// an Invalid Date. Returning undefined here drops the key entirely (both as
-// a JSON.parse reviver and as a plain value). `Date` instances pass through
-// (revalidated) so the same helper serves both a raw JSON read and an
-// already-revived value.
+// A malformed or hand-edited persisted date must not become an Invalid Date -
+// downstream code calls .toISOString() on global.store's `date`, which throws
+// for one. Returning undefined drops the key entirely, both as a JSON.parse
+// reviver and as a plain value; `Date` instances pass through revalidated, so
+// the same helper serves a raw JSON read and an already-revived value.
 const parseValidDate = (value: unknown): Date | undefined => {
   if (value instanceof Date) {
     return Number.isNaN(value.getTime()) ? undefined : value
@@ -111,10 +107,9 @@ export const localGlobalStorage = createJSONStorage(
   }
 )
 
-// No reviver here (unlike localGlobalStorage): reminders.store's persist
-// `merge` runs the payload through normalizeLocalRemindersSnapshot below,
-// which revives the three date fields and validates the rows in one pass -
-// the same pass readLocalRemindersSnapshot uses for the raw JSON read.
+// No reviver here, unlike localGlobalStorage: reminders.store's persist `merge`
+// runs the payload through normalizeLocalRemindersSnapshot, which revives the
+// three date fields and validates the rows in one pass.
 export const localRemindersStorage = createJSONStorage(() =>
   createLocalGatedStorage()
 )
@@ -162,11 +157,10 @@ const isValidHallDimensions = (
   typeof (value as { width?: unknown }).width === "number" &&
   typeof (value as { height?: unknown }).height === "number"
 
-// Guards against a corrupted/malformed persisted snapshot (e.g. hand-edited
-// localStorage, or a schema change from an older app version) crashing a
-// consumer like MigrateLocalWeddingDialog. Accepts both the current
-// multi-hall shape (`halls` array) and the legacy single-`hall` shape;
-// `normalizeLocalPlannerSnapshot` converts the latter.
+// Guards a corrupted persisted snapshot - hand-edited localStorage, or an older
+// app version's schema - from crashing a consumer like MigrateLocalWeddingDialog.
+// Accepts the current multi-hall shape and the legacy single-`hall` one, which
+// `normalizeLocalPlannerSnapshot` converts.
 const hasEntityArrays = (
   value: unknown
 ): value is {
@@ -251,10 +245,9 @@ export const normalizeLocalPlannerSnapshot = (
   return null
 }
 
-// Reads the raw persisted snapshot directly, bypassing the live stores
-// entirely. Rehydrating the live planner/global stores just to inspect them
-// would clobber an actively-loaded cloud wedding if the user signs in from a
-// different tab/route - this must stay decoupled from in-memory state.
+// Reads the raw persisted snapshot directly, bypassing the live stores.
+// Rehydrating them just to inspect would clobber an actively-loaded cloud
+// wedding, so this must stay decoupled from in-memory state.
 export const readLocalPlannerSnapshot = (): LocalPlannerSnapshot | null =>
   normalizeLocalPlannerSnapshot(readPersistedState(PLANNER_STORAGE_KEY))
 
@@ -288,13 +281,11 @@ const hasReminderIdentity = (
   )
 }
 
-// Normalizes a persisted reminders payload (dates arrive as strings from
-// plain JSON, or as `Date`s if something already revived them) into store
-// shape. Malformed rows are dropped rather than crashing the list; missing or
-// unparsable `createdAt`/`updatedAt` fall back to now, since Reminder types
-// them as non-optional and every consumer (ReminderPreview, the migration
-// insert) reads them unguarded. Shared by the raw read below and
-// reminders.store's persist `merge`.
+// Normalizes a persisted reminders payload into store shape - dates arrive as
+// strings from plain JSON, or as `Date`s if something already revived them.
+// Malformed rows are dropped rather than crashing the list; an unparsable
+// `createdAt`/`updatedAt` falls back to now, since Reminder types them
+// non-optional and every consumer reads them unguarded.
 export const normalizeLocalRemindersSnapshot = (
   value: unknown
 ): Array<Reminder> => {

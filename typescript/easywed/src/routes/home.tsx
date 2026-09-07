@@ -38,11 +38,11 @@ function Home() {
 
   const [weddings, setWeddings] = useState<Array<WeddingSummary>>([])
   const [loading, setLoading] = useState(true)
-  // A failed read must not fall through to the empty state: "no weddings yet"
-  // is indistinguishable from data loss for a returning user, so the list has
-  // its own error branch with a retry. Bumping `reloadKey` re-runs the effect;
-  // the two flags are reset by the retry handler rather than in the effect
-  // body, which would be a cascading setState on every run.
+  // A failed read must not fall through to the empty state: "no weddings yet" is
+  // indistinguishable from data loss for a returning user, so the list has its
+  // own error branch with a retry. Bumping `reloadKey` re-runs the effect; the
+  // flags reset in the retry handler rather than the effect body, which would be
+  // a cascading setState on every run.
   const [loadFailed, setLoadFailed] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
 
@@ -67,9 +67,9 @@ function Home() {
     if (!session) return
 
     // The effect re-runs on a retry and on a language switch, so without this
-    // two reads can be in flight at once and the older one can land last,
-    // overwriting the newer list. Aborting the previous run is what orders
-    // them - and it is also what keeps the resolution off an unmounted screen.
+    // two reads can be in flight and the older can land last, overwriting the
+    // newer list. Aborting orders them, and keeps resolution off an unmounted
+    // screen.
     const controller = new AbortController()
 
     const fail = (cause: unknown) => {
@@ -104,10 +104,9 @@ function Home() {
         )
         setLoading(false)
       } catch (e) {
-        // A request that never completed at all - offline, DNS, a dropped
-        // connection - rejects instead of returning an error result, and
-        // without this branch the list sits on "loading" forever with no retry
-        // in reach.
+        // A request that never completed - offline, DNS, a dropped connection -
+        // rejects instead of returning an error result, and without this the
+        // list sits on "loading" forever with no retry in reach.
         if (controller.signal.aborted) return
         fail(e)
       }
@@ -142,21 +141,18 @@ function Home() {
       return
     }
     // Awaited, not fire-and-forget: navigating first would race loadWedding
-    // against this insert and land the user on the blank canvas anyway - the
-    // exact thing the seed exists to prevent. It's one round-trip, and the
-    // create button stays busy for it.
+    // against this insert and land the user on the blank canvas the seed exists
+    // to prevent. One round trip, and the create button stays busy for it.
     await seedDefaultHall(data.id)
     setCreating(false)
     track("wedding_created", { source: "wedding_list" })
     navigate({ to: "/wedding/$id", params: { id: data.id } })
   }
 
-  // Wait for the first getSession() to resolve before deciding which landing
-  // to show - otherwise an already-authenticated user reloading this page would
-  // flash the signed-out screen before flipping to their dashboard below.
-  //
-  // Same reasoning for the venue check: showing the wedding list to someone we
-  // are about to send to a CRM is the flash this page already avoids for auth.
+  // Wait for the first getSession() before deciding which landing to show, or an
+  // already-authenticated user reloading flashes the signed-out screen. Same
+  // reasoning for the venue check: showing the wedding list to someone about to
+  // be sent to a CRM is the same flash.
   if (!isReady || venueLanding === "checking") return null
 
   if (!session) {
@@ -226,7 +222,8 @@ function Home() {
               {t("weddings.empty")}
             </p>
           ) : (
-            // TODO: based on a role (couple/planner/site) render only one wedding / list etc.
+            // TODO: a couple has one wedding and a planner has many - this could
+            // render a single wedding rather than a list of one.
             weddings.map((wedding) => (
               <WeddingListItem
                 key={wedding.id}

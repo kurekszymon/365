@@ -15,36 +15,29 @@ const SNAPSHOT_CLOSE = "</layout-snapshot>"
  * Escapes angle brackets in the serialized snapshot so no value inside it can
  * spell a delimiter.
  *
- * Without this the fence is decorative: a table named "</layout-snapshot>"
- * puts that exact substring in the payload, and to a model reading a flat
- * stream of text the block has ended there - so the rest of the snapshot reads
- * as being OUTSIDE the tags, which the system prompt defines as the user
- * speaking. That is the whole injection this delimiting exists to stop.
+ * Without this the fence is decorative: a table named "</layout-snapshot>" ends
+ * the block early, and the rest of the snapshot reads as being outside the tags
+ * - which the system prompt defines as the user speaking.
  *
- * `<` and `>` only ever occur inside string literals in JSON output (they are
- * not structural), and `\u003c` is a valid escape for the same character, so
- * the payload still parses to an identical value - it simply no longer contains
- * a literal angle bracket for anything to collide with. The delimiters
- * themselves are added outside this, and stay the only real tags in the message.
+ * `<` and `>` are never structural in JSON output, and the `\u003c` escape is
+ * the same character, so the payload parses to an identical value with no
+ * literal angle bracket left to collide with.
  */
 const escapeDelimiters = (json: string): string =>
   json.replace(/</g, "\\u003c").replace(/>/g, "\\u003e")
 
 /**
  * The current layout, as the model sees it. Split out of the system prompt (see
- * buildLayoutMessage) because every `name` in here is user-supplied - typed into
- * the planner, or imported wholesale from a spreadsheet by
- * `parseGuestFile`/`buildGuests` - and a co-editor can put anything in one.
- * Text an attacker controls does not belong in the same turn role as the rules
- * it might try to override.
+ * buildLayoutMessage) because every `name` here is user-supplied - typed in, or
+ * imported wholesale from a spreadsheet - and text an attacker controls does not
+ * belong in the same turn role as the rules it might try to override.
  */
 const buildSnapshot = () => {
   const { halls, tables, fixtures, guests } = usePlannerStore.getState()
 
-  // One pass over the guests instead of a filter per table. Not a hot path -
-  // this runs once per user turn, against an LLM round trip - but it is the
-  // shape EntityListContent already uses to build the same figure, and it keeps
-  // the cost linear rather than tables x guests as a wedding grows.
+  // One pass over the guests instead of a filter per table - the shape
+  // EntityListContent already uses for the same figure, and linear rather than
+  // tables x guests as a wedding grows.
   const assignedByTable = new Map<string, number>()
   for (const guest of guests) {
     if (!guest.tableId) continue
@@ -105,12 +98,10 @@ export const buildLayoutMessage = (): ModelMessage => ({
 // with a top-left origin: x grows right, y grows down. An object's position is
 // its top-left corner.
 export const buildSystemPrompt = (): string => {
-  // Mirrors the "Dodaj do sali" visual-card picker's own presets (see
-  // addPresets.ts) so tables/fixtures the assistant creates by free-form
-  // request look consistent with what the user could tap to insert by hand.
-  // Built from the same constants (never hand-copy these numbers, they'd
-  // drift) and recomputed on every call - i18n.t must run here, not at module
-  // load, so it always reflects the current locale even if it changes mid-session.
+  // Mirrors the "Dodaj do sali" picker's presets (addPresets.ts) so what the
+  // assistant creates matches what the user could tap to insert. Built from the
+  // same constants - never hand-copy these numbers - and recomputed per call, so
+  // i18n.t reflects a locale changed mid-session.
   const tablePresetsList = TABLE_PRESETS.map(
     (p) =>
       `- ${i18n.t(p.labelKey)}: shape=${p.shape}, capacity=${p.capacity}, size=${p.size.width}x${p.size.height} m`

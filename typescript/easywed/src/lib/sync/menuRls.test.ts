@@ -5,19 +5,12 @@ import type { Database } from "@/lib/supabase.types"
 
 /**
  * The venue menu catalogue, asserted against a real PostgreSQL with real RLS.
+ * "A venue authors its own menu and reaches nobody else's" is twelve policies
+ * and two composite foreign keys; no type or comment can hold that.
  *
- * The third suite in the family, after venueRls.test.ts and
- * tenantInvitations.test.ts, and it exists for the same reason both of those
- * do: every claim this feature makes is a *policy* claim. "A venue authors its
- * own menu and reaches nobody else's" is enforced by twelve policies and two
- * composite foreign keys, and neither a type nor a comment can hold that.
- *
- * The isolation assertions are made **per table**, not once. That is the whole
- * reason the fixture has a second tenant with a package of its own: courses and
- * options carry a denormalised `tenant_id` - kept honest by the composite FKs
- * rather than by a trigger - so each of the three tables has its own policy, and
- * a policy that was forgotten on one of them would still leave the other two
- * green.
+ * Isolation is asserted **per table**, hence the second tenant in the fixture:
+ * each of the three tables has its own policy, and one forgotten on a single
+ * table would leave the other two green.
  *
  * Skipped, not failed, when the local stack is down - see venueRls.test.ts.
  *
@@ -41,9 +34,8 @@ const DWOREK_PACKAGE = "60000000-0000-4000-8000-000000000009"
 // A soup of that package, so the re-link tests can put a real selection on a
 // throwaway wedding linked to dworek.
 const DWOREK_SOUP = "62000000-0000-4000-8000-000000090101"
-// MENU II, the buffet-shaped package. Used as "some other package of the same
-// venue", which is the interesting negative - a package the couple can read and
-// still may not draw dishes from.
+// MENU II, the buffet-shaped package: some other package of the same venue -
+// readable by the couple, and still not one they may draw dishes from.
 const BUFFET_PACKAGE = "60000000-0000-4000-8000-000000000002"
 // MENU I's first soup: a real dish of this same venue, in a package this
 // wedding did not order.
@@ -96,9 +88,8 @@ const signIn = async (email: string) => {
 describe.skipIf(!reachable)("venue menu catalogue", () => {
   // Owner of `bagatelka`, whose catalogue this is.
   let venue: SupabaseClient<Database>
-  // Owner of `dworek`. Staff of a real tenant, with a real menu of their own -
-  // which is what makes every "reads zero" below a statement about scope rather
-  // than about being logged out.
+  // Owner of `dworek`: staff of a real tenant with a menu of their own, which
+  // makes every "reads zero" below about scope rather than about being anon.
   let otherVenue: SupabaseClient<Database>
   // owner@easywed.test: a couple, and a 'customer' of bagatelka.
   let couple: SupabaseClient<Database>
@@ -109,16 +100,9 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
   let venueUserId: string
 
   /**
-   * Puts the seeded order back: the package first, then the served set.
-   *
-   * Switching package wipes the selections by design, so the test that proves
-   * it has to put them back - a suite that only passes on a freshly reset
-   * database is a suite people stop running. Same rule as
-   * tenantInvitations.test.ts: every test restores the fixture.
-   *
-   * The order of the two statements is the whole helper. Selections are refused
-   * with 23514 while the wedding holds no package, so restoring them first
-   * silently does nothing and every later assertion reads an empty menu.
+   * Puts the seeded order back: the package first, then the served set. That
+   * order is the whole helper - selections are refused with 23514 while the
+   * wedding holds no package, so restoring them first silently does nothing.
    */
   const restoreSeededMenu = async () => {
     await couple
@@ -135,13 +119,10 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
   }
 
   /**
-   * The guests' dishes, for the tests that destroy them.
-   *
-   * Needed from 20260822000003 onwards and not before: switching package used
-   * to clear only the selections, and now clears `guests.menu_option_id` too.
-   * Snapshotting beats recomputing - the seed assigns dishes round-robin over
-   * the seated guests, and duplicating that rule here would be a second copy to
-   * keep in step for no benefit.
+   * The guests' dishes, for the tests that destroy them. Needed from
+   * 20260822000003 on, where switching package also clears
+   * `guests.menu_option_id`. Snapshotted rather than recomputed, so the seed's
+   * round-robin assignment stays in one place.
    */
   const guestDishes = async (): Promise<
     Array<{ id: string; menu_option_id: string | null }>
@@ -155,11 +136,9 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
   }
 
   /**
-   * Puts them back, one statement per distinct dish.
-   *
-   * Order matters as much as it does in `restoreSeededMenu`: the package has to
-   * be back first, or `enforce_guest_menu_option` refuses every one of these
-   * with 23514 and the restore silently does nothing.
+   * Puts them back, one statement per distinct dish. As in `restoreSeededMenu`,
+   * the package has to be back first or `enforce_guest_menu_option` refuses
+   * every one with 23514 and the restore silently does nothing.
    */
   const restoreGuestDishes = async (
     rows: Array<{ id: string; menu_option_id: string | null }>
@@ -201,8 +180,8 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
       expect(courses.data!.length).toBeGreaterThan(0)
       expect(options.data!.length).toBeGreaterThan(0)
 
-      // The plated course exists and is flagged - the one boolean the whole
-      // two-shapes decision rests on.
+      // The plated course exists and is flagged - the boolean the two-shapes
+      // decision rests on.
       expect(
         courses.data!.some(
           (row) => row.id === PLATED_COURSE && row.per_guest_choice
@@ -219,9 +198,8 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
   })
 
   describe("isolation, per table", () => {
-    // Three separate assertions rather than one, because there are three
-    // separate policies. Collapsing them would let a missing policy on
-    // menu_options pass because menu_packages is fine.
+    // Three assertions because there are three policies: collapsing them would
+    // let a missing policy on menu_options pass because menu_packages is fine.
     it("keeps packages out of another tenant's reach", async () => {
       const { data } = await otherVenue
         .from("menu_packages")
@@ -256,9 +234,8 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
         .eq("id", SERVED_PACKAGE)
         .select("id")
 
-      // `.select()` back is mandatory. An UPDATE that RLS filters to nothing is
-      // a clean 204 - no error, no rows - so without it this reads as success
-      // and the test proves nothing.
+      // `.select()` back is mandatory: an UPDATE RLS filters to nothing is a
+      // clean 204, so without it this reads as success and proves nothing.
       expect(error).toBeNull()
       expect(data).toEqual([])
     })
@@ -295,14 +272,10 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
     })
 
     /**
-     * The composite FK, doing the job a scope trigger would otherwise do.
-     *
-     * This is the write that *passes* RLS - `tenant_id` is dworek's own, so
-     * `is_tenant_staff` is true - and is refused by referential integrity
-     * instead, because (dworek, bagatelka's package) is not a row of
-     * menu_packages(tenant_id, id). Without the composite key this insert would
-     * succeed and put a dworek-owned course inside a bagatelka package, which
-     * every policy here would then happily show to dworek.
+     * The composite FK, doing the job a scope trigger would otherwise do. This
+     * write *passes* RLS - `tenant_id` is dworek's own - and referential
+     * integrity refuses it, because (dworek, bagatelka's package) is not a row
+     * of menu_packages(tenant_id, id).
      */
     it("refuses a course whose tenant and package disagree", async () => {
       const { error } = await otherVenue.from("menu_courses").insert({
@@ -357,13 +330,10 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
     })
 
     /**
-     * The RLS-filters-the-update path, which is the entire authorization story
-     * for these two functions: they are **invoker rights**, not definer, so a
-     * caller who is not staff of the owning tenant updates zero rows.
-     *
-     * Easy to get wrong and invisible without this test - the call returns
-     * successfully either way, so only re-reading the positions can tell a
-     * silent no-op from a silent scramble.
+     * The whole authorization story for these two functions: **invoker rights**,
+     * not definer, so a caller who is not staff of the owning tenant updates
+     * zero rows. The call returns successfully either way, so only re-reading
+     * the positions tells a silent no-op from a silent scramble.
      */
     it("is a no-op when called by another tenant's staff", async () => {
       const before = await positions(venue, PLATED_COURSE)
@@ -429,17 +399,12 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
   })
 
   /**
-   * The couple's read, opened by 20260822000002.
+   * The couple's read, opened by 20260822000002. The route in is the wedding's
+   * **link to the tenant**, not a `tenant_members` row.
    *
-   * In the previous migration these three assertions were `toEqual([])` - the
-   * catalogue's whole blast radius was "staff of this tenant". They read `>0`
-   * now, and the route in is the **wedding's link to the tenant**, not a
-   * `tenant_members` row: `solo@` belongs to no tenant and owns a wedding linked
-   * to none, and reads zero of all three.
-   *
-   * Deliberately not gated on `venue_access = 'granted'`. A menu is the venue's
-   * own data, published to be read, and a couple deciding whether to grant
-   * anything needs to see the offer first.
+   * Deliberately not gated on `venue_access = 'granted'`: a menu is the venue's
+   * own published data, and a couple deciding whether to grant anything needs to
+   * see the offer first.
    */
   describe("what a linked couple can read", () => {
     it("reads the venue's packages, courses and options", async () => {
@@ -461,19 +426,14 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
     })
 
     /**
-     * The other half of the same policy: the link scopes the read, so a couple
-     * reaches their own venue's catalogue and no other venue's.
+     * The other half of the same policy: the link scopes the read.
      *
      * Asserted against dworek's rows rather than by signing in as a couple
-     * linked to nothing, and the reason is worth writing down so nobody
-     * "restores" the simpler version. The only seeded account in that state is
-     * solo@, and tenantInvitations.test.ts deliberately leaves their wedding
-     * linked to `bagatelka` in 'pending' - documented residue, harmless there,
-     * and fatal here: the couple-read policy is deliberately not gated on
-     * `venue_access`, so a linked-but-not-granted wedding reads the menu by
-     * design. Vitest runs the two files concurrently against one database, so a
-     * "solo reads zero" assertion passes or fails depending on which suite got
-     * there first.
+     * linked to nothing - do not "simplify" it back. The only seeded account in
+     * that state is solo@, whose wedding tenantInvitations.test.ts leaves linked
+     * to `bagatelka` in 'pending', and this policy is not gated on
+     * `venue_access`. The suites run concurrently against one database, so a
+     * "solo reads zero" assertion passes or fails on which got there first.
      */
     it("reads nothing belonging to a venue it is not linked to", async () => {
       const [packages, courses, options] = await Promise.all([
@@ -487,9 +447,8 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
       expect(options.data).toEqual([])
     })
 
-    // Read-only, asserted per table for the reason the isolation block is:
-    // three tables, three sets of policies, and the couple gains SELECT on all
-    // three and nothing else on any of them.
+    // Read-only, per table for the reason the isolation block is: the couple
+    // gains SELECT on all three and nothing else on any of them.
     it("cannot write a package", async () => {
       const insert = await couple
         .from("menu_packages")
@@ -560,14 +519,10 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
 
   describe("the wedding's package", () => {
     /**
-     * The assertion that makes an ordinary UPDATE policy on
-     * `weddings.menu_package_id` safe.
-     *
+     * What makes an ordinary UPDATE policy on `weddings.menu_package_id` safe.
      * The column is client-writable, unlike `tenant_id` and `venue_access`,
-     * because choosing a package discloses nothing. What keeps it honest is
-     * `enforce_wedding_menu_package`: a package from a venue this wedding is
-     * not linked to is refused outright, so the couple cannot point their
-     * wedding at a catalogue they have no relationship with.
+     * because choosing a package discloses nothing; `enforce_wedding_menu_package`
+     * refuses a package from a venue this wedding is not linked to.
      */
     it("refuses a package belonging to another venue", async () => {
       const { error } = await couple
@@ -589,27 +544,16 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
     })
 
     /**
-     * The re-link case, and the single most likely thing in this stack to have
-     * been missed.
+     * The re-link case. `link_wedding_to_venue` re-links an already-linked
+     * wedding on purpose, and its UPDATE fires `enforce_wedding_menu_package`.
+     * Without the `menu_package_id = null` that 20260822000002 adds to that
+     * statement, a wedding still holding the old venue's package fails with
+     * 23514 and changing venue stops working.
      *
-     * `link_wedding_to_venue` re-links an already-linked wedding on purpose,
-     * and its UPDATE now fires `enforce_wedding_menu_package`. Without the
-     * `menu_package_id = null` that 20260822000002 adds to that statement, a
-     * wedding still holding the old venue's package fails with 23514 and
-     * changing venue simply stops working - discovered by a customer, not by a
-     * test.
-     *
-     * Runs against a **throwaway wedding this test creates and deletes**, not
-     * the seeded one, and that is not tidiness. Re-linking rewrites `tenant_id`
-     * and lands `venue_access` back in 'pending' - consent is given to *a*
-     * recipient - which is exactly the state venueRls.test.ts asserts its peek
-     * against. Vitest runs the two files concurrently against one database, so
-     * borrowing the shared fixture here makes that suite fail at random, in a
-     * way that reads as a policy bug.
-     *
-     * `dworek` has `open_linking = true` and owner@ is already a `customer` of
-     * `bagatelka`, so both legs of the round trip are reachable with no
-     * invitation to mint or clean up.
+     * Runs against a **throwaway wedding**, not the seeded one: re-linking lands
+     * `venue_access` back in 'pending', which is the state venueRls.test.ts
+     * asserts its peek against, and the two suites run concurrently against one
+     * database.
      */
     it("survives a re-link to another venue, clearing the menu", async () => {
       const scratchId = crypto.randomUUID()
@@ -627,9 +571,8 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
         })
         expect(linked.error).toBeNull()
 
-        // A package of the venue it is linked to *now*, so the state under test
-        // is the real one: a wedding holding one venue's package at the moment
-        // it is pointed at another.
+        // A package of the venue it is linked to *now*: a wedding holding one
+        // venue's package at the moment it is pointed at another.
         const picked = await couple
           .from("weddings")
           .update({ menu_package_id: DWOREK_PACKAGE })
@@ -640,9 +583,8 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
           p_wedding_id: scratchId,
           p_slug: "bagatelka",
         })
-        // The assertion this whole test exists for. Without the
-        // `menu_package_id = null` in the replaced RPC, this is 23514 and
-        // changing venue is broken.
+        // Without the `menu_package_id = null` in the replaced RPC, this is
+        // 23514 and changing venue is broken.
         expect(relinked.error).toBeNull()
 
         const { data: after } = await couple
@@ -659,23 +601,15 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
     })
 
     /**
-     * The other half of that RPC's re-link behaviour, and the one that was
-     * wrong: pointing a wedding at the venue it is *already* linked to.
+     * Pointing a wedding at the venue it is *already* linked to - the dialog is
+     * a picker and theirs is in the list. Before the guard, that reset
+     * `venue_access` to 'pending' and dropped `menu_package_id`, taking every
+     * selection through trigger 2 and every guest's dish through 20260822000003.
      *
-     * Nothing about the dialog stops a couple doing it - it is a picker of
-     * venues, and theirs is in the list. Before the guard, choosing it reset
-     * `venue_access` to 'pending' and, from this migration on, dropped
-     * `menu_package_id`, which took every selection with it through trigger 2
-     * and every guest's dish through 20260822000003. A finished menu and a live
-     * consent, both gone, for an act that meant nothing.
+     * Trigger 2's `when (new.menu_package_id is distinct from old...)` does not
+     * rescue it: null is distinct from the package they hold.
      *
-     * Note what does *not* rescue it: trigger 2's
-     * `when (new.menu_package_id is distinct from old.menu_package_id)` fires
-     * here precisely because null is distinct from the package they hold.
-     *
-     * Same throwaway-wedding rule as the test above, and for the same reason -
-     * `venueRls.test.ts` runs concurrently and asserts against the seeded
-     * wedding's granted peek.
+     * Throwaway wedding, for the reason the test above gives.
      */
     it("makes re-linking the same venue a no-op", async () => {
       const scratchId = crypto.randomUUID()
@@ -716,8 +650,8 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
           p_slug: "dworek",
         })
 
-        // Still a success, and still answering with the tenant id, so no caller
-        // has to learn a new shape for "you were already linked".
+        // Still a success answering with the tenant id, so no caller has to
+        // learn a new shape for "you were already linked".
         expect(again.error).toBeNull()
         expect(again.data).toBe(DWOREK)
 
@@ -743,10 +677,9 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
     })
 
     /**
-     * The guard skips the write, not the checks. A venue that has closed its
-     * linking still refuses a couple who is already linked to it - otherwise
-     * "already linked" would be a way past `PT403`, and the early return would
-     * be an authorization hole rather than a no-op.
+     * The guard skips the write, not the checks: otherwise "already linked"
+     * would be a way past `PT403`, making the early return an authorization
+     * hole rather than a no-op.
      */
     it("still runs the venue checks before returning early", async () => {
       const scratchId = crypto.randomUUID()
@@ -779,10 +712,8 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
           p_slug: "dworek",
         })
 
-        // owner@ is a 'customer' of bagatelka, never of dworek, so with the
-        // door closed `is_tenant_member` is false and the refusal stands - the
-        // early return is reached only by callers who would have been allowed
-        // to link for real.
+        // owner@ is a 'customer' of bagatelka, never of dworek, so with the door
+        // closed `is_tenant_member` is false and the refusal stands.
         expect(again.error?.code).toBe("PT403")
       } finally {
         await setOpenLinking(true)
@@ -815,14 +746,11 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
     })
 
     /**
-     * The write shape `insertMenuSelection` uses, and why it is an upsert.
-     *
-     * `(wedding_id, menu_option_id)` is the primary key, so a plain insert of a
-     * dish already picked raises 23505 - which `run()` turns into a
-     * "could not save" toast for a write the database is already consistent
-     * with. Two people editing the menu at once hit that, and so does a single
-     * client doing pick → unpick → pick, since the writes are fire-and-forget
-     * with no ordering guarantee.
+     * Why `insertMenuSelection` is an upsert: `(wedding_id, menu_option_id)` is
+     * the primary key, so a plain insert of a dish already picked raises 23505 -
+     * a "could not save" toast for a write the database is already consistent
+     * with. Two editors at once hit that, and so does one client doing
+     * pick → unpick → pick, the writes being fire-and-forget and unordered.
      */
     it("absorbs a duplicate pick instead of failing it", async () => {
       const duplicate = await couple
@@ -833,8 +761,8 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
         )
       expect(duplicate.error).toBeNull()
 
-      // Still one row, not two - the primary key saw to that either way; what
-      // changed is that the caller is not told it failed.
+      // Still one row - the primary key saw to that either way; what changed is
+      // that the caller is not told it failed.
       const { data } = await couple
         .from("wedding_menu_selections")
         .select("menu_option_id")
@@ -843,8 +771,7 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
 
       expect(data).toEqual([{ menu_option_id: PLATED_MAIN_A }])
 
-      // The contrast, so the reason for the upsert is visible here rather than
-      // only in a comment.
+      // The contrast, so the reason for the upsert is visible in the test.
       const plain = await couple
         .from("wedding_menu_selections")
         .insert({ wedding_id: COUPLE_WEDDING, menu_option_id: PLATED_MAIN_A })
@@ -879,13 +806,11 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
     })
 
     /**
-     * A stranger reads nothing, and the stranger is dworek's owner rather than
-     * solo@ for the same cross-suite reason the catalogue block explains - with
-     * a sharper edge here. tenantInvitations.test.ts has solo@ claim a *staff*
-     * invitation to bagatelka mid-run, and staff of the linked tenant is
-     * exactly what `wedding_role()` derives 'venue' from, so for the length of
-     * that test solo@ can legitimately read this wedding's selections. dworek
-     * has no relationship to this wedding in any suite.
+     * A stranger reads nothing. The stranger is dworek's owner, not solo@:
+     * tenantInvitations.test.ts has solo@ claim a *staff* invitation to
+     * bagatelka mid-run, which is exactly what `wedding_role()` derives 'venue'
+     * from, so solo@ can legitimately read these selections for that test's
+     * duration. dworek has no relationship to this wedding in any suite.
      */
     it("reads nothing for a caller with no relationship to the wedding", async () => {
       const { data } = await otherVenue
@@ -897,10 +822,9 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
     })
 
     /**
-     * `enforce_menu_selection_in_package`. MENU I's soup is a perfectly real
-     * dish of this same venue, and it is still refused: the wedding ordered
-     * MENU SERWOWANE, and every option row belongs to exactly one course of
-     * exactly one package.
+     * `enforce_menu_selection_in_package`. MENU I's soup is a real dish of this
+     * same venue and still refused: the wedding ordered MENU SERWOWANE, and
+     * every option belongs to exactly one course of exactly one package.
      */
     it("refuses a dish from a package this wedding did not order", async () => {
       const { error } = await couple.from("wedding_menu_selections").insert({
@@ -913,13 +837,12 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
 
     /**
      * Switching package is destructive by design, and the wipe happens in the
-     * database rather than the client - there is no rollback layer, and the
+     * database rather than the client: there is no rollback layer, and the
      * switch can arrive from another device.
      */
     it("wipes the selections when the package changes", async () => {
-      // Captured before the switch, because from 20260822000003 the same
-      // trigger also clears every guest's dish - which is the point, and which
-      // makes this the one test that has to restore three things.
+      // Captured before the switch: from 20260822000003 the same trigger also
+      // clears every guest's dish, so this test restores three things.
       const dishes = await guestDishes()
 
       try {
@@ -935,10 +858,9 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
           .eq("wedding_id", COUPLE_WEDDING)
         expect(data).toEqual([])
 
-        // And the guests with it. Leaving them holding a dish from a package
-        // the wedding no longer orders is the exact state the trigger exists
-        // to prevent - it would print on the kitchen report as food nobody
-        // agreed to cook.
+        // And the guests with it: a dish from a package the wedding no longer
+        // orders would print on the kitchen report as food nobody agreed to
+        // cook.
         expect(await guestDishes()).toEqual([])
       } finally {
         await restoreSeededMenu()
@@ -947,9 +869,9 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
     })
 
     /**
-     * The assertion that keeps "read-only by construction" true for the derived
-     * role. This is the first relation in the wedding tree that admits 'venue'
-     * on SELECT *and* the couple writes, so the write half has to be pinned.
+     * Keeps "read-only by construction" true for the derived role: the first
+     * relation in the wedding tree that admits 'venue' on SELECT *and* the
+     * couple writes, so the write half has to be pinned.
      */
     it("lets the granted venue read them and write none", async () => {
       const { data: read } = await venue
@@ -1017,14 +939,11 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
     })
 
     /**
-     * The `per_guest_choice` half of `enforce_guest_menu_option`, and the half
-     * that would be silently wrong if it were dropped.
-     *
-     * MENU SERWOWANE's Przystawka is a dish of the very package this wedding
-     * ordered - the package half of the check passes - but its course is a
-     * buffet course, where nobody is plating anything per guest. Assigned to a
-     * guest it would tally as a portion the kitchen has to plate, and it would
-     * look right on the report.
+     * The `per_guest_choice` half of `enforce_guest_menu_option`, which would be
+     * silently wrong if dropped: MENU SERWOWANE's Przystawka is a dish of the
+     * package this wedding ordered, so the package half passes, but its course
+     * is a buffet where nobody plates per guest. Assigned to a guest it tallies
+     * as a portion the kitchen must plate, and looks right on the report.
      */
     it("refuses a dish from a course that is not per-guest", async () => {
       const guest = await someGuest()
@@ -1049,10 +968,9 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
     })
 
     /**
-     * Repair, not refusal. Unpicking a dish four guests already hold releases
-     * those guests rather than rejecting the unpick with a message about people
-     * the couple would then have to hunt down - the same direction as soft
-     * deletes and orphan adoption.
+     * Repair, not refusal: unpicking a dish four guests hold releases those
+     * guests rather than rejecting the unpick with a list of people to hunt
+     * down - the same direction as soft deletes and orphan adoption.
      */
     it("clears the guests holding a dish when it is unpicked", async () => {
       const { data: before } = await couple
@@ -1094,12 +1012,11 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
     })
 
     /**
-     * Re-asserted here as well as in venueRls.test.ts, deliberately.
-     *
-     * This is the migration that gives the venue a new per-guest column, so a
-     * reviewer of *this* feature should be able to see, in *this* file, that it
-     * bought them nothing on `guests` itself. What the venue reads is
-     * `wedding_seatmap`, whose projection has no name and no note to leak.
+     * Deliberately re-asserted here as well as in venueRls.test.ts: this is the
+     * migration that gives the venue a new per-guest column, so a reviewer of
+     * *this* feature should see in *this* file that it bought them nothing on
+     * `guests`. What the venue reads is `wedding_seatmap`, whose projection has
+     * no name and no note to leak.
      */
     it("still shows the venue zero guest rows", async () => {
       const { data, error } = await venue
@@ -1123,18 +1040,13 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
   })
 
   /**
-   * `archived_at`, from the two sides that must not agree.
+   * `archived_at`, from the two sides that must not agree: the same flag means
+   * "no longer pickable" and "still perfectly servable" at once. They part
+   * company at `menu_option_in_package`'s `_require_active` - drop the flag and
+   * the first two cases go green, pass it everywhere and the third goes red.
    *
-   * Archiving is how a venue retires an offer without cancelling an order, so
-   * the same flag has to mean "no longer pickable" and "still perfectly
-   * servable" at once. `menu_option_in_package`'s `_require_active` is where
-   * those two part company, and these tests are the pair that pins the
-   * asymmetry: drop the flag and the first two go green, pass it everywhere and
-   * the third goes red.
-   *
-   * Every case restores the catalogue, including on failure - the venue's
-   * `archived_at` is shared fixture and `venueRls.test.ts` runs against the
-   * same database.
+   * Every case restores the catalogue, including on failure: `archived_at` is
+   * shared fixture and `venueRls.test.ts` runs against the same database.
    */
   describe("archived dishes", () => {
     const setArchived = async (
@@ -1166,8 +1078,8 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
         await setArchived("menu_options", PLATED_MAIN_D, null)
       }
 
-      // And the same insert with nothing else changed: `archived_at` was the
-      // reason, not something else about this dish.
+      // The same insert with nothing else changed, so `archived_at` was the
+      // reason and not something else about this dish.
       const { error } = await couple
         .from("wedding_menu_selections")
         .insert({ wedding_id: COUPLE_WEDDING, menu_option_id: PLATED_MAIN_D })
@@ -1182,9 +1094,8 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
     })
 
     it("refuses a new pick from an archived course", async () => {
-      // Archiving a course retires the dishes on it, and the couple's picker
-      // agrees - `liveCourses` drops the whole course. The dish row itself is
-      // untouched here, so this fails only if the check reads the course too.
+      // Archiving a course retires the dishes on it. The dish row itself is
+      // untouched, so this fails only if the check reads the course too.
       await setArchived("menu_courses", PLATED_COURSE, NOW)
 
       try {
@@ -1200,14 +1111,10 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
     })
 
     /**
-     * The half that must keep working, and the reason `_require_active` is a
-     * flag rather than part of the predicate.
-     *
-     * The venue archives a main this wedding is already serving - next
-     * season's catalogue, edited mid-planning. The couple still has guests to
-     * seat, and every one of them has to be assignable to the dish the wedding
-     * ordered. Refusing here would freeze planning on a wedding that did
-     * nothing wrong.
+     * Why `_require_active` is a flag rather than part of the predicate: the
+     * venue archives a main this wedding is already serving, and every guest
+     * still has to be assignable to it. Refusing here would freeze planning on
+     * a wedding that did nothing wrong.
      */
     it("still assigns a guest to a selected dish the venue archived", async () => {
       const { data: guest } = await couple
@@ -1238,24 +1145,19 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
   })
 
   /**
-   * The three `on delete restrict` FKs, asserted from the side that hits them.
+   * The three `on delete restrict` FKs. The only tests in the file where staff
+   * pass RLS and are refused anyway - the policy says yes, it is this venue's
+   * own dish, and referential integrity says no, which is why the assertion is
+   * `23503` rather than `[]`.
    *
-   * These are the only tests in the file where staff pass RLS and are refused
-   * anyway. Every "does not let another tenant..." case above expects an empty
-   * filtered result, because a policy declined to show the row; here the policy
-   * says yes - it is this venue's own dish - and referential integrity says no,
-   * which is what makes `23503` the assertion rather than `[]`.
+   * What they protect is the *wedding tree*: while these FKs were `set null` /
+   * `cascade`, this delete wrote `guests`, `wedding_menu_selections` and
+   * `weddings` rows through a role holding no policy on any of them. So each
+   * case checks the couple's side is untouched, not merely that it failed.
    *
-   * What they are protecting is not the catalogue but the *wedding tree*: while
-   * these FKs were `set null` / `cascade`, this same delete wrote `guests`,
-   * `wedding_menu_selections` and `weddings` rows of a couple, through a role
-   * that holds no policy on any of them. So each case checks the couple's side
-   * is untouched, not merely that the statement failed.
-   *
-   * The tenant-retirement path is the one interaction not testable here:
-   * deleting a `tenants` row needs privileges no anon-key session has, the same
-   * limit `20260822000002` section 5 records. Verified with psql instead, in
-   * both referential orders - see docs/supabase.md.
+   * Tenant retirement is not testable here - deleting a `tenants` row needs
+   * privileges no anon-key session has. Verified with psql in both referential
+   * orders instead; see docs/supabase.md.
    */
   describe("hard delete once a couple has ordered", () => {
     /** Sorted, because neither query promises an order. */
@@ -1281,9 +1183,8 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
         .eq("menu_option_id", PLATED_MAIN_A)
 
       expect(selection!.length).toBe(1)
-      // The guests who were eating it are still eating it. This is the
-      // assertion the whole phase is for: `set null` here was a venue writing
-      // `guests`, a table its role may not even SELECT.
+      // The guests who were eating it still are: `set null` here was a venue
+      // writing `guests`, a table its role may not even SELECT.
       expect(byId(await guestDishes())).toEqual(byId(before))
     })
 
@@ -1294,10 +1195,9 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
         .eq("id", PLATED_COURSE)
         .select("id")
 
-      // The course itself is referenced by nothing in the wedding tree - the
-      // delete cascades down to its options and the restrict fires there. Same
-      // code, one level further in, which is why the CRM's `23503` branch is on
-      // all three deletes and not just the dish.
+      // The course is referenced by nothing in the wedding tree: the delete
+      // cascades to its options and the restrict fires there. Same code one
+      // level in, which is why the CRM's `23503` branch is on all three deletes.
       expect(error?.code).toBe("23503")
 
       const { data: course } = await venue
@@ -1325,10 +1225,9 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
     })
 
     it("still deletes a dish nobody has ordered", async () => {
-      // The other half of the claim, and the one that keeps `archived_at` from
-      // becoming the only way out of a typo: a dish no selection and no guest
-      // points at is still deletable. Created here rather than borrowing an
-      // unpicked seeded main, so a failure leaves the fixture alone.
+      // Keeps `archived_at` from becoming the only way out of a typo: a dish no
+      // selection and no guest points at is still deletable. Created here rather
+      // than borrowing a seeded main, so a failure leaves the fixture alone.
       const { data: created, error: insertError } = await venue
         .from("menu_options")
         .insert({
@@ -1353,9 +1252,9 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
   })
 
   it("leaves the seeded fixture as it found it", async () => {
-    // Cheap guard for the suites sharing this database: everything above either
-    // restores what it changed or was refused outright, so the catalogue must
-    // be exactly what seed.sql wrote.
+    // Guard for the suites sharing this database: everything above either
+    // restores what it changed or was refused, so the catalogue must be exactly
+    // what seed.sql wrote.
     const { data } = await venue
       .from("menu_packages")
       .select("id, price_per_person_minor")
@@ -1368,8 +1267,7 @@ describe.skipIf(!reachable)("venue menu catalogue", () => {
     })
     expect(venueUserId).toBeTruthy()
 
-    // And the couple's order, which two tests above deliberately destroy and
-    // restore. Six dishes, and the wedding still on MENU SERWOWANE.
+    // And the couple's order, which two tests above destroy and restore.
     const { data: order } = await couple
       .from("weddings")
       .select("menu_package_id, wedding_menu_selections(menu_option_id)")

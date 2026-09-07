@@ -44,9 +44,8 @@ export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
     abortRef.current = controller
 
     // pointermove fires at the device rate (500+Hz on some mice) while React
-    // can only paint once per frame - committing every event just queues
-    // wasted renders and makes the pan feel sluggish. Coalesce: remember the
-    // latest position and flush at most one setPan per animation frame.
+    // paints once per frame, so committing every event queues wasted renders.
+    // Coalesce: keep the latest position, flush one setPan per animation frame.
     let rafId = 0
     let pending: Position | null = null
     const flush = () => {
@@ -57,9 +56,9 @@ export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
 
     const onMove = (ev: PointerEvent) => {
       // A mouse released outside the window never delivers pointerup here, so
-      // the drag would otherwise stay live (and leak its listener on the next
-      // press). A move with no buttons held means the release was missed -
-      // tear the drag down. Touch always reports buttons while in contact.
+      // the drag would stay live and leak its listener on the next press. A move
+      // with no buttons held means the release was missed; touch always reports
+      // buttons while in contact.
       if (ev.pointerType === "mouse" && ev.buttons === 0) {
         controller.abort()
         return
@@ -84,10 +83,10 @@ export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
       if (pointers.current.size === 0) controller.abort()
     }
 
-    // Listen on window (not the canvas element) so the pan keeps tracking once
+    // Listen on window, not the canvas element, so the pan keeps tracking when
     // the pointer crosses the overlay toolbar or leaves the canvas - a mouse
-    // gets no implicit pointer capture there. setPan clamps, so the hall just
-    // pins to its last valid spot instead of freezing and jumping back.
+    // gets no implicit pointer capture there. setPan clamps, so the hall pins to
+    // its last valid spot instead of freezing and jumping back.
     window.addEventListener("pointermove", onMove, { signal })
     window.addEventListener("pointerup", release, { signal })
     window.addEventListener("pointercancel", release, { signal })

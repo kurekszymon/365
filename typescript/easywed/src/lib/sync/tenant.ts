@@ -5,23 +5,17 @@ import { useAuthStore } from "@/stores/auth.store"
 /**
  * The transport half of every "null on failure" contract in this file.
  *
- * PostgREST reports a refused or malformed query as an error *result*, and each
- * helper below already turns that into its documented fallback. What it cannot
- * report that way is a request that never completed at all - offline, DNS,
- * CORS, a dropped connection - which arrives as a rejected promise instead.
+ * PostgREST reports a refused or malformed query as an error *result*, which
+ * each helper below already turns into its documented fallback. A request that
+ * never completed - offline, DNS, CORS, a dropped connection - arrives as a
+ * rejected promise instead, and since every caller in the tenant tree is a
+ * fire-and-forget `void x.then(...)` inside an effect, that is not a logged
+ * failure but a screen that never leaves its loading state.
  *
- * Every caller in the tenant tree is a fire-and-forget `void x.then(...)` inside
- * an effect, so an escaping rejection is not a logged failure: it is a screen
- * that never leaves its loading state. The CRM shell holds on `crm.loading`,
- * /home renders null, the claim page sits on "claiming", and nothing short of a
- * reload recovers. The contract has to be total, and this is where it is made
- * total - once, rather than in a `.catch()` at each call site that would put the
- * fallback decision in two places.
- *
- * An `abortSignal` cancellation is deliberately *not* what this catches:
- * supabase-js surfaces that as an error result too, so the callers' existing
- * `signal.aborted` guards keep doing the cancellation work and this fallback
- * never reaches a screen that has already navigated away.
+ * Made total here rather than in a `.catch()` per call site, which would put the
+ * fallback decision in two places. An `abortSignal` cancellation is *not* what
+ * this catches - supabase-js surfaces that as an error result, so the callers'
+ * `signal.aborted` guards keep doing the cancellation work.
  */
 const total = async <T>(
   where: string,
@@ -45,10 +39,8 @@ const total = async <T>(
  *
  * Returns `null` for both "no such slug" and "the lookup failed", which the
  * caller renders identically as "no such venue". Collapsing them is deliberate:
- * distinguishing them would need the error surfaced to an anonymous visitor who
- * can do nothing about either, and a network failure that renders as a venue
- * that exists-but-is-broken is worse than one that renders as absent. The
- * error is still logged.
+ * an anonymous visitor can do nothing about either, and a venue rendered as
+ * exists-but-broken is worse than one rendered as absent. Still logged.
  */
 export const fetchPublicTenant = (
   slug: string,
@@ -66,13 +58,9 @@ export const fetchPublicTenant = (
         return null
       }
 
-      // Set-returning, so an unknown slug is an empty array rather than a null
-      // row.
-      //
-      // `.at(0)` rather than `[0]` because the generated types index as `T`,
-      // not `T | undefined` - so the guard below reads as dead code to the
-      // linter while being exactly what catches the empty case at runtime.
-      // `.at()` types the absence honestly instead of asserting it away.
+      // Set-returning, so an unknown slug is an empty array, not a null row.
+      // `.at(0)` rather than `[0]` because the generated types index as `T`, not
+      // `T | undefined`, so the guard below would read as dead code.
       const row = data.at(0)
       if (!row) return null
 
@@ -80,12 +68,9 @@ export const fetchPublicTenant = (
         id: row.id,
         slug: row.slug,
         name: row.name,
-        // The CHECK constraint pins this to one of two values; the generated
-        // type widens it to string because Postgres CHECKs do not survive into
-        // the schema types. Narrowed here rather than asserted, so an
-        // unexpected value reads as "suspended" - the conservative direction,
-        // since the alternative is presenting a suspended venue as open for
-        // business.
+        // The CHECK pins this to one of two values; the generated type widens it
+        // to string. Narrowed rather than asserted, so an unexpected value reads
+        // as "suspended" - the conservative direction.
         status: row.status === "active" ? "active" : "suspended",
         logoUrl: row.logo_url,
         primaryColor: row.primary_color,
@@ -101,11 +86,10 @@ export const fetchPublicTenant = (
  *
  * Reads `tenant_members` directly rather than through a helper RPC: the SELECT
  * policy already narrows it to "staff see the roster, everyone else sees their
- * own row", so filtering on the caller's own id needs no extra privilege and
- * costs one indexed lookup.
+ * own row", so filtering on the caller's own id costs one indexed lookup.
  *
- * `null` on failure as well as on non-membership, which is the fail-closed
- * direction - the CRM layout turns both into a 403 rather than a blank shell.
+ * `null` on failure as well as on non-membership - the fail-closed direction,
+ * which the CRM layout turns into a 403 rather than a blank shell.
  */
 export const fetchTenantRole = (
   tenantId: string,
@@ -142,20 +126,17 @@ export const fetchTenantRole = (
  * The venue this account works for, or null - including for a `customer`, who
  * is somebody's client rather than their staff and reaches none of the CRM.
  *
- * The apex's half of the sign-in landing: on a venue host the hostname already
- * names the tenant, and this is what stands in when it does not. One indexed
- * lookup on the caller's own `tenant_members` row, with the slug embedded
- * because the CRM lives on `<slug>.easywed.app` and an id cannot be navigated
- * to. Both reads are ordinary member reads - `tenant_members` SELECT admits
- * `user_id = auth.uid()`, and `tenants` SELECT admits any member of the row.
+ * The apex's half of the sign-in landing, standing in for the hostname that
+ * names the tenant on a venue host. One indexed lookup on the caller's own
+ * `tenant_members` row, with the slug embedded because the CRM lives on
+ * `<slug>.easywed.app` and an id cannot be navigated to.
  *
  * `maybeSingle` is safe because of `tenant_members_one_per_user`; if that index
  * ever goes, this has to pick a venue rather than error into null - the same
  * caveat `my_tenant_id()` carries.
  *
- * Null on failure as well as on non-membership. The caller is a couple far more
- * often than not, and the cost of failing that way is a wedding list rather
- * than a bounce nobody can undo.
+ * Null on failure as well as on non-membership: the caller is usually a couple,
+ * and failing that way costs a wedding list rather than an undoable bounce.
  */
 export const fetchMyStaffTenant = (
   userId: string,
@@ -204,15 +185,11 @@ type TenantClaimFailure = "invalid" | "other_venue" | "failed"
  * The SQLSTATEs `claim_tenant_invitation` raises, mapped to the sentence the
  * page renders. A code missing here falls to "failed" and a generic retry.
  *
- * Keyed on `error.code`, not `error.message`, for the reason spelled out on
- * LINK_FAILURES in venue.ts: the message is prose the migration is free to
- * reword and PostgREST is free to wrap.
+ * Keyed on `error.code`, not `error.message` - see LINK_FAILURES in venue.ts.
  *
- * PT409 is the one that must not collapse into the generic case.
- * `tenant_members_one_per_user` allows one membership per account, so an
- * account already attached to another venue cannot fix this by retrying - the
- * only ways forward are leaving that venue or using a different account, and
- * nothing in "something went wrong" says so.
+ * PT409 must not collapse into the generic case: `tenant_members_one_per_user`
+ * allows one membership per account, so an account already attached to another
+ * venue cannot fix this by retrying, and "something went wrong" does not say so.
  */
 const CLAIM_FAILURES: Record<string, TenantClaimFailure> = {
   PT404: "invalid",
@@ -222,23 +199,21 @@ const CLAIM_FAILURES: Record<string, TenantClaimFailure> = {
 /**
  * Spends an invitation token, joining the caller to the venue that issued it.
  *
- * The claim is the consent. A `tenant_members` row is what hands the venue this
- * person's `profiles.display_name` through `staff_can_view_profile`, which is
- * why `tenant_members` has no INSERT policy and why this goes through a definer
- * RPC called with the *recipient's* session - see 20260820000001.
+ * The claim is the consent: a `tenant_members` row hands the venue this person's
+ * `profiles.display_name` through `staff_can_view_profile`, which is why the
+ * table has no INSERT policy and why this goes through a definer RPC called with
+ * the *recipient's* session (20260820000001).
  *
- * Joining as `customer` buys exactly one thing: the ability to call
- * `link_wedding_to_venue` for an invitation-only venue. It is emphatically not
- * the art. 9(2)(a) consent for the guest list - that is still a separate
- * `set_venue_access(true)` against a dialog that names what is disclosed.
+ * Joining as `customer` buys one thing: the ability to call
+ * `link_wedding_to_venue` for an invitation-only venue. Not the art. 9(2)(a)
+ * consent for the guest list - that is a separate `set_venue_access(true)`.
  */
 export const claimTenantInvitation = (
   token: string,
   signal?: AbortSignal
 ): Promise<TenantClaimResult> =>
-  // The whole body, not just the RPC: the two follow-up reads below can fail at
-  // the transport layer just as easily, and a rejection out of either leaves
-  // the claim page on "claiming" with no way forward.
+  // The whole body, not just the RPC: the two follow-up reads can fail at the
+  // transport layer too, and a rejection out of either strands the claim page.
   total<TenantClaimResult>(
     "claimTenantInvitation",
     async () => {
@@ -253,18 +228,15 @@ export const claimTenantInvitation = (
         }
       }
 
-      // Two reads rather than a wider RPC return, because both are now ordinary
-      // member reads: the row just written makes `is_tenant_member` true, which
-      // is exactly what the `tenants` SELECT policy asks for.
+      // Two reads rather than a wider RPC return: the row just written makes
+      // `is_tenant_member` true, which is what the `tenants` SELECT policy asks
+      // for, so both are ordinary member reads.
       //
-      // The role read goes through `fetchTenantRole` so it carries the
-      // `user_id` filter. The `tenant_members` SELECT policy is *not* "members
-      // view themselves" alone - it is `is_tenant_staff(tenant_id) or user_id =
-      // auth.uid()`, so the moment a staff claim succeeds the caller can see
-      // the venue's whole roster. An unfiltered `.maybeSingle()` would then
-      // error on multiple rows and fall back to "customer", which is precisely
-      // backwards: the new staff member would be shown the couple's card and
-      // sent to /home.
+      // The role read goes through `fetchTenantRole` for its `user_id` filter.
+      // The `tenant_members` SELECT policy is `is_tenant_staff(tenant_id) or
+      // user_id = auth.uid()`, so a successful staff claim can see the whole
+      // roster - an unfiltered `.maybeSingle()` would error on multiple rows and
+      // fall back to "customer", sending the new staff member to /home.
       const userId = useAuthStore.getState().session?.user.id
 
       const [tenantRes, role] = await Promise.all([
@@ -277,8 +249,7 @@ export const claimTenantInvitation = (
       ])
 
       // `.single()` turns "no row" into an error rather than a null row, so the
-      // error check is the whole guard - and the generated types agree, which
-      // is why a `!tenantRes.data` here reads as always-false to the linter.
+      // error check is the whole guard.
       if (tenantRes.error) {
         console.error("[tenant] claimed venue lookup failed", tenantRes.error)
         return { ok: false, reason: "failed" }
@@ -290,11 +261,10 @@ export const claimTenantInvitation = (
           id: tenantRes.data.id,
           slug: tenantRes.data.slug,
           name: tenantRes.data.name,
-          // `fetchTenantRole` already narrows the column; what is left to
-          // decide is the `null` it returns for a failed read (or the session
-          // vanishing mid-claim). "customer" is the conservative fallback: it
-          // is the role that offers the fewest onward doors, so a failed read
-          // cannot advertise a CRM the caller may not reach.
+          // `fetchTenantRole` narrows the column; what is left is the `null` it
+          // returns for a failed read. "customer" is the conservative fallback -
+          // the fewest onward doors, so a failed read cannot advertise a CRM the
+          // caller may not reach.
           role: role ?? "customer",
         },
       }

@@ -163,13 +163,11 @@ export const Canvas = () => {
     pan
   )
 
-  // Entering shape-edit mode jumps the view to frame the target entity (with
-  // margin for the vertex handles and the floating toolbar) - otherwise the
-  // mode can start with the shape half hidden behind the sidebar or off-screen.
-  // The ref-guard makes the jump truly once per entity, not a camera lock:
-  // the effect's `fitRect` dep changes identity whenever the world bounds
-  // change, which for HALL editing is every committed vertex drag (the hall's
-  // AABB moves) - without the guard the camera would re-zoom on every drop.
+  // Entering shape-edit mode frames the target entity, with margin for the
+  // vertex handles and the floating toolbar - otherwise the mode can start with
+  // the shape half hidden behind the sidebar. The ref-guard makes it once per
+  // entity rather than a camera lock: `fitRect`'s identity changes whenever the
+  // world bounds do, which for hall editing is every committed vertex drag.
   const shapeEditView = usePanelStore((state) =>
     state.view?.kind === "shape.edit" ? state.view : null
   )
@@ -261,14 +259,13 @@ export const Canvas = () => {
   }, [clampPan, pan, setPan])
 
   // ⌘/Ctrl+C copies the selected table/fixture; ⌘/Ctrl+V pastes it under the
-  // cursor (or hall centre if the pointer hasn't been over the canvas). Disabled
-  // while measuring, and ignored when a form field is focused.
+  // cursor (or hall centre if the pointer has not been over the canvas).
+  // Disabled while measuring, ignored when a form field is focused.
   //
-  // The handler closes over per-render values (viewportToWorld,
-  // resolveHallPoint, snapStep, …), so the DOM listener is subscribed once
-  // (per isMeasuring) and dispatches through a ref that's re-captured after
-  // every render - the canvas re-renders every pan/zoom frame, and
-  // re-subscribing at that rate would churn the listener for nothing.
+  // The handler closes over per-render values, so the DOM listener is subscribed
+  // once per isMeasuring and dispatches through a ref re-captured after every
+  // render - the canvas re-renders every pan/zoom frame, and re-subscribing at
+  // that rate would churn the listener for nothing.
   const copyPasteRef = useRef<(e: KeyboardEvent) => void>(() => {})
   useEffect(() => {
     copyPasteRef.current = (e: KeyboardEvent) => {
@@ -311,9 +308,8 @@ export const Canvas = () => {
 
   const hallSurfaceRef = useRef<HallSurfaceMethods>(null)
 
-  // The minimap only earns its space when the whole world isn't already
-  // framed: once it's been panned off-centre, or zoomed until it overflows the
-  // viewport on either axis. A fully-visible, centred layout needs no navigator.
+  // The minimap only earns its space when the whole world is not already framed:
+  // panned off-centre, or zoomed until it overflows the viewport on either axis.
   const worldOverflows =
     scaledWidth > containerWidth + 1 || scaledHeight > containerHeight + 1
   const showMinimap = worldOverflows || pan.x !== 0 || pan.y !== 0
@@ -507,8 +503,8 @@ export const Canvas = () => {
           const captured = findCapturedElement(e.target)
 
           // First click selects; clicking the already-selected element opens its
-          // edit panel/drawer. (Editing is also reachable via the right-click
-          // context menu.) Same flow on touch and pointer devices.
+          // edit panel/drawer, also reachable from the context menu. Same flow
+          // on touch and pointer devices.
           if (captured?.kind === "table") {
             if (panel.selectedId === captured.id)
               panel.openTableEdit(captured.id)

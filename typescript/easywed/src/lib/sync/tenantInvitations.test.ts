@@ -6,17 +6,15 @@ import type { Database } from "@/lib/supabase.types"
 /**
  * The tenant invitation flow, asserted against a real PostgreSQL with real RLS.
  *
- * The sibling of venueRls.test.ts, and it exists for the same reason: every
- * claim this feature makes is a *policy* claim. "A venue cannot put a stranger
- * on its roster" and "an invitation is spent by the person it names, not by the
- * venue" are enforced by an absent INSERT policy and a definer function, and
- * neither a type nor a comment can hold that.
+ * The sibling of venueRls.test.ts. "A venue cannot put a stranger on its roster"
+ * and "an invitation is spent by the person it names, not by the venue" are
+ * enforced by an absent INSERT policy and a definer function, which no type or
+ * comment can hold.
  *
- * The specific regression this guards is the one 20260817000001 section 4
- * describes: an INSERT policy on `tenant_members` that lets staff name any uuid
- * hands that account's display name to the venue, permanently bars it from
- * every other venue, and makes its weddings attachable. Re-adding one would
- * make the whole feature "work" and turn several of these red.
+ * The regression it guards is 20260817000001 section 4's: an INSERT policy on
+ * `tenant_members` letting staff name any uuid hands that account's display name
+ * to the venue, permanently bars it from every other venue, and makes its
+ * weddings attachable. Re-adding one turns several of these red.
  *
  * Skipped, not failed, when the local stack is down - see venueRls.test.ts.
  *
@@ -40,17 +38,14 @@ const PASSWORD = "password123"
 /**
  * Prefix for every token these tests mint, and the whole cleanup strategy.
  *
- * The seeded `seed-live-customer-invite` is deliberately left alone. Claiming
- * it burns it, and there is no way back: `tenant_invitations` has no UPDATE
- * policy on purpose, so a client cannot un-claim a row, and the second run of
- * the suite would find every claim returning PT404. The seeded token exists for
- * clicking through the flow in a browser; the suite makes its own.
+ * The seeded `seed-live-customer-invite` is left alone: claiming it burns it,
+ * and `tenant_invitations` has no UPDATE policy, so a second run would find
+ * every claim returning PT404. That token is for clicking through the flow in a
+ * browser; the suite mints its own.
  *
- * Hex, and sixteen characters of it, because the INSERT policy pins the token
- * to `^[0-9a-f]{64}$` - a client that supplies its own token has to supply one
- * shaped like the default. A readable marker would be nicer to grep for; a
- * marker this long is what keeps the `like` cleanup below from ever matching a
- * real invitation, which at 1 in 2^64 it will not.
+ * Hex, and sixteen characters of it, because the INSERT policy pins the token to
+ * `^[0-9a-f]{64}$`. A marker this long is what keeps the `like` cleanup from
+ * ever matching a real invitation.
  */
 const TEST_TOKEN_PREFIX = "7e577e577e577e57"
 
@@ -89,11 +84,9 @@ describe.skipIf(!reachable)("tenant invitations", () => {
   let tokenSeq = 0
 
   /**
-   * A live `customer` invitation to `bagatelka`, minted by its owner.
-   *
-   * The token is supplied rather than left to the column default so cleanup can
-   * match on it - `token` is `not null unique` with a default, and an explicit
-   * value is as legitimate as the seed's.
+   * A live `customer` invitation to `bagatelka`, minted by its owner. The token
+   * is supplied rather than left to the column default so cleanup can match on
+   * it.
    */
   const mintInvitation = async (
     role: "customer" | "staff" = "customer"
@@ -119,19 +112,16 @@ describe.skipIf(!reachable)("tenant invitations", () => {
     venueUserId = (await venue.auth.getUser()).data.user!.id
   })
 
-  // A suite that only passes on a freshly reset database is a suite people stop
-  // running, so every test puts the fixture back: `solo` leaves whatever tenant
-  // they joined, and every minted invitation is dropped, claimed or not.
+  // Every test puts the fixture back, so the suite does not need a freshly reset
+  // database: `solo` leaves whatever tenant they joined, and every minted
+  // invitation is dropped, claimed or not.
   //
-  // One residue is deliberately *not* undone: the linking test below points
-  // "Tomasz & Kasia" at `bagatelka` in state 'pending', and nothing a client
-  // can call unlinks a wedding - `enforce_wedding_tenant_columns` makes both
-  // columns unwritable and there is no inverse of link_wedding_to_venue. It is
-  // harmless on a re-run: 'pending' is what the wedding would be left in
-  // anyway, the derived 'venue' role requires 'granted', so venueRls.test.ts's
-  // "reaches nothing belonging to a wedding it was not granted" still holds,
-  // and the PT403 that test asserts first comes from solo's *membership* being
-  // gone, not from the wedding being unlinked.
+  // One residue is deliberately *not* undone: the linking test points "Tomasz &
+  // Kasia" at `bagatelka` in 'pending', and nothing a client can call unlinks a
+  // wedding (`enforce_wedding_tenant_columns` makes both columns unwritable, and
+  // link_wedding_to_venue has no inverse). Harmless on a re-run - the derived
+  // 'venue' role requires 'granted', so venueRls.test.ts still holds, and the
+  // PT403 it asserts comes from solo's membership being gone.
   afterEach(async () => {
     await solo.from("tenant_members").delete().eq("user_id", SOLO_USER)
     await venue
@@ -146,9 +136,9 @@ describe.skipIf(!reachable)("tenant invitations", () => {
         .from("tenant_members")
         .insert({ tenant_id: BAGATELKA, user_id: SOLO_USER, role: "customer" })
 
-      // The absence of an INSERT policy is the guarantee - 20260817000001
-      // section 4. RLS refuses the write rather than filtering it, so unlike a
-      // SELECT this really is an error and not an empty result.
+      // The absence of an INSERT policy is the guarantee (20260817000001 §4).
+      // RLS refuses the write rather than filtering it, so unlike a SELECT this
+      // really is an error and not an empty result.
       expect(error).not.toBeNull()
     })
 
@@ -286,9 +276,9 @@ describe.skipIf(!reachable)("tenant invitations", () => {
 
   describe("what the claimed membership unlocks", () => {
     it("lets the couple link to the invitation-only venue", async () => {
-      // The gap this whole migration closes: before it, `bagatelka` has
-      // open_linking = false and nothing could write the tenant_members row
-      // that link_wedding_to_venue looks for, so this call returned PT403.
+      // The gap the migration closes: `bagatelka` has open_linking = false, and
+      // before it nothing could write the tenant_members row that
+      // link_wedding_to_venue looks for, so this call returned PT403.
       const before = await solo.rpc("link_wedding_to_venue", {
         p_wedding_id: SOLO_WEDDING,
         p_slug: "bagatelka",
@@ -329,12 +319,11 @@ describe.skipIf(!reachable)("tenant invitations", () => {
     })
 
     /**
-     * The other half of the same policy, and the reason `fetchTenantRole` takes
-     * a `userId`: for a *staff* claimer the first disjunct fires, so the very
-     * same unfiltered select returns the venue's whole roster. A caller reading
-     * "my role" without the `user_id` filter gets multiple rows, which
-     * `.maybeSingle()` reports as an error - and a fail-closed fallback then
-     * renders a fresh staff member as a customer.
+     * Why `fetchTenantRole` takes a `userId`: for a *staff* claimer the first
+     * disjunct fires, so the same unfiltered select returns the venue's whole
+     * roster. Reading "my role" without the `user_id` filter gets multiple rows,
+     * which `.maybeSingle()` reports as an error - and a fail-closed fallback
+     * then renders a fresh staff member as a customer.
      */
     it("shows a staff claimer the whole roster, not just their row", async () => {
       await solo.rpc("claim_tenant_invitation", {
@@ -374,9 +363,8 @@ describe.skipIf(!reachable)("tenant invitations", () => {
         .select("id, display_name")
         .eq("id", SOLO_USER)
 
-      // The roster screen needs this, and it is exactly the disclosure the
-      // couple consented to by claiming - which is why the claim is theirs to
-      // make and not the venue's.
+      // The roster screen needs this, and it is the disclosure the couple
+      // consented to by claiming - which is why the claim is theirs to make.
       expect(data).toEqual([
         { id: SOLO_USER, display_name: "Tomasz Zielinski" },
       ])
@@ -388,8 +376,7 @@ describe.skipIf(!reachable)("tenant invitations", () => {
       })
 
       // `.select()` because a DELETE that RLS filters to nothing comes back a
-      // clean 204 - the same trap useWeddingMembers documents. Asserting the
-      // returned row is what makes this a test of the policy.
+      // clean 204; asserting the returned row is what tests the policy.
       const { data, error } = await solo
         .from("tenant_members")
         .delete()
@@ -427,9 +414,9 @@ describe.skipIf(!reachable)("tenant invitations", () => {
     })
 
     it("refuses an owner invitation outright", async () => {
-      // The generated type widens `role` to plain `string` - Postgres CHECKs do
-      // not survive into the schema types - so this is a runtime assertion, not
-      // a compile-time one, and the constraint is the only thing refusing it.
+      // The generated type widens `role` to plain `string`, since Postgres CHECKs
+      // do not survive into the schema types, so the constraint is the only
+      // thing refusing this.
       const { error } = await venue.from("tenant_invitations").insert({
         tenant_id: BAGATELKA,
         role: "owner",
@@ -453,14 +440,13 @@ describe.skipIf(!reachable)("tenant invitations", () => {
   /**
    * The columns the INSERT policy has to pin, one test each.
    *
-   * Every one of these is `bagatelka`'s own owner writing a row into
-   * `bagatelka`'s own table, so `invited_by`, `tenant_id` and `role` - the three
-   * the policy originally constrained - are all correct. What is being asserted
-   * is that being allowed to insert *a* row is not being allowed to insert *any*
-   * row: a `with check` says nothing about the columns it does not name, and
-   * defaults are defaults rather than guarantees.
+   * Each is `bagatelka`'s own owner writing into `bagatelka`'s own table, so the
+   * three columns the policy originally constrained are all correct. What is
+   * asserted is that being allowed to insert *a* row is not being allowed to
+   * insert *any* row: a `with check` says nothing about the columns it does not
+   * name, and defaults are defaults rather than guarantees.
    *
-   * All five are refusals, so none of them leaves a row for `afterEach` to reap.
+   * All five are refusals, so none leaves a row for `afterEach` to reap.
    */
   describe("the columns an inserter must not choose", () => {
     const forge = async (row: Record<string, unknown>) => {
@@ -474,10 +460,9 @@ describe.skipIf(!reachable)("tenant invitations", () => {
     }
 
     it("refuses an invitation minted already claimed", async () => {
-      // The forgery worth naming: a row that reads "this account joined on that
-      // date", in the venue's own roster, about someone who never clicked
-      // anything. `claimed_by` is an `auth.users` FK, so the uuid has to name a
-      // real account - the forger picks whose acceptance to fabricate.
+      // The forgery worth naming: a row reading "this account joined on that
+      // date", about someone who never clicked anything. `claimed_by` is an
+      // `auth.users` FK, so the forger picks whose acceptance to fabricate.
       const error = await forge({
         claimed_at: new Date().toISOString(),
         claimed_by: SOLO_USER,
@@ -515,16 +500,15 @@ describe.skipIf(!reachable)("tenant invitations", () => {
     })
 
     it("refuses a chosen token", async () => {
-      // The one that matters most. A token's entire security is that nobody who
-      // was not sent it can guess it, and `guess-me` is as good as no token.
+      // A token's entire security is that nobody who was not sent it can guess
+      // it, and `guess-me` is as good as no token.
       const error = await forge({ token: "guess-me" })
       expect(error?.code).toBe("42501")
     })
 
     it("still accepts a row that takes every default", async () => {
-      // The other half: the hardening must not have broken the only insert the
-      // application actually makes. `useTenantRoster` sends these three columns
-      // and nothing else.
+      // The hardening must not break the only insert the application makes:
+      // `useTenantRoster` sends these three columns and nothing else.
       const { data, error } = await venue
         .from("tenant_invitations")
         .insert({
@@ -545,8 +529,8 @@ describe.skipIf(!reachable)("tenant invitations", () => {
   })
 
   it("does not disturb the seeded venue peek", async () => {
-    // The two suites share a database and `dworek` is the isolation control in
-    // both. Cheap guard that nothing here leaked into venueRls.test.ts.
+    // The suites share a database and `dworek` is the isolation control in both,
+    // so this guards against anything here leaking into venueRls.test.ts.
     const { data } = await otherVenue.from("weddings").select("id")
     expect(data).toEqual([])
   })

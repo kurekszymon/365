@@ -13,21 +13,18 @@ import type {
 /**
  * DB row -> store entity, for the three tables both load paths read.
  *
- * Extracted when `loadWeddingForVenue` arrived: it selects the same hall,
- * table and fixture columns as `loadWedding` and has to interpret them
- * identically, and the interesting parts here are not obvious enough to
- * duplicate. The `geometry` casts in particular need the `unknown` hop (see
- * `toJsonOrNull` in mutations/shared.ts for the inverse and why), and the
+ * `loadWedding` and `loadWeddingForVenue` select the same hall, table and
+ * fixture columns and have to interpret them identically. The `geometry` casts
+ * need the `unknown` hop (see `toJsonOrNull` for the inverse), and the
  * geometry <-> preset invariant below is a repair rule, not a mapping.
  *
- * Deliberately does *not* include guests. The venue path never reads that
- * table - it reads the `wedding_seatmap` view, whose projection has no name and
- * no note column - so there is no shared guest mapper to be tempted into
- * writing one.
+ * Deliberately does *not* include guests: the venue path reads the
+ * `wedding_seatmap` view instead, whose projection has no name and no note
+ * column, so there is no shared guest mapper to be tempted into writing one.
  *
- * `resolveHallId` is the caller's orphan policy rather than a rule here:
+ * `resolveHallId` is the caller's orphan policy rather than a rule here -
  * `loadWedding` adopts orphans into the first hall *and repairs the rows*,
- * which a venue must never do, so the two paths pass different functions.
+ * which a venue must never do.
  */
 
 /** Numeric columns arrive as `string | number` depending on the column type. */

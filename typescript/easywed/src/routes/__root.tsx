@@ -28,17 +28,15 @@ import { OG_IMAGE, SITE_ORIGIN } from "@/lib/site"
 const options = {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
   defaults: "2026-01-30",
-  // Load-bearing beyond the cookie banner it saves us: session replay cannot
-  // start in cookieless mode, and scrubInviteTokens deliberately does not walk
-  // into $snapshot payloads. Turning this off silently enables replay of the
-  // planner - the guest list, names and all - with un-redacted invite tokens
-  // in the recorded URLs. Read the note at the bottom of scrubInviteTokens.ts
-  // before changing it.
+  // Load-bearing beyond the cookie banner it saves: session replay cannot start
+  // in cookieless mode, and scrubInviteTokens deliberately does not walk into
+  // $snapshot payloads. Turning this off silently enables replay of the planner -
+  // guest list, names and all - with un-redacted invite tokens in the recorded
+  // URLs. Read the note at the bottom of scrubInviteTokens.ts first.
   cookieless_mode: "always",
-  // Off because autocapture reports the text of whatever was clicked, and in
-  // the planner that is a wedding guest's name - a third party with no
-  // relationship to us, and beyond what privacy.data.usage promises.
-  // Product events are declared explicitly instead; see lib/analytics/track.
+  // Off because autocapture reports the text of whatever was clicked, and in the
+  // planner that is a wedding guest's name - beyond what privacy.data.usage
+  // promises. Product events are declared explicitly; see lib/analytics/track.
   autocapture: false,
   // Invite tokens are bearer credentials and they live in the URL path, which
   // pageview capture would otherwise ship verbatim. See scrubInviteTokens.
@@ -66,9 +64,8 @@ export const Route = createRootRoute({
   // path instead of following the flow - a per-route guard would only cover the
   // routes we remembered to annotate.
   beforeLoad: ({ location }) => {
-    // Before the terms gate, because it leaves this origin entirely: there is
-    // no point deciding whether someone owes an acceptance on a host we are
-    // about to send them off.
+    // Before the terms gate, because it leaves this origin entirely: no point
+    // deciding whether someone owes an acceptance on a host they are leaving.
     redirectApexOnlyPathToApex(location.pathname)
     requireAcceptedTerms(location.pathname)
   },
@@ -83,14 +80,12 @@ export const Route = createRootRoute({
         {
           charSet: "utf-8",
         },
-        // Deliberately no maximum-scale / user-scalable=no. Blocking pinch-zoom
-        // is a WCAG 1.4.4 failure, and it was never what protected the planner:
+        // Deliberately no maximum-scale / user-scalable=no: blocking pinch-zoom
+        // is a WCAG 1.4.4 failure, and it never protected the planner anyway -
         // the canvas claims its own two-finger gesture through
-        // `touch-action: none` (the `touch-none` class on the Canvas container
-        // and every draggable), which is what stops the browser applying its
-        // pan/zoom there. iOS Safari has ignored these two directives since
-        // iOS 10 regardless, so they only ever bound Android Chrome - where
-        // they cost zoom on the guest list, forms and dialogs for nothing.
+        // `touch-action: none`. iOS Safari has ignored both directives since
+        // iOS 10, so they only ever bound Android Chrome, where they cost zoom
+        // on the guest list, forms and dialogs for nothing.
         {
           name: "viewport",
           content: "width=device-width, initial-scale=1",
@@ -102,11 +97,10 @@ export const Route = createRootRoute({
           name: "description",
           content: description,
         },
-        // Default the whole app to noindex and let the marketing routes opt
-        // back in (localeHead / rootHead emit "index, follow"). Inverted on
-        // purpose: signed-in surfaces vastly outnumber indexable pages, and
-        // Search Console was showing /home and /login ranking for nothing.
-        // A missed opt-in costs one page; a missed opt-out leaks the app.
+        // Default the whole app to noindex and let the marketing routes opt back
+        // in (localeHead / rootHead emit "index, follow"). Inverted on purpose:
+        // signed-in surfaces vastly outnumber indexable pages, and a missed
+        // opt-in costs one page where a missed opt-out leaks the app.
         {
           name: "robots",
           content: "noindex, nofollow",

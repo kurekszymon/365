@@ -50,11 +50,10 @@ export const ShapeEditOverlay = ({
   const setHallShape = usePlannerStore((s) => s.setHallShape)
   const snapStep = useViewStore((s) => s.snapStep)
 
-  // Non-null only while a handle drag is in flight - the outline renders from
-  // it so the store (and the entity underneath) only updates on release. The
-  // ref mirrors the state so pointer handlers always see the latest draft:
-  // pointer events can outrun React's re-render, and a commit read from a
-  // stale closure would silently drop the drag.
+  // Non-null only while a handle drag is in flight - the outline renders from it
+  // so the store only updates on release. The ref mirrors the state because
+  // pointer events can outrun React's re-render, and a commit read from a stale
+  // closure would silently drop the drag.
   const [draft, setDraft] = useState<Array<Position> | null>(null)
   const draftRef = useRef<Array<Position> | null>(null)
   const updateDraft = (next: Array<Position> | null) => {
@@ -157,10 +156,9 @@ export const ShapeEditOverlay = ({
 
   // The single way a drag ends, wired to pointerup, pointercancel AND
   // lostpointercapture (plus the buttons check in the move handler). If the
-  // browser drops the pointerup (context menu mid-drag, alt-tab, touch
-  // interruption), a surviving dragRef would turn plain hovers into drags -
-  // pointermove fires without any button held - so the old vertex sticks to
-  // the cursor and no other handle can be grabbed.
+  // browser drops the pointerup - context menu mid-drag, alt-tab, touch
+  // interruption - a surviving dragRef turns plain hovers into drags, so the old
+  // vertex sticks to the cursor and no other handle can be grabbed.
   const finishDrag = () => {
     if (!dragRef.current) return
     dragRef.current = null

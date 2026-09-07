@@ -74,10 +74,9 @@ const segmentsIntersect = (
   return o1 !== o2 && o3 !== o4 && o1 !== 0 && o2 !== 0 && o3 !== 0 && o4 !== 0
 }
 
-// An axis-aligned rect (top-left `pos`, `size`) lies fully inside the polygon
-// when all four corners are inside and no polygon edge properly crosses a
-// rect edge - the crossing test catches the "corners inside but an L-notch
-// pokes through an edge" case that a corner-only check misses.
+// An axis-aligned rect lies fully inside the polygon when all four corners are
+// inside and no polygon edge properly crosses a rect edge - the crossing test
+// catches the "corners inside but an L-notch pokes through" case.
 export const rectInsidePolygon = (
   pos: Position,
   size: Size,
@@ -115,24 +114,22 @@ const DEFAULT_CLAMP_STEP = 0.25
 
 /**
  * Clamps an entity's AABB into a hall (hall-local coords) - the single
- * containment entry point shared by the store, the canvas, and the AI tools.
- * Without geometry this is the classic axis clamp into the hall rect (the
- * historical behavior). With geometry, a candidate that already fits the
- * polygon is returned as-is; otherwise the valid position range is
- * grid-searched at `step` (pass the caller's snap step so results stay
- * grid-aligned; a non-positive/non-finite step falls back to the default)
- * and the fitting position nearest the candidate wins (positions are visited
- * in ascending distance order, so results are deterministic). If
- * nothing fits - the entity is larger than every pocket of the polygon -
- * the plain AABB clamp is returned, mirroring how oversized entities
- * already overflow rectangular halls today.
+ * containment entry point shared by the store, the canvas and the AI tools.
  *
- * Entities are judged by their AABB even when they have their own polygon
- * geometry, matching the fixture stance where `size` drives all clamp logic.
+ * Without geometry, a plain axis clamp into the hall rect. With geometry, a
+ * candidate that already fits is returned as-is; otherwise the valid range is
+ * grid-searched at `step` (pass the caller's snap step to stay grid-aligned; a
+ * non-positive or non-finite step falls back to the default) and the nearest
+ * fitting position wins. If nothing fits - the entity is larger than every
+ * pocket - the plain AABB clamp is returned, mirroring how oversized entities
+ * already overflow rectangular halls.
+ *
+ * Entities are judged by their AABB even when they carry polygon geometry,
+ * matching the fixture stance where `size` drives all clamp logic.
  */
 // Grid positions along one axis (0, step, ... capped at `max`), ordered by
-// distance to `target` so clampRectIntoHall can search nearest-first and
-// short-circuit. Values are mm-rounded to match the persisted coordinate grid.
+// distance to `target` so clampRectIntoHall searches nearest-first and
+// short-circuits. mm-rounded to match the persisted coordinate grid.
 const axisCandidates = (
   target: number,
   max: number,
@@ -164,9 +161,9 @@ export const clampRectIntoHall = (
   // search below always advances (it would otherwise spin forever).
   const s = Number.isFinite(step) && step > 0 ? step : DEFAULT_CLAMP_STEP
 
-  // Visit grid positions nearest `clamped` first, so the first fit is the
-  // best and we can stop once no remaining position can beat it - work is
-  // bounded by the distance to the nearest pocket, not the whole hall.
+  // Nearest to `clamped` first, so the first fit is the best and the search
+  // stops once nothing left can beat it - work is bounded by the distance to
+  // the nearest pocket, not the whole hall.
   const xs = axisCandidates(clamped.x, maxX, s)
   const ys = axisCandidates(clamped.y, maxY, s)
   let best: Position | null = null

@@ -40,12 +40,10 @@ const tabsFor = (canEdit: boolean, hasVenue: boolean): Array<EntityListTab> =>
   )
 
 /**
- * Desktop-only unified sidebar: a ~60px icon strip - Guests / Tables /
- * Fixtures / Asystent AI - plus a content column that slides in over the
- * canvas as an overlay (see the return for why it overlays rather than
- * pushing). The strip stays visible while expanded so switching tabs never
- * requires collapsing first; clicking the active tab's icon toggles the panel
- * closed.
+ * Desktop-only unified sidebar: a ~60px icon strip plus a content column that
+ * slides in over the canvas as an overlay (see the return for why it overlays
+ * rather than pushing). The strip stays visible while expanded, and clicking the
+ * active tab's icon toggles the panel closed.
  */
 export const SidebarRail = () => {
   const { t } = useTranslation()
@@ -70,16 +68,14 @@ export const SidebarRail = () => {
     return t(tab)
   }
 
-  // entityList.store is a module-level singleton that nothing resets between
-  // weddings, so activeTab survives client-side navigation: open the assistant
-  // in a wedding you edit, move to one you only view, and activeTab is still
-  // "ai_chat" - a tab this role doesn't get. Resolve it to something visible,
-  // the same way MobileTabBar does for its desktop-only ai_chat.
+  // entityList.store is a module singleton nothing resets between weddings, so
+  // activeTab survives navigation: open the assistant in a wedding you edit,
+  // move to one you only view, and activeTab is still a tab this role lacks.
   //
-  // Everything the strip and panel render must key off this, not activeTab:
-  // driving the content from the fallback while the highlight still followed
-  // activeTab left the panel showing Guests with no tab lit, and the first
-  // click on Guests re-opened it instead of toggling it closed.
+  // Everything the strip and panel render must key off *this*, not activeTab:
+  // driving the content from the fallback while the highlight followed activeTab
+  // left the panel showing Guests with no tab lit, and the first click on Guests
+  // re-opened it instead of toggling it closed.
   const visibleTab: EntityListTab = tabs.includes(activeTab)
     ? activeTab
     : "guests"
@@ -98,13 +94,11 @@ export const SidebarRail = () => {
   }[visibleTab]
 
   return (
-    // The rail's own footprint is always the 60px strip; the content column is
-    // an absolutely-positioned overlay that slides in over the canvas by
-    // animating `translate` (see the panel's transition below). Animating
-    // `width` here instead would resize the flex-sibling canvas every frame -
-    // whose ResizeObserver then recomputes hall geometry and re-renders the
-    // whole surface per frame, which is what made expanding feel sluggish. A
-    // translate only composites; the canvas never relayouts.
+    // The rail's footprint is always the 60px strip; the content column is an
+    // absolutely-positioned overlay that slides in by animating `translate`.
+    // Animating `width` would resize the flex-sibling canvas every frame, whose
+    // ResizeObserver then recomputes hall geometry and re-renders the whole
+    // surface per frame. A translate only composites.
     <div className="relative z-30 flex w-[60px] shrink-0 border-r bg-background">
       {/* Opaque and stacked above the panel so the panel slides out from
           *under* the strip instead of gliding across the icons. Everything
@@ -150,12 +144,11 @@ export const SidebarRail = () => {
       <div
         className={cn(
           "absolute top-0 bottom-0 left-full flex w-[400px] flex-col border-r bg-background shadow-[8px_0_24px_-16px_rgba(40,60,45,0.45)]",
-          // `content-visibility` is transitioned discretely alongside the
-          // slide: it flips to `visible` at the start of the open and back to
-          // `hidden` only once the close finishes. That gives the old
-          // mount/unmount timing (no rendering, layout or a11y presence while
-          // collapsed; content still on screen through the whole slide-out)
-          // without any transitionend bookkeeping in JS.
+          // `content-visibility` transitions discretely alongside the slide:
+          // `visible` at the start of the open, back to `hidden` only once the
+          // close finishes. That gives mount/unmount timing - no rendering,
+          // layout or a11y presence while collapsed, content still on screen
+          // through the slide-out - with no transitionend bookkeeping in JS.
           "transition-[translate,content-visibility] transition-discrete duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
           expanded
             ? "translate-x-0"

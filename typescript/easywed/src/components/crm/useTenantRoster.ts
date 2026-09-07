@@ -30,14 +30,11 @@ export type TenantMember = {
 /**
  * Everything the roster screen needs, and every Supabase call it makes.
  *
- * Modelled on `useWeddingMembers`, deliberately: the two screens are the same
- * screen for two different trees, and keeping the shapes aligned is what stops
- * the tenant side from quietly inventing a laxer rule. The one structural
- * difference is that there is no guest-mode branch - a venue has no local
- * equivalent, so nothing here is gated on a sentinel id.
+ * Modelled on `useWeddingMembers`: the same screen for two different trees, with
+ * no guest-mode branch, since a venue has no local equivalent.
  *
- * The security-relevant asymmetries are all in the database
- * (20260820000001), and this hook only mirrors them so the UI is honest:
+ * The security-relevant asymmetries all live in the database (20260820000001);
+ * this hook mirrors them so the UI is honest:
  *
  *   - only an owner may invite `staff`, so `canInviteStaff` hides the option
  *     for a plain staff member rather than letting them hit an RLS refusal;
@@ -65,19 +62,16 @@ export function useTenantRoster(tenantId: string | undefined) {
     url: string
   } | null>(null)
   /**
-   * The *key* of the current failure, not its sentence.
-   *
-   * State outlives a language switch, so translating at the point of failure
-   * froze whichever language was current when the write was refused - the rest
-   * of the screen switched and the red banner did not. Resolved on each render
-   * instead, through the hook's `t`. `useTenantMenus` holds the same rule.
+   * The *key* of the current failure, not its sentence: state outlives a
+   * language switch, so translating at the point of failure would freeze the
+   * banner in the language current when the write was refused. Same rule as
+   * `useTenantMenus`.
    */
   const [errorKey, setErrorKey] = useState<string | null>(null)
 
   // The load effect's controller, kept where the handlers can reach it: a
-  // refresh fired from one of them has to be cancellable by the same unmount
-  // that cancels the initial load, and `refresh()` with no signal falls into a
-  // throwaway controller that nothing ever aborts.
+  // refresh fired from one has to be cancellable by the unmount that cancels the
+  // initial load, and `refresh()` with no signal gets a controller nothing aborts.
   const loadController = useRef<AbortController | null>(null)
 
   // Cleared on unmount and at the top of each copy, so a second copy does not
@@ -94,9 +88,8 @@ export function useTenantRoster(tenantId: string | undefined) {
       if (!tenantId) return
       const effectiveSignal = signal ?? new AbortController().signal
       // Read through a call, not the property: TypeScript narrows `aborted` to
-      // false at the first check and does not reconsider across the awaits, so
-      // the later checks - the ones that actually catch a cancellation - get
-      // flagged as dead code they are not. Same note as useWeddingMembers.
+      // false at the first check and does not reconsider across awaits, so the
+      // later checks - the ones that catch a cancellation - read as dead code.
       const isAborted = () => effectiveSignal.aborted
 
       const [invitationsRes, membersRes] = await Promise.all([
@@ -115,8 +108,8 @@ export function useTenantRoster(tenantId: string | undefined) {
       ])
 
       // Before the error checks: an aborted PostgREST request comes back as an
-      // error *result*, not a silent no-op, so navigating away mid-fetch would
-      // otherwise park an "AbortError" string in `error`.
+      // error *result*, so navigating away mid-fetch would otherwise park an
+      // "AbortError" string in `error`.
       if (isAborted()) return
 
       if (invitationsRes.error || membersRes.error) {
@@ -175,10 +168,9 @@ export function useTenantRoster(tenantId: string | undefined) {
     if (insertError) {
       console.error("[crm] create invitation failed", insertError)
       setSubmitting(false)
-      // The one refusal a staff member can actually provoke from this form is
-      // the owner-only staff invite, and the RLS message for it is a PostgREST
-      // policy string nobody should be shown. `canInviteStaff` already hides
-      // the option, so this is the defence-in-depth path.
+      // The one refusal a staff member can provoke from this form is the
+      // owner-only staff invite, whose RLS message is a PostgREST policy string
+      // nobody should see. `canInviteStaff` hides the option; this is depth.
       setErrorKey(
         role === "staff" && !canInviteStaff
           ? "crm.roster.staff_owner_only"
@@ -191,9 +183,9 @@ export function useTenantRoster(tenantId: string | undefined) {
     // nobody until it is claimed.
     track("tenant_invite_created", { role })
 
-    // Re-fetch to pick up the token the database generated - on the load
-    // effect's signal, so navigating away mid-refresh cancels it rather than
-    // landing a roster (and the two resets below) on an unmounted screen.
+    // Re-fetch to pick up the token the database generated, on the load effect's
+    // signal so navigating away mid-refresh cancels it rather than landing a
+    // roster on an unmounted screen.
     const signal = loadController.current?.signal
     await refresh(signal)
     if (signal?.aborted) return
@@ -239,9 +231,8 @@ export function useTenantRoster(tenantId: string | undefined) {
       )
 
       // `.select()` because a DELETE that RLS filters to nothing comes back a
-      // clean 204 - no error, no rows. Treating that as success is the worst
-      // outcome available: the optimistic removal above stands, the roster
-      // shows them gone, and they still hold whatever the row granted.
+      // clean 204. Treating that as success leaves the optimistic removal
+      // standing - the roster shows them gone, and they still hold the row.
       const { data, error: removeError } = await supabase
         .from("tenant_members")
         .delete()
@@ -270,11 +261,10 @@ export function useTenantRoster(tenantId: string | undefined) {
 
   const handleCopy = useCallback(
     async (invitation: TenantInvitation) => {
-      // The origin is chosen by who the link is for, not by where it was
-      // copied from. Sessions are per-origin: a couple's account lives on the
-      // apex, staff sign in on the venue's own host, and handing either the
-      // other's URL is a sign-in screen for no reason. This is the whole
-      // reason apexOrigin/tenantUrl exist rather than SITE_ORIGIN.
+      // The origin is chosen by who the link is for, not by where it was copied
+      // from. Sessions are per-origin: a couple's account lives on the apex,
+      // staff sign in on the venue's host, and handing either the other's URL is
+      // a sign-in screen for no reason - which is why apexOrigin/tenantUrl exist.
       const path = `/venue/invite/${invitation.token}`
       const url =
         invitation.role === "staff" && slug
@@ -305,9 +295,9 @@ export function useTenantRoster(tenantId: string | undefined) {
     setRole,
     submitting,
     loaded,
-    // Claimed rows stay in the table as a record of how someone joined, but
-    // they are not revocable and not copyable - the membership they created is
-    // what matters now, and that is in the member list.
+    // Claimed rows stay as a record of how someone joined, but are neither
+    // revocable nor copyable - the membership they created is what matters now,
+    // and that is in the member list.
     pending: invitations.filter((i) => !i.claimed_at),
     members,
     /** The current failure as a sentence, resolved in the current language. */

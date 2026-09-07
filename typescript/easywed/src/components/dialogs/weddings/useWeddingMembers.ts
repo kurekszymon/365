@@ -52,8 +52,7 @@ export function useWeddingMembers(isOpen: boolean) {
   const [error, setError] = useState<string | null>(null)
 
   // Cleared on unmount and at the top of each copy. This one lives in a dialog,
-  // so closing it inside the 1500 ms window is the ordinary case rather than an
-  // edge one - same shape as useTenantRoster's.
+  // so closing it inside the 1500 ms window is the ordinary case.
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(
@@ -61,21 +60,19 @@ export function useWeddingMembers(isOpen: boolean) {
     []
   )
 
-  // Free plan = guest mode: a device-local wedding has no Supabase row, so
-  // there is nothing to attach members or invitations to. Signing in (which
-  // migrates the plan to an account) is the upgrade path - see
-  // MembersUpgradeNotice. Every DB call below is gated on this, so the
-  // dialog never fires a query with the "local" sentinel as a wedding id.
+  // Free plan = guest mode: a device-local wedding has no Supabase row to attach
+  // members or invitations to, and signing in is the upgrade path (see
+  // MembersUpgradeNotice). Every DB call below is gated on this, so the dialog
+  // never fires a query with the "local" sentinel as a wedding id.
   const canInvite = Boolean(session) && !isLocalWedding(weddingId)
 
   const refresh = useCallback(
     async (signal?: AbortSignal) => {
       if (!weddingId || !canInvite) return
       const effectiveSignal = signal ?? new AbortController().signal
-      // Read through a call, not the property. TypeScript narrows `aborted` to
-      // false at the first check and doesn't reconsider across the awaits that
-      // follow, so the later checks - the ones that actually catch a
-      // cancellation - get flagged as dead code they aren't.
+      // Read through a call, not the property: TypeScript narrows `aborted` to
+      // false at the first check and does not reconsider across awaits, so the
+      // later checks - the ones that catch a cancellation - read as dead code.
       const isAborted = () => effectiveSignal.aborted
       const [invitationsRes, membersRes] = await Promise.all([
         supabase
@@ -94,10 +91,9 @@ export function useWeddingMembers(isOpen: boolean) {
           .abortSignal(effectiveSignal),
       ])
 
-      // Has to come before the error checks: an aborted PostgREST request
-      // comes back as an error *result*, not a silent no-op, so closing the
-      // dialog mid-fetch would otherwise park an "AbortError" string in
-      // `error` for the next time it opens.
+      // Before the error checks: an aborted PostgREST request comes back as an
+      // error *result*, so closing the dialog mid-fetch would otherwise park an
+      // "AbortError" string in `error` for the next time it opens.
       if (isAborted()) return
 
       if (invitationsRes.error) {
@@ -126,17 +122,15 @@ export function useWeddingMembers(isOpen: boolean) {
       setInvitations(invitationsRes.data as Array<Invitation>)
       setMembers(nextMembers)
 
-      // The header avatar stack reads global.store, which is otherwise only
-      // written by loadWedding - so it's a snapshot from page load and goes
-      // stale the moment anyone joins or leaves in another session. This is
-      // the same list, freshly fetched, so hand it over: opening the dialog
-      // doubles as the stack's refresh.
+      // The header avatar stack reads global.store, otherwise written only by
+      // loadWedding, so it goes stale the moment anyone joins or leaves in
+      // another session. This is the same list freshly fetched, so opening the
+      // dialog doubles as the stack's refresh.
       //
-      // Same guard loadWedding puts on its own member write, and it earns its
-      // keep here for a reason the abort checks above don't cover: refresh()
-      // is also called without a signal after an invite is created or revoked,
-      // so nothing would otherwise stop a slow round trip for the previous
-      // wedding landing on the current one's stack.
+      // The wedding-id guard is loadWedding's, and earns its keep for a case the
+      // abort checks miss: refresh() is also called without a signal after an
+      // invite is created or revoked, so a slow round trip for the previous
+      // wedding could land on the current one's stack.
       if (useGlobalStore.getState().weddingId !== weddingId) return
 
       useGlobalStore.setState({
@@ -239,15 +233,14 @@ export function useWeddingMembers(isOpen: boolean) {
         members: state.members.filter((m) => m.userId !== member.user_id),
       }))
 
-      // Delete membership first - that's the critical access revocation step.
-      // Only delete the invitation row after membership is confirmed gone, so
-      // we never end up with access still granted but no visible row to revoke.
+      // Delete membership first - the critical revocation - and the invitation
+      // row only once membership is confirmed gone, so access is never still
+      // granted with no visible row left to revoke.
       //
-      // `.select()` because a DELETE that RLS filters to nothing comes back as
-      // a clean 204 - no error, no rows. Treating that as success is the worst
-      // outcome available here: the optimistic removal above stands, both the
-      // dialog and the header stack show the member gone, and they still have
-      // full access to the wedding.
+      // `.select()` because a DELETE that RLS filters to nothing comes back a
+      // clean 204. Treating that as success leaves the optimistic removal
+      // standing: the dialog and header stack show the member gone, and they
+      // still have full access to the wedding.
       const memberRes = await supabase
         .from("wedding_members")
         .delete()

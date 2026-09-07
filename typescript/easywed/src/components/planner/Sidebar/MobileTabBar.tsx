@@ -25,14 +25,9 @@ const TABS: Array<MobileListTab> = [
 ]
 
 /**
- * Column counts, spelled out rather than interpolated.
- *
- * Tailwind v4's scanner only sees class names written verbatim in the source,
- * so `` `grid-cols-${n}` `` compiles to nothing at all - the same reason
- * TAG_TONE_BADGE and the theme SWATCH are literal maps. The bar now has three
- * variables driving its width (four fixed tabs, plus menu, plus the assistant),
- * which is exactly when a second inline ternary stops being readable and starts
- * being wrong.
+ * Column counts, spelled out rather than interpolated: Tailwind v4's scanner
+ * only sees class names written verbatim, so `` `grid-cols-${n}` `` compiles to
+ * nothing - the same reason TAG_TONE_BADGE and the theme SWATCH are literal maps.
  */
 const GRID_COLS: Record<number, string> = {
   4: "grid-cols-4",
@@ -42,16 +37,13 @@ const GRID_COLS: Record<number, string> = {
 
 /**
  * Mobile counterpart of the desktop `Sidebar/SidebarRail`: a fixed bottom bar
- * with Guests / Tables / Fixtures buttons (replacing the old guests-only
- * peek bar). Tapping one opens a drawer with that entity list; a
- * segmented header inside the drawer switches between them without closing.
- * Opening an edit form / add hub / AI chat (which surface via
- * `MobilePanelDrawer`) supersedes the list, so this one steps aside.
+ * whose buttons open a drawer with that entity list, switchable from a segmented
+ * header inside the drawer. Anything surfacing via `MobilePanelDrawer` - an edit
+ * form, the add hub, the AI chat - supersedes the list, so this steps aside.
  *
- * The assistant sits here too, mirroring the desktop rail's "Asystent" tab -
- * it used to be a sparkles button in the header, which left the mobile header
- * too crowded to read. It isn't an entity list, so it opens the panel drawer
- * directly instead of going through `entityList.store`.
+ * The assistant sits here too, mirroring the desktop rail's "Asystent" tab. It
+ * is not an entity list, so it opens the panel drawer directly rather than going
+ * through `entityList.store`.
  */
 export const MobileTabBar = () => {
   const { t } = useTranslation()

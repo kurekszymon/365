@@ -96,16 +96,13 @@ export const updateGuestSeat = (
   )
 
 /**
- * Sets (or clears) one guest's dish.
+ * Sets (or clears) one guest's dish. Its own mutation for the reason
+ * `updateGuestSeat` is separate: the guest edit dialog submits its whole form
+ * state, so folding this in would let a dialog opened before a dish was
+ * assigned overwrite it with a stale `null`.
  *
- * Its own mutation rather than a field folded into `updateGuestDetails`, for
- * exactly the reason `updateGuestSeat` is separate: the guest edit dialog
- * submits its whole form state, so folding this in would let a dialog opened
- * before a dish was assigned - or one open on another device - overwrite that
- * dish with a stale `null` the user never chose.
- *
- * `enforce_guest_menu_option` refuses anything that is not a dish of a
- * per-guest course of this wedding's package, with 23514.
+ * `enforce_guest_menu_option` refuses anything that is not a dish of a per-guest
+ * course of this wedding's package, with 23514.
  */
 export const updateGuestMenuOption = (
   guestId: string,

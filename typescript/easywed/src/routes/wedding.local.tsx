@@ -22,10 +22,9 @@ function LocalWeddingLayout() {
     let cancelled = false
 
     // Force the local-storage gate off before resetting in-memory state,
-    // regardless of what weddingId was already active - including a prior
-    // guest session revisited via client-side nav, where it'd already be the
-    // local sentinel. Otherwise the reset below would itself persist and
-    // wipe the real local snapshot before rehydrate() gets to read it back.
+    // whatever weddingId was active - including a prior guest session revisited
+    // via client-side nav, where it is already the sentinel. Otherwise the reset
+    // persists and wipes the snapshot before rehydrate() reads it back.
     if (useGlobalStore.getState().weddingId === LOCAL_WEDDING_ID) {
       useGlobalStore.setState({ weddingId: undefined })
     }
@@ -47,9 +46,8 @@ function LocalWeddingLayout() {
       // A local wedding has no members table behind it - clearing this stops
       // the previous cloud wedding's avatar stack showing in guest mode.
       members: [],
-      // Nor a venue. Left over from a cloud wedding it would offer guest mode
-      // the whole venue surface - including the Menu tab, which `tabsFor` keys
-      // off exactly this being null.
+      // Nor a venue: left over from a cloud wedding it would offer guest mode the
+      // whole venue surface, Menu tab included - `tabsFor` keys off this null.
       venue: null,
       venueAccess: "none",
     })
@@ -65,9 +63,8 @@ function LocalWeddingLayout() {
       useRemindersStore.persist.rehydrate(),
     ])
       .catch((err: unknown) => {
-        // A read/parse failure here (e.g. corrupted localStorage) must not
-        // leave the guest stuck on the loading screen forever - fall back to
-        // the already-reset empty state above and let them start fresh.
+        // A read/parse failure (corrupted localStorage) must not strand the
+        // guest on the loading screen - fall back to the reset empty state.
         console.error("[guest-mode] failed to rehydrate local wedding", err)
       })
       .then(() => {
@@ -75,19 +72,16 @@ function LocalWeddingLayout() {
         // Only now does the local sentinel go live, so subsequent edits persist.
         useGlobalStore.setState({ weddingId: LOCAL_WEDDING_ID })
 
-        // Guest-mode counterpart of seedDefaultHall: a signed-in wedding gets
-        // its starting hall at creation, but a guest plan has no creation
-        // event, so the trigger is "no hall to draw" instead. Must run after
-        // the sentinel is live - the gated storage would otherwise drop the
-        // write.
+        // Guest-mode counterpart of seedDefaultHall: a signed-in wedding gets its
+        // starting hall at creation, and a guest plan has no creation event, so
+        // the trigger is "no hall to draw". Must run after the sentinel is live
+        // or the gated storage drops the write.
         //
-        // Hall count is the whole condition, deliberately. deleteHall takes
-        // its tables and fixtures with it, so zero halls already means zero of
-        // those - but it only *unseats* their guests, who stay on the list.
-        // Also gating on guests would leave anyone holding a stray guest from
-        // an earlier session stuck on the blank canvas, which is the one
-        // outcome this exists to prevent. Same reasoning as loadWedding's
-        // adoptive hall on the cloud side: no hall, make one.
+        // Hall count is the whole condition, deliberately. deleteHall takes its
+        // tables and fixtures with it, so zero halls means zero of those - but it
+        // only *unseats* their guests, who stay on the list. Gating on guests too
+        // would strand anyone holding one from an earlier session on the blank
+        // canvas, the outcome this exists to prevent.
         const planner = usePlannerStore.getState()
         if (planner.halls.length === 0)
           planner.addHall(DEFAULT_HALL, { x: 0, y: 0 })
