@@ -61,13 +61,12 @@ export const TAG_TONE_SOLID: Record<TagTone, string> = {
 }
 
 // Deterministic tone for a value with no reserved hue. Dietary tags and age
-// brackets are free-form, so most real guest lists carry tags we've never seen
-// ("lactose-free", "halal"); hashing the tag itself means the same tag gets the
-// same color for every user, on every device, forever - no per-wedding color
-// table to store or migrate.
+// brackets are free-form, so most guest lists carry tags we have never seen
+// ("lactose-free", "halal"); hashing the tag means it gets the same color for
+// every user on every device, with no color table to store or migrate.
 //
-// djb2 over UTF-16 code units, kept in the 32-bit range with `| 0` and folded
-// to non-negative with `>>> 0` before the modulo.
+// djb2 over UTF-16 code units, kept in 32-bit range with `| 0` and folded
+// non-negative with `>>> 0` before the modulo.
 export const toneFromKey = (key: string): TagTone => {
   let hash = 5381
   for (let i = 0; i < key.length; i += 1) {

@@ -78,15 +78,12 @@ const fuzzyMatch = (query: string, haystack: string): boolean =>
     .every((token) => token === "" || isSubsequence(token, haystack))
 
 // One chip in the scrollable filter row - All/Unseated plus one per dietary
-// category actually in use, replacing the old single "Dieta" toggle so a diner
-// can filter down to (say) just the vegan guests instead of "has any diet".
-// `tooltip` is for chips whose count is derived rather than literal (Kids), so
-// the rule behind the number is discoverable.
+// category in use. `tooltip` is for chips whose count is derived rather than
+// literal (Kids), so the rule behind the number is discoverable.
 //
-// `tone` carries the same hue the matching badges use down in the list, which
-// turns the row into a legend: the green chip filters to the green badges. The
-// chips that stand for no tag (All / Unseated) pass no tone and keep the neutral
-// primary/muted pair.
+// `tone` carries the same hue the matching badges use in the list, turning the
+// row into a legend: the green chip filters to the green badges. Chips standing
+// for no tag (All / Unseated) pass no tone and keep the neutral pair.
 const FilterChip = ({
   active,
   onClick,
@@ -129,10 +126,9 @@ const FilterChip = ({
 }
 
 /**
- * Guests-first list: search + filter chips + seating progress, replacing the
- * old drag-and-drop reassignment view. Shared by the desktop
- * `Sidebar/SidebarRail` (Guests tab) and mobile `Sidebar/MobileTabBar`. Tapping a row
- * opens `SeatAssignSheet` (table → seat picker) for that guest.
+ * Guests-first list: search + filter chips + seating progress. Shared by the
+ * desktop `Sidebar/SidebarRail` (Guests tab) and mobile `Sidebar/MobileTabBar`;
+ * tapping a row opens `SeatAssignSheet` for that guest.
  */
 export const GuestListContent = () => {
   const { t } = useTranslation()
@@ -151,10 +147,9 @@ export const GuestListContent = () => {
   // nothing in guest mode.
   const menuOptions = useMenuStore((state) => state.options)
 
-  // Onboarding's "seat everyone" step asks for this highlight; it fades on its
-  // own so the row settles back to three matching icons. The store owns the
-  // flag rather than this component so the request survives the panel being
-  // opened by the same click.
+  // Onboarding's "seat everyone" step asks for this highlight, which fades on
+  // its own. The store owns the flag rather than this component so the request
+  // survives the panel being opened by the same click.
   const seatHint = useEntityListStore((state) => state.seatHint)
   const clearSeatHint = useEntityListStore((state) => state.clearSeatHint)
   useEffect(() => {
@@ -170,9 +165,9 @@ export const GuestListContent = () => {
 
   const seatedCount = guests.filter((g) => g.tableId).length
   const unseatedCount = guests.length - seatedCount
-  // One number for every under-18, inferred from whichever bracket they were
-  // tagged with (preset or custom) rather than a badge of its own. Caterers ask
-  // for this total, and no single bracket chip answers it.
+  // One number for every under-18, inferred from whichever bracket they carry
+  // rather than a badge of its own: caterers ask for this total, and no single
+  // bracket chip answers it.
   const kidsCount = countKids(guests)
 
   const dietaryCounts = useMemo(() => {
@@ -191,14 +186,13 @@ export const GuestListContent = () => {
   // `archived_at`, for the reason on `dishNameIndex`.
   const dishNameById = useMemo(() => dishNameIndex(menuOptions), [menuOptions])
 
-  // Only dishes somebody is actually having, biggest group first - the same
-  // helper the kitchen tally and the printed report use, so the count-then-name
-  // sort and the drop-unresolved-ids rule live in exactly one tested place.
-  // Empty for a buffet menu, an unlinked wedding and all of guest mode, where
-  // nothing carries a dish.
-  // `.rows` only: these are filter chips, and there is no filtering by a name
-  // the catalogue could not produce. The tally's `unnamed` count belongs on the
-  // documents that have to add up - the printed report and the kitchen tally.
+  // Only dishes somebody is having, biggest group first - the same helper the
+  // kitchen tally and the printed report use, so the sort and the
+  // drop-unresolved-ids rule live in one tested place. Empty for a buffet menu,
+  // an unlinked wedding and all of guest mode.
+  //
+  // `.rows` only: there is no filtering by a name the catalogue could not
+  // produce. The tally's `unnamed` count belongs on the documents that add up.
   const dishCounts = useMemo(
     () =>
       tallyByOption(
@@ -208,11 +202,10 @@ export const GuestListContent = () => {
     [guests, dishNameById]
   )
 
-  // Fold the name, each dietary preference - both the raw tag ("vegan") and
-  // its displayed label ("Wegańska") - the age bracket and the assigned dish
-  // into one normalized blob so a fuzzy query can hit any of them. Searching
-  // "kaczka" to find everyone having the duck is the whole point of the last
-  // one.
+  // Fold the name, each dietary preference (raw tag "vegan" and displayed label
+  // "Wegańska"), the age bracket and the assigned dish into one normalized blob
+  // so a fuzzy query hits any of them - searching "kaczka" to find everyone
+  // having the duck is the point of the last one.
   const guestHaystack = (guest: Guest) => {
     const child = childAgeGroup(guest.ageGroup)
     const dish = guest.menuOptionId

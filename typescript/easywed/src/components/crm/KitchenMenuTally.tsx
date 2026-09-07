@@ -9,24 +9,18 @@ import { usePlannerStore } from "@/stores/planner.store"
 /**
  * How many portions of each dish, for the kitchen.
  *
- * The question the whole menu feature exists to answer, and until now the CRM
- * could only approximate it from dietary tags.
- *
  * Counted from the pseudonymous guests `loadWeddingForVenue` already put in
- * `planner.store`, so there is no second query and **nothing here can reach a
- * name** - those rows never carried one. The same docblock `VenuePeekSummary`
- * has, and for the same reason: this component sits one careless `select` away
- * from being the place a guest name enters the CRM, so the fact that it makes
- * no query at all is the property worth stating.
+ * `planner.store`, so there is **no query here and nothing that can reach a
+ * name** - those rows never carried one. Same property as `VenuePeekSummary`,
+ * and worth stating for the same reason: this sits one careless `select` away
+ * from being where a guest name enters the CRM.
  *
- * The dish *names* come from `menu.store`, which holds this venue's own
- * catalogue - written by these staff, and read unfiltered by `archived_at` so a
- * dish retired after the couple ordered it is still named here rather than
- * silently dropping off the count.
+ * Dish *names* come from `menu.store` - this venue's own catalogue, read
+ * unfiltered by `archived_at` so a dish retired after the couple ordered it is
+ * still named rather than dropping off the count.
  *
  * Grouped by course, because a package can carry more than one per-guest course
- * even though today's schema assigns one dish per guest: the grouping is what
- * makes the report readable when it does.
+ * even though today's schema assigns one dish per guest.
  */
 export const KitchenMenuTally = () => {
   const { t } = useTranslation()

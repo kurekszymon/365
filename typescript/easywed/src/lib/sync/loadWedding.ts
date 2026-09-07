@@ -34,12 +34,10 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     roleRes,
     menuSelectionsRes,
   ] = await Promise.all([
-    // The `tenants` embed rides on weddings.tenant_id's foreign key and costs
-    // nothing extra: it is null for every unlinked wedding, and for a linked
-    // one it saves the grant dialog a second round trip to learn the venue's
-    // name. RLS still decides - "wedding members can view their linked venue"
-    // (20260817000002) is what makes the row visible to a couple who is not a
-    // member of the tenant.
+    // The `tenants` embed rides on weddings.tenant_id's FK and costs nothing:
+    // null for an unlinked wedding, and for a linked one it saves the grant
+    // dialog a round trip to learn the venue's name. RLS still decides -
+    // "wedding members can view their linked venue" (20260817000002).
     supabase
       .from("weddings")
       .select(
@@ -81,10 +79,9 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
       .abortSignal(signal),
 
     // Every member, not just this user's row: the header avatar stack shows
-    // editors that they aren't alone in here. RLS ("members can view
-    // co-members") already permits this for any role, so no extra gating.
-    // Ordered by created_at so the owner - inserted first by the trigger -
-    // leads the stack and the order stays stable across loads.
+    // editors they aren't alone in here, and RLS ("members can view co-members")
+    // permits it for any role. Ordered by created_at so the owner - inserted
+    // first by the trigger - leads the stack and the order stays stable.
     userId
       ? supabase
           .from("wedding_members")
@@ -103,14 +100,11 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
       .is("deleted_at", null)
       .abortSignal(signal),
 
-    // The caller's own role, straight from wedding_role(). It used to be read
-    // off the member rows above, and cannot be any more: 20260817000003
-    // narrowed `wedding_members` SELECT to the three explicit member roles, so
-    // a venue reads zero rows there - and "no row" is indistinguishable from
-    // "no access", which is the state selectCanEdit fails closed on. Signed-out
-    // callers never reach here (requireAuth gates the route), but the RPC is
-    // authenticated-only, so the null-session branch skips it rather than
-    // spending a guaranteed 401.
+    // The caller's own role, straight from wedding_role() and *not* off the
+    // member rows above: 20260817000003 narrowed `wedding_members` SELECT to the
+    // three explicit member roles, so a venue reads zero rows there, and "no
+    // row" is indistinguishable from "no access". The RPC is
+    // authenticated-only, so the null-session branch skips a guaranteed 401.
     userId
       ? supabase
           .rpc("my_wedding_role", { p_wedding_id: id })
@@ -170,23 +164,18 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     menuSelectionsRes.data.map((row) => row.menu_option_id)
   )
 
-  // Deliberately not awaited, for the same reason fetchDisplayNames is not: the
-  // Menu tab is one tab of the planner, and holding up the canvas for it would
-  // make every wedding open pay a serial request. The tab renders a spinner
-  // until this lands - `status` starts "idle" and goes "loading" inside.
-  //
-  // Unlinked weddings skip it entirely and stay "idle", which is also the state
-  // the Menu tab is hidden on. Guest mode never reaches here.
+  // Not awaited, for the reason fetchDisplayNames is not: holding up the canvas
+  // for one tab would make every wedding open pay a serial request. The tab
+  // renders a spinner until this lands. Unlinked weddings skip it and stay
+  // "idle", which is also the state the Menu tab is hidden on.
   if (tenant) void loadMenuCatalogue(tenant.id, signal)
 
-  // Names live in profiles, not wedding_members, and there's no FK between
-  // them (both point at auth.users), so PostgREST can't embed them in the
-  // batch above - it's a second round trip that needs the ids first.
+  // Names live in profiles, not wedding_members, with no FK between them (both
+  // point at auth.users), so PostgREST cannot embed them in the batch above.
   //
-  // Deliberately not awaited: the avatar stack already renders a neutral glyph
-  // for a member without a name, so holding up first paint for this would cost
-  // every wedding open a serial request to change a tooltip. Names patch
-  // themselves in when they arrive.
+  // Not awaited: the avatar stack renders a neutral glyph for a member without a
+  // name, so holding up first paint would cost every wedding open a serial
+  // request to change a tooltip. Names patch themselves in when they arrive.
   void fetchDisplayNames(
     memberRows.map((m) => m.user_id),
     signal
@@ -197,10 +186,9 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
     // names belong to this one.
     if (useGlobalStore.getState().weddingId !== id) return
 
-    // One write for the whole batch rather than setMemberDisplayName per
-    // member: that action re-maps the entire array and publishes a new
-    // `members` identity each time, so patching n names re-rendered the avatar
-    // stack n times to reach a single settled state.
+    // One write for the whole batch rather than setMemberDisplayName per member:
+    // that action publishes a new `members` identity each time, so patching n
+    // names re-rendered the avatar stack n times to reach one settled state.
     useGlobalStore.setState((state) => ({
       members: state.members.map((member) =>
         profileNames.has(member.userId)
@@ -215,19 +203,15 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
 
   const halls: Array<Hall> = hallsRes.data.map(toHall)
 
-  // Self-healing for rows whose hall is missing: the migration backfilled
-  // hall_id, but a fire-and-forget insert race (or a hall row deleted
-  // server-side via `on delete set null`) can still leave orphans - either a
-  // null hall_id or a non-null one pointing at a hall absent from this
-  // wedding's hall list. Adopt both into the first hall - creating a default
-  // one when entities exist but no hall does - and repair the rows in the
-  // background. The fallback insert is awaited: the orphan backfill below and
-  // any user mutation against the adoptive hall reference its id, so it must
-  // exist server-side first or they FK-violate.
+  // Self-healing for rows whose hall is missing - a null hall_id, or one
+  // pointing at a hall absent from this wedding. Adopt both into the first hall,
+  // creating a default when entities exist but no hall does, and repair the rows
+  // in the background. The fallback insert is awaited: the orphan backfill below
+  // and any user mutation reference its id, so it must exist server-side first.
   //
-  // Known race: two clients loading a hall-less wedding at once each insert
-  // their own fallback hall, leaving a duplicate. Accepted - the state is
-  // already anomalous and the surplus hall is visible/deletable in the UI.
+  // Known race: two clients loading a hall-less wedding at once each insert a
+  // fallback hall. Accepted - the state is already anomalous, and the surplus
+  // hall is visible and deletable in the UI.
   let adoptiveHallPersisted = true
   if (
     halls.length === 0 &&

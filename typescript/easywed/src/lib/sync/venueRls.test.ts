@@ -7,15 +7,13 @@ import type { Database } from "@/lib/supabase.types"
  * The venue role's access matrix, asserted against a real PostgreSQL with real
  * RLS - not against types, and not against a mock.
  *
- * This file is the acceptance gate for 20260817000003. Everything the venue
- * feature promises is a *policy* claim: "the venue sees the room and never sees
- * the people". A comment cannot hold that, a type cannot hold that, and the
- * client cannot hold it either, because the client is not what enforces it. Two
- * signed-in PostgREST clients and a set of row counts can.
+ * The acceptance gate for 20260817000003. "The venue sees the room and never
+ * sees the people" is a *policy* claim, which no type, comment or client can
+ * hold; two signed-in PostgREST clients and a set of row counts can.
  *
  * Skipped, not failed, when the local stack is down: `supabase start` is not a
  * prerequisite for `pnpm test`, and a red suite on a laptop with no Docker
- * running teaches people to ignore red suites.
+ * teaches people to ignore red suites.
  *
  * Fixtures come from supabase/seed.sql. "Anna & Piotr" is linked to `bagatelka`
  * and granted; "Tomasz & Kasia" is linked to nothing; `dworek` is a second
@@ -79,9 +77,8 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
   })
 
   afterAll(async () => {
-    // The revocation test restores the grant itself; this is the safety net for
-    // a failure between the two, so a red run does not leave the local database
-    // in a state that makes every later run red as well.
+    // The revocation test restores the grant itself; this catches a failure
+    // between the two, so one red run does not make every later run red.
     if (couple)
       await couple.rpc("set_venue_access", {
         p_wedding_id: GRANTED_WEDDING,
@@ -96,8 +93,8 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
         .select("*")
         .eq("wedding_id", GRANTED_WEDDING)
 
-      // Not an error - RLS filters rather than refuses, which is exactly why
-      // this has to be asserted rather than assumed from a 403 never arriving.
+      // Not an error: RLS filters rather than refuses, which is why this has to
+      // be asserted rather than assumed from a 403 never arriving.
       expect(error).toBeNull()
       expect(data).toEqual([])
     })
@@ -147,10 +144,9 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
     })
 
     it("sees seat rows with no name key and no note key at all", async () => {
-      // `select("*")` on purpose. Naming the columns would ask the view for a
-      // projection we already believe in and prove nothing; the star is what
-      // makes this an assertion about the *view*, so a `name` column added to
-      // it later fails here.
+      // `select("*")` on purpose: naming the columns would ask the view for a
+      // projection we already believe in. The star makes this an assertion about
+      // the *view*, so a `name` column added later fails here.
       const { data, error } = await venue
         .from("wedding_seatmap")
         .select("*")
@@ -160,32 +156,27 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
       expect(data?.length).toBeGreaterThan(0)
 
       for (const row of data ?? []) {
-        // Key absence, not value absence, and the difference is the whole
-        // point of this assertion. `expect(row.name).toBeUndefined()` also
-        // passes against a view that returns `name: null` - which would mean
-        // the column exists, is being selected, and is one projection change
-        // away from being populated. These two say the key is not in the
-        // response object at all.
+        // Key absence, not value absence, and the difference is the point:
+        // `expect(row.name).toBeUndefined()` also passes against a view
+        // returning `name: null`, which would mean the column exists and is one
+        // projection change from being populated.
         expect(Object.keys(row)).not.toContain("name")
         expect(Object.keys(row)).not.toContain("note")
         expect(row).not.toHaveProperty("name")
         expect(row).not.toHaveProperty("note")
 
-        // The per-guest dish, added by 20260822000003. A **uuid or null**, and
-        // that is the assertion: the column is a foreign key into the venue's
-        // own catalogue, so unlike `dietary` and `age_group` it is structurally
-        // incapable of carrying a name somebody typed. This fails the moment
-        // anyone "helpfully" changes the projection to join the dish label in.
+        // The per-guest dish, added by 20260822000003. A **uuid or null** is the
+        // assertion: a foreign key into the venue's own catalogue, so unlike
+        // `dietary` and `age_group` it cannot carry a name somebody typed. Fails
+        // the moment anyone joins the dish label into the projection.
         expect(Object.keys(row)).toContain("menu_option_id")
         expect(
           row.menu_option_id === null || UUID_RE.test(row.menu_option_id)
         ).toBe(true)
 
-        // The real upgrade over the four assertions above: they only forbid two
-        // names, so *any* third column could be added to this view silently.
-        // Pinning the whole set makes every future change to the projection a
-        // deliberate edit to this file - which is the only place the "there is
-        // nothing here to redact" argument is actually checked.
+        // The assertions above only forbid two names, so any third column could
+        // be added silently. Pinning the whole set makes every change to the
+        // projection a deliberate edit to this file.
         expect(new Set(Object.keys(row))).toEqual(
           new Set([
             "id",
@@ -212,11 +203,9 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
       const target = tables?.[0]
       expect(target).toBeDefined()
 
-      // `.select()` back is what makes this meaningful: an UPDATE whose rows
-      // are all filtered out by RLS is not an error to PostgREST - it answers
-      // 204 with no body, which supabase-js reports as a clean success. The
-      // returned rows are the only evidence either way. Same reason
-      // deleteWedding and leaveWedding ask for them.
+      // `.select()` back is what makes this meaningful: an UPDATE RLS filters to
+      // nothing answers 204, which supabase-js reports as a clean success, so
+      // the returned rows are the only evidence either way.
       const { data, error } = await venue
         .from("tables")
         .update({ name: "venue wrote this" })
@@ -258,17 +247,15 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
 
   describe("what a venue cannot decide about a person", () => {
     it("cannot enrol an account as one of its members", async () => {
-      // One table further out than the rest of this file, and the same
-      // question: what may a venue do to someone who has agreed to nothing?
+      // What may a venue do to someone who has agreed to nothing?
       //
-      // `tenant_members` carried a "staff can add members" INSERT policy, so
-      // any account a venue could name by uuid became its 'customer' on the
-      // venue's say-so alone. One such row disclosed that person's
-      // profiles.display_name to the venue (staff_can_view_profile reads this
-      // very table), barred them from ever joining another venue
+      // `tenant_members` carried a "staff can add members" INSERT policy, so any
+      // account a venue could name by uuid became its 'customer' on the venue's
+      // say-so: that row disclosed the person's profiles.display_name (via
+      // staff_can_view_profile), barred them from every other venue
       // (tenant_members_one_per_user is unique), and satisfied the
-      // invitation-only gate in link_wedding_to_venue. The policy is gone. This
-      // is what keeps it gone - a re-added INSERT policy fails here.
+      // invitation-only gate in link_wedding_to_venue. A re-added INSERT policy
+      // fails here.
       const { error } = await venue.from("tenant_members").insert({
         tenant_id: BAGATELKA,
         // solo@easywed.test: a real account with no connection to this venue,
@@ -290,10 +277,9 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
         venue.from("weddings").select("id").eq("id", UNLINKED_WEDDING),
         venue.from("halls").select("id").eq("wedding_id", UNLINKED_WEDDING),
         venue
-          // `menu_option_id` named explicitly, here and in the two blocks
-          // below: the per-guest dish is the newest thing the seat map carries,
-          // so every "reaches nothing" assertion has to be about it too rather
-          // than only about the columns that predate it.
+          // `menu_option_id` named explicitly, here and in the two blocks below:
+          // every "reaches nothing" assertion has to cover the newest column the
+          // seat map carries, not only the ones that predate it.
           .from("wedding_seatmap")
           .select("id, menu_option_id")
           .eq("wedding_id", UNLINKED_WEDDING),
@@ -331,20 +317,15 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
   })
 
   /**
-   * `set_venue_access` authorizes before it answers.
-   *
-   * A `security definer` function reads the whole table, so every refusal it
-   * can raise *before* it knows who is calling is a question anyone may ask
-   * about any wedding id. This one used to raise three distinguishable ones -
-   * `P0002` for an id that names nothing, "not linked to a venue" for a real
-   * unlinked wedding, and the generic refusal for a real linked one - so a
-   * stranger with a list of uuids could sort them into "not a wedding", "a
-   * wedding", and "a wedding with a venue" without being allowed to touch any
-   * of them.
+   * `set_venue_access` authorizes before it answers. A `security definer`
+   * function reads the whole table, so every refusal it raises *before* knowing
+   * who is calling is a question anyone may ask about any wedding id - and three
+   * distinguishable ones let a stranger with a list of uuids sort them into "not
+   * a wedding", "a wedding", and "a wedding with a venue".
    *
    * The fix is ordering, not a new check: the owner and staff branches still
-   * answer in detail, because reaching either one means the caller has already
-   * been placed on this wedding. Everything else collapses.
+   * answer in detail, since reaching either means the caller is already placed
+   * on this wedding. Everything else collapses.
    */
   describe("set_venue_access answers strangers with one refusal", () => {
     // A syntactically valid uuid that names nothing.
@@ -359,9 +340,8 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
     }
 
     it("cannot be told apart across linked, unlinked and absent weddings", async () => {
-      // `dworek`'s staff: real venue staff, and a stranger to all three ids -
-      // which is what makes this a statement about scope rather than about
-      // being signed out.
+      // `dworek`'s staff: real venue staff and a stranger to all three ids, so
+      // this is about scope rather than about being signed out.
       const [linked, unlinked, missing] = await Promise.all([
         refusalFor(GRANTED_WEDDING),
         refusalFor(UNLINKED_WEDDING),
@@ -385,17 +365,14 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
 
     it("still tells an owner that their own wedding has no venue", async () => {
       // The other half: collapsing the refusals must not cost the one caller
-      // entitled to the specific answer. An owner asking about their own
-      // unlinked wedding learns nothing they do not already own.
+      // entitled to the specific answer.
       //
-      // On a **throwaway wedding**, not the seeded unlinked one. That one is
-      // "Tomasz & Kasia", and tenantInvitations.test.ts links it to bagatelka
-      // and deliberately leaves it linked - it says so in its own afterEach,
-      // because nothing a client can call unlinks a wedding. The two files run
-      // concurrently against one database, so borrowing it makes this test's
-      // result depend on which suite got there first, and a `p_granted: true`
-      // that lands on a *linked* wedding does not refuse at all: it grants, and
-      // hands a venue a wedding the rest of this file asserts it cannot see.
+      // On a **throwaway wedding**, not the seeded unlinked one:
+      // tenantInvitations.test.ts links "Tomasz & Kasia" to bagatelka and
+      // deliberately leaves it linked, since nothing a client can call unlinks a
+      // wedding. The suites run concurrently against one database, and a
+      // `p_granted: true` landing on a *linked* wedding does not refuse - it
+      // grants, handing a venue a wedding this file asserts it cannot see.
       const scratchId = crypto.randomUUID()
       const userId = (await solo.auth.getUser()).data.user!.id
 
@@ -438,10 +415,9 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
             .eq("wedding_id", GRANTED_WEDDING),
         ])
 
-        // privacy.venue.revoke promises "natychmiast i calkowicie". This is
-        // that sentence as an assertion: the derived role reads venue_access on
-        // every policy evaluation, so there is no cache to expire and no
-        // background job to wait for.
+        // privacy.venue.revoke promises "natychmiast i calkowicie", as an
+        // assertion: the derived role reads venue_access on every policy
+        // evaluation, so there is no cache to expire and no job to wait for.
         expect(weddings.data).toEqual([])
         expect(halls.data).toEqual([])
         expect(tables.data).toEqual([])
@@ -466,16 +442,13 @@ describe.skipIf(!reachable)("venue RLS matrix", () => {
 })
 
 /**
- * Whether a local Supabase is answering.
+ * Whether a local Supabase is answering. Probes PostgREST rather than trusting
+ * the env vars: `.env.local` always names `127.0.0.1:54321`, so their presence
+ * says nothing about whether Docker is running. The timeout keeps a stopped
+ * stack from costing five seconds per run.
  *
- * Deliberately probes PostgREST rather than trusting the env vars: `.env.local`
- * always names `127.0.0.1:54321`, so their presence says nothing about whether
- * Docker is running. The timeout keeps a stopped stack from costing five
- * seconds per suite run.
- *
- * A skip is visible in vitest's own summary - `410 passed | 24 skipped` rather
- * than `434 passed` - which is the only place it can be seen: console output
- * from a file whose tests are all skipped is not printed by the reporter.
+ * A skip shows in vitest's own summary, which is the only place it can - the
+ * reporter prints no console output from an all-skipped file.
  */
 async function probeLocalStack(): Promise<boolean> {
   if (!SUPABASE_URL || !SUPABASE_KEY) return false

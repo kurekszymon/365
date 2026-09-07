@@ -24,11 +24,10 @@ const PUBLIC_PATHS = [
   "/pl",
   "/en",
   "/wedding/local",
-  // The tenant host's own two roots. `/venue` is the anonymous front door, so
-  // waiting on getSession() would blank it for a visitor who has no session to
-  // wait for - and TenantGate is nested inside this component, so the branding
-  // lookup would not even start until auth settled. `/crm` renders its own
-  // loading and 403 states, and requireTenantMember owns the redirect.
+  // The tenant host's two roots. `/venue` is the anonymous front door, so
+  // waiting on getSession() would blank it for a visitor with no session - and
+  // TenantGate is nested here, so the branding lookup would not even start until
+  // auth settled. `/crm` renders its own loading and 403 states.
   "/venue",
   "/crm",
 ]
@@ -70,15 +69,11 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe()
   }, [setSession, setReady, router])
 
-  // The user's own display name, kept next to the session it belongs to.
-  //
-  // Cleared on every transition, not just sign-out: a session can go straight
-  // from one user to another with no SIGNED_OUT in between - another tab
-  // signing in broadcasts SIGNED_IN here, and the getSession() and
-  // onAuthStateChange calls above can resolve in either order. Holding the
-  // previous name until the new fetch lands would show it under the wrong
-  // account. Costs nothing in the common path: the store already starts empty,
-  // so this is a no-op on first mount, and the effect doesn't re-run while
+  // The user's own display name, kept next to the session it belongs to and
+  // cleared on every transition rather than only on sign-out: a session can go
+  // straight from one user to another with no SIGNED_OUT between them, and
+  // holding the previous name until the new fetch lands would show it under the
+  // wrong account. A no-op on first mount, and the effect does not re-run while
   // userId is unchanged.
   useEffect(() => {
     const { setDisplayName, setLoaded, reset } = useProfileStore.getState()
@@ -125,11 +120,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return () => controller.abort()
   }, [userId, router])
 
-  // `p !== "/"` matters: PUBLIC_PATHS contains "/", and every pathname starts
-  // with "/", so without the exclusion `isPublic` was unconditionally true and
-  // this render gate never fired once - the app rendered its signed-out shape
-  // for a frame on every cold load of a private route, then swapped. Same form
-  // as isTermsExempt in guards.ts, which had it right.
+  // `p !== "/"` matters: PUBLIC_PATHS contains "/" and every pathname starts
+  // with it, so without the exclusion `isPublic` is unconditionally true and
+  // this render gate never fires - the app flashing its signed-out shape on
+  // every cold load of a private route. Same form as isTermsExempt in guards.ts.
   const isPublic = PUBLIC_PATHS.some(
     (p) => pathname === p || (p !== "/" && pathname.startsWith(`${p}/`))
   )

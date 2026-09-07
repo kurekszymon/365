@@ -1,5 +1,3 @@
-// i still don't know if that's correct idea, but might as well just try since it's most likely another personal prejct
-
 import { create } from "zustand"
 
 type Guests =

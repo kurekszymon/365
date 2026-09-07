@@ -12,25 +12,19 @@ import { Button } from "@/components/ui/button"
 /**
  * Claiming a venue invitation.
  *
- * The path is `/venue/invite/$token` rather than something like
- * `/venue-invite/$token`, and the shape is load-bearing rather than tidy: the
- * token is a bearer credential, and both `scrubInviteTokens` (which keeps it
- * out of PostHog) and `robots.txt` match on the literal segment `/invite/`.
- * Sitting inside that segment means this route is covered by the redaction that
- * already exists, instead of needing a second pattern that the next reader has
- * to remember to keep in step. Filed as `venue_.invite.$token` so it does not
- * nest under the anonymous entry page at `/venue`.
+ * The path shape is load-bearing, not tidy: the token is a bearer credential,
+ * and both `scrubInviteTokens` and `robots.txt` match on the literal segment
+ * `/invite/`, so sitting inside it means this route is covered by the redaction
+ * that already exists. Filed as `venue_.invite.$token` so it does not nest under
+ * the anonymous entry page at `/venue`.
  *
- * Unlike `/invite/$token`, which drops the claimer straight into the wedding,
- * this ends on a card rather than a redirect. Two reasons:
+ * Unlike `/invite/$token`, this ends on a card rather than a redirect:
  *
  *   - the couple needs to be told *what* they joined, by name, before anything
- *     else happens - the venue is the party they are about to be able to
- *     disclose to;
- *   - joining is not the end of the flow. A `customer` row buys exactly one
- *     thing, the ability to link a wedding to this venue, and that is a
- *     separate act on a separate screen. Redirecting to /home would leave
- *     someone who did the right thing looking at an unchanged wedding list.
+ *     else - the venue is the party they may go on to disclose to;
+ *   - joining is not the end of the flow. A `customer` row buys one thing, the
+ *     ability to link a wedding to this venue, and that is a separate act on a
+ *     separate screen; /home would show an unchanged wedding list.
  */
 export const Route = createFileRoute("/venue_/invite/$token")({
   beforeLoad: ({ params }) => {
@@ -82,9 +76,9 @@ function TenantInviteClaim() {
       <Card
         title={t("venue_invite.error_title")}
         body={t(`venue_invite.error.${status.reason}`)}
-        // Whatever went wrong, the wedding list is where this account's own
-        // work is, and it is the only onward move that is right for every
-        // reason - including PT409, where the fix is on another account.
+        // Whatever went wrong, the wedding list is where this account's own work
+        // is - the only onward move that is right for every reason, PT409
+        // included, where the fix is on another account.
         action={{
           href: `${apexOrigin()}/home`,
           label: t("venue_invite.error_cta"),
@@ -102,11 +96,10 @@ function TenantInviteClaim() {
       body={t(
         isStaff ? "venue_invite.joined_staff" : "venue_invite.joined_customer"
       )}
-      // Staff work in the CRM on the venue's own host; a couple plans on the
-      // apex. Sessions are per-origin, so sending either to the other's origin
-      // lands them on a sign-in screen for no reason - which is the whole
-      // reason apexOrigin/tenantUrl exist rather than a SITE_ORIGIN
-      // constant.
+      // Staff work in the CRM on the venue's host; a couple plans on the apex.
+      // Sessions are per-origin, so sending either to the other's origin lands
+      // them on a sign-in screen for no reason - the reason apexOrigin/tenantUrl
+      // exist rather than a SITE_ORIGIN constant.
       action={{
         href: isStaff ? tenantUrl(tenant.slug, "/crm") : `${apexOrigin()}/home`,
         label: t(

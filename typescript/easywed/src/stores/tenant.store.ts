@@ -3,15 +3,13 @@ import { create } from "zustand"
 /**
  * Which tenant, if any, this origin belongs to.
  *
- * "unknown" is the pre-resolution state and deliberately does *not* gate: route
- * guards let it through and TenantGate invalidates the router once the real
- * answer lands, exactly like `isReady` in useAuthStore and `TermsStatus` in
- * useProfileStore. Gating on it would flash a 403 at every staff member on
- * every cold load.
+ * "unknown" is the pre-resolution state and deliberately does *not* gate: guards
+ * let it through and TenantGate invalidates the router once the real answer
+ * lands, like `isReady` in useAuthStore. Gating on it would flash a 403 at every
+ * staff member on every cold load.
  *
- * "none" is the apex, and it is a *resolved* answer rather than an absence -
- * `tenantSlugFromHost` decides it synchronously with no network, so the apex
- * reaches this state before the first paint and never leaves it.
+ * "none" is the apex, a *resolved* answer rather than an absence -
+ * `tenantSlugFromHost` decides it synchronously, before the first paint.
  */
 export type TenantStatus = "unknown" | "none" | "resolved" | "not_found"
 
@@ -26,12 +24,10 @@ export type TenantStatus = "unknown" | "none" | "resolved" | "not_found"
 export type TenantRole = "owner" | "staff" | "customer"
 
 /**
- * The public face of a tenant, as `tenant_public()` returns it.
- *
- * Columns, not a `brand` blob, and that is load-bearing rather than stylistic:
- * the three branding values are written into `element.style`, and their CHECK
- * regexes in the database are the CSS-injection guard. A blob could not carry
- * those constraints, so the shape here mirrors the projection exactly.
+ * The public face of a tenant, as `tenant_public()` returns it. Columns, not a
+ * `brand` blob, and that is load-bearing: the branding values are written into
+ * `element.style`, and their CHECK regexes in the database are the
+ * CSS-injection guard. A blob could not carry those constraints.
  */
 export type PublicTenant = {
   id: string
@@ -79,11 +75,9 @@ const initial: State = {
 }
 
 /**
- * Plain `create`, following profile.store. Deliberately **not** persisted:
- * global.store's persist/skipHydration/localGlobalStorage machinery exists for
- * guest mode, where a plan has to survive a reload with no server. None of that
- * applies here - the host is the source of truth and it is re-read on every
- * load, so a cached tenant could only ever be a stale one.
+ * Plain `create`, following profile.store. Deliberately **not** persisted: the
+ * host is the source of truth and is re-read on every load, so a cached tenant
+ * could only ever be a stale one.
  */
 export const useTenantStore = create<State & Action>((set) => ({
   ...initial,
@@ -96,16 +90,12 @@ export const useTenantStore = create<State & Action>((set) => ({
 }))
 
 /**
- * Whether the caller may reach the CRM.
+ * Whether the caller may reach the CRM. An allowlist, like `selectCanEdit` in
+ * global.store, failing closed on both `undefined` (still resolving) and `null`
+ * (not a member). Callers that need to tell those apart - the CRM layout,
+ * spinner for one and 403 for the other - read `tenantRole` directly.
  *
- * An allowlist, like `selectCanEdit` in global.store, and failing closed on
- * both `undefined` (still resolving) and `null` (not a member) for the same
- * reason that one fails closed on `undefined`: the safe answer to "is this
- * settled?" is no. Callers that need to distinguish "still resolving" from
- * "refused" - the CRM layout, which renders a spinner for one and a 403 for
- * the other - read `tenantRole` directly.
- *
- * `customer` is excluded on purpose. A couple married at a venue is a member of
+ * `customer` is excluded on purpose: a couple married at a venue is a member of
  * that tenant and reaches none of its CRM.
  */
 export const selectIsTenantStaff = (state: State): boolean =>

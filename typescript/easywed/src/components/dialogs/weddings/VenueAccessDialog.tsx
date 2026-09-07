@@ -51,10 +51,9 @@ export const VenueAccessDialog = () => {
   const isOpen = dialog.opened === "Wedding.Venue"
 
   // The consent screen is a transient step, not a state of the wedding: closing
-  // the dialog on it and reopening must land back on the status, so that an
-  // accidental second open never reads as a second request for consent. No
-  // reset is needed for that - DialogManager renders this component only while
-  // `opened` names it, so closing unmounts it and the state goes with it.
+  // and reopening must land back on the status, so an accidental second open
+  // never reads as a second request for consent. No reset needed - DialogManager
+  // unmounts this on close and the state goes with it.
   const [confirming, setConfirming] = useState(false)
 
   // Same rule for "I want a different venue": transient, and gone on close.

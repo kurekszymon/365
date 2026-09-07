@@ -8,16 +8,12 @@ import { TERMS_ENFORCED_SINCE, TERMS_VERSION } from "@/lib/legal/dates"
 // survive a redirect to a different origin and back.
 const PENDING_KEY = "easywed.terms.pending"
 
-// A marker is only good for the redirect it was written for.
-//
-// Without this it outlives the sign-up that created it, and localStorage is per
-// browser, not per person: someone ticks the box, abandons the sign-up (never
-// confirms the email), and the next person to use that browser signs in with
-// Google from /login - a form with no checkbox, which happily creates a brand
-// new account. That account has a blank terms_version, so the stale marker
-// fills it in, and the app records an acceptance from someone who was never
-// shown the document. A Google round trip takes seconds; ten minutes is slack
-// for a slow consent screen, not for a different user on another day.
+// A marker is only good for the redirect it was written for. localStorage is per
+// browser, not per person: without a TTL, someone ticks the box and abandons the
+// sign-up, the next person signs in with Google from /login - a form with no
+// checkbox - and the stale marker fills in their blank terms_version, recording
+// an acceptance from someone never shown the document. Ten minutes is slack for
+// a slow consent screen, not for a different user on another day.
 const PENDING_TTL_MS = 10 * 60 * 1000
 
 // Same treatment as guest-mode storage: unavailable or throwing localStorage
@@ -36,7 +32,7 @@ const safeSetItem = (key: string, value: string): void => {
   try {
     localStorage.setItem(key, value)
   } catch {
-    // Storage blocked/full. The acceptance still happened - it just won't be
+    // Storage blocked/full. The acceptance still happened; it just won't be
     // recorded for an OAuth user whose browser refuses to hold it.
   }
 }
@@ -55,11 +51,10 @@ export const rememberAcceptedTerms = (): void => {
 }
 
 /**
- * Drops a pending marker without acting on it.
- *
- * Called when the login form mounts: arriving there means whatever sign-up
- * wrote the marker was abandoned rather than completed, and the OAuth round
- * trip that legitimately needs one never passes through /login.
+ * Drops a pending marker without acting on it. Called when the login form
+ * mounts: arriving there means the sign-up that wrote the marker was abandoned,
+ * and the OAuth round trip that legitimately needs one never passes through
+ * /login.
  */
 export const forgetPendingTermsAcceptance = (): void => {
   safeRemoveItem(PENDING_KEY)
@@ -97,15 +92,12 @@ const readPendingTermsAcceptance = (): string | null => {
 /**
  * Writes a pending acceptance to the user's profile, once they have a session.
  *
- * Only ever fills a blank: an existing `terms_version` is left alone, so this
- * cannot overwrite what handle_new_user already recorded at sign-up, and a
- * returning user signing in on a device that still holds a pending marker
- * doesn't get a fresh (and wrong) acceptance timestamp. The timestamp itself is
- * the trigger's to set - the client never sends one.
+ * Only ever fills a blank, so it cannot overwrite what handle_new_user recorded
+ * at sign-up, and a returning user on a device still holding a marker does not
+ * get a fresh (wrong) timestamp. The timestamp is the trigger's to set.
  *
- * Failure is non-fatal and deliberately not surfaced: the user is signed in and
- * mid-flow, and there is nothing useful for them to do about it. The marker is
- * kept on failure so the next authenticated render retries.
+ * Failure is non-fatal and not surfaced - the user is signed in and mid-flow -
+ * and the marker is kept so the next authenticated render retries.
  */
 export const recordPendingTermsAcceptance = async (
   userId: string
@@ -145,21 +137,16 @@ export const recordPendingTermsAcceptance = async (
 /**
  * Whether this user still owes us an acceptance before they can use the app.
  *
- * "outstanding" is deliberately narrower than "terms_version is null". Accounts
- * that predate the Regulamin accepted nothing *because there was nothing to
- * accept*, and 20260806000002 records the decision not to backfill them: § 16
- * ust. 2 (notify by email, 14 days to object) is their route, not a wall in
- * front of the app. So the cut-off is the date the gate started running - a
- * profile created on or after it was created under a regime that required
- * acceptance, and a blank column there means the acceptance genuinely went
- * missing (a Google sign-in from the login form, or a blocked localStorage on
- * the sign-up one).
+ * "outstanding" is narrower than "terms_version is null". Accounts predating the
+ * Regulamin accepted nothing *because there was nothing to accept*, and
+ * 20260806000002 records the decision not to backfill them - § 16 ust. 2 is
+ * their route, not a wall. So the cut-off is the date the gate started running:
+ * a profile created after it was created under a regime that required
+ * acceptance, and a blank column there means the acceptance went missing.
  *
- * Fails open, logged. A read that errors - or the anomalous missing profile
- * row - locks the user out of their own account if treated as outstanding, and
- * that is a worse failure than one unrecorded acceptance: the row is not
- * client-deletable (profiles has no DELETE policy), so this is never something
- * a user can arrange for themselves.
+ * Fails open, logged. Treating a failed read as outstanding locks the user out
+ * of their own account, which is worse than one unrecorded acceptance - and the
+ * row is not client-deletable, so this is never something a user can arrange.
  */
 export const fetchTermsStatus = async (
   userId: string
@@ -188,11 +175,9 @@ export const fetchTermsStatus = async (
 
 /**
  * Records an acceptance made at the gate, for a user who arrived without one.
- *
- * Unlike recordPendingTermsAcceptance this is an explicit act happening right
- * now, so it writes unconditionally rather than only filling a blank - the
- * caller has already established the column is empty. The timestamp still
- * belongs to stamp_terms_acceptance(); the client never sends one.
+ * Unlike recordPendingTermsAcceptance this is an explicit act happening now, so
+ * it writes unconditionally - the caller has already established the column is
+ * empty. The timestamp still belongs to stamp_terms_acceptance().
  */
 export const acceptTerms = async (
   userId: string

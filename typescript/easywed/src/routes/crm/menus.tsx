@@ -13,19 +13,16 @@ import { useTenantStore } from "@/stores/tenant.store"
  * The venue's menu catalogue: packages, their courses, and the dishes each
  * course offers.
  *
- * This is the screen the whole of phase 4 hangs off. What the venue writes here
- * is what a linked couple picks from in the planner, and what the kitchen report
- * eventually tallies - so the data model, not the layout, is where the thought
- * went (see 20260822000001).
+ * What the venue writes here is what a linked couple picks from in the planner
+ * and what the kitchen report tallies, so the thought went into the data model
+ * rather than the layout (see 20260822000001).
  *
- * No guard of its own: /crm's layout has already decided the caller is staff of
- * a resolved, active tenant before this renders - the same arrangement
- * crm/roster.tsx uses.
+ * No guard of its own: /crm's layout has already established staff of a
+ * resolved, active tenant, the same arrangement crm/roster.tsx uses.
  *
- * Nothing on this screen shows a total. A package carries a per-person price
- * and that is the honest number available today; extras and the age-tier
- * multipliers land with bookings, and a total computed without them would be a
- * quote that is wrong in the venue's favour or the couple's, unpredictably.
+ * Nothing here shows a total. A package carries a per-person price, and extras
+ * and age-tier multipliers land with bookings; a total computed without them
+ * would be a quote wrong in one party's favour, unpredictably.
  */
 export const Route = createFileRoute("/crm/menus")({
   component: CrmMenus,
@@ -44,7 +41,7 @@ function CrmMenus() {
   //
   // `.at(0)` rather than `[0]`, for the reason `fetchPublicTenant` gives: the
   // index signature types as `T`, so `[0]` would make the empty-list guard below
-  // read as dead code while being exactly what catches a venue with no menus.
+  // read as dead code.
   const selected =
     menus.packages.find((pkg) => pkg.id === selectedId) ?? menus.packages.at(0)
 

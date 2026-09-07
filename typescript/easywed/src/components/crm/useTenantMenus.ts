@@ -23,19 +23,11 @@ export type CrmMenuCourse = CatalogueMenuCourse
 export type CrmMenuOption = CatalogueMenuOption
 
 /**
- * Applies a persisted order to the local rows.
- *
- * Two halves, and the second is the one that is easy to leave out: the
- * positions are renumbered 1..n to match what `with ordinality` wrote
- * server-side, **and the array is re-sorted**. Every consumer renders in array
- * order - `CrmMenuPackageEditor` does `menus.courses.filter(...)`, and a filter
- * preserves the order it was given - so patching `position` alone persists the
- * reorder and shows nothing. Staff click ▲, the row does not move, they click
- * again, and the list ends up two places from where it looked.
- *
- * Sorts with `byPosition`, the same comparator the reads order by, so the local
- * order after a move is identical to the order the next load produces rather
- * than merely similar.
+ * Applies a persisted order to the local rows: renumber 1..n to match what
+ * `with ordinality` wrote server-side, **and re-sort the array**. Every consumer
+ * renders in array order, so patching `position` alone persists the reorder and
+ * shows nothing. Sorts with `byPosition`, the comparator the reads order by, so
+ * the local order matches the next load's exactly.
  */
 const applyOrder = <T extends { id: string; position: number }>(
   list: Array<T>,
@@ -49,16 +41,10 @@ const applyOrder = <T extends { id: string; position: number }>(
     .sort(byPosition)
 
 /**
- * Undoing an optimistic edit, one row at a time.
- *
- * All three take the *current* list and change the one thing this write
- * touched, rather than reinstating an array captured before the round trip.
- * The snapshot version was the easy way to write it and quietly wrong: a menu
- * editor is a screen of small independent writes, so between the optimistic
- * edit and the refusal a staff member has typically renamed a dish, added
- * another, or toggled an archive - and putting the old array back threw all of
- * it away to undo one field. The same rule the planner's stores follow when a
- * write is refused mid-edit.
+ * Undoing an optimistic edit, one row at a time: take the *current* list and
+ * change the one thing this write touched, rather than reinstating an array
+ * captured before the round trip. This is a screen of small independent writes,
+ * so a snapshot restore would throw away every other edit made in flight.
  */
 const withoutRow = <T extends { id: string }>(
   list: Array<T>,
@@ -71,8 +57,8 @@ const withRows = <T extends { id: string; position: number }>(
 ): Array<T> =>
   [
     ...list,
-    // Only the ones that are actually gone. A row somebody re-created in the
-    // meantime keeps its newer version rather than being duplicated.
+    // Only the ones actually gone, so a row re-created in the meantime keeps its
+    // newer version rather than being duplicated.
     ...rows.filter((row) => !list.some((item) => item.id === row.id)),
   ].sort(byPosition)
 
@@ -99,9 +85,8 @@ const revertPatch = <T extends { id: string }>(
 
 /**
  * The sibling ids after moving one row by `delta`, or null when it cannot move.
- *
- * Pure, and separate from the write, so the new order can be shown before the
- * RPC is asked to persist it.
+ * Pure and separate from the write, so the new order can be shown before the RPC
+ * is asked to persist it.
  */
 const reorderedIds = <T extends { id: string }>(
   siblings: Array<T>,
@@ -118,41 +103,24 @@ const reorderedIds = <T extends { id: string }>(
 }
 
 /**
- * The refusal that arrives with nothing in it.
- *
- * An UPDATE or DELETE that RLS filters to nothing is a clean 204 - no error, no
- * rows - so there is no error object to log and the console would otherwise say
- * a bare `null` where the SQLSTATE and the constraint name should have been. A
- * string, because that is genuinely all that is known.
+ * The refusal that arrives with nothing in it: an UPDATE or DELETE RLS filters
+ * to nothing is a clean 204, so there is no error object and the console would
+ * otherwise log a bare `null` where the SQLSTATE should be.
  */
 const NO_ROWS = "no rows matched - RLS refused it, or the row is already gone"
 
 /**
- * Everything the menu editor needs, and every Supabase call it makes.
+ * Everything the menu editor needs, and every Supabase call it makes. Modelled
+ * on `useTenantRoster`, down to the abort handling and the restore-on-failure
+ * edits.
  *
- * Modelled on `useTenantRoster` deliberately, down to the abort handling and
- * the restore-on-failure edits: the two screens are the same screen for two
- * different tables, and keeping the shapes aligned is what stops this one from
- * quietly inventing a laxer rule.
+ * These are direct `supabase` calls and **not** `run()`: that contract
+ * short-circuits to `false` when `selectCanEdit` is false, and in the CRM no
+ * wedding is loaded, so `role` is `undefined` and every write would be refused
+ * with a console warning and no toast. `src/lib/sync/venue.ts` stands outside
+ * `run()` for the same reason. `insertRow` / `patchRow` / `deleteRow` replace it.
  *
- * ## Why these are direct `supabase` calls and not `run()`
- *
- * `run()` in `sync/mutations/shared.ts` is the contract for every write in the
- * *wedding* tree, and it must not be used here. It short-circuits to `false`
- * when `selectCanEdit(useGlobalStore.getState())` is false - and in the CRM no
- * wedding is loaded, so `role` is `undefined`, `selectCanEdit` fails closed,
- * and every write would be refused with a console warning and no toast at all.
- * It also short-circuits to `true` for the local wedding id, which is
- * meaningless here. `src/lib/sync/venue.ts` stands outside `run()` for exactly
- * the same reason.
- *
- * What replaces it is `insertRow` / `patchRow` / `deleteRow` below: optimistic
- * state change, direct write, and on a refusal undo *that row* - see
- * `withoutRow` / `withRows` / `revertPatch` - rather than reinstating an array
- * captured before the round trip.
- *
- * The read is not here at all: it is `fetchMenuCatalogue`, shared with the
- * couple's Menu tab, which asks the same three tables the same questions.
+ * The read is `fetchMenuCatalogue`, shared with the couple's Menu tab.
  */
 export function useTenantMenus(tenantId: string | undefined) {
   const { t } = useTranslation()
@@ -162,33 +130,22 @@ export function useTenantMenus(tenantId: string | undefined) {
   const [currency, setCurrency] = useState(DEFAULT_CURRENCY)
   const [loaded, setLoaded] = useState(false)
   /**
-   * The *key* of the current failure, not its sentence.
-   *
-   * State outlives a language switch, so translating at the point of failure
-   * froze whichever language was current when the write was refused - the rest
-   * of the screen switched and the red banner did not. Every other file in this
-   * feature goes through `useTranslation`; this one now does too, and resolves
-   * the key on each render instead.
+   * The *key* of the current failure, not its sentence: state outlives a
+   * language switch, so translating at the point of failure would freeze the
+   * banner in whichever language was current when the write was refused.
    */
   const [errorKey, setErrorKey] = useState<string | null>(null)
   /**
-   * How many writes are in flight, not whether one is.
-   *
-   * A counter because these overlap: blurring a name while a dish delete is
-   * still going is ordinary use, and a boolean would have the first write to
-   * finish declare the screen idle while the second is still out. Exposed as
-   * the boolean `saving` - callers only ever ask the yes/no question.
+   * How many writes are in flight, not whether one is: they overlap, and a
+   * boolean would let the first to finish declare the screen idle while the
+   * second is still out. Exposed as the boolean `saving`.
    */
   const [writesInFlight, setWritesInFlight] = useState(0)
 
   /**
-   * Read the catalogue into local state.
-   *
-   * The read itself is `fetchMenuCatalogue`, shared with the couple's Menu tab:
-   * the two screens ask the same four questions of the same three tables and
-   * differ only in where the rows land and how a failure is announced. What
-   * stays here is that second half - the error banner, `loaded`, and the
-   * currency.
+   * Read the catalogue into local state. The read is `fetchMenuCatalogue`,
+   * shared with the couple's Menu tab; what stays here is where the rows land
+   * and how a failure is announced - the error banner, `loaded`, the currency.
    */
   const refresh = useCallback(
     async (signal?: AbortSignal) => {
@@ -198,9 +155,9 @@ export function useTenantMenus(tenantId: string | undefined) {
         tenantId,
         signal ?? new AbortController().signal
       )
-      // Navigating away mid-fetch is not a failure to render, and an aborted
-      // PostgREST request arrives as an error *result* - so this case is its
-      // own, and it leaves `loaded` alone.
+      // An aborted PostgREST request arrives as an error *result*, and
+      // navigating away mid-fetch is not a failure to render, so this case is
+      // its own and leaves `loaded` alone.
       if (result.status === "aborted") return
 
       if (result.status === "failed") {
@@ -223,10 +180,9 @@ export function useTenantMenus(tenantId: string | undefined) {
   useEffect(() => {
     if (!tenantId) return
 
-    // Everything from the previous tenant goes first. `loaded` stays true
+    // Everything from the previous tenant goes first: `loaded` stays true
     // between tenants otherwise, so the screen renders one venue's packages
-    // under another venue's name until the fetch lands - and staff who switch
-    // venues are staff who are about to edit the wrong catalogue.
+    // under another venue's name until the fetch lands.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoaded(false)
     setPackages([])
@@ -242,12 +198,9 @@ export function useTenantMenus(tenantId: string | undefined) {
   }, [tenantId, refresh])
 
   /**
-   * Report a refused write.
-   *
-   * `cause` is the PostgrestError the helpers below now hand back rather than
-   * swallow. It used to be null at every call site, so the console logged
-   * `[crm] save option failed null` - the message, the constraint name and the
-   * SQLSTATE all thrown away at the one moment somebody needs them.
+   * Report a refused write. `cause` is the PostgrestError the helpers below hand
+   * back rather than swallow, so the console gets the message, the constraint
+   * name and the SQLSTATE.
    */
   const fail = useCallback((scope: string, cause: unknown, key: string) => {
     console.error(`[crm] ${scope}`, cause)
@@ -256,12 +209,10 @@ export function useTenantMenus(tenantId: string | undefined) {
 
   /**
    * Wrap one write: count it in, clear the last failure, count it out.
-   *
-   * The `setErrorKey(null)` is here rather than on success, matching
-   * `useTenantRoster`: a stale red banner belongs to the action that produced
-   * it, and the next action is the moment it stops being true. Clearing only on
-   * success would leave one transient failure on screen for the rest of the
-   * session, which is what this replaces.
+   * `setErrorKey(null)` is here rather than on success, matching
+   * `useTenantRoster` - a stale banner belongs to the action that produced it,
+   * and clearing only on success would leave one transient failure on screen for
+   * the rest of the session.
    */
   const tracked = useCallback(
     async <T>(write: () => Promise<T>): Promise<T> => {
@@ -277,26 +228,18 @@ export function useTenantMenus(tenantId: string | undefined) {
   )
 
   /**
-   * The three write primitives, parameterized by table.
+   * The three write primitives, parameterized by table. Each is a whole gesture:
+   * apply the optimistic change, write it, and on a refusal put back the one row
+   * it touched and say so. Returns whether the write took.
    *
-   * Each one is a whole gesture rather than a bare request: apply the optimistic
-   * change, write it, and on a refusal put back the one row the write touched
-   * and say so. Written once here instead of three times over in the trios
-   * below, where a rule fixed in one copy stayed broken in the other two.
-   *
-   * The `as never` casts are the price of the parameterization: supabase-js
+   * The `as never` casts are the price of the parameterization - supabase-js
    * resolves the payload type from the literal table name, and a union of three
-   * collapses the accepted shape to `never`. The columns are still checked - by
-   * the CHECK constraints, and by the callers, which build every payload from a
-   * typed row.
+   * collapses it to `never`. The columns are still checked by the CHECK
+   * constraints and by callers, which build every payload from a typed row.
    *
-   * Every mutating call asks for `.select("id")` back, because an UPDATE or
-   * DELETE that RLS filters to nothing is a clean 204 - no error, no rows - and
-   * treating that as success would leave the screen showing an edit the
-   * database refused.
-   *
-   * They return whether the write took, for the two callers that have something
-   * further to do with the answer.
+   * Every mutating call asks for `.select("id")` back: an UPDATE or DELETE RLS
+   * filters to nothing is a clean 204, and treating that as success would leave
+   * the screen showing an edit the database refused.
    */
   const insertRow = useCallback(
     async <T extends { id: string }>(
@@ -344,8 +287,8 @@ export function useTenantMenus(tenantId: string | undefined) {
             .eq("id", id)
             .select("id")
       )
-      // `data` is only read once `patchError` is known null, which is the only
-      // state PostgREST guarantees it in.
+      // `data` is only read once `patchError` is known null - the only state
+      // PostgREST guarantees it in.
       if (patchError || data.length === 0) {
         setList((rows) => revertPatch(rows, id, before, patch))
         fail(
@@ -362,17 +305,16 @@ export function useTenantMenus(tenantId: string | undefined) {
   )
 
   /**
-   * The one write that has to say *why* it failed, and the one whose optimistic
-   * change is not a single row - so it takes the removal and its undo as
-   * closures: a package drops its courses and their dishes with it.
+   * The one write that has to say *why* it failed, and whose optimistic change
+   * is not a single row - so it takes the removal and its undo as closures: a
+   * package drops its courses and their dishes with it.
    *
-   * The three FKs the wedding tree points at this catalogue are
-   * `on delete restrict` (20260822000002 section 1), so "a couple has ordered
-   * this" is a routine outcome of the delete button rather than a fault, and
-   * `delete_failed` - "please try again" - is the wrong thing to say about it:
-   * trying again cannot work, and archiving is what the staff member wants.
-   * `23503` is `foreign_key_violation`; it arrives for a package too, because
-   * the delete cascades down to the options and the restrict fires there.
+   * The wedding tree's three FKs into this catalogue are `on delete restrict`
+   * (20260822000002 section 1), so "a couple has ordered this" is a routine
+   * outcome rather than a fault, and `delete_failed` ("please try again") is the
+   * wrong thing to say: trying again cannot work, and archiving is what the
+   * staff member wants. `23503` arrives for a package too - the delete cascades
+   * to the options and the restrict fires there.
    */
   const deleteRow = useCallback(
     async (
@@ -412,17 +354,14 @@ export function useTenantMenus(tenantId: string | undefined) {
       if (!tenantId) return null
 
       // The id is minted here rather than read back, so the optimistic row is
-      // the real row - the same thing planner.store does for every entity.
-      // `created_at` is the local guess at what the database will stamp; it is
-      // only ever used as a sort tiebreaker, and the next load corrects it.
+      // the real row - what planner.store does for every entity. `created_at` is
+      // a local guess at what the database will stamp, used only as a sort
+      // tiebreaker and corrected by the next load.
       //
-      // `position` is read off the render's list, so two adds in the same tick
-      // can land on the same number. Deliberately not chased: the column is
-      // non-unique by design and every read orders `position, created_at, id`,
-      // so a tie costs an arbitrary but *stable* order and nothing else (see
-      // 20260822000001). Threading an exact position out of a setState updater
-      // would be a second source of truth for a number the next reorder
-      // rewrites anyway.
+      // `position` is read off the render's list, so two adds in one tick can
+      // collide. Not chased: the column is non-unique by design and every read
+      // orders `position, created_at, id`, so a tie costs an arbitrary but
+      // stable order and nothing else (20260822000001).
       const row: CrmMenuPackage = {
         id: crypto.randomUUID(),
         name,
@@ -463,9 +402,9 @@ export function useTenantMenus(tenantId: string | undefined) {
       )
       if (!ok) return
 
-      // Counts only. The package's *name* is a string the venue typed, and
-      // `AnalyticsEvents` is closed precisely so nothing like it can reach
-      // PostHog; the venue itself is attributed with a PostHog group.
+      // Counts only: the package's name is a string the venue typed, and
+      // `AnalyticsEvents` is closed so nothing like it can reach PostHog. The
+      // venue itself is attributed with a PostHog group.
       const courseRows = coursesOf(courses, id)
       const courseIds = new Set(courseRows.map((c) => c.id))
       track("menu_package_saved", {
@@ -482,8 +421,7 @@ export function useTenantMenus(tenantId: string | undefined) {
     async (id: string) => {
       const packageCourses = coursesOf(courses, id)
       const courseIds = new Set(packageCourses.map((c) => c.id))
-      // Captured to be put back one row at a time if the delete is refused -
-      // "a couple has ordered this" is a routine outcome here, not a fault.
+      // Captured to be put back one row at a time if the delete is refused.
       const removed = {
         packages: packages.filter((p) => p.id === id),
         courses: packageCourses,
@@ -500,9 +438,8 @@ export function useTenantMenus(tenantId: string | undefined) {
           // state has to do the same or the screen keeps rendering orphans.
           setPackages((list) => list.filter((row) => row.id !== id))
           setCourses((list) => list.filter((row) => row.menu_package_id !== id))
-          // `menu_course_id`, not `id` - an option is dropped because of the
-          // course it belongs to, not because it happens to share an id with
-          // one.
+          // `menu_course_id`, not `id`: an option is dropped for the course it
+          // belongs to, not for sharing an id with one.
           setOptions((list) =>
             list.filter((row) => !courseIds.has(row.menu_course_id))
           )
@@ -648,18 +585,14 @@ export function useTenantMenus(tenantId: string | undefined) {
   // Reordering
   // ---------------------------------------------------------------------
   /**
-   * Persist a whole sibling order in one RPC.
-   *
-   * One statement per gesture rather than two UPDATEs, which is the point of
+   * Persist a whole sibling order in one RPC. That is the point of
    * `reorder_menu_courses` / `reorder_menu_options`: a dropped connection
-   * between two writes leaves a list with two rows claiming the same position.
+   * between two UPDATEs leaves two rows claiming the same position.
    *
-   * The RPCs are invoker-rights, so a caller who is not staff of the owning
-   * tenant renumbers nothing and gets no error for it. That is not a case this
-   * screen can produce - the /crm shell has already established staff before
-   * any of this renders - and the honest statement of the limit is that such a
-   * call would leave the moved row where the optimistic update put it until the
-   * next load.
+   * The RPCs are invoker-rights, so a non-staff caller renumbers nothing and
+   * gets no error for it - unreachable from this screen, since the /crm shell
+   * establishes staff first, but it would leave the moved row where the
+   * optimistic update put it until the next load.
    */
   const persistOrder = useCallback(
     async (
@@ -670,8 +603,7 @@ export function useTenantMenus(tenantId: string | undefined) {
       scope: string
     ): Promise<boolean> => {
       // `async () => await` rather than passing the builder straight through:
-      // supabase-js returns a thenable, not a Promise, and `tracked` needs
-      // something with a `finally` to decrement on.
+      // supabase-js returns a thenable, and `tracked` needs a `finally`.
       const { error: rpcError } = await tracked(
         async () =>
           await supabase.rpc(rpc, {
@@ -690,17 +622,13 @@ export function useTenantMenus(tenantId: string | undefined) {
   )
 
   /**
-   * Move one row among its siblings.
+   * Move one row among its siblings. The new order is applied **before** the
+   * RPC: waiting for the round trip left ▲ doing nothing visible, which teaches
+   * a second click computed from a list that had not moved, and the two gestures
+   * then fight over the same pair of positions.
    *
-   * The new order is applied **before** the RPC, not after it. Waiting for the
-   * round trip meant clicking ▲ did nothing visible for as long as the network
-   * took, which is exactly what teaches somebody to click it again - and the
-   * second click was computed from a sibling list that had not moved yet, so
-   * the two gestures fought over the same pair of positions.
-   *
-   * On a refusal the original order goes back the same way, through
-   * `applyOrder` over the ids as they were, so nothing else on the screen is
-   * disturbed.
+   * On a refusal the original order goes back through `applyOrder` over the ids
+   * as they were, so nothing else on the screen is disturbed.
    */
   const moveCourse = useCallback(
     async (packageId: string, id: string, delta: -1 | 1) => {
@@ -752,12 +680,9 @@ export function useTenantMenus(tenantId: string | undefined) {
     /** True while any write is out. Gates the destructive buttons. */
     saving: writesInFlight > 0,
     /**
-     * Re-read the catalogue.
-     *
-     * Returned so the error banner can offer a retry. Without it a failed load
-     * was terminal for the screen: the message sat there and the only way back
-     * was a full page reload, which is not something a staff member should have
-     * to work out for themselves.
+     * Re-read the catalogue. Returned so the error banner can offer a retry -
+     * without it a failed load is terminal for the screen short of a full page
+     * reload.
      */
     refresh,
     currency,

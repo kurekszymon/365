@@ -5,25 +5,22 @@ import { getWeddingId, run } from "@/lib/sync/mutations/shared"
  * The couple's three menu writes.
  *
  * These *are* wedding-tree writes - `weddings` and `wedding_menu_selections` -
- * so unlike the CRM's `useTenantMenus`, which talks to Supabase directly, they
- * go through `run()` like every other mutation in this folder. The role gate
- * and the guest-mode short-circuit both apply and both are wanted here: a
- * viewer must not be able to reorder somebody's dinner, and a local wedding has
- * no venue to have a menu at all.
+ * so unlike the CRM's `useTenantMenus` they go through `run()` like every other
+ * mutation here. Both its gates are wanted: a viewer must not reorder somebody's
+ * dinner, and a local wedding has no venue to have a menu at all.
  *
- * Nothing writes the catalogue. `menu_packages` / `menu_courses` /
+ * Nothing writes the catalogue - `menu_packages` / `menu_courses` /
  * `menu_options` are the venue's, and the couple holds SELECT and nothing else
- * (20260822000002 section 4).
+ * (20260822000002 §4).
  */
 
 /**
  * Point the wedding at a package, or clear it.
  *
- * Destructive server-side, and deliberately so: the
- * `weddings_menu_package_changed` trigger deletes every selection for the
- * wedding, because every option row belongs to exactly one package and a
- * "keep what still fits" sweep would keep nothing. The store mirrors that
- * locally and the UI confirms before calling.
+ * Destructive server-side and deliberately so: the
+ * `weddings_menu_package_changed` trigger deletes every selection, because every
+ * option belongs to exactly one package and a "keep what still fits" sweep would
+ * keep nothing. The store mirrors that locally and the UI confirms first.
  *
  * `enforce_wedding_menu_package` refuses a package belonging to a venue this
  * wedding is not linked to, with 23514 - which is what makes an ordinary UPDATE
@@ -46,18 +43,14 @@ export const setWeddingMenuPackage = (
 /**
  * Add one dish to the served set.
  *
- * `upsert` with `ignoreDuplicates`, not a plain `insert`, and the difference is
- * a toast the user should never see. `(wedding_id, menu_option_id)` is the
- * primary key, so a second pick of the same dish is a `23505` - which `run()`
- * turns into a "could not save" toast for a write the database is already
- * consistent with.
+ * `upsert` with `ignoreDuplicates`, not a plain `insert`: `(wedding_id,
+ * menu_option_id)` is the primary key, so a second pick of the same dish raises
+ * `23505`, which `run()` turns into a "could not save" toast for a write the
+ * database is already consistent with. That happens when two people edit at once.
  *
- * What reaches that state is two people editing the menu at once. It used to be
- * reachable from a single client too, by pick → unpick → pick, because all
- * three writes were fire-and-forget with no ordering between them; that is now
- * `queueOptionWrite`'s job in menu.store, and it is a different problem -
- * ordering, not idempotence. Neither fix substitutes for the other, and this
- * one is still the reason a second editor's pick is quiet.
+ * The single-client version of it - pick → unpick → pick, racing because the
+ * writes are unordered - is `queueOptionWrite`'s job in menu.store. Ordering and
+ * idempotence are different problems and neither fix substitutes for the other.
  */
 export const insertMenuSelection = (optionId: string): Promise<boolean> => {
   const weddingId = getWeddingId()

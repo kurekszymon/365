@@ -142,11 +142,10 @@ export const hallAtPoint = (halls: Array<Hall>, p: Position): Hall | null => {
   return null
 }
 
-// Fallback drop target: the hall whose rect is closest to the point.
-// Deliberately AABB-based even for polygon halls: a drop inside a hall's own
-// notch misses hallAtPoint, lands here at distance 0, and the clamp then
-// pushes the entity inside the polygon - the right outcome without polygon
-// distance math.
+// Fallback drop target: the hall whose rect is closest to the point. AABB-based
+// even for polygon halls, deliberately - a drop inside a hall's own notch misses
+// hallAtPoint, lands here at distance 0, and the clamp pushes the entity inside
+// the polygon, which is the right outcome without polygon distance math.
 export const nearestHall = (halls: Array<Hall>, p: Position): Hall | null => {
   let best: Hall | null = null
   let bestD = Infinity

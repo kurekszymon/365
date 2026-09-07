@@ -7,20 +7,16 @@ import type { Database } from "@/lib/supabase.types"
  * `wedding_invitations` INSERT, asserted against a real PostgreSQL with real
  * RLS.
  *
- * The smallest of the four suites in this family, and deliberately narrow: it
- * covers the one policy `20260828000001` replaces, not the whole invitation
- * flow. `claim_wedding_invitation` has been in production since April 2026 and
- * is unchanged; what is new is that `"owners create invites"` now pins the
- * columns it used to leave to the caller.
+ * Deliberately narrow: it covers the one policy `20260828000001` replaces, not
+ * the whole invitation flow. What is new is that `"owners create invites"` pins
+ * the columns it used to leave to the caller.
  *
- * It exists because the tenant side had `tenantInvitations.test.ts` and this
- * side had nothing. The forgeries are identical on both tables - they were the
- * same table shape, copied - so a suite on one and none on the other would have
- * meant the *applied* half of the fix was the untested half.
+ * The forgeries are identical to `tenantInvitations.test.ts`'s - the two tables
+ * are the same shape - so a suite on one and none on the other would leave the
+ * *applied* half of the fix untested.
  *
- * Every case here is a refusal except the last two, and both of those clean up
- * after themselves: this database is shared with three other suites running
- * concurrently.
+ * Every case is a refusal except the last two, which clean up after themselves:
+ * this database is shared with three other suites running concurrently.
  *
  * Skipped, not failed, when the local stack is down - see venueRls.test.ts.
  *
@@ -45,12 +41,9 @@ const VIEWER_USER = "10000000-0000-4000-8000-000000000003"
 const PASSWORD = "password123"
 
 /**
- * Marks the rows this suite creates, so cleanup can find them.
- *
- * Hex and sixteen characters of it, because the INSERT policy now pins the
- * token to `^[0-9a-f]{64}$` - a caller supplying its own token has to supply
- * one shaped like the default. Same reasoning, same marker, as
- * tenantInvitations.test.ts.
+ * Marks the rows this suite creates, so cleanup can find them. Hex, sixteen
+ * characters, because the INSERT policy pins the token to `^[0-9a-f]{64}$` -
+ * same marker as tenantInvitations.test.ts.
  */
 const TEST_TOKEN_PREFIX = "7e577e577e577e57"
 
@@ -100,7 +93,7 @@ describe.skipIf(!reachable)("wedding invitations", () => {
   /**
    * The forgeries. Each is the wedding's own owner writing into their own
    * wedding, so `invited_by` and the ownership check - everything the policy
-   * constrained before `20260828000001` - are satisfied.
+   * constrained before `20260828000001` - already pass.
    */
   describe("the columns an owner must not choose", () => {
     const forge = async (row: Record<string, unknown>) => {
@@ -115,9 +108,9 @@ describe.skipIf(!reachable)("wedding invitations", () => {
     }
 
     it("refuses an invitation minted already claimed", async () => {
-      // A row that reads, in the couple's own invitation manager, as a named
-      // account having accepted a link they never saw. `claimed_by` is an
-      // `auth.users` FK, so the uuid names a real person.
+      // A row reading, in the couple's own invitation manager, as a named
+      // account accepting a link they never saw. `claimed_by` is an `auth.users`
+      // FK, so the uuid names a real person.
       const error = await forge({
         claimed_at: new Date().toISOString(),
         claimed_by: VIEWER_USER,
@@ -159,10 +152,9 @@ describe.skipIf(!reachable)("wedding invitations", () => {
   })
 
   /**
-   * The half of the predicate that was already there. `20260828000001` drops
-   * and recreates the policy rather than adding a second one, so the original
-   * clauses are restated by hand - and a restated clause is one that can be
-   * mistyped.
+   * The half of the predicate that was already there. `20260828000001` drops and
+   * recreates the policy rather than adding a second, so the original clauses
+   * are restated by hand - and a restated clause can be mistyped.
    */
   describe("who may invite at all", () => {
     it("refuses an editor of the same wedding", async () => {
@@ -189,9 +181,9 @@ describe.skipIf(!reachable)("wedding invitations", () => {
   })
 
   it("still accepts the insert the application actually makes", async () => {
-    // The other half of the hardening: `useWeddingMembers` sends these three
-    // columns and nothing else, and every remaining column has to come from its
-    // default. If this goes red, inviting anyone to a wedding is broken.
+    // The hardening must not break the only insert the application makes:
+    // `useWeddingMembers` sends these three columns and nothing else. If this
+    // goes red, inviting anyone to a wedding is broken.
     const { data, error } = await owner
       .from("wedding_invitations")
       .insert({
