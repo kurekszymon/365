@@ -15,7 +15,10 @@ const at = (href: string) => {
   Object.defineProperty(window, "location", {
     configurable: true,
     value: {
+      protocol: url.protocol,
       hostname: url.hostname,
+      port: url.port,
+      origin: url.origin,
       pathname: url.pathname,
       search: url.search,
       hash: url.hash,
@@ -63,6 +66,37 @@ describe("redirectApexOnlyPathToApex", () => {
         expect(replace).not.toHaveBeenCalled()
       }
     )
+
+    // The destination is the apex *this browser can reach*, not the canonical
+    // one: a developer on a venue host used to be thrown at production, and a
+    // preview deploy at a build it is not running.
+    it("stays on the host family it is already on", () => {
+      at("http://bagatelka.localhost:3000/home")
+
+      redirectApexOnlyPathToApex("/home")
+
+      expect(replace).toHaveBeenCalledWith("http://localhost:3000/home")
+    })
+
+    it("drops ?tenant= on a preview deploy, which would loop", () => {
+      at("https://abc123.easywed.pages.dev/home?tenant=bagatelka&tab=guests")
+
+      redirectApexOnlyPathToApex("/home")
+
+      expect(replace).toHaveBeenCalledWith(
+        "https://abc123.easywed.pages.dev/home?tab=guests"
+      )
+    })
+
+    it("leaves no empty query behind when ?tenant= was the only param", () => {
+      at("https://abc123.easywed.pages.dev/wedding/abc?tenant=bagatelka#seat-4")
+
+      redirectApexOnlyPathToApex("/wedding/abc")
+
+      expect(replace).toHaveBeenCalledWith(
+        "https://abc123.easywed.pages.dev/wedding/abc#seat-4"
+      )
+    })
 
     // A path that merely starts with the same letters is not the same path.
     it.each(["/homepage", "/weddings", "/home-page"])(
