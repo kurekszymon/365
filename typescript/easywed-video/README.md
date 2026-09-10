@@ -1,8 +1,12 @@
 # easywed-video
 
-A [Remotion](https://remotion.dev) product demo for **easywed.** (`../easywed`) - a 28 second
-walkthrough of the planner: sketch the hall, add guests, seat everyone. Renders in both 16:9
-(1920x1080) and 9:16 (1080x1920).
+[Remotion](https://remotion.dev) promotional film for **easywed.** (`../easywed`), in two cuts:
+
+- **the walkthrough** - 28 seconds of the planner: sketch the hall, add guests, seat everyone.
+- **the teaser** - 15 seconds for Reels/TikTok: the question, the pile of spreadsheets it takes
+  today, the room filling itself, the CTA.
+
+Both render in 16:9 (1920x1080) and 9:16 (1080x1920), and both are in Polish.
 
 It is a standalone package on purpose - it sits next to `easywed/` rather than inside it, so it
 stays out of that project's tsconfig, ESLint and Vite scope.
@@ -14,7 +18,11 @@ npm run dev              # Remotion Studio on http://localhost:3000
 npm run render           # -> out/easywed-demo.mp4          (16:9)
 npm run render:vertical  # -> out/easywed-demo-vertical.mp4 (9:16)
 npm run render:gif       # -> out/easywed-demo.gif (960px wide, every 2nd frame)
-npm run render:all       # all three
+
+npm run render:teaser            # -> out/easywed-teaser.mp4          (16:9)
+npm run render:teaser:vertical   # -> out/easywed-teaser-vertical.mp4 (9:16)
+
+npm run render:all       # all of the above
 npm run lint             # eslint + tsc
 ```
 
@@ -36,8 +44,18 @@ npx remotion still easywed-demo out/frame.png --frame=265
 | `Seating`               | 240f   | step 03 - seat everyone   |
 | `Outro`                 | 150f   | headline + CTA            |
 
-The scenes are also registered individually (Studio folder "Scenes") so a single beat can be
-previewed without scrubbing through the whole timeline.
+| id                        | length | what it is                        |
+| ------------------------- | ------ | --------------------------------- |
+| `easywed-teaser`          | 450f   | the 15 s social cut, 16:9         |
+| `easywed-teaser-vertical` | 450f   | the same cut, 9:16                |
+| `Hook`                    | 90f    | the question                      |
+| `Chaos`                   | 100f   | the spreadsheets, swept off       |
+| `Plan`                    | 176f   | the room filling, 58/58           |
+| `Cta`                     | 108f   | logo + easywed.app                |
+
+The scenes are also registered individually (Studio folders "Scenes" and "Teaser") so a single
+beat can be previewed without scrubbing through the whole timeline. The teaser's are registered
+at 9:16, the cut it is made for.
 
 ## Structure
 
@@ -53,7 +71,13 @@ src/easywed/
   components/            Backdrop, BrandMark, Wordmark, Icon, AppFrame, PlannerCanvas,
                          HallCanvas, PlannerTable, ...
   scenes/                one file per scene
+  teaser/                the social cut - its own timeline, Teaser.tsx and scenes,
+                         drawn with the same theme, layouts and components
 ```
+
+The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect
+ratios the same way the walkthrough does. Its own beats and its shorter crossfade live in
+`teaser/timeline.ts` rather than the shared one - a teaser cuts where a walkthrough dissolves.
 
 ## How one set of scenes renders two aspect ratios
 

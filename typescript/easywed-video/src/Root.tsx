@@ -7,6 +7,11 @@ import { HallScene } from "./easywed/scenes/HallScene";
 import { GuestsScene } from "./easywed/scenes/GuestsScene";
 import { SeatingScene } from "./easywed/scenes/SeatingScene";
 import { OutroScene } from "./easywed/scenes/OutroScene";
+import { Teaser } from "./easywed/teaser/Teaser";
+import { HookScene } from "./easywed/teaser/scenes/HookScene";
+import { ChaosScene } from "./easywed/teaser/scenes/ChaosScene";
+import { PlanScene } from "./easywed/teaser/scenes/PlanScene";
+import { CtaScene } from "./easywed/teaser/scenes/CtaScene";
 import {
   FPS,
   HEIGHT,
@@ -16,6 +21,7 @@ import {
   VERTICAL_WIDTH,
   WIDTH,
 } from "./easywed/timeline";
+import { TEASER_DURATION, TEASER_SCENES } from "./easywed/teaser/timeline";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -41,6 +47,25 @@ export const RemotionRoot: React.FC = () => {
         height={VERTICAL_HEIGHT}
       />
 
+      {/* The 15 s social cut - same palette and components, its own beats. */}
+      <Composition
+        id="easywed-teaser"
+        component={Teaser}
+        durationInFrames={TEASER_DURATION}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+
+      <Composition
+        id="easywed-teaser-vertical"
+        component={Teaser}
+        durationInFrames={TEASER_DURATION}
+        fps={FPS}
+        width={VERTICAL_WIDTH}
+        height={VERTICAL_HEIGHT}
+      />
+
       {/* Each scene on its own, so a single beat can be previewed in isolation. */}
       <Folder name="Scenes">
         <Composition id="Intro" component={IntroScene} durationInFrames={SCENES.intro} fps={FPS} width={WIDTH} height={HEIGHT} />
@@ -48,6 +73,15 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="Guests" component={GuestsScene} durationInFrames={SCENES.guests} fps={FPS} width={WIDTH} height={HEIGHT} />
         <Composition id="Seating" component={SeatingScene} durationInFrames={SCENES.seating} fps={FPS} width={WIDTH} height={HEIGHT} />
         <Composition id="Outro" component={OutroScene} durationInFrames={SCENES.outro} fps={FPS} width={WIDTH} height={HEIGHT} />
+      </Folder>
+
+      {/* The teaser's beats, registered at 9:16 - the cut it is made for, and
+          the one whose stacked layouts need the most checking. */}
+      <Folder name="Teaser">
+        <Composition id="Hook" component={HookScene} durationInFrames={TEASER_SCENES.hook} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="Chaos" component={ChaosScene} durationInFrames={TEASER_SCENES.chaos} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="Plan" component={PlanScene} durationInFrames={TEASER_SCENES.plan} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="Cta" component={CtaScene} durationInFrames={TEASER_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
       </Folder>
     </>
   );

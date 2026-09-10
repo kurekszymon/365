@@ -23,8 +23,16 @@ type Props = {
   children?: React.ReactNode;
 };
 
-/** Room around the hall for the dimension labels and the room chip. */
-const PAD = { left: 46, top: 62, right: 76, bottom: 34 };
+/**
+ * Room around the hall for the dimension labels and the room chip. Exported so
+ * a scene can size its canvas box to the drawing's own aspect ratio instead of
+ * letting the SVG letterbox inside it.
+ */
+export const PAD = { left: 46, top: 62, right: 76, bottom: 34 };
+
+/** Aspect ratio of what `HallCanvas` actually draws, padding included. */
+export const hallAspect = (hall: HallLayout): number =>
+  (hall.canvas.width + PAD.left + PAD.right) / (hall.canvas.height + PAD.top + PAD.bottom);
 
 /** A fixture, drawn the way the app draws one: slate on a cream floor. */
 const Fixture: React.FC<{

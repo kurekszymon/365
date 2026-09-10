@@ -28,7 +28,9 @@
     "render": "remotion render easywed-demo out/easywed-demo.mp4",
     "render:vertical": "remotion render easywed-demo-vertical out/easywed-demo-vertical.mp4",
     "render:gif": "remotion render easywed-demo out/easywed-demo.gif --codec=gif --every-nth-frame=2 --width=960",
-    "render:all": "npm run render && npm run render:vertical && npm run render:gif",
+    "render:teaser": "remotion render easywed-teaser out/easywed-teaser.mp4",
+    "render:teaser:vertical": "remotion render easywed-teaser-vertical out/easywed-teaser-vertical.mp4",
+    "render:all": "npm run render && npm run render:vertical && npm run render:gif && npm run render:teaser && npm run render:teaser:vertical",
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
     "lint": "eslint src && tsc"
