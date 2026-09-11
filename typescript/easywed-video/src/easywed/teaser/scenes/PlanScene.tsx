@@ -2,7 +2,7 @@ import React from "react";
 import { AbsoluteFill, Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { Backdrop } from "../../components/Backdrop";
 import { HallCanvas, hallAspect } from "../../components/HallCanvas";
-import { PlannerCanvas } from "../../components/PlannerCanvas";
+import { canvasInsets, PlannerCanvas } from "../../components/PlannerCanvas";
 import { useFormat } from "../../format";
 import { colors, fonts } from "../../theme";
 
@@ -11,12 +11,19 @@ const FILL_FROM = 76;
 const FILL_STEP = 7;
 const FILL_OVER = 30;
 
-/** Side padding of the scene, so the canvas box can be sized off it. */
-const PAD_X = { wide: 56, tall: 40 };
+/** Scene padding, so the viewport can be sized off what is left over. */
+const PAD = {
+  wide: { x: 56, top: 30, bottom: 26 },
+  tall: { x: 40, top: 58, bottom: 38 },
+};
+
+/** Space between the headline and the viewport, and above the portrait count. */
+const GAP_ABOVE_CANVAS = { wide: 20, tall: 24 };
+const GAP_ABOVE_STAT = 24;
 
 export const PlanScene: React.FC = () => {
   const frame = useCurrentFrame();
-  const { fps, width: frameWidth } = useVideoConfig();
+  const { fps, width: frameWidth, height: frameHeight } = useVideoConfig();
   const { hall, tall, type } = useFormat();
 
   const outline = interpolate(frame, [4, 36], [0, 1], {
@@ -45,11 +52,31 @@ export const PlanScene: React.FC = () => {
   const titleIn = spring({ frame: frame - 4, fps, config: { damping: 200 }, durationInFrames: 26 });
   const statIn = spring({ frame: frame - 66, fps, config: { damping: 200 }, durationInFrames: 24 });
 
-  // Capping the canvas box at the hall's own aspect ratio keeps the planner
-  // chrome - toolbar, zoom pill, minimap - against the room rather than pinned
-  // to the far corners of a box the drawing letterboxes inside.
-  const padX = tall ? PAD_X.tall : PAD_X.wide;
-  const maxCanvasHeight = (frameWidth - padX * 2) / hallAspect(hall);
+  // The viewport is sized to the room rather than to whatever is left of the
+  // frame: the plan fills it, so the chrome floats against the walls instead of
+  // in the corners of a box the drawing letterboxes inside. Both text blocks
+  // are measured off the type scale that draws them, so the fit is exact.
+  const pad = tall ? PAD.tall : PAD.wide;
+  const insets = canvasInsets(tall);
+  const headerHeight = type.title * 1.05;
+  const statHeight = type.stat * 1.15 + GAP_ABOVE_STAT;
+  const room = {
+    width: frameWidth - pad.x * 2 - insets.left - insets.right,
+    height:
+      frameHeight -
+      pad.top -
+      pad.bottom -
+      headerHeight -
+      (tall ? GAP_ABOVE_CANVAS.tall + statHeight : GAP_ABOVE_CANVAS.wide) -
+      insets.top -
+      insets.bottom,
+  };
+  const aspect = hallAspect(hall);
+  const drawWidth = Math.min(room.width, room.height * aspect);
+  const canvas = {
+    width: drawWidth + insets.left + insets.right,
+    height: drawWidth / aspect + insets.top + insets.bottom,
+  };
 
   const stat = (
     <div
@@ -87,8 +114,8 @@ export const PlanScene: React.FC = () => {
         style={{
           display: "flex",
           flexDirection: "column",
-          justifyContent: "space-between",
-          padding: `${tall ? 64 : 40}px ${padX}px ${tall ? 44 : 32}px`,
+          justifyContent: "center",
+          padding: `${pad.top}px ${pad.x}px ${pad.bottom}px`,
         }}
       >
         <div
@@ -119,11 +146,12 @@ export const PlanScene: React.FC = () => {
 
         <div
           style={{
-            flex: 1,
-            minHeight: 0,
-            maxHeight: maxCanvasHeight,
+            width: canvas.width,
+            height: canvas.height,
+            alignSelf: "center",
             display: "flex",
-            marginTop: tall ? 26 : 20,
+            flexShrink: 0,
+            marginTop: tall ? GAP_ABOVE_CANVAS.tall : GAP_ABOVE_CANVAS.wide,
           }}
         >
           <PlannerCanvas hall={hall} tall={tall}>
@@ -137,7 +165,9 @@ export const PlanScene: React.FC = () => {
           </PlannerCanvas>
         </div>
 
-        {tall ? <div style={{ marginTop: 26, flexShrink: 0 }}>{stat}</div> : null}
+        {tall ? (
+          <div style={{ marginTop: GAP_ABOVE_STAT, flexShrink: 0 }}>{stat}</div>
+        ) : null}
       </AbsoluteFill>
     </Backdrop>
   );
