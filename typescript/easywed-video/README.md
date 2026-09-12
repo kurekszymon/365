@@ -32,6 +32,12 @@ Render a single frame while iterating:
 npx remotion still easywed-demo out/frame.png --frame=265
 ```
 
+`/video-plan` (in the monorepo root, `.claude/skills/video-plan/`) plans the next videos in this
+series against what `easywed/v1` actually does. Each run authors a new dated brief under
+`docs/video-plans/{scope}-{date}.md` rather than revising the last one. Its two reference files -
+the confirmed v1 selling points, and the beats and lines the finished films already used - are what
+to update when a new video ships.
+
 ## Compositions
 
 | id                      | length | what it is                |
