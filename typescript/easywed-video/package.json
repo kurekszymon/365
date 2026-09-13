@@ -30,7 +30,9 @@
     "render:gif": "remotion render easywed-demo out/easywed-demo.gif --codec=gif --every-nth-frame=2 --width=960",
     "render:teaser": "remotion render easywed-teaser out/easywed-teaser.mp4",
     "render:teaser:vertical": "remotion render easywed-teaser-vertical out/easywed-teaser-vertical.mp4",
-    "render:all": "npm run render && npm run render:vertical && npm run render:gif && npm run render:teaser && npm run render:teaser:vertical",
+    "render:import-excel": "remotion render easywed-import out/easywed-import.mp4",
+    "render:import-excel:vertical": "remotion render easywed-import-vertical out/easywed-import-vertical.mp4",
+    "render:all": "npm run render && npm run render:vertical && npm run render:gif && npm run render:teaser && npm run render:teaser:vertical && npm run render:import-excel && npm run render:import-excel:vertical",
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
     "lint": "eslint src && tsc"

@@ -28,7 +28,10 @@ export type IconName =
   | "trash"
   | "check"
   | "fileUp"
-  | "printer";
+  | "printer"
+  | "chevronDown"
+  | "x"
+  | "fileSpreadsheet";
 
 const PATHS: Record<IconName, React.ReactNode> = {
   guests: (
@@ -41,9 +44,9 @@ const PATHS: Record<IconName, React.ReactNode> = {
   ),
   tables: (
     <>
-      <path d="M3 2v7a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2V2" />
-      <path d="M6 11v11" />
-      <path d="M18 22v-7h3V7a5 5 0 0 0-3 4.6V15h3" />
+      <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+      <path d="M7 2v20" />
+      <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
     </>
   ),
   fixtures: (
@@ -160,6 +163,15 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M6 9V3h12v6" />
       <path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2" />
       <rect x="6" y="14" width="12" height="8" rx="1" />
+    </>
+  ),
+  chevronDown: <path d="M6 9l6 6 6-6" />,
+  x: <path d="M18 6 6 18M6 6l12 12" />,
+  fileSpreadsheet: (
+    <>
+      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z" />
+      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+      <path d="M8 13h2M14 13h2M8 17h2M14 17h2" />
     </>
   ),
 };

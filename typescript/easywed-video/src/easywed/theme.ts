@@ -46,6 +46,11 @@ export const colors = {
   selected: "#9c4f89",
   selectedSoft: "#f6e8f2",
 
+  /** `--destructive` (red-600 in every palette): a dialog's required-field asterisk. */
+  destructive: "#e7000b",
+  /** `DialogOverlay`'s `bg-black/10` - the scrim behind a dialog or drawer. */
+  scrim: "rgba(0, 0, 0, 0.1)",
+
   brandGreen: "#43684b",
   brandGreenSoft: "#9ec2a2",
   brandGreenMist: "#d9ead9",

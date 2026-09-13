@@ -1,12 +1,14 @@
 # easywed-video
 
-[Remotion](https://remotion.dev) promotional film for **easywed.** (`../easywed`), in two cuts:
+[Remotion](https://remotion.dev) promotional film for **easywed.** (`../easywed`), in three cuts:
 
 - **the walkthrough** - 28 seconds of the planner: sketch the hall, add guests, seat everyone.
 - **the teaser** - 15 seconds for Reels/TikTok: the question, the pile of spreadsheets it takes
   today, the room filling itself, the CTA.
+- **the import** - 20 seconds for Reels/TikTok: the guest list already in Excel, dropped into the
+  import wizard, its columns mapped, the room seated, the CTA.
 
-Both render in 16:9 (1920x1080) and 9:16 (1080x1920), and both are in Polish.
+All render in 16:9 (1920x1080) and 9:16 (1080x1920), and all are in Polish.
 
 It is a standalone package on purpose - it sits next to `easywed/` rather than inside it, so it
 stays out of that project's tsconfig, ESLint and Vite scope.
@@ -21,6 +23,9 @@ npm run render:gif       # -> out/easywed-demo.gif (960px wide, every 2nd frame)
 
 npm run render:teaser            # -> out/easywed-teaser.mp4          (16:9)
 npm run render:teaser:vertical   # -> out/easywed-teaser-vertical.mp4 (9:16)
+
+npm run render:import-excel            # -> out/easywed-import.mp4          (16:9)
+npm run render:import-excel:vertical   # -> out/easywed-import-vertical.mp4 (9:16)
 
 npm run render:all       # all of the above
 npm run lint             # eslint + tsc
@@ -64,9 +69,18 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `Plan`                    | 176f   | the room filling, 58/58           |
 | `Cta`                     | 108f   | logo + easywed.app                |
 
-The scenes are also registered individually (Studio folders "Scenes" and "Teaser") so a single
-beat can be previewed without scrubbing through the whole timeline. The teaser's are registered
-at 9:16, the cut it is made for.
+| id                        | length | what it is                                  |
+| ------------------------- | ------ | ------------------------------------------- |
+| `easywed-import`          | 600f   | the 20 s import cut, 16:9                   |
+| `easywed-import-vertical` | 600f   | the same cut, 9:16                          |
+| `ImportHook`              | 90f    | the list in a spreadsheet                   |
+| `ImportDrop`              | 150f   | the file dropped into the import dialog     |
+| `ImportMap`               | 180f   | columns mapped, "Do zaimportowania: 58"     |
+| `ImportLanded`            | 204f   | the room seats 58/58, then the CTA          |
+
+The scenes are also registered individually (Studio folders "Scenes", "Teaser" and "Import") so a
+single beat can be previewed without scrubbing through the whole timeline. The teaser's and the
+import's are registered at 9:16, the cut they are made for.
 
 ## Structure
 
@@ -84,6 +98,8 @@ src/easywed/
   scenes/                one file per scene
   teaser/                the social cut - its own timeline, Teaser.tsx and scenes,
                          drawn with the same theme, layouts and components
+  import-excel/          the import cut, in the teaser's shape; its dialog redraw lives in
+                         components/ImportDialog.tsx, since the long walkthrough reuses it
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect

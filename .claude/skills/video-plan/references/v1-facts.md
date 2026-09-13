@@ -20,6 +20,18 @@ named in section 2 both need updating — nothing will warn you.
 - **CSV and XLSX import** through a column-mapping wizard that survives Polish diacritics, reports
   skipped and overflowed rows, and can seat guests from a table column — `guests_imported`,
   `guests.import.*`, changelog `i3`.
+  - How the wizard actually runs (`dialogs/guests/ImportGuestsDialog.tsx`,
+    `lib/import/guestsImport.ts`): file → mapping → preview → commit. `autoDetectMapping`
+    pre-fills the four fields (`name`, `table`, `dietary`, `note`) from Polish or English headers
+    after `normalize` strips diacritics and maps `ł` → `l` (*Gość*, *Stół*, *Dieta*, *Uwagi* all
+    match). Table names join to existing tables through the same `normalize`, and only while the
+    table has capacity left — the rest count as `overflowed`. *„Do zaimportowania: N gości”*
+    (`guests.import.summary`) sits on the **preview** step after *Dalej*, not on the mapping step.
+    On a phone the dialog is a bottom-sheet drawer (`ui/responsive-dialog.tsx`).
+  - `guests.import.drop_here` is *„Przeciągnij tutaj plik .csv lub .xlsx lub kliknij, aby
+    wybrać”*; the progress card is `guests.progress` *„Rozsadzeni”* beside
+    `guests.seated_ratio` *„{{seated_count}}/{{count}} gości przy stołach”* — two strings, not
+    *„Rozsadzeni 58/58”*.
 - **A printable plan and guest list** — the venue/kitchen report, with diets and headcount.
   `plan_printed`, `export.pdf.*`, changelog `i6`. It is the browser print dialog, not a generated
   file; see section 4.

@@ -16,6 +16,13 @@ Scenes 120 + 210 + 180 + 240 + 150 at `TRANSITION = 15`.
 the question → the pile of spreadsheets → the room filling itself → the CTA.
 Scenes 90 + 100 + 176 + 108 at `TEASER_TRANSITION = 8`.
 
+## The import cut - `easywed-import` / `easywed-import-vertical`, 600f (20 s)
+
+the list in a spreadsheet → the file dropped into the import dialog → columns mapped, preview of
+58 → the room seats 58/58 → the CTA.
+Scenes 90 + 150 + 180 + 204 = 624 at `IMPORT_EXCEL_TRANSITION = 8` × 3 seams → 600.
+Built from `docs/video-plans/full-series-2026-09-11.md`, brief `import-excel`.
+
 ## Polish lines already burned on screen
 
 None of these may appear again:
@@ -28,6 +35,16 @@ None of these may appear again:
 Also on screen, and equally spent: *"Krok 01/02/03"*, *"Import CSV i XLSX"*, *"Import z CSV lub
 Excela"*, *"Eksport PDF do druku"*, *"Plan sali „przeciągnij i upuść”"*, *"Sale i piętra"*,
 *"Planujcie razem"*, *"Ciocia Basia NIE obok Marka"*, *"Wujek Janusz - bez glutenu?"*.
+
+From the import cut: *"Twoja lista gości mieszka w Excelu."* - and, as the import wizard and guest
+panel show them (app strings, verbatim): *"Importuj gości z pliku CSV lub Excel"*, *"Wgraj plik
+.csv lub .xlsx. Wykryjemy kolumny, pozwolimy je dopasować i pokażemy podgląd przed dodaniem."*,
+*"Przeciągnij tutaj plik .csv lub .xlsx lub kliknij, aby wybrać"*, *"Wybierz plik CSV lub
+Excel"*, *"Dopasuj każde pole do kolumny z Twojego pliku."*, *"Do zaimportowania: 58 gości"*,
+*"Dodaj 58 gości"*, *"+52 więcej wierszy"*, *"Brak gości."*, *"Rozsadzeni"* ·
+*"58/58 gości przy stołach"*. The spreadsheet itself shows *"goscie.xlsx"* and the notes
+*"dojedzie po ślubie"*, *"krzesełko dla dziecka"*. Its CTA is *"easywed.app"* + *"bez zakładania
+konta"* - the allowed recurrence below, so it burns nothing new.
 
 The one exception is the CTA: section 8 requires *„bez zakładania konta”*, so that phrase recurs by
 design. The full burned line *"Za darmo, bez zakładania konta."* still may not.
