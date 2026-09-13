@@ -38,6 +38,11 @@ series against what `easywed/v1` actually does. Each run authors a new dated bri
 the confirmed v1 selling points, and the beats and lines the finished films already used - are what
 to update when a new video ships.
 
+`/video-build <id>` (`.claude/skills/video-build/`) then builds one brief from such a plan: it
+re-checks the brief's copy, claims and frame maths against `easywed/v1`, adds the film under
+`src/easywed/{id}/` in the teaser's shape, registers it in `Root.tsx` and `package.json`, checks
+stills, and adds the new on-screen lines to the burned list so the next plan won't reuse them.
+
 ## Compositions
 
 | id                      | length | what it is                |

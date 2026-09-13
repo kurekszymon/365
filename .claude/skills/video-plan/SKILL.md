@@ -178,4 +178,4 @@ fake counts, no implied popularity. Polish typography as this repo writes it.
   questions at the end of the document as well as raising them in chat.
 
 Do **not** produce any of the videos. This run ends at briefs plus a build order; implementation is a
-separate pass, started by handing one brief back to Claude Code.
+separate pass, one brief at a time, with `/video-build <id>`.
