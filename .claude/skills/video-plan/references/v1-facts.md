@@ -35,6 +35,23 @@ named in section 2 both need updating — nothing will warn you.
 - **A printable plan and guest list** — the venue/kitchen report, with diets and headcount.
   `plan_printed`, `export.pdf.*`, changelog `i6`. It is the browser print dialog, not a generated
   file; see section 4.
+  - What the page actually holds (`planner/PlannerPrintView.tsx`, A4 landscape per `styles.css`
+    `@page`): a cover - *easywed.*, the wedding name, *„Data ślubu: {{date}}”*
+    (`export.pdf.wedding_date`), then `tables.count` · seated/total `guests` (*„7 stołów · 58/58
+    goście”*) and *„Wygenerowano {{date}}”* at the foot; the hall on its own page; then *„Goście”*
+    in two columns, one block per table headed `export.csv.section.table` - *„Stół 1 (8/8
+    zajętych)”*, not *„Stół 1 · 8 miejsc”* - with numbered lines of the chosen fields joined by
+    *„ - ”*. There is no *„Plan rozsadzenia”* title, and no per-diet total: the diets are printed
+    per guest, not summed.
+  - `DEFAULT_PRINT_FIELDS` (`stores/print.store.ts`) is name + dietary, so diets print by default;
+    guests sort alphabetically within a table (`DEFAULT_GUEST_SORT`), tables in numeric order.
+  - The export dialog (`dialogs/guests/ExportGuestsPdfDialog.tsx`) is titled *„Eksportuj do PDF”*
+    and its button reads *„Pobierz PDF”* (`export.pdf.title`, `export.pdf.download`), reached from
+    the header's download menu item *„PDF”*. A video that must not claim a PDF file cannot show that
+    dialog as it is.
+  - Diet tags are free-form; only the presets `vegetarian`, `vegan`, `gluten-free` have labels
+    (`lib/dietary.ts`) and reserved tones - green, teal, amber (`--tag-*` in `styles.css`). The
+    guest list's filter row offers a diet chip, with its count, only once someone carries it.
 - **Invite-link collaboration** with owner / editor / viewer roles — `members.role.*`,
   `invite_claimed`. **Account-gated:** `canInvite = Boolean(session) && !isLocalWedding(weddingId)`,
   so a guest-mode video cannot show this without saying so.

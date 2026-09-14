@@ -7,6 +7,9 @@
   today, the room filling itself, the CTA.
 - **the import** - 20 seconds for Reels/TikTok: the guest list already in Excel, dropped into the
   import wizard, its columns mapped, the room seated, the CTA.
+- **the kitchen report** - 18 seconds for Reels/TikTok: the venue, the florist and the kitchen all
+  asking at once, the diet tags on the guest list, the printed report with diets beside the names,
+  the CTA.
 
 All render in 16:9 (1920x1080) and 9:16 (1080x1920), and all are in Polish.
 
@@ -26,6 +29,9 @@ npm run render:teaser:vertical   # -> out/easywed-teaser-vertical.mp4 (9:16)
 
 npm run render:import-excel            # -> out/easywed-import.mp4          (16:9)
 npm run render:import-excel:vertical   # -> out/easywed-import-vertical.mp4 (9:16)
+
+npm run render:kitchen-report            # -> out/easywed-report.mp4          (16:9)
+npm run render:kitchen-report:vertical   # -> out/easywed-report-vertical.mp4 (9:16)
 
 npm run render:all       # all of the above
 npm run lint             # eslint + tsc
@@ -78,9 +84,18 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `ImportMap`               | 180f   | columns mapped, "Do zaimportowania: 58"     |
 | `ImportLanded`            | 204f   | the room seats 58/58, then the CTA          |
 
-The scenes are also registered individually (Studio folders "Scenes", "Teaser" and "Import") so a
-single beat can be previewed without scrubbing through the whole timeline. The teaser's and the
-import's are registered at 9:16, the cut they are made for.
+| id                        | length | what it is                                     |
+| ------------------------- | ------ | ---------------------------------------------- |
+| `easywed-report`          | 540f   | the 18 s kitchen-report cut, 16:9              |
+| `easywed-report-vertical` | 540f   | the same cut, 9:16                             |
+| `ReportHook`              | 174f   | messages from the venue, florist and kitchen   |
+| `ReportTags`              | 120f   | diet tags landing on the guest list            |
+| `ReportSheet`             | 150f   | the printed report, pushed in on the diets     |
+| `ReportCta`               | 120f   | the pages settle, logo + easywed.app           |
+
+The scenes are also registered individually (Studio folders "Scenes", "Teaser", "Import" and
+"Report") so a single beat can be previewed without scrubbing through the whole timeline. The
+social cuts' scenes are registered at 9:16, the cut they are made for.
 
 ## Structure
 
@@ -100,6 +115,8 @@ src/easywed/
                          drawn with the same theme, layouts and components
   import-excel/          the import cut, in the teaser's shape; its dialog redraw lives in
                          components/ImportDialog.tsx, since the long walkthrough reuses it
+  kitchen-report/        the kitchen-report cut, in the teaser's shape; the printed report
+                         lives in components/PrintSheet.tsx, since the long walkthrough reuses it
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect

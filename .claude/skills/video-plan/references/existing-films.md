@@ -23,6 +23,14 @@ the list in a spreadsheet → the file dropped into the import dialog → column
 Scenes 90 + 150 + 180 + 204 = 624 at `IMPORT_EXCEL_TRANSITION = 8` × 3 seams → 600.
 Built from `docs/video-plans/full-series-2026-09-11.md`, brief `import-excel`.
 
+## The kitchen-report cut - `easywed-report` / `easywed-report-vertical`, 540f (18 s)
+
+messages pile up from the venue, the florist and the kitchen → diet tags landing row by row on the
+guest list → the printed report's pages land, push in on the diets beside the names → the pages
+settle, the CTA.
+Scenes 174 + 120 + 150 + 120 = 564 at `KITCHEN_REPORT_TRANSITION = 8` × 3 seams → 540.
+Built from `docs/video-plans/full-series-2026-09-11.md`, brief `kitchen-report`.
+
 ## Polish lines already burned on screen
 
 None of these may appear again:
@@ -45,6 +53,24 @@ Excel"*, *"Dopasuj każde pole do kolumny z Twojego pliku."*, *"Do zaimportowani
 *"58/58 gości przy stołach"*. The spreadsheet itself shows *"goscie.xlsx"* and the notes
 *"dojedzie po ślubie"*, *"krzesełko dla dziecka"*. Its CTA is *"easywed.app"* + *"bez zakładania
 konta"* - the allowed recurrence below, so it burns nothing new.
+
+From the kitchen-report cut: *"Sala prosi o plan stołów."* · *"Florystka pyta, gdzie rozłożyć
+winietki."* · *"Kuchnia pyta, ile dań wege."* · *"Wydrukuj i podaj dalej."* The florist's line
+names place cards at the user's call: easywed has no place-card feature (`SKILL.md` section 4),
+and the film only shows the printed per-table guest list as what answers her - never build a
+beat that shows or implies the app making place cards. And,
+as the guest panel and the printed report show them (app strings, verbatim): *"Szukaj gościa…"*,
+*"Wszyscy 58"*, *"Bez miejsca 0"*, *"Wege (4)"* ticking up to *"Wege (7)"*, *"Vegan (3)"* to
+*"Vegan (4)"*, *"Bez glutenu (2)"* to *"Bez glutenu (3)"*, *"Dodaj
+gościa"*, *"Importuj gości"*, *"Przy stole: Stół 1"* (and every other table), *"Data ślubu:
+12.09.2026"*, *"7 stołów · 58/58 goście"*, *"Wygenerowano 5.09.2026"*, *"Goście"*, *"Stół 1 (8/8
+zajętych)"* through *"Stół pary młodej (10/10 zajętych)"*, and the printed guest lines such as
+*"Maria Wiśniewska - Wege"*, *"Grzegorz Michalak - Wege"*, *"Zofia Wójcik - Bez glutenu"*,
+*"Urszula Kałużna - Vegan"*, *"Julia Zielińska - Vegan"*. The film's list carries 14 diets in 58
+(`kitchen-report/guests.ts`), more than the import cut's sheet. The tags
+*"Wege"*, *"Vegan"* and *"Bez glutenu"* appear on their own too; as words they stay the app's
+nouns (`SKILL.md` section 5), but a beat built on tags landing on a list is spent. Its CTA is
+*"easywed.app"* + *"bez zakładania konta"*.
 
 The one exception is the CTA: section 8 requires *„bez zakładania konta”*, so that phrase recurs by
 design. The full burned line *"Za darmo, bez zakładania konta."* still may not.

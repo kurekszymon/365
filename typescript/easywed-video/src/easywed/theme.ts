@@ -60,6 +60,19 @@ export const colors = {
   seatEmptyBorder: "#6f9a79",
   seatFilled: "#a9592b",
   seatFilledBorder: "#7f4220",
+
+  /** `--tag-green` / `--tag-teal` / `--tag-amber` (`styles.css`, oklch as hex): the diet tags' reserved tones. */
+  tagGreen: "#337344",
+  tagTeal: "#157171",
+  tagAmber: "#915c08",
+
+  /** The print view (`PlannerPrintView`): `bg-white text-black` and Tailwind v4's gray-500..800. */
+  paper: "#ffffff",
+  paperInk: "#000000",
+  paperGray500: "#6a7282",
+  paperGray600: "#4a5565",
+  paperGray700: "#364153",
+  paperGray800: "#1e2939",
 };
 
 export const shadow = {

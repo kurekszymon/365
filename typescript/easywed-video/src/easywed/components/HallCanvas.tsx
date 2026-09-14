@@ -19,6 +19,11 @@ type Props = {
   /** Per-table drag offset, indexed like `hall.tables`. */
   offsets?: Point[];
   selectedTableId?: string;
+  /**
+   * The printed plan's hall (`PlannerPrintView`): no dimension labels and no
+   * room chip, so it is drawn edge to edge rather than padded for them.
+   */
+  bare?: boolean;
   /** Overlays drawn in canvas coordinates (cursor, flying guest chips). */
   children?: React.ReactNode;
 };
@@ -30,9 +35,14 @@ type Props = {
  */
 export const PAD = { left: 46, top: 62, right: 76, bottom: 34 };
 
+/** A bare hall has nothing outside its walls to make room for. */
+const NO_PAD = { left: 0, top: 0, right: 0, bottom: 0 };
+
 /** Aspect ratio of what `HallCanvas` actually draws, padding included. */
-export const hallAspect = (hall: HallLayout): number =>
-  (hall.canvas.width + PAD.left + PAD.right) / (hall.canvas.height + PAD.top + PAD.bottom);
+export const hallAspect = (hall: HallLayout, bare = false): number => {
+  const pad = bare ? NO_PAD : PAD;
+  return (hall.canvas.width + pad.left + pad.right) / (hall.canvas.height + pad.top + pad.bottom);
+};
 
 /** A fixture, drawn the way the app draws one: slate on a cream floor. */
 const Fixture: React.FC<{
@@ -76,21 +86,24 @@ export const HallCanvas: React.FC<Props> = ({
   seatFill,
   offsets,
   selectedTableId,
+  bare = false,
   children,
 }) => {
   const { canvas, danceFloor, meters } = hall;
   const perimeter = (canvas.width + canvas.height) * 2;
   const chipLabel = `${hall.name} · ${meters.width}×${meters.height} m`;
   const chipWidth = 22 + chipLabel.length * 10.6;
+  const pad = bare ? NO_PAD : PAD;
 
   return (
     <svg
-      viewBox={`${-PAD.left} ${-PAD.top} ${canvas.width + PAD.left + PAD.right} ${
-        canvas.height + PAD.top + PAD.bottom
+      viewBox={`${-pad.left} ${-pad.top} ${canvas.width + pad.left + pad.right} ${
+        canvas.height + pad.top + pad.bottom
       }`}
       width="100%"
       height="100%"
-      style={{ display: "block" }}
+      // Edge to edge, the wall's stroke would lose its outer half to the SVG's clip.
+      style={{ display: "block", overflow: bare ? "visible" : undefined }}
     >
       <defs>
         {/* Two rulings, like the app's ruled-paper grid: 1 m fine, 5 m firmer. */}
@@ -138,8 +151,8 @@ export const HallCanvas: React.FC<Props> = ({
         strokeDashoffset={interpolate(outline, [0, 1], [perimeter, 0])}
       />
 
-      {/* Dimension labels sit outside the walls, as on the canvas. */}
-      <g opacity={outline} fill={colors.hall} fontFamily={fonts.sans} fontSize={21} fontWeight={500}>
+      {/* Dimension labels sit outside the walls, as on the canvas - not on paper. */}
+      <g opacity={bare ? 0 : outline} fill={colors.hall} fontFamily={fonts.sans} fontSize={21} fontWeight={500}>
         <text x={canvas.width / 2} y={-22} textAnchor="middle">
           {`${meters.width} m`}
         </text>
@@ -154,7 +167,7 @@ export const HallCanvas: React.FC<Props> = ({
       </g>
 
       {/* The hall's own label chip, grip handle and all. */}
-      <g opacity={outline}>
+      <g opacity={bare ? 0 : outline}>
         <rect
           x={14}
           y={14}

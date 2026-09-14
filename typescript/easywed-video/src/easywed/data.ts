@@ -93,4 +93,8 @@ export const rosterFor = (tables: Pick<TableSpec, "label" | "seats">[]): RosterG
 export const WEDDING = {
   couple: "Anna & Piotr",
   date: "12 września 2026",
+  /** The same day as a date, for the printed report's "Data ślubu". */
+  day: new Date(2026, 8, 12),
+  /** When the report is printed - the week before, as a couple would hand it on. */
+  printedOn: new Date(2026, 8, 5),
 };

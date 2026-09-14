@@ -32,7 +32,9 @@
     "render:teaser:vertical": "remotion render easywed-teaser-vertical out/easywed-teaser-vertical.mp4",
     "render:import-excel": "remotion render easywed-import out/easywed-import.mp4",
     "render:import-excel:vertical": "remotion render easywed-import-vertical out/easywed-import-vertical.mp4",
-    "render:all": "npm run render && npm run render:vertical && npm run render:gif && npm run render:teaser && npm run render:teaser:vertical && npm run render:import-excel && npm run render:import-excel:vertical",
+    "render:kitchen-report": "remotion render easywed-report out/easywed-report.mp4",
+    "render:kitchen-report:vertical": "remotion render easywed-report-vertical out/easywed-report-vertical.mp4",
+    "render:all": "npm run render && npm run render:vertical && npm run render:gif && npm run render:teaser && npm run render:teaser:vertical && npm run render:import-excel && npm run render:import-excel:vertical && npm run render:kitchen-report && npm run render:kitchen-report:vertical",
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
     "lint": "eslint src && tsc"

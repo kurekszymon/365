@@ -28,6 +28,12 @@ import { ImportDropScene } from "./easywed/import-excel/scenes/ImportDropScene";
 import { ImportMapScene } from "./easywed/import-excel/scenes/ImportMapScene";
 import { ImportLandedScene } from "./easywed/import-excel/scenes/ImportLandedScene";
 import { IMPORT_EXCEL_DURATION, IMPORT_EXCEL_SCENES } from "./easywed/import-excel/timeline";
+import { KitchenReport } from "./easywed/kitchen-report/KitchenReport";
+import { ReportHookScene } from "./easywed/kitchen-report/scenes/ReportHookScene";
+import { ReportTagsScene } from "./easywed/kitchen-report/scenes/ReportTagsScene";
+import { ReportSheetScene } from "./easywed/kitchen-report/scenes/ReportSheetScene";
+import { ReportCtaScene } from "./easywed/kitchen-report/scenes/ReportCtaScene";
+import { KITCHEN_REPORT_DURATION, KITCHEN_REPORT_SCENES } from "./easywed/kitchen-report/timeline";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -91,6 +97,25 @@ export const RemotionRoot: React.FC = () => {
         height={VERTICAL_HEIGHT}
       />
 
+      {/* The 18 s kitchen-report cut - the diets on the list, printed for the venue, florist and kitchen. */}
+      <Composition
+        id="easywed-report"
+        component={KitchenReport}
+        durationInFrames={KITCHEN_REPORT_DURATION}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+
+      <Composition
+        id="easywed-report-vertical"
+        component={KitchenReport}
+        durationInFrames={KITCHEN_REPORT_DURATION}
+        fps={FPS}
+        width={VERTICAL_WIDTH}
+        height={VERTICAL_HEIGHT}
+      />
+
       {/* Each scene on its own, so a single beat can be previewed in isolation. */}
       <Folder name="Scenes">
         <Composition id="Intro" component={IntroScene} durationInFrames={SCENES.intro} fps={FPS} width={WIDTH} height={HEIGHT} />
@@ -115,6 +140,14 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="ImportDrop" component={ImportDropScene} durationInFrames={IMPORT_EXCEL_SCENES.drop} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="ImportMap" component={ImportMapScene} durationInFrames={IMPORT_EXCEL_SCENES.map} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="ImportLanded" component={ImportLandedScene} durationInFrames={IMPORT_EXCEL_SCENES.landed} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+      </Folder>
+
+      {/* The kitchen-report cut's beats, at 9:16 - the cut it is made for. */}
+      <Folder name="Report">
+        <Composition id="ReportHook" component={ReportHookScene} durationInFrames={KITCHEN_REPORT_SCENES.hook} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="ReportTags" component={ReportTagsScene} durationInFrames={KITCHEN_REPORT_SCENES.tags} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="ReportSheet" component={ReportSheetScene} durationInFrames={KITCHEN_REPORT_SCENES.sheet} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="ReportCta" component={ReportCtaScene} durationInFrames={KITCHEN_REPORT_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
       </Folder>
     </>
   );
