@@ -35,6 +35,7 @@
     "render:kitchen-report": "remotion render easywed-report out/easywed-report.mp4",
     "render:kitchen-report:vertical": "remotion render easywed-report-vertical out/easywed-report-vertical.mp4",
     "render:all": "npm run render && npm run render:vertical && npm run render:gif && npm run render:teaser && npm run render:teaser:vertical && npm run render:import-excel && npm run render:import-excel:vertical && npm run render:kitchen-report && npm run render:kitchen-report:vertical",
+    "render:all:vertical": "npm run render && npm run render:vertical && npm run render:gif && npm run render:teaser && npm run render:teaser:vertical && npm run render:import-excel && npm run render:import-excel:vertical && npm run render:kitchen-report && npm run render:kitchen-report:vertical",
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
     "lint": "eslint src && tsc"
