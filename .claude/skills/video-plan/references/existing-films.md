@@ -51,8 +51,8 @@ panel show them (app strings, verbatim): *"Importuj gości z pliku CSV lub Excel
 Excel"*, *"Dopasuj każde pole do kolumny z Twojego pliku."*, *"Do zaimportowania: 58 gości"*,
 *"Dodaj 58 gości"*, *"+52 więcej wierszy"*, *"Brak gości."*, *"Rozsadzeni"* ·
 *"58/58 gości przy stołach"*. The spreadsheet itself shows *"goscie.xlsx"* and the notes
-*"dojedzie po ślubie"*, *"krzesełko dla dziecka"*. Its CTA is *"easywed.app"* + *"bez zakładania
-konta"* - the allowed recurrence below, so it burns nothing new.
+*"dojedzie po ślubie"*, *"krzesełko dla dziecka"*. Its CTA is *"Wczytaj swoją listę gości"* over
+the *"easywed.app"* pill.
 
 From the kitchen-report cut: *"Sala prosi o plan stołów."* · *"Florystka pyta, gdzie rozłożyć
 winietki."* · *"Kuchnia pyta, ile dań wege."* · *"Wydrukuj i podaj dalej."* The florist's line
@@ -70,10 +70,14 @@ zajętych)"* through *"Stół pary młodej (10/10 zajętych)"*, and the printed 
 (`kitchen-report/guests.ts`), more than the import cut's sheet. The tags
 *"Wege"*, *"Vegan"* and *"Bez glutenu"* appear on their own too; as words they stay the app's
 nouns (`SKILL.md` section 5), but a beat built on tags landing on a list is spent. Its CTA is
-*"easywed.app"* + *"bez zakładania konta"*.
+*"Przygotuj wydruk dla sali i kuchni"* over the *"easywed.app"* pill.
 
-The one exception is the CTA: section 8 requires *„bez zakładania konta”*, so that phrase recurs by
-design. The full burned line *"Za darmo, bez zakładania konta."* still may not.
+The teaser's CTA is *"Zacznij dziś wieczorem"* over the same pill. The three social cuts once closed
+on a grey *"(Za darmo,) bez zakładania konta"* note under the pill; that was replaced by an action
+line (`components/CallToAction.tsx`), so the note is spent too.
+
+The one exception is the CTA pill itself: *"easywed.app"* recurs by design (section 8). Each video's
+action line above it is its own, and burns like any other line.
 
 ## One caveat: the films are not a source of approved copy
 

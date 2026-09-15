@@ -2,9 +2,13 @@ import React from "react";
 import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { Backdrop } from "../../components/Backdrop";
 import { BrandMark } from "../../components/BrandMark";
+import { CallToAction } from "../../components/CallToAction";
 import { Wordmark } from "../../components/Wordmark";
 import { useFormat } from "../../format";
-import { colors, fonts, shadow } from "../../theme";
+import { colors, fonts } from "../../theme";
+
+/** The action line lands once the title has settled; the pill follows it. */
+const CTA_FROM = 36;
 
 export const CtaScene: React.FC = () => {
   const frame = useCurrentFrame();
@@ -15,8 +19,6 @@ export const CtaScene: React.FC = () => {
   // The mark's two seats fill on the cut, echoing the room that just filled.
   const fillProgress = spring({ frame: frame - 10, fps, config: { damping: 11, mass: 0.5 } });
   const titleIn = spring({ frame: frame - 16, fps, config: { damping: 200 }, durationInFrames: 26 });
-  const ctaIn = spring({ frame: frame - 36, fps, config: { damping: 12, mass: 0.6 } });
-  const noteIn = spring({ frame: frame - 52, fps, config: { damping: 200 }, durationInFrames: 22 });
 
   return (
     <Backdrop>
@@ -51,36 +53,13 @@ export const CtaScene: React.FC = () => {
           Rozsadź gości w jeden wieczór
         </div>
 
-        <div
-          style={{
-            marginTop: tall ? 52 : 56,
-            padding: "22px 52px",
-            borderRadius: 999,
-            backgroundColor: colors.primary,
-            color: colors.primaryInk,
-            boxShadow: shadow.chip,
-            fontFamily: fonts.sans,
-            fontSize: 36,
-            fontWeight: 600,
-            letterSpacing: 0.4,
-            opacity: ctaIn,
-            transform: `scale(${interpolate(ctaIn, [0, 1], [0.9, 1])})`,
-          }}
-        >
-          easywed.app
-        </div>
-
-        <div
-          style={{
-            marginTop: 22,
-            fontFamily: fonts.sans,
-            fontSize: 27,
-            color: colors.inkSoft,
-            opacity: noteIn,
-          }}
-        >
-          Za darmo, bez zakładania konta.
-        </div>
+        <CallToAction
+          action="Zacznij dziś wieczorem"
+          from={CTA_FROM}
+          actionSize={tall ? 46 : 42}
+          urlSize={38}
+          marginTop={tall ? 52 : 56}
+        />
       </AbsoluteFill>
     </Backdrop>
   );

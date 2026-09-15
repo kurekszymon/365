@@ -8,18 +8,18 @@ import {
 } from "remotion";
 import { Backdrop } from "../../components/Backdrop";
 import { BrandMark } from "../../components/BrandMark";
+import { CallToAction } from "../../components/CallToAction";
 import { PRINT_PAGE, PrintPage, printPages } from "../../components/PrintSheet";
 import { Wordmark } from "../../components/Wordmark";
 import { useFormat } from "../../format";
-import { colors, fonts, shadow } from "../../theme";
+import { colors, fonts } from "../../theme";
 import { guestListFor } from "../guests";
 
-/** The printed pages settle into a stack, then the mark, the line, the address and the note land. */
+/** The printed pages settle into a stack, then the mark, the line and the call to action land. */
 const STACK_FROM = 0;
 const MARK_FROM = 14;
 const LINE_FROM = 26;
-const URL_FROM = 44;
-const NOTE_FROM = 58;
+const CTA_FROM = 44;
 
 /** Each page's offset and tilt in the settled stack, guest list on top. */
 const STACK = [
@@ -74,17 +74,6 @@ export const ReportCtaScene: React.FC = () => {
     fps,
     config: { damping: 200 },
     durationInFrames: 24,
-  });
-  const urlIn = spring({
-    frame: frame - URL_FROM,
-    fps,
-    config: { damping: 12, mass: 0.6 },
-  });
-  const noteIn = spring({
-    frame: frame - NOTE_FROM,
-    fps,
-    config: { damping: 200 },
-    durationInFrames: 22,
   });
 
   const pageScale = layout.pageWidth / PRINT_PAGE.width;
@@ -163,37 +152,13 @@ export const ReportCtaScene: React.FC = () => {
         {"Wydrukuj i podaj dalej."}
       </div>
 
-      <div
-        style={{
-          marginTop: tall ? 48 : 40,
-          padding: "22px 52px",
-          borderRadius: 999,
-          backgroundColor: colors.primary,
-          color: colors.primaryInk,
-          boxShadow: shadow.chip,
-          fontFamily: fonts.sans,
-          fontSize: tall ? 42 : 38,
-          fontWeight: 600,
-          letterSpacing: 0.4,
-          opacity: urlIn,
-          transform: `scale(${interpolate(urlIn, [0, 1], [0.9, 1])})`,
-        }}
-      >
-        easywed.app
-      </div>
-
-      <div
-        style={{
-          marginTop: 24,
-          fontFamily: fonts.sans,
-          fontSize: tall ? 36 : 32,
-          color: colors.inkSoft,
-          opacity: noteIn,
-          transform: `translateY(${interpolate(noteIn, [0, 1], [14, 0])}px)`,
-        }}
-      >
-        bez zakładania konta
-      </div>
+      <CallToAction
+        action="Przygotuj wydruk dla sali i kuchni"
+        from={CTA_FROM}
+        actionSize={tall ? 44 : 36}
+        urlSize={tall ? 42 : 38}
+        marginTop={tall ? 48 : 40}
+      />
     </div>
   );
 

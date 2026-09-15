@@ -12,6 +12,7 @@ export type IconName =
   | "reminders"
   | "assistant"
   | "arrowLeft"
+  | "arrowRight"
   | "chevronLeft"
   | "chevronRight"
   | "landmark"
@@ -72,6 +73,12 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <path d="M19 12H5" />
       <path d="M12 19l-7-7 7-7" />
+    </>
+  ),
+  arrowRight: (
+    <>
+      <path d="M5 12h14" />
+      <path d="M12 5l7 7-7 7" />
     </>
   ),
   chevronLeft: <path d="M15 18l-6-6 6-6" />,

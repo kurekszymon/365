@@ -68,8 +68,8 @@ with AskUserQuestion, then build.
    - Where the brief cites an app key, `git show easywed/v1:./src/i18n/locales/pl.json | grep
      '"that.key"'` and use the value **verbatim**. If the real value is too long for the frame, ask —
      never invent a shorter line and attribute it to the app.
-   - It must not appear in the burned list in `existing-films.md`. *„bez zakładania konta”* is the
-     one phrase allowed to recur.
+   - It must not appear in the burned list in `existing-films.md`. The *„easywed.app”* pill is the
+     one thing allowed to recur; the CTA's action line above it must be new.
    - It must not make a section 4 claim.
    - The `*„…”*` around copy in a plan is the plan quoting it, not glyphs to draw. The existing
      scenes render their lines bare (`teaser/scenes/HookScene.tsx`). Draw quotation marks only

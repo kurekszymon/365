@@ -2,10 +2,10 @@ import React from "react";
 import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { Backdrop } from "../../components/Backdrop";
 import { BrandMark } from "../../components/BrandMark";
+import { CallToAction } from "../../components/CallToAction";
 import { ImportDialog } from "../../components/ImportDialog";
 import { Wordmark } from "../../components/Wordmark";
 import { useFormat } from "../../format";
-import { colors, fonts, shadow } from "../../theme";
 import { DialogMotion, dialogScale, ImportPlanner } from "../components/ImportPlanner";
 import { SHEET_HEADERS, SHEET_MAPPING, sheetFor } from "../sheet";
 import { IMPORT_EXCEL_SCENES, IMPORT_EXCEL_TRANSITION } from "../timeline";
@@ -28,7 +28,7 @@ const FILL_FROM = 40;
 const FILL_STEP = 6;
 const FILL_OVER = 26;
 
-/** The planner gives way to the CTA card, then the mark, the address and the note land. */
+/** The planner gives way to the CTA card, then the mark and the call to action land. */
 const CTA_FROM = 134;
 const CTA_OVER = 14;
 
@@ -55,8 +55,6 @@ export const ImportLandedScene: React.FC = () => {
   const ctaIn = interpolate(frame, [CTA_FROM, CTA_FROM + CTA_OVER], [0, 1], clamp);
   const markIn = spring({ frame: frame - (CTA_FROM + 4), fps, config: { damping: 13, mass: 0.6 } });
   const fillProgress = spring({ frame: frame - (CTA_FROM + 14), fps, config: { damping: 11, mass: 0.5 } });
-  const urlIn = spring({ frame: frame - (CTA_FROM + 18), fps, config: { damping: 12, mass: 0.6 } });
-  const noteIn = spring({ frame: frame - (CTA_FROM + 30), fps, config: { damping: 200 }, durationInFrames: 22 });
 
   return (
     <AbsoluteFill>
@@ -98,37 +96,13 @@ export const ImportLandedScene: React.FC = () => {
                 <Wordmark size={tall ? 96 : 104} />
               </div>
 
-              <div
-                style={{
-                  marginTop: tall ? 64 : 56,
-                  padding: "22px 52px",
-                  borderRadius: 999,
-                  backgroundColor: colors.primary,
-                  color: colors.primaryInk,
-                  boxShadow: shadow.chip,
-                  fontFamily: fonts.sans,
-                  fontSize: tall ? 42 : 40,
-                  fontWeight: 600,
-                  letterSpacing: 0.4,
-                  opacity: urlIn,
-                  transform: `scale(${interpolate(urlIn, [0, 1], [0.9, 1])})`,
-                }}
-              >
-                easywed.app
-              </div>
-
-              <div
-                style={{
-                  marginTop: 26,
-                  fontFamily: fonts.sans,
-                  fontSize: tall ? 36 : 32,
-                  color: colors.inkSoft,
-                  opacity: noteIn,
-                  transform: `translateY(${interpolate(noteIn, [0, 1], [14, 0])}px)`,
-                }}
-              >
-                bez zakładania konta
-              </div>
+              <CallToAction
+                action="Wczytaj swoją listę gości"
+                from={CTA_FROM + 18}
+                actionSize={tall ? 48 : 44}
+                urlSize={tall ? 42 : 40}
+                marginTop={tall ? 64 : 56}
+              />
             </AbsoluteFill>
           </Backdrop>
         </AbsoluteFill>

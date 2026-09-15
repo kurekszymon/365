@@ -164,7 +164,10 @@ Cover all four target formats:
 
 One idea per video. The hook is a pain or a question, never a feature name. Show the product doing
 the thing — no talking-head substitutes, no abstract motion graphics standing in for a screen.
-Sound-off by default. The CTA is easywed.app plus *"bez zakładania konta"*. No invented numbers, no
+Sound-off by default. The CTA is one imperative action line tied to the video's own payoff (what the
+viewer does next, e.g. *"Wczytaj swoją listę gości"*), then the easywed.app pill - both drawn by
+`components/CallToAction.tsx`. Not a disclaimer like *"bez zakładania konta"*; that belongs in the
+caption. No invented numbers, no
 fake counts, no implied popularity. Polish typography as this repo writes it.
 
 ## 9. Before writing, verify
