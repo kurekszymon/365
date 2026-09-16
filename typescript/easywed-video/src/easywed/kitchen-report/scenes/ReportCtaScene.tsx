@@ -153,7 +153,9 @@ export const ReportCtaScene: React.FC = () => {
       </div>
 
       <CallToAction
-        action="Przygotuj wydruk dla sali i kuchni"
+        // The heading above is the payoff; this is the step before it, so the
+        // two lines stop issuing the same command.
+        action="Dodaj preferencje żywieniowe gości"
         from={CTA_FROM}
         actionSize={tall ? 44 : 36}
         urlSize={tall ? 42 : 38}

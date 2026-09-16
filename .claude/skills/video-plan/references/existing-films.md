@@ -70,11 +70,16 @@ zajętych)"* through *"Stół pary młodej (10/10 zajętych)"*, and the printed 
 (`kitchen-report/guests.ts`), more than the import cut's sheet. The tags
 *"Wege"*, *"Vegan"* and *"Bez glutenu"* appear on their own too; as words they stay the app's
 nouns (`SKILL.md` section 5), but a beat built on tags landing on a list is spent. Its CTA is
-*"Przygotuj wydruk dla sali i kuchni"* over the *"easywed.app"* pill.
+*"Dodaj preferencje żywieniowe gości"* over the *"easywed.app"* pill.
 
 The teaser's CTA is *"Zacznij dziś wieczorem"* over the same pill. The three social cuts once closed
 on a grey *"(Za darmo,) bez zakładania konta"* note under the pill; that was replaced by an action
 line (`components/CallToAction.tsx`), so the note is spent too.
+
+The walkthrough's outro now closes the same way - *"Ustaw pierwszy stół"* over the pill - so all four
+films share one closing shape. The grey *"Zacznij w trybie gościa - bez zakładania konta."* that used
+to sit under its pill is gone from the last film that carried it: a disclaimer is caption copy, not
+an action line (`SKILL.md` section 8). Both of those lines are now spent.
 
 The one exception is the CTA pill itself: *"easywed.app"* recurs by design (section 8). Each video's
 action line above it is its own, and burns like any other line.

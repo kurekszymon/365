@@ -54,7 +54,12 @@ export const CallToAction: React.FC<{
           display: "flex",
           alignItems: "center",
           gap: Math.round(urlSize * 0.45),
-          padding: "22px 40px 22px 52px",
+          // Scales with the type, as the gap and the margin above it do. The
+          // 9:16 cuts set a larger `urlSize`, and fixed padding left their pill
+          // squatter than the 16:9 one; at `urlSize` 38 this is the same pill.
+          padding: `${Math.round(urlSize * 0.58)}px ${Math.round(urlSize * 1.05)}px ${Math.round(
+            urlSize * 0.58,
+          )}px ${Math.round(urlSize * 1.37)}px`,
           borderRadius: 999,
           backgroundColor: colors.primary,
           color: colors.primaryInk,

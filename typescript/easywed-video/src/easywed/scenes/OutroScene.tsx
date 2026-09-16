@@ -2,9 +2,10 @@ import React from "react";
 import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { Backdrop } from "../components/Backdrop";
 import { BrandMark } from "../components/BrandMark";
+import { CallToAction } from "../components/CallToAction";
 import { Wordmark } from "../components/Wordmark";
 import { useFormat } from "../format";
-import { colors, fonts, shadow } from "../theme";
+import { colors, fonts } from "../theme";
 
 const FEATURES = [
   "Plan sali „przeciągnij i upuść”",
@@ -24,7 +25,6 @@ export const OutroScene: React.FC = () => {
   const pills = FEATURES.map((_, i) =>
     spring({ frame: frame - (28 + i * 6), fps, config: { damping: 200 }, durationInFrames: 22 }),
   );
-  const ctaIn = spring({ frame: frame - 58, fps, config: { damping: 12, mass: 0.6 } });
 
   return (
     <Backdrop>
@@ -73,37 +73,17 @@ export const OutroScene: React.FC = () => {
           ))}
         </div>
 
-        <div
-          style={{
-            marginTop: 58,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 20,
-            opacity: ctaIn,
-            transform: `scale(${interpolate(ctaIn, [0, 1], [0.9, 1])})`,
-          }}
-        >
-          <div
-            style={{
-              // The landing page's CTA block is `bg-primary`, not the logo green.
-              padding: "22px 52px",
-              borderRadius: 999,
-              backgroundColor: colors.primary,
-              color: colors.primaryInk,
-              boxShadow: shadow.chip,
-              fontFamily: fonts.sans,
-              fontSize: 34,
-              fontWeight: 600,
-              letterSpacing: 0.4,
-            }}
-          >
-            easywed.app
-          </div>
-          <div style={{ fontFamily: fonts.sans, fontSize: 26, color: colors.inkSoft }}>
-            Zacznij w trybie gościa - bez zakładania konta.
-          </div>
-        </div>
+        {/* The one thing to do next, then the pill - the closing shape the
+            social cuts already use (`components/CallToAction.tsx`), so the
+            longest film ends on an instruction rather than on a note. The
+            guest-mode line that sat here belongs in the caption. */}
+        <CallToAction
+          action="Ustaw pierwszy stół"
+          from={58}
+          actionSize={tall ? 36 : 34}
+          urlSize={tall ? 38 : 36}
+          marginTop={tall ? 52 : 50}
+        />
       </AbsoluteFill>
     </Backdrop>
   );

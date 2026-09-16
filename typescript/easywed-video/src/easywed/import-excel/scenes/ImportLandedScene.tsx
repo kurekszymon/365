@@ -28,8 +28,12 @@ const FILL_FROM = 40;
 const FILL_STEP = 6;
 const FILL_OVER = 26;
 
-/** The planner gives way to the CTA card, then the mark and the call to action land. */
-const CTA_FROM = 134;
+/**
+ * The planner gives way to the CTA card, then the mark and the call to action
+ * land. Earlier than the room's fill alone would need: at 134 the pill held for
+ * barely 40 frames before the cut, against the teaser's and the report's ~70.
+ */
+const CTA_FROM = 124;
 const CTA_OVER = 14;
 
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
