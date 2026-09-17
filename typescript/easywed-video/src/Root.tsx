@@ -44,6 +44,12 @@ import { SwapHookScene } from "./easywed/seat-swap/scenes/SwapHookScene";
 import { SwapPickScene } from "./easywed/seat-swap/scenes/SwapPickScene";
 import { SwapReseatScene } from "./easywed/seat-swap/scenes/SwapReseatScene";
 import { SWAP_DURATION, SWAP_SCENES } from "./easywed/seat-swap/timeline";
+import { KidsCount } from "./easywed/kids-count/KidsCount";
+import { KidsHookScene } from "./easywed/kids-count/scenes/KidsHookScene";
+import { KidsTagScene } from "./easywed/kids-count/scenes/KidsTagScene";
+import { KidsCountScene } from "./easywed/kids-count/scenes/KidsCountScene";
+import { KidsCtaScene } from "./easywed/kids-count/scenes/KidsCtaScene";
+import { KIDS_DURATION, KIDS_SCENES } from "./easywed/kids-count/timeline";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -126,6 +132,25 @@ export const RemotionRoot: React.FC = () => {
         height={VERTICAL_HEIGHT}
       />
 
+      {/* The 17 s kids cut - two age brackets typed onto the guest list, and the count that follows. */}
+      <Composition
+        id="easywed-kids"
+        component={KidsCount}
+        durationInFrames={KIDS_DURATION}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+
+      <Composition
+        id="easywed-kids-vertical"
+        component={KidsCount}
+        durationInFrames={KIDS_DURATION}
+        fps={FPS}
+        width={VERTICAL_WIDTH}
+        height={VERTICAL_HEIGHT}
+      />
+
       {/* The 12 s landing-page loop - two distances measured in metres; 16:9 only, no CTA, loops back to frame 0. */}
       <Composition
         id="easywed-scale"
@@ -179,6 +204,14 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="ReportTags" component={ReportTagsScene} durationInFrames={KITCHEN_REPORT_SCENES.tags} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="ReportSheet" component={ReportSheetScene} durationInFrames={KITCHEN_REPORT_SCENES.sheet} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="ReportCta" component={ReportCtaScene} durationInFrames={KITCHEN_REPORT_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+      </Folder>
+
+      {/* The kids cut's beats, at 9:16 - the cut it is made for. */}
+      <Folder name="Kids">
+        <Composition id="KidsHook" component={KidsHookScene} durationInFrames={KIDS_SCENES.hook} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="KidsTag" component={KidsTagScene} durationInFrames={KIDS_SCENES.tag} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="KidsCount" component={KidsCountScene} durationInFrames={KIDS_SCENES.count} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="KidsCta" component={KidsCtaScene} durationInFrames={KIDS_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
       </Folder>
 
       {/* The to-scale loop's beats, at 16:9 - the only size it is made for. */}

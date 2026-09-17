@@ -77,6 +77,13 @@ export const colors = {
   tagGreen: "#337344",
   tagTeal: "#157171",
   tagAmber: "#915c08",
+  /**
+   * `--tag-violet`, the one tone `lib/ageGroup.ts` reserves for every child
+   * bracket (`AGE_GROUP_TONE`). `oklch(0.5 0.11 300)` as hex - a blue-violet,
+   * two hue families away from `accent` (336deg), so a bracket badge never
+   * reads as a selection.
+   */
+  tagViolet: "#6d5398",
 
   /** The print view (`PlannerPrintView`): `bg-white text-black` and Tailwind v4's gray-500..800. */
   paper: "#ffffff",

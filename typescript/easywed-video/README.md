@@ -40,6 +40,9 @@ npm run render:import-excel:vertical   # -> out/pl/easywed-import-vertical.mp4 (
 npm run render:kitchen-report            # -> out/pl/easywed-report.mp4          (16:9)
 npm run render:kitchen-report:vertical   # -> out/pl/easywed-report-vertical.mp4 (9:16)
 
+npm run render:kids-count            # -> out/pl/easywed-kids.mp4          (16:9)
+npm run render:kids-count:vertical   # -> out/pl/easywed-kids-vertical.mp4 (9:16)
+
 npm run render:to-scale          # -> out/pl/easywed-scale.mp4        (16:9, at 960x540 for its page slot)
 npm run render:to-scale:poster   # -> out/pl/easywed-scale-poster.png (frame 0 at 960x540, the <video> poster)
 
@@ -128,6 +131,15 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `ReportSheet`             | 150f   | the printed report, pushed in on the diets     |
 | `ReportCta`               | 120f   | the pages settle, logo + easywed.app           |
 
+| id                        | length | what it is                                          |
+| ------------------------- | ------ | --------------------------------------------------- |
+| `easywed-kids`            | 510f   | the 17 s kids-count cut, 16:9                       |
+| `easywed-kids-vertical`   | 510f   | the same cut, 9:16                                  |
+| `KidsHook`                | 96f    | 58 names, not a bracket among them                  |
+| `KidsTag`                 | 180f   | two guests given an age bracket, one of them typed  |
+| `KidsCount`               | 150f   | the "Dzieci 5" chip pressed; five rows, five badges |
+| `KidsCta`                 | 108f   | the panel recedes, logo + easywed.app               |
+
 | id                        | length | what it is                                        |
 | ------------------------- | ------ | ------------------------------------------------- |
 | `easywed-scale`           | 360f   | the 12 s to-scale landing loop, 16:9              |
@@ -143,7 +155,7 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `SwapReseat`              | 150f   | the chair she left, filled again; the seam home    |
 
 The scenes are also registered individually (Studio folders "Scenes", "Teaser", "Import",
-"Report", "Scale" and "Swap") so a single beat can be previewed without scrubbing through the whole
+"Report", "Kids", "Scale" and "Swap") so a single beat can be previewed without scrubbing through the whole
 timeline. The social cuts' scenes are registered at 9:16, the cut they are made for; the loops' at
 16:9, their only size.
 
@@ -166,7 +178,14 @@ src/easywed/
   import-excel/          the import cut, in the teaser's shape; its dialog redraw lives in
                          components/ImportDialog.tsx, since the long walkthrough reuses it
   kitchen-report/        the kitchen-report cut, in the teaser's shape; the printed report
-                         lives in components/PrintSheet.tsx, since the long walkthrough reuses it
+                         lives in components/PrintSheet.tsx, since the long walkthrough reuses
+                         it, and the guest list in components/GuestList.tsx, since the
+                         kids-count cut draws it too
+  kids-count/            the kids-count cut, in the teaser's shape; guests.ts puts five
+                         children on the roster without changing its 58, and
+                         components/EditGuestDrawer.tsx redraws the edit-guest form. The
+                         guest list itself is components/GuestList.tsx, shared with the
+                         kitchen-report cut
   to-scale/              the to-scale landing loop - three scenes drawn off one shared clock
                          (script.ts), closed by components/LoopSeam.tsx, which the other
                          landing loops reuse

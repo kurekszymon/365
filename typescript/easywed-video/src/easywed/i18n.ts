@@ -80,8 +80,24 @@ const pl = {
     search: "Szukaj gościa…", // guests.search_placeholder
     filterAll: (count: number) => `Wszyscy ${count}`, // guests.filter.all
     filterUnseated: (count: number) => `Bez miejsca ${count}`, // guests.filter.unseated
+    filterKids: (count: number) => `Dzieci ${count}`, // guests.filter.kids
     add: "Dodaj gościa", // guests.add
+    edit: "Edytuj gościa", // guests.edit
     import: "Importuj gości", // guests.import
+    /** `GuestFormFields` / `GuestAgeGroupField`, in the order the form draws them. */
+    form: {
+      name: "Imię", // guests.add.name
+      dietary: "Preferencje żywieniowe", // guests.add.dietary_preferences
+      dietaryCustom: "Dodaj", // guests.add.dietary_custom
+      ageGroup: "Grupa wiekowa", // guests.add.age_group
+      ageGroupCustom: "Dodaj", // guests.add.age_group_custom
+      ageGroupPlaceholder: "np. 6-12", // guests.add.age_group_custom_placeholder
+      note: "Notatka", // guests.add.note
+      notePlaceholder: "np. uczulony na orzechy, lubi ostre jedzenie, itp.", // guests.add.note_placeholder
+      save: "Zapisz", // common.save
+    },
+    /** `AGE_GROUP_PRESETS`, labelled `guests.age_group.*`; a typed bracket is its own label. */
+    ageGroup: { adult: "Dorosły", "0-3": "0-3 lata", "3-6": "3-6 lat" } as Record<string, string>,
     none: "Brak gości.", // guests.none
     seatedAt: (table: string) => `Przy stole: ${table}`, // guests.status.seated_at
     more: (count: number) => `+ ${count} gości więcej`,
@@ -189,6 +205,13 @@ const pl = {
     hook: "Ktoś musi się przesiąść?",
     payoff: "Przesiadka bez przepisywania listy.",
   },
+
+  kids: {
+    /** Revealed word by word; "na" is bound to "weselu?" so the line never ends on it. */
+    hook: ["Ile", "dzieci", "będzie", "na weselu?"],
+    payoff: "Każde dziecko policzone.",
+    ctaAction: "Oznacz dzieci na liście gości",
+  },
 };
 
 const en: typeof pl = {
@@ -242,8 +265,22 @@ const en: typeof pl = {
     search: "Search guest…",
     filterAll: (count) => `All ${count}`,
     filterUnseated: (count) => `Unseated ${count}`,
+    filterKids: (count) => `Kids ${count}`,
     add: "Add a guest",
+    edit: "Edit guest",
     import: "Import guests",
+    form: {
+      name: "Name",
+      dietary: "Dietary Preferences",
+      dietaryCustom: "Add",
+      ageGroup: "Age group",
+      ageGroupCustom: "Add",
+      ageGroupPlaceholder: "e.g. 6-12",
+      note: "Note",
+      notePlaceholder: "e.g. allergic to nuts, loves spicy food, etc.",
+      save: "Save",
+    },
+    ageGroup: { adult: "Adult", "0-3": "0-3 years", "3-6": "3-6 years" },
     none: "No guests added yet.",
     seatedAt: (table) => `Seated at ${table}`,
     more: (count) => `+ ${count} more guests`,
@@ -344,8 +381,20 @@ const en: typeof pl = {
     hook: "Someone has to move?",
     payoff: "Reseat without rewriting the list.",
   },
+
+  kids: {
+    hook: ["How", "many", "children", "are coming?"],
+    payoff: "Every child counted.",
+    ctaAction: "Tag the children on your guest list",
+  },
 };
 
 const translations: Record<Lang, typeof pl> = { pl, en };
 
 export const tl = translations[LANG];
+
+/**
+ * `ageGroupLabel` in `lib/ageGroup.ts`: the presets carry a translated label,
+ * anything the user typed is its own label.
+ */
+export const ageGroupLabel = (group: string): string => tl.guests.ageGroup[group] ?? group;

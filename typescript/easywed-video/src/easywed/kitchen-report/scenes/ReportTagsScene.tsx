@@ -5,7 +5,7 @@ import { HallCanvas } from "../../components/HallCanvas";
 import { PlannerCanvas } from "../../components/PlannerCanvas";
 import { useFormat } from "../../format";
 import { colors } from "../../theme";
-import { CHIPS_TOP, GuestList, LIST_TOP, rowBottom } from "../components/GuestList";
+import { CHIPS_TOP, GuestList, LIST_TOP, rowBottom } from "../../components/GuestList";
 import { guestListFor } from "../guests";
 
 /**

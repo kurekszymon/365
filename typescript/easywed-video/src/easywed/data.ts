@@ -20,8 +20,12 @@ export const GUESTS: GuestSpec[] = [
   { name: "Hanna Mazur", diet: "vegetarian", table: tl.hall.table(5) },
 ];
 
-/** A row of the guest list the import film reads in. */
-export type RosterGuest = GuestSpec & { note?: string };
+/**
+ * A row of the guest list the import film reads in. `ageGroup` is the app's
+ * single age bracket per guest (`lib/ageGroup.ts`): absent means an adult, the
+ * implicit default, which is why no film before `kids-count` sets it.
+ */
+export type RosterGuest = GuestSpec & { note?: string; ageGroup?: string };
 
 /**
  * First names for the seats `GUESTS` doesn't fill, alternating so every table

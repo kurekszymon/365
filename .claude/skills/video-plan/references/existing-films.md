@@ -49,6 +49,15 @@ loop: no CTA, no pill.
 Scenes 105 + 165 + 150 = 420 at `SWAP_TRANSITION = 15` × 2 seams → 390; the last 15 frames are
 `LoopSeam` onto frame 0. Built from `docs/video-plans/16x9-only-2026-09-16.md`, brief `seat-swap`.
 
+## The kids-count cut - `easywed-kids` / `easywed-kids-vertical`, 510f (17 s)
+
+58 names with not a bracket among them and the question - the pencil on one row, the edit sheet,
+`0-3 lata` picked and saved, then a cut to a second guest whose bracket `6-12` is typed into the
+form's own field - the `Dzieci 5` chip pressed, the list filtered to five rows each with its violet
+badge, the payoff - the panel recedes, the CTA.
+Scenes 96 + 180 + 150 + 108 = 534 at `KIDS_TRANSITION = 8` x 3 seams -> 510.
+Built from `docs/video-plans/full-series-2026-09-17.md`, brief `kids-count`.
+
 ## Polish lines already burned on screen
 
 None of these may appear again:
@@ -72,8 +81,10 @@ Excel"*, *"Dopasuj każde pole do kolumny z Twojego pliku."*, *"Do zaimportowani
 *"dojedzie po ślubie"*, *"krzesełko dla dziecka"*. Its CTA is *"Wczytaj swoją listę gości"* over
 the *"easywed.app"* pill.
 
-From the kitchen-report cut: *"Sala prosi o plan stołów."* · *"Florystka pyta, gdzie rozłożyć
-winietki."* · *"Kuchnia pyta, ile dań wege."* · *"Wydrukuj i podaj dalej."* The florist's line
+From the kitchen-report cut: *"Sala prosi o plan stołów."* · *"Florystka pyta, jak rozłożyć
+winietki."* · *"Kuchnia pyta, gdzie podać dania wege."* · *"Wydrukuj i podaj dalej."* (The florist's
+and kitchen's lines were quoted here for a year as *"gdzie rozłożyć winietki"* and *"ile dań wege"*;
+`i18n.ts` renders the versions above. Both variants are spent.) The florist's line
 names place cards at the user's call: easywed has no place-card feature (`SKILL.md` section 4),
 and the film only shows the printed per-table guest list as what answers her - never build a
 beat that shows or implies the app making place cards. And,
@@ -116,6 +127,22 @@ and, as the seat-assign popover shows them (app strings, verbatim): *"Szukaj go�
 demo roster is on screen as popover rows - `rosterFor(WIDE_HALL.tables)` in name order - so no guest
 name from `data.ts` is fresh any more. The beat itself, a guest moved onto a taken chair and the
 one she turned out reseated, is spent.
+
+From the kids-count cut: *"Ile dzieci będzie na weselu?"* · *"Każde dziecko policzone."* - and, as
+the guest panel and the edit-guest form show them (app strings, verbatim): *"Dzieci 1"* / *"Dzieci
+2"* / *"Dzieci 5"* (`guests.filter.kids`), *"Edytuj gościa"*, *"Imię"*, *"Preferencje żywieniowe"*,
+*"Grupa wiekowa"*, *"Dorosły"*, *"0-3 lata"*, *"3-6 lat"*, *"Dodaj"* (both the dietary and the age
+row's custom button), *"np. 6-12"*, *"Notatka"*, *"np. uczulony na orzechy, lubi ostre jedzenie,
+itp."* and *"Zapisz"*. The typed bracket *"6-12"* is on screen as a value, not a string. Five names
+are new to `data.ts`'s roster and now spent with it - *Staś Mazur*, *Lena Mazur*, *Antek Sikora*,
+*Kuba Król*, *Ola Król* (`kids-count/guests.ts`). The beat itself - a guest given an age bracket in
+the edit form, and the kid count that follows - is spent, as is the payoff of a filter chip pressed
+to prove a number. Its CTA is *"Oznacz dzieci na liście gości"* over the *"easywed.app"* pill.
+
+The guest panel's own chrome recurs across the report and kids cuts by explicit decision (this
+plan's open question 5, answered 2026-09-17): *"Szukaj gościa…"*, *"Wszyscy 58"*, *"Bez miejsca 0"*,
+*"Dodaj gościa"*, *"Importuj gości"* and *"Przy stole: Stół N"* are chrome every guest-list shot
+carries, not lines. A beat may not rest on them.
 
 The one exception is the CTA pill itself: *"easywed.app"* recurs by design (section 8). Each video's
 action line above it is its own, and burns like any other line.

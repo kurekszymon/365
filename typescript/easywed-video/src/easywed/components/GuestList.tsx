@@ -1,15 +1,20 @@
 import React from "react";
 import { interpolate } from "remotion";
-import { Icon, type IconName } from "../../components/Icon";
-import type { RosterGuest } from "../../data";
-import { tl, type DietKey } from "../../i18n";
-import { colors, fonts } from "../../theme";
+import { Icon, type IconName } from "./Icon";
+import type { RosterGuest } from "../data";
+import { ageGroupLabel, tl, type DietKey } from "../i18n";
+import { colors, fonts } from "../theme";
 
 /**
  * The guest panel's list - `planner/Guests/GuestListContent.tsx` at easywed/v1:
  * search, filter chips, add and import, then one row per guest with the table
- * they sit at and their diet tags (`ui/tag-badge`, toned by `lib/dietary`).
- * Strings are `guests.*` from `pl.json` / `en.json`, verbatim.
+ * they sit at, their child age bracket beside the name (`lib/ageGroup.ts`) and
+ * their diet tags (`ui/tag-badge`, toned by `lib/dietary`). Strings are
+ * `guests.*` from `pl.json` / `en.json`, verbatim.
+ *
+ * Shared by the kitchen-report cut, which draws diets, and the kids-count cut,
+ * which draws brackets; the age props default to the report's list as it
+ * shipped.
  *
  * The sticky block opens with the `SeatingProgress` card above the search; the
  * close-up that shows this list frames below it, so it is not drawn.
@@ -25,6 +30,20 @@ const DIETS: { diet: DietKey; tone: string }[] = [
 ];
 
 const toneOf = (diet: DietKey) => DIETS.find((entry) => entry.diet === diet)?.tone ?? colors.inkSoft;
+
+/**
+ * `isKidAgeGroup` in `lib/ageGroup.ts`: a bracket is judged by its lower bound,
+ * so "0-3" and a typed "6-12" count as children and an adult - which is a
+ * missing bracket - never does.
+ */
+const ADULT_AGE = 18;
+/** `ADULT_AGE_GROUP` - the implicit default, stored as the bare key like the app stores it. */
+export const ADULT_AGE_GROUP = "adult";
+export const isKid = (group: string | undefined): boolean => {
+  if (!group || group === ADULT_AGE_GROUP) return false;
+  const lowerBound = /^(\d{1,2})/.exec(group);
+  return lowerBound ? Number(lowerBound[1]) < ADULT_AGE : true;
+};
 
 /** `TAG_TONE_BADGE`: the tone's border at 35%, its wash at 10%, its text at full strength. */
 const toned = (tone: string): React.CSSProperties => ({
@@ -44,13 +63,17 @@ const STICKY_GAP = 12;
 const LIST_GAP = 16;
 const ROW_GAP = 8;
 /** A row: `p-3` around the 44px avatar, plus its border; the tags add `mt-1` and the 20px badge. */
-const ROW_HEIGHT = 70;
+export const ROW_HEIGHT = 70;
 const TAGS_HEIGHT = 24;
 
 /** Where the filter chips start, below the search. */
 export const CHIPS_TOP = SEARCH_HEIGHT + STICKY_GAP;
 /** Where the first row starts. */
 export const LIST_TOP = CHIPS_TOP + CHIPS_HEIGHT + STICKY_GAP + BUTTON_HEIGHT + LIST_GAP;
+
+/** Top edge of row `index`, measured from `LIST_TOP` - where a cursor aims for that row. */
+export const rowTop = (guests: RosterGuest[], index: number): number =>
+  rowBottom(guests, index) - ROW_HEIGHT - (guests[index]?.diet ? TAGS_HEIGHT : 0);
 
 /** Bottom edge of row `index` once every tag above it has landed, measured from `LIST_TOP`. */
 export const rowBottom = (guests: RosterGuest[], index: number): number =>
@@ -115,10 +138,36 @@ type Props = {
   scroll: number;
   /** Height of the list's viewport below the sticky block, in CSS px. */
   listHeight: number;
+  /**
+   * Per-guest entrance of the age badge, indexed like `guests`; adults ignore
+   * it. Left out, every bracket is already on the row - which is how a list
+   * with no brackets at all, like the report cut's, renders unchanged.
+   */
+  aged?: number[];
+  /** Which filter chip is pressed. "kids" filters the rows down, as the app does. */
+  activeFilter?: "all" | "kids";
 };
 
-export const GuestList: React.FC<Props> = ({ guests, width, tagged, scroll, listHeight }) => {
+export const GuestList: React.FC<Props> = ({
+  guests,
+  width,
+  tagged,
+  scroll,
+  listHeight,
+  aged,
+  activeFilter = "all",
+}) => {
   const landed = (i: number) => Math.min(1, Math.max(0, tagged[i] ?? 0));
+  const badged = (i: number) => Math.min(1, Math.max(0, aged?.[i] ?? 1));
+
+  // The kid headcount is derived from the brackets on the list, never typed -
+  // `countKids` over the badges that have landed.
+  const kidsCount = guests.filter((guest, i) => isKid(guest.ageGroup) && badged(i) >= 0.5).length;
+  const kidsShown = Math.max(0, ...guests.map((guest, i) => (isKid(guest.ageGroup) ? badged(i) : 0)));
+  const kidsActive = activeFilter === "kids";
+  // The app filters `guests` down to the rows that match; the counts above it
+  // keep reading the whole list.
+  const rows = kidsActive ? guests.filter((guest) => isKid(guest.ageGroup)) : guests;
 
   // The filter row only offers a diet once someone carries it, counting the tags already on the list.
   const dietChips = DIETS.map(({ diet, tone }) => {
@@ -149,8 +198,29 @@ export const GuestList: React.FC<Props> = ({ guests, width, tagged, scroll, list
       </div>
 
       <div style={{ marginTop: STICKY_GAP, display: "flex", gap: 8, overflow: "hidden" }}>
-        <Chip label={tl.guests.filterAll(guests.length)} style={{ backgroundColor: colors.primary, color: colors.primaryInk }} />
+        <Chip
+          label={tl.guests.filterAll(guests.length)}
+          style={
+            kidsActive
+              ? { backgroundColor: colors.bgDeep, color: colors.inkSoft }
+              : { backgroundColor: colors.primary, color: colors.primaryInk }
+          }
+        />
         <Chip label={tl.guests.filterUnseated(guests.filter((guest) => !guest.table).length)} style={{ backgroundColor: colors.bgDeep, color: colors.inkSoft }} />
+        {/* Offered only once someone carries a bracket - `kidsCount > 0 &&` in
+            the app - which is why it slides in mid-film rather than sitting at zero. */}
+        {kidsShown > 0 ? (
+          <div style={{ opacity: kidsShown, transform: `scale(${interpolate(kidsShown, [0, 1], [0.7, 1])})` }}>
+            <Chip
+              label={tl.guests.filterKids(Math.max(kidsCount, 1))}
+              style={
+                kidsActive
+                  ? { backgroundColor: colors.tagViolet, color: colors.bg }
+                  : toned(colors.tagViolet)
+              }
+            />
+          </div>
+        ) : null}
         {dietChips.map(({ diet, tone, count, shown }) =>
           shown > 0 ? (
             <div key={diet} style={{ opacity: shown, transform: `scale(${interpolate(shown, [0, 1], [0.7, 1])})` }}>
@@ -167,8 +237,11 @@ export const GuestList: React.FC<Props> = ({ guests, width, tagged, scroll, list
 
       <div style={{ marginTop: LIST_GAP, height: listHeight, overflow: "hidden" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: ROW_GAP, transform: `translateY(${-scroll}px)` }}>
-          {guests.map((guest, i) => {
+          {rows.map((guest) => {
+            const i = guests.indexOf(guest);
             const tag = tagged[i] ?? 0;
+            const bracket = isKid(guest.ageGroup) ? guest.ageGroup : undefined;
+            const badge = badged(i);
             return (
               <div
                 key={guest.name}
@@ -201,8 +274,33 @@ export const GuestList: React.FC<Props> = ({ guests, width, tagged, scroll, list
                     {initials(guest.name)}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, lineHeight: "20px", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {guest.name}
+                    {/* The bracket rides beside the name, not with the diets:
+                        it is who the guest is, not what they eat. */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ fontSize: 14, lineHeight: "20px", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {guest.name}
+                      </div>
+                      {bracket ? (
+                        <div
+                          style={{
+                            flexShrink: 0,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            height: 20,
+                            padding: "0 8px",
+                            borderRadius: 999,
+                            fontSize: 12,
+                            fontWeight: 500,
+                            whiteSpace: "nowrap",
+                            opacity: interpolate(badge, [0, 0.4], [0, 1], { extrapolateRight: "clamp" }),
+                            transform: `scale(${Math.max(badge, 0)})`,
+                            transformOrigin: "left center",
+                            ...toned(colors.tagViolet),
+                          }}
+                        >
+                          {ageGroupLabel(bracket)}
+                        </div>
+                      ) : null}
                     </div>
                     <div
                       style={{

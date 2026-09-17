@@ -83,6 +83,20 @@ named in section 2 both need updating — nothing will warn you.
   - Diet tags are free-form; only the presets `vegetarian`, `vegan`, `gluten-free` have labels
     (`lib/dietary.ts`) and reserved tones - green, teal, amber (`--tag-*` in `styles.css`). The
     guest list's filter row offers a diet chip, with its count, only once someone carries it.
+  - **One age bracket per guest**, and the kid headcount derived from it (`lib/ageGroup.ts`,
+    `dialogs/guests/GuestAgeGroupField.tsx`). `AGE_GROUP_PRESETS` is `adult` / `0-3` / `3-6`
+    (*„Dorosły”*, *„0-3 lata”*, *„3-6 lat”*); a guest with no bracket **is** an adult
+    (`isAdultAgeGroup`), and only children get a badge (`childAgeGroup`). A bracket the user types
+    is kept verbatim after `canonicalizeAgeGroup` trims it and snaps a numeric range to `a-b`,
+    capped at 24 characters - `guests.add.age_group_custom_placeholder` is literally *„np. 6-12”*.
+    `countKids` counts every bracket whose lower bound is under 18 (`ADULT_AGE`), and a
+    non-numeric label counts too; the `Dzieci N` chip (`guests.filter.kids`) appears only once
+    someone carries a bracket, exactly as the diet chips do, and `guests.filter.kids_hint`
+    explains the rule. The reserved tone is `AGE_GROUP_TONE = "violet"`, `--tag-violet:
+    oklch(0.5 0.11 300)` - **#6d5398** as hex. Age brackets are **not** importable: `IMPORT_FIELDS`
+    is name / table / dietary / note only. Editing a guest fires no analytics event; there is no
+    `guest_updated` in `AnalyticsEvents`, only `guest_added { age_group: "adult" | "preset" |
+    "custom" }`.
 - **Invite-link collaboration** with owner / editor / viewer roles — `members.role.*`,
   `invite_claimed`. **Account-gated:** `canInvite = Boolean(session) && !isLocalWedding(weddingId)`,
   so a guest-mode video cannot show this without saying so.
