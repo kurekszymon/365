@@ -10,15 +10,22 @@ type Props = {
   enter: number;
   /** Share of the table's seats that are taken, 0..1. */
   fill: number;
+  /**
+   * Per-seat override, indexed like `seatPositions(table)`, each 0..1. The seat
+   * swap needs one chair to empty while the rest stay taken, which `fill` alone
+   * - a share, filled in seat order - cannot say. Left out, the table fills in
+   * order from `fill`, exactly as every published film draws it.
+   */
+  fills?: number[];
   /** Extra offset, used while a table is being dragged. */
   dx?: number;
   dy?: number;
   selected?: boolean;
 };
 
-export const PlannerTable: React.FC<Props> = ({ table, enter, fill, dx = 0, dy = 0, selected }) => {
+export const PlannerTable: React.FC<Props> = ({ table, enter, fill, fills, dx = 0, dy = 0, selected }) => {
   const seats = seatPositions(table);
-  const takenSeats = fill * table.seats;
+  const takenSeats = fills ? fills.reduce((sum, seat) => sum + seat, 0) : fill * table.seats;
   // Scale about the table's own center so it grows into place, then shift by
   // the drag offset.
   const transform = `translate(${dx} ${dy}) translate(${table.x} ${table.y}) scale(${enter}) translate(${-table.x} ${-table.y})`;
@@ -29,10 +36,12 @@ export const PlannerTable: React.FC<Props> = ({ table, enter, fill, dx = 0, dy =
       opacity={interpolate(enter, [0, 0.4], [0, 1], { extrapolateRight: "clamp" })}
     >
       {seats.map((seat, i) => {
-        const taken = interpolate(takenSeats, [i, i + 1], [0, 1], {
-          extrapolateLeft: "clamp",
-          extrapolateRight: "clamp",
-        });
+        const taken =
+          fills?.[i] ??
+          interpolate(fill * table.seats, [i, i + 1], [0, 1], {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          });
         // A small pop as the guest lands, settling back to the resting size.
         const pop = 1 + Math.sin(taken * Math.PI) * 0.35;
         return (

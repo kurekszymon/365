@@ -17,6 +17,12 @@ type Props = {
   tableIn: number[];
   /** Per-table share of taken seats, indexed like `hall.tables`. */
   seatFill: number[];
+  /**
+   * Per-seat override for a table, indexed like `hall.tables`, each entry
+   * indexed like that table's seats. A table left `undefined` here fills from
+   * `seatFill` as before - see `PlannerTable`'s `fills`.
+   */
+  seatFills?: (number[] | undefined)[];
   /** Per-table drag offset, indexed like `hall.tables`. */
   offsets?: Point[];
   selectedTableId?: string;
@@ -85,6 +91,7 @@ export const HallCanvas: React.FC<Props> = ({
   floor,
   tableIn,
   seatFill,
+  seatFills,
   offsets,
   selectedTableId,
   bare = false,
@@ -215,6 +222,7 @@ export const HallCanvas: React.FC<Props> = ({
           table={table}
           enter={tableIn[i] ?? 0}
           fill={seatFill[i] ?? 0}
+          fills={seatFills?.[i]}
           dx={offsets?.[i]?.x ?? 0}
           dy={offsets?.[i]?.y ?? 0}
           selected={selectedTableId === table.id}

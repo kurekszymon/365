@@ -26,6 +26,25 @@ named in section 2 both need updating — nothing will warn you.
     *„Kliknij na sali, aby umieścić punkt pomiaru”* or, once a first point is down,
     *„Kliknij ponownie, aby ustawić punkt końcowy”*, followed by an `Esc` key and
     *„Esc aby wyjść”* (`statusbar.esc_to_exit`).
+- **Seat-level assignment straight off the canvas**, and nobody silently double-booked.
+  - The popover (`planner/Canvas/SeatAssignPopover.tsx`, opened from a marker in `TableSeats.tsx`):
+    a search field (`tables.guests_search_placeholder` *„Szukaj gości”*, a plain lowercased
+    `includes` on the name with no diacritic folding), *„Zwolnij miejsce”* (`seats.clear`) only when
+    the chair is taken, then guests in **four fixed sections** - `seats.group_selected`
+    *„Aktualnie na tym miejscu”*, `seats.group_table` *„Przy tym stole”*, `seats.group_unassigned`
+    *„Bez stołu”*, `seats.group_elsewhere` *„Przy innym stole”*. The order never changes; empty
+    sections are dropped (`.filter((section) => section.items.length > 0)`), so *„Bez stołu”* leads
+    only when nobody else is at that table. Rows in the last section carry the amber
+    `border-amber-300/80 bg-amber-50/70 text-amber-900` - the "this moves them" affordance. The
+    list is a `max-h-52` scroller inside a `w-64` popover, `side="top"`.
+  - What a pick does (`assignGuestToSeat` in `stores/planner.store.ts`): bringing in a guest from
+    **outside** a table that is already **full** sets `occupantLeavesTable`, and the displaced
+    occupant is written `tableId: null, seatId: null` - they become unassigned and show up under
+    *„Bez stołu”*, rather than vanishing. Any other case (the guest was already at that table, or
+    the table had room) merely clears the occupant's pin and leaves them at the table.
+    `track("guest_seated", { source: "canvas_seat", displaced })` is fired by the popover itself.
+  - A marker shows the occupant's initials once it is 14 px or larger (`getInitials`, `seatSizePx`),
+    and is inert - no drag, no popover - while the measure tool is on or the viewer cannot edit.
 - **Multi-hall and multi-floor** (`hall.floor`, `hall.list_title`), plus custom polygon halls and
   fixtures — stage, dance floor, bar, DJ booth, entrance, or a shape drawn by hand
   (`fixtures.preset.*`, `fixtures.shape.polygon`).

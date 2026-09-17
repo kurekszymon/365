@@ -54,6 +54,15 @@ export const colors = {
   /** `MeasureOverlay`'s hard-coded `#0d9488` (teal-600): the measuring line, its dots and its label. */
   measure: "#0d9488",
 
+  /**
+   * `SeatAssignPopover`'s *elsewhere* rows - the amber "this moves them" tone:
+   * `border-amber-300/80 bg-amber-50/70 text-amber-900`, Tailwind v4's own
+   * oklch amber converted to hex.
+   */
+  amber50: "#fffbeb",
+  amber300: "#ffd230",
+  amber900: "#7b3306",
+
   brandGreen: "#43684b",
   brandGreenSoft: "#9ec2a2",
   brandGreenMist: "#d9ead9",

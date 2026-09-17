@@ -62,6 +62,15 @@ const pl = {
       started: "Kliknij ponownie, aby ustawić punkt końcowy", // measure.statusbar_drop
     },
     escToExit: "Esc aby wyjść", // statusbar.esc_to_exit
+    seatSearch: "Szukaj gości", // tables.guests_search_placeholder
+    seatClear: "Zwolnij miejsce", // seats.clear
+    /** `SeatAssignPopover`'s sections, in the order it renders them. Drawn uppercase, as its own header class sets them. */
+    seatGroups: {
+      selected: "Aktualnie na tym miejscu", // seats.group_selected
+      table: "Przy tym stole", // seats.group_table
+      unassigned: "Bez stołu", // seats.group_unassigned
+      elsewhere: "Przy innym stole", // seats.group_elsewhere
+    },
   },
 
   guests: {
@@ -174,6 +183,12 @@ const pl = {
     hook: "Zmieszczą się te stoły?",
     payoff: "Odległości w metrach, nie na oko.",
   },
+
+  swap: {
+    /** "się" is bound to "przesiąść?" so the question never breaks after it. */
+    hook: "Ktoś musi się przesiąść?",
+    payoff: "Przesiadka bez przepisywania listy.",
+  },
 };
 
 const en: typeof pl = {
@@ -210,6 +225,14 @@ const en: typeof pl = {
       started: "Click again to drop the end point",
     },
     escToExit: "Esc to exit",
+    seatSearch: "Search guests",
+    seatClear: "Clear seat",
+    seatGroups: {
+      selected: "Currently seated",
+      table: "At this table",
+      unassigned: "Unassigned",
+      elsewhere: "Seated elsewhere",
+    },
   },
 
   guests: {
@@ -315,6 +338,11 @@ const en: typeof pl = {
   scale: {
     hook: "Will these tables fit?",
     payoff: "Distances in metres, not by eye.",
+  },
+
+  swap: {
+    hook: "Someone has to move?",
+    payoff: "Reseat without rewriting the list.",
   },
 };
 

@@ -13,8 +13,11 @@
 - **the to-scale loop** - 12 seconds for the landing page, 16:9 only: the question beside a seated
   room, the measure tool taking two distances in metres, then back to its first frame. No CTA -
   the page around it is the CTA.
+- **the seat-swap loop** - 13 seconds for the landing page, 16:9 only: a room where every chair is
+  taken, a guest brought over from another table onto a full one, and the guest she turned out given
+  the chair she left. No CTA either.
 
-All but the loop render in 16:9 (1920x1080) and 9:16 (1080x1920), and all are in Polish.
+All but the loops render in 16:9 (1920x1080) and 9:16 (1080x1920), and all are in Polish.
 
 It is a standalone package on purpose - it sits next to `easywed/` rather than inside it, so it
 stays out of that project's tsconfig, ESLint and Vite scope.
@@ -39,6 +42,9 @@ npm run render:kitchen-report:vertical   # -> out/pl/easywed-report-vertical.mp4
 
 npm run render:to-scale          # -> out/pl/easywed-scale.mp4        (16:9, at 960x540 for its page slot)
 npm run render:to-scale:poster   # -> out/pl/easywed-scale-poster.png (frame 0 at 960x540, the <video> poster)
+
+npm run render:seat-swap         # -> out/pl/easywed-swap.mp4        (16:9, at 960x540 for its page slot)
+npm run render:seat-swap:poster  # -> out/pl/easywed-swap-poster.png (frame 0 at 960x540, the <video> poster)
 
 npm run render:all       # all of the above
 npm run render:all:en    # all of the above in English -> out/en/
@@ -129,10 +135,17 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `ScaleMeasure`            | 150f   | Stół 1 across to the dance floor, "3.33 m"        |
 | `ScaleGap`                | 120f   | Stół 5 up to the floor, "1.33 m", the seam home   |
 
+| id                        | length | what it is                                        |
+| ------------------------- | ------ | ------------------------------------------------- |
+| `easywed-swap`            | 390f   | the 13 s seat-swap landing loop, 16:9             |
+| `SwapHook`                | 105f   | a full room and the question; one chair pressed    |
+| `SwapPick`                | 165f   | the seat popover; a guest taken from another table |
+| `SwapReseat`              | 150f   | the chair she left, filled again; the seam home    |
+
 The scenes are also registered individually (Studio folders "Scenes", "Teaser", "Import",
-"Report" and "Scale") so a single beat can be previewed without scrubbing through the whole
-timeline. The social cuts' scenes are registered at 9:16, the cut they are made for; the loop's at
-16:9, its only size.
+"Report", "Scale" and "Swap") so a single beat can be previewed without scrubbing through the whole
+timeline. The social cuts' scenes are registered at 9:16, the cut they are made for; the loops' at
+16:9, their only size.
 
 ## Structure
 
@@ -157,6 +170,9 @@ src/easywed/
   to-scale/              the to-scale landing loop - three scenes drawn off one shared clock
                          (script.ts), closed by components/LoopSeam.tsx, which the other
                          landing loops reuse
+  seat-swap/             the seat-swap landing loop, in the to-scale loop's shape; seating.ts
+                         works out who sits where at each frame and what the seat popover
+                         (components/SeatPopover.tsx) therefore lists
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect

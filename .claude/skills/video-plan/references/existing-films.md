@@ -39,6 +39,16 @@ a dissolve back onto frame 0. A landing-page loop: no CTA, no pill.
 Scenes 120 + 150 + 120 = 390 at `SCALE_TRANSITION = 15` × 2 seams → 360; the last 15 frames are
 `LoopSeam` onto frame 0. Built from `docs/video-plans/16x9-only-2026-09-16.md`, brief `to-scale`.
 
+## The seat-swap loop - `easywed-swap`, 390f (13 s), 16:9 only
+
+a room where every chair is taken and the question → the seat popover on a chair at Stół 4, its
+list flicked down to the amber *Przy innym stole* rows, Maria Wiśniewska picked → Stół 1 drops to
+7 / 8 with one green chair, the popover on it leads through *Przy tym stole* to *Bez stołu* and
+Michał Dąbrowski, who takes it → the payoff, then a dissolve back onto frame 0. A landing-page
+loop: no CTA, no pill.
+Scenes 105 + 165 + 150 = 420 at `SWAP_TRANSITION = 15` × 2 seams → 390; the last 15 frames are
+`LoopSeam` onto frame 0. Built from `docs/video-plans/16x9-only-2026-09-16.md`, brief `seat-swap`.
+
 ## Polish lines already burned on screen
 
 None of these may appear again:
@@ -97,6 +107,15 @@ as the canvas toolbar, the measure overlay and the status bar show them (app str
 between a table and the dance floor - is spent too. The toolbar's *"Siatka"*, *"Miejsca"* and
 *"1 m"*, and the hall chip *"Sala główna · 22×14 m"*, are chrome every planner shot carries, not
 lines.
+
+From the seat-swap loop: *"Ktoś musi się przesiąść?"* · *"Przesiadka bez przepisywania listy."* -
+and, as the seat-assign popover shows them (app strings, verbatim): *"Szukaj gości"*
+(`tables.guests_search_placeholder`, distinct from the guest panel's burned *"Szukaj gościa…"*),
+*"Zwolnij miejsce"*, and the four section headings, drawn uppercase as the app draws them:
+*"Aktualnie na tym miejscu"*, *"Przy tym stole"*, *"Bez stołu"*, *"Przy innym stole"*. The whole
+demo roster is on screen as popover rows - `rosterFor(WIDE_HALL.tables)` in name order - so no guest
+name from `data.ts` is fresh any more. The beat itself, a guest moved onto a taken chair and the
+one she turned out reseated, is spent.
 
 The one exception is the CTA pill itself: *"easywed.app"* recurs by design (section 8). Each video's
 action line above it is its own, and burns like any other line.
