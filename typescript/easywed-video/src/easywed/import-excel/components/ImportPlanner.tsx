@@ -6,6 +6,7 @@ import { Icon, type IconName } from "../../components/Icon";
 import { canvasInsets, PlannerCanvas } from "../../components/PlannerCanvas";
 import type { RosterGuest } from "../../data";
 import { useFormat } from "../../format";
+import { tl } from "../../i18n";
 import { colors, fonts } from "../../theme";
 
 /**
@@ -56,9 +57,9 @@ const SeatingProgress: React.FC<{ seated: number; total: number; scale: number }
           fontSize: 13 * scale,
         }}
       >
-        <span style={{ fontWeight: 600, color: colors.ink }}>Rozsadzeni</span>
+        <span style={{ fontWeight: 600, color: colors.ink }}>{tl.guests.progress}</span>
         <span style={{ color: colors.inkSoft, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
-          {total === 1 ? `${seated}/${total} gość przy stole` : `${seated}/${total} gości przy stołach`}
+          {tl.guests.seatedRatio(seated, total)}
         </span>
       </div>
       <div style={{ height: 8 * scale, borderRadius: 999, backgroundColor: colors.bgDeep, overflow: "hidden" }}>
@@ -122,14 +123,14 @@ const GuestPanel: React.FC<{
         borderBottom: `1px solid ${colors.border}`,
       }}
     >
-      Goście
+      {tl.guests.title}
     </div>
 
     {guests.length === 0 ? (
       <>
-        <div style={{ fontSize: 14 * scale, color: colors.inkSoft }}>Brak gości.</div>
-        <OutlineButton icon="plus" label="Dodaj gościa" scale={scale} />
-        <OutlineButton icon="fileSpreadsheet" label="Importuj gości" scale={scale} />
+        <div style={{ fontSize: 14 * scale, color: colors.inkSoft }}>{tl.guests.none}</div>
+        <OutlineButton icon="plus" label={tl.guests.add} scale={scale} />
+        <OutlineButton icon="fileSpreadsheet" label={tl.guests.import} scale={scale} />
       </>
     ) : (
       <div
@@ -156,7 +157,7 @@ const GuestPanel: React.FC<{
           }}
         >
           <Icon name="search" color={colors.inkSoft} size={16 * scale} />
-          Szukaj gościa…
+          {tl.guests.search}
         </div>
         {guests.slice(0, GUEST_ROWS).map((guest, i) => (
           <div

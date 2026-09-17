@@ -1,5 +1,6 @@
 import React from "react";
 import { WEDDING, type RosterGuest } from "../data";
+import { locale, tl } from "../i18n";
 import type { HallLayout } from "../layouts";
 import { colors, fonts, shadow } from "../theme";
 import { HallCanvas } from "./HallCanvas";
@@ -10,7 +11,7 @@ import { HallCanvas } from "./HallCanvas";
  * landscape paper: a cover with the wedding and its headcount, the hall, then
  * the guests table by table with their diets beside the names
  * (`DEFAULT_PRINT_FIELDS` is name + dietary). Strings are `export.*`,
- * `tables.count` and `guests` from `pl.json`, verbatim.
+ * `tables.count` and `guests` from `pl.json` / `en.json`, verbatim.
  *
  * Sizes are the print view's CSS pixels; a page is drawn at `scale`.
  */
@@ -42,20 +43,12 @@ export type PrintPageSpec =
 const groupHeight = (group: PrintGroup) =>
   GROUP_HEAD + group.lines.length * LINE + (group.lines.length - 1) * LINE_GAP;
 
-const pluralRules = new Intl.PluralRules("pl");
-
-/** `tables.count_one` / `_few` / `_many`. */
-const tablesCount = (count: number) => {
-  const rule = pluralRules.select(count);
-  return `${count} ${rule === "one" ? "stół" : rule === "few" ? "stoły" : "stołów"}`;
-};
-
-/** `toLocaleDateString` in Polish - "12.09.2026". */
-const printedDate = (date: Date) => date.toLocaleDateString("pl-PL");
+/** `toLocaleDateString` in the render's language - "12.09.2026", "12/09/2026". */
+const printedDate = (date: Date) => date.toLocaleDateString(locale);
 
 /**
  * The report's pages. Tables come in `groupGuestsByTable` order - numbers by
- * value, so "Stół pary młodej" follows "Stół 6" - with each table's guests
+ * value, so "Stół pary młodej" follows "Stół 6" (and "Head table" leads in English) - with each table's guests
  * alphabetical (`DEFAULT_GUEST_SORT`). The two columns fill top to bottom and a
  * table never splits (`break-inside-avoid`), so a long list runs onto a second
  * page, where the last columns balance.
@@ -67,10 +60,10 @@ export const printPages = (hall: HallLayout, guests: RosterGuest[]): PrintPageSp
     .map((table) => {
       const seated = guests
         .filter((guest) => guest.table === table.label)
-        .sort((a, b) => a.name.localeCompare(b.name, "pl"));
+        .sort((a, b) => a.name.localeCompare(b.name, locale));
       return {
-        title: `${table.label} (${seated.length}/${table.seats} zajętych)`,
-        lines: seated.map((guest) => (guest.diet ? `${guest.name} - ${guest.diet}` : guest.name)),
+        title: tl.print.tableSection(table.label, seated.length, table.seats),
+        lines: seated.map((guest) => (guest.diet ? `${guest.name} - ${tl.diet[guest.diet]}` : guest.name)),
       };
     });
 
@@ -144,12 +137,12 @@ const Cover: React.FC<{ hall: HallLayout; guests: RosterGuest[] }> = ({ hall, gu
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, textAlign: "center" }}>
         <div style={{ fontSize: 30, lineHeight: "36px", fontWeight: 600 }}>{WEDDING.couple}</div>
         <div style={{ fontSize: 16, lineHeight: "24px", color: colors.paperGray700 }}>
-          {`Data ślubu: ${printedDate(WEDDING.day)}`}
+          {tl.print.weddingDate(printedDate(WEDDING.day))}
         </div>
       </div>
       {/* `tables.count` · seated/total `guests`, lowercased as the view does. */}
       <div style={{ fontSize: 14, lineHeight: "20px", color: colors.paperGray600 }}>
-        {`${tablesCount(hall.tables.length)} · ${seated}/${guests.length} goście`}
+        {`${tl.print.tablesCount(hall.tables.length)} · ${seated}/${guests.length} ${tl.print.guestsLower}`}
       </div>
       <div
         style={{
@@ -160,7 +153,7 @@ const Cover: React.FC<{ hall: HallLayout; guests: RosterGuest[] }> = ({ hall, gu
           color: colors.paperGray500,
         }}
       >
-        {`Wygenerowano ${printedDate(WEDDING.printedOn)}`}
+        {tl.print.generatedOn(printedDate(WEDDING.printedOn))}
       </div>
     </div>
   );
@@ -202,7 +195,7 @@ const Hall: React.FC<{ hall: HallLayout }> = ({ hall }) => {
 const Guests: React.FC<{ page: Extract<PrintPageSpec, { kind: "guests" }> }> = ({ page }) => (
   <div style={{ height: PRINT_PAGE.height, padding: SECTION_PAD }}>
     {page.heading ? (
-      <div style={{ marginBottom: 16, fontSize: 18, lineHeight: "28px", fontWeight: 600 }}>Goście</div>
+      <div style={{ marginBottom: 16, fontSize: 18, lineHeight: "28px", fontWeight: 600 }}>{tl.print.guests}</div>
     ) : null}
     <div style={{ display: "flex", gap: COLUMN_GAP }}>
       {page.columns.map((column, c) => (

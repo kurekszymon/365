@@ -1,4 +1,5 @@
 import React from "react";
+import { tl } from "../i18n";
 import type { HallLayout } from "../layouts";
 import { colors, fonts, shadow } from "../theme";
 import { Icon, type IconName } from "./Icon";
@@ -227,11 +228,11 @@ export const PlannerCanvas: React.FC<{
         }}
       >
         <Stepper value="1 m" scale={scale} />
-        <Tool icon="grid" label="Siatka" scale={scale} />
+        <Tool icon="grid" label={tl.app.grid} scale={scale} />
         {tall ? null : (
-          <Tool icon="ruler" label="Mierzenie" active={measureMode !== undefined} scale={scale} />
+          <Tool icon="ruler" label={tl.app.measure} active={measureMode !== undefined} scale={scale} />
         )}
-        <Tool icon="armchair" label="Miejsca" active scale={scale} />
+        <Tool icon="armchair" label={tl.app.seats} active scale={scale} />
         {measureMode !== undefined ? <Tool label={measureMode} active scale={scale} /> : null}
       </div>
 

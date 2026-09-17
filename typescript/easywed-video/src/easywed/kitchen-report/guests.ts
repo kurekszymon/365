@@ -1,7 +1,6 @@
-import { GUESTS, rosterFor, type GuestSpec, type RosterGuest } from "../data";
+import { GUESTS, rosterFor, type RosterGuest } from "../data";
+import type { DietKey } from "../i18n";
 import type { HallLayout } from "../layouts";
-
-type Diet = NonNullable<GuestSpec["diet"]>;
 
 /**
  * Diets on the guests `rosterFor` generates, by their index in generation
@@ -10,17 +9,17 @@ type Diet = NonNullable<GuestSpec["diet"]>;
  * Kept here rather than in `data.ts`: the import cut's sheet is published with
  * the roster as it is.
  */
-const EXTRA_DIETS: Record<number, Diet> = {
-  0: "Wege", // Łukasz Sikora, Stół pary młodej
-  2: "Vegan", // Grzegorz Górski, Stół pary młodej
-  4: "Wege", // Mikołaj Pawłowski, Stół pary młodej
-  7: "Bez glutenu", // Jadwiga Król, Stół pary młodej
-  12: "Wege", // Grzegorz Michalak, Stół 1
-  19: "Vegan", // Urszula Kałużna, Stół 2
-  25: "Wege", // Agnieszka Szczęsna, Stół 3
-  31: "Bez glutenu", // Żaneta Wróblewska, Stół 4
-  38: "Vegan", // Przemysław Jabłoński, Stół 5
-  44: "Wege", // Mikołaj Sikora, Stół 6
+const EXTRA_DIETS: Record<number, DietKey> = {
+  0: "vegetarian", // Łukasz Sikora, Stół pary młodej
+  2: "vegan", // Grzegorz Górski, Stół pary młodej
+  4: "vegetarian", // Mikołaj Pawłowski, Stół pary młodej
+  7: "glutenFree", // Jadwiga Król, Stół pary młodej
+  12: "vegetarian", // Grzegorz Michalak, Stół 1
+  19: "vegan", // Urszula Kałużna, Stół 2
+  25: "vegetarian", // Agnieszka Szczęsna, Stół 3
+  31: "glutenFree", // Żaneta Wróblewska, Stół 4
+  38: "vegan", // Przemysław Jabłoński, Stół 5
+  44: "vegetarian", // Mikołaj Sikora, Stół 6
 };
 
 /**

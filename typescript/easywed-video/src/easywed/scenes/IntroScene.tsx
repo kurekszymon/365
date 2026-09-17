@@ -4,6 +4,7 @@ import { Backdrop } from "../components/Backdrop";
 import { BrandMark } from "../components/BrandMark";
 import { Wordmark } from "../components/Wordmark";
 import { useFormat } from "../format";
+import { tl } from "../i18n";
 import { colors, fonts } from "../theme";
 
 export const IntroScene: React.FC = () => {
@@ -49,7 +50,7 @@ export const IntroScene: React.FC = () => {
             color: colors.inkSoft,
           }}
         >
-          Plan stołów weselnych - prościej się nie da.
+          {tl.demo.tagline}
         </div>
       </AbsoluteFill>
     </Backdrop>

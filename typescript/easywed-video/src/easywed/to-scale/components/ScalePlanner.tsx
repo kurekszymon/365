@@ -6,6 +6,7 @@ import { HallCanvas, hallAspect, PAD as HALL_PAD } from "../../components/HallCa
 import { canvasInsets, chromeScale, PlannerCanvas } from "../../components/PlannerCanvas";
 import { useFormat } from "../../format";
 import type { Point } from "../../geometry";
+import { tl } from "../../i18n";
 import { colors, fonts } from "../../theme";
 import {
   HOOK_IN,
@@ -49,8 +50,8 @@ const chipWidth = (label: string, icon: boolean) => 16 + (icon ? 20 : 0) + label
 /** `PlannerCanvas`'s toolbar, right to left, as it stands while the pointer travels to one chip. */
 const toolbarRow = (measureMode: string | undefined) => [
   ...(measureMode === undefined ? [] : [{ id: "mode", width: chipWidth(measureMode, false) }]),
-  { id: "seats", width: chipWidth("Miejsca", true) },
-  { id: "measure", width: chipWidth("Mierzenie", true) },
+  { id: "seats", width: chipWidth(tl.app.seats, true) },
+  { id: "measure", width: chipWidth(tl.app.measure, true) },
 ];
 
 const chipCentreFromRight = (id: string, measureMode: string | undefined): number => {
@@ -174,7 +175,7 @@ export const ScalePlanner: React.FC<{ frame: number }> = ({ frame }) => {
               transform: `translateY(${interpolate(hookIn, [0, 1], [24, 0])}px)`,
             }}
           >
-            Zmieszczą się te stoły?
+            {tl.scale.hook}
           </div>
 
           <div
@@ -189,7 +190,7 @@ export const ScalePlanner: React.FC<{ frame: number }> = ({ frame }) => {
               transform: `translateY(${interpolate(payoffIn, [0, 1], [18, 0])}px)`,
             }}
           >
-            {"Odległości w metrach, nie na oko."}
+            {tl.scale.payoff}
           </div>
         </div>
 

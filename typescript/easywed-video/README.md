@@ -23,25 +23,48 @@ stays out of that project's tsconfig, ESLint and Vite scope.
 
 ```bash
 npm run dev              # Remotion Studio on http://localhost:3000
-npm run render           # -> out/easywed-demo.mp4          (16:9)
-npm run render:vertical  # -> out/easywed-demo-vertical.mp4 (9:16)
-npm run render:gif       # -> out/easywed-demo.gif (960px wide, every 2nd frame)
+npm run dev:en           # the same, in English
+npm run render           # -> out/pl/easywed-demo.mp4          (16:9)
+npm run render:vertical  # -> out/pl/easywed-demo-vertical.mp4 (9:16)
+npm run render:gif       # -> out/pl/easywed-demo.gif (960px wide, every 2nd frame)
 
-npm run render:teaser            # -> out/easywed-teaser.mp4          (16:9)
-npm run render:teaser:vertical   # -> out/easywed-teaser-vertical.mp4 (9:16)
+npm run render:teaser            # -> out/pl/easywed-teaser.mp4          (16:9)
+npm run render:teaser:vertical   # -> out/pl/easywed-teaser-vertical.mp4 (9:16)
 
-npm run render:import-excel            # -> out/easywed-import.mp4          (16:9)
-npm run render:import-excel:vertical   # -> out/easywed-import-vertical.mp4 (9:16)
+npm run render:import-excel            # -> out/pl/easywed-import.mp4          (16:9)
+npm run render:import-excel:vertical   # -> out/pl/easywed-import-vertical.mp4 (9:16)
 
-npm run render:kitchen-report            # -> out/easywed-report.mp4          (16:9)
-npm run render:kitchen-report:vertical   # -> out/easywed-report-vertical.mp4 (9:16)
+npm run render:kitchen-report            # -> out/pl/easywed-report.mp4          (16:9)
+npm run render:kitchen-report:vertical   # -> out/pl/easywed-report-vertical.mp4 (9:16)
 
-npm run render:to-scale          # -> out/easywed-scale.mp4        (16:9, at 960x540 for its page slot)
-npm run render:to-scale:poster   # -> out/easywed-scale-poster.png (frame 0 at 960x540, the <video> poster)
+npm run render:to-scale          # -> out/pl/easywed-scale.mp4        (16:9, at 960x540 for its page slot)
+npm run render:to-scale:poster   # -> out/pl/easywed-scale-poster.png (frame 0 at 960x540, the <video> poster)
 
 npm run render:all       # all of the above
+npm run render:all:en    # all of the above in English -> out/en/
 npm run lint             # eslint + tsc
 ```
+
+## Languages
+
+Every film renders in Polish (the default) or English. All on-screen strings live in
+`src/easywed/i18n.ts` as one `pl` object and an `en` object typed `typeof pl`, so a key missing
+from either side fails `tsc`. Scenes read the active language through `tl`:
+
+```tsx
+<SceneLabel step={tl.demo.hall.step} title={tl.demo.hall.title} subtitle={tl.demo.hall.subtitle} />
+```
+
+The language comes from `REMOTION_LANG` - Remotion only forwards `REMOTION_`-prefixed variables to
+the bundle - and every render script writes to `out/${REMOTION_LANG:-pl}/`, so the two never
+overwrite each other:
+
+```bash
+REMOTION_LANG=en npm run render:teaser   # -> out/en/easywed-teaser.mp4
+```
+
+Strings that redraw the app are its own `pl.json` / `en.json` values at `easywed/v1`, with the
+key noted beside them. Guest names stay Polish in both languages - they are demo data.
 
 Render a single frame while iterating:
 
@@ -183,7 +206,7 @@ video follows it.
   free-seat/taken-seat language the planner uses, so the logo animation in the intro is
   literally the product's core interaction.
 - Fonts match the app: Playfair Display for headings, Inter for UI text.
-- Copy is lifted from the landing page strings in `easywed/src/i18n/locales/en.json`, so the
-  video and the site say the same thing.
+- Copy is lifted from the landing page strings in `easywed/src/i18n/locales/pl.json` and
+  `en.json`, so the video and the site say the same thing.
 
-If the app's palette or copy changes, `theme.ts` and the scene text are the two places to update.
+If the app's palette or copy changes, `theme.ts` and `i18n.ts` are the two places to update.

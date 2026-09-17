@@ -1,4 +1,5 @@
 import React from "react";
+import { tl } from "../i18n";
 
 /**
  * The app's glyphs. Same lucide icons the planner uses (`Sidebar/tabs.ts`,
@@ -208,9 +209,9 @@ export type NavKind = "guests" | "tables" | "fixtures" | "reminders" | "assistan
 
 /** The planner's tab strip, in the app's order, with its badge counts. */
 export const NAV_ITEMS: { kind: NavKind; label: string; badge?: number }[] = [
-  { kind: "guests", label: "Goście" },
-  { kind: "tables", label: "Stoły", badge: 7 },
-  { kind: "fixtures", label: "Elementy", badge: 2 },
-  { kind: "reminders", label: "Przypomnienia", badge: 1 },
-  { kind: "assistant", label: "Asystent" },
+  { kind: "guests", label: tl.app.nav.guests },
+  { kind: "tables", label: tl.app.nav.tables, badge: 7 },
+  { kind: "fixtures", label: tl.app.nav.fixtures, badge: 2 },
+  { kind: "reminders", label: tl.app.nav.reminders, badge: 1 },
+  { kind: "assistant", label: tl.app.nav.assistant },
 ];

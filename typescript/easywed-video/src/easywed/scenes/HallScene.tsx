@@ -7,6 +7,7 @@ import { PlannerCanvas } from "../components/PlannerCanvas";
 import { SceneLabel } from "../components/SceneLabel";
 import { useFormat } from "../format";
 import type { Point } from "../geometry";
+import { tl } from "../i18n";
 import { colors, fonts } from "../theme";
 
 /**
@@ -97,7 +98,7 @@ export const HallScene: React.FC = () => {
         opacity: outline,
       }}
     >
-      <span style={{ color: colors.inkSoft }}>Twoja sala</span>
+      <span style={{ color: colors.inkSoft }}>{tl.demo.hall.yourHall}</span>
       <strong style={{ fontWeight: 600 }}>
         {`${hall.name} · ${hall.meters.width} × ${hall.meters.height} m`}
       </strong>
@@ -118,9 +119,9 @@ export const HallScene: React.FC = () => {
       >
         <div style={{ width: tall ? "100%" : 540, paddingTop: tall ? 8 : 40, flexShrink: 0 }}>
           <SceneLabel
-            step="Krok 01"
-            title="Naszkicuj salę"
-            subtitle="Stoły okrągłe i prostokątne, parkiet i wyposażenie - ustaw salę dokładnie tak, jak będzie wyglądać w dniu wesela."
+            step={tl.demo.hall.step}
+            title={tl.demo.hall.title}
+            subtitle={tl.demo.hall.subtitle}
             from={10}
           />
           {venuePill}

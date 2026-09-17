@@ -2,10 +2,11 @@ import React from "react";
 import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { Backdrop } from "../../components/Backdrop";
 import { useFormat } from "../../format";
+import { tl } from "../../i18n";
 import { colors, fonts } from "../../theme";
 
-/** Revealed word by word, so the question lands on "stole 4?" rather than all at once. */
-const QUESTION = "Ile osób siedzi przy stole 4?".split(" ");
+/** Revealed word by word, so the question lands on "4?" rather than all at once. */
+const QUESTION = tl.teaser.question;
 
 export const HookScene: React.FC = () => {
   const frame = useCurrentFrame();
@@ -44,7 +45,7 @@ export const HookScene: React.FC = () => {
         >
           {QUESTION.map((word, i) => (
             <span
-              key={word}
+              key={i}
               style={{
                 display: "inline-block",
                 opacity: words[i],
@@ -67,7 +68,7 @@ export const HookScene: React.FC = () => {
             transform: `translateY(${interpolate(stingIn, [0, 1], [18, 0])}px)`,
           }}
         >
-          Trzy dni przed weselem.
+          {tl.teaser.sting}
         </div>
       </AbsoluteFill>
     </Backdrop>

@@ -12,6 +12,7 @@ import { CallToAction } from "../../components/CallToAction";
 import { PRINT_PAGE, PrintPage, printPages } from "../../components/PrintSheet";
 import { Wordmark } from "../../components/Wordmark";
 import { useFormat } from "../../format";
+import { tl } from "../../i18n";
 import { colors, fonts } from "../../theme";
 import { guestListFor } from "../guests";
 
@@ -149,13 +150,13 @@ export const ReportCtaScene: React.FC = () => {
           transform: `translateY(${interpolate(lineIn, [0, 1], [24, 0])}px)`,
         }}
       >
-        {"Wydrukuj i podaj dalej."}
+        {tl.report.payoff}
       </div>
 
       <CallToAction
         // The heading above is the payoff; this is the step before it, so the
         // two lines stop issuing the same command.
-        action="Dodaj preferencje żywieniowe gości"
+        action={tl.report.ctaAction}
         from={CTA_FROM}
         actionSize={tall ? 44 : 36}
         urlSize={tall ? 42 : 38}

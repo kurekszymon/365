@@ -7,6 +7,7 @@ import { SceneLabel } from "../components/SceneLabel";
 import { GUESTS } from "../data";
 import { useFormat } from "../format";
 import { allSeats } from "../geometry";
+import { tl } from "../i18n";
 import { colors, fonts } from "../theme";
 
 const CHIP_START = 34;
@@ -59,9 +60,9 @@ export const SeatingScene: React.FC = () => {
       >
         <div style={{ width: tall ? "100%" : 540, paddingTop: tall ? 8 : 40, flexShrink: 0 }}>
           <SceneLabel
-            step="Krok 03"
-            title="Posadź wszystkich"
-            subtitle="Przeciągnij gości na miejsca, wyrównaj obłożenie stołów i wyeksportuj gotowy plan do druku dla sali."
+            step={tl.demo.seating.step}
+            title={tl.demo.seating.title}
+            subtitle={tl.demo.seating.subtitle}
             from={4}
           />
 
@@ -87,7 +88,7 @@ export const SeatingScene: React.FC = () => {
                 {Math.round(seated)}
               </span>
               <span style={{ fontFamily: fonts.sans, fontSize: type.body, color: colors.inkSoft }}>
-                z {hall.totalSeats} gości przy stołach
+                {tl.demo.seating.ofSeated(hall.totalSeats)}
               </span>
             </div>
             <div
@@ -118,8 +119,8 @@ export const SeatingScene: React.FC = () => {
                 color: colors.inkSoft,
               }}
             >
-              <Legend color={colors.seatEmpty} label="Wolne miejsce" />
-              <Legend color={colors.seatFilled} label="Zajęte" />
+              <Legend color={colors.seatEmpty} label={tl.demo.seating.emptySeat} />
+              <Legend color={colors.seatFilled} label={tl.demo.seating.taken} />
             </div>
           </div>
         </div>

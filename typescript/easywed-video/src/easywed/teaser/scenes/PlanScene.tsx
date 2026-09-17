@@ -4,6 +4,7 @@ import { Backdrop } from "../../components/Backdrop";
 import { HallCanvas, hallAspect } from "../../components/HallCanvas";
 import { canvasInsets, PlannerCanvas } from "../../components/PlannerCanvas";
 import { useFormat } from "../../format";
+import { tl } from "../../i18n";
 import { colors, fonts } from "../../theme";
 
 /** Frame the first table starts taking guests, and the stagger between tables. */
@@ -101,7 +102,7 @@ export const PlanScene: React.FC = () => {
         {`${seated} / ${hall.totalSeats}`}
       </span>
       <span style={{ fontFamily: fonts.sans, fontSize: type.body, color: colors.inkSoft }}>
-        gości ma swoje miejsce
+        {tl.teaser.hasSeat}
       </span>
     </div>
   );
@@ -139,7 +140,7 @@ export const PlanScene: React.FC = () => {
               transform: `translateY(${interpolate(titleIn, [0, 1], [24, 0])}px)`,
             }}
           >
-            Albo jeden plan sali.
+            {tl.teaser.plan}
           </div>
           {tall ? null : stat}
         </div>

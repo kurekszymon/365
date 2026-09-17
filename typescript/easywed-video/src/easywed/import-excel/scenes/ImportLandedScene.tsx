@@ -5,6 +5,7 @@ import { BrandMark } from "../../components/BrandMark";
 import { CallToAction } from "../../components/CallToAction";
 import { ImportDialog } from "../../components/ImportDialog";
 import { Wordmark } from "../../components/Wordmark";
+import { tl } from "../../i18n";
 import { useFormat } from "../../format";
 import { DialogMotion, dialogScale, ImportPlanner } from "../components/ImportPlanner";
 import { SHEET_HEADERS, SHEET_MAPPING, sheetFor } from "../sheet";
@@ -101,7 +102,7 @@ export const ImportLandedScene: React.FC = () => {
               </div>
 
               <CallToAction
-                action="Wczytaj swoją listę gości"
+                action={tl.importFilm.ctaAction}
                 from={CTA_FROM + 18}
                 actionSize={tall ? 48 : 44}
                 urlSize={tall ? 42 : 40}

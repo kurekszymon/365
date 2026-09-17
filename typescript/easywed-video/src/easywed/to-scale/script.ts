@@ -1,4 +1,5 @@
 import type { Point } from "../geometry";
+import { tl } from "../i18n";
 import type { HallLayout } from "../layouts";
 import { PX_PER_M } from "../layouts";
 
@@ -45,13 +46,10 @@ export const LABEL_POP = 12;
  */
 export const PAYOFF_IN = [280, 294] as const;
 
-export const MEASURE_MODE = { center: "Środek", border: "Krawędź" } as const;
+export const MEASURE_MODE = tl.app.measureMode;
 
 /** The two `measure.statusbar*` hints, verbatim. */
-export const STATUS = {
-  idle: "Kliknij na sali, aby umieścić punkt pomiaru",
-  started: "Kliknij ponownie, aby ustawić punkt końcowy",
-};
+export const STATUS = tl.app.measureStatus;
 
 type Rect = { x: number; y: number; width: number; height: number };
 

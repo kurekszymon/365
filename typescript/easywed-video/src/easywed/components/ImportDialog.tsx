@@ -1,6 +1,7 @@
 import React from "react";
 import { interpolateColors } from "remotion";
 import type { RosterGuest } from "../data";
+import { tl } from "../i18n";
 import { colors, fonts, shadow } from "../theme";
 import { Cursor } from "./Cursor";
 import { Icon } from "./Icon";
@@ -11,7 +12,7 @@ import { Icon } from "./Icon";
  * `GuestImportSheetPreview`, `GuestImportResultPreview` and `ui/preview-table`.
  * A centred dialog in landscape; in portrait the bottom-sheet drawer
  * `ResponsiveDialog` swaps to on a phone. Every string is `guests.import.*`
- * (or `common.show_more`) from `pl.json`, verbatim.
+ * (or `common.show_more`) from `pl.json` / `en.json`, verbatim.
  *
  * Sizes are the app's CSS pixels times `scale`, as `AppFrame` draws the chrome.
  */
@@ -20,15 +21,15 @@ export type ImportStage = "file" | "mapping" | "preview";
 
 /** `GUEST_IMPORT_FIELDS`, in the app's order, labelled `guests.import.col.*`. */
 export const IMPORT_FIELDS = [
-  { field: "name", label: "Imię", required: true },
-  { field: "table", label: "Stół", required: false },
-  { field: "dietary", label: "Dieta", required: false },
-  { field: "note", label: "Notatka", required: false },
+  { field: "name", label: tl.import.col.name, required: true },
+  { field: "table", label: tl.import.col.table, required: false },
+  { field: "dietary", label: tl.import.col.dietary, required: false },
+  { field: "note", label: tl.import.col.note, required: false },
 ] as const;
 
 export type ImportField = (typeof IMPORT_FIELDS)[number]["field"];
 
-/** The app's `ColumnMapping`: a column index per field, or null for "- Brak -". */
+/** The app's `ColumnMapping`: a column index per field, or null for "- None -". */
 export type ColumnMapping = Record<ImportField, number | null>;
 
 export type ImportPointer = {
@@ -60,7 +61,7 @@ type Props = {
   pointer?: ImportPointer;
 };
 
-/** `PreviewTable`'s `initial` - rows shown before "+N więcej wierszy". */
+/** `PreviewTable`'s `initial` - rows shown before "+N more rows". */
 const PREVIEW_ROWS = 6;
 
 /** Column widths for the four-field table, so long cells truncate as `truncate` does. */
@@ -70,15 +71,6 @@ const COLUMN_SHARES = [31, 29, 19, 21];
 const RING = "rgba(36, 31, 26, 0.1)";
 /** The drop zone's idle `border-muted-foreground/40`. */
 const DROP_BORDER = "rgba(123, 115, 107, 0.4)";
-
-const pluralRules = new Intl.PluralRules("pl");
-
-/** The `_one` / `_few` / `_many` form i18next picks for a Polish count. */
-const byCount = (count: number, forms: { one: string; few: string; many: string }) => {
-  const rule = pluralRules.select(count);
-  const form = rule === "one" ? forms.one : rule === "few" ? forms.few : forms.many;
-  return form.replace("{{count}}", String(count));
-};
 
 /**
  * Where on its target the pointer comes to rest. The file lands in the drop
@@ -127,7 +119,7 @@ const PointerOverlay: React.FC<{ pointer: ImportPointer; scale: number }> = ({ p
   );
 };
 
-/** One half of the footer's `ButtonGroup`: outline "Wstecz", then the primary action. */
+/** One half of the footer's `ButtonGroup`: outline "Back", then the primary action. */
 const GroupButton: React.FC<{
   label: string;
   primary?: boolean;
@@ -214,7 +206,7 @@ const PreviewTable: React.FC<{
                 colSpan={headers.length}
                 style={{ padding: `${6 * scale}px ${8 * scale}px`, textAlign: "center", fontStyle: "italic", color: colors.inkSoft }}
               >
-                {`+${remaining} więcej wierszy`}
+                {tl.import.moreRows(remaining)}
               </td>
             </tr>
           ) : null}
@@ -249,7 +241,7 @@ export const ImportDialog: React.FC<Props> = ({
 
   const footer = (primaryLabel: string, target: "next" | "commit") => (
     <div style={{ display: "flex", justifyContent: "flex-end" }}>
-      <GroupButton label="Wstecz" scale={scale} />
+      <GroupButton label={tl.import.back} scale={scale} />
       <GroupButton
         label={primaryLabel}
         primary
@@ -266,7 +258,7 @@ export const ImportDialog: React.FC<Props> = ({
     body = (
       <>
         <div style={muted}>
-          Wgraj plik .csv lub .xlsx. Wykryjemy kolumny, pozwolimy je dopasować i pokażemy podgląd przed dodaniem.
+          {tl.import.intro}
         </div>
         <div
           style={{
@@ -284,9 +276,9 @@ export const ImportDialog: React.FC<Props> = ({
           }}
         >
           <span style={{ fontSize: 14 * scale, fontWeight: 500, color: colors.ink }}>
-            Przeciągnij tutaj plik .csv lub .xlsx lub kliknij, aby wybrać
+            {tl.import.dropHere}
           </span>
-          <span style={{ fontSize: 12 * scale, color: colors.inkSoft }}>Wybierz plik CSV lub Excel</span>
+          <span style={{ fontSize: 12 * scale, color: colors.inkSoft }}>{tl.import.chooseFile}</span>
           {pointerOn("drop")}
         </div>
       </>
@@ -294,12 +286,12 @@ export const ImportDialog: React.FC<Props> = ({
   } else if (stage === "mapping") {
     body = (
       <>
-        <div style={muted}>Dopasuj każde pole do kolumny z Twojego pliku.</div>
+        <div style={muted}>{tl.import.mapColumns}</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 * scale }}>
           {IMPORT_FIELDS.map(({ field, label, required }, i) => {
             const settle = snap?.[i] ?? 1;
             const column = mapping[field];
-            const value = column === null ? "- Brak -" : headers[column] || `Kolumna ${column + 1}`;
+            const value = column === null ? tl.import.colNone : headers[column] || tl.import.colUnnamed(column + 1);
             return (
               <div key={field} style={{ display: "flex", alignItems: "center", gap: 12 * scale }}>
                 <div style={{ flex: 1, fontSize: 14 * scale, fontWeight: 500, color: colors.ink }}>
@@ -342,7 +334,7 @@ export const ImportDialog: React.FC<Props> = ({
           scale={scale}
           highlight={columnGlow}
         />
-        {footer("Dalej", "next")}
+        {footer(tl.import.next, "next")}
       </>
     );
   } else {
@@ -350,32 +342,21 @@ export const ImportDialog: React.FC<Props> = ({
     body = (
       <>
         <div style={muted}>
-          {byCount(guests.length, {
-            one: "Do zaimportowania: {{count}} gość",
-            few: "Do zaimportowania: {{count}} gości",
-            many: "Do zaimportowania: {{count}} gości",
-          })}
+          {tl.import.summary(guests.length)}
         </div>
         <PreviewTable
           headers={shown.map(({ label }) => label)}
           rows={guests.map((guest) =>
             shown.map(({ field }): Cell => {
               if (field === "name") return { text: guest.name };
-              if (field === "table") return guest.table ? { text: guest.table } : { text: "Nieprzypisani", muted: true };
-              if (field === "dietary") return guest.diet ? { text: guest.diet } : { text: "-", muted: true };
+              if (field === "table") return guest.table ? { text: guest.table } : { text: tl.import.unassigned, muted: true };
+              if (field === "dietary") return guest.diet ? { text: tl.diet[guest.diet] } : { text: "-", muted: true };
               return guest.note ? { text: guest.note } : { text: "-", muted: true };
             }),
           )}
           scale={scale}
         />
-        {footer(
-          byCount(guests.length, {
-            one: "Dodaj {{count}} gościa",
-            few: "Dodaj {{count}} gości",
-            many: "Dodaj {{count}} gości",
-          }),
-          "commit",
-        )}
+        {footer(tl.import.commit(guests.length), "commit")}
       </>
     );
   }
@@ -421,7 +402,7 @@ export const ImportDialog: React.FC<Props> = ({
         }}
       >
         <div style={{ fontFamily: fonts.heading, fontSize: 16 * scale, fontWeight: 500, lineHeight: 1 }}>
-          Importuj gości z pliku CSV lub Excel
+          {tl.import.title}
         </div>
         {drawer ? <Icon name="x" color={colors.inkSoft} size={20 * scale} /> : null}
       </div>

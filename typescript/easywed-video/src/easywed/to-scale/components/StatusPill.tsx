@@ -1,5 +1,6 @@
 import React from "react";
 import { Icon } from "../../components/Icon";
+import { tl } from "../../i18n";
 import { colors, fonts, shadow } from "../../theme";
 
 /**
@@ -44,7 +45,7 @@ export const StatusPill: React.FC<{ text: string; scale: number; opacity: number
       >
         Esc
       </span>
-      <span style={{ opacity: 0.8 }}>Esc aby wyjść</span>
+      <span style={{ opacity: 0.8 }}>{tl.app.escToExit}</span>
     </span>
   </div>
 );

@@ -1,14 +1,15 @@
 import React from "react";
 import { interpolate } from "remotion";
 import { Icon, type IconName } from "../../components/Icon";
-import type { GuestSpec, RosterGuest } from "../../data";
+import type { RosterGuest } from "../../data";
+import { tl, type DietKey } from "../../i18n";
 import { colors, fonts } from "../../theme";
 
 /**
  * The guest panel's list - `planner/Guests/GuestListContent.tsx` at easywed/v1:
  * search, filter chips, add and import, then one row per guest with the table
  * they sit at and their diet tags (`ui/tag-badge`, toned by `lib/dietary`).
- * Strings are `guests.*` from `pl.json`, verbatim.
+ * Strings are `guests.*` from `pl.json` / `en.json`, verbatim.
  *
  * The sticky block opens with the `SeatingProgress` card above the search; the
  * close-up that shows this list frames below it, so it is not drawn.
@@ -16,16 +17,14 @@ import { colors, fonts } from "../../theme";
  * Sizes are the app's CSS pixels; the caller scales the whole list.
  */
 
-type Diet = NonNullable<GuestSpec["diet"]>;
-
 /** `DIETARY_PRESETS` order, which the filter row keeps, and each preset's reserved tone. */
-const DIETS: { diet: Diet; tone: string }[] = [
-  { diet: "Wege", tone: colors.tagGreen },
-  { diet: "Vegan", tone: colors.tagTeal },
-  { diet: "Bez glutenu", tone: colors.tagAmber },
+const DIETS: { diet: DietKey; tone: string }[] = [
+  { diet: "vegetarian", tone: colors.tagGreen },
+  { diet: "vegan", tone: colors.tagTeal },
+  { diet: "glutenFree", tone: colors.tagAmber },
 ];
 
-const toneOf = (diet: Diet) => DIETS.find((entry) => entry.diet === diet)?.tone ?? colors.inkSoft;
+const toneOf = (diet: DietKey) => DIETS.find((entry) => entry.diet === diet)?.tone ?? colors.inkSoft;
 
 /** `TAG_TONE_BADGE`: the tone's border at 35%, its wash at 10%, its text at full strength. */
 const toned = (tone: string): React.CSSProperties => ({
@@ -146,24 +145,24 @@ export const GuestList: React.FC<Props> = ({ guests, width, tagged, scroll, list
         }}
       >
         <Icon name="search" color={colors.inkSoft} size={16} />
-        Szukaj gościa…
+        {tl.guests.search}
       </div>
 
       <div style={{ marginTop: STICKY_GAP, display: "flex", gap: 8, overflow: "hidden" }}>
-        <Chip label={`Wszyscy ${guests.length}`} style={{ backgroundColor: colors.primary, color: colors.primaryInk }} />
-        <Chip label={`Bez miejsca ${guests.filter((guest) => !guest.table).length}`} style={{ backgroundColor: colors.bgDeep, color: colors.inkSoft }} />
+        <Chip label={tl.guests.filterAll(guests.length)} style={{ backgroundColor: colors.primary, color: colors.primaryInk }} />
+        <Chip label={tl.guests.filterUnseated(guests.filter((guest) => !guest.table).length)} style={{ backgroundColor: colors.bgDeep, color: colors.inkSoft }} />
         {dietChips.map(({ diet, tone, count, shown }) =>
           shown > 0 ? (
             <div key={diet} style={{ opacity: shown, transform: `scale(${interpolate(shown, [0, 1], [0.7, 1])})` }}>
-              <Chip label={`${diet} (${Math.max(count, 1)})`} style={toned(tone)} />
+              <Chip label={`${tl.diet[diet]} (${Math.max(count, 1)})`} style={toned(tone)} />
             </div>
           ) : null,
         )}
       </div>
 
       <div style={{ marginTop: STICKY_GAP, display: "flex", gap: 8 }}>
-        <OutlineButton icon="plus" label="Dodaj gościa" />
-        <OutlineButton icon="fileSpreadsheet" label="Importuj gości" />
+        <OutlineButton icon="plus" label={tl.guests.add} />
+        <OutlineButton icon="fileSpreadsheet" label={tl.guests.import} />
       </div>
 
       <div style={{ marginTop: LIST_GAP, height: listHeight, overflow: "hidden" }}>
@@ -219,7 +218,7 @@ export const GuestList: React.FC<Props> = ({ guests, width, tagged, scroll, list
                       }}
                     >
                       <Icon name="check" color={colors.primary} size={12} strokeWidth={2.5} />
-                      {`Przy stole: ${guest.table}`}
+                      {tl.guests.seatedAt(guest.table)}
                     </div>
                     {/* The tag row opens as the diet is typed in, pushing the rows below down. */}
                     {guest.diet ? (
@@ -241,7 +240,7 @@ export const GuestList: React.FC<Props> = ({ guests, width, tagged, scroll, list
                             ...toned(toneOf(guest.diet)),
                           }}
                         >
-                          {guest.diet}
+                          {tl.diet[guest.diet]}
                         </div>
                       </div>
                     ) : null}

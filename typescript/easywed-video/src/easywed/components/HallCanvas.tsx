@@ -1,6 +1,7 @@
 import React from "react";
 import { interpolate } from "remotion";
 import type { Point } from "../geometry";
+import { tl } from "../i18n";
 import type { HallLayout } from "../layouts";
 import { PX_PER_M } from "../layouts";
 import { colors, fonts } from "../theme";
@@ -200,7 +201,7 @@ export const HallCanvas: React.FC<Props> = ({
           y={danceFloor.y}
           width={danceFloor.width}
           height={danceFloor.height}
-          label="Parkiet"
+          label={tl.hall.danceFloor}
           radius={24}
         />
         {hall.fixtures.map((fixture) => (

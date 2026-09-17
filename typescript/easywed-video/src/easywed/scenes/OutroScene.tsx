@@ -5,15 +5,10 @@ import { BrandMark } from "../components/BrandMark";
 import { CallToAction } from "../components/CallToAction";
 import { Wordmark } from "../components/Wordmark";
 import { useFormat } from "../format";
+import { tl } from "../i18n";
 import { colors, fonts } from "../theme";
 
-const FEATURES = [
-  "Plan sali „przeciągnij i upuść”",
-  "Import CSV i XLSX",
-  "Eksport PDF do druku",
-  "Sale i piętra",
-  "Planujcie razem",
-];
+const FEATURES = tl.demo.features;
 
 export const OutroScene: React.FC = () => {
   const frame = useCurrentFrame();
@@ -49,7 +44,7 @@ export const OutroScene: React.FC = () => {
             transform: `translateY(${interpolate(titleIn, [0, 1], [26, 0])}px)`,
           }}
         >
-          Każdy gość na właściwym miejscu
+          {tl.demo.outroTitle}
         </div>
 
         <div style={{ marginTop: 44, display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center" }}>
@@ -78,7 +73,7 @@ export const OutroScene: React.FC = () => {
             longest film ends on an instruction rather than on a note. The
             guest-mode line that sat here belongs in the caption. */}
         <CallToAction
-          action="Ustaw pierwszy stół"
+          action={tl.demo.outroAction}
           from={58}
           actionSize={tall ? 36 : 34}
           urlSize={tall ? 38 : 36}

@@ -2,12 +2,13 @@ import React from "react";
 import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { Backdrop } from "../../components/Backdrop";
 import { useFormat } from "../../format";
+import { tl } from "../../i18n";
 import { colors, fonts } from "../../theme";
 import { FileChip, Spreadsheet } from "../components/Spreadsheet";
 import { FILE_NAME, SHEET_HEADERS, sheetFor } from "../sheet";
 
-/** Revealed word by word; "w" is bound to "Excelu." so the line never ends on it. */
-const LINE = ["Twoja", "lista", "gości", "mieszka", "w Excelu."];
+/** Revealed word by word. */
+const LINE = tl.importFilm.line;
 
 /** Word stagger - the last word has settled by frame 42, inside the 1.5 s hook. */
 const WORD_FROM = 2;
@@ -106,7 +107,7 @@ export const ImportHookScene: React.FC = () => {
         >
           {LINE.map((word, i) => (
             <span
-              key={word}
+              key={i}
               style={{
                 display: "inline-block",
                 opacity: words[i],

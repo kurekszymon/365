@@ -1,6 +1,7 @@
 import React from "react";
 import { AbsoluteFill } from "remotion";
 import { WEDDING } from "../data";
+import { tl } from "../i18n";
 import { useFormat } from "../format";
 import { colors, fonts, shadow } from "../theme";
 import { Backdrop } from "./Backdrop";
@@ -189,7 +190,7 @@ export const AppFrame: React.FC<Props> = ({ activeRail, children }) => {
                 }}
               >
                 <Icon name="landmark" color={colors.ink} size={15 * s} />
-                Skonfiguruj salę
+                {tl.app.configureHall}
               </div>
             )}
             <HeaderButton name="upload" scale={s} />

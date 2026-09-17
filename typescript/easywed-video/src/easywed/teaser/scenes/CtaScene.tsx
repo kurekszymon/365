@@ -5,6 +5,7 @@ import { BrandMark } from "../../components/BrandMark";
 import { CallToAction } from "../../components/CallToAction";
 import { Wordmark } from "../../components/Wordmark";
 import { useFormat } from "../../format";
+import { tl } from "../../i18n";
 import { colors, fonts } from "../../theme";
 
 /** The action line lands once the title has settled; the pill follows it. */
@@ -50,11 +51,11 @@ export const CtaScene: React.FC = () => {
             transform: `translateY(${interpolate(titleIn, [0, 1], [26, 0])}px)`,
           }}
         >
-          Rozsadź gości w jeden wieczór
+          {tl.teaser.ctaTitle}
         </div>
 
         <CallToAction
-          action="Zacznij dziś wieczorem"
+          action={tl.teaser.ctaAction}
           from={CTA_FROM}
           actionSize={tall ? 46 : 42}
           urlSize={38}

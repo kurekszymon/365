@@ -1,22 +1,23 @@
+import { tl, type DietKey } from "./i18n";
 import type { TableSpec } from "./layouts";
 
 export type GuestSpec = {
   name: string;
-  /** The app's own diet tags (`guests.dietary.*`). */
-  diet?: "Wege" | "Vegan" | "Bez glutenu";
+  /** The app's own diet tags (`guests.dietary.*`), drawn as `tl.diet[diet]`. */
+  diet?: DietKey;
   table: string;
 };
 
 export const GUESTS: GuestSpec[] = [
-  { name: "Anna Kowalska", table: "Stół pary młodej" },
-  { name: "Piotr Nowak", table: "Stół pary młodej" },
-  { name: "Maria Wiśniewska", diet: "Wege", table: "Stół 1" },
-  { name: "Tomasz Lewandowski", table: "Stół 1" },
-  { name: "Zofia Wójcik", diet: "Bez glutenu", table: "Stół 2" },
-  { name: "Jakub Kamiński", table: "Stół 3" },
-  { name: "Julia Zielińska", diet: "Vegan", table: "Stół 3" },
-  { name: "Michał Dąbrowski", table: "Stół 4" },
-  { name: "Hanna Mazur", diet: "Wege", table: "Stół 5" },
+  { name: "Anna Kowalska", table: tl.hall.headTable },
+  { name: "Piotr Nowak", table: tl.hall.headTable },
+  { name: "Maria Wiśniewska", diet: "vegetarian", table: tl.hall.table(1) },
+  { name: "Tomasz Lewandowski", table: tl.hall.table(1) },
+  { name: "Zofia Wójcik", diet: "glutenFree", table: tl.hall.table(2) },
+  { name: "Jakub Kamiński", table: tl.hall.table(3) },
+  { name: "Julia Zielińska", diet: "vegan", table: tl.hall.table(3) },
+  { name: "Michał Dąbrowski", table: tl.hall.table(4) },
+  { name: "Hanna Mazur", diet: "vegetarian", table: tl.hall.table(5) },
 ];
 
 /** A row of the guest list the import film reads in. */
@@ -56,7 +57,7 @@ const SURNAMES: [string, string][] = [
 ];
 
 /** The odd note a real list carries - logistics, never the reason for a diet. */
-const NOTES: Record<number, string> = { 5: "dojedzie po ślubie", 12: "krzesełko dla dziecka" };
+const NOTES: Record<number, string> = { 5: tl.notes.lateArrival, 12: tl.notes.highChair };
 
 const generatedGuest = (i: number, table: string): RosterGuest => {
   const first = FIRST_NAMES[i % FIRST_NAMES.length];
@@ -92,7 +93,6 @@ export const rosterFor = (tables: Pick<TableSpec, "label" | "seats">[]): RosterG
 /** The venue line comes from the active `HallLayout` (name + metres). */
 export const WEDDING = {
   couple: "Anna & Piotr",
-  date: "12 września 2026",
   /** The same day as a date, for the printed report's "Data ślubu". */
   day: new Date(2026, 8, 12),
   /** When the report is printed - the week before, as a couple would hand it on. */

@@ -8,6 +8,7 @@ import {
 } from "remotion";
 import { Backdrop } from "../../components/Backdrop";
 import { useFormat } from "../../format";
+import { tl } from "../../i18n";
 import { colors, fonts, shadow } from "../../theme";
 
 /**
@@ -18,11 +19,7 @@ import { colors, fonts, shadow } from "../../theme";
  * Every message is revealed word by word. A unit holding more than one word
  * keeps a lone "o" off the end of a line and never strands "wege." on its own.
  */
-const MESSAGES = [
-  ["Sala", "prosi", "o plan stołów."],
-  ["Florystka", "pyta,", "jak", "rozłożyć", "winietki."],
-  ["Kuchnia", "pyta,", "gdzie", "podać", "dania wege."],
-];
+const MESSAGES = tl.report.messages;
 
 /** Word stagger inside a message - the first has settled by frame 28, inside the 1.5 s hook. */
 const WORD_FROM = 4;
@@ -139,7 +136,7 @@ export const ReportHookScene: React.FC = () => {
                     });
                     return (
                       <span
-                        key={word}
+                        key={i}
                         style={{
                           display: "inline-block",
                           opacity: wordIn,

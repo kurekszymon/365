@@ -9,25 +9,26 @@ import {
 } from "remotion";
 import { Backdrop } from "../../components/Backdrop";
 import { useFormat } from "../../format";
+import { tl } from "../../i18n";
 import { colors, fonts } from "../../theme";
 import { SheetCard, StickyNote } from "../components/Scraps";
 
 const SHEETS = [
   {
-    filename: "goscie.xlsx",
+    filename: tl.teaser.files[0],
     rows: [{ width: 52 }, { width: 44, struck: true }, { width: 58 }, { width: 40 }, { width: 49 }],
   },
   {
-    filename: "goscie_final.xlsx",
+    filename: tl.teaser.files[1],
     rows: [{ width: 46 }, { width: 55 }, { width: 38, struck: true }, { width: 51 }, { width: 43 }],
   },
   {
-    filename: "goscie_final_OSTATECZNA.xlsx",
+    filename: tl.teaser.files[2],
     rows: [{ width: 57 }, { width: 41 }, { width: 48 }, { width: 53, struck: true }, { width: 45 }],
   },
 ];
 
-const NOTES = ["Ciocia Basia NIE obok Marka", "Wujek Janusz - bez glutenu?"];
+const NOTES = tl.teaser.notes;
 
 /**
  * Where each scrap sits relative to the centre and which way it is flung. The
@@ -153,7 +154,7 @@ export const ChaosScene: React.FC = () => {
             transform: `translateY(${interpolate(captionIn, [0, 1], [24, 0])}px)`,
           }}
         >
-          Arkusz, karteczki i grupa na czacie.
+          {tl.teaser.chaos}
         </div>
       </AbsoluteFill>
     </Backdrop>
