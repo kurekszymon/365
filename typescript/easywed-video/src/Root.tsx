@@ -34,6 +34,11 @@ import { ReportTagsScene } from "./easywed/kitchen-report/scenes/ReportTagsScene
 import { ReportSheetScene } from "./easywed/kitchen-report/scenes/ReportSheetScene";
 import { ReportCtaScene } from "./easywed/kitchen-report/scenes/ReportCtaScene";
 import { KITCHEN_REPORT_DURATION, KITCHEN_REPORT_SCENES } from "./easywed/kitchen-report/timeline";
+import { ToScale } from "./easywed/to-scale/ToScale";
+import { ScaleHookScene } from "./easywed/to-scale/scenes/ScaleHookScene";
+import { ScaleMeasureScene } from "./easywed/to-scale/scenes/ScaleMeasureScene";
+import { ScaleGapScene } from "./easywed/to-scale/scenes/ScaleGapScene";
+import { SCALE_DURATION, SCALE_SCENES } from "./easywed/to-scale/timeline";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -116,6 +121,16 @@ export const RemotionRoot: React.FC = () => {
         height={VERTICAL_HEIGHT}
       />
 
+      {/* The 12 s landing-page loop - two distances measured in metres; 16:9 only, no CTA, loops back to frame 0. */}
+      <Composition
+        id="easywed-scale"
+        component={ToScale}
+        durationInFrames={SCALE_DURATION}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+
       {/* Each scene on its own, so a single beat can be previewed in isolation. */}
       <Folder name="Scenes">
         <Composition id="Intro" component={IntroScene} durationInFrames={SCENES.intro} fps={FPS} width={WIDTH} height={HEIGHT} />
@@ -148,6 +163,13 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="ReportTags" component={ReportTagsScene} durationInFrames={KITCHEN_REPORT_SCENES.tags} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="ReportSheet" component={ReportSheetScene} durationInFrames={KITCHEN_REPORT_SCENES.sheet} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="ReportCta" component={ReportCtaScene} durationInFrames={KITCHEN_REPORT_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+      </Folder>
+
+      {/* The to-scale loop's beats, at 16:9 - the only size it is made for. */}
+      <Folder name="Scale">
+        <Composition id="ScaleHook" component={ScaleHookScene} durationInFrames={SCALE_SCENES.hook} fps={FPS} width={WIDTH} height={HEIGHT} />
+        <Composition id="ScaleMeasure" component={ScaleMeasureScene} durationInFrames={SCALE_SCENES.measure} fps={FPS} width={WIDTH} height={HEIGHT} />
+        <Composition id="ScaleGap" component={ScaleGapScene} durationInFrames={SCALE_SCENES.gap} fps={FPS} width={WIDTH} height={HEIGHT} />
       </Folder>
     </>
   );

@@ -31,6 +31,14 @@ settle, the CTA.
 Scenes 174 + 120 + 150 + 120 = 564 at `KITCHEN_REPORT_TRANSITION = 8` × 3 seams → 540.
 Built from `docs/video-plans/full-series-2026-09-11.md`, brief `kitchen-report`.
 
+## The to-scale loop - `easywed-scale`, 360f (12 s), 16:9 only
+
+a seated room and the question → the measure tool switched on, its mode flipped to *Krawędź* →
+Stół 1's edge measured across to the dance floor → Stół 5's edge measured up to it, the payoff →
+a dissolve back onto frame 0. A landing-page loop: no CTA, no pill.
+Scenes 120 + 150 + 120 = 390 at `SCALE_TRANSITION = 15` × 2 seams → 360; the last 15 frames are
+`LoopSeam` onto frame 0. Built from `docs/video-plans/16x9-only-2026-09-16.md`, brief `to-scale`.
+
 ## Polish lines already burned on screen
 
 None of these may appear again:
@@ -80,6 +88,15 @@ The walkthrough's outro now closes the same way - *"Ustaw pierwszy stół"* over
 films share one closing shape. The grey *"Zacznij w trybie gościa - bez zakładania konta."* that used
 to sit under its pill is gone from the last film that carried it: a disclaimer is caption copy, not
 an action line (`SKILL.md` section 8). Both of those lines are now spent.
+
+From the to-scale loop: *"Zmieszczą się te stoły?"* · *"Odległości w metrach, nie na oko."* - and,
+as the canvas toolbar, the measure overlay and the status bar show them (app strings, verbatim):
+*"Mierzenie"*, *"Środek"*, *"Krawędź"*, *"Kliknij na sali, aby umieścić punkt pomiaru"*,
+*"Kliknij ponownie, aby ustawić punkt końcowy"*, *"Esc aby wyjść"*, and the distance labels
+*"3.33 m"* and *"1.33 m"* (with the app's decimal point). The beat itself - two distances measured
+between a table and the dance floor - is spent too. The toolbar's *"Siatka"*, *"Miejsca"* and
+*"1 m"*, and the hall chip *"Sala główna · 22×14 m"*, are chrome every planner shot carries, not
+lines.
 
 The one exception is the CTA pill itself: *"easywed.app"* recurs by design (section 8). Each video's
 action line above it is its own, and burns like any other line.

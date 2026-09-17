@@ -14,6 +14,18 @@ named in section 2 both need updating — nothing will warn you.
 - **Free for couples**, stated contractually rather than as a promotion — `terms.fees.c1`.
 - **A metric, to-scale floor plan** — `PX_PER_M = 60`, a measuring tool (`measure.*`), snapping
   (`canvas.snap.*`), a 1 m ruled grid with a firmer 5 m ruling.
+  - How the measure tool actually runs (`planner/Canvas/useMeasureTool.ts`, `CanvasToolbar.tsx`,
+    `MeasureOverlay.tsx`, `StatusBar.tsx`): *Mierzenie* toggles it, and while it is on a mode
+    switch joins the **end** of the toolbar row, after *Miejsca*, reading *„Środek”* by default
+    (`view.store.ts` `measureMode: "center"`, persisted) or *„Krawędź”*. In border mode a click
+    **inside** a table or fixture snaps to its nearest edge (`nearestCircleBorder` /
+    `nearestRectBorder`), and the pending start point turns to face the pointer as it moves off a
+    table. A saved measurement is a dashed teal (`#0d9488`) line with end dots, a label
+    `${d.toFixed(2)} m` - decimal point, not comma - and a small delete ✕, and stays drawn after
+    the tool is switched off. On desktop only, a pill at the bottom reads
+    *„Kliknij na sali, aby umieścić punkt pomiaru”* or, once a first point is down,
+    *„Kliknij ponownie, aby ustawić punkt końcowy”*, followed by an `Esc` key and
+    *„Esc aby wyjść”* (`statusbar.esc_to_exit`).
 - **Multi-hall and multi-floor** (`hall.floor`, `hall.list_title`), plus custom polygon halls and
   fixtures — stage, dance floor, bar, DJ booth, entrance, or a shape drawn by hand
   (`fixtures.preset.*`, `fixtures.shape.polygon`).

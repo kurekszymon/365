@@ -51,6 +51,9 @@ export const colors = {
   /** `DialogOverlay`'s `bg-black/10` - the scrim behind a dialog or drawer. */
   scrim: "rgba(0, 0, 0, 0.1)",
 
+  /** `MeasureOverlay`'s hard-coded `#0d9488` (teal-600): the measuring line, its dots and its label. */
+  measure: "#0d9488",
+
   brandGreen: "#43684b",
   brandGreenSoft: "#9ec2a2",
   brandGreenMist: "#d9ead9",

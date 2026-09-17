@@ -1,6 +1,6 @@
 # easywed-video
 
-[Remotion](https://remotion.dev) promotional film for **easywed.** (`../easywed`), in three cuts:
+[Remotion](https://remotion.dev) promotional film for **easywed.** (`../easywed`), in these cuts:
 
 - **the walkthrough** - 28 seconds of the planner: sketch the hall, add guests, seat everyone.
 - **the teaser** - 15 seconds for Reels/TikTok: the question, the pile of spreadsheets it takes
@@ -10,8 +10,11 @@
 - **the kitchen report** - 18 seconds for Reels/TikTok: the venue, the florist and the kitchen all
   asking at once, the diet tags on the guest list, the printed report with diets beside the names,
   the CTA.
+- **the to-scale loop** - 12 seconds for the landing page, 16:9 only: the question beside a seated
+  room, the measure tool taking two distances in metres, then back to its first frame. No CTA -
+  the page around it is the CTA.
 
-All render in 16:9 (1920x1080) and 9:16 (1080x1920), and all are in Polish.
+All but the loop render in 16:9 (1920x1080) and 9:16 (1080x1920), and all are in Polish.
 
 It is a standalone package on purpose - it sits next to `easywed/` rather than inside it, so it
 stays out of that project's tsconfig, ESLint and Vite scope.
@@ -32,6 +35,9 @@ npm run render:import-excel:vertical   # -> out/easywed-import-vertical.mp4 (9:1
 
 npm run render:kitchen-report            # -> out/easywed-report.mp4          (16:9)
 npm run render:kitchen-report:vertical   # -> out/easywed-report-vertical.mp4 (9:16)
+
+npm run render:to-scale          # -> out/easywed-scale.mp4        (16:9, at 960x540 for its page slot)
+npm run render:to-scale:poster   # -> out/easywed-scale-poster.png (frame 0 at 960x540, the <video> poster)
 
 npm run render:all       # all of the above
 npm run lint             # eslint + tsc
@@ -93,9 +99,17 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `ReportSheet`             | 150f   | the printed report, pushed in on the diets     |
 | `ReportCta`               | 120f   | the pages settle, logo + easywed.app           |
 
-The scenes are also registered individually (Studio folders "Scenes", "Teaser", "Import" and
-"Report") so a single beat can be previewed without scrubbing through the whole timeline. The
-social cuts' scenes are registered at 9:16, the cut they are made for.
+| id                        | length | what it is                                        |
+| ------------------------- | ------ | ------------------------------------------------- |
+| `easywed-scale`           | 360f   | the 12 s to-scale landing loop, 16:9              |
+| `ScaleHook`               | 120f   | the question; the measure tool switched on        |
+| `ScaleMeasure`            | 150f   | Stół 1 across to the dance floor, "3.33 m"        |
+| `ScaleGap`                | 120f   | Stół 5 up to the floor, "1.33 m", the seam home   |
+
+The scenes are also registered individually (Studio folders "Scenes", "Teaser", "Import",
+"Report" and "Scale") so a single beat can be previewed without scrubbing through the whole
+timeline. The social cuts' scenes are registered at 9:16, the cut they are made for; the loop's at
+16:9, its only size.
 
 ## Structure
 
@@ -117,6 +131,9 @@ src/easywed/
                          components/ImportDialog.tsx, since the long walkthrough reuses it
   kitchen-report/        the kitchen-report cut, in the teaser's shape; the printed report
                          lives in components/PrintSheet.tsx, since the long walkthrough reuses it
+  to-scale/              the to-scale landing loop - three scenes drawn off one shared clock
+                         (script.ts), closed by components/LoopSeam.tsx, which the other
+                         landing loops reuse
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect

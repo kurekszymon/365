@@ -3,9 +3,9 @@ import type { HallLayout } from "../layouts";
 import { colors, fonts, shadow } from "../theme";
 import { Icon, type IconName } from "./Icon";
 
-type ToolProps = { icon: IconName; label: string; active?: boolean; scale: number };
+type ToolProps = { icon?: IconName; label: string; active?: boolean; scale: number };
 
-/** One of the canvas toolbar's bordered chips. */
+/** One of the canvas toolbar's bordered chips. The measure mode switch is the one without a glyph. */
 const Tool: React.FC<ToolProps> = ({ icon, label, active, scale }) => {
   const tint = active ? colors.selected : colors.inkSoft;
   return (
@@ -23,7 +23,7 @@ const Tool: React.FC<ToolProps> = ({ icon, label, active, scale }) => {
         color: tint,
       }}
     >
-      <Icon name={icon} color={tint} size={14 * scale} />
+      {icon ? <Icon name={icon} color={tint} size={14 * scale} /> : null}
       {label}
     </div>
   );
@@ -175,8 +175,13 @@ export const PlannerCanvas: React.FC<{
   hall: HallLayout;
   tall: boolean;
   zoom?: string;
+  /**
+   * The measure tool switched on: *Mierzenie* lights up and, as in
+   * `CanvasToolbar`, its mode switch (`measure.mode.*`) joins the end of the row.
+   */
+  measureMode?: string;
   children: React.ReactNode;
-}> = ({ hall, tall, zoom = "92%", children }) => {
+}> = ({ hall, tall, zoom = "92%", measureMode, children }) => {
   const scale = chromeScale(tall);
   const insets = canvasInsets(tall);
 
@@ -223,8 +228,11 @@ export const PlannerCanvas: React.FC<{
       >
         <Stepper value="1 m" scale={scale} />
         <Tool icon="grid" label="Siatka" scale={scale} />
-        {tall ? null : <Tool icon="ruler" label="Mierzenie" scale={scale} />}
+        {tall ? null : (
+          <Tool icon="ruler" label="Mierzenie" active={measureMode !== undefined} scale={scale} />
+        )}
         <Tool icon="armchair" label="Miejsca" active scale={scale} />
+        {measureMode !== undefined ? <Tool label={measureMode} active scale={scale} /> : null}
       </div>
 
       <div style={{ position: "absolute", left: GAP * scale, bottom: GAP * scale }}>
