@@ -67,7 +67,12 @@ const B = {
 /** How long a press reads as held down, and how long the sheet takes to arrive or leave. */
 const PRESS_HELD = 5;
 const OPEN_OVER = 13;
-const CLOSE_OVER = 8;
+/**
+ * Short: in landscape the sheet is a centred dialog that fades rather than
+ * sliding away, and every frame it spends half-transparent is one where the
+ * guest list reads through the form on top of it.
+ */
+const CLOSE_OVER = 5;
 
 /** The bracket the couple types for the older children. `canonicalizeAgeGroup` keeps it verbatim. */
 const CUSTOM_BRACKET = TAGGED_ON_CAMERA[1].ageGroup;
@@ -94,6 +99,8 @@ export const KidsTagScene: React.FC = () => {
   const open =
     spring({ frame: t - beat.open, fps, config: { damping: 200 }, durationInFrames: OPEN_OVER }) *
     (1 - interpolate(t, [beat.close, beat.close + CLOSE_OVER], [0, 1], clamp));
+
+  const scrim = Math.min(1, open * 1.8);
 
   // The two brackets land on their rows as each sheet closes; nobody else is tagged yet.
   const tagged = [
@@ -197,8 +204,14 @@ export const KidsTagScene: React.FC = () => {
           pointerEvents: "none",
         }}
       >
+        {/* The scrim holds while the sheet fades, so the list behind it stays
+            blurred rather than reading through the form on its way out. */}
         <AbsoluteFill
-          style={{ backgroundColor: colors.scrim, opacity: open, backdropFilter: `blur(${4 * open}px)` }}
+          style={{
+            backgroundColor: colors.scrim,
+            opacity: scrim,
+            backdropFilter: `blur(${4 * scrim}px)`,
+          }}
         />
         {open > 0.01 ? (
           <DrawerMotion open={open} drawer={tall}>

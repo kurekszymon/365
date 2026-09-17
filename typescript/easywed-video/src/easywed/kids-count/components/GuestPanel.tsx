@@ -2,8 +2,8 @@ import React from "react";
 import { AbsoluteFill, useVideoConfig } from "remotion";
 import { Backdrop } from "../../components/Backdrop";
 import { CHIPS_TOP, GuestList, LIST_TOP, ROW_HEIGHT, rowTop } from "../../components/GuestList";
-import { HallCanvas } from "../../components/HallCanvas";
-import { PlannerCanvas } from "../../components/PlannerCanvas";
+import { HallCanvas, hallAspect } from "../../components/HallCanvas";
+import { canvasInsets, PlannerCanvas } from "../../components/PlannerCanvas";
 import type { RosterGuest } from "../../data";
 import { useFormat } from "../../format";
 import { colors } from "../../theme";
@@ -26,11 +26,26 @@ const CHIPS_AT = 140;
 
 /** Landscape: the panel's left edge, width and inner padding, and the gap before the planner beside it. */
 const PANEL = { x: 64, width: 420, padX: 14, gap: 48 };
+
+/**
+ * Landscape: what the planner beside the panel is given. The panel is a
+ * close-up and runs off the top and bottom edges the way a scrolling list does;
+ * the hall does not - a room with two tables cut off the frame reads as a
+ * mistake, not as a crop. Its band starts below the top strip the hook's
+ * question and the payoff line take, so nothing is ever drawn over the room.
+ */
+const PLANNER = { top: 270, right: 56, bottom: 56 };
 /** Portrait: the drawer's `px-4`. */
 const DRAWER_PAD = 16;
 
 export type PanelGeometry = {
   scale: number;
+  /**
+   * How wide a fade over the list has to be to cover it. Portrait is the whole
+   * frame; landscape is the panel column alone, so a fade over the list never
+   * reaches the planner beside it.
+   */
+  fadeWidth: number;
   /** Screen y of the list's own origin - the search field's top edge. */
   listTop: number;
   /** Screen x of the same origin. */
@@ -44,6 +59,7 @@ export const panelGeometry = (tall: boolean, frameWidth: number, frameHeight: nu
   const listTop = CHIPS_AT - CHIPS_TOP * scale;
   return {
     scale,
+    fadeWidth: tall ? frameWidth : PANEL.x + PANEL.width * scale + PANEL.gap / 2,
     listTop,
     listLeft: tall ? DRAWER_PAD * scale : PANEL.x + PANEL.padX * scale,
     listWidth: tall ? frameWidth / scale - DRAWER_PAD * 2 : PANEL.width - PANEL.padX * 2,
@@ -129,28 +145,43 @@ export const GuestPanel: React.FC<Props> = ({ guests, scroll, aged, activeFilter
   const panelWidth = PANEL.width * geometry.scale;
   const canvasLeft = PANEL.x + panelWidth + PANEL.gap;
 
+  // The hall takes the room's own proportions inside whatever the panel leaves
+  // it, measured in container units rather than guessed in pixels - the way
+  // `ImportPlanner` sizes the same canvas.
+  const insets = canvasInsets(false);
+  const aspect = hallAspect(hall);
+  const insetX = insets.left + insets.right;
+  const insetY = insets.top + insets.bottom;
+  const canvasWidth = `min(100cqw, calc((100cqh - ${insetY}px) * ${aspect} + ${insetX}px))`;
+  const canvasHeight = `calc((${canvasWidth} - ${insetX}px) / ${aspect} + ${insetY}px)`;
+
   return (
     <Backdrop>
-      {/* The planner beside the panel, every seat taken; it runs off the frame's edges like the panel does. */}
+      {/* The planner beside the panel, every seat taken, whole. */}
       <div
         style={{
           position: "absolute",
           left: canvasLeft,
-          top: -140,
-          width: frameWidth - canvasLeft + 220,
-          height: frameHeight + 280,
+          top: PLANNER.top,
+          width: frameWidth - canvasLeft - PLANNER.right,
+          height: frameHeight - PLANNER.top - PLANNER.bottom,
+          containerType: "size",
           display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        <PlannerCanvas hall={hall} tall={false}>
-          <HallCanvas
-            hall={hall}
-            outline={1}
-            floor={1}
-            tableIn={hall.tables.map(() => 1)}
-            seatFill={hall.tables.map(() => 1)}
-          />
-        </PlannerCanvas>
+        <div style={{ width: canvasWidth, height: canvasHeight, display: "flex" }}>
+          <PlannerCanvas hall={hall} tall={false}>
+            <HallCanvas
+              hall={hall}
+              outline={1}
+              floor={1}
+              tableIn={hall.tables.map(() => 1)}
+              seatFill={hall.tables.map(() => 1)}
+            />
+          </PlannerCanvas>
+        </div>
       </div>
 
       <div
