@@ -109,12 +109,19 @@ const byName = (a: string, b: string) => a.localeCompare(b);
  * sections dropped (`sections.filter((section) => section.items.length > 0)`).
  * The app sorts *Przy tym stole* with seatless guests first; in this hall every
  * guest at a table has a chair, so that reduces to a name sort.
+ *
+ * `query` is the popover's search, matched as the app matches it - a plain
+ * lowercased `includes` on the name, with no diacritic folding, applied to
+ * every section, the occupant's included.
  */
 export const sectionsFor = (
   seating: HallSeating,
   tableId: string,
   seatIndex: number,
+  query = "",
 ): SeatSection[] => {
+  const needle = query.trim().toLowerCase();
+  const matches = (name: string) => name.toLowerCase().includes(needle);
   const occupant = seating.byTable[tableId][seatIndex];
   const here = seating.byTable[tableId].filter(
     (name): name is string => name !== null && name !== occupant,
@@ -128,5 +135,7 @@ export const sectionsFor = (
     { key: "table", label: tl.app.seatGroups.table, items: here.sort(byName), elsewhere: false },
     { key: "unassigned", label: tl.app.seatGroups.unassigned, items: [...seating.unassigned].sort(byName), elsewhere: false },
     { key: "elsewhere", label: tl.app.seatGroups.elsewhere, items: elsewhere.sort(byName), elsewhere: true },
-  ].filter((section) => section.items.length > 0);
+  ]
+    .map((section) => ({ ...section, items: section.items.filter(matches) }))
+    .filter((section) => section.items.length > 0);
 };

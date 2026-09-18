@@ -29,7 +29,9 @@ named in section 2 both need updating — nothing will warn you.
 - **Seat-level assignment straight off the canvas**, and nobody silently double-booked.
   - The popover (`planner/Canvas/SeatAssignPopover.tsx`, opened from a marker in `TableSeats.tsx`):
     a search field (`tables.guests_search_placeholder` *„Szukaj gości”*, a plain lowercased
-    `includes` on the name with no diacritic folding), *„Zwolnij miejsce”* (`seats.clear`) only when
+    `includes` on the name with no diacritic folding, `autoFocus`ed so keys land without a click,
+    and applied before grouping - so it narrows **every** section, the occupant's own included;
+    the demo roster's `maria` and `michał` each leave exactly one row), *„Zwolnij miejsce”* (`seats.clear`) only when
     the chair is taken, then guests in **four fixed sections** - `seats.group_selected`
     *„Aktualnie na tym miejscu”*, `seats.group_table` *„Przy tym stole”*, `seats.group_unassigned`
     *„Bez stołu”*, `seats.group_elsewhere` *„Przy innym stole”*. The order never changes; empty

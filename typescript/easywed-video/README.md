@@ -16,6 +16,8 @@
 - **the seat-swap loop** - 13 seconds for the landing page, 16:9 only: a room where every chair is
   taken, a guest brought over from another table onto a full one, and the guest she turned out given
   the chair she left. No CTA either.
+- **the seat-swap cut** - 17 seconds for Reels/TikTok: the same move with the names typed into the
+  seat popover's search, the guest who lost his chair found under *Bez stołu*, the CTA.
 
 All but the loops render in 16:9 (1920x1080) and 9:16 (1080x1920), and all are in Polish.
 
@@ -48,6 +50,9 @@ npm run render:to-scale:poster   # -> out/pl/easywed-scale-poster.png (frame 0 a
 
 npm run render:seat-swap         # -> out/pl/easywed-swap.mp4        (16:9, at 960x540 for its page slot)
 npm run render:seat-swap:poster  # -> out/pl/easywed-swap-poster.png (frame 0 at 960x540, the <video> poster)
+
+npm run render:seat-swap-cut            # -> out/pl/easywed-swap-cut.mp4          (16:9)
+npm run render:seat-swap-cut:vertical   # -> out/pl/easywed-swap-cut-vertical.mp4 (9:16)
 
 npm run render:all       # all of the above
 npm run render:all:en    # all of the above in English -> out/en/
@@ -154,8 +159,17 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `SwapPick`                | 165f   | the seat popover; a guest taken from another table |
 | `SwapReseat`              | 150f   | the chair she left, filled again; the seam home    |
 
+| id                          | length | what it is                                              |
+| --------------------------- | ------ | ------------------------------------------------------- |
+| `easywed-swap-cut`          | 510f   | the 17 s seat-swap cut, 16:9                            |
+| `easywed-swap-cut-vertical` | 510f   | the same cut, 9:16                                      |
+| `SwapCutHook`               | 96f    | the full room, the question; a chair at Stół 4 pressed  |
+| `SwapCutPick`               | 180f   | "Maria" typed into the search, picked; Stół 1 at 7 / 8  |
+| `SwapCutReseat`             | 150f   | "Michał" typed, found under *Bez stołu*; the payoff     |
+| `SwapCutCta`                | 108f   | the room recedes, logo + easywed.app                    |
+
 The scenes are also registered individually (Studio folders "Scenes", "Teaser", "Import",
-"Report", "Kids", "Scale" and "Swap") so a single beat can be previewed without scrubbing through the whole
+"Report", "Kids", "Scale", "Swap" and "Swap-cut") so a single beat can be previewed without scrubbing through the whole
 timeline. The social cuts' scenes are registered at 9:16, the cut they are made for; the loops' at
 16:9, their only size.
 
@@ -191,7 +205,10 @@ src/easywed/
                          landing loops reuse
   seat-swap/             the seat-swap landing loop, in the to-scale loop's shape; seating.ts
                          works out who sits where at each frame and what the seat popover
-                         (components/SeatPopover.tsx) therefore lists
+                         (components/SeatPopover.tsx) therefore lists. The social cut of the
+                         same move lives beside it - SeatSwapCut.tsx, cutScript.ts, the
+                         SwapCut* scenes and components/SwapCutPlanner.tsx - and shares
+                         seating.ts and the popover
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect

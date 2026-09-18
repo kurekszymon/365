@@ -49,6 +49,18 @@ loop: no CTA, no pill.
 Scenes 105 + 165 + 150 = 420 at `SWAP_TRANSITION = 15` × 2 seams → 390; the last 15 frames are
 `LoopSeam` onto frame 0. Built from `docs/video-plans/16x9-only-2026-09-16.md`, brief `seat-swap`.
 
+## The seat-swap cut - `easywed-swap-cut` / `easywed-swap-cut-vertical`, 510f (17 s)
+
+a room where every chair is taken and the auntie question - the seat popover on Stół 4's chair,
+its occupant and his table, then *Maria* typed into its search until one amber row is left, picked -
+Stół 1 drops to 7 / 8 with one green chair - its popover lists *Przy tym stole*, *Michał* typed
+until he is the one row under *Bez stołu*, picked, the table back at 8 / 8, the payoff - the room
+recedes, the CTA. The loop's beat retold as a social cut by explicit decision (2026-09-18), with the
+names reached by typing rather than by scrolling.
+Scenes 96 + 180 + 150 + 108 = 534 at `SWAP_CUT_TRANSITION = 8` x 3 seams -> 510.
+Built from `docs/video-plans/full-series-2026-09-17.md`, brief `seat-swap` (ids renamed from the
+brief's `easywed-swap` / `-vertical`, which the loop already held).
+
 ## The kids-count cut - `easywed-kids` / `easywed-kids-vertical`, 510f (17 s)
 
 58 names with not a bracket among them and the question - the pencil on one row, the edit sheet,
@@ -127,6 +139,12 @@ and, as the seat-assign popover shows them (app strings, verbatim): *"Szukaj go�
 demo roster is on screen as popover rows - `rosterFor(WIDE_HALL.tables)` in name order - so no guest
 name from `data.ts` is fresh any more. The beat itself, a guest moved onto a taken chair and the
 one she turned out reseated, is spent.
+
+From the seat-swap cut: *"Ciocia chce siedzieć przy innym stole?"* · *"Nikt nie znika z planu."* -
+and the popover's chrome again (*"Szukaj gości"*, *"Zwolnij miejsce"*, *"Aktualnie na tym
+miejscu"*, *"Przy tym stole"*, *"Bez stołu"*, *"Przy innym stole"*), now with the typed searches
+*"Maria"* and *"Michał"* as values in its field. The beat of narrowing the popover by typing a name
+is spent with it. Its CTA is *"Kliknij miejsce i wybierz gościa"* over the *"easywed.app"* pill.
 
 From the kids-count cut: *"Ile dzieci będzie na weselu?"* · *"Każde dziecko policzone."* - and, as
 the guest panel and the edit-guest form show them (app strings, verbatim): *"Dzieci 1"* / *"Dzieci

@@ -44,6 +44,12 @@ import { SwapHookScene } from "./easywed/seat-swap/scenes/SwapHookScene";
 import { SwapPickScene } from "./easywed/seat-swap/scenes/SwapPickScene";
 import { SwapReseatScene } from "./easywed/seat-swap/scenes/SwapReseatScene";
 import { SWAP_DURATION, SWAP_SCENES } from "./easywed/seat-swap/timeline";
+import { SeatSwapCut } from "./easywed/seat-swap/SeatSwapCut";
+import { SwapCutHookScene } from "./easywed/seat-swap/scenes/SwapCutHookScene";
+import { SwapCutPickScene } from "./easywed/seat-swap/scenes/SwapCutPickScene";
+import { SwapCutReseatScene } from "./easywed/seat-swap/scenes/SwapCutReseatScene";
+import { SwapCutCtaScene } from "./easywed/seat-swap/scenes/SwapCutCtaScene";
+import { SWAP_CUT_DURATION, SWAP_CUT_SCENES } from "./easywed/seat-swap/timeline";
 import { KidsCount } from "./easywed/kids-count/KidsCount";
 import { KidsHookScene } from "./easywed/kids-count/scenes/KidsHookScene";
 import { KidsTagScene } from "./easywed/kids-count/scenes/KidsTagScene";
@@ -172,6 +178,26 @@ export const RemotionRoot: React.FC = () => {
         height={HEIGHT}
       />
 
+      {/* The 17 s seat-swap cut - the same move as the loop, the names typed into the
+          popover's search, closing on the CTA. */}
+      <Composition
+        id="easywed-swap-cut"
+        component={SeatSwapCut}
+        durationInFrames={SWAP_CUT_DURATION}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+
+      <Composition
+        id="easywed-swap-cut-vertical"
+        component={SeatSwapCut}
+        durationInFrames={SWAP_CUT_DURATION}
+        fps={FPS}
+        width={VERTICAL_WIDTH}
+        height={VERTICAL_HEIGHT}
+      />
+
       {/* Each scene on its own, so a single beat can be previewed in isolation. */}
       <Folder name="Scenes">
         <Composition id="Intro" component={IntroScene} durationInFrames={SCENES.intro} fps={FPS} width={WIDTH} height={HEIGHT} />
@@ -226,6 +252,14 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="SwapHook" component={SwapHookScene} durationInFrames={SWAP_SCENES.hook} fps={FPS} width={WIDTH} height={HEIGHT} />
         <Composition id="SwapPick" component={SwapPickScene} durationInFrames={SWAP_SCENES.pick} fps={FPS} width={WIDTH} height={HEIGHT} />
         <Composition id="SwapReseat" component={SwapReseatScene} durationInFrames={SWAP_SCENES.reseat} fps={FPS} width={WIDTH} height={HEIGHT} />
+      </Folder>
+
+      {/* The seat-swap cut's beats, at 9:16 - the cut it is made for. */}
+      <Folder name="Swap-cut">
+        <Composition id="SwapCutHook" component={SwapCutHookScene} durationInFrames={SWAP_CUT_SCENES.hook} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="SwapCutPick" component={SwapCutPickScene} durationInFrames={SWAP_CUT_SCENES.pick} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="SwapCutReseat" component={SwapCutReseatScene} durationInFrames={SWAP_CUT_SCENES.reseat} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="SwapCutCta" component={SwapCutCtaScene} durationInFrames={SWAP_CUT_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
       </Folder>
     </>
   );

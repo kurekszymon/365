@@ -83,6 +83,12 @@ type Props = {
   scale: number;
   /** 0..1 - the `zoom-in-95` entrance, and the fade out as the popover closes. */
   open: number;
+  /**
+   * The focused search field: what has been typed, and whether the caret is
+   * in its on phase. Left out, the field shows its placeholder, as the loop
+   * draws it.
+   */
+  search?: { text: string; caret: boolean };
 };
 
 const Row: React.FC<{ name: string; elsewhere: boolean; occupant: boolean; hover: boolean; scale: number }> = ({
@@ -121,7 +127,7 @@ const Row: React.FC<{ name: string; elsewhere: boolean; occupant: boolean; hover
   </div>
 );
 
-export const SeatPopover: React.FC<Props> = ({ sections, scroll, hasClear, hover, scale, open }) => (
+export const SeatPopover: React.FC<Props> = ({ sections, scroll, hasClear, hover, scale, open, search }) => (
   <div
     style={{
       width: POPOVER.width * scale,
@@ -150,7 +156,19 @@ export const SeatPopover: React.FC<Props> = ({ sections, scroll, hasClear, hover
         color: colors.inkSoft,
       }}
     >
-      {tl.app.seatSearch}
+      {search?.text ? <span style={{ color: colors.ink }}>{search.text}</span> : null}
+      {search ? (
+        <span
+          style={{
+            width: 1.5 * scale,
+            height: 16 * scale,
+            marginLeft: search.text ? 1 * scale : 0,
+            backgroundColor: colors.ink,
+            opacity: search.caret ? 1 : 0,
+          }}
+        />
+      ) : null}
+      {search?.text ? null : tl.app.seatSearch}
     </div>
 
     {hasClear ? (

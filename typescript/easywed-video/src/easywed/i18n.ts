@@ -206,6 +206,14 @@ const pl = {
     payoff: "Przesiadka bez przepisywania listy.",
   },
 
+  swapCut: {
+    hook: "Ciocia chce siedzieć przy innym stole?",
+    /** "z" is bound to "planu." so the line never ends on it. */
+    payoff: "Nikt nie znika z\u00a0planu.",
+    /** "i" is bound to "wybierz" for the same reason. */
+    ctaAction: "Kliknij miejsce i\u00a0wybierz gościa",
+  },
+
   kids: {
     /** Revealed word by word; "na" is bound to "weselu?" so the line never ends on it. */
     hook: ["Ile", "dzieci", "będzie", "na weselu?"],
@@ -380,6 +388,12 @@ const en: typeof pl = {
   swap: {
     hook: "Someone has to move?",
     payoff: "Reseat without rewriting the list.",
+  },
+
+  swapCut: {
+    hook: "Auntie wants to sit at a\u00a0different table?",
+    payoff: "Nobody drops off the plan.",
+    ctaAction: "Click a seat and pick a guest",
   },
 
   kids: {
