@@ -94,3 +94,28 @@ export const TALL_HALL = withDerived({
   ],
   fixtures: [{ id: "bar", label: tl.hall.bar, x: 420, y: 620, width: 240, height: 56 }],
 });
+
+/**
+ * The odd-room loop's hall: the landscape room's 22x14 m, planned as the L it
+ * turns out to be. Every table, seat ring and fixture stays clear of the
+ * top-right quarter that `lShapeVertices` cuts away - the app re-clamps a
+ * hall's entities into its new outline (`setHallShape`), so anything standing
+ * there would jump. The same half-metre clearances as the other two rooms, and
+ * the same 58 seats, so the count reads identically across cuts.
+ */
+export const L_HALL = withDerived({
+  name: tl.hall.name,
+  canvas: { width: 1320, height: 840 },
+  // Beside Stół 6 in the L's bottom wing, the bar standing on end at the far wall.
+  danceFloor: { x: 1047, y: 630, width: 280, height: 220 },
+  tables: [
+    { id: "head", label: tl.hall.headTable, shape: "rect", x: 330, y: 140, width: 360, height: 84, seats: 10 },
+    { id: "t1", label: tl.hall.table(1), shape: "round", x: 140, y: 370, width: 140, height: 140, seats: 8 },
+    { id: "t2", label: tl.hall.table(2), shape: "round", x: 520, y: 370, width: 140, height: 140, seats: 8 },
+    { id: "t3", label: tl.hall.table(3), shape: "round", x: 330, y: 535, width: 140, height: 140, seats: 8 },
+    { id: "t4", label: tl.hall.table(4), shape: "round", x: 140, y: 700, width: 140, height: 140, seats: 8 },
+    { id: "t5", label: tl.hall.table(5), shape: "round", x: 520, y: 700, width: 140, height: 140, seats: 8 },
+    { id: "t6", label: tl.hall.table(6), shape: "round", x: 770, y: 630, width: 140, height: 140, seats: 8 },
+  ],
+  fixtures: [{ id: "bar", label: tl.hall.bar, x: 1245, y: 630, width: 56, height: 200 }],
+});

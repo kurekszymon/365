@@ -1,6 +1,6 @@
 import React from "react";
 import { interpolate } from "remotion";
-import type { Point } from "../geometry";
+import { polygonPoints, type Point } from "../geometry";
 import { tl } from "../i18n";
 import type { HallLayout } from "../layouts";
 import { PX_PER_M } from "../layouts";
@@ -26,6 +26,13 @@ type Props = {
   /** Per-table drag offset, indexed like `hall.tables`. */
   offsets?: Point[];
   selectedTableId?: string;
+  /**
+   * The hall's polygon outline (`hall.geometry` in the app), in canvas units.
+   * The floor and the grid clip to it and the wall follows it, as
+   * `HallBackground` and `HallOutline` draw a polygon hall. Left out, the hall
+   * is the plain rectangle every published film draws.
+   */
+  walls?: Point[];
   /**
    * The printed plan's hall (`PlannerPrintView`): no dimension labels and no
    * room chip, so it is drawn edge to edge rather than padded for them.
@@ -94,9 +101,13 @@ export const HallCanvas: React.FC<Props> = ({
   seatFills,
   offsets,
   selectedTableId,
+  walls,
   bare = false,
   children,
 }) => {
+  // Two halls can be on screen at once - a crossfade, a loop's seam - each
+  // with its own outline, so the clip needs an id of its own.
+  const clipId = `hall-walls-${React.useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const { canvas, danceFloor, meters } = hall;
   const perimeter = (canvas.width + canvas.height) * 2;
   const chipLabel = `${hall.name} · ${meters.width}×${meters.height} m`;
@@ -140,24 +151,42 @@ export const HallCanvas: React.FC<Props> = ({
         </pattern>
       </defs>
 
-      <g opacity={outline}>
+      {walls ? (
+        <clipPath id={clipId}>
+          <polygon points={polygonPoints(walls)} />
+        </clipPath>
+      ) : null}
+
+      <g opacity={outline} clipPath={walls ? `url(#${clipId})` : undefined}>
         <rect x={0} y={0} width={canvas.width} height={canvas.height} fill={colors.bg} />
         <rect x={0} y={0} width={canvas.width} height={canvas.height} fill="url(#hall-grid)" />
         <rect x={0} y={0} width={canvas.width} height={canvas.height} fill="url(#hall-grid-major)" />
       </g>
 
-      {/* The room outline draws itself on, like sketching the hall. */}
-      <rect
-        x={0}
-        y={0}
-        width={canvas.width}
-        height={canvas.height}
-        fill="none"
-        stroke={colors.hall}
-        strokeWidth={1.5}
-        strokeDasharray={perimeter}
-        strokeDashoffset={interpolate(outline, [0, 1], [perimeter, 0])}
-      />
+      {/* The room outline draws itself on, like sketching the hall. A polygon
+          hall is already drawn when a film shows it, so its wall just fades. */}
+      {walls ? (
+        <polygon
+          points={polygonPoints(walls)}
+          fill="none"
+          stroke={colors.hall}
+          strokeWidth={1.5}
+          strokeLinejoin="round"
+          opacity={outline}
+        />
+      ) : (
+        <rect
+          x={0}
+          y={0}
+          width={canvas.width}
+          height={canvas.height}
+          fill="none"
+          stroke={colors.hall}
+          strokeWidth={1.5}
+          strokeDasharray={perimeter}
+          strokeDashoffset={interpolate(outline, [0, 1], [perimeter, 0])}
+        />
+      )}
 
       {/* Dimension labels sit outside the walls, as on the canvas - not on paper. */}
       <g opacity={bare ? 0 : outline} fill={colors.hall} fontFamily={fonts.sans} fontSize={21} fontWeight={500}>

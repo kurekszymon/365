@@ -70,6 +70,16 @@ badge, the payoff - the panel recedes, the CTA.
 Scenes 96 + 180 + 150 + 108 = 534 at `KIDS_TRANSITION = 8` x 3 seams -> 510.
 Built from `docs/video-plans/full-series-2026-09-17.md`, brief `kids-count`.
 
+## The odd-room loop - `easywed-shape`, 360f (12 s), 16:9 only
+
+a seated room drawn as a plain rectangle, its top-right quarter empty, and the question - the hall's
+label chip opens its settings dialog, *Kształt L* is picked and the quarter goes from the room behind
+the blurred scrim - *Edytuj obrys* closes the dialog on the L in full, vertex handles up - the
+notch's outer corner dragged a metre up and out, snapping to the metre, one wall now slanting - the
+payoff, then a dissolve back onto frame 0. A landing-page loop: no CTA, no pill.
+Scenes 105 + 150 + 135 = 390 at `SHAPE_TRANSITION = 15` x 2 seams -> 360; the last 15 frames are
+`LoopSeam` onto frame 0. Built from `docs/video-plans/full-series-2026-09-17.md`, brief `odd-room`.
+
 ## Polish lines already burned on screen
 
 None of these may appear again:
@@ -156,6 +166,17 @@ are new to `data.ts`'s roster and now spent with it - *Staś Mazur*, *Lena Mazur
 *Kuba Król*, *Ola Król* (`kids-count/guests.ts`). The beat itself - a guest given an age bracket in
 the edit form, and the kid count that follows - is spent, as is the payoff of a filter chip pressed
 to prove a number. Its CTA is *"Oznacz dzieci na liście gości"* over the *"easywed.app"* pill.
+
+From the odd-room loop: *"Sala nie jest prostokątem?"* · *"Ściany tam, gdzie naprawdę stoją."* -
+and, as the hall settings dialog and the shape editor show them (app strings, verbatim): *"Sala"*
+(the dialog's title), *"Nazwa"*, *"Piętro"*, *"np. 0, 1, 2"*, *"Kształt sali"*, *"Prostokąt"*,
+*"Kształt L"*, *"Kształt U"*, *"Niestandardowy"*, *"Przeciągnij punkty obrysu sali, aby dopasować go
+do lokalu."*, *"Edytuj obrys"*, *"Szerokość"*, *"Wysokość"*, *"Pozycja na planie (m)"*, *"Odstęp
+siatki"*, *"Auto"*, *"Styl siatki"*, *"Kropki"*, *"Wyłączone"*, *"Usuń salę"*, and the shape-edit
+pill's *"Przeciągaj punkty, aby zmienić kształt. Kliknij środek krawędzi, aby dodać punkt; kliknij
+punkt dwukrotnie, aby go usunąć."* beside *"Gotowe"*. The beat itself - a rectangle turned into a
+preset L and one vertex dragged by hand - is spent; `walkthrough-long` reuses these scenes as
+chapters by design. `L_HALL` (`layouts.ts`) is a new room plan, 58 seats, same 22x14 m.
 
 The guest panel's own chrome recurs across the report and kids cuts by explicit decision (this
 plan's open question 5, answered 2026-09-17): *"Szukaj gościa…"*, *"Wszyscy 58"*, *"Bez miejsca 0"*,

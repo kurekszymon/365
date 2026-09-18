@@ -56,6 +56,11 @@ import { KidsTagScene } from "./easywed/kids-count/scenes/KidsTagScene";
 import { KidsCountScene } from "./easywed/kids-count/scenes/KidsCountScene";
 import { KidsCtaScene } from "./easywed/kids-count/scenes/KidsCtaScene";
 import { KIDS_DURATION, KIDS_SCENES } from "./easywed/kids-count/timeline";
+import { OddRoom } from "./easywed/odd-room/OddRoom";
+import { ShapeHookScene } from "./easywed/odd-room/scenes/ShapeHookScene";
+import { ShapeLScene } from "./easywed/odd-room/scenes/ShapeLScene";
+import { ShapeEditScene } from "./easywed/odd-room/scenes/ShapeEditScene";
+import { SHAPE_DURATION, SHAPE_SCENES } from "./easywed/odd-room/timeline";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -157,27 +162,6 @@ export const RemotionRoot: React.FC = () => {
         height={VERTICAL_HEIGHT}
       />
 
-      {/* The 12 s landing-page loop - two distances measured in metres; 16:9 only, no CTA, loops back to frame 0. */}
-      <Composition
-        id="easywed-scale"
-        component={ToScale}
-        durationInFrames={SCALE_DURATION}
-        fps={FPS}
-        width={WIDTH}
-        height={HEIGHT}
-      />
-
-      {/* The 13 s seat-swap loop - one guest moved onto a taken chair, the one she
-          turned out given hers; 16:9 only, no CTA, loops back to frame 0. */}
-      <Composition
-        id="easywed-swap"
-        component={SeatSwap}
-        durationInFrames={SWAP_DURATION}
-        fps={FPS}
-        width={WIDTH}
-        height={HEIGHT}
-      />
-
       {/* The 17 s seat-swap cut - the same move as the loop, the names typed into the
           popover's search, closing on the CTA. */}
       <Composition
@@ -197,6 +181,63 @@ export const RemotionRoot: React.FC = () => {
         width={VERTICAL_WIDTH}
         height={VERTICAL_HEIGHT}
       />
+
+      {/* The landing-page loops - 16:9 only, no CTA, each closing on `LoopSeam`
+          back to its frame 0 - with their beats nested beside them. */}
+      <Folder name="Landing-loops">
+        {/* The 12 s landing-page loop - two distances measured in metres; 16:9 only, no CTA, loops back to frame 0. */}
+        <Composition
+          id="easywed-scale"
+          component={ToScale}
+          durationInFrames={SCALE_DURATION}
+          fps={FPS}
+          width={WIDTH}
+          height={HEIGHT}
+        />
+
+        {/* The 13 s seat-swap loop - one guest moved onto a taken chair, the one she
+            turned out given hers; 16:9 only, no CTA, loops back to frame 0. */}
+        <Composition
+          id="easywed-swap"
+          component={SeatSwap}
+          durationInFrames={SWAP_DURATION}
+          fps={FPS}
+          width={WIDTH}
+          height={HEIGHT}
+        />
+
+        {/* The 12 s odd-room loop - the rectangle turned into the L the room really is,
+            one corner pulled out by hand; 16:9 only, no CTA, loops back to frame 0. */}
+        <Composition
+          id="easywed-shape"
+          component={OddRoom}
+          durationInFrames={SHAPE_DURATION}
+          fps={FPS}
+          width={WIDTH}
+          height={HEIGHT}
+        />
+
+        {/* The to-scale loop's beats, at 16:9 - the only size it is made for. */}
+        <Folder name="Scale">
+          <Composition id="ScaleHook" component={ScaleHookScene} durationInFrames={SCALE_SCENES.hook} fps={FPS} width={WIDTH} height={HEIGHT} />
+          <Composition id="ScaleMeasure" component={ScaleMeasureScene} durationInFrames={SCALE_SCENES.measure} fps={FPS} width={WIDTH} height={HEIGHT} />
+          <Composition id="ScaleGap" component={ScaleGapScene} durationInFrames={SCALE_SCENES.gap} fps={FPS} width={WIDTH} height={HEIGHT} />
+        </Folder>
+
+        {/* The seat-swap loop's beats, at 16:9 - the only size it is made for. */}
+        <Folder name="Swap">
+          <Composition id="SwapHook" component={SwapHookScene} durationInFrames={SWAP_SCENES.hook} fps={FPS} width={WIDTH} height={HEIGHT} />
+          <Composition id="SwapPick" component={SwapPickScene} durationInFrames={SWAP_SCENES.pick} fps={FPS} width={WIDTH} height={HEIGHT} />
+          <Composition id="SwapReseat" component={SwapReseatScene} durationInFrames={SWAP_SCENES.reseat} fps={FPS} width={WIDTH} height={HEIGHT} />
+        </Folder>
+
+        {/* The odd-room loop's beats, at 16:9 - the only size it is made for. */}
+        <Folder name="Shape">
+          <Composition id="ShapeHook" component={ShapeHookScene} durationInFrames={SHAPE_SCENES.hook} fps={FPS} width={WIDTH} height={HEIGHT} />
+          <Composition id="ShapeL" component={ShapeLScene} durationInFrames={SHAPE_SCENES.lShape} fps={FPS} width={WIDTH} height={HEIGHT} />
+          <Composition id="ShapeEdit" component={ShapeEditScene} durationInFrames={SHAPE_SCENES.edit} fps={FPS} width={WIDTH} height={HEIGHT} />
+        </Folder>
+      </Folder>
 
       {/* Each scene on its own, so a single beat can be previewed in isolation. */}
       <Folder name="Scenes">
@@ -240,20 +281,6 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="KidsCta" component={KidsCtaScene} durationInFrames={KIDS_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
       </Folder>
 
-      {/* The to-scale loop's beats, at 16:9 - the only size it is made for. */}
-      <Folder name="Scale">
-        <Composition id="ScaleHook" component={ScaleHookScene} durationInFrames={SCALE_SCENES.hook} fps={FPS} width={WIDTH} height={HEIGHT} />
-        <Composition id="ScaleMeasure" component={ScaleMeasureScene} durationInFrames={SCALE_SCENES.measure} fps={FPS} width={WIDTH} height={HEIGHT} />
-        <Composition id="ScaleGap" component={ScaleGapScene} durationInFrames={SCALE_SCENES.gap} fps={FPS} width={WIDTH} height={HEIGHT} />
-      </Folder>
-
-      {/* The seat-swap loop's beats, at 16:9 - the only size it is made for. */}
-      <Folder name="Swap">
-        <Composition id="SwapHook" component={SwapHookScene} durationInFrames={SWAP_SCENES.hook} fps={FPS} width={WIDTH} height={HEIGHT} />
-        <Composition id="SwapPick" component={SwapPickScene} durationInFrames={SWAP_SCENES.pick} fps={FPS} width={WIDTH} height={HEIGHT} />
-        <Composition id="SwapReseat" component={SwapReseatScene} durationInFrames={SWAP_SCENES.reseat} fps={FPS} width={WIDTH} height={HEIGHT} />
-      </Folder>
-
       {/* The seat-swap cut's beats, at 9:16 - the cut it is made for. */}
       <Folder name="Swap-cut">
         <Composition id="SwapCutHook" component={SwapCutHookScene} durationInFrames={SWAP_CUT_SCENES.hook} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
@@ -261,6 +288,7 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="SwapCutReseat" component={SwapCutReseatScene} durationInFrames={SWAP_CUT_SCENES.reseat} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="SwapCutCta" component={SwapCutCtaScene} durationInFrames={SWAP_CUT_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
       </Folder>
+
     </>
   );
 };

@@ -50,6 +50,20 @@ named in section 2 both need updating — nothing will warn you.
 - **Multi-hall and multi-floor** (`hall.floor`, `hall.list_title`), plus custom polygon halls and
   fixtures — stage, dance floor, bar, DJ booth, entrance, or a shape drawn by hand
   (`fixtures.preset.*`, `fixtures.shape.polygon`).
+  - How a hall changes shape (`EntityForms/HallPanelContent.tsx`, `Canvas/ShapeEditOverlay.tsx`,
+    `Canvas/ShapeEditToolbar.tsx`, `lib/geometry.ts`): on desktop the hall's settings are a
+    **centred modal** (`Sidebar/EntityEditDialog`, `sm:max-w-md`, a `bg-black/10` scrim with
+    `backdrop-blur-xs`), not a side panel - opened from the hall's label chip or *Skonfiguruj
+    salę*. Its form runs name, *Piętro*, the four-button *Kształt sali* group (*Prostokąt*,
+    *Kształt L*, *Kształt U*, *Niestandardowy*), then - only once the hall has an outline - the
+    hint and *Edytuj obrys*. A preset applies instantly through `setHallShape`, which re-clamps the
+    hall's entities into the new outline; *Kształt L* cuts the top-right quarter out of the hall's
+    bounding box (`verticesForHallPreset`). *Edytuj obrys* switches the panel to `shape.edit`,
+    which the dialog does not host, so the dialog **closes** and a pill floats top-centre over the
+    canvas (`shape_edit.hint` + *Gotowe*). Vertex drags **snap** to the canvas snap step
+    (`snapStep: 1` by default), preview in the selection colour, and reach the hall only on release;
+    a midpoint click adds a vertex, a double-click removes one. No orthogonal correction. There is
+    no hall-shape analytics event.
 - **CSV and XLSX import** through a column-mapping wizard that survives Polish diacritics, reports
   skipped and overflowed rows, and can seat guests from a table column — `guests_imported`,
   `guests.import.*`, changelog `i3`.

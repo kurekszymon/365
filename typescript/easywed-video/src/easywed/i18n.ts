@@ -71,6 +71,34 @@ const pl = {
       unassigned: "Bez stołu", // seats.group_unassigned
       elsewhere: "Przy innym stole", // seats.group_elsewhere
     },
+    /** `EntityEditDialog` around `HallPanelContent`, top to bottom. */
+    hallDialog: {
+      title: "Sala", // hall
+      name: "Nazwa", // common.name
+      floor: "Piętro", // hall.floor
+      floorPlaceholder: "np. 0, 1, 2", // hall.floor_placeholder
+      shape: "Kształt sali", // hall.shape
+      preset: {
+        rectangle: "Prostokąt", // hall.preset.rectangle
+        lShape: "Kształt L", // hall.preset.l-shape
+        uShape: "Kształt U", // hall.preset.u-shape
+        custom: "Niestandardowy", // hall.preset.custom
+      },
+      polygonHint: "Przeciągnij punkty obrysu sali, aby dopasować go do lokalu.", // hall.shape.polygon_hint
+      editOutline: "Edytuj obrys", // hall.shape.edit_button
+      width: "Szerokość", // common.width
+      height: "Wysokość", // common.height
+      position: "Pozycja na planie (m)", // hall.position
+      gridSpacing: "Odstęp siatki", // canvas.grid.spacing
+      auto: "Auto", // common.auto
+      gridStyle: "Styl siatki", // canvas.grid.style
+      gridStyles: { grid: "Siatka", dots: "Kropki", off: "Wyłączone" }, // canvas.grid.grid|dots|off
+      delete: "Usuń salę", // hall.delete
+    },
+    /** `ShapeEditToolbar`, the pill that floats over the canvas in shape-edit mode. */
+    shapeEditHint:
+      "Przeciągaj punkty, aby zmienić kształt. Kliknij środek krawędzi, aby dodać punkt; kliknij punkt dwukrotnie, aby go usunąć.", // shape_edit.hint
+    done: "Gotowe", // common.done
   },
 
   guests: {
@@ -220,6 +248,12 @@ const pl = {
     payoff: "Każde dziecko policzone.",
     ctaAction: "Oznacz dzieci na liście gości",
   },
+
+  shape: {
+    hook: "Sala nie jest prostokątem?",
+    /** "naprawdę" is bound to "stoją." so the last word never wraps alone. */
+    payoff: "Ściany tam, gdzie naprawdę\u00a0stoją.",
+  },
 };
 
 const en: typeof pl = {
@@ -264,6 +298,32 @@ const en: typeof pl = {
       unassigned: "Unassigned",
       elsewhere: "Seated elsewhere",
     },
+    hallDialog: {
+      title: "Hall",
+      name: "Name",
+      floor: "Floor",
+      floorPlaceholder: "e.g. 0, 1, 2",
+      shape: "Hall shape",
+      preset: {
+        rectangle: "Rectangle",
+        lShape: "L-shape",
+        uShape: "U-shape",
+        custom: "Custom",
+      },
+      polygonHint: "Drag the hall's corner points to match your venue.",
+      editOutline: "Edit outline",
+      width: "Width",
+      height: "Height",
+      position: "Position on canvas (m)",
+      gridSpacing: "Grid spacing",
+      auto: "Auto",
+      gridStyle: "Grid style",
+      gridStyles: { grid: "Grid", dots: "Dots", off: "Off" },
+      delete: "Delete hall",
+    },
+    shapeEditHint:
+      "Drag points to reshape. Click an edge midpoint to add a point, double-click a point to remove it.",
+    done: "Done",
   },
 
   guests: {
@@ -400,6 +460,11 @@ const en: typeof pl = {
     hook: ["How", "many", "children", "are coming?"],
     payoff: "Every child counted.",
     ctaAction: "Tag the children on your guest list",
+  },
+
+  shape: {
+    hook: "Your room isn't a rectangle?",
+    payoff: "Walls where they really stand.",
   },
 };
 

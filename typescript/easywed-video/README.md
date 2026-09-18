@@ -18,6 +18,9 @@
   the chair she left. No CTA either.
 - **the seat-swap cut** - 17 seconds for Reels/TikTok: the same move with the names typed into the
   seat popover's search, the guest who lost his chair found under *Bez stołu*, the CTA.
+- **the odd-room loop** - 12 seconds for the landing page, 16:9 only: a seated room drawn as a
+  rectangle, its shape switched to *Kształt L* in the hall's settings, and one corner of the L
+  dragged a metre out by hand. No CTA either.
 
 All but the loops render in 16:9 (1920x1080) and 9:16 (1080x1920), and all are in Polish.
 
@@ -53,6 +56,9 @@ npm run render:seat-swap:poster  # -> out/pl/easywed-swap-poster.png (frame 0 at
 
 npm run render:seat-swap-cut            # -> out/pl/easywed-swap-cut.mp4          (16:9)
 npm run render:seat-swap-cut:vertical   # -> out/pl/easywed-swap-cut-vertical.mp4 (9:16)
+
+npm run render:odd-room          # -> out/pl/easywed-shape.mp4        (16:9, at 960x540 for its page slot)
+npm run render:odd-room:poster   # -> out/pl/easywed-shape-poster.png (frame 0 at 960x540, the <video> poster)
 
 npm run render:all       # all of the above
 npm run render:all:en    # all of the above in English -> out/en/
@@ -168,9 +174,19 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `SwapCutReseat`             | 150f   | "Michał" typed, found under *Bez stołu*; the payoff     |
 | `SwapCutCta`                | 108f   | the room recedes, logo + easywed.app                    |
 
+| id                        | length | what it is                                              |
+| ------------------------- | ------ | ------------------------------------------------------- |
+| `easywed-shape`           | 360f   | the 12 s odd-room landing loop, 16:9                    |
+| `ShapeHook`               | 105f   | the rectangle and the question; the hall dialog opened  |
+| `ShapeL`                  | 150f   | *Kształt L* picked, *Edytuj obrys* - the handles come up |
+| `ShapeEdit`               | 135f   | one corner pulled a metre out; the payoff, the seam home |
+
 The scenes are also registered individually (Studio folders "Scenes", "Teaser", "Import",
-"Report", "Kids", "Scale", "Swap" and "Swap-cut") so a single beat can be previewed without scrubbing through the whole
-timeline. The social cuts' scenes are registered at 9:16, the cut they are made for; the loops' at
+"Report", "Kids" and "Swap-cut") so a single beat can be previewed without scrubbing through the
+whole timeline. The social cuts' scenes are registered at 9:16, the cut they are made for.
+
+The landing-page loops - `easywed-scale`, `easywed-swap` and `easywed-shape` - sit together in the
+Studio folder "Landing-loops", each with its beats in a nested folder ("Scale", "Swap", "Shape") at
 16:9, their only size.
 
 ## Structure
@@ -179,7 +195,7 @@ timeline. The social cuts' scenes are registered at 9:16, the cut they are made 
 src/easywed/
   timeline.ts            scene lengths, fps, dimensions - the single source of truth
   theme.ts               hex mirror of the app's `editorial` palette + brand colors, fonts
-  layouts.ts             WIDE_HALL and TALL_HALL - the two room plans, 60 units per metre
+  layouts.ts             WIDE_HALL, TALL_HALL and the odd-room loop's L_HALL, 60 units per metre
   format.ts              useFormat() - picks hall + type scale from the composition size
   data.ts                the demo wedding: guest list, couple
   geometry.ts            seat positions around round/rectangular tables
@@ -209,6 +225,10 @@ src/easywed/
                          same move lives beside it - SeatSwapCut.tsx, cutScript.ts, the
                          SwapCut* scenes and components/SwapCutPlanner.tsx - and shares
                          seating.ts and the popover
+  odd-room/              the odd-room landing loop, in the to-scale loop's shape, drawn on
+                         L_HALL (layouts.ts) with HallCanvas's `walls` polygon; script.ts
+                         derives the outline from the frame, and its components redraw the
+                         hall dialog, the shape-edit pill and the vertex handles
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect
