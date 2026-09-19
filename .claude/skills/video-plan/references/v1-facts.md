@@ -63,6 +63,13 @@ named in section 2 both need updating — nothing will warn you.
     puts it beside the last hall with `HALL_GAP = 3` m between them, an even count starts a new
     row under everything - so a second hall needs no dragging. The canvas chip reads name,
     floor, size: *„Sala · p. 1 · 20×12 m”* (`Canvas/HallView.tsx`).
+  - On a phone (`useIsMobile`, below `md`) the same forms open in `EntityForms/MobilePanelDrawer`,
+    a bottom sheet with the same title and black check, not `Sidebar/EntityEditDialog`
+    (`Planner.tsx`: `{!isMobile && <EntityEditDialog />}`, `{isMobile && <MobilePanelDrawer />}`).
+    Shape editing closes the sheet so the handles are reachable. The canvas toolbar is desktop-only
+    (`Canvas.tsx`: `{!isMobile && <CanvasToolbar />}`): a phone reaches grid, snap, seats and the
+    measure tool through the long-press `CanvasViewMenu`, which has **no** *Środek* / *Krawędź*
+    mode switch - so edge-to-edge measuring is a desktop beat.
   - How a hall changes shape (`EntityForms/HallPanelContent.tsx`, `Canvas/ShapeEditOverlay.tsx`,
     `Canvas/ShapeEditToolbar.tsx`, `lib/geometry.ts`): on desktop the hall's settings are a
     **centred modal** (`Sidebar/EntityEditDialog`, `sm:max-w-md`, a `bg-black/10` scrim with

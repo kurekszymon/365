@@ -8,7 +8,8 @@ import { canvasInsets, chromeScale, PlannerCanvas } from "../../components/Plann
 import { useFormat } from "../../format";
 import type { Point } from "../../geometry";
 import { tl } from "../../i18n";
-import { PX_PER_M, SALA_2, WIDE_HALL, type HallLayout } from "../../layouts";
+import { PX_PER_M, secondHallBeside, type HallLayout } from "../../layouts";
+import { SHAPE_TALL } from "../../odd-room/components/ShapePlanner";
 import { colors, fonts } from "../../theme";
 import { HallsPanel, hallsPanelAddTarget, hallsPanelHeight } from "../components/HallsPanel";
 
@@ -20,11 +21,13 @@ import { HallsPanel, hallsPanelAddTarget, hallsPanelHeight } from "../components
  * `nextHallPosition` puts a second one, beside the first, so nothing is
  * dragged. It is given a dance floor and a bar and no tables, then its label
  * chip is pressed, which opens the settings the next chapter (`ShapeLScene`
- * on `SALA_2`) picks up.
+ * on the same second hall) picks up.
  *
  * Laid out as `ShapePlanner` lays out the chapters either side of it - the
- * line in a column, the planner beside it - with the dialog at the same centre
- * and scale, so the crossfade into *Kształt L* doesn't jump.
+ * line in a column, the planner beside it; in portrait the line over the
+ * planner and the forms in the phone's bottom sheet (`MobilePanelDrawer`) -
+ * with the forms at the same place and scale, so the crossfade into
+ * *Kształt L* doesn't jump.
  */
 
 /** The line lands in the scene's first 20 frames. */
@@ -112,14 +115,16 @@ export const FloorsScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { width: frameWidth, height: frameHeight } = useVideoConfig();
   const { tall, type, gap } = useFormat();
-  const main = WIDE_HALL;
-  const second = SALA_2;
+  const main = useFormat().hall;
+  const second = secondHallBeside(main);
+  const T = SHAPE_TALL;
 
   // The whole planner area, not sized to one room: the view inside it pulls back.
-  const box = {
-    width: frameWidth - PAD.x * 2 - COLUMN - gap,
-    height: frameHeight - PAD.y * 2,
-  };
+  const box = tall
+    ? { width: frameWidth - T.padX * 2, height: frameHeight - T.roomTop - T.padY }
+    : { width: frameWidth - PAD.x * 2 - COLUMN - gap, height: frameHeight - PAD.y * 2 };
+  const boxAt = { x: T.padX, y: T.roomTop };
+  const sheetWidth = frameWidth / T.appPx;
   const insets = canvasInsets(tall);
   const inner = {
     width: box.width - insets.left - insets.right,
@@ -151,19 +156,24 @@ export const FloorsScene: React.FC = () => {
       ? interpolate(frame, [LIST_OPEN, LIST_OPEN + DIALOG_FADE], [0, 1], clamp) *
         interpolate(frame, [closedAt, closedAt + DIALOG_FADE], [1, 0], clamp)
       : interpolate(frame, [chipAt, chipAt + DIALOG_FADE], [0, 1], clamp);
-  const listHeight = hallsPanelHeight(1);
-  const settingsHeight = hallPanelHeight(false);
-  const dialogAt = (height: number, p: Point): Point => ({
-    x: box.width / 2 + (p.x - HALL_PANEL.width / 2) * APP_PX,
-    y: box.height / 2 + (p.y - height / 2) * APP_PX,
-  });
-  const targets = hallPanelTargets(false);
+  const listHeight = hallsPanelHeight(1, tall);
+  const settingsHeight = hallPanelHeight(false, tall);
+  // A sheet stands on the frame's bottom edge; a dialog is centred on the planner.
+  const dialogAt = (height: number, p: Point): Point =>
+    tall
+      ? { x: p.x * T.appPx - boxAt.x, y: frameHeight - (height - p.y) * T.appPx - boxAt.y }
+      : {
+          x: box.width / 2 + (p.x - HALL_PANEL.width / 2) * APP_PX,
+          y: box.height / 2 + (p.y - height / 2) * APP_PX,
+        };
+  const targets = tall ? hallPanelTargets(false, sheetWidth, true) : hallPanelTargets(false);
+  const addTarget = tall ? hallsPanelAddTarget(1, sheetWidth, true) : hallsPanelAddTarget(1);
 
   // The pointer's stops, each reached just before its press lands.
   const chip = toBox({ x: origin(second).x + CHIP_AIM.x, y: origin(second).y + CHIP_AIM.y });
   const entry = { x: box.width * 0.78, y: box.height * 0.86 };
   const stops: { at: Point; press: Press }[] = [
-    { at: dialogAt(listHeight, hallsPanelAddTarget(1)), press: PRESS_ADD },
+    { at: dialogAt(listHeight, addTarget), press: PRESS_ADD },
     { at: dialogAt(settingsHeight, targets.floor), press: PRESS_FLOOR },
     { at: dialogAt(settingsHeight, targets.done), press: PRESS_DONE },
     { at: chip, press: PRESS_CHIP },
@@ -213,6 +223,97 @@ export const FloorsScene: React.FC = () => {
     );
   };
 
+  const halls = (
+    <PlannerCanvas hall={main} tall={tall} zoom={zoomLabel}>
+      {/* The halls are placed in the viewport's own pixels - the chrome's insets included - so drawn from its corner. */}
+      <div style={{ position: "absolute", left: -insets.left, top: -insets.top, width: box.width, height: box.height }}>
+        {hallAt(main, 1, 1)}
+        {added ? hallAt(second, secondIn, fixturesIn) : null}
+      </div>
+    </PlannerCanvas>
+  );
+
+  const form = (drawer: boolean) =>
+    added ? (
+      <HallPanel
+        hallName={second.name}
+        meters={second.meters}
+        lShape={false}
+        floor={frame >= TYPED_AT ? String(second.floor) : undefined}
+        floorFocused={frame >= released(PRESS_FLOOR) && frame < closedAt}
+        position={second.position}
+        drawer={drawer}
+        width={drawer ? sheetWidth : undefined}
+      />
+    ) : (
+      <HallsPanel
+        halls={[main]}
+        addPressed={isPressed(frame, PRESS_ADD)}
+        drawer={drawer}
+        width={drawer ? sheetWidth : undefined}
+      />
+    );
+
+  if (tall) {
+    // The sheet changes height when the list gives way to the form; it slides by its own.
+    const sheetHeight = added ? settingsHeight : listHeight;
+    return (
+      <Backdrop>
+        <AbsoluteFill style={{ padding: `${T.padY}px ${T.padX}px 0`, alignItems: "center" }}>
+          <div
+            style={{
+              fontFamily: fonts.heading,
+              fontSize: T.hookSize,
+              fontWeight: 600,
+              letterSpacing: -2,
+              lineHeight: 1.05,
+              color: colors.ink,
+              textAlign: "center",
+              opacity: lineIn,
+              transform: `translateY(${interpolate(lineIn, [0, 1], [24, 0])}px)`,
+            }}
+          >
+            {tl.walkthrough.floors}
+          </div>
+        </AbsoluteFill>
+
+        <div
+          style={{ position: "absolute", left: boxAt.x, top: boxAt.y, width: box.width, height: box.height, display: "flex" }}
+        >
+          {halls}
+        </div>
+
+        {dialogIn > 0 ? (
+          <AbsoluteFill style={{ justifyContent: "flex-end", overflow: "hidden" }}>
+            <AbsoluteFill
+              style={{ backgroundColor: colors.scrim, backdropFilter: `blur(${SCRIM_BLUR * T.appPx}px)`, opacity: dialogIn }}
+            />
+            {/* `DrawerContent` slides up from the bottom edge rather than fading in. */}
+            <div
+              style={{
+                transform: `translateY(${(1 - dialogIn) * sheetHeight * T.appPx}px) scale(${T.appPx})`,
+                transformOrigin: "bottom left",
+                width: sheetWidth,
+              }}
+            >
+              {form(true)}
+            </div>
+          </AbsoluteFill>
+        ) : null}
+
+        <svg
+          width={box.width}
+          height={box.height}
+          style={{ position: "absolute", left: boxAt.x, top: boxAt.y, overflow: "visible" }}
+        >
+          <g transform={`translate(${pointer.x} ${pointer.y}) scale(${T.pointer})`}>
+            <Cursor x={0} y={0} opacity={pointerOpacity} pressed={pressed} />
+          </g>
+        </svg>
+      </Backdrop>
+    );
+  }
+
   return (
     <Backdrop>
       <AbsoluteFill
@@ -241,13 +342,7 @@ export const FloorsScene: React.FC = () => {
         </div>
 
         <div style={{ position: "relative", width: box.width, height: box.height, display: "flex", flexShrink: 0 }}>
-          <PlannerCanvas hall={main} tall={tall} zoom={zoomLabel}>
-            {/* The halls are placed in the viewport's own pixels - the chrome's insets included - so drawn from its corner. */}
-            <div style={{ position: "absolute", left: -insets.left, top: -insets.top, width: box.width, height: box.height }}>
-              {hallAt(main, 1, 1)}
-              {added ? hallAt(second, secondIn, fixturesIn) : null}
-            </div>
-          </PlannerCanvas>
+          {halls}
 
           {dialogIn > 0 ? (
             <div
@@ -265,18 +360,7 @@ export const FloorsScene: React.FC = () => {
               }}
             >
               <div style={{ transform: `scale(${APP_PX * interpolate(dialogIn, [0, 1], [0.95, 1])})` }}>
-                {added ? (
-                  <HallPanel
-                    hallName={second.name}
-                    meters={second.meters}
-                    lShape={false}
-                    floor={frame >= TYPED_AT ? String(second.floor) : undefined}
-                    floorFocused={frame >= released(PRESS_FLOOR) && frame < closedAt}
-                    position={second.position}
-                  />
-                ) : (
-                  <HallsPanel halls={[main]} addPressed={isPressed(frame, PRESS_ADD)} />
-                )}
+                {form(false)}
               </div>
             </div>
           ) : null}

@@ -41,6 +41,22 @@ export const WALKTHROUGH_LONG_DURATION =
   sceneFrames.reduce((sum, frames) => sum + frames, 0) - WALKTHROUGH_LONG_TRANSITION * (sceneFrames.length - 1);
 
 /**
+ * The 9:16 cut leaves the measure chapter out. On a phone at v1 the canvas
+ * toolbar isn't mounted (`Canvas.tsx`, `!isMobile`): measuring is a long-press
+ * menu item (`CanvasViewMenu`) with no *Środek* / *Krawędź* switch - and that
+ * switch is the chapter's whole beat.
+ */
+export const WALKTHROUGH_LONG_VERTICAL_SKIPS: ReadonlyArray<keyof typeof WALKTHROUGH_LONG_SCENES> = ["scaleMeasure"];
+
+const verticalFrames = (Object.keys(WALKTHROUGH_LONG_SCENES) as (keyof typeof WALKTHROUGH_LONG_SCENES)[])
+  .filter((key) => !WALKTHROUGH_LONG_VERTICAL_SKIPS.includes(key))
+  .map((key) => WALKTHROUGH_LONG_SCENES[key]);
+
+/** 2355 frames - 78.5 s at 30 fps: 2565 of scenes less fourteen 15-frame crossfades. */
+export const WALKTHROUGH_LONG_VERTICAL_DURATION =
+  verticalFrames.reduce((sum, frames) => sum + frames, 0) - WALKTHROUGH_LONG_TRANSITION * (verticalFrames.length - 1);
+
+/**
  * The swap chapters are one continuous shot on the social cut's clock, which
  * seams them over 8 frames. Here the seam is 15, so the reseat starts on the
  * frame the pick's crossfade begins, and both sides draw the same pose.

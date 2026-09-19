@@ -2,8 +2,9 @@ import React from "react";
 import { AbsoluteFill } from "remotion";
 import { linearTiming, TransitionSeries } from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
+import { useFormat } from "../format";
 import { tl } from "../i18n";
-import { SALA_2 } from "../layouts";
+import { secondHallBeside } from "../layouts";
 import { colors } from "../theme";
 import { IntroScene } from "../scenes/IntroScene";
 import { HallScene } from "../scenes/HallScene";
@@ -21,7 +22,12 @@ import { SwapCutPickScene } from "../seat-swap/scenes/SwapCutPickScene";
 import { SwapCutReseatScene } from "../seat-swap/scenes/SwapCutReseatScene";
 import { ReportSheetScene } from "../kitchen-report/scenes/ReportSheetScene";
 import { FloorsScene } from "./scenes/FloorsScene";
-import { SWAP_RESEAT_START, WALKTHROUGH_LONG_SCENES, WALKTHROUGH_LONG_TRANSITION } from "./timeline";
+import {
+  SWAP_RESEAT_START,
+  WALKTHROUGH_LONG_SCENES,
+  WALKTHROUGH_LONG_TRANSITION,
+  WALKTHROUGH_LONG_VERTICAL_SKIPS,
+} from "./timeline";
 
 const S = WALKTHROUGH_LONG_SCENES;
 
@@ -39,8 +45,16 @@ const crossfade = (
  * the CTA. Most chapters are other films' scenes, their own questions and
  * payoffs included; the kids chapters follow the seating, since they draw a
  * room that is already seated.
+ *
+ * The 9:16 cut draws the same chapters in portrait - the forms in the phone's
+ * bottom sheet - less the measure chapter (`WALKTHROUGH_LONG_VERTICAL_SKIPS`).
  */
 export const WalkthroughLong: React.FC = () => {
+  const { tall, hall } = useFormat();
+  // Where `nextHallPosition` puts the second hall: beside whichever room this format draws first.
+  const second = secondHallBeside(hall);
+  const measure = !(tall && WALKTHROUGH_LONG_VERTICAL_SKIPS.includes("scaleMeasure"));
+
   return (
     <AbsoluteFill style={{ backgroundColor: colors.bg }}>
       <TransitionSeries>
@@ -57,11 +71,11 @@ export const WalkthroughLong: React.FC = () => {
         </TransitionSeries.Sequence>
         {crossfade}
         <TransitionSeries.Sequence durationInFrames={S.shapeL}>
-          <ShapeLScene hall={SALA_2} />
+          <ShapeLScene hall={second} />
         </TransitionSeries.Sequence>
         {crossfade}
         <TransitionSeries.Sequence durationInFrames={S.shapeEdit}>
-          <ShapeEditScene hall={SALA_2} loop={false} />
+          <ShapeEditScene hall={second} loop={false} />
         </TransitionSeries.Sequence>
         {crossfade}
         <TransitionSeries.Sequence durationInFrames={S.importDrop}>
@@ -88,10 +102,12 @@ export const WalkthroughLong: React.FC = () => {
           <KidsCountScene />
         </TransitionSeries.Sequence>
         {crossfade}
-        <TransitionSeries.Sequence durationInFrames={S.scaleMeasure}>
-          <ScaleMeasureScene />
-        </TransitionSeries.Sequence>
-        {crossfade}
+        {measure ? (
+          <TransitionSeries.Sequence durationInFrames={S.scaleMeasure}>
+            <ScaleMeasureScene />
+          </TransitionSeries.Sequence>
+        ) : null}
+        {measure ? crossfade : null}
         <TransitionSeries.Sequence durationInFrames={S.swapPick}>
           <SwapCutPickScene />
         </TransitionSeries.Sequence>

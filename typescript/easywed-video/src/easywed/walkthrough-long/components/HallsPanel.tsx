@@ -1,5 +1,5 @@
 import React from "react";
-import { HALL_PANEL } from "../../components/HallPanel";
+import { DRAWER_HANDLE, DrawerHandle, HALL_PANEL, panelShell } from "../../components/HallPanel";
 import { Icon } from "../../components/Icon";
 import type { Point } from "../../geometry";
 import { tl } from "../../i18n";
@@ -14,7 +14,8 @@ import { colors, fonts } from "../../theme";
  * chevron), and the outline *Dodaj salę* button under the rows.
  *
  * Drawn in the app's own CSS pixels, like `HallPanel`, and scaled as a whole
- * by the caller.
+ * by the caller - as a centred modal, or with `drawer` as the phone's bottom
+ * sheet (`MobilePanelDrawer`), the same list under a grab handle.
  */
 const P = HALL_PANEL;
 
@@ -26,13 +27,13 @@ const ROW_GAP = 8;
 
 const rowsHeight = (rows: number) => rows * ROW + (rows - 1) * ROW_GAP;
 
-export const hallsPanelHeight = (rows: number): number =>
-  P.pad * 2 + P.header + P.gap + HINT + P.gap + rowsHeight(rows) + P.gap + P.button;
+export const hallsPanelHeight = (rows: number, drawer = false): number =>
+  (drawer ? DRAWER_HANDLE : 0) + P.pad * 2 + P.header + P.gap + HINT + P.gap + rowsHeight(rows) + P.gap + P.button;
 
-/** Where the pointer aims for *Dodaj salę*, in the dialog's own unscaled pixels. */
-export const hallsPanelAddTarget = (rows: number): Point => ({
-  x: P.width / 2,
-  y: hallsPanelHeight(rows) - P.pad - P.button / 2,
+/** Where the pointer aims for *Dodaj salę*, in the panel's own unscaled pixels. */
+export const hallsPanelAddTarget = (rows: number, width = P.width, drawer = false): Point => ({
+  x: width / 2,
+  y: hallsPanelHeight(rows, drawer) - P.pad - P.button / 2,
 });
 
 /**
@@ -80,26 +81,17 @@ export const HallsPanel: React.FC<{
   halls: HallLayout[];
   /** *Dodaj salę* held down. */
   addPressed?: boolean;
-}> = ({ halls, addPressed = false }) => (
-  <div
-    style={{
-      width: P.width,
-      height: hallsPanelHeight(halls.length),
-      boxSizing: "border-box",
-      padding: P.pad,
-      display: "flex",
-      flexDirection: "column",
-      gap: P.gap,
-      borderRadius: P.radius,
-      backgroundColor: colors.bg,
-      // `ring-1 ring-foreground/10`, plus the lift a modal carries - as `HallPanel`.
-      boxShadow: "0 0 0 1px rgba(36, 31, 26, 0.1), 0 24px 60px rgba(60, 50, 40, 0.18)",
-      fontFamily: fonts.sans,
-      overflow: "hidden",
-    }}
-  >
+  /** The phone's bottom sheet rather than the desktop modal. */
+  drawer?: boolean;
+  /** The panel's width in app pixels - a sheet is as wide as the screen. */
+  width?: number;
+}> = ({ halls, addPressed = false, drawer = false, width = P.width }) => (
+  <div style={panelShell(drawer, width, hallsPanelHeight(halls.length, drawer))}>
+    {drawer ? <DrawerHandle /> : null}
     <div style={{ height: P.header, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-      <div style={{ fontFamily: fonts.heading, fontSize: 16, fontWeight: 500, color: colors.ink }}>{h.title}</div>
+      <div style={{ fontFamily: fonts.heading, fontSize: drawer ? 18 : 16, fontWeight: 500, color: colors.ink }}>
+        {h.title}
+      </div>
       <div
         style={{
           width: P.header,

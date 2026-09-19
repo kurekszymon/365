@@ -129,20 +129,22 @@ export const HALL_GAP = 3;
 
 /**
  * The long walkthrough's second hall: what *Dodaj salę* makes of
- * `DEFAULT_HALL` at v1 - no name, a 20x12 m rectangle - once *Piętro* is set to
- * 1, placed where `nextHallPosition` puts a second hall (beside the first, 3 m
- * clear of it). A dance floor and a bar and **no tables**, so the wedding still
- * seats 58. Both stay clear of the top-right quarter `lShapeVertices` cuts
- * away, since `setHallShape` re-clamps whatever stands there, with the same
- * half-metre clearances as the other rooms.
+ * `DEFAULT_HALL` at v1 - no name, a 20x12 m rectangle, whatever the screen -
+ * once *Piętro* is set to 1, placed where `nextHallPosition` puts a second
+ * hall: beside the first, 3 m clear of it. So its position follows the room
+ * each format draws first. A dance floor and a bar and **no tables**, so the
+ * wedding still seats 58. Both stay clear of the top-right quarter
+ * `lShapeVertices` cuts away, since `setHallShape` re-clamps whatever stands
+ * there, with the same half-metre clearances as the other rooms.
  */
-export const SALA_2 = withDerived({
-  // Empty, as the app stores it: the chip reads `hall.unnamed`, the halls list `hall.unnamed_index`.
-  name: "",
-  canvas: { width: 1200, height: 720 },
-  danceFloor: { x: 300, y: 450, width: 360, height: 240 },
-  tables: [],
-  fixtures: [{ id: "bar", label: tl.hall.bar, x: 900, y: 630, width: 240, height: 56 }],
-  floor: 1,
-  position: { x: WIDE_HALL.meters.width + HALL_GAP, y: 0 },
-});
+export const secondHallBeside = (first: HallLayout): HallLayout =>
+  withDerived({
+    // Empty, as the app stores it: the chip reads `hall.unnamed`, the halls list `hall.unnamed_index`.
+    name: "",
+    canvas: { width: 1200, height: 720 },
+    danceFloor: { x: 300, y: 450, width: 360, height: 240 },
+    tables: [],
+    fixtures: [{ id: "bar", label: tl.hall.bar, x: 900, y: 630, width: 240, height: 56 }],
+    floor: 1,
+    position: { x: (first.position?.x ?? 0) + first.meters.width + HALL_GAP, y: first.position?.y ?? 0 },
+  });

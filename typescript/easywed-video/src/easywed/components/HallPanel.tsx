@@ -15,6 +15,10 @@ import { colors, fonts } from "../theme";
  * Drawn in the app's own CSS pixels - `DialogContent`'s `sm:max-w-md`, `p-4`
  * and `gap-4`, `h-8` inputs, `size="xs"` button groups - and scaled as a whole
  * by the caller, so the layout arithmetic below is the app's.
+ *
+ * On a phone the same form sits in `EntityForms/MobilePanelDrawer` instead: a
+ * bottom sheet as wide as the screen, its grab handle over the same header and
+ * body, square at the bottom. `drawer` draws that, at the caller's `width`.
  */
 export const HALL_PANEL = {
   width: 448,
@@ -38,11 +42,55 @@ const field = P.label + P.labelGap + P.input;
 const groupField = P.label + P.labelGap + P.group;
 const smallField = P.smallLabel + P.smallGap + P.input;
 
+/**
+ * The bottom sheet's grab handle and the margin above it, as the repo's other
+ * drawers draw it (`ImportDialog`): everything under it sits this much lower.
+ */
+export const DRAWER_HANDLE = 12 + 6;
+
+/** The grab handle a bottom sheet carries over its header. */
+export const DrawerHandle: React.FC = () => (
+  <div
+    style={{
+      position: "absolute",
+      top: 12,
+      left: "50%",
+      width: 48,
+      height: 6,
+      marginLeft: -24,
+      borderRadius: 999,
+      backgroundColor: "rgba(123, 115, 107, 0.3)",
+    }}
+  />
+);
+
+/** The shell both hall panels share: a centred modal, or a bottom sheet the width of the screen. */
+export const panelShell = (drawer: boolean, width: number, height: number): React.CSSProperties => ({
+  position: "relative",
+  width,
+  height,
+  boxSizing: "border-box",
+  padding: P.pad,
+  paddingTop: P.pad + (drawer ? DRAWER_HANDLE : 0),
+  display: "flex",
+  flexDirection: "column",
+  gap: P.gap,
+  borderRadius: drawer ? `${P.radius}px ${P.radius}px 0 0` : P.radius,
+  backgroundColor: colors.bg,
+  // A modal's `ring-1 ring-foreground/10` and lift; a sheet's top border and the same lift.
+  boxShadow: drawer
+    ? "0 -1px 0 0 rgba(36, 31, 26, 0.1), 0 -24px 60px rgba(60, 50, 40, 0.18)"
+    : "0 0 0 1px rgba(36, 31, 26, 0.1), 0 24px 60px rgba(60, 50, 40, 0.18)",
+  fontFamily: fonts.sans,
+  overflow: "hidden",
+});
+
 /** Where the shape group's buttons sit, from the dialog's top edge. */
 const SHAPE_GROUP_TOP = P.pad + P.header + P.gap + field + P.gap + field + P.gap + P.label + P.labelGap;
 
-/** The dialog's height; it grows by the hint and the button once the hall has an outline. */
-export const hallPanelHeight = (lShape: boolean): number =>
+/** The dialog's height; it grows by the hint and the button once the hall has an outline, and by the handle as a sheet. */
+export const hallPanelHeight = (lShape: boolean, drawer = false): number =>
+  (drawer ? DRAWER_HANDLE : 0) +
   P.pad * 2 +
   P.header +
   P.gap +
@@ -58,19 +106,22 @@ export const hallPanelHeight = (lShape: boolean): number =>
     P.button,
   ].reduce((sum, h) => sum + h + P.gap, -P.gap);
 
-/** The centres the pointer aims at, in the dialog's own unscaled pixels. */
+/** The centres the pointer aims at, in the panel's own unscaled pixels. */
 export const hallPanelTargets = (
   lShape: boolean,
+  width = P.width,
+  drawer = false,
 ): { lShape: Point; editOutline: Point; floor: Point; done: Point } => {
-  const inner = P.width - P.pad * 2;
+  const inner = width - P.pad * 2;
   // `flex-1` on four buttons: equal quarters of the group.
   const quarter = inner / 4;
   const editTop = SHAPE_GROUP_TOP + P.group + P.gap + P.hint + P.gap;
+  const down = drawer ? DRAWER_HANDLE : 0;
   return {
-    lShape: { x: P.pad + quarter * 1.5, y: SHAPE_GROUP_TOP + P.group / 2 },
-    editOutline: { x: P.width / 2, y: lShape ? editTop + P.button / 2 : Number.NaN },
-    floor: { x: P.width / 2, y: P.pad + P.header + P.gap + field + P.gap + P.label + P.labelGap + P.input / 2 },
-    done: { x: P.width - P.pad - P.header / 2, y: P.pad + P.header / 2 },
+    lShape: { x: P.pad + quarter * 1.5, y: down + SHAPE_GROUP_TOP + P.group / 2 },
+    editOutline: { x: width / 2, y: lShape ? down + editTop + P.button / 2 : Number.NaN },
+    floor: { x: width / 2, y: down + P.pad + P.header + P.gap + field + P.gap + P.label + P.labelGap + P.input / 2 },
+    done: { x: width - P.pad - P.header / 2, y: down + P.pad + P.header / 2 },
   };
 };
 
@@ -205,26 +256,18 @@ export const HallPanel: React.FC<{
   floorFocused?: boolean;
   /** `hall.position` in metres; a first hall sits at the world origin. */
   position?: { x: number; y: number };
-}> = ({ hallName, meters, lShape, floor, floorFocused, position = { x: 0, y: 0 } }) => (
-  <div
-    style={{
-      width: P.width,
-      height: hallPanelHeight(lShape),
-      boxSizing: "border-box",
-      padding: P.pad,
-      display: "flex",
-      flexDirection: "column",
-      gap: P.gap,
-      borderRadius: P.radius,
-      backgroundColor: colors.bg,
-      // `ring-1 ring-foreground/10`, plus the lift a modal carries.
-      boxShadow: "0 0 0 1px rgba(36, 31, 26, 0.1), 0 24px 60px rgba(60, 50, 40, 0.18)",
-      fontFamily: fonts.sans,
-      overflow: "hidden",
-    }}
-  >
+  /** The phone's bottom sheet rather than the desktop modal. */
+  drawer?: boolean;
+  /** The panel's width in app pixels - a sheet is as wide as the screen. */
+  width?: number;
+}> = ({ hallName, meters, lShape, floor, floorFocused, position = { x: 0, y: 0 }, drawer = false, width = P.width }) => (
+  <div style={panelShell(drawer, width, hallPanelHeight(lShape, drawer))}>
+    {drawer ? <DrawerHandle /> : null}
     <div style={{ height: P.header, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-      <div style={{ fontFamily: fonts.heading, fontSize: 16, fontWeight: 500, color: colors.ink }}>{d.title}</div>
+      {/* `DialogTitle`, or the sheet's `DrawerTitle className="font-heading text-lg"`. */}
+      <div style={{ fontFamily: fonts.heading, fontSize: drawer ? 18 : 16, fontWeight: 500, color: colors.ink }}>
+        {d.title}
+      </div>
       <div
         style={{
           width: P.header,

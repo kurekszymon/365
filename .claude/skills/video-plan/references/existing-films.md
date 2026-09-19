@@ -80,7 +80,7 @@ payoff, then a dissolve back onto frame 0. A landing-page loop: no CTA, no pill.
 Scenes 105 + 150 + 135 = 390 at `SHAPE_TRANSITION = 15` x 2 seams -> 360; the last 15 frames are
 `LoopSeam` onto frame 0. Built from `docs/video-plans/full-series-2026-09-17.md`, brief `odd-room`.
 
-## The long walkthrough - `easywed-walkthrough`, 2490f (83 s), 16:9 only
+## The long walkthrough - `easywed-walkthrough`, 2490f (83 s), and `easywed-walkthrough-vertical`, 2355f (78.5 s)
 
 the question over the logo build - the hall sketched (the short walkthrough's scene) - the *Sale*
 list opened, *Dodaj salę*, the new unnamed hall's *Piętro* set to 1, the view pulled back over both
@@ -97,7 +97,10 @@ is a shipped film's, reused by explicit decision (the plan's open question 3, an
 Scenes 120 + 210 + 240 + 150 + 135 + 150 + 180 + 180 + 240 + 180 + 150 + 150 + 180 + 150 + 150 +
 150 = 2715 at `TRANSITION = 15` x 15 seams -> 2490. Built from
 `docs/video-plans/full-series-2026-09-17.md`, brief `walkthrough-long`, with its chapter list
-changed (import, measure and report added; the kids chapters after the seating).
+changed (import, measure and report added; the kids chapters after the seating). The 9:16 twin,
+built the same day, leaves the measure chapter out (2565 - 14 x 15 = 2355) because a phone at v1
+measures from a long-press menu with no *Środek* / *Krawędź* switch, and draws the hall forms as
+the phone's bottom sheet; the second hall stands 17 m along there, beside `TALL_HALL`'s 14 m.
 
 ## Polish lines already burned on screen
 
@@ -206,8 +209,8 @@ From the long walkthrough: *"Pusta sala, lista gości i żadnego planu?"* · *"O
 na górze?"* · *"Wasza sala, Wasi goście, jeden plan."* - and, as the halls list and the new hall's
 settings show them (app strings, verbatim): *"Sale"*, *"Wszystkie sale są widoczne razem na planie –
 przeciągnij salę za jej etykietę, aby ułożyć pomieszczenia i piętra."*, *"Dodaj salę"*, the row
-*"Sala główna"* over *"22×14 m · 10 elementów"*, *"np. Sala główna"*, the typed floor *"1"*, and
-the canvas chip *"Sala · p. 1 · 20×12 m"*. The beat itself - a second hall added on another floor
+*"Sala główna"* over *"22×14 m · 10 elementów"* (*"14×16 m · 9 elementów"* in 9:16),
+*"np. Sala główna"*, the typed floor *"1"*, and the canvas chip *"Sala · p. 1 · 20×12 m"*. The beat itself - a second hall added on another floor
 from the halls list - is spent. Its CTA is *"Narysujcie swoją salę"* over the *"easywed.app"*
 pill. It also puts on screen, through the short walkthrough's reused scenes, two subtitles this
 file had never listed: *"Stoły okrągłe i prostokątne, parkiet i wyposażenie - ustaw salę
