@@ -80,6 +80,25 @@ payoff, then a dissolve back onto frame 0. A landing-page loop: no CTA, no pill.
 Scenes 105 + 150 + 135 = 390 at `SHAPE_TRANSITION = 15` x 2 seams -> 360; the last 15 frames are
 `LoopSeam` onto frame 0. Built from `docs/video-plans/full-series-2026-09-17.md`, brief `odd-room`.
 
+## The long walkthrough - `easywed-walkthrough`, 2490f (83 s), 16:9 only
+
+the question over the logo build - the hall sketched (the short walkthrough's scene) - the *Sale*
+list opened, *Dodaj salę*, the new unnamed hall's *Piętro* set to 1, the view pulled back over both
+halls and the second given a dance floor and a bar, its chip pressed - that hall (`SALA_2`, 20x12
+m, no tables) turned into an L and one corner dragged out (the odd-room loop's scenes, its question
+and payoff) - the guest list dropped into the import dialog and its columns mapped (the import
+cut's scenes) - the guest list (the short walkthrough's scene) - everyone seated (ditto) - two
+children tagged and the kids counted (the kids cut's scenes) - one distance measured (the to-scale
+loop's scene, its question) - a guest moved onto a full table and the one she turned out reseated
+(the seat-swap cut's scenes, its question and payoff) - the printed report (the kitchen-report
+cut's scene) - the outro with a new headline, no feature pills, the CTA. Every beat after *Floors*
+is a shipped film's, reused by explicit decision (the plan's open question 3, answered
+2026-09-19), so the beats themselves were already spent; what is new is the second hall.
+Scenes 120 + 210 + 240 + 150 + 135 + 150 + 180 + 180 + 240 + 180 + 150 + 150 + 180 + 150 + 150 +
+150 = 2715 at `TRANSITION = 15` x 15 seams -> 2490. Built from
+`docs/video-plans/full-series-2026-09-17.md`, brief `walkthrough-long`, with its chapter list
+changed (import, measure and report added; the kids chapters after the seating).
+
 ## Polish lines already burned on screen
 
 None of these may appear again:
@@ -183,16 +202,33 @@ plan's open question 5, answered 2026-09-17): *"Szukaj gościa…"*, *"Wszyscy 5
 *"Dodaj gościa"*, *"Importuj gości"* and *"Przy stole: Stół N"* are chrome every guest-list shot
 carries, not lines. A beat may not rest on them.
 
+From the long walkthrough: *"Pusta sala, lista gości i żadnego planu?"* · *"Obiad na dole, tańce
+na górze?"* · *"Wasza sala, Wasi goście, jeden plan."* - and, as the halls list and the new hall's
+settings show them (app strings, verbatim): *"Sale"*, *"Wszystkie sale są widoczne razem na planie –
+przeciągnij salę za jej etykietę, aby ułożyć pomieszczenia i piętra."*, *"Dodaj salę"*, the row
+*"Sala główna"* over *"22×14 m · 10 elementów"*, *"np. Sala główna"*, the typed floor *"1"*, and
+the canvas chip *"Sala · p. 1 · 20×12 m"*. The beat itself - a second hall added on another floor
+from the halls list - is spent. Its CTA is *"Narysujcie swoją salę"* over the *"easywed.app"*
+pill. It also puts on screen, through the short walkthrough's reused scenes, two subtitles this
+file had never listed: *"Stoły okrągłe i prostokątne, parkiet i wyposażenie - ustaw salę
+dokładnie tak, jak będzie wyglądać w dniu wesela."* (`demo.hall.subtitle`) and *"Przeciągnij gości
+na miejsca, wyrównaj obłożenie stołów i wyeksportuj gotowy plan do druku dla sali."*
+(`demo.seating.subtitle`) - both spent, in both films - and the guest scene's corrected subtitle,
+*"Diety, grupy wiekowe i przypisane miejsca są zawsze przy nazwisku - koniec z trzema arkuszami
+naraz."*, spent with them.
+
 The one exception is the CTA pill itself: *"easywed.app"* recurs by design (section 8). Each video's
 action line above it is its own, and burns like any other line.
 
 ## One caveat: the films are not a source of approved copy
 
-`src/easywed/scenes/GuestsScene.tsx:173` carries the landing page's plus-one line on screen —
-*"Diety, osoby towarzyszące i przypisane miejsca są zawsze przy nazwisku - koniec z trzema arkuszami
-naraz."* There is no plus-one field on the guest model at v1, so a published film already makes a
-claim on the `SKILL.md` section 4 forbidden list.
+Until 2026-09-19, `src/easywed/scenes/GuestsScene.tsx` carried the landing page's plus-one line
+on screen - *"Diety, osoby towarzyszące i przypisane miejsca są zawsze przy nazwisku - koniec z
+trzema arkuszami naraz."* - a claim on the `SKILL.md` section 4 forbidden list, in a published
+film. `demo.guests.subtitle` in `i18n.ts` now reads *"Diety, grupy wiekowe i przypisane miejsca…"*
+(English: *"Dietary needs, age groups, and seat assignments…"*), backed by
+`guests.add.age_group` and `lib/ageGroup.ts`. Renders of `easywed-demo` made before that date
+still carry the old line; re-render them before posting.
 
-Do not copy from the existing scenes on the assumption that what shipped was checked. Flag this line
-to the user instead; a same-shape replacement that is true would be *„Diety, przedziały wieku i
-przypisane miejsca są zawsze przy nazwisku - koniec z trzema arkuszami naraz.”*
+The lesson stands: do not copy from the existing scenes on the assumption that what shipped was
+checked. Verify a line against `v1-facts.md` and the app at the tag before reusing its claim.

@@ -110,7 +110,14 @@ export const HallCanvas: React.FC<Props> = ({
   const clipId = `hall-walls-${React.useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const { canvas, danceFloor, meters } = hall;
   const perimeter = (canvas.width + canvas.height) * 2;
-  const chipLabel = `${hall.name} · ${meters.width}×${meters.height} m`;
+  // `HallView`'s label: the name (or `hall.unnamed`), the floor when one is set, the size.
+  const chipLabel = [
+    hall.name || tl.app.hallsList.unnamed,
+    hall.floor !== undefined ? tl.app.hallsList.floorShort(hall.floor) : null,
+    `${meters.width}×${meters.height} m`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   const chipWidth = 22 + chipLabel.length * 10.6;
   const pad = bare ? NO_PAD : PAD;
 

@@ -61,6 +61,9 @@ import { ShapeHookScene } from "./easywed/odd-room/scenes/ShapeHookScene";
 import { ShapeLScene } from "./easywed/odd-room/scenes/ShapeLScene";
 import { ShapeEditScene } from "./easywed/odd-room/scenes/ShapeEditScene";
 import { SHAPE_DURATION, SHAPE_SCENES } from "./easywed/odd-room/timeline";
+import { WalkthroughLong } from "./easywed/walkthrough-long/WalkthroughLong";
+import { FloorsScene } from "./easywed/walkthrough-long/scenes/FloorsScene";
+import { WALKTHROUGH_LONG_DURATION, WALKTHROUGH_LONG_SCENES } from "./easywed/walkthrough-long/timeline";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -103,6 +106,17 @@ export const RemotionRoot: React.FC = () => {
         fps={FPS}
         width={VERTICAL_WIDTH}
         height={VERTICAL_HEIGHT}
+      />
+
+      {/* The 83 s YouTube tour - the walkthrough's scenes with a second hall, the
+          other films' beats as chapters between them; 16:9 only. */}
+      <Composition
+        id="easywed-walkthrough"
+        component={WalkthroughLong}
+        durationInFrames={WALKTHROUGH_LONG_DURATION}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
       />
 
       {/* The 20 s import cut - the guest list already in Excel, read in and seated. */}
@@ -246,6 +260,12 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="Guests" component={GuestsScene} durationInFrames={SCENES.guests} fps={FPS} width={WIDTH} height={HEIGHT} />
         <Composition id="Seating" component={SeatingScene} durationInFrames={SCENES.seating} fps={FPS} width={WIDTH} height={HEIGHT} />
         <Composition id="Outro" component={OutroScene} durationInFrames={SCENES.outro} fps={FPS} width={WIDTH} height={HEIGHT} />
+      </Folder>
+
+      {/* The long walkthrough's one scene of its own, at 16:9 - its only size.
+          Its other chapters are registered with the films they come from. */}
+      <Folder name="Walkthrough-long">
+        <Composition id="Floors" component={FloorsScene} durationInFrames={WALKTHROUGH_LONG_SCENES.floors} fps={FPS} width={WIDTH} height={HEIGHT} />
       </Folder>
 
       {/* The teaser's beats, registered at 9:16 - the cut it is made for, and

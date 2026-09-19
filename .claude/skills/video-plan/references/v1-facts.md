@@ -50,6 +50,19 @@ named in section 2 both need updating — nothing will warn you.
 - **Multi-hall and multi-floor** (`hall.floor`, `hall.list_title`), plus custom polygon halls and
   fixtures — stage, dance floor, bar, DJ booth, entrance, or a shape drawn by hand
   (`fixtures.preset.*`, `fixtures.shape.polygon`).
+  - How a second hall is added (`EntityForms/HallsPanelContent.tsx`, `stores/planner.store.ts`):
+    *Skonfiguruj salę* opens the same centred modal on the halls list, titled *„Sale”*
+    (`hall.list_title`) - the `hall.list_hint` line, one bordered row per hall (name, then
+    *„p. 1”* from `hall.floor_short` when a floor is set; `{w}×{h} m · N elementów` under it,
+    counting tables and fixtures, the dance floor being a fixture), and an outline *„Dodaj salę”*.
+    Pressing it runs `openHallEdit(addHall(DEFAULT_HALL))`: the dialog switches straight to the
+    new hall's settings, so the list never shows the new row until it is reopened.
+    `DEFAULT_HALL` is **unnamed** (`name: ""`, so the name field shows *„np. Sala główna”*, the
+    list says *„Sala 2”* via `hall.unnamed_index`, and the canvas chip says *„Sala”* via
+    `hall.unnamed`), a `rectangle`, **20×12 m**. `nextHallPosition` places it: an odd hall count
+    puts it beside the last hall with `HALL_GAP = 3` m between them, an even count starts a new
+    row under everything - so a second hall needs no dragging. The canvas chip reads name,
+    floor, size: *„Sala · p. 1 · 20×12 m”* (`Canvas/HallView.tsx`).
   - How a hall changes shape (`EntityForms/HallPanelContent.tsx`, `Canvas/ShapeEditOverlay.tsx`,
     `Canvas/ShapeEditToolbar.tsx`, `lib/geometry.ts`): on desktop the hall's settings are a
     **centred modal** (`Sidebar/EntityEditDialog`, `sm:max-w-md`, a `bg-black/10` scrim with

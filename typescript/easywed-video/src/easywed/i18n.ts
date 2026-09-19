@@ -75,6 +75,7 @@ const pl = {
     hallDialog: {
       title: "Sala", // hall
       name: "Nazwa", // common.name
+      namePlaceholder: "np. Sala główna", // hall.name_placeholder
       floor: "Piętro", // hall.floor
       floorPlaceholder: "np. 0, 1, 2", // hall.floor_placeholder
       shape: "Kształt sali", // hall.shape
@@ -99,6 +100,18 @@ const pl = {
     shapeEditHint:
       "Przeciągaj punkty, aby zmienić kształt. Kliknij środek krawędzi, aby dodać punkt; kliknij punkt dwukrotnie, aby go usunąć.", // shape_edit.hint
     done: "Gotowe", // common.done
+    /** `HallsPanelContent` in the same dialog, titled by `usePanelTitle`. */
+    hallsList: {
+      title: "Sale", // hall.list_title
+      hint: "Wszystkie sale są widoczne razem na planie – przeciągnij salę za jej etykietę, aby ułożyć pomieszczenia i piętra.", // hall.list_hint
+      add: "Dodaj salę", // hall.add
+      unnamed: "Sala", // hall.unnamed - the canvas chip of a hall with no name
+      unnamedIndex: (index: number) => `Sala ${index}`, // hall.unnamed_index - the same hall in this list
+      floorShort: (floor: number) => `p. ${floor}`, // hall.floor_short
+      // hall.entity_count_one|few|many
+      entityCount: (count: number) =>
+        `${count} ${plural(count, { one: "element", few: "elementy", many: "elementów" })}`,
+    },
   },
 
   guests: {
@@ -179,7 +192,10 @@ const pl = {
     guests: {
       step: "Krok 02",
       title: "Dodaj gości", // landing.steps.two.title
-      subtitle: "Diety, osoby towarzyszące i przypisane miejsca są zawsze przy nazwisku - koniec z trzema arkuszami naraz.", // landing.features.guests.desc
+      // landing.features.guests.desc, with its plus-ones - a field v1 does not
+      // have - swapped for the age groups it does (guests.add.age_group,
+      // lib/ageGroup.ts). "i" and "z" are bound to the next word.
+      subtitle: "Diety, grupy wiekowe i\u00a0przypisane miejsca są zawsze przy nazwisku - koniec z\u00a0trzema arkuszami naraz.",
       importPill: "Import z CSV lub Excela",
       exportPill: "Eksport PDF do druku",
     },
@@ -254,6 +270,15 @@ const pl = {
     /** "naprawdę" is bound to "stoją." so the last word never wraps alone. */
     payoff: "Ściany tam, gdzie naprawdę\u00a0stoją.",
   },
+
+  walkthrough: {
+    /** "i" is bound to "żadnego" so the line never ends on it. */
+    hook: "Pusta sala, lista gości i\u00a0żadnego planu?",
+    /** Each "na" is bound to the word after it, so neither line ends on one. */
+    floors: "Obiad na\u00a0dole, tańce na\u00a0górze?",
+    outroTitle: "Wasza sala, Wasi goście, jeden plan.",
+    outroAction: "Narysujcie swoją salę",
+  },
 };
 
 const en: typeof pl = {
@@ -301,6 +326,7 @@ const en: typeof pl = {
     hallDialog: {
       title: "Hall",
       name: "Name",
+      namePlaceholder: "e.g. Main hall",
       floor: "Floor",
       floorPlaceholder: "e.g. 0, 1, 2",
       shape: "Hall shape",
@@ -324,6 +350,15 @@ const en: typeof pl = {
     shapeEditHint:
       "Drag points to reshape. Click an edge midpoint to add a point, double-click a point to remove it.",
     done: "Done",
+    hallsList: {
+      title: "Halls",
+      hint: "All halls show together on the canvas - drag a hall by its label to arrange rooms and floors.",
+      add: "Add hall",
+      unnamed: "Hall",
+      unnamedIndex: (index) => `Hall ${index}`,
+      floorShort: (floor) => `fl. ${floor}`,
+      entityCount: (count) => `${count} ${count === 1 ? "item" : "items"}`,
+    },
   },
 
   guests: {
@@ -399,7 +434,7 @@ const en: typeof pl = {
     guests: {
       step: "Step 02",
       title: "Add your guests",
-      subtitle: "Dietary needs, plus-ones, and seat assignments live next to every name - no more cross-checking three spreadsheets.",
+      subtitle: "Dietary needs, age groups, and seat assignments live next to every name - no more cross-checking three spreadsheets.",
       importPill: "Import from CSV or Excel",
       exportPill: "Print-ready PDF export",
     },
@@ -465,6 +500,13 @@ const en: typeof pl = {
   shape: {
     hook: "Your room isn't a rectangle?",
     payoff: "Walls where they really stand.",
+  },
+
+  walkthrough: {
+    hook: "An empty hall, a guest list and no plan?",
+    floors: "Dinner downstairs, dancing upstairs?",
+    outroTitle: "Your hall, your guests, one plan.",
+    outroAction: "Draw your hall",
   },
 };
 

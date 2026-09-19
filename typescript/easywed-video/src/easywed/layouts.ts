@@ -31,6 +31,10 @@ export type HallLayout = {
   totalSeats: number;
   /** Room size in metres - the canvas is drawn at `PX_PER_M` units per metre. */
   meters: { width: number; height: number };
+  /** `hall.floor`, when one is set - the chip and the halls list show it as *p. 1*. */
+  floor?: number;
+  /** `hall.position` on the world canvas, in metres. Every published film's one hall sits at the origin. */
+  position?: { x: number; y: number };
 };
 
 /** Canvas units per metre, so the 1 m grid lands on whole numbers. */
@@ -118,4 +122,27 @@ export const L_HALL = withDerived({
     { id: "t6", label: tl.hall.table(6), shape: "round", x: 770, y: 630, width: 140, height: 140, seats: 8 },
   ],
   fixtures: [{ id: "bar", label: tl.hall.bar, x: 1245, y: 630, width: 56, height: 200 }],
+});
+
+/** `HALL_GAP` in the app's `planner.store.ts`: the metres `nextHallPosition` leaves between halls. */
+export const HALL_GAP = 3;
+
+/**
+ * The long walkthrough's second hall: what *Dodaj salę* makes of
+ * `DEFAULT_HALL` at v1 - no name, a 20x12 m rectangle - once *Piętro* is set to
+ * 1, placed where `nextHallPosition` puts a second hall (beside the first, 3 m
+ * clear of it). A dance floor and a bar and **no tables**, so the wedding still
+ * seats 58. Both stay clear of the top-right quarter `lShapeVertices` cuts
+ * away, since `setHallShape` re-clamps whatever stands there, with the same
+ * half-metre clearances as the other rooms.
+ */
+export const SALA_2 = withDerived({
+  // Empty, as the app stores it: the chip reads `hall.unnamed`, the halls list `hall.unnamed_index`.
+  name: "",
+  canvas: { width: 1200, height: 720 },
+  danceFloor: { x: 300, y: 450, width: 360, height: 240 },
+  tables: [],
+  fixtures: [{ id: "bar", label: tl.hall.bar, x: 900, y: 630, width: 240, height: 56 }],
+  floor: 1,
+  position: { x: WIDE_HALL.meters.width + HALL_GAP, y: 0 },
 });

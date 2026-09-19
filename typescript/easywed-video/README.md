@@ -21,8 +21,12 @@
 - **the odd-room loop** - 12 seconds for the landing page, 16:9 only: a seated room drawn as a
   rectangle, its shape switched to *Kształt L* in the hall's settings, and one corner of the L
   dragged a metre out by hand. No CTA either.
+- **the long walkthrough** - 83 seconds for YouTube, 16:9 only: the short walkthrough's scenes with
+  a second hall added upstairs between them, and the other films' beats as chapters - the L-shaped
+  room, the import, the kids counted, a distance measured, a guest moved, the printed report.
 
-All but the loops render in 16:9 (1920x1080) and 9:16 (1080x1920), and all are in Polish.
+All but the loops and the long walkthrough render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
+are in Polish.
 
 It is a standalone package on purpose - it sits next to `easywed/` rather than inside it, so it
 stays out of that project's tsconfig, ESLint and Vite scope.
@@ -59,6 +63,8 @@ npm run render:seat-swap-cut:vertical   # -> out/pl/easywed-swap-cut-vertical.mp
 
 npm run render:odd-room          # -> out/pl/easywed-shape.mp4        (16:9, at 960x540 for its page slot)
 npm run render:odd-room:poster   # -> out/pl/easywed-shape-poster.png (frame 0 at 960x540, the <video> poster)
+
+npm run render:walkthrough-long  # -> out/pl/easywed-walkthrough.mp4  (16:9)
 
 npm run render:all       # all of the above
 npm run render:all:en    # all of the above in English -> out/en/
@@ -181,8 +187,16 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `ShapeL`                  | 150f   | *Kształt L* picked, *Edytuj obrys* - the handles come up |
 | `ShapeEdit`               | 135f   | one corner pulled a metre out; the payoff, the seam home |
 
+| id                        | length | what it is                                                   |
+| ------------------------- | ------ | ------------------------------------------------------------ |
+| `easywed-walkthrough`     | 2490f  | the 83 s tour for YouTube, 16:9 only                         |
+| `Floors`                  | 240f   | a second hall added on floor 1, both halls in view           |
+
+The long walkthrough's other fifteen chapters are the scenes registered above, from the short
+walkthrough and the other cuts; only `Floors` is its own.
+
 The scenes are also registered individually (Studio folders "Scenes", "Teaser", "Import",
-"Report", "Kids" and "Swap-cut") so a single beat can be previewed without scrubbing through the
+"Report", "Kids", "Swap-cut" and "Walkthrough-long") so a single beat can be previewed without scrubbing through the
 whole timeline. The social cuts' scenes are registered at 9:16, the cut they are made for.
 
 The landing-page loops - `easywed-scale`, `easywed-swap` and `easywed-shape` - sit together in the
@@ -195,7 +209,8 @@ Studio folder "Landing-loops", each with its beats in a nested folder ("Scale", 
 src/easywed/
   timeline.ts            scene lengths, fps, dimensions - the single source of truth
   theme.ts               hex mirror of the app's `editorial` palette + brand colors, fonts
-  layouts.ts             WIDE_HALL, TALL_HALL and the odd-room loop's L_HALL, 60 units per metre
+  layouts.ts             WIDE_HALL, TALL_HALL, the odd-room loop's L_HALL and the long
+                         walkthrough's SALA_2, 60 units per metre
   format.ts              useFormat() - picks hall + type scale from the composition size
   data.ts                the demo wedding: guest list, couple
   geometry.ts            seat positions around round/rectangular tables
@@ -228,7 +243,12 @@ src/easywed/
   odd-room/              the odd-room landing loop, in the to-scale loop's shape, drawn on
                          L_HALL (layouts.ts) with HallCanvas's `walls` polygon; script.ts
                          derives the outline from the frame, and its components redraw the
-                         hall dialog, the shape-edit pill and the vertex handles
+                         shape-edit pill and the vertex handles. The hall dialog lives in
+                         components/HallPanel.tsx, since the long walkthrough draws it too
+  walkthrough-long/      the 83 s YouTube tour: its timeline reads each chapter's length from
+                         the film it comes from; FloorsScene adds SALA_2 (layouts.ts) beside
+                         the first hall through components/HallsPanel.tsx, the *Sale* list,
+                         and the odd-room chapters then shape that hall rather than L_HALL
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect

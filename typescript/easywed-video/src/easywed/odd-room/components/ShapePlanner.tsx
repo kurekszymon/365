@@ -7,7 +7,7 @@ import { canvasInsets, chromeScale, PlannerCanvas } from "../../components/Plann
 import { useFormat } from "../../format";
 import type { Point } from "../../geometry";
 import { tl } from "../../i18n";
-import { L_HALL } from "../../layouts";
+import { L_HALL, type HallLayout } from "../../layouts";
 import { colors, fonts } from "../../theme";
 import {
   DIALOG_FADE,
@@ -28,7 +28,7 @@ import {
   RELEASE,
   shapeAt,
 } from "../script";
-import { HALL_PANEL, HallPanel, hallPanelHeight, hallPanelTargets } from "./HallPanel";
+import { HALL_PANEL, HallPanel, hallPanelHeight, hallPanelTargets } from "../../components/HallPanel";
 import { ShapeEditPill } from "./ShapeEditPill";
 import { VertexHandles } from "./VertexHandles";
 
@@ -59,12 +59,16 @@ const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
  * plain rectangle, its settings opened from the label chip, *Kształt L* picked,
  * the dialog giving way to the shape editor, and one corner dragged a metre
  * outward. Every scene of the loop renders this from the loop's clock.
+ *
+ * The long walkthrough shapes its second hall instead, passed as `hall`.
  */
-export const ShapePlanner: React.FC<{ frame: number }> = ({ frame }) => {
+export const ShapePlanner: React.FC<{ frame: number; hall?: HallLayout }> = ({
+  frame,
+  // 16:9 only - the L is its own room, so this reads `L_HALL` rather than `useFormat().hall`.
+  hall = L_HALL,
+}) => {
   const { width: frameWidth, height: frameHeight } = useVideoConfig();
   const { tall, type, gap } = useFormat();
-  // 16:9 only - the L is its own room, so this reads `L_HALL` rather than `useFormat().hall`.
-  const hall = L_HALL;
 
   // The viewport is sized to the room, as `PlanScene` sizes it.
   const insets = canvasInsets(tall);
@@ -235,7 +239,13 @@ export const ShapePlanner: React.FC<{ frame: number }> = ({ frame }) => {
               }}
             >
               <div style={{ transform: `scale(${APP_PX * interpolate(dialogIn, [0, 1], [0.95, 1])})` }}>
-                <HallPanel hallName={hall.name} meters={hall.meters} lShape={shape.lShape} />
+                <HallPanel
+                  hallName={hall.name}
+                  meters={hall.meters}
+                  lShape={shape.lShape}
+                  floor={hall.floor === undefined ? undefined : String(hall.floor)}
+                  position={hall.position}
+                />
               </div>
             </div>
           ) : null}

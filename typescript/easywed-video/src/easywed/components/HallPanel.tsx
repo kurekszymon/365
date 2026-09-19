@@ -1,8 +1,8 @@
 import React from "react";
-import { Icon, type IconName } from "../../components/Icon";
-import type { Point } from "../../geometry";
-import { tl } from "../../i18n";
-import { colors, fonts } from "../../theme";
+import { Icon, type IconName } from "./Icon";
+import type { Point } from "../geometry";
+import { tl } from "../i18n";
+import { colors, fonts } from "../theme";
 
 /**
  * Redraws the desktop hall settings: `Sidebar/EntityEditDialog` - a centred
@@ -59,7 +59,9 @@ export const hallPanelHeight = (lShape: boolean): number =>
   ].reduce((sum, h) => sum + h + P.gap, -P.gap);
 
 /** The centres the pointer aims at, in the dialog's own unscaled pixels. */
-export const hallPanelTargets = (lShape: boolean): { lShape: Point; editOutline: Point } => {
+export const hallPanelTargets = (
+  lShape: boolean,
+): { lShape: Point; editOutline: Point; floor: Point; done: Point } => {
   const inner = P.width - P.pad * 2;
   // `flex-1` on four buttons: equal quarters of the group.
   const quarter = inner / 4;
@@ -67,6 +69,8 @@ export const hallPanelTargets = (lShape: boolean): { lShape: Point; editOutline:
   return {
     lShape: { x: P.pad + quarter * 1.5, y: SHAPE_GROUP_TOP + P.group / 2 },
     editOutline: { x: P.width / 2, y: lShape ? editTop + P.button / 2 : Number.NaN },
+    floor: { x: P.width / 2, y: P.pad + P.header + P.gap + field + P.gap + P.label + P.labelGap + P.input / 2 },
+    done: { x: P.width - P.pad - P.header / 2, y: P.pad + P.header / 2 },
   };
 };
 
@@ -86,7 +90,14 @@ const Label: React.FC<{ children: React.ReactNode; small?: boolean }> = ({ child
   </div>
 );
 
-const Input: React.FC<{ value?: string; placeholder?: string }> = ({ value, placeholder }) => (
+/** `Input`'s `focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50`. */
+const FOCUS_RING = "0 0 0 3px rgba(123, 115, 107, 0.35)";
+
+const Input: React.FC<{ value?: string; placeholder?: string; focused?: boolean }> = ({
+  value,
+  placeholder,
+  focused,
+}) => (
   <div
     style={{
       height: P.input,
@@ -95,12 +106,14 @@ const Input: React.FC<{ value?: string; placeholder?: string }> = ({ value, plac
       alignItems: "center",
       padding: "0 10px",
       borderRadius: 10,
-      border: `1px solid ${colors.border}`,
+      border: `1px solid ${focused ? colors.inkSoft : colors.border}`,
+      boxShadow: focused ? FOCUS_RING : undefined,
       fontSize: 14,
       color: value ? colors.ink : colors.inkSoft,
     }}
   >
-    {value ?? placeholder}
+    {value || placeholder}
+    {focused ? <div style={{ width: 1, height: 16, marginLeft: 1, backgroundColor: colors.ink }} /> : null}
   </div>
 );
 
@@ -182,10 +195,17 @@ const d = tl.app.hallDialog;
 const NICE_INTERVALS = [1, 2, 5, 10, 25, 50];
 
 export const HallPanel: React.FC<{
+  /** Empty for a hall added without a name: the field then shows its placeholder. */
   hallName: string;
   meters: { width: number; height: number };
   lShape: boolean;
-}> = ({ hallName, meters, lShape }) => (
+  /** What is typed into *Piętro* - left out, the field shows its placeholder. */
+  floor?: string;
+  /** *Piętro* has the caret, with the input's focus ring. */
+  floorFocused?: boolean;
+  /** `hall.position` in metres; a first hall sits at the world origin. */
+  position?: { x: number; y: number };
+}> = ({ hallName, meters, lShape, floor, floorFocused, position = { x: 0, y: 0 } }) => (
   <div
     style={{
       width: P.width,
@@ -222,12 +242,12 @@ export const HallPanel: React.FC<{
 
     <Field>
       <Label>{d.name}</Label>
-      <Input value={hallName} />
+      <Input value={hallName} placeholder={d.namePlaceholder} />
     </Field>
 
     <Field>
       <Label>{d.floor}</Label>
-      <Input placeholder={d.floorPlaceholder} />
+      <Input value={floor} placeholder={d.floorPlaceholder} focused={floorFocused} />
     </Field>
 
     <Field>
@@ -254,10 +274,10 @@ export const HallPanel: React.FC<{
 
     <Field>
       <Label>{d.position}</Label>
-      {/* A new hall starts at the world origin (`localWedding.ts`, `mutations/hall.ts`). */}
+      {/* A first hall starts at the world origin (`localWedding.ts`, `mutations/hall.ts`); a later one where `nextHallPosition` puts it. */}
       <div style={{ display: "flex", gap: 8 }}>
-        <SmallField label="X" value="0" />
-        <SmallField label="Y" value="0" />
+        <SmallField label="X" value={String(position.x)} />
+        <SmallField label="Y" value={String(position.y)} />
       </div>
     </Field>
 
