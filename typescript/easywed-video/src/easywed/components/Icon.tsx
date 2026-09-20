@@ -1,4 +1,5 @@
 import React from "react";
+import { tl } from "../i18n";
 
 /**
  * The app's glyphs. Same lucide icons the planner uses (`Sidebar/tabs.ts`,
@@ -12,6 +13,7 @@ export type IconName =
   | "reminders"
   | "assistant"
   | "arrowLeft"
+  | "arrowRight"
   | "chevronLeft"
   | "chevronRight"
   | "landmark"
@@ -28,7 +30,11 @@ export type IconName =
   | "trash"
   | "check"
   | "fileUp"
-  | "printer";
+  | "printer"
+  | "chevronDown"
+  | "x"
+  | "fileSpreadsheet"
+  | "pencilRuler";
 
 const PATHS: Record<IconName, React.ReactNode> = {
   guests: (
@@ -41,9 +47,9 @@ const PATHS: Record<IconName, React.ReactNode> = {
   ),
   tables: (
     <>
-      <path d="M3 2v7a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2V2" />
-      <path d="M6 11v11" />
-      <path d="M18 22v-7h3V7a5 5 0 0 0-3 4.6V15h3" />
+      <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+      <path d="M7 2v20" />
+      <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
     </>
   ),
   fixtures: (
@@ -69,6 +75,12 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <path d="M19 12H5" />
       <path d="M12 19l-7-7 7-7" />
+    </>
+  ),
+  arrowRight: (
+    <>
+      <path d="M5 12h14" />
+      <path d="M12 5l7 7-7 7" />
     </>
   ),
   chevronLeft: <path d="M15 18l-6-6 6-6" />,
@@ -162,6 +174,25 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <rect x="6" y="14" width="12" height="8" rx="1" />
     </>
   ),
+  chevronDown: <path d="M6 9l6 6 6-6" />,
+  x: <path d="M18 6 6 18M6 6l12 12" />,
+  fileSpreadsheet: (
+    <>
+      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z" />
+      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+      <path d="M8 13h2M14 13h2M8 17h2M14 17h2" />
+    </>
+  ),
+  pencilRuler: (
+    <>
+      <path d="M13 7 8.7 2.7a2.4 2.4 0 0 0-3.4 0L2.7 5.3a2.4 2.4 0 0 0 0 3.4L7 13" />
+      <path d="m8 6 2-2" />
+      <path d="m18 16 2-2" />
+      <path d="m17 11 4.3 4.3c.94.94.94 2.46 0 3.4l-2.6 2.6c-.94.94-2.46.94-3.4 0L11 17" />
+      <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+      <path d="m15 5 4 4" />
+    </>
+  ),
 };
 
 export const Icon: React.FC<{
@@ -189,9 +220,9 @@ export type NavKind = "guests" | "tables" | "fixtures" | "reminders" | "assistan
 
 /** The planner's tab strip, in the app's order, with its badge counts. */
 export const NAV_ITEMS: { kind: NavKind; label: string; badge?: number }[] = [
-  { kind: "guests", label: "Guests" },
-  { kind: "tables", label: "Tables", badge: 7 },
-  { kind: "fixtures", label: "Elements", badge: 2 },
-  { kind: "reminders", label: "Reminders", badge: 1 },
-  { kind: "assistant", label: "Assistant" },
+  { kind: "guests", label: tl.app.nav.guests },
+  { kind: "tables", label: tl.app.nav.tables, badge: 7 },
+  { kind: "fixtures", label: tl.app.nav.fixtures, badge: 2 },
+  { kind: "reminders", label: tl.app.nav.reminders, badge: 1 },
+  { kind: "assistant", label: tl.app.nav.assistant },
 ];

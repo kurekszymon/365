@@ -46,6 +46,23 @@ export const colors = {
   selected: "#9c4f89",
   selectedSoft: "#f6e8f2",
 
+  /** `--destructive` (red-600 in every palette): a dialog's required-field asterisk. */
+  destructive: "#e7000b",
+  /** `DialogOverlay`'s `bg-black/10` - the scrim behind a dialog or drawer. */
+  scrim: "rgba(0, 0, 0, 0.1)",
+
+  /** `MeasureOverlay`'s hard-coded `#0d9488` (teal-600): the measuring line, its dots and its label. */
+  measure: "#0d9488",
+
+  /**
+   * `SeatAssignPopover`'s *elsewhere* rows - the amber "this moves them" tone:
+   * `border-amber-300/80 bg-amber-50/70 text-amber-900`, Tailwind v4's own
+   * oklch amber converted to hex.
+   */
+  amber50: "#fffbeb",
+  amber300: "#ffd230",
+  amber900: "#7b3306",
+
   brandGreen: "#43684b",
   brandGreenSoft: "#9ec2a2",
   brandGreenMist: "#d9ead9",
@@ -55,6 +72,26 @@ export const colors = {
   seatEmptyBorder: "#6f9a79",
   seatFilled: "#a9592b",
   seatFilledBorder: "#7f4220",
+
+  /** `--tag-green` / `--tag-teal` / `--tag-amber` (`styles.css`, oklch as hex): the diet tags' reserved tones. */
+  tagGreen: "#337344",
+  tagTeal: "#157171",
+  tagAmber: "#915c08",
+  /**
+   * `--tag-violet`, the one tone `lib/ageGroup.ts` reserves for every child
+   * bracket (`AGE_GROUP_TONE`). `oklch(0.5 0.11 300)` as hex - a blue-violet,
+   * two hue families away from `accent` (336deg), so a bracket badge never
+   * reads as a selection.
+   */
+  tagViolet: "#6d5398",
+
+  /** The print view (`PlannerPrintView`): `bg-white text-black` and Tailwind v4's gray-500..800. */
+  paper: "#ffffff",
+  paperInk: "#000000",
+  paperGray500: "#6a7282",
+  paperGray600: "#4a5565",
+  paperGray700: "#364153",
+  paperGray800: "#1e2939",
 };
 
 export const shadow = {

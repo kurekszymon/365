@@ -5,6 +5,7 @@ import { Icon, type IconName } from "../components/Icon";
 import { SceneLabel } from "../components/SceneLabel";
 import { GUESTS } from "../data";
 import { useFormat } from "../format";
+import { tl } from "../i18n";
 import { colors, fonts, shadow } from "../theme";
 
 const initials = (name: string) =>
@@ -75,7 +76,7 @@ const GuestRow: React.FC<{ guest: (typeof GUESTS)[number]; enter: number; scale:
         }}
       >
         <Icon name="check" color={colors.inkSoft} size={11 * scale} />
-        {`At table: ${guest.table}`}
+        {tl.guests.seatedAt(guest.table)}
       </div>
     </div>
     <Icon name="pencil" color={colors.inkSoft} size={15 * scale} />
@@ -168,9 +169,9 @@ export const GuestsScene: React.FC = () => {
       >
         <div style={{ width: tall ? "100%" : 560, paddingTop: tall ? 8 : 40, flexShrink: 0 }}>
           <SceneLabel
-            step="Step 02"
-            title="Add your guests"
-            subtitle="Dietary needs, plus-ones and seat assignments live next to every name - no more cross-checking three spreadsheets."
+            step={tl.demo.guests.step}
+            title={tl.demo.guests.title}
+            subtitle={tl.demo.guests.subtitle}
             from={6}
           />
 
@@ -185,8 +186,8 @@ export const GuestsScene: React.FC = () => {
             }}
           >
             {[
-              { icon: "fileUp" as IconName, label: "Import CSV or XLSX" },
-              { icon: "printer" as IconName, label: "Export a PDF to print" },
+              { icon: "fileUp" as IconName, label: tl.demo.guests.importPill },
+              { icon: "printer" as IconName, label: tl.demo.guests.exportPill },
             ].map(({ icon, label }) => (
               <div
                 key={label}
@@ -239,7 +240,7 @@ export const GuestsScene: React.FC = () => {
               borderBottom: `1px solid ${colors.border}`,
             }}
           >
-            Guests
+            {tl.guests.title}
           </div>
 
           <div
@@ -259,12 +260,12 @@ export const GuestsScene: React.FC = () => {
                   color: colors.ink,
                 }}
               >
-                Guest list
+                {tl.guests.list}
               </span>
               <span
                 style={{ fontFamily: fonts.sans, fontSize: 14 * scale, color: colors.inkSoft }}
               >
-                {`${counter} of ${hall.totalSeats} guests added`}
+                {tl.guests.added(counter, hall.totalSeats)}
               </span>
             </div>
             <div
@@ -302,18 +303,18 @@ export const GuestsScene: React.FC = () => {
             }}
           >
             <Icon name="search" color={colors.inkSoft} size={15 * scale} />
-            Search a guest...
+            {tl.guests.search}
           </div>
 
           <div style={{ display: "flex", gap: 8 * scale }}>
-            <FilterChip label={`All ${hall.totalSeats}`} active scale={scale} />
-            <FilterChip label="No seat 0" scale={scale} />
-            <FilterChip label="Vege 7" tone={colors.brandGreen} scale={scale} />
+            <FilterChip label={tl.guests.filterAll(hall.totalSeats)} active scale={scale} />
+            <FilterChip label={tl.guests.filterUnseated(0)} scale={scale} />
+            <FilterChip label={`${tl.diet.vegetarian} 7`} tone={colors.brandGreen} scale={scale} />
           </div>
 
           <div style={{ display: "flex", gap: 8 * scale }}>
-            <PanelButton icon="plus" label="Add guest" scale={scale} />
-            <PanelButton icon="fileUp" label="Import guests" scale={scale} />
+            <PanelButton icon="plus" label={tl.guests.add} scale={scale} />
+            <PanelButton icon="fileUp" label={tl.guests.import} scale={scale} />
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 7 * scale, minHeight: 0 }}>
@@ -329,7 +330,7 @@ export const GuestsScene: React.FC = () => {
                 opacity: rows[visibleGuests.length - 1],
               }}
             >
-              {`+ ${hall.totalSeats - visibleGuests.length} more guests`}
+              {tl.guests.more(hall.totalSeats - visibleGuests.length)}
             </div>
           </div>
         </div>

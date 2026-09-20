@@ -30,13 +30,10 @@ const markDismissed = (): void => {
   }
 }
 
-// Root-level (not route-scoped) so it fires regardless of where sign-in
-// happens: /login, /auth/callback, or a second tab. Listens for Supabase's
-// own SIGNED_IN event - distinct from INITIAL_SESSION (session restored on
-// page load) - so an already-authenticated user reloading the app with
-// stale local data lying around doesn't get re-prompted on every visit.
-// AuthGate makes the same SIGNED_IN/SIGNED_OUT distinction for its own
-// router.invalidate() call.
+// Root-level, not route-scoped, so it fires wherever sign-in happens: /login,
+// /auth/callback, or a second tab. Listens for SIGNED_IN, distinct from
+// INITIAL_SESSION (a session restored on page load), so an already-authenticated
+// user reloading with stale local data is not re-prompted every visit.
 export function LocalWeddingMigrationPrompt() {
   // Everything the sign-in transition can tell us: local data is there and the
   // prompt hasn't been dismissed. Whether to actually offer it needs a session
@@ -57,22 +54,18 @@ export function LocalWeddingMigrationPrompt() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Only offered to an account with nothing in it.
-  //
-  // The dialog creates a *new* wedding from local storage, so someone who
-  // already has one ends up with an unexplained duplicate next to their real
-  // plan - and guest-mode leftovers are usually a throwaway from before the
-  // account existed, not something they meant to keep. An empty account is the
-  // only case where "this is your wedding now" is true.
+  // Only offered to an account with nothing in it. The dialog creates a *new*
+  // wedding from local storage, so someone who already has one gets an
+  // unexplained duplicate next to their real plan - and guest-mode leftovers are
+  // usually a throwaway from before the account existed.
   //
   // Waiting on termsStatus is the other half: a Google sign-in from /login
-  // creates accounts, and one with local data would otherwise get this dialog
-  // on top of the /accept-terms gate, offering to write to the database under
-  // a contract they haven't agreed to. Deciding at SIGNED_IN can't work - the
-  // status is still "unknown" then.
+  // creates accounts, and one with local data would get this dialog on top of
+  // the /accept-terms gate, offering to write under a contract they have not
+  // agreed to. Deciding at SIGNED_IN cannot work - the status is "unknown" then.
   //
-  // A failed lookup stays quiet rather than guessing. Local storage is
-  // untouched and the next sign-in asks again.
+  // A failed lookup stays quiet rather than guessing; local storage is untouched
+  // and the next sign-in asks again.
   useEffect(() => {
     if (!candidate || termsStatus !== "accepted") return
 
@@ -101,10 +94,9 @@ export function LocalWeddingMigrationPrompt() {
 
   if (!promptOpen) return null
 
-  // hasLocalWeddingData() can be true from name/date alone, with no planner
-  // storage key ever written (e.g. a guest who only set a wedding name) -
-  // fall back to an empty snapshot instead of bailing, so the dialog still
-  // renders (with an honest "0 tables · 0 guests" summary).
+  // hasLocalWeddingData() can be true from name/date alone, with no planner key
+  // ever written - fall back to an empty snapshot rather than bailing, so the
+  // dialog still renders an honest "0 tables · 0 guests" summary.
   const planner = readLocalPlannerSnapshot() ?? {
     tables: [],
     guests: [],

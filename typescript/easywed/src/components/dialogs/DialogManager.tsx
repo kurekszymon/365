@@ -7,7 +7,7 @@ import {
   ImportGuestsDialog,
 } from "./guests"
 import { DeleteHallDialog } from "./planner"
-import { WeddingMembersDialog } from "./weddings"
+import { VenueAccessDialog, WeddingMembersDialog } from "./weddings"
 import type { Dialog } from "@/stores/dialog.store"
 import { useDialogStore } from "@/stores/dialog.store"
 import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
@@ -22,6 +22,11 @@ const WRITE_DIALOGS: ReadonlySet<Dialog> = new Set([
   "Guest.Edit",
   "Guest.Import",
   "Planner.Hall.Delete",
+  // Not a planner write, and canEdit is not the rule that decides it - the RPCs
+  // behind it check `weddings.owner_id`, so an editor is refused there. It is
+  // here for the role canEdit *does* decide: a venue must never reach the
+  // dialog that hands a venue access, and this is the backstop for that.
+  "Wedding.Venue",
 ])
 
 export const DialogManager = () => {
@@ -47,6 +52,8 @@ export const DialogManager = () => {
   switch (opened) {
     case "Wedding.Members":
       return <WeddingMembersDialog />
+    case "Wedding.Venue":
+      return <VenueAccessDialog />
     case "Guest.Add":
       return <AddGuestDialog />
     case "Guest.Edit":

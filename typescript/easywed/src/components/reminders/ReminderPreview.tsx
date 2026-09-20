@@ -18,7 +18,9 @@ export const ReminderPreview = ({
   removeReminder: (uuid: string) => void
 }) => {
   const { t } = useTranslation()
-  // TODO: handle it better? for now it's good enough
+  // The two locales the app ships. A third would want a map rather than another
+  // arm here - date-fns locales are separate imports, so this cannot be driven
+  // off `i18n.language` directly.
   const locale = i18n.language.startsWith("en") ? enUS : pl
   const isOverdue =
     reminder.due && reminder.status === "open" && isPast(reminder.due)

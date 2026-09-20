@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "legal:check": "node scripts/check-legal-placeholders.mjs",
+    "types:gen": "supabase gen types typescript --local > src/lib/supabase.types.ts",
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx}\"",
     "typecheck": "tsc --noEmit"

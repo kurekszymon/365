@@ -57,6 +57,21 @@ describe("redactInviteToken", () => {
       "https://easywed.app/invite/"
     )
   })
+
+  // The venue roster's claim link, and the reason that route is filed under the
+  // shared `/invite/` segment rather than at `/venue-invite/`: the pattern is
+  // unanchored, so one rule covers both credentials. A route named the other way
+  // would need a second pattern here, and the failure of forgetting it is a live
+  // token in the analytics store.
+  it("redacts the venue invitation token too", () => {
+    expect(redactInviteToken(`https://easywed.app/venue/invite/${TOKEN}`)).toBe(
+      "https://easywed.app/venue/invite/<redacted>"
+    )
+
+    expect(
+      redactInviteToken(`https://bagatelka.easywed.app/venue/invite/${TOKEN}`)
+    ).toBe("https://bagatelka.easywed.app/venue/invite/<redacted>")
+  })
 })
 
 describe("redactAuthCredential", () => {

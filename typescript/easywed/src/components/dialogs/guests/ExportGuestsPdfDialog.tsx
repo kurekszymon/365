@@ -19,11 +19,17 @@ import { useDialogStore } from "@/stores/dialog.store"
 import { DEFAULT_PRINT_FIELDS } from "@/stores/print.store"
 import { useViewStore } from "@/stores/view.store"
 import { useIsMobile } from "@/hooks/useMediaQuery"
+import { liveCourses, useMenuStore } from "@/stores/menu.store"
 import { GUEST_FIELDS } from "@/lib/export/guestsCsv"
 import { triggerPdfExport } from "@/lib/export/guestsPdf"
 
 // Table column is implicit (guests are grouped under their table heading).
 const PICKABLE_FIELDS = GUEST_FIELDS.filter((f) => f !== "table")
+
+// ...and the dish column only exists once the ordered package has a per-guest
+// course, which is per-wedding state - so it is filtered per render.
+const pickableFor = (hasDishes: boolean) =>
+  PICKABLE_FIELDS.filter((f) => f !== "dish" || hasDishes)
 
 export const ExportGuestsPdfDialog = () => {
   const { t } = useTranslation()
@@ -58,7 +64,16 @@ export const ExportGuestsPdfDialog = () => {
     )
   }
 
-  const orderedSelected = PICKABLE_FIELDS.filter((f) => selected.includes(f))
+  // "has a per-guest course", not "the venue has any dish at all": a couple
+  // on a buffet-only package can still see the whole catalogue in the store,
+  // so the looser check offers a Dish checkbox that could only ever export an
+  // empty column. Same predicate GuestMenuChoiceField gates on.
+  const hasDishes = useMenuStore((s) =>
+    liveCourses(s).some((course) => course.per_guest_choice)
+  )
+
+  const fieldChoices = pickableFor(hasDishes)
+  const orderedSelected = fieldChoices.filter((f) => selected.includes(f))
   const canExport = orderedSelected.includes("name")
 
   return (
@@ -79,7 +94,7 @@ export const ExportGuestsPdfDialog = () => {
           <Field>
             <FieldLabel>{t("export.pdf.fields")}</FieldLabel>
             <FieldContent className="flex-row flex-wrap gap-1.5">
-              {PICKABLE_FIELDS.map((field) => (
+              {fieldChoices.map((field) => (
                 <Button
                   key={field}
                   variant={selected.includes(field) ? "default" : "outline"}

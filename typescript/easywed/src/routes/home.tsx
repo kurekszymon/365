@@ -6,6 +6,7 @@ import type { WeddingSummary } from "@/components/weddings/WeddingListItem"
 import type { RemoveMode } from "@/components/weddings/RemoveWeddingDialog"
 import { supabase } from "@/lib/supabase"
 import { seedDefaultHall } from "@/lib/sync/mutations"
+import { useVenueStaffLanding } from "@/hooks/useVenueStaffLanding"
 import { useAuthStore } from "@/stores/auth.store"
 import { track } from "@/lib/analytics/track"
 import { Button } from "@/components/ui/button"
@@ -30,13 +31,18 @@ function Home() {
   const isReady = useAuthStore((s) => s.isReady)
   const navigate = useNavigate()
 
+  // A venue's staff have no wedding list; this is where the apex works out that
+  // it is looking at one of them and hands them over to their CRM. Only ever
+  // does anything on an arrival from an auth surface - see venueLanding.ts.
+  const venueLanding = useVenueStaffLanding()
+
   const [weddings, setWeddings] = useState<Array<WeddingSummary>>([])
   const [loading, setLoading] = useState(true)
-  // A failed read must not fall through to the empty state: "no weddings yet"
-  // is indistinguishable from data loss for a returning user, so the list has
-  // its own error branch with a retry. Bumping `reloadKey` re-runs the effect;
-  // the two flags are reset by the retry handler rather than in the effect
-  // body, which would be a cascading setState on every run.
+  // A failed read must not fall through to the empty state: "no weddings yet" is
+  // indistinguishable from data loss for a returning user, so the list has its
+  // own error branch with a retry. Bumping `reloadKey` re-runs the effect; the
+  // flags reset in the retry handler rather than the effect body, which would be
+  // a cascading setState on every run.
   const [loadFailed, setLoadFailed] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
 
@@ -60,20 +66,34 @@ function Home() {
   useEffect(() => {
     if (!session) return
 
-    // owner_id decides which exit the row offers: owners delete the wedding
-    // for everyone, invited members only drop their own access.
-    supabase
-      .from("weddings")
-      .select("id, name, owner_id")
-      .order("created_at", { ascending: false })
-      .then(({ data, error }) => {
-        if (error) {
-          console.error(error)
-          toast.error(t("weddings.load_failed"))
-          setLoadFailed(true)
-          setLoading(false)
-          return
-        }
+    // The effect re-runs on a retry and on a language switch, so without this
+    // two reads can be in flight and the older can land last, overwriting the
+    // newer list. Aborting orders them, and keeps resolution off an unmounted
+    // screen.
+    const controller = new AbortController()
+
+    const fail = (cause: unknown) => {
+      console.error(cause)
+      toast.error(t("weddings.load_failed"))
+      setLoadFailed(true)
+      setLoading(false)
+    }
+
+    void (async () => {
+      try {
+        // owner_id decides which exit the row offers: owners delete the wedding
+        // for everyone, invited members only drop their own access.
+        const { data, error } = await supabase
+          .from("weddings")
+          .select("id, name, owner_id")
+          .order("created_at", { ascending: false })
+          .abortSignal(controller.signal)
+
+        // Before the error check: an aborted PostgREST request comes back as an
+        // error *result*, so without this a retry would toast and park the
+        // failure state on the read it just replaced.
+        if (controller.signal.aborted) return
+        if (error) return fail(error)
 
         setWeddings(
           data.map((wedding) => ({
@@ -83,7 +103,16 @@ function Home() {
           }))
         )
         setLoading(false)
-      })
+      } catch (e) {
+        // A request that never completed - offline, DNS, a dropped connection -
+        // rejects instead of returning an error result, and without this the
+        // list sits on "loading" forever with no retry in reach.
+        if (controller.signal.aborted) return
+        fail(e)
+      }
+    })()
+
+    return () => controller.abort()
     // `t` is stable across renders unless the language changes; re-reading the
     // list on a language switch is harmless.
   }, [session, reloadKey, t])
@@ -112,19 +141,19 @@ function Home() {
       return
     }
     // Awaited, not fire-and-forget: navigating first would race loadWedding
-    // against this insert and land the user on the blank canvas anyway - the
-    // exact thing the seed exists to prevent. It's one round-trip, and the
-    // create button stays busy for it.
+    // against this insert and land the user on the blank canvas the seed exists
+    // to prevent. One round trip, and the create button stays busy for it.
     await seedDefaultHall(data.id)
     setCreating(false)
     track("wedding_created", { source: "wedding_list" })
     navigate({ to: "/wedding/$id", params: { id: data.id } })
   }
 
-  // Wait for the first getSession() to resolve before deciding which landing
-  // to show - otherwise an already-authenticated user reloading this page would
-  // flash the signed-out screen before flipping to their dashboard below.
-  if (!isReady) return null
+  // Wait for the first getSession() before deciding which landing to show, or an
+  // already-authenticated user reloading flashes the signed-out screen. Same
+  // reasoning for the venue check: showing the wedding list to someone about to
+  // be sent to a CRM is the same flash.
+  if (!isReady || venueLanding === "checking") return null
 
   if (!session) {
     return (
@@ -193,7 +222,8 @@ function Home() {
               {t("weddings.empty")}
             </p>
           ) : (
-            // TODO: based on a role (couple/planner/site) render only one wedding / list etc.
+            // TODO: a couple has one wedding and a planner has many - this could
+            // render a single wedding rather than a list of one.
             weddings.map((wedding) => (
               <WeddingListItem
                 key={wedding.id}

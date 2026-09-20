@@ -1,6 +1,7 @@
 import React from "react";
 import { interpolate } from "remotion";
-import type { Point } from "../geometry";
+import { polygonPoints, type Point } from "../geometry";
+import { tl } from "../i18n";
 import type { HallLayout } from "../layouts";
 import { PX_PER_M } from "../layouts";
 import { colors, fonts } from "../theme";
@@ -16,15 +17,46 @@ type Props = {
   tableIn: number[];
   /** Per-table share of taken seats, indexed like `hall.tables`. */
   seatFill: number[];
+  /**
+   * Per-seat override for a table, indexed like `hall.tables`, each entry
+   * indexed like that table's seats. A table left `undefined` here fills from
+   * `seatFill` as before - see `PlannerTable`'s `fills`.
+   */
+  seatFills?: (number[] | undefined)[];
   /** Per-table drag offset, indexed like `hall.tables`. */
   offsets?: Point[];
   selectedTableId?: string;
+  /**
+   * The hall's polygon outline (`hall.geometry` in the app), in canvas units.
+   * The floor and the grid clip to it and the wall follows it, as
+   * `HallBackground` and `HallOutline` draw a polygon hall. Left out, the hall
+   * is the plain rectangle every published film draws.
+   */
+  walls?: Point[];
+  /**
+   * The printed plan's hall (`PlannerPrintView`): no dimension labels and no
+   * room chip, so it is drawn edge to edge rather than padded for them.
+   */
+  bare?: boolean;
   /** Overlays drawn in canvas coordinates (cursor, flying guest chips). */
   children?: React.ReactNode;
 };
 
-/** Room around the hall for the dimension labels and the room chip. */
-const PAD = { left: 46, top: 62, right: 76, bottom: 34 };
+/**
+ * Room around the hall for the dimension labels and the room chip. Exported so
+ * a scene can size its canvas box to the drawing's own aspect ratio instead of
+ * letting the SVG letterbox inside it.
+ */
+export const PAD = { left: 46, top: 62, right: 76, bottom: 34 };
+
+/** A bare hall has nothing outside its walls to make room for. */
+const NO_PAD = { left: 0, top: 0, right: 0, bottom: 0 };
+
+/** Aspect ratio of what `HallCanvas` actually draws, padding included. */
+export const hallAspect = (hall: HallLayout, bare = false): number => {
+  const pad = bare ? NO_PAD : PAD;
+  return (hall.canvas.width + pad.left + pad.right) / (hall.canvas.height + pad.top + pad.bottom);
+};
 
 /** A fixture, drawn the way the app draws one: slate on a cream floor. */
 const Fixture: React.FC<{
@@ -66,23 +98,38 @@ export const HallCanvas: React.FC<Props> = ({
   floor,
   tableIn,
   seatFill,
+  seatFills,
   offsets,
   selectedTableId,
+  walls,
+  bare = false,
   children,
 }) => {
+  // Two halls can be on screen at once - a crossfade, a loop's seam - each
+  // with its own outline, so the clip needs an id of its own.
+  const clipId = `hall-walls-${React.useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const { canvas, danceFloor, meters } = hall;
   const perimeter = (canvas.width + canvas.height) * 2;
-  const chipLabel = `${hall.name} · ${meters.width}×${meters.height} m`;
+  // `HallView`'s label: the name (or `hall.unnamed`), the floor when one is set, the size.
+  const chipLabel = [
+    hall.name || tl.app.hallsList.unnamed,
+    hall.floor !== undefined ? tl.app.hallsList.floorShort(hall.floor) : null,
+    `${meters.width}×${meters.height} m`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   const chipWidth = 22 + chipLabel.length * 10.6;
+  const pad = bare ? NO_PAD : PAD;
 
   return (
     <svg
-      viewBox={`${-PAD.left} ${-PAD.top} ${canvas.width + PAD.left + PAD.right} ${
-        canvas.height + PAD.top + PAD.bottom
+      viewBox={`${-pad.left} ${-pad.top} ${canvas.width + pad.left + pad.right} ${
+        canvas.height + pad.top + pad.bottom
       }`}
       width="100%"
       height="100%"
-      style={{ display: "block" }}
+      // Edge to edge, the wall's stroke would lose its outer half to the SVG's clip.
+      style={{ display: "block", overflow: bare ? "visible" : undefined }}
     >
       <defs>
         {/* Two rulings, like the app's ruled-paper grid: 1 m fine, 5 m firmer. */}
@@ -111,27 +158,45 @@ export const HallCanvas: React.FC<Props> = ({
         </pattern>
       </defs>
 
-      <g opacity={outline}>
+      {walls ? (
+        <clipPath id={clipId}>
+          <polygon points={polygonPoints(walls)} />
+        </clipPath>
+      ) : null}
+
+      <g opacity={outline} clipPath={walls ? `url(#${clipId})` : undefined}>
         <rect x={0} y={0} width={canvas.width} height={canvas.height} fill={colors.bg} />
         <rect x={0} y={0} width={canvas.width} height={canvas.height} fill="url(#hall-grid)" />
         <rect x={0} y={0} width={canvas.width} height={canvas.height} fill="url(#hall-grid-major)" />
       </g>
 
-      {/* The room outline draws itself on, like sketching the hall. */}
-      <rect
-        x={0}
-        y={0}
-        width={canvas.width}
-        height={canvas.height}
-        fill="none"
-        stroke={colors.hall}
-        strokeWidth={1.5}
-        strokeDasharray={perimeter}
-        strokeDashoffset={interpolate(outline, [0, 1], [perimeter, 0])}
-      />
+      {/* The room outline draws itself on, like sketching the hall. A polygon
+          hall is already drawn when a film shows it, so its wall just fades. */}
+      {walls ? (
+        <polygon
+          points={polygonPoints(walls)}
+          fill="none"
+          stroke={colors.hall}
+          strokeWidth={1.5}
+          strokeLinejoin="round"
+          opacity={outline}
+        />
+      ) : (
+        <rect
+          x={0}
+          y={0}
+          width={canvas.width}
+          height={canvas.height}
+          fill="none"
+          stroke={colors.hall}
+          strokeWidth={1.5}
+          strokeDasharray={perimeter}
+          strokeDashoffset={interpolate(outline, [0, 1], [perimeter, 0])}
+        />
+      )}
 
-      {/* Dimension labels sit outside the walls, as on the canvas. */}
-      <g opacity={outline} fill={colors.hall} fontFamily={fonts.sans} fontSize={21} fontWeight={500}>
+      {/* Dimension labels sit outside the walls, as on the canvas - not on paper. */}
+      <g opacity={bare ? 0 : outline} fill={colors.hall} fontFamily={fonts.sans} fontSize={21} fontWeight={500}>
         <text x={canvas.width / 2} y={-22} textAnchor="middle">
           {`${meters.width} m`}
         </text>
@@ -146,7 +211,7 @@ export const HallCanvas: React.FC<Props> = ({
       </g>
 
       {/* The hall's own label chip, grip handle and all. */}
-      <g opacity={outline}>
+      <g opacity={bare ? 0 : outline}>
         <rect
           x={14}
           y={14}
@@ -179,7 +244,7 @@ export const HallCanvas: React.FC<Props> = ({
           y={danceFloor.y}
           width={danceFloor.width}
           height={danceFloor.height}
-          label="Dance floor"
+          label={tl.hall.danceFloor}
           radius={24}
         />
         {hall.fixtures.map((fixture) => (
@@ -193,6 +258,7 @@ export const HallCanvas: React.FC<Props> = ({
           table={table}
           enter={tableIn[i] ?? 0}
           fill={seatFill[i] ?? 0}
+          fills={seatFills?.[i]}
           dx={offsets?.[i]?.x ?? 0}
           dy={offsets?.[i]?.y ?? 0}
           selected={selectedTableId === table.id}

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react"
-import { Outlet, createFileRoute } from "@tanstack/react-router"
+import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { requireAuth } from "@/lib/auth/guards"
 import { loadWedding } from "@/lib/sync/loadWedding"
 import { ErrorFallback } from "@/components/ErrorFallback"
+import { useGlobalStore } from "@/stores/global.store"
 
 export const Route = createFileRoute("/wedding/$id")({
   beforeLoad: ({ params }) => {
@@ -16,6 +17,8 @@ export const Route = createFileRoute("/wedding/$id")({
 function WeddingLayout() {
   const { id } = Route.useParams()
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  const role = useGlobalStore((state) => state.role)
 
   const [resolvedId, setResolvedId] = useState<string | null>(null)
   const [errorState, setErrorState] = useState<{
@@ -43,6 +46,21 @@ function WeddingLayout() {
 
     return () => ctrl.abort()
   }, [id, t])
+
+  // Venue staff do not get the planner. The role is derived by wedding_role()
+  // and only settles once loadWedding's my_wedding_role call returns, so this
+  // is an effect on the loaded state rather than a beforeLoad guard - there is
+  // nothing to decide on before the wedding is known.
+  //
+  // /crm is a tenant-host surface, so on the apex requireTenantMember forwards
+  // this on to /home. That is the right end state for the case it covers: a
+  // couple's planner link opened by staff who are signed in on the wrong
+  // origin. Their own route into a customer's plan is the CRM list, which links
+  // here from the venue's own hostname.
+  useEffect(() => {
+    if (role !== "venue") return
+    void navigate({ to: "/crm/wedding/$id", params: { id }, replace: true })
+  }, [role, id, navigate])
 
   const error = errorState?.id === id ? errorState.message : null
   const loading = !error && resolvedId !== id

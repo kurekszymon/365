@@ -1,7 +1,11 @@
 /**
- * Turning a member into an avatar: initials and a stable color. Both derive
- * only from what we're allowed to know (a self-chosen display name and the
- * user id) - never from an email.
+ * Turning a member into an avatar: initials and a stable color, both derived
+ * only from what we are allowed to know - a self-chosen display name and the
+ * user id, never an email.
+ *
+ * `getInitials` also labels *guest* avatars across the planner (seat markers,
+ * guest list rows, the assign sheet). Nothing about it is member-specific; it
+ * maps a name to at most two glyphs.
  */
 
 /**
@@ -11,13 +15,15 @@
  * character instead of half a surrogate pair.
  *
  * The locale is pinned to "pl" rather than read from i18n on purpose: initials
- * belong to the *name*, not to whoever is looking at it, so the same person
- * must not render as "İK" to one member and "IK" to another. "pl" and "en"
- * agree on every letter this touches, so pinning costs nothing today and keeps
- * the function pure.
+ * belong to the *name*, not to whoever is looking at it, so the same person must
+ * not render as "İK" to one member and "IK" to another.
+ *
+ * A name with no letters at all yields "•" - these sit in a fixed avatar circle,
+ * and an empty one reads as a rendering bug.
  */
 export const getInitials = (displayName: string): string => {
   const words = displayName.trim().split(/\s+/).filter(Boolean)
+  if (words.length === 0) return "•"
 
   return words
     .slice(0, 2)

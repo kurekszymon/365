@@ -74,18 +74,6 @@ export const clamp = (value: number, min: number, max: number) => {
   return Math.max(min, Math.min(max, value))
 }
 
-// Up to 2 initials from a guest's name, for avatar-circle labels (seat markers,
-// guest list rows, assign pickers).
-export const getInitials = (name: string) => {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return "•"
-  return parts
-    .slice(0, 2)
-    .map((p) => p[0])
-    .join("")
-    .toUpperCase()
-}
-
 // Diameter (px) of a seat marker at a given pixels-per-meter. Scales with zoom
 // but stays legible/tappable at the extremes. Shared by the seat renderer and
 // anything that needs to clear the seat ring (e.g. the table toolbar offset).
@@ -154,11 +142,10 @@ export const hallAtPoint = (halls: Array<Hall>, p: Position): Hall | null => {
   return null
 }
 
-// Fallback drop target: the hall whose rect is closest to the point.
-// Deliberately AABB-based even for polygon halls: a drop inside a hall's own
-// notch misses hallAtPoint, lands here at distance 0, and the clamp then
-// pushes the entity inside the polygon - the right outcome without polygon
-// distance math.
+// Fallback drop target: the hall whose rect is closest to the point. AABB-based
+// even for polygon halls, deliberately - a drop inside a hall's own notch misses
+// hallAtPoint, lands here at distance 0, and the clamp pushes the entity inside
+// the polygon, which is the right outcome without polygon distance math.
 export const nearestHall = (halls: Array<Hall>, p: Position): Hall | null => {
   let best: Hall | null = null
   let bestD = Infinity

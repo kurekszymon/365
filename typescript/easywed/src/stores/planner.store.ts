@@ -23,6 +23,7 @@ import {
   updateFixturePos,
   updateFixtureRow,
   updateGuestDetails,
+  updateGuestMenuOption,
   updateGuestSeat,
   updateHallPos,
   updateHallRow,
@@ -82,7 +83,7 @@ export interface Position {
 }
 
 export interface Size {
-  // naive approach - just width and height, regardless of table shape. For round tables, width will be used as diameter.
+  // AABB regardless of shape; round tables use `width` as diameter.
   width: number
   height: number
 }
@@ -140,13 +141,11 @@ export interface Hall {
   geometry?: Geometry
 }
 
-// Where a newly added hall lands: two halls per row ("1 2 / 3 4"), so the
-// fit-to-view zoom stays readable as halls accumulate - a single long strip
-// shrinks everything until the dimension labels (fixed screen px, just
-// outside each hall's top/left edge) collide with the neighbouring hall.
-// Odd count → beside the last hall; even count → a new row under everything,
-// left-aligned with the leftmost hall. The gap leaves room for those labels.
-// This is only the starting spot - halls are freely draggable afterwards.
+// Where a newly added hall lands: two per row ("1 2 / 3 4"), so fit-to-view
+// stays readable - a single long strip shrinks everything until the dimension
+// labels (fixed screen px, outside each hall's top/left edge) collide with the
+// neighbouring hall. Odd count → beside the last hall; even → a new row,
+// left-aligned with the leftmost. Only the starting spot; halls are draggable.
 const HALL_GAP = 3
 
 export const nextHallPosition = (halls: Array<Hall>): Position => {
@@ -180,6 +179,12 @@ export interface Guest {
   // seat in order. Always null when `tableId` is null.
   seatId?: string | null
   note?: string
+  // Which dish this guest is having, for a course the venue marked
+  // `per_guest_choice`. A `menu_options` uuid, and deliberately not a label:
+  // it is the only per-guest field a linked venue reads that cannot carry a
+  // name somebody typed. Undefined/null means "not chosen"; it is null for
+  // every wedding with no venue, which is all of guest mode.
+  menuOptionId?: string | null
 }
 
 // Stable, index-derived seat id. Default (never-dragged) seats use these so a
@@ -231,6 +236,11 @@ type Action = {
     id: string,
     details: Pick<Guest, "name" | "dietary" | "ageGroup" | "note">
   ) => void
+  // Sets (or clears) one guest's dish. Separate from `updateGuest`, mirroring
+  // the split `updateGuestSeat` already has: the guest edit dialog submits its
+  // whole form state, so folding the dish in would let a dialog opened before
+  // the dish was chosen overwrite it with a stale null.
+  setGuestMenuOption: (id: string, optionId: string | null) => void
   deleteGuest: (id: string) => void
   addHall: (hall: Omit<Hall, "id" | "position">, position?: Position) => string
   updateHall: (id: string, patch: Partial<Omit<Hall, "id">>) => void
@@ -349,14 +359,14 @@ type MovedEntity = {
 }
 
 // Maps a hall's tables/fixtures through `place` (new hall-local position +
-// world-space delta), collecting entities that need persistence into `moved`.
-// With `newHallId` every entity is collected (the hall reassignment must be
-// written even when the position is unchanged) and re-stamped; without it,
-// only entities that moved neither hall-locally NOR in world space are left
-// untouched. Both checks matter: a hall-origin shift cancelled by clamping
-// keeps the local position but still moves the entity in world space (the
-// measurements must shift), and a pure counter-shift changes the local
-// position with no world move (the row must be written).
+// world-space delta), collecting entities needing persistence into `moved`.
+// With `newHallId` every entity is collected and re-stamped, since the hall
+// reassignment must be written even at an unchanged position; without it, only
+// entities that moved neither hall-locally NOR in world space are left alone.
+// Both checks matter: a hall-origin shift cancelled by clamping keeps the local
+// position but moves the entity in world space (measurements must shift), and a
+// pure counter-shift changes the local position with no world move (the row must
+// be written).
 const rehomeHallEntities = (
   state: State,
   hallId: string,
@@ -396,12 +406,11 @@ const rehomeHallEntities = (
 }
 
 // Shifts rehomed entities' anchored measurements (world coords) by each world
-// delta. Split out from the row writes below because measurements are purely
-// local state (measures.store is localStorage-backed, no Supabase): they must
-// land in the same tick as the `set()` that rehomed the entities. Deferring
-// them behind a pending hall insert would let them visibly drift from their
-// objects - and a failed insert would strand them wrong permanently, since the
-// entities are already rehomed in local state either way.
+// delta. Split from the row writes below because measurements are purely local
+// state (measures.store is localStorage-backed): they must land in the same tick
+// as the `set()` that rehomed the entities. Deferring them behind a pending hall
+// insert would let them drift visibly, and a failed insert would strand them
+// wrong permanently - the entities are rehomed locally either way.
 const shiftMovedMeasurements = (moved: Array<MovedEntity>) => {
   const weddingId = useGlobalStore.getState().weddingId
   if (!weddingId) return
@@ -465,9 +474,8 @@ const createPlannerStore = (
           void reassignTableGuests(tableId, guestIds)
       })
     })
-    // In the store rather than at the call sites so every route to a new table
-    // is counted once: the add hub, a canvas drop, a clipboard paste, and the
-    // AI's addTable tool all land here.
+    // In the store rather than at the call sites, so the add hub, a canvas drop,
+    // a paste and the AI's addTable tool are each counted once.
     track("table_added", { shape: newTable.shape })
     return tableId
   },
@@ -522,9 +530,8 @@ const createPlannerStore = (
     set((state) => ({ tables: [...state.tables, ...newTables] }))
     afterHallInsert(table.hallId, () => void insertTables(newTables))
 
-    // Reported as its own event rather than N x table_added: `capped` falling
-    // short of `count` is the interesting signal here (the grid silently skips
-    // cells that fall outside the hall), and it only exists at this level.
+    // Its own event rather than N x table_added: `capped` falling short of
+    // `count` only exists at this level.
     track("tables_batch_added", {
       shape: table.shape,
       requested: count,
@@ -646,9 +653,8 @@ const createPlannerStore = (
     const newGuest: Guest = { ...guest, id: crypto.randomUUID() }
     set((state) => ({ guests: [...state.guests, newGuest] }))
     void insertGuest(newGuest)
-    // Neither the name/note nor the raw tag values leave the browser - the
-    // dietary tags are counted and the age bracket is reduced to which kind of
-    // value it is, because both are free text the user typed.
+    // No name, note or raw tag value leaves the browser: dietary tags are
+    // counted and the age bracket is reduced to which kind of value it is.
     track("guest_added", {
       dietary_count: newGuest.dietary.length,
       age_group: isAdultAgeGroup(newGuest.ageGroup)
@@ -674,6 +680,14 @@ const createPlannerStore = (
       guests: state.guests.map((g) => (g.id === id ? { ...g, ...details } : g)),
     }))
     void updateGuestDetails({ id, ...details })
+  },
+  setGuestMenuOption: (id, optionId) => {
+    set((state) => ({
+      guests: state.guests.map((g) =>
+        g.id === id ? { ...g, menuOptionId: optionId } : g
+      ),
+    }))
+    void updateGuestMenuOption(id, optionId)
   },
   deleteGuest: (id) => {
     set((state) => ({
@@ -718,10 +732,9 @@ const createPlannerStore = (
         const next = { ...h, ...patch }
         // A size change on a polygon hall rescales the outline with it - the
         // vertices span the AABB exactly, so the scaled bbox equals the new
-        // size. Covers the form's width/height fields and AI update_hall
-        // without any caller changes. Skipped when the patch replaces the
-        // geometry itself (setHallShape owns that path) and on no-op sizes,
-        // so vertex identity doesn't churn on every form keystroke.
+        // size. Skipped when the patch replaces the geometry itself (setHallShape
+        // owns that path) and on no-op sizes, so vertex identity doesn't churn
+        // on every form keystroke.
         if (
           patch.size &&
           h.geometry &&
@@ -835,14 +848,12 @@ const createPlannerStore = (
     if (contents.kind === "move") {
       const target = state.halls.find((h) => h.id === contents.targetHallId)
       if (!target || target.id === id) return
-      // Where a moved entity lands in the target hall. When its world
-      // position already lies inside the target (overlapping/adjacent
-      // halls), keep it - the entity doesn't visibly jump and measurements
-      // only shift by whatever clamping was needed. When the halls are
-      // disjoint (the default side-by-side layout) that world spot is
-      // outside the target and world-preserving placement would pile
-      // everything onto the nearest edge - so transplant the hall-local
-      // arrangement instead, preserving the room's layout.
+      // Where a moved entity lands in the target hall. If its world position is
+      // already inside the target (overlapping/adjacent halls) keep it, so
+      // nothing jumps. If the halls are disjoint (the default side-by-side
+      // layout) that spot is outside the target and world-preserving placement
+      // would pile everything onto the nearest edge - so transplant the
+      // hall-local arrangement instead, preserving the room's layout.
       const relocate = (local: Position, size: Size) => {
         const oldWorld = {
           x: hall.position.x + local.x,

@@ -3,19 +3,14 @@ import type { TableShape } from "@/stores/planner.store"
 
 /**
  * Every product event this app sends, and the exact properties it may carry.
+ * The replacement for autocapture, which `__root.tsx` turns off: autocapture
+ * reports the text of whatever was clicked, and in the planner that text is a
+ * guest's name.
  *
- * This map is the replacement for autocapture, which `__root.tsx` turns off.
- * Autocapture reports the text of whatever element was clicked, and in the
- * planner that text is a wedding guest's name - a third party who never agreed
- * to anything and has no relationship with us. `privacy.data.analytics`
- * promises only "zdarzenia produktowe (odwiedzone ekrany, uzyte funkcje)":
- * $pageview covers the screens, this covers the features.
- *
- * The type is closed rather than `Record<string, unknown>` on purpose. Every
- * property below is written by us, so nothing a user typed - a guest, table,
- * hall or wedding name, a note, an AI prompt - can reach the event store by
- * accident. Counts, enums and booleans only; if a new event needs a string,
- * it has to be a literal union declared here.
+ * The type is **closed** on purpose. Every property below is written by us, so
+ * nothing a user typed - a name, a note, an AI prompt - can reach the event
+ * store by accident. Counts, enums and booleans only; a new event needing a
+ * string has to declare a literal union here.
  */
 export type AnalyticsEvents = {
   /** A signed-in user created an empty wedding from the wedding list. */
@@ -28,9 +23,8 @@ export type AnalyticsEvents = {
     reminders: number
   }
   /**
-   * One table placed. Fires for every route to a new table - the add hub, a
-   * canvas drop, a paste, and the AI's `addTable` tool - so it counts tables
-   * created, not clicks on a particular button.
+   * One table placed - the add hub, a canvas drop, a paste, the AI's `addTable`
+   * tool - so it counts tables created, not clicks on a button.
    */
   table_added: { shape: TableShape }
   /**
@@ -44,11 +38,8 @@ export type AnalyticsEvents = {
   }
   /**
    * One guest typed in by hand. Imports report `guests_imported` instead.
-   *
-   * `age_group` is bucketed rather than sent verbatim, and dietary tags are
-   * only counted: both are free text the user types (see MAX_AGE_GROUP_LENGTH
-   * and the `Dietary` alias), so the raw values are exactly the kind of
-   * user-authored string this map exists to keep out.
+   * `age_group` is bucketed and dietary tags are only counted: both are free
+   * text the user typed.
    */
   guest_added: {
     dietary_count: number
@@ -88,6 +79,67 @@ export type AnalyticsEvents = {
   reminder_created: { has_due_date: boolean }
   /** An invite link redeemed into a membership. */
   invite_claimed: undefined
+  /**
+   * A wedding was pointed at a venue and is now waiting on the couple. Not a
+   * disclosure - `pending` shows the venue nothing. The venue itself is
+   * attributed with a PostHog **group**, never a property here.
+   *
+   * "venue" is declared but not yet emitted (the CRM-initiated request arrives
+   * with the customer roster); declaring it now keeps the property from widening
+   * later, which is the change that quietly reshapes an existing insight.
+   */
+  venue_access_requested: { source: "couple" | "venue" }
+  /**
+   * The couple gave a linked venue access to the seat map - the art. 9(2)(a)
+   * consent moment, so the event carries nothing about *what* was shared. The
+   * answer is fixed, and it is in the policy.
+   */
+  venue_access_granted: undefined
+  /** Venue staff opened one customer's seat map in the CRM. */
+  venue_peek_opened: undefined
+  /**
+   * A venue issued an invitation link from the CRM roster. `role` is the whole
+   * payload and the useful cut - 'customer' is the daily booking flow, 'staff'
+   * is the venue growing its team. No token, no uuid, no email: the token is a
+   * bearer credential (see scrubInviteTokens).
+   */
+  tenant_invite_created: { role: "staff" | "customer" }
+  /**
+   * Someone spent a venue invitation and joined the roster. Not `invite_claimed`,
+   * which is a wedding membership: this only lets a couple *ask* an
+   * invitation-only venue for a link. The disclosure decision is still
+   * `venue_access_granted`, separately and later.
+   */
+  tenant_invite_claimed: { role: "staff" | "customer" }
+  /**
+   * A venue saved one menu package in the CRM. Counts only - how many courses a
+   * real offer has, how many dishes, how many venues use the plated shape. The
+   * name, the price and every dish are strings a venue typed.
+   */
+  menu_package_saved: {
+    course_count: number
+    option_count: number
+    per_guest_courses: number
+  }
+  /**
+   * A couple pointed their wedding at one of the venue's packages. Fires on a
+   * switch as well as a first choice, and carries the shape of what they chose
+   * rather than which package it was.
+   */
+  menu_package_selected: { course_count: number; per_guest_courses: number }
+  /**
+   * Every course now has at least the number of dishes the venue asked for.
+   * Fired on the transition into that state, so it counts weddings that finished
+   * choosing rather than clicks. `options_picked` can exceed the sum of the
+   * `choose_count`s - the database deliberately does not cap it.
+   */
+  menu_selection_completed: { courses: number; options_picked: number }
+  /**
+   * One guest was assigned one dish from a per-guest course. `source` answers
+   * whether couples assign from the guest list or work through the Menu tab.
+   * The dish uuid and the guest stay out of the payload.
+   */
+  menu_guest_dish_assigned: { source: "menu_tab" | "guest_list" }
 }
 
 // Events declared as `undefined` are called bare - `track("invite_claimed")`.
@@ -100,16 +152,11 @@ type TrackArgs<TEvent extends keyof AnalyticsEvents> =
     : [event: TEvent, properties: AnalyticsEvents[TEvent]]
 
 /**
- * Sends one product event.
- *
- * Called from stores and plain modules as well as components, so it reaches
- * for the `posthog-js` default singleton rather than the React context -
- * `PostHogProvider` initializes that same instance when it's given an `apiKey`
- * (see `getDefaultPostHogInstance` in @posthog/react), so the two agree.
- *
- * The `__loaded` guard is what keeps this callable from anywhere: these code
- * paths also run during SSR and under vitest, where `init` never happened and
- * every `capture` would otherwise warn.
+ * Sends one product event. Called from stores and plain modules as well as
+ * components, so it uses the `posthog-js` default singleton rather than the
+ * React context - `PostHogProvider` initializes that same instance when given an
+ * `apiKey`. The `__loaded` guard is what makes it callable from anywhere: these
+ * paths also run under SSR and vitest, where `init` never happened.
  */
 export const track = <TEvent extends keyof AnalyticsEvents>(
   ...args: TrackArgs<TEvent>
@@ -120,4 +167,19 @@ export const track = <TEvent extends keyof AnalyticsEvents>(
   ]
   if (!posthog.__loaded) return
   posthog.capture(event, properties)
+}
+
+/**
+ * Attributes the current session to a tenant, as a PostHog **group** rather than
+ * an event property: set once per session, it rolls every later event up by
+ * venue without any event declaring it - which is what keeps `AnalyticsEvents`
+ * closed.
+ *
+ * The id is the tenant's uuid, never its slug or name. `name` rides along as a
+ * group property, the one place a human-readable label is wanted: the venue is
+ * our customer, and the uuid alone makes the dashboard unreadable.
+ */
+export const identifyTenantGroup = (tenantId: string, name: string): void => {
+  if (!posthog.__loaded) return
+  posthog.group("tenant", tenantId, { name })
 }

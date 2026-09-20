@@ -42,3 +42,26 @@ export const allSeats = (tables: TableSpec[]): Point[] => {
   });
   return out;
 };
+
+/**
+ * `verticesForHallPreset(preset, size)` from the app's `src/lib/geometry.ts`,
+ * for the one polygon preset a film uses so far: the L, with the top-right
+ * quarter cut out, spanning the hall's bounding box exactly. In canvas units
+ * rather than metres - the proportions are the same.
+ */
+export const lShapeVertices = (canvas: { width: number; height: number }): Point[] => {
+  const w = canvas.width;
+  const h = canvas.height;
+  return [
+    { x: 0, y: 0 },
+    { x: w * 0.5, y: 0 },
+    { x: w * 0.5, y: h * 0.5 },
+    { x: w, y: h * 0.5 },
+    { x: w, y: h },
+    { x: 0, y: h },
+  ];
+};
+
+/** An SVG `points` attribute for a polygon - `polygonPoints` in the app. */
+export const polygonPoints = (vertices: Point[]): string =>
+  vertices.map((v) => `${v.x},${v.y}`).join(" ");

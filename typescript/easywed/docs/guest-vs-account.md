@@ -87,6 +87,7 @@ Reminders carry two extra wrinkles the planner/global keys don't:
 | Leaving a wedding                    |  ❌   |    ✅     | row menu on `/home`, members only              |
 | Deleting a wedding                   |  ❌   |    ✅     | row menu on `/home`, owner only                |
 | Deleting your account                |  ❌   |    ✅     | `delete_own_account()`; guest data is local    |
+| Venue menu                           |  ❌   |    ✅     | requires a linked venue; no tenant, no tab     |
 
 ## The members gate (free plan)
 
