@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { salesMailto } from "./salesMailto"
 import type { Lang } from "@/components/landing/LocaleLanding"
-import { PlannerPreview } from "@/components/landing/PlannerPreview"
+import { LandingLoop } from "@/components/landing/LandingLoop"
 import { Button } from "@/components/ui/button"
 
 export function VenueHero({ lang }: { lang: Lang }) {
@@ -33,7 +33,7 @@ export function VenueHero({ lang }: { lang: Lang }) {
           </Button>
         </div>
       </div>
-      <PlannerPreview lang={lang} />
+      <LandingLoop name="scale" lang={lang} />
     </section>
   )
 }

@@ -6,10 +6,20 @@
 # (there is no report collector wired up) and block nothing. Read the notes
 # under connect-src before switching the header name to Content-Security-Policy.
 
+# The landing loops are large and never change within a deploy, so they are
+# cached hard. Deliberately NOT `immutable`, and deliberately not a year: these
+# filenames are not content-hashed, and step 3b of the v1.1 release re-renders
+# every one of them in place (the /landing/en/* files are Polish renders
+# standing in until then). A year of `immutable` on a mutable name would pin a
+# visitor to the wrong video with no way to invalidate it. Once the renders are
+# final and the names carry a hash, raise this to `max-age=31536000, immutable`.
+/landing/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
 /*
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
-  Content-Security-Policy-Report-Only: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://eu-assets.i.posthog.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://iteuwqbqrulwdwyjohtx.supabase.co wss://iteuwqbqrulwdwyjohtx.supabase.co https://eu.i.posthog.com https://eu-assets.i.posthog.com https://openrouter.ai; manifest-src 'self'; upgrade-insecure-requests
+  Content-Security-Policy-Report-Only: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://eu-assets.i.posthog.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; font-src 'self' data:; connect-src 'self' https://iteuwqbqrulwdwyjohtx.supabase.co wss://iteuwqbqrulwdwyjohtx.supabase.co https://eu.i.posthog.com https://eu-assets.i.posthog.com https://openrouter.ai; manifest-src 'self'; upgrade-insecure-requests
