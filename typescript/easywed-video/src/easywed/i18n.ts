@@ -31,7 +31,7 @@ export type DietKey = "vegetarian" | "vegan" | "glutenFree";
 const pl = {
   hall: {
     name: "Sala główna",
-    headTable: "Stół pary młodej", // landing.preview.head_table
+    headTable: "Stół pary młodej", // a table name; landing.preview.head_table was dropped in v1.1
     table: (n: number) => `Stół ${n}`, // tables.unnamed_index
     danceFloor: "Parkiet", // fixtures.preset.dance_floor
     bar: "Bar", // fixtures.preset.bar
@@ -61,7 +61,7 @@ const pl = {
       idle: "Kliknij na sali, aby umieścić punkt pomiaru", // measure.statusbar
       started: "Kliknij ponownie, aby ustawić punkt końcowy", // measure.statusbar_drop
     },
-    escToExit: "Esc aby wyjść", // statusbar.esc_to_exit
+    escToExit: "Esc, aby wyjść", // statusbar.esc_to_exit
     seatSearch: "Szukaj gości", // tables.guests_search_placeholder
     seatClear: "Zwolnij miejsce", // seats.clear
     /** `SeatAssignPopover`'s sections, in the order it renders them. Drawn uppercase, as its own header class sets them. */
@@ -103,7 +103,7 @@ const pl = {
     /** `HallsPanelContent` in the same dialog, titled by `usePanelTitle`. */
     hallsList: {
       title: "Sale", // hall.list_title
-      hint: "Wszystkie sale są widoczne razem na planie – przeciągnij salę za jej etykietę, aby ułożyć pomieszczenia i piętra.", // hall.list_hint
+      hint: "Wszystkie sale są widoczne razem na planie - przeciągnij salę za jej etykietę, aby ułożyć pomieszczenia i piętra.", // hall.list_hint
       add: "Dodaj salę", // hall.add
       unnamed: "Sala", // hall.unnamed - the canvas chip of a hall with no name
       unnamedIndex: (index: number) => `Sala ${index}`, // hall.unnamed_index - the same hall in this list
@@ -127,7 +127,7 @@ const pl = {
     import: "Importuj gości", // guests.import
     /** `GuestFormFields` / `GuestAgeGroupField`, in the order the form draws them. */
     form: {
-      name: "Imię", // guests.add.name
+      name: "Imię i nazwisko", // guests.add.name
       dietary: "Preferencje żywieniowe", // guests.add.dietary_preferences
       dietaryCustom: "Dodaj", // guests.add.dietary_custom
       ageGroup: "Grupa wiekowa", // guests.add.age_group
@@ -179,29 +179,29 @@ const pl = {
   },
 
   demo: {
-    tagline: "Plan stołów weselnych - prościej się nie da.", // landing.footer.tagline
-    outroTitle: "Każdy gość na właściwym miejscu", // landing.hero.title
-    features: ["Plan sali „przeciągnij i upuść”", "Import CSV i XLSX", "Eksport PDF do druku", "Sale i piętra", "Planujcie razem"],
+    tagline: "Planer rozsadzenia gości weselnych.", // landing.footer.tagline
+    outroTitle: "Narysujcie salę. Posadźcie wszystkich.", // after landing.hero.title
+    features: ["Plan sali „przeciągnij i upuść”", "Import CSV i XLSX", "Plan gotowy do druku", "Sale i piętra", "Planujcie razem"],
     outroAction: "Ustaw pierwszy stół",
     hall: {
       step: "Krok 01",
-      title: "Naszkicuj salę", // landing.steps.one.title
-      subtitle: "Stoły okrągłe i prostokątne, parkiet i wyposażenie - ustaw salę dokładnie tak, jak będzie wyglądać w dniu wesela.", // landing.features.planner.desc
+      title: "Narysujcie salę", // landing.steps.one.title
+      subtitle: "Stoły okrągłe i prostokątne, parkiet i wyposażenie - ustaw salę dokładnie tak, jak będzie wyglądać w dniu wesela.", // the film's own line; landing.features.planner.desc was dropped in v1.1
       yourHall: "Twoja sala",
     },
     guests: {
       step: "Krok 02",
-      title: "Dodaj gości", // landing.steps.two.title
+      title: "Dodajcie gości", // landing.steps.two.title
       // landing.features.guests.desc, with its plus-ones - a field v1 does not
       // have - swapped for the age groups it does (guests.add.age_group,
       // lib/ageGroup.ts). "i" and "z" are bound to the next word.
       subtitle: "Diety, grupy wiekowe i\u00a0przypisane miejsca są zawsze przy nazwisku - koniec z\u00a0trzema arkuszami naraz.",
       importPill: "Import z CSV lub Excela",
-      exportPill: "Eksport PDF do druku",
+      exportPill: "Plan gotowy do druku",
     },
     seating: {
       step: "Krok 03",
-      title: "Posadź wszystkich", // landing.steps.three.title
+      title: "Posadźcie wszystkich", // landing.steps.three.title
       subtitle: "Przeciągnij gości na miejsca, wyrównaj obłożenie stołów i wyeksportuj gotowy plan do druku dla sali.",
       ofSeated: (total: number) => `z ${total} gości przy stołach`,
       emptySeat: "Wolne miejsce", // seats.empty
@@ -421,13 +421,13 @@ const en: typeof pl = {
   },
 
   demo: {
-    tagline: "Wedding seating, made easy.",
-    outroTitle: "Every guest in the right seat",
-    features: ["Drag & drop floor plan", "CSV & XLSX import", "Print-ready PDF export", "Halls & floors", "Plan together"],
+    tagline: "A seating planner for your wedding.",
+    outroTitle: "Draw your hall. Sit everyone down.",
+    features: ["Drag & drop floor plan", "CSV & XLSX import", "A plan you can print", "Halls & floors", "Plan together"],
     outroAction: "Place your first table",
     hall: {
       step: "Step 01",
-      title: "Sketch the hall",
+      title: "Draw the hall",
       subtitle: "Round and rectangular tables, the dance floor, and fixtures - lay out the hall exactly as it will look on the day.",
       yourHall: "Your hall",
     },
@@ -436,12 +436,12 @@ const en: typeof pl = {
       title: "Add your guests",
       subtitle: "Dietary needs, age groups, and seat assignments live next to every name - no more cross-checking three spreadsheets.",
       importPill: "Import from CSV or Excel",
-      exportPill: "Print-ready PDF export",
+      exportPill: "A plan you can print",
     },
     seating: {
       step: "Step 03",
       title: "Seat everyone",
-      subtitle: "Drag guests onto seats, balance the tables, and export a print-ready plan for the venue.",
+      subtitle: "Drag guests onto seats, balance the tables, and print the finished plan for the venue.",
       ofSeated: (total) => `of ${total} guests seated`,
       emptySeat: "Empty seat",
       taken: "Taken",
