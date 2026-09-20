@@ -109,15 +109,11 @@ highest-risk failure in any copy pass is promising a feature that does not
 exist:
 
 - ❌ **Live sync.** There is no Realtime. Collaborators see changes on reload.
-  `landing.features.collab.desc` says _"zmiany synchronizują się od razu"_ - the
-  landing page over-claims this. Do not amplify it.
 - ❌ **Plus-ones / "osoby towarzyszące".** No such field on the guest model.
-  `landing.features.guests.desc` over-claims this too.
 - ❌ RSVP, sending invitations, collecting guest replies.
 - ❌ Offline or installable. A manifest exists; there is no service worker.
 - ❌ Venue templates, or "import the venue's floor plan". That is manual founder
-  work - a third landing over-claim, in `landing.steps.one.desc` (_"lub
-  zaimportuj jej plan"_).
+  work.
 - ❌ A generated PDF _file_. Export opens the browser print dialog
   (`plan_printed` says as much).
 - ❌ Free or included AI. It needs the user's own API key.
@@ -131,20 +127,24 @@ exist:
   working commercially need the paid plan (`terms.technical.c6`) - so "for
   wedding planners" framing is off-limits.
 
-### The four strings that break it today
+### The four strings that used to break it
 
-The list above names three. There is a fourth: `/venues` repeats the live-sync
-claim. All four are what v1.1 takes back, and once it ships they are evidence of
-what the copy used to say, not of what it says.
+v1.1 took all four back. They are recorded here because the shape of the
+mistake repeats, not because any of these strings still say this:
 
-| Key                            | Claims                                        |
-| ------------------------------ | --------------------------------------------- |
-| `landing.features.collab.desc` | changes sync instantly - there is no Realtime |
-| `venues.features.emails.desc`  | the same, to venue owners                     |
-| `landing.features.guests.desc` | plus-ones - no such field on the guest model  |
-| `landing.steps.one.desc`       | import the venue's floor plan - manual work   |
+| Key                            | Claimed                                       | Now                         |
+| ------------------------------ | --------------------------------------------- | --------------------------- |
+| `landing.features.collab.desc` | changes sync instantly - there is no Realtime | key removed                 |
+| `venues.features.emails.desc`  | the same, to venue owners                     | "when they open it"         |
+| `landing.features.guests.desc` | plus-ones - no such field on the guest model  | key removed                 |
+| `landing.steps.one.desc`       | import the venue's floor plan - manual work   | metres, tables, dance floor |
 
-`venues.features.template.desc` and `venues.steps.one.desc` sit next to the
-third one and describe the same manual founder work. They are honest only
-because `/venues` sells an onboarding service rather than a feature - keep that
-distinction explicit when rewriting them, or they become the fifth over-claim.
+Each one read as a feature the reader could go and use. Three were written as
+a bullet beside real features, which is what made them easy to miss: the list
+around them was true. When a claim cannot be traced to something in the
+planner, it does not belong in the sentence, however small.
+
+`venues.features.template.desc` and `venues.steps.one.desc` still describe that
+same manual founder work. They are honest only because `/venues` sells an
+onboarding service rather than a feature - keep that distinction explicit when
+rewriting them, or they become the fifth over-claim.
