@@ -135,7 +135,7 @@ function Home() {
               <Link to={landingPath}>easywed.</Link>
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              {t("weddings.subtitle")}
+              {t("weddings.signed_out_subtitle")}
             </p>
           </div>
 
