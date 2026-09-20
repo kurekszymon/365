@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { LandingHero } from "./LandingHero"
+import { LandingStories } from "./LandingStories"
 import { LandingFeatures } from "./LandingFeatures"
 import { LandingSteps } from "./LandingSteps"
 import { LandingCta } from "./LandingCta"
@@ -74,6 +75,7 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
 
       <main className="flex-1">
         <LandingHero lang={lang} />
+        <LandingStories lang={lang} />
         <LandingFeatures lang={lang} />
         <LandingSteps lang={lang} />
         <VenueOwnersBanner lang={lang} />

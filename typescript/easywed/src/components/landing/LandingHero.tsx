@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
-import { PlannerPreview } from "./PlannerPreview"
+import { LandingLoop } from "./LandingLoop"
 import type { Lang } from "./LocaleLanding"
 import { Button } from "@/components/ui/button"
 
@@ -33,7 +33,7 @@ export function LandingHero({ lang }: { lang: Lang }) {
           {t("landing.hero.local_hint", { lng: lang })}
         </p>
       </div>
-      <PlannerPreview lang={lang} />
+      <LandingLoop name="swap" lang={lang} />
     </section>
   )
 }
