@@ -391,7 +391,7 @@ viewer the two things they may most expect (open question 3).
 
 Steps 1 and 3 both touch `HallCanvas.tsx`, and step 5 touches `format.ts` — the two files every
 shipped film renders. Take them one at a time, on their own branches, and after each one run
-`npm run lint` plus `npx remotion still` on a frame of `easywed-demo`, `easywed-teaser`,
+`pnpm run lint` plus `pnpm exec remotion still` on a frame of `easywed-demo`, `easywed-teaser`,
 `easywed-import`, `easywed-report` and `easywed-scale` to prove nothing moved. Every new string goes
 into `src/easywed/i18n.ts` in **both** `pl` and `en` (a missing key fails `tsc`), and each shipped
 film adds its beats and lines to `references/existing-films.md` — `/video-build` does that.

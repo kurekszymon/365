@@ -33,43 +33,46 @@ stays out of that project's tsconfig, ESLint and Vite scope.
 
 ## Commands
 
+The package manager is pnpm, pinned in `package.json` (`packageManager`) - `corepack` or pnpm
+itself fetches the right version, so `pnpm install` is all the setup there is.
+
 ```bash
-npm run dev              # Remotion Studio on http://localhost:3000
-npm run dev:en           # the same, in English
-npm run render           # -> out/pl/easywed-demo.mp4          (16:9)
-npm run render:vertical  # -> out/pl/easywed-demo-vertical.mp4 (9:16)
-npm run render:gif       # -> out/pl/easywed-demo.gif (960px wide, every 2nd frame)
+pnpm run dev              # Remotion Studio on http://localhost:3000
+pnpm run dev:en           # the same, in English
+pnpm run render           # -> out/pl/easywed-demo.mp4          (16:9)
+pnpm run render:vertical  # -> out/pl/easywed-demo-vertical.mp4 (9:16)
+pnpm run render:gif       # -> out/pl/easywed-demo.gif (960px wide, every 2nd frame)
 
-npm run render:teaser            # -> out/pl/easywed-teaser.mp4          (16:9)
-npm run render:teaser:vertical   # -> out/pl/easywed-teaser-vertical.mp4 (9:16)
+pnpm run render:teaser           # -> out/pl/easywed-teaser.mp4          (16:9)
+pnpm run render:teaser:vertical  # -> out/pl/easywed-teaser-vertical.mp4 (9:16)
 
-npm run render:import-excel            # -> out/pl/easywed-import.mp4          (16:9)
-npm run render:import-excel:vertical   # -> out/pl/easywed-import-vertical.mp4 (9:16)
+pnpm run render:import-excel           # -> out/pl/easywed-import.mp4          (16:9)
+pnpm run render:import-excel:vertical  # -> out/pl/easywed-import-vertical.mp4 (9:16)
 
-npm run render:kitchen-report            # -> out/pl/easywed-report.mp4          (16:9)
-npm run render:kitchen-report:vertical   # -> out/pl/easywed-report-vertical.mp4 (9:16)
+pnpm run render:kitchen-report           # -> out/pl/easywed-report.mp4          (16:9)
+pnpm run render:kitchen-report:vertical  # -> out/pl/easywed-report-vertical.mp4 (9:16)
 
-npm run render:kids-count            # -> out/pl/easywed-kids.mp4          (16:9)
-npm run render:kids-count:vertical   # -> out/pl/easywed-kids-vertical.mp4 (9:16)
+pnpm run render:kids-count           # -> out/pl/easywed-kids.mp4          (16:9)
+pnpm run render:kids-count:vertical  # -> out/pl/easywed-kids-vertical.mp4 (9:16)
 
-npm run render:to-scale          # -> out/pl/easywed-scale.mp4        (16:9, at 960x540 for its page slot)
-npm run render:to-scale:poster   # -> out/pl/easywed-scale-poster.png (frame 0 at 960x540, the <video> poster)
+pnpm run render:to-scale         # -> out/pl/easywed-scale.mp4        (16:9, at 960x540 for its page slot)
+pnpm run render:to-scale:poster  # -> out/pl/easywed-scale-poster.png (frame 0 at 960x540, the <video> poster)
 
-npm run render:seat-swap         # -> out/pl/easywed-swap.mp4        (16:9, at 960x540 for its page slot)
-npm run render:seat-swap:poster  # -> out/pl/easywed-swap-poster.png (frame 0 at 960x540, the <video> poster)
+pnpm run render:seat-swap         # -> out/pl/easywed-swap.mp4        (16:9, at 960x540 for its page slot)
+pnpm run render:seat-swap:poster  # -> out/pl/easywed-swap-poster.png (frame 0 at 960x540, the <video> poster)
 
-npm run render:seat-swap-cut            # -> out/pl/easywed-swap-cut.mp4          (16:9)
-npm run render:seat-swap-cut:vertical   # -> out/pl/easywed-swap-cut-vertical.mp4 (9:16)
+pnpm run render:seat-swap-cut           # -> out/pl/easywed-swap-cut.mp4          (16:9)
+pnpm run render:seat-swap-cut:vertical  # -> out/pl/easywed-swap-cut-vertical.mp4 (9:16)
 
-npm run render:odd-room          # -> out/pl/easywed-shape.mp4        (16:9, at 960x540 for its page slot)
-npm run render:odd-room:poster   # -> out/pl/easywed-shape-poster.png (frame 0 at 960x540, the <video> poster)
+pnpm run render:odd-room         # -> out/pl/easywed-shape.mp4        (16:9, at 960x540 for its page slot)
+pnpm run render:odd-room:poster  # -> out/pl/easywed-shape-poster.png (frame 0 at 960x540, the <video> poster)
 
-npm run render:walkthrough-long            # -> out/pl/easywed-walkthrough.mp4          (16:9)
-npm run render:walkthrough-long:vertical   # -> out/pl/easywed-walkthrough-vertical.mp4 (9:16)
+pnpm run render:walkthrough-long           # -> out/pl/easywed-walkthrough.mp4          (16:9)
+pnpm run render:walkthrough-long:vertical  # -> out/pl/easywed-walkthrough-vertical.mp4 (9:16)
 
-npm run render:all       # all of the above
-npm run render:all:en    # all of the above in English -> out/en/
-npm run lint             # eslint + tsc
+pnpm run render:all     # all of the above
+pnpm run render:all:en  # all of the above in English -> out/en/
+pnpm run lint           # eslint + tsc
 ```
 
 ## Languages
@@ -87,7 +90,7 @@ the bundle - and every render script writes to `out/${REMOTION_LANG:-pl}/`, so t
 overwrite each other:
 
 ```bash
-REMOTION_LANG=en npm run render:teaser   # -> out/en/easywed-teaser.mp4
+REMOTION_LANG=en pnpm run render:teaser  # -> out/en/easywed-teaser.mp4
 ```
 
 Strings that redraw the app are its own `pl.json` / `en.json` values at `easywed/v1`, with the
@@ -96,7 +99,7 @@ key noted beside them. Guest names stay Polish in both languages - they are demo
 Render a single frame while iterating:
 
 ```bash
-npx remotion still easywed-demo out/frame.png --frame=265
+pnpm exec remotion still easywed-demo out/frame.png --frame=265
 ```
 
 `/video-plan` (in the monorepo root, `.claude/skills/video-plan/`) plans the next videos in this

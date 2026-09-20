@@ -112,7 +112,7 @@ The plan has to be buildable in the Remotion repo as it stands:
   A viewer should recognise the product the moment they open it.
 - **Polish copy uses the app's own nouns**: sala, stół, gość, miejsce, parkiet, *Bez miejsca*,
   *Rozsadzeni*, *Wege* / *Vegan* / *Bez glutenu*, *Piętro*, *Elementy sali*.
-- `npm run lint` (eslint + tsc) must pass; render scripts are in `package.json`.
+- `pnpm run lint` (eslint + tsc) must pass; render scripts are in `package.json`.
 
 ## 6. Do not repeat what exists
 

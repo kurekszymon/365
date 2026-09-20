@@ -169,8 +169,8 @@ scenes, and suggest the user commit it on its own.
 
 Run in order, fixing and re-running before moving on:
 
-1. `npm run lint` (eslint + tsc).
-2. `npx remotion compositions` — every new id, size and duration matches the brief. `easywed-demo`
+1. `pnpm run lint` (eslint + tsc).
+2. `pnpm exec remotion compositions` — every new id, size and duration matches the brief. `easywed-demo`
    is still 840 and `easywed-teaser` still 450.
 3. **Stills**, for every size the film registers, into `out/{slug}/`:
    - frame 45 — the hook has landed
@@ -179,7 +179,7 @@ Run in order, fixing and re-running before moving on:
    - the last frame, `durationInFrames − 1`; for a loop, frame 0 as well
 
    ```bash
-   npx remotion still easywed-import-vertical out/import-excel/vertical-0045.png --frame=45
+   pnpm exec remotion still easywed-import-vertical out/import-excel/vertical-0045.png --frame=45
    ```
 
 4. **Look at every still** with Read. Check for text that is clipped, overflowing or badly wrapped;

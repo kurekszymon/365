@@ -1,7 +1,7 @@
 /**
  * Every on-screen string, in both languages. Pick one at render time:
  *
- *   REMOTION_LANG=en npm run render:teaser
+ *   REMOTION_LANG=en pnpm run render:teaser
  *
  * Remotion only hands `REMOTION_`-prefixed variables to the bundle, hence the
  * prefix. Anything else - or nothing - renders Polish.

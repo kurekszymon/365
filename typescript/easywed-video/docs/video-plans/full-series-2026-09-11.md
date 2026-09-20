@@ -253,8 +253,8 @@ inserted before the outro.
 | 5 | `FloorSwitcher` / `MembersPanel` / `AssistantPanel`, then assemble `walkthrough-long` | L, but mostly assembly by then | video 5 |
 
 Do step 4 on its own branch: `format.ts` is the single seam every scene reads, so a regression there
-breaks both existing films at once. `npm run lint` (eslint + tsc) after each step, and
-`npx remotion still <id> out/frame.png --frame=N` on the seams before rendering anything full.
+breaks both existing films at once. `pnpm run lint` (eslint + tsc) after each step, and
+`pnpm exec remotion still <id> out/frame.png --frame=N` on the seams before rendering anything full.
 
 ## Findings to fix in the existing films
 
