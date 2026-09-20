@@ -2,6 +2,163 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 19.09
+
+- `walkthrough-long` in both frames - the 83 s youtube tour, and a 78.5 s portrait cut of the same component. its chapters are mostly other films' scenes, so `WALKTHROUGH_LONG_SCENES` reads their lengths from `import-excel`, `kids-count`, `to-scale`, `seat-swap` and `kitchen-report` rather than copying numbers that would drift the first time one of those cuts is retimed. `floors` is its one new scene
+- the vertical cut drops the measure chapter, for a product reason rather than a framing one: on a phone at v1 the canvas toolbar isn't mounted, so measuring is a long-press menu item with no *środek* / *krawędź* switch - and that switch is the chapter's whole beat. `WALKTHROUGH_LONG_VERTICAL_SKIPS` names it in one line with the reason beside it, and `WALKTHROUGH_LONG_VERTICAL_DURATION` falls out of the same list
+- `HallPanel` and `ShapePlanner` reworked to render at either aspect instead of the vertical build growing a second copy of each
+
+### 18.09
+
+- `odd-room`, the third landing loop: an l-shaped room drawn by dragging vertices - the answer to "our room isn't a rectangle". `ShapePlanner`, `VertexHandles` and a `ShapeEditPill`, all redrawing the real custom-geometry edit rather than implying it
+- `seat-swap` cut for social as well, 9:16 with its own script and its own cta scene, sharing `SeatPopover` and `seating.ts` with the landing loop. a separate composition rather than a crop: a page loop that carries no cta and a reel that ends on one are different films
+- kids horizontal: the app frame was sized differently between aspects, so the same panel read as a different product between two chapters of one walkthrough
+
+### 17.09
+
+- three films in a day, off the 17.09 plan: `to-scale` (does this even fit - the measure tool, 16:9 loop), `seat-swap` (someone has to move) and `kids-count` (how many children are coming). the loops end on a 15-frame `LoopSeam` crossfading onto scene 1 frame 0, because `TransitionSeries` does not wrap last → first - built once in `to-scale` and reused
+- every film renders in polish **or** english now. all on-screen strings moved into `src/easywed/i18n.ts` as one `pl` object and an `en` typed `typeof pl`, so a key missing from either side fails `tsc`. the switch is `REMOTION_LANG` - remotion only forwards `REMOTION_`-prefixed vars into the bundle - and every render script writes to `out/${REMOTION_LANG:-pl}/`, so the two languages cannot overwrite each other
+- strings that redraw the app are its own `pl.json` / `en.json` values at `easywed/v1`, verbatim, with the key noted beside each. guest names stay polish in both: they are demo data, not copy
+
+### 16.09
+
+- a second plan, `16x9-only-2026-09-16.md`: three landing-page loops plus the youtube walkthrough. a new dated file rather than a revision of the first, so each plan stays the record of what was decided on its date. its shared rule for the loops is that the page is the cta, so none of them carries one
+- one closing cta across the social cuts instead of three hand-built ones - `OutroScene` now ends on the same `CallToAction` the import and report cuts do
+
+### 15.09
+
+- `CallToAction` extracted and made configurable (action line, delay, sizes), replacing the three near-identical closing cards. the address renders as the app's own black pill, and the arrow nudges once a second after it settles - the one thing to do next, tied to what the film just showed
+
+### 14.09
+
+- `kitchen-report` cut: the venue asking how many vegan meals, answered by the print view. new `GuestList` and `PrintSheet` work, the rest reused
+- `render:all:vertical` for the 9:16 set on its own
+
+### 13.09
+
+- `import-excel` shipped first off the plan: the spreadsheet you already maintain becomes a seated hall without being retyped. `Spreadsheet.tsx` for the cold grid in the hook, `ImportPlanner` for the wizard, polish surnames with their diacritics intact because that is the thing being demonstrated
+- `/video-build` skill to implement one brief at a time. its first rule is that the plan is a strong draft and not a spec: the brief decides what the film says and in what order, `easywed/v1` and the remotion repo decide whether it is true. the first plan quoted `guests.import.drop_here` as *„przeciągnij plik tutaj”* and at the tag it reads something else entirely - factual drift follows the source, anything claim-bearing stops and asks, and the do-not-claim list is never built whatever the brief says
+
+### 12.09
+
+- `/video-plan` skill and the first plan (`full-series-2026-09-11.md`). it reads the product at the `easywed/v1` tag rather than the working tree, and the two lists that go stale fastest - the confirmed selling points and the beats already used - live beside the skill as their own files
+- the **do not claim** section is the useful half. no realtime sync, no plus-ones, no rsvp, no offline, no generated pdf file (export opens the print dialog), no free ai, no reminders that notify, and no social proof of any kind since none exists. three of those are places the landing page itself over-claims - written down so the videos do not amplify them
+- success signals must be named from the closed `AnalyticsEvents` map and nowhere else
+
+### 11.09
+
+- teaser graphics: `PlannerCanvas` redrawn so the plan scene looks like the app rather than like a diagram of it
+
+### 10.09
+
+- new social teaser - hook / chaos / plan / cta, with `Scraps` for the paper-slips-on-a-table opening
+
+### 09.09
+
+- astro side: migrated to astro 7, then dropped `/blog` entirely - one page, no rss, the two sample posts gone
+
+### 08.09
+
+- `redirectApexOnlyPathToApex` sent people to `SITE_ORIGIN`, which is the canonical origin and exactly wrong for a link this browser is about to follow: on `bagatelka.localhost:3000` it sent a developer to production, a different database. `apexOrigin()` instead, and `?tenant=` stripped off the way out - on a preview deploy the tenant is a query parameter, so carrying it across would land on the context that triggered the redirect, one navigation at a time
+- the untouched-search fast path is not an optimisation: `URLSearchParams` re-serializes and turns `?a` into `?a=`, and this runs on every navigation
+- claude.md trimmed back to what is load-bearing
+
+### 07.09
+
+- comment pass across 81 files: about a thousand lines net removed. anything the code already says went; what is left is the reasoning a reader cannot reconstruct - why a policy names three roles literally, why `updateX` does not persist, why a trigger is definer
+
+### 06.09
+
+- the crm's red banner froze in whichever language was current when the write failed: it stored a translated sentence, and state outlives a language switch. both hooks hold the *key* now and resolve it on render, so the banner switches with the rest of the screen
+- docs and claude.md brought back in step with the menu stack
+
+### 05.09
+
+- named the menu rules that were being retyped. `canonicalizeText` / `canonicalizeLine` replace eight copies of the same three lines in the crm editor, which had already drifted on whether whitespace collapses - two functions rather than a flag, because the distinction belongs to the control: every `<input>` wants the collapsing one, the package description is a `<textarea>` and would lose deliberate newlines
+- `toggleArchivedAt`, `coursesOf` and `optionsOf` for the same reason - `c.menu_package_id === id` and `o.menu_course_id === id` are similar enough to be typed into each other's place without anything failing to compile
+- `localeDocPath(doc, language)` in `lib/site.ts`: `/pl/terms` and `/en/terms` are two prerendered routes, not one route with a detector, so six files were each carrying the same ternary. returns a union of two literals, not `string`, so `<Link to>` still type-checks against the generated route tree
+
+### 04.09
+
+- the catalogue is read in one place now. the couple's menu tab and the venue's own editor were the same four-way `Promise.all` twice, down to the triple `.order()` and the `?? "PLN"` - they differ in what they do with the rows, not in how they get them. `fetchMenuCatalogue` is the seam, and it returns **three** outcomes: an aborted postgrest request comes back as an error *result*, so folding it into "failed" parks an `AbortError` on screen every time somebody navigates away mid-fetch
+- the three selects stay spelled out rather than driven through one table-name-parameterized helper: supabase-js resolves the row type off the literal table name, and a union of three collapses every column into a "does not exist on" error
+
+### 03.09
+
+- video: polish strings throughout, replacing the english placeholders the first cut shipped with
+
+### 02.09
+
+- a couple can change the venue they are linked to. no second rpc and no second code path - `link_wedding_to_venue` already resets `venue_access` to 'pending' and clears the ordered package on any real change of `tenant_id`; the dialog only has to say what is about to be lost
+- the venue-landing marker is spent when the lookup *starts*, not when it answers. spending it in the callback looks safer and is not: the callback returns early on an abort, and an unmount is an abort with nobody left to spend it - navigate off `/home` mid-flight and the marker sat in sessionStorage for the life of the tab, firing at the next arrival on the wedding list, which is the exact bounce the marker exists to prevent. strictmode's double mount is unaffected, since `pending` is component state
+- `sanitizeNextPath` now validates what the *browser* will see: tab, newline and cr are stripped anywhere in a url before parsing, and a backslash in the authority position normalises to a slash - so `/\evil.example` resolves protocol-relative to somebody else's origin. no live hole today (every consumer feeds tanstack's `redirect({ to })`), but this is the function the next cross-origin caller will reasonably trust
+- the tenant reads are **total**, not merely error-checked. postgrest reports a refusal as an error result, which each helper already handles; what it cannot report that way is a request that never completed - offline, dns, cors - and every caller is a fire-and-forget `void x.then(...)` inside an effect, so an escaping rejection is not a logged failure but a screen that never leaves its loading state. one `total()` wrapper rather than a `.catch()` per call site putting the fallback decision in two places
+- reads and timers that outlive their screens cancelled: `/home`'s wedding list aborts the previous run (two reads in flight, older landing last, overwriting the newer list), and checks `signal.aborted` *before* the error branch, since an aborted request arrives as an error result
+- the crm's two-click delete now announces itself. one button across both states rather than a branch returning two - the arming click used to unmount the element under the user's finger, dropping keyboard and screen-reader focus at exactly the moment the label changed. armed, the visible text *is* the name (an aria-label saying something else is the label-in-name failure); resting, the hint is a description, which is the actual fix for a `sr-only` span that an aria-label was overriding into silence
+
+### 01.09
+
+- a refused menu write now undoes **that row**, not the list. the snapshot version was the easy way to write it and quietly wrong: a menu editor is a screen of small independent writes, so between the optimistic edit and the refusal a staff member has typically renamed a dish or toggled an archive, and reinstating the old array threw all of it away to undo one field. `withoutRow` / `withRows` / `revertPatch`, the last of which puts back only the fields the write tried to change
+- two adds in the same tick can land on the same `position`, deliberately not chased: the column is non-unique by design and every read orders `position, created_at, id`, so a tie costs an arbitrary but stable order and nothing else
+
+### 31.08
+
+- the menu editor had no write feedback worth the name. every `fail()` logged `null` because the helpers returned a bare boolean and dropped the postgrest error - the message, the constraint name and the sqlstate all thrown away at the one moment somebody needs them. `WriteResult` carries the cause, and an update or delete that rls filters to nothing gets a string of its own, since a clean 204 has no error object to log
+- `writesInFlight` is a counter, not a boolean: blurring a name while a dish delete is still going is ordinary use, and the first write to finish would otherwise declare the screen idle
+- the last failure clears when the *next* action starts, matching `useTenantRoster` - clearing only on success leaves one transient failure on screen for the rest of the session
+- switching tenants clears the rows first: `loaded` stayed true between tenants, so the screen rendered one venue's packages under another venue's name until the fetch landed, and staff who switch venues are staff about to edit the wrong catalogue
+
+### 30.08
+
+- `choose_count` commits on blur. `NumberInput` reports every parseable value as it is typed, so typing "60" wrote 6 and then clamped 60 down to 50 - two writes of a rule no staff member chose, the second landing while the field still read "60", and a couple looking at the menu in between was told to pick six dishes
+- `parseChooseCount` takes the raw text rather than a number precisely so it can tell `""` from `0`: an emptied field reverts instead of snapping to a bound
+
+### 29.08
+
+- an archived dish stays in the picker **while it is served**. a live-only filter took a dish the couple had selected off the screen while it was still in the served set, which meant it could not be unpicked - they were left serving something they could no longer see. `pickableOptions` admits live *or* selected, and `pickedCount` counts the same set, so the sidebar badge stopped reading "nothing left to do" over a section reading "4 of 5"
+- a refused package change now rolls back. this is the one store action that awaits, and the reason is that it clears three things - the package, the served set and every guest's dish - on the strength of a trigger that only runs if the write lands. a refusal left an emptied menu and an emptied guest list over a database that still held all three, and every later pick failed too, because `enforce_menu_selection_in_package` was measuring against the package the database still had. guarded: if the couple picked something else while it was in flight, that later choice owns the state
+- `restoreGuestDishes` works guest by guest rather than restoring the array, and only touches guests who are *still* dishless - the round trip is long enough to have added, renamed or seated somebody
+- a couple can clear the chosen menu, which is the way back out of a package picked by mistake: `link_wedding_to_venue` clears it on a re-link, but somebody who picked the wrong package at the right venue has nothing to re-link. same operation as a switch, not a special case - the `when` clause on the trigger is written to catch exactly the null. no analytics event for a clear: the payload is the shape of the package, and there isn't one
+- pick and unpick of the same dish are sequenced per option (`queueOptionWrite`). both were fire-and-forget with nothing ordering them, so the delete could reach postgres before the insert it was undoing, delete nothing, and leave the row behind - the store showing a dish as unpicked while the wedding still served it, with no error anywhere, both statements having succeeded. `ignoreDuplicates` never covered this; it makes a *second* pick idempotent, a different race. keyed per dish, because two different dishes have no ordering relationship at all
+- the tally counts portions it **cannot name**. unresolvable ids were dropped on the floor, which let a printed report say "31 of 40 guests have a dish" over a list summing to 19, with no sign of where the other twelve went. they are a count rather than a row - a raw uuid on a kitchen printout is worse than a shorter list - and they go wholesale when a wedding loses its venue, since the catalogue empties while `guests.menu_option_id` stays put
+- retired dishes render at the right opacity again: `cn` runs through tailwind-merge, so two `opacity-*` utilities collapse to whichever is last, and the read-only `opacity-90` was winning over `opacity-60`
+- consent dialog copy: the account identifier is named in the full privacy document, not in the dialog's short list, and `privacy.venue.optin` now says the dialog shows a *short version* of both halves rather than "exactly this list" - the published promise has to describe what the dialog actually does
+
+### 28.08
+
+- **the three fks into the venue's catalogue are `on delete restrict` now, and that is a security boundary rather than a preference.** `weddings.menu_package_id`, `wedding_menu_selections.menu_option_id` and `guests.menu_option_id` all point at rows venue staff hold delete on, and shipped as `set null` / `cascade` / `set null` they made one `delete from menu_options` a write into three tables of the couple's wedding - `guests` included, whose select policy names the three member roles literally so that no venue ever reads it, and by way of `clear_guests_menu_option`, a definer function doing an unscoped `update public.guests` with rls and `venue_access` both out of the picture. "read-only by construction" was a statement about *policies*; referential actions were the hole. staff can still hard-delete a dish nobody ordered - the typo before anyone ordered, which is all delete was ever for - and anything a couple holds has to be archived
+- **retiring a venue is a clear, not a refusal.** `weddings.tenant_id` is `set null` and `menu_packages.tenant_id` is `cascade`, so one `delete from tenants` fires both in an order nothing specifies - ri triggers run in name order, i.e. creation order, i.e. which migration happened to be written first. the older fk wins today, so the refusal aborted the whole delete with 23514 and retiring a venue any couple had ordered from was simply impossible. third branch: tenant *becoming* null and `menu_package_id` unchanged → null the package and return. tenant a → tenant b still raises, so `link_wedding_to_venue`'s own `menu_package_id = null` stays load-bearing
+- that branch is why trigger 2 is `when (new.menu_package_id is distinct from old.menu_package_id)` and not `after update of menu_package_id`: `update of` matches the statement's **set list**, and the set list of that referential update names `tenant_id` and nothing else. verified in psql, in both referential orders - the fk dropped and recreated so its ri triggers sort after the cascade instead of before it - with the same end state either way. changing either side means redoing that check
+- **archiving retires an offer; it does not cancel an order**, and the asymmetry is a parameter rather than a predicate. `menu_option_in_package` gained `_require_active`, passed by exactly one caller: a *new* selection of an archived dish is refused, while a *guest assignment* to a dish the wedding already selected is not - otherwise a venue archiving a main mid-planning freezes guest edits on a wedding that did nothing wrong
+- re-linking to the venue you are already with is a no-op. everything below that point in the rpc exists to move a wedding from one recipient to another, and the reset is how the previous recipient's consent is withdrawn - with the same venue there is nobody to withdraw it from. it had cost a live `granted` dropping to `pending`, and from the menu stack on it would additionally have wiped the package, the selections and every guest's dish. the checks above still run first, so this is not a way past them
+- `set_venue_access` authorizes before it answers. written the obvious way - not found, then not linked, then the permission check - a definer function reading every row handed a stranger three distinguishable answers about any wedding id. the owner branch and the staff branch stay specific because both have already proved they belong; everything else collapses into one 42501
+- **both invitation insert policies pin every forgeable column.** a `with check` constrains what it names and is silent about the rest, and every column is client-supplied on insert - defaults are defaults, not guarantees. that left `claimed_at` + `claimed_by` (a row that reads, in the couple's own records, as a named account having accepted an invitation they never saw), an `expires_at` arbitrarily far out, and a chosen `token`, whose entire security is that nobody who was not sent it can guess it. the wedding side is its own migration, `20260828000001`, because `20260422000001` has been applied on remote since april
+- the token shape is a policy clause rather than a check on the column, deliberately: a check would also outlaw `seed.sql`'s hand-typeable fixtures, which exist so `/invite/$token` can be reached by typing it in development, and would have to validate every row already on remote at push time
+- indexed the fks these deletes walk - `weddings.menu_package_id` (partial, since most weddings have picked no package) and both `auth.users` references on `tenant_invitations`, which `delete_own_account` has to walk on every account deletion
+- a policy admits **rows, not columns**, so `'venue'` on `weddings` puts `owner_id` within reach - a stable uuid the disclosure did not name. reachable rather than disclosed, since both venue-side reads project explicit column lists, but the answer taken was to name it in the copy rather than to hide it. the alternative, a `wedding_venue_summary` view mirroring `wedding_seatmap`, costs `loadWeddingForVenue` its `tenants(id, slug, name)` embed - postgrest will not traverse an fk from a view - to conceal an opaque identifier carrying no name and nothing the couple typed
+
+### 27.08
+
+- `tenantOrigin(slug)` became `tenantUrl(slug, path)`, and the signature *is* the fix. on a preview deploy there is no tenant origin to hand back - the tenant rides `?tenant=` - so a caller appending `/venue/invite/<token>` to a string ending in `?tenant=bagatelka` buried the token inside the query value and landed on `/`. the invitation 404'd and the claim route never ran. every caller had that bug; none can have it now
+- `formatMoney` pins two fraction digits instead of leaving them to the currency's own minor-unit exponent. every price here is stored as hundredths whatever the currency is, and intl's default would otherwise print a value `parsePriceInput` cannot read back: `¥1,405` has no decimal mark left to tell its group comma from one, and `KWD 405.000` lands exactly on the three-digits-behind-a-lone-separator trap. `tenants.currency` is shape-checked rather than allowlisted, so both are reachable today
+
+### 26.08
+
+- `parsePriceInput` was losing a factor of 1000 on grouped input: it replaced every comma with a dot before deciding what the separators meant, so an english venue's `1,405.00` - which is what `formatMoney` seeds the field with on an english ui - could not be typed back. `splitAmount` classifies first: both characters present means the rightmost is the decimal mark (no locale writes its group separator after it), a repeated single character is grouping
+- the third case is refused rather than guessed. a lone separator with exactly three digits behind it - `1,405`, `10,000` - reads as 1405 to an english venue and 1.405 to a polish one, the two readings are a factor of 1000 apart, and nothing in the string breaks the tie. a price is not a field to be wrong about by 1000x, so the form asks again
+
+### 25.08
+
+- `apexOrigin()` was handing back a third party's origin on preview deploys. on `*.pages.dev` the slug comes from `?tenant=` rather than from a label, so it is non-null on a hostname that never carried it, and stripping `slug.length + 1` characters off `x.easywed.pages.dev` yields `pages.dev` - the string a copied invitation url gets built on, with a bearer token in its path. guarded on the label rather than on the preview suffix, so it stays correct for any future slug source
+- `tenant_invitations.claimed_by` is `on delete set null`. copied literally from `20260422000001` it would have been `no action` and would have reintroduced the exact undeletable-account bug `20260731000002` exists to fix - anyone who claimed a venue invite gets 23503 out of `delete_own_account`. when copying a table shape, copy the migrations that repaired it too. not cascade: the row is the venue's audit record of a burned link
+
+### 24.08
+
+- the store mirrors the two triggers that clear `guests.menu_option_id`, because the half that is easy to forget shows up everywhere at once - the guest list badge, the dish filter chips, the printed report and the csv export would all go on naming a dish the database had already taken away, and only a reload would correct them. local only, no mutation: the database has already done it by the time the write returns. it reaches into `planner.store` and not the reverse, so there is no cycle
+- the kitchen report prints `["name", "dietary", "dish"]` - that "name" being the seat's pseudonym. without it the kitchen gets a diet and a dish with no way to tell which seat they belong to, since the list's numbering restarts under every table heading
+- crm reorder applied the new positions without re-sorting the array. every consumer renders in array order, so a reorder persisted and showed nothing: staff clicked the up arrow, the row did not move, they clicked again, and the list ended up two places from where it looked. `applyOrder` renumbers *and* sorts, with the same comparator the reads order by
+- deleting a package filtered options by `id` instead of `menu_course_id`, so the orphans stayed on screen
+
 ### 22.08
 
 - venue menus, part one: the catalogue. `menu_packages` → `menu_courses` → `menu_options` at `/crm/menus`, and nothing else in the app moves - no couple can read a byte of it yet, which is what keeps this migration a no-op for every existing user. the whole reason it exists is that a venue's product *is* its menu, and until now the only food-shaped field in the app was `guests.dietary`
