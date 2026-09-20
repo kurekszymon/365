@@ -1175,6 +1175,7 @@
   "assistant.tool.label.named": "\"{{name}}\"",
   "assistant.tool.label.table_round": "the round table",
   "assistant.tool.label.table_rectangular": "the rectangular table",
+  "assistant.tool.label.table_custom": "the custom-shaped table",
   "assistant.tool.label.fixture_rectangle": "the rectangular room element",
   "assistant.tool.label.fixture_circle": "the circle room element",
   "assistant.tool.label.fixture_rounded": "the rounded room element",

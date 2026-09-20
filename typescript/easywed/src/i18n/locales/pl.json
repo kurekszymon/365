@@ -1131,6 +1131,7 @@
   "export.col.name": "Imię",
   "export.col.table": "Stół",
   "export.col.dietary": "Dieta",
+  "export.col.dish": "Danie",
   "export.col.note": "Notatka",
   "export.dish_tally": "Dania - zestawienie",
   "export.dish_assigned": "Danie ma przypisane {{count}} z {{total}} gości",
