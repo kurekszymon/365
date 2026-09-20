@@ -72,13 +72,13 @@ export function VenueLanding({ lang }: { lang: Lang }) {
 
       <footer className="border-t">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-muted-foreground sm:flex-row">
-          <p>
+          <p className="text-center sm:text-left">
             <span className="font-heading font-semibold text-foreground">
               easywed.
             </span>{" "}
             - {t("landing.footer.tagline", { lng: lang })}
           </p>
-          <nav className="flex items-center gap-6">
+          <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
             <Link
               to={lang === "pl" ? "/pl/changelog" : "/en/changelog"}
               className="transition-colors hover:text-foreground"

@@ -4,9 +4,15 @@ import type { LoopName } from "./LandingLoop"
 import type { Lang } from "./LocaleLanding"
 
 // Two rows that each show one thing the planner does, as a rendered loop of
-// the real app beside the sentence that says what you are watching. The rows
-// alternate sides on desktop; on mobile the loop always comes first, because
-// the video is what stops the scroll.
+// the real app beside the sentence that says what you are watching.
+//
+// The rows alternate sides on desktop, which is what the `lg:order-first` on
+// every other loop is for. In DOM order the caption comes first, so on mobile
+// - one column, no ordering - each loop is introduced by the heading that says
+// what it is. The loop used to come first there, on the theory that the video
+// is what stops the scroll; what it actually produced was the hero loop and
+// this one stacked back to back, two silent videos deep before any heading
+// explains either.
 const STORIES: Array<{ key: string; loop: LoopName }> = [
   { key: "scale", loop: "scale" },
   { key: "shape", loop: "shape" },
@@ -23,11 +29,6 @@ export function LandingStories({ lang }: { lang: Lang }) {
             key={key}
             className="grid items-center gap-8 lg:grid-cols-2 lg:gap-14"
           >
-            <LandingLoop
-              name={loop}
-              lang={lang}
-              className={i % 2 === 1 ? "lg:order-2" : undefined}
-            />
             <div className="flex flex-col gap-4">
               <h2 className="font-heading text-3xl font-semibold text-balance sm:text-4xl">
                 {t(`landing.stories.${key}.title`, { lng: lang })}
@@ -36,6 +37,11 @@ export function LandingStories({ lang }: { lang: Lang }) {
                 {t(`landing.stories.${key}.desc`, { lng: lang })}
               </p>
             </div>
+            <LandingLoop
+              name={loop}
+              lang={lang}
+              className={i % 2 === 0 ? "lg:order-first" : undefined}
+            />
           </div>
         ))}
       </div>

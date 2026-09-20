@@ -7,14 +7,20 @@
 # under connect-src before switching the header name to Content-Security-Policy.
 
 # The landing loops are large and never change within a deploy, so they are
-# cached hard. Deliberately NOT `immutable`, and deliberately not a year: these
-# filenames are not content-hashed, and step 3b of the v1.1 release re-renders
-# every one of them in place (the /landing/en/* files are Polish renders
-# standing in until then). A year of `immutable` on a mutable name would pin a
-# visitor to the wrong video with no way to invalidate it. Once the renders are
-# final and the names carry a hash, raise this to `max-age=31536000, immutable`.
+# cached hard. Deliberately NOT `immutable` and deliberately not a year: these
+# filenames are not content-hashed, and the release process re-renders them in
+# place, so the same URL can legitimately hold different bytes after a deploy.
+# A year of `immutable` on a mutable name would pin a visitor to the old video
+# with no way to invalidate it.
+#
+# No `stale-while-revalidate` either, for the same reason: it let a re-rendered
+# loop keep being served from cache for up to a week after the deploy that
+# replaced it. A day of plain `max-age` is the whole exposure now.
+#
+# Give these names a content hash and this becomes `max-age=31536000,
+# immutable` - that is the fix, and it is the only thing blocking it.
 /landing/*
-  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+  Cache-Control: public, max-age=86400
 
 /*
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
