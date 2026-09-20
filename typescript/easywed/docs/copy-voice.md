@@ -91,6 +91,14 @@ touches, so fix it there.
 | `assistant.tool.result.no_hall`                                 | en dash        |
 | `assistant.tool.result.invalid_measures_one` / `_few` / `_many` | en dash        |
 
+### One invisible character that must stay
+
+`reminders.title` PL is „Przypo­mnienia" - with a **soft hyphen** (U+00AD)
+after „Przypo". It is the only invisible character in either locale, and it is
+deliberate: the sidebar rail is a fixed 60px strip and the label span sets no
+wrap rules, so without a break opportunity the word overflows the strip. Do not
+strip it as a stray character, and keep it if the string is retranslated.
+
 English is the opposite case: a straight `"` **is** the convention there (17
 strings, most of them legal prose), so leave it alone. EN takes no curly quotes.
 
