@@ -6,8 +6,11 @@ import viteTsConfigPaths from "vite-tsconfig-paths"
 import tailwindcss from "@tailwindcss/vite"
 import { nitro } from "nitro/vite"
 // Relative, not "@/lib/site": vite-tsconfig-paths applies to the app build,
-// not to this config file, so the alias would not resolve here.
-import { SITE_ORIGIN as SITE } from "./src/lib/site"
+// not to this config file, so the alias would not resolve here. The explicit
+// `.ts` is what Vite 8's `configLoader: "native"` needs - it hands the config
+// to Node, which does not guess extensions - and it is already the default in
+// waiting, so the extensionless form only warns today.
+import { SITE_ORIGIN as SITE } from "./src/lib/site.ts"
 
 // The marketing surface, in both locales. Everything here is prerendered to
 // real HTML at build time; every other route stays a client-rendered SPA served
