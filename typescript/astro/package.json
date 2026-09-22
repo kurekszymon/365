@@ -6,7 +6,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "deploy": "astro build && yarn dlx wrangler pages deploy ./dist"
   },
   "dependencies": {
     "@astrojs/mdx": "8.0.1",

@@ -4,6 +4,12 @@
 
 check what's astro's about, deploy personal website with it
 
+## deploy
+
+```sh
+yarn deploy # astro build && yarn dlx wrangler pages deploy ./dist
+```
+
 ## note
 
 i know there will be some repetitions - I will copy some content from [posts](../../posts/).
