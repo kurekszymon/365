@@ -1,8 +1,7 @@
 ---
-title: 'git got gut'
-description: 'Overview on the git workflow from reversibility perspective'
-pubDate: 'Feb 01, 2026'
-heroImage: '../../assets/gitgotgut.svg'
+title: "git got gut"
+description: "Overview on the git workflow from reversibility perspective"
+pubDate: "Feb 01, 2026"
 ---
 
 _you need to be familiar with git_ - that's just the requirement nowadays - whether you are an experienced engineer or just getting started.
@@ -145,7 +144,7 @@ Date:   Thu Jan 29 22:34:12 2026 +0100
 For me reflog is the last safety net - if I mess up rebases, resets, commits in order I would go back in time to place before I started to mess up.
 It's also very convenient you don't have to do _anything_ in order to get this bookkeeping and all benefits that come from this.
 
-Note: `reflog` is a __LOCAL__ tracker of your changes - your peers or the remote does not know about this. Reflog also eventually expires, but I have never experienced a case where I would need to worry about the time of it - most commonly I reach for it when I messed up just now, or relatively not a long time ago.
+Note: `reflog` is a **LOCAL** tracker of your changes - your peers or the remote does not know about this. Reflog also eventually expires, but I have never experienced a case where I would need to worry about the time of it - most commonly I reach for it when I messed up just now, or relatively not a long time ago.
 
 ## wrapping up
 

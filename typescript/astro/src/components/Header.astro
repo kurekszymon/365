@@ -2,46 +2,43 @@
 import { SITE_TITLE } from "../consts";
 import HeaderLink from "./HeaderLink.astro";
 
-const pathname = Astro.url.pathname.split("/").filter(Boolean).at(-1);
+interface Props {
+	/** On the home page the site title is the page's h1. */
+	home?: boolean;
+}
+
+const { home = false } = Astro.props;
+const Title = home ? "h1" : "p";
 ---
 
-<header>
-	<nav>
-		<h2>
-			{`${SITE_TITLE}/${pathname}`}
-		</h2>
-		<div class="internal-links">
-			<HeaderLink href="/about">about</HeaderLink>
-		</div>
-	</nav>
+<header class="wrap">
+	<Title class="site-title">
+		<a href="/">{SITE_TITLE}</a>
+	</Title>
+	<HeaderLink href="/about">about</HeaderLink>
 </header>
+
 <style>
 	header {
-		margin: 0;
-		padding: 0 1em;
-		background: white;
-		box-shadow: 0 2px 8px rgba(var(--black), 5%);
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 1rem;
+		padding-top: 2.5rem;
+		padding-bottom: 1.5rem;
+		font-size: 0.95rem;
 	}
-	h2 {
+	.site-title {
 		margin: 0;
-		font-size: 1em;
+		font-size: 1.5rem;
+		font-weight: 700;
+		line-height: 1.2;
 	}
-
-	h2 a,
-	h2 a.active {
+	.site-title a {
+		color: inherit;
 		text-decoration: none;
 	}
-	nav {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		min-width: 190px;
-	}
-	nav a {
-		padding: 1em 0.5em;
-		color: var(--black);
-	}
-	.internal-links {
-		display: flex;
+	.site-title a:hover {
+		color: var(--accent);
 	}
 </style>
