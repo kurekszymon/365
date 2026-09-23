@@ -162,5 +162,3 @@ Open branch with no changes if you are scared to do so - do everything you need 
 Your company won't care about an extra branch opened, especially if you don't push it to the remote (no one will track you down if you do it - unless you don't open a PR, in most setups reviewers won't be notified, look up CODEOWNERS file in your project).
 
 Most importantly - do your own research on git commands, make them yours, feel good and safe when using this, experiment on your personal projects and custom branches - it's not that hard. Be mindful of what might happen, paste it to LLM if you are not sure (please don't paste any company secrets there).
-
-Git is easy - own the process.
