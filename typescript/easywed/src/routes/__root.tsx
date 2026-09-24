@@ -11,6 +11,7 @@ import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { PostHogProvider } from "@posthog/react"
 import appCss from "../styles.css?url"
+import type { PostHogConfig } from "posthog-js"
 import i18n from "@/i18n"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
@@ -41,7 +42,7 @@ const options = {
   // Invite tokens are bearer credentials and they live in the URL path, which
   // pageview capture would otherwise ship verbatim. See scrubInviteTokens.
   before_send: scrubInviteTokens,
-} as const
+} as Partial<PostHogConfig>
 
 function NotFound() {
   const { t } = useTranslation()
