@@ -124,6 +124,36 @@ export const L_HALL = withDerived({
   fixtures: [{ id: "bar", label: tl.hall.bar, x: 1245, y: 630, width: 56, height: 200 }],
 });
 
+/**
+ * The keep-apart cut's room, as the couple left it before the video starts:
+ * `TALL_HALL`'s 14x16 m, its round tables in two columns either side of the
+ * dance floor. Stół 6 stands right under the DJ booth. Two tables are named
+ * by the couple (`mum`, `dad` - what were Stół 4 and 5), and those two stand
+ * one behind the other on the left. Stół 6 goes first, into the bottom-left
+ * corner, which is clear from the start; Rodzina taty then takes the spot
+ * Stół 6 left, across the dance floor from Rodzina mamy. The same half-metre
+ * clearances as the other rooms, and the same 58 seats.
+ *
+ * A round table is 130 units, so a centre at 5 past a whole metre puts its
+ * top-left corner - what the app snaps (`snapPositionToGrid`) - on the grid.
+ * Moved tables come last, so they are drawn over the dance floor they cross.
+ */
+export const KEEP_APART_HALL = withDerived({
+  name: tl.hall.name,
+  canvas: { width: 840, height: 960 },
+  danceFloor: { x: 425, y: 545, width: 300, height: 240 },
+  tables: [
+    { id: "head", label: tl.hall.headTable, shape: "rect", x: 425, y: 120, width: 320, height: 80, seats: 10 },
+    { id: "t1", label: tl.hall.table(1), shape: "round", x: 725, y: 605, width: 130, height: 130, seats: 8 },
+    { id: "t2", label: tl.hall.table(2), shape: "round", x: 425, y: 845, width: 130, height: 130, seats: 8 },
+    { id: "t3", label: tl.hall.table(3), shape: "round", x: 725, y: 845, width: 130, height: 130, seats: 8 },
+    { id: "mum", label: tl.keepApart.mumsFamily, shape: "round", x: 125, y: 605, width: 130, height: 130, seats: 8 },
+    { id: "t6", label: tl.hall.table(6), shape: "round", x: 725, y: 365, width: 130, height: 130, seats: 8 },
+    { id: "dad", label: tl.keepApart.dadsFamily, shape: "round", x: 125, y: 365, width: 130, height: 130, seats: 8 },
+  ],
+  fixtures: [{ id: "dj", label: tl.hall.djBooth, x: 725, y: 120, width: 180, height: 60 }],
+});
+
 /** `HALL_GAP` in the app's `planner.store.ts`: the metres `nextHallPosition` leaves between halls. */
 export const HALL_GAP = 3;
 

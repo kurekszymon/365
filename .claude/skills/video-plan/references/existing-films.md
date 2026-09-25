@@ -102,6 +102,20 @@ built the same day, leaves the measure chapter out (2565 - 14 x 15 = 2355) becau
 measures from a long-press menu with no *Środek* / *Krawędź* switch, and draws the hall forms as
 the phone's bottom sheet; the second hall stands 17 m along there, beside `TALL_HALL`'s 14 m.
 
+## The keep-apart cut - `easywed-apart-vertical`, 510f (17 s), 9:16 only
+
+close on the *DJ Booth* and Stół 6 under it, the uncle's line already on screen on frame 0 - Stół 6
+pressed and dragged over *Parkiet* to the empty bottom-left corner, the view pulling back over the
+whole room - the camera pushes in on two tables the couple named *Rodzina mamy* and *Rodzina taty*,
+one behind the other, every chair initialled, and the parents' line - Rodzina taty dragged in an arc
+over the dance floor into the spot Stół 6 left, let go and snapped to the grid while the view pulls
+back - the room recedes, the payoff, the CTA. One continuous camera move, no cuts inside the planner.
+The first film to show a table dragged *with* its seated guests, and the first to put initials on
+the seat markers. The hook order was swapped from the brief (parents first) at the user's call.
+Scenes 96 + 150 + 180 + 108 = 534 at `KEEP_APART_TRANSITION = 8` x 3 seams -> 510.
+Built from `docs/video-plans/3-story-videos-9x16-2026-09-25.md`, brief `keep-apart`, drawn on
+`KEEP_APART_HALL` (`layouts.ts`), 14x16 m, 58 seats.
+
 ## Polish lines already burned on screen
 
 None of these may appear again:
@@ -219,6 +233,16 @@ na miejsca, wyrównaj obłożenie stołów i wyeksportuj gotowy plan do druku dl
 (`demo.seating.subtitle`) - both spent, in both films - and the guest scene's corrected subtitle,
 *"Diety, grupy wiekowe i przypisane miejsca są zawsze przy nazwisku - koniec z trzema arkuszami
 naraz."*, spent with them.
+
+From the keep-apart cut: *"Wujek Zbyszek i mikrofon? Daleko od DJ-a."* (its hook) · *"Twoi rodzice
+nie mogą siedzieć stół w stół?"* · *"Cały stół na drugą stronę parkietu."* · *"Goście zostają na
+swoich miejscach."* · *"Przesuwacie stół, razem z gośćmi."* - and, as the canvas shows them: the
+couple's own table names *"Rodzina mamy"* and *"Rodzina taty"* (user data, not app strings - both
+now spent), the fixture *"DJ Booth"* (`fixtures.preset.dj_booth`, English in the Polish locale
+too), and the zoom pill's *"175%"*, *"103%"*, *"92%"*. The uncle, *Wujek Zbyszek*, is spent as a
+character. The beat itself - a whole seated table dragged across the room, its guests travelling
+with it - is spent, as is the payoff of moving a table with its guests. Its CTA is *"Zacznij
+planowanie bez konta"* over the *"easywed.app"* pill.
 
 The one exception is the CTA pill itself: *"easywed.app"* recurs by design (section 8). Each video's
 action line above it is its own, and burns like any other line.

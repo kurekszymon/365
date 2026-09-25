@@ -21,9 +21,30 @@ type Props = {
   dx?: number;
   dy?: number;
   selected?: boolean;
+  /**
+   * The occupants' initials, indexed like `seatPositions(table)` - what
+   * `TableSeats` writes on a taken marker (`getInitials`). Left out, markers
+   * stay blank, as every published film draws them.
+   */
+  initials?: string[];
+  /** The name's type size. The couple's own names run longer than *Stół 1*. */
+  labelSize?: number;
 };
 
-export const PlannerTable: React.FC<Props> = ({ table, enter, fill, fills, dx = 0, dy = 0, selected }) => {
+/** `TableSeats`: `fontSize: Math.max(7, seatPx * 0.42)`, in white on the filled marker. */
+const INITIALS_SIZE = SEAT_RADIUS * 2 * 0.42;
+
+export const PlannerTable: React.FC<Props> = ({
+  table,
+  enter,
+  fill,
+  fills,
+  dx = 0,
+  dy = 0,
+  selected,
+  initials,
+  labelSize = 22,
+}) => {
   const seats = seatPositions(table);
   const takenSeats = fills ? fills.reduce((sum, seat) => sum + seat, 0) : fill * table.seats;
   // Scale about the table's own center so it grows into place, then shift by
@@ -45,15 +66,30 @@ export const PlannerTable: React.FC<Props> = ({ table, enter, fill, fills, dx = 
         // A small pop as the guest lands, settling back to the resting size.
         const pop = 1 + Math.sin(taken * Math.PI) * 0.35;
         return (
-          <circle
-            key={i}
-            cx={seat.x}
-            cy={seat.y}
-            r={SEAT_RADIUS * pop}
-            fill={interpolateColors(taken, [0, 1], [colors.seatEmpty, colors.seatFilled])}
-            stroke={interpolateColors(taken, [0, 1], [colors.seatEmptyBorder, colors.seatFilledBorder])}
-            strokeWidth={1.5}
-          />
+          <g key={i}>
+            <circle
+              cx={seat.x}
+              cy={seat.y}
+              r={SEAT_RADIUS * pop}
+              fill={interpolateColors(taken, [0, 1], [colors.seatEmpty, colors.seatFilled])}
+              stroke={interpolateColors(taken, [0, 1], [colors.seatEmptyBorder, colors.seatFilledBorder])}
+              strokeWidth={1.5}
+            />
+            {initials?.[i] && taken > 0.5 ? (
+              <text
+                x={seat.x}
+                y={seat.y}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontFamily={fonts.sans}
+                fontSize={INITIALS_SIZE}
+                fontWeight={500}
+                fill={colors.primaryInk}
+              >
+                {initials[i]}
+              </text>
+            ) : null}
+          </g>
         );
       })}
 
@@ -86,7 +122,7 @@ export const PlannerTable: React.FC<Props> = ({ table, enter, fill, fills, dx = 
         y={table.y - 2}
         textAnchor="middle"
         fontFamily={fonts.heading}
-        fontSize={22}
+        fontSize={labelSize}
         fontWeight={600}
         fill={colors.tableInk}
       >

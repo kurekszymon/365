@@ -26,6 +26,10 @@ type Props = {
   /** Per-table drag offset, indexed like `hall.tables`. */
   offsets?: Point[];
   selectedTableId?: string;
+  /** Per-table occupants' initials, indexed like `hall.tables` - see `PlannerTable`'s `initials`. */
+  seatInitials?: (string[] | undefined)[];
+  /** Every table name's type size - see `PlannerTable`'s `labelSize`. */
+  labelSize?: number;
   /**
    * The hall's polygon outline (`hall.geometry` in the app), in canvas units.
    * The floor and the grid clip to it and the wall follows it, as
@@ -101,6 +105,8 @@ export const HallCanvas: React.FC<Props> = ({
   seatFills,
   offsets,
   selectedTableId,
+  seatInitials,
+  labelSize,
   walls,
   bare = false,
   children,
@@ -262,6 +268,8 @@ export const HallCanvas: React.FC<Props> = ({
           dx={offsets?.[i]?.x ?? 0}
           dy={offsets?.[i]?.y ?? 0}
           selected={selectedTableId === table.id}
+          initials={seatInitials?.[i]}
+          labelSize={labelSize}
         />
       ))}
 

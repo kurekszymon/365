@@ -47,6 +47,19 @@ named in section 2 both need updating — nothing will warn you.
     `track("guest_seated", { source: "canvas_seat", displaced })` is fired by the popover itself.
   - A marker shows the occupant's initials once it is 14 px or larger (`getInitials`, `seatSizePx`),
     and is inert - no drag, no popover - while the measure tool is on or the viewer cannot edit.
+- **A table dragged across the room takes its guests with it** (`Canvas/useTableSnap.ts`,
+  `Canvas/TableVisual.tsx`, `stores/planner.store.ts`). While it is dragged the table - seat markers
+  included, since `TableSeats` renders inside `TableVisual` - follows the raw pointer delta as a
+  `translate3d`, raised above its neighbours (`zIndex: 30`); on drop `snapPositionToGrid` rounds its
+  **top-left corner** (`position` is the top-left, `left: position.x * ppm`) to the snap step,
+  clamps it into the hall under its centre, and `updateTablePosition` rewrites only `position` /
+  `hallId`. Guests point at the table by `tableId` / `seatId`, so nobody is unseated. Moving a table
+  fires **no** analytics event at v1, and `wedding_created` is `{ source: "wedding_list" }` - a
+  signed-in action, so a guest-mode film cannot name it as its success signal.
+  - A seat marker's initials are `getInitials` (the first letters of the first two words,
+    uppercased), white, `font-medium`, `fontSize: Math.max(7, seatPx * 0.42)`, shown once
+    `seatSizePx(ppm) = clamp(ppm * 0.34, 12, 44)` reaches 14 px (`Canvas/TableSeats.tsx`). A table's
+    name is `text-xs` Playfair, `truncate`d to the table's width, over its `N / capacity` count.
 - **Multi-hall and multi-floor** (`hall.floor`, `hall.list_title`), plus custom polygon halls and
   fixtures — stage, dance floor, bar, DJ booth, entrance, or a shape drawn by hand
   (`fixtures.preset.*`, `fixtures.shape.polygon`).

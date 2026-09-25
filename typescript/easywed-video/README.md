@@ -25,8 +25,12 @@
   hall added upstairs between them, and the other films' beats as chapters - the L-shaped room, the
   import, the kids counted, a distance measured, a guest moved, the printed report. Its 9:16 twin
   runs 78.5 seconds without the measuring, which a phone at v1 does differently.
+- **the keep-apart cut** - 17 seconds for Reels/TikTok, 9:16 only: Stół 6 taken away from the DJ
+  booth, then the couple's two family tables one behind the other, one of them dragged across the
+  dance floor with its guests, the CTA.
 
-All but the loops render in 16:9 (1920x1080) and 9:16 (1080x1920), and all are in Polish.
+All but the loops and the keep-apart cut render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
+are in Polish.
 
 It is a standalone package on purpose - it sits next to `easywed/` rather than inside it, so it
 stays out of that project's tsconfig, ESLint and Vite scope.
@@ -69,6 +73,8 @@ pnpm run render:odd-room:poster  # -> out/pl/easywed-shape-poster.png (frame 0 a
 
 pnpm run render:walkthrough-long           # -> out/pl/easywed-walkthrough.mp4          (16:9)
 pnpm run render:walkthrough-long:vertical  # -> out/pl/easywed-walkthrough-vertical.mp4 (9:16)
+
+pnpm run render:keep-apart:vertical  # -> out/pl/easywed-apart-vertical.mp4 (9:16, its only size)
 
 pnpm run render:all     # all of the above
 pnpm run render:all:en  # all of the above in English -> out/en/
@@ -197,6 +203,14 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `easywed-walkthrough-vertical` | 2355f  | the same tour in 9:16, without the measure chapter      |
 | `Floors`                       | 240f   | a second hall added on floor 1, both halls in view      |
 
+| id                        | length | what it is                                                  |
+| ------------------------- | ------ | ----------------------------------------------------------- |
+| `easywed-apart-vertical`  | 510f   | the 17 s keep-apart cut, 9:16 only                          |
+| `ApartHook`               | 96f    | close on the DJ booth, the uncle's line up on frame 0       |
+| `ApartUncle`              | 150f   | Stół 6 taken to the far corner; push-in on the family tables |
+| `ApartParents`            | 180f   | Rodzina taty dragged over the dance floor, guests and all   |
+| `ApartCta`                | 108f   | the room recedes, the payoff, logo + easywed.app            |
+
 The long walkthrough's other fifteen chapters are the scenes registered above, from the short
 walkthrough and the other cuts; only `Floors` is its own. The 9:16 cut leaves out `ScaleMeasure`:
 on a phone at v1 the canvas toolbar isn't there, and measuring is a long-press menu item with no
@@ -204,7 +218,7 @@ on a phone at v1 the canvas toolbar isn't there, and measuring is a long-press m
 bottom sheet rather than the desktop's centred dialog.
 
 The scenes are also registered individually (Studio folders "Scenes", "Teaser", "Import",
-"Report", "Kids", "Swap-cut" and "Walkthrough-long") so a single beat can be previewed without scrubbing through the
+"Report", "Kids", "Swap-cut", "Keep-apart" and "Walkthrough-long") so a single beat can be previewed without scrubbing through the
 whole timeline. The social cuts' scenes are registered at 9:16, the cut they are made for.
 
 The landing-page loops - `easywed-scale`, `easywed-swap` and `easywed-shape` - sit together in the
@@ -217,8 +231,9 @@ Studio folder "Landing-loops", each with its beats in a nested folder ("Scale", 
 src/easywed/
   timeline.ts            scene lengths, fps, dimensions - the single source of truth
   theme.ts               hex mirror of the app's `editorial` palette + brand colors, fonts
-  layouts.ts             WIDE_HALL, TALL_HALL, the odd-room loop's L_HALL and the long
-                         walkthrough's second hall, 60 units per metre
+  layouts.ts             WIDE_HALL, TALL_HALL, the odd-room loop's L_HALL, the keep-apart
+                         cut's KEEP_APART_HALL and the long walkthrough's second hall,
+                         60 units per metre
   format.ts              useFormat() - picks hall + type scale from the composition size
   data.ts                the demo wedding: guest list, couple
   geometry.ts            seat positions around round/rectangular tables
@@ -257,6 +272,11 @@ src/easywed/
                          the film it comes from; FloorsScene adds secondHallBeside()
                          (layouts.ts) through components/HallsPanel.tsx, the *Sale* list,
                          and the odd-room chapters then shape that hall rather than L_HALL
+  keep-apart/            the keep-apart cut, 9:16 only, in the seat-swap cut's shape: every
+                         planner scene draws components/ApartPlanner.tsx off one clock
+                         (script.ts) - the two table drags, the pointer and a camera that
+                         zooms the canvas. Its lines use components/CaptionLine.tsx, shared
+                         with the story cuts still to come
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect

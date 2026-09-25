@@ -21,7 +21,10 @@ export const locale = LOCALE[LANG];
 const pluralRules = new Intl.PluralRules(locale);
 
 /** The `_one` / `_few` / `_many` form i18next picks for a count. */
-const plural = (count: number, forms: { one: string; few: string; many: string }) => {
+const plural = (
+  count: number,
+  forms: { one: string; few: string; many: string },
+) => {
   const rule = pluralRules.select(count);
   return rule === "one" ? forms.one : rule === "few" ? forms.few : forms.many;
 };
@@ -35,6 +38,7 @@ const pl = {
     table: (n: number) => `Stół ${n}`, // tables.unnamed_index
     danceFloor: "Parkiet", // fixtures.preset.dance_floor
     bar: "Bar", // fixtures.preset.bar
+    djBooth: "DJ Booth", // fixtures.preset.dj_booth - the Polish locale keeps it in English
     cakeTable: "Stół z tortem",
   },
   diet: {
@@ -42,7 +46,10 @@ const pl = {
     vegan: "Vegan",
     glutenFree: "Bez glutenu",
   } satisfies Record<DietKey, string>,
-  notes: { lateArrival: "dojedzie po ślubie", highChair: "krzesełko dla dziecka" },
+  notes: {
+    lateArrival: "dojedzie po ślubie",
+    highChair: "krzesełko dla dziecka",
+  },
 
   app: {
     configureHall: "Skonfiguruj salę", // hall.configure_short
@@ -85,7 +92,8 @@ const pl = {
         uShape: "Kształt U", // hall.preset.u-shape
         custom: "Niestandardowy", // hall.preset.custom
       },
-      polygonHint: "Przeciągnij punkty obrysu sali, aby dopasować go do lokalu.", // hall.shape.polygon_hint
+      polygonHint:
+        "Przeciągnij punkty obrysu sali, aby dopasować go do lokalu.", // hall.shape.polygon_hint
       editOutline: "Edytuj obrys", // hall.shape.edit_button
       width: "Szerokość", // common.width
       height: "Wysokość", // common.height
@@ -138,19 +146,26 @@ const pl = {
       save: "Zapisz", // common.save
     },
     /** `AGE_GROUP_PRESETS`, labelled `guests.age_group.*`; a typed bracket is its own label. */
-    ageGroup: { adult: "Dorosły", "0-3": "0-3 lata", "3-6": "3-6 lat" } as Record<string, string>,
+    ageGroup: {
+      adult: "Dorosły",
+      "0-3": "0-3 lata",
+      "3-6": "3-6 lat",
+    } as Record<string, string>,
     none: "Brak gości.", // guests.none
     seatedAt: (table: string) => `Przy stole: ${table}`, // guests.status.seated_at
     more: (count: number) => `+ ${count} gości więcej`,
     progress: "Rozsadzeni", // guests.progress
     // guests.seated_ratio
     seatedRatio: (seated: number, total: number) =>
-      total === 1 ? `${seated}/${total} gość przy stole` : `${seated}/${total} gości przy stołach`,
+      total === 1
+        ? `${seated}/${total} gość przy stole`
+        : `${seated}/${total} gości przy stołach`,
   },
 
   import: {
     title: "Importuj gości z pliku CSV lub Excel", // guests.import.title
-    intro: "Wgraj plik .csv lub .xlsx. Wykryjemy kolumny, pozwolimy je dopasować i pokażemy podgląd przed dodaniem.",
+    intro:
+      "Wgraj plik .csv lub .xlsx. Wykryjemy kolumny, pozwolimy je dopasować i pokażemy podgląd przed dodaniem.",
     dropHere: "Przeciągnij tutaj plik .csv lub .xlsx lub kliknij, aby wybrać",
     chooseFile: "Wybierz plik CSV lub Excel",
     mapColumns: "Dopasuj każde pole do kolumny z Twojego pliku.",
@@ -163,17 +178,20 @@ const pl = {
     unassigned: "Nieprzypisani", // guests.unassigned
     summary: (count: number) =>
       `Do zaimportowania: ${count} ${plural(count, { one: "gość", few: "gości", many: "gości" })}`,
-    commit: (count: number) => `Dodaj ${count} ${plural(count, { one: "gościa", few: "gości", many: "gości" })}`,
+    commit: (count: number) =>
+      `Dodaj ${count} ${plural(count, { one: "gościa", few: "gości", many: "gości" })}`,
     /** The file the couple drags in, and its header row - aliases `autoDetectMapping` recognises. */
     fileName: "goscie.xlsx",
     sheetHeaders: ["Gość", "Stół", "Dieta", "Uwagi"],
   },
 
   print: {
-    tableSection: (name: string, seated: number, capacity: number) => `${name} (${seated}/${capacity} zajętych)`, // export.csv.section.table
+    tableSection: (name: string, seated: number, capacity: number) =>
+      `${name} (${seated}/${capacity} zajętych)`, // export.csv.section.table
     weddingDate: (date: string) => `Data ślubu: ${date}`, // export.pdf.wedding_date
     generatedOn: (date: string) => `Wygenerowano ${date}`, // export.pdf.generated_on
-    tablesCount: (count: number) => `${count} ${plural(count, { one: "stół", few: "stoły", many: "stołów" })}`, // tables.count
+    tablesCount: (count: number) =>
+      `${count} ${plural(count, { one: "stół", few: "stoły", many: "stołów" })}`, // tables.count
     guestsLower: "goście", // guests, lowercased as the view does
     guests: "Goście",
   },
@@ -181,12 +199,19 @@ const pl = {
   demo: {
     tagline: "Planer rozsadzenia gości weselnych.", // landing.footer.tagline
     outroTitle: "Narysujcie salę. Posadźcie wszystkich.", // after landing.hero.title
-    features: ["Plan sali „przeciągnij i upuść”", "Import CSV i XLSX", "Plan gotowy do druku", "Sale i piętra", "Planujcie razem"],
+    features: [
+      "Plan sali „przeciągnij i upuść”",
+      "Import CSV i XLSX",
+      "Plan gotowy do druku",
+      "Sale i piętra",
+      "Planujcie razem",
+    ],
     outroAction: "Ustaw pierwszy stół",
     hall: {
       step: "Krok 01",
       title: "Narysujcie salę", // landing.steps.one.title
-      subtitle: "Stoły okrągłe i prostokątne, parkiet i wyposażenie - ustaw salę dokładnie tak, jak będzie wyglądać w dniu wesela.", // the film's own line; landing.features.planner.desc was dropped in v1.1
+      subtitle:
+        "Stoły okrągłe i prostokątne, parkiet i wyposażenie - ustaw salę dokładnie tak, jak będzie wyglądać w dniu wesela.", // the film's own line; landing.features.planner.desc was dropped in v1.1
       yourHall: "Twoja sala",
     },
     guests: {
@@ -195,14 +220,16 @@ const pl = {
       // landing.features.guests.desc, with its plus-ones - a field v1 does not
       // have - swapped for the age groups it does (guests.add.age_group,
       // lib/ageGroup.ts). "i" and "z" are bound to the next word.
-      subtitle: "Diety, grupy wiekowe i\u00a0przypisane miejsca są zawsze przy nazwisku - koniec z\u00a0trzema arkuszami naraz.",
+      subtitle:
+        "Diety, grupy wiekowe i\u00a0przypisane miejsca są zawsze przy nazwisku - koniec z\u00a0trzema arkuszami naraz.",
       importPill: "Import z CSV lub Excela",
       exportPill: "Plan gotowy do druku",
     },
     seating: {
       step: "Krok 03",
       title: "Posadźcie wszystkich", // landing.steps.three.title
-      subtitle: "Przeciągnij gości na miejsca, wyrównaj obłożenie stołów i wyeksportuj gotowy plan do druku dla sali.",
+      subtitle:
+        "Przeciągnij gości na miejsca, wyrównaj obłożenie stołów i wyeksportuj gotowy plan do druku dla sali.",
       ofSeated: (total: number) => `z ${total} gości przy stołach`,
       emptySeat: "Wolne miejsce", // seats.empty
       taken: "Zajęte",
@@ -271,6 +298,26 @@ const pl = {
     payoff: "Ściany tam, gdzie naprawdę\u00a0stoją.",
   },
 
+  keepApart: {
+    /** Two tables the couple named themselves (`tables.name_placeholder` is *Stół rodzinny*). */
+    mumsFamily: "Rodzina mamy",
+    dadsFamily: "Rodzina taty",
+    /**
+     * The hook. "i" is bound to "mikrofon?", and the answer is bound into one
+     * piece - a non-breaking hyphen keeps "DJ-a" whole - so the line breaks
+     * after the question.
+     */
+    hook: "Wujek Zbyszek i\u00a0mikrofon? Daleko\u00a0od\u00a0DJ\u2011a.",
+    /** "w" is bound to "stół?" so the line never breaks after it. */
+    parentsLine: "Twoi rodzice nie mogą siedzieć stół w\u00a0stół?",
+    dragLine: "Cały stół na drugą stronę parkietu.",
+    /** "swoich" is bound to "miejscach." so the last word never wraps alone. */
+    guestsLine: "Goście zostają na swoich\u00a0miejscach.",
+    /** "z" is bound to "gośćmi." so the line never ends on it. */
+    payoff: "Przesuwacie stół, razem z\u00a0gośćmi.",
+    ctaAction: "Zacznij planowanie bez konta",
+  },
+
   walkthrough: {
     /** "i" is bound to "żadnego" so the line never ends on it. */
     hook: "Pusta sala, lista gości i\u00a0żadnego planu?",
@@ -288,6 +335,7 @@ const en: typeof pl = {
     table: (n) => `Table ${n}`,
     danceFloor: "Dance floor",
     bar: "Bar",
+    djBooth: "DJ booth",
     cakeTable: "Cake table",
   },
   diet: {
@@ -295,7 +343,10 @@ const en: typeof pl = {
     vegan: "Vegan",
     glutenFree: "Gluten-free",
   },
-  notes: { lateArrival: "arriving after the ceremony", highChair: "needs a high chair" },
+  notes: {
+    lateArrival: "arriving after the ceremony",
+    highChair: "needs a high chair",
+  },
 
   app: {
     configureHall: "Configure Hall",
@@ -389,12 +440,15 @@ const en: typeof pl = {
     more: (count) => `+ ${count} more guests`,
     progress: "Seated",
     seatedRatio: (seated, total) =>
-      total === 1 ? `${seated}/${total} guest seated` : `${seated}/${total} guests seated`,
+      total === 1
+        ? `${seated}/${total} guest seated`
+        : `${seated}/${total} guests seated`,
   },
 
   import: {
     title: "Import guests from CSV or Excel",
-    intro: "Upload a .csv or .xlsx file. We'll detect the columns, let you map them, and preview before adding.",
+    intro:
+      "Upload a .csv or .xlsx file. We'll detect the columns, let you map them, and preview before adding.",
     dropHere: "Drag a .csv or .xlsx file here or click to browse",
     chooseFile: "Choose CSV or Excel file",
     mapColumns: "Match each field to a column from your file.",
@@ -405,14 +459,16 @@ const en: typeof pl = {
     back: "Back",
     next: "Next",
     unassigned: "Unassigned",
-    summary: (count) => `Ready to import ${count} ${count === 1 ? "guest" : "guests"}`,
+    summary: (count) =>
+      `Ready to import ${count} ${count === 1 ? "guest" : "guests"}`,
     commit: (count) => `Add ${count} ${count === 1 ? "guest" : "guests"}`,
     fileName: "guests.xlsx",
     sheetHeaders: ["Guest", "Table", "Diet", "Notes"],
   },
 
   print: {
-    tableSection: (name, seated, capacity) => `${name} (${seated}/${capacity} seated)`,
+    tableSection: (name, seated, capacity) =>
+      `${name} (${seated}/${capacity} seated)`,
     weddingDate: (date) => `Wedding date: ${date}`,
     generatedOn: (date) => `Generated ${date}`,
     tablesCount: (count) => `${count} ${count === 1 ? "table" : "tables"}`,
@@ -423,25 +479,34 @@ const en: typeof pl = {
   demo: {
     tagline: "A seating planner for your wedding.",
     outroTitle: "Draw your hall. Sit everyone down.",
-    features: ["Drag & drop floor plan", "CSV & XLSX import", "A plan you can print", "Halls & floors", "Plan together"],
+    features: [
+      "Drag & drop floor plan",
+      "CSV & XLSX import",
+      "A plan you can print",
+      "Halls & floors",
+      "Plan together",
+    ],
     outroAction: "Place your first table",
     hall: {
       step: "Step 01",
       title: "Draw the hall",
-      subtitle: "Round and rectangular tables, the dance floor, and fixtures - lay out the hall exactly as it will look on the day.",
+      subtitle:
+        "Round and rectangular tables, the dance floor, and fixtures - lay out the hall exactly as it will look on the day.",
       yourHall: "Your hall",
     },
     guests: {
       step: "Step 02",
       title: "Add your guests",
-      subtitle: "Dietary needs, age groups, and seat assignments live next to every name - no more cross-checking three spreadsheets.",
+      subtitle:
+        "Dietary needs, age groups, and seat assignments live next to every name - no more cross-checking three spreadsheets.",
       importPill: "Import from CSV or Excel",
       exportPill: "A plan you can print",
     },
     seating: {
       step: "Step 03",
       title: "Seat everyone",
-      subtitle: "Drag guests onto seats, balance the tables, and print the finished plan for the venue.",
+      subtitle:
+        "Drag guests onto seats, balance the tables, and print the finished plan for the venue.",
       ofSeated: (total) => `of ${total} guests seated`,
       emptySeat: "Empty seat",
       taken: "Taken",
@@ -502,6 +567,17 @@ const en: typeof pl = {
     payoff: "Walls where they really stand.",
   },
 
+  keepApart: {
+    mumsFamily: "Mum's family",
+    dadsFamily: "Dad's family",
+    hook: "Uncle Zbyszek and a\u00a0microphone? Far\u00a0from\u00a0the\u00a0DJ.",
+    parentsLine: "Your parents can't sit at neighbouring tables?",
+    dragLine: "The whole table, across the dance floor.",
+    guestsLine: "The guests keep their seats.",
+    payoff: "Move the table, guests and all.",
+    ctaAction: "Start planning without an account",
+  },
+
   walkthrough: {
     hook: "An empty hall, a guest list and no plan?",
     floors: "Dinner downstairs, dancing upstairs?",
@@ -518,4 +594,5 @@ export const tl = translations[LANG];
  * `ageGroupLabel` in `lib/ageGroup.ts`: the presets carry a translated label,
  * anything the user typed is its own label.
  */
-export const ageGroupLabel = (group: string): string => tl.guests.ageGroup[group] ?? group;
+export const ageGroupLabel = (group: string): string =>
+  tl.guests.ageGroup[group] ?? group;

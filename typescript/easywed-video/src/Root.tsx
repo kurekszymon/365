@@ -61,6 +61,12 @@ import { ShapeHookScene } from "./easywed/odd-room/scenes/ShapeHookScene";
 import { ShapeLScene } from "./easywed/odd-room/scenes/ShapeLScene";
 import { ShapeEditScene } from "./easywed/odd-room/scenes/ShapeEditScene";
 import { SHAPE_DURATION, SHAPE_SCENES } from "./easywed/odd-room/timeline";
+import { KeepApart } from "./easywed/keep-apart/KeepApart";
+import { ApartHookScene } from "./easywed/keep-apart/scenes/ApartHookScene";
+import { ApartParentsScene } from "./easywed/keep-apart/scenes/ApartParentsScene";
+import { ApartUncleScene } from "./easywed/keep-apart/scenes/ApartUncleScene";
+import { ApartCtaScene } from "./easywed/keep-apart/scenes/ApartCtaScene";
+import { KEEP_APART_DURATION, KEEP_APART_SCENES } from "./easywed/keep-apart/timeline";
 import { WalkthroughLong } from "./easywed/walkthrough-long/WalkthroughLong";
 import { FloorsScene } from "./easywed/walkthrough-long/scenes/FloorsScene";
 import {
@@ -210,6 +216,18 @@ export const RemotionRoot: React.FC = () => {
         height={VERTICAL_HEIGHT}
       />
 
+      {/* The 17 s keep-apart cut - Stół 6 taken away from the DJ, then a family table
+          dragged across the dance floor with its guests; 9:16 only, the unsuffixed
+          id left free for a 16:9 loop. */}
+      <Composition
+        id="easywed-apart-vertical"
+        component={KeepApart}
+        durationInFrames={KEEP_APART_DURATION}
+        fps={FPS}
+        width={VERTICAL_WIDTH}
+        height={VERTICAL_HEIGHT}
+      />
+
       {/* The landing-page loops - 16:9 only, no CTA, each closing on `LoopSeam`
           back to its frame 0 - with their beats nested beside them. */}
       <Folder name="Landing-loops">
@@ -321,6 +339,14 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="SwapCutPick" component={SwapCutPickScene} durationInFrames={SWAP_CUT_SCENES.pick} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="SwapCutReseat" component={SwapCutReseatScene} durationInFrames={SWAP_CUT_SCENES.reseat} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="SwapCutCta" component={SwapCutCtaScene} durationInFrames={SWAP_CUT_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+      </Folder>
+
+      {/* The keep-apart cut's beats, at 9:16 - the only size it is made for. */}
+      <Folder name="Keep-apart">
+        <Composition id="ApartHook" component={ApartHookScene} durationInFrames={KEEP_APART_SCENES.hook} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="ApartUncle" component={ApartUncleScene} durationInFrames={KEEP_APART_SCENES.uncle} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="ApartParents" component={ApartParentsScene} durationInFrames={KEEP_APART_SCENES.parents} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="ApartCta" component={ApartCtaScene} durationInFrames={KEEP_APART_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
       </Folder>
 
     </>
