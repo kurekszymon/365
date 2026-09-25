@@ -13,7 +13,7 @@ The next day I wanted to check how many people actually tried the app, and since
 ![no events placeholder in PostHog](../../assets/no-events-posthog.png)
 
 I was devastated. I was so stressed about posting a video like my life depended on it and yet I have no info about how it went at all!
-Fix was actually super simple and _actually_ well documented, if you'd use proper types, you could just read it from JSDoc:
+Fix was actually super simple and _actually_ well documented, if you'd use [proper types](https://github.com/kurekszymon/365/commit/b01aefce1b68e11e53f81ea079fa06dcbef7c333), you could just read it from JSDoc:
 
 ![cookieless_mode JSDoc from PostHogConfig](../../assets/cookieless_mode.png)
 
