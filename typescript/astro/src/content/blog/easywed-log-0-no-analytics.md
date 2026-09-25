@@ -14,6 +14,7 @@ The next day I wanted to check how many people actually tried the app, and since
 
 I was devastated. I was so stressed about posting a video like my life depended on it and yet I have no info about how it went at all!
 Fix was actually super simple and _actually_ well documented, if you'd use proper types, you could just read it from JSDoc:
+
 ![cookieless_mode JSDoc from PostHogConfig](../../assets/cookieless_mode.png)
 
 Why I didn't find it sooner? I was focused on developing application further to target wedding venues, and so I wasn't clicking around on the remote. Issue is that PostHog requires you to enable [Cookieless tracking](https://eu.posthog.com/project/169235/settings/project-web-analytics#cookieless-server-hash-mode) manualy on top of setting `cookieless_mode: always` in sdk.
