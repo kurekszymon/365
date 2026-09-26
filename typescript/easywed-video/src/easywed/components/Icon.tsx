@@ -34,7 +34,11 @@ export type IconName =
   | "chevronDown"
   | "x"
   | "fileSpreadsheet"
-  | "pencilRuler";
+  | "pencilRuler"
+  | "copy"
+  | "userX"
+  | "menu"
+  | "minus";
 
 const PATHS: Record<IconName, React.ReactNode> = {
   guests: (
@@ -193,6 +197,21 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="m15 5 4 4" />
     </>
   ),
+  copy: (
+    <>
+      <rect x="8" y="8" width="14" height="14" rx="2" />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+    </>
+  ),
+  userX: (
+    <>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="m17 8 5 5M22 8l-5 5" />
+    </>
+  ),
+  menu: <path d="M4 6h16M4 12h16M4 18h16" />,
+  minus: <path d="M5 12h14" />,
 };
 
 export const Icon: React.FC<{

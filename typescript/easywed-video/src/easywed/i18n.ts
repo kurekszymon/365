@@ -108,6 +108,46 @@ const pl = {
     shapeEditHint:
       "Przeciągaj punkty, aby zmienić kształt. Kliknij środek krawędzi, aby dodać punkt; kliknij punkt dwukrotnie, aby go usunąć.", // shape_edit.hint
     done: "Gotowe", // common.done
+    /** `WeddingMembersDialog`: `InvitationManager` over `MemberList`, `Zamknij` in the footer. */
+    members: {
+      title: "Członkowie", // members.title
+      role: "Rola", // members.role
+      roles: { owner: "Właściciel", editor: "Edytor", viewer: "Podgląd" }, // members.role.*
+      createInvite: "Utwórz link zaproszenia", // members.create_invite
+      pending: "Oczekujące zaproszenia", // members.pending - drawn uppercase, as its class sets it
+      linkOnly: "Zaproszenie linkiem", // members.link_only
+      expires: (date: string) => `Wygasa ${date}`, // members.expires
+      copyLink: "Kopiuj link", // members.copy_link
+      copied: "Skopiowano", // members.copied
+      active: "Aktywni członkowie", // members.active - drawn uppercase too
+      you: "Ty", // members.you
+      changeName: "Zmień nazwę", // members.change_name
+      close: "Zamknij", // common.close
+    },
+    /** The `/login` card a signed-out invitee lands on (`requireAuth`), top to bottom. */
+    auth: {
+      subtitle: "Zaloguj się, żeby kontynuować planowanie", // auth.subtitle
+      google: "Zaloguj się przez Google", // auth.sign_in_with_google
+      or: "lub", // auth.or - drawn uppercase
+      email: "Email", // auth.email
+      password: "Hasło", // auth.password
+      forgot: "Nie pamiętasz hasła?", // auth.forgot_password
+      signIn: "Zaloguj się", // auth.sign_in
+      noAccount: "Nie masz konta?", // auth.no_account
+      signUp: "Załóż konto", // auth.sign_up
+    },
+    inviteClaiming: "Dołączanie do wesela...", // invite.claiming
+    /**
+     * `MobileTabBar`'s tabs, `t(tab)` and `reminders.title` - the phone's own
+     * labels, which differ from the desktop rail's `nav` above ("Elementy sali").
+     * The soft hyphen is the locale's own.
+     */
+    mobileTabs: {
+      guests: "Goście", // guests
+      tables: "Stoły", // tables
+      fixtures: "Elementy sali", // fixtures
+      reminders: "Przypo\u00admnienia", // reminders.title
+    },
     /** `HallsPanelContent` in the same dialog, titled by `usePanelTitle`. */
     hallsList: {
       title: "Sale", // hall.list_title
@@ -318,6 +358,24 @@ const pl = {
     ctaAction: "Zacznij planowanie bez konta",
   },
 
+  mama: {
+    /** The hook. Mum is asking about the uncle, not the aunt - the teaser and the seat-swap cuts spent her. */
+    hook: "Mama pyta już trzeci raz, gdzie siedzi wujek.",
+    /** Whose phone this is - the bride's name in mum's thread. */
+    sender: "Ania",
+    /** Mum's three messages, oldest first. The first one's "A" is bound to "wujek" so it never ends a line. */
+    bubbles: [
+      "A\u00a0wujek Zbyszek gdzie siedzi?",
+      "Wyślij ten plan jakoś inaczej",
+      "Bo nie widać nic na tym zdjęciu",
+    ],
+    /** What mum types into the guest search - the name she knows him by. */
+    search: "Zbyszek",
+    captionLine: "Zamiast zdjęcia kartki - link.",
+    payoff: "Mama sprawdzi sama.",
+    ctaAction: "Wyślij mamie link do planu",
+  },
+
   walkthrough: {
     /** "i" is bound to "żadnego" so the line never ends on it. */
     hook: "Pusta sala, lista gości i\u00a0żadnego planu?",
@@ -401,6 +459,39 @@ const en: typeof pl = {
     shapeEditHint:
       "Drag points to reshape. Click an edge midpoint to add a point, double-click a point to remove it.",
     done: "Done",
+    members: {
+      title: "Members",
+      role: "Role",
+      roles: { owner: "Owner", editor: "Editor", viewer: "Viewer" },
+      createInvite: "Create invite link",
+      pending: "Pending invites",
+      linkOnly: "Link invite",
+      expires: (date) => `Expires ${date}`,
+      copyLink: "Copy link",
+      copied: "Copied",
+      active: "Active members",
+      you: "You",
+      changeName: "Change name",
+      close: "Close",
+    },
+    auth: {
+      subtitle: "Sign in to continue planning",
+      google: "Sign in with Google",
+      or: "or",
+      email: "Email",
+      password: "Password",
+      forgot: "Forgot your password?",
+      signIn: "Sign in",
+      noAccount: "No account yet?",
+      signUp: "Create account",
+    },
+    inviteClaiming: "Joining wedding...",
+    mobileTabs: {
+      guests: "Guests",
+      tables: "Tables",
+      fixtures: "Fixtures",
+      reminders: "Reminders",
+    },
     hallsList: {
       title: "Halls",
       hint: "All halls show together on the canvas - drag a hall by its label to arrange rooms and floors.",
@@ -576,6 +667,20 @@ const en: typeof pl = {
     guestsLine: "The guests keep their seats.",
     payoff: "Move the table, guests and all.",
     ctaAction: "Start planning without an account",
+  },
+
+  mama: {
+    hook: "Mum's asking for the third time where Uncle sits.",
+    sender: "Ania",
+    bubbles: [
+      "And where's Uncle Zbyszek sitting?",
+      "Send me a photo of the plan",
+      "I can't see a thing in that photo",
+    ],
+    search: "Zbyszek",
+    captionLine: "A link, not a photo of a sheet of paper.",
+    payoff: "Mum can check for herself.",
+    ctaAction: "Send Mum a link to the plan",
   },
 
   walkthrough: {

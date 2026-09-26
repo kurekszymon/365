@@ -55,6 +55,48 @@ const toned = (tone: string): React.CSSProperties => ({
 /** `bg-primary/10` behind the initials. */
 const AVATAR = "rgba(43, 38, 33, 0.1)";
 
+/**
+ * `normalize` in the app's `lib/import/guestsImport.ts`: diacritics stripped,
+ * and the Polish "ł" - which NFD leaves whole - mapped by hand.
+ */
+const normalize = (value: string): string =>
+  value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/ł/gi, "l")
+    .trim()
+    .toLowerCase();
+
+/** `isSubsequence` + `fuzzyMatch` in `GuestListContent`: every token's letters in order, anywhere in the haystack. */
+const isSubsequence = (needle: string, haystack: string): boolean => {
+  let i = 0;
+  for (const ch of haystack) {
+    if (i < needle.length && ch === needle[i]) i += 1;
+  }
+  return i === needle.length;
+};
+const fuzzyMatch = (query: string, haystack: string): boolean =>
+  query.split(/\s+/).every((token) => token === "" || isSubsequence(token, haystack));
+
+/** The stored tag the app folds in beside its label (`DIETARY_PRESETS`). */
+const DIET_TAG: Record<DietKey, string> = { vegetarian: "vegetarian", vegan: "vegan", glutenFree: "gluten-free" };
+
+/** `guestHaystack`: the name, each diet as its tag and its label, and a child's bracket as key and label. */
+const haystackOf = (guest: RosterGuest): string =>
+  normalize(
+    [
+      guest.name,
+      ...(guest.diet ? [DIET_TAG[guest.diet], tl.diet[guest.diet]] : []),
+      ...(isKid(guest.ageGroup) && guest.ageGroup ? [guest.ageGroup, ageGroupLabel(guest.ageGroup)] : []),
+    ].join(" "),
+  );
+
+/** The guests a search leaves on the list, as `filteredGuests` narrows them on every keystroke. */
+export const matchingGuests = (guests: RosterGuest[], query: string): RosterGuest[] => {
+  const needle = normalize(query);
+  return needle ? guests.filter((guest) => fuzzyMatch(needle, haystackOf(guest))) : guests;
+};
+
 /** Search, chips and buttons with `gap-3` between them, then the list's `gap-4`. */
 const SEARCH_HEIGHT = 36;
 const CHIPS_HEIGHT = 30;
@@ -70,6 +112,8 @@ const TAGS_HEIGHT = 24;
 export const CHIPS_TOP = SEARCH_HEIGHT + STICKY_GAP;
 /** Where the first row starts. */
 export const LIST_TOP = CHIPS_TOP + CHIPS_HEIGHT + STICKY_GAP + BUTTON_HEIGHT + LIST_GAP;
+/** Where it starts for a viewer, who gets no add and import buttons. */
+export const READ_ONLY_LIST_TOP = CHIPS_TOP + CHIPS_HEIGHT + LIST_GAP;
 
 /** Top edge of row `index`, measured from `LIST_TOP` - where a cursor aims for that row. */
 export const rowTop = (guests: RosterGuest[], index: number): number =>
@@ -146,6 +190,17 @@ type Props = {
   aged?: number[];
   /** Which filter chip is pressed. "kids" filters the rows down, as the app does. */
   activeFilter?: "all" | "kids";
+  /**
+   * What is typed into the search. The field shows it, gains its clear button,
+   * and the rows narrow to `matchingGuests` - the counts on the chips keep
+   * reading the whole list, as the app's do. Left out, the placeholder shows.
+   */
+  query?: string;
+  /**
+   * The list as a viewer sees it: `selectCanEdit` fails, so there are no add
+   * and import buttons and no seat, edit and delete buttons on the rows.
+   */
+  readOnly?: boolean;
 };
 
 export const GuestList: React.FC<Props> = ({
@@ -156,6 +211,8 @@ export const GuestList: React.FC<Props> = ({
   listHeight,
   aged,
   activeFilter = "all",
+  query = "",
+  readOnly = false,
 }) => {
   const landed = (i: number) => Math.min(1, Math.max(0, tagged[i] ?? 0));
   const badged = (i: number) => Math.min(1, Math.max(0, aged?.[i] ?? 1));
@@ -167,7 +224,7 @@ export const GuestList: React.FC<Props> = ({
   const kidsActive = activeFilter === "kids";
   // The app filters `guests` down to the rows that match; the counts above it
   // keep reading the whole list.
-  const rows = kidsActive ? guests.filter((guest) => isKid(guest.ageGroup)) : guests;
+  const rows = matchingGuests(kidsActive ? guests.filter((guest) => isKid(guest.ageGroup)) : guests, query);
 
   // The filter row only offers a diet once someone carries it, counting the tags already on the list.
   const dietChips = DIETS.map(({ diet, tone }) => {
@@ -194,7 +251,15 @@ export const GuestList: React.FC<Props> = ({
         }}
       >
         <Icon name="search" color={colors.inkSoft} size={16} />
-        {tl.guests.search}
+        {query ? (
+          <>
+            <span style={{ flex: 1, color: colors.ink }}>{query}</span>
+            {/* The clear button `searchQuery &&` adds at the field's right end. */}
+            <Icon name="x" color={colors.inkSoft} size={14} />
+          </>
+        ) : (
+          tl.guests.search
+        )}
       </div>
 
       <div style={{ marginTop: STICKY_GAP, display: "flex", gap: 8, overflow: "hidden" }}>
@@ -230,10 +295,12 @@ export const GuestList: React.FC<Props> = ({
         )}
       </div>
 
-      <div style={{ marginTop: STICKY_GAP, display: "flex", gap: 8 }}>
-        <OutlineButton icon="plus" label={tl.guests.add} />
-        <OutlineButton icon="fileSpreadsheet" label={tl.guests.import} />
-      </div>
+      {readOnly ? null : (
+        <div style={{ marginTop: STICKY_GAP, display: "flex", gap: 8 }}>
+          <OutlineButton icon="plus" label={tl.guests.add} />
+          <OutlineButton icon="fileSpreadsheet" label={tl.guests.import} />
+        </div>
+      )}
 
       <div style={{ marginTop: LIST_GAP, height: listHeight, overflow: "hidden" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: ROW_GAP, transform: `translateY(${-scroll}px)` }}>
@@ -344,7 +411,7 @@ export const GuestList: React.FC<Props> = ({
                     ) : null}
                   </div>
                 </div>
-                {(["tables", "pencil", "trash"] as const).map((icon) => (
+                {(readOnly ? [] : (["tables", "pencil", "trash"] as const)).map((icon) => (
                   <div
                     key={icon}
                     style={{ width: 36, height: 36, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}

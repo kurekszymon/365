@@ -67,6 +67,12 @@ import { ApartParentsScene } from "./easywed/keep-apart/scenes/ApartParentsScene
 import { ApartUncleScene } from "./easywed/keep-apart/scenes/ApartUncleScene";
 import { ApartCtaScene } from "./easywed/keep-apart/scenes/ApartCtaScene";
 import { KEEP_APART_DURATION, KEEP_APART_SCENES } from "./easywed/keep-apart/timeline";
+import { MamaLink } from "./easywed/mama-link/MamaLink";
+import { MamaHookScene } from "./easywed/mama-link/scenes/MamaHookScene";
+import { MamaInviteScene } from "./easywed/mama-link/scenes/MamaInviteScene";
+import { MamaPhoneScene } from "./easywed/mama-link/scenes/MamaPhoneScene";
+import { MamaCtaScene } from "./easywed/mama-link/scenes/MamaCtaScene";
+import { MAMA_DURATION, MAMA_SCENES } from "./easywed/mama-link/timeline";
 import { WalkthroughLong } from "./easywed/walkthrough-long/WalkthroughLong";
 import { FloorsScene } from "./easywed/walkthrough-long/scenes/FloorsScene";
 import {
@@ -228,6 +234,17 @@ export const RemotionRoot: React.FC = () => {
         height={VERTICAL_HEIGHT}
       />
 
+      {/* The 18 s mama-link cut - mum's questions, a view-only link made on the laptop,
+          mum finding the uncle on her own phone; 9:16 only. */}
+      <Composition
+        id="easywed-mama-vertical"
+        component={MamaLink}
+        durationInFrames={MAMA_DURATION}
+        fps={FPS}
+        width={VERTICAL_WIDTH}
+        height={VERTICAL_HEIGHT}
+      />
+
       {/* The landing-page loops - 16:9 only, no CTA, each closing on `LoopSeam`
           back to its frame 0 - with their beats nested beside them. */}
       <Folder name="Landing-loops">
@@ -347,6 +364,14 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="ApartUncle" component={ApartUncleScene} durationInFrames={KEEP_APART_SCENES.uncle} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="ApartParents" component={ApartParentsScene} durationInFrames={KEEP_APART_SCENES.parents} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="ApartCta" component={ApartCtaScene} durationInFrames={KEEP_APART_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+      </Folder>
+
+      {/* The mama-link cut's beats, at 9:16 - the only size it is made for. */}
+      <Folder name="Mama-link">
+        <Composition id="MamaHook" component={MamaHookScene} durationInFrames={MAMA_SCENES.hook} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="MamaInvite" component={MamaInviteScene} durationInFrames={MAMA_SCENES.invite} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="MamaPhone" component={MamaPhoneScene} durationInFrames={MAMA_SCENES.phone} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="MamaCta" component={MamaCtaScene} durationInFrames={MAMA_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
       </Folder>
 
     </>

@@ -12,13 +12,23 @@ import { Wordmark } from "./Wordmark";
 type Props = {
   activeRail: NavKind;
   children: React.ReactNode;
+  /**
+   * Draw the desktop planner whatever the composition's shape - for a portrait
+   * film that shows the couple's laptop. Left out, the frame follows `useFormat()`.
+   */
+  desktop?: boolean;
+  /** Drawn over the dashed invite circle, positioned from its centre - a pointer that presses it. */
+  inviteSlot?: React.ReactNode;
 };
+
+/** `useFormat()`'s landscape padding, for a desktop frame drawn inside a portrait composition. */
+const DESKTOP_PAD = 44;
 
 /**
  * The header's member stack: the signed-in owner plus the dashed "invite"
  * circle the app shows next to it.
  */
-const Members: React.FC<{ size: number }> = ({ size }) => (
+const Members: React.FC<{ size: number; inviteSlot?: React.ReactNode }> = ({ size, inviteSlot }) => (
   <div style={{ display: "flex", alignItems: "center", gap: size * 0.16 }}>
     <div
       style={{
@@ -47,9 +57,15 @@ const Members: React.FC<{ size: number }> = ({ size }) => (
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        position: inviteSlot ? "relative" : undefined,
       }}
     >
       <Icon name="userPlus" color={colors.inkSoft} size={size * 0.42} />
+      {inviteSlot ? (
+        <div style={{ position: "absolute", left: "50%", top: "50%", width: 0, height: 0, zIndex: 10 }}>
+          {inviteSlot}
+        </div>
+      ) : null}
     </div>
   </div>
 );
@@ -125,8 +141,10 @@ const TabIcon: React.FC<{
  * 60px icon strip with its labels underneath; portrait gets the mobile tab bar
  * with the zoom control and add FAB, matching how the app itself adapts.
  */
-export const AppFrame: React.FC<Props> = ({ activeRail, children }) => {
-  const { tall, pad } = useFormat();
+export const AppFrame: React.FC<Props> = ({ activeRail, children, desktop = false, inviteSlot }) => {
+  const format = useFormat();
+  const tall = desktop ? false : format.tall;
+  const pad = desktop ? DESKTOP_PAD : format.pad;
   // The app's chrome is designed at browser scale; everything here is that
   // spec times a constant so it stays legible at 1080p.
   const s = tall ? 1.5 : 1.7;
@@ -172,7 +190,7 @@ export const AppFrame: React.FC<Props> = ({ activeRail, children }) => {
 
             <div style={{ flex: 1 }} />
 
-            <Members size={21 * s} />
+            <Members size={21 * s} inviteSlot={inviteSlot} />
             {tall ? null : (
               <div
                 style={{

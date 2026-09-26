@@ -28,8 +28,11 @@
 - **the keep-apart cut** - 17 seconds for Reels/TikTok, 9:16 only: Stół 6 taken away from the DJ
   booth, then the couple's two family tables one behind the other, one of them dragged across the
   dance floor with its guests, the CTA.
+- **the mama-link cut** - 18 seconds for Reels/TikTok, 9:16 only: mum's third question about
+  where the uncle sits, a view-only invite link made on the couple's laptop, mum signing in on her
+  phone and finding his table herself in the guest list, the CTA.
 
-All but the loops and the keep-apart cut render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
+All but the loops, the keep-apart cut and the mama-link cut render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
 are in Polish.
 
 It is a standalone package on purpose - it sits next to `easywed/` rather than inside it, so it
@@ -75,6 +78,8 @@ pnpm run render:walkthrough-long           # -> out/pl/easywed-walkthrough.mp4  
 pnpm run render:walkthrough-long:vertical  # -> out/pl/easywed-walkthrough-vertical.mp4 (9:16)
 
 pnpm run render:keep-apart:vertical  # -> out/pl/easywed-apart-vertical.mp4 (9:16, its only size)
+
+pnpm run render:mama-link:vertical   # -> out/pl/easywed-mama-vertical.mp4  (9:16, its only size)
 
 pnpm run render:all     # all of the above
 pnpm run render:all:en  # all of the above in English -> out/en/
@@ -211,6 +216,14 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `ApartParents`            | 180f   | Rodzina taty dragged over the dance floor, guests and all   |
 | `ApartCta`                | 108f   | the room recedes, the payoff, logo + easywed.app            |
 
+| id                        | length | what it is                                                     |
+| ------------------------- | ------ | -------------------------------------------------------------- |
+| `easywed-mama-vertical`   | 540f   | the 18 s mama-link cut, 9:16 only                              |
+| `MamaHook`                | 96f    | mum's thread - the photo of the paper plan, her three questions |
+| `MamaInvite`              | 180f   | the laptop: the invite circle, *Podgląd*, the link created, copied |
+| `MamaPhone`               | 180f   | mum taps the link, signs in, opens *Goście* and types his name |
+| `MamaCta`                 | 108f   | the phone recedes, the payoff, logo + easywed.app              |
+
 The long walkthrough's other fifteen chapters are the scenes registered above, from the short
 walkthrough and the other cuts; only `Floors` is its own. The 9:16 cut leaves out `ScaleMeasure`:
 on a phone at v1 the canvas toolbar isn't there, and measuring is a long-press menu item with no
@@ -218,7 +231,7 @@ on a phone at v1 the canvas toolbar isn't there, and measuring is a long-press m
 bottom sheet rather than the desktop's centred dialog.
 
 The scenes are also registered individually (Studio folders "Scenes", "Teaser", "Import",
-"Report", "Kids", "Swap-cut", "Keep-apart" and "Walkthrough-long") so a single beat can be previewed without scrubbing through the
+"Report", "Kids", "Swap-cut", "Keep-apart", "Mama-link" and "Walkthrough-long") so a single beat can be previewed without scrubbing through the
 whole timeline. The social cuts' scenes are registered at 9:16, the cut they are made for.
 
 The landing-page loops - `easywed-scale`, `easywed-swap` and `easywed-shape` - sit together in the
@@ -277,6 +290,13 @@ src/easywed/
                          (script.ts) - the two table drags, the pointer and a camera that
                          zooms the canvas. Its lines use components/CaptionLine.tsx, shared
                          with the story cuts still to come
+  mama-link/             the mama-link cut, 9:16 only: mum's phone (components/MamaPhone.tsx)
+                         and the couple's laptop (components/InviteDesk.tsx) both run off
+                         one clock (script.ts). Its components are the film's own - a generic
+                         chat thread, the members dialog, the sign-in page and the planner
+                         as a viewer on a phone; guests.ts seats the uncle without changing
+                         the roster's 58. The laptop is AppFrame's `desktop` frame, and the
+                         viewer's guest list is GuestList with `readOnly` and a `query`
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect

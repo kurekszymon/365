@@ -116,6 +116,21 @@ Scenes 96 + 150 + 180 + 108 = 534 at `KEEP_APART_TRANSITION = 8` x 3 seams -> 51
 Built from `docs/video-plans/3-story-videos-9x16-2026-09-25.md`, brief `keep-apart`, drawn on
 `KEEP_APART_HALL` (`layouts.ts`), 14x16 m, 58 seats.
 
+## The mama-link cut - `easywed-mama-vertical`, 540f (18 s), 9:16 only
+
+mum's phone: a photo of the pencilled paper plan from Ania, then mum's three questions landing
+under the hook, and a push in on the photo - the couple's laptop, close on the header's dashed
+invite circle, pressed; the *Członkowie* dialog, *Rola* switched to *Podgląd*, *Utwórz link
+zaproszenia*, the pending row, *Kopiuj link* to *Skopiowano*, the caption line - back on mum's
+phone, the link arrives in her thread and her thumb taps it, the sign-in page, *Dołączanie do
+wesela...*, the plan opened read-only in her browser, *Goście* tapped, *Zbyszek* typed until one
+row is left - the phone recedes, the payoff, the CTA. The first film to show the invite link, the
+members dialog, a second person's device, and the planner as a viewer sees it. Mum asks about the
+uncle, not the aunt (the brief's *ciocia Halina*), by the user's call - and keep-apart's Wujek
+Zbyszek is reused by that same call.
+Scenes 96 + 180 + 180 + 108 = 564 at `MAMA_TRANSITION = 8` x 3 seams -> 540.
+Built from `docs/video-plans/3-story-videos-9x16-2026-09-25.md`, brief `mama-link`.
+
 ## Polish lines already burned on screen
 
 None of these may appear again:
@@ -243,6 +258,28 @@ too), and the zoom pill's *"175%"*, *"103%"*, *"92%"*. The uncle, *Wujek Zbyszek
 character. The beat itself - a whole seated table dragged across the room, its guests travelling
 with it - is spent, as is the payoff of moving a table with its guests. Its CTA is *"Zacznij
 planowanie bez konta"* over the *"easywed.app"* pill.
+
+From the mama-link cut: *"Mama pyta już trzeci raz, gdzie siedzi wujek."* (its hook) · mum's
+messages *"A wujek Zbyszek gdzie siedzi?"*, *"Wyślij zdjęcie tego planu"*, *"Bo nie widać nic na
+tym zdjęciu"* · *"Zamiast zdjęcia kartki - link."* · *"Mama sprawdzi sama."* - and, as the members
+dialog shows them (app strings, verbatim): *"Członkowie"*, *"Rola"*, *"Edytor"*, *"Podgląd"*,
+*"Utwórz link zaproszenia"*, *"Oczekujące zaproszenia"* and *"Aktywni członkowie"* (both drawn
+uppercase, as the app draws them), *"Zaproszenie linkiem"*, *"Podgląd · Wygasa 7.09.2026"*,
+*"Kopiuj link"*, *"Skopiowano"*, *"Anna Kowalska (Ty)"*, *"Właściciel"*, *"Zmień nazwę"*,
+*"Zamknij"*; as the sign-in page shows them: *"easywed."*, *"Zaloguj się, żeby kontynuować
+planowanie"*, *"Zaloguj się przez Google"*, *"lub"* (drawn uppercase), *"Email"*, *"Hasło"*,
+*"Nie pamiętasz hasła?"*, *"Zaloguj się"*, *"Nie masz konta? Załóż konto"*; *"Dołączanie do
+wesela..."* on the claim page; and on the viewer's phone the tab bar's *"Goście"*, *"Stoły"*,
+*"Elementy sali"*, *"Przypomnienia"*, the wedding name *"Anna & Piotr"* (truncated), and the typed
+search *"Zbyszek"* as a value. The address bar's *"easywed.app"* is the pill's address, not a
+line. The chat's contact name *"Ania"* and the guest *Zbyszek Pawlak* (`mama-link/guests.ts`, at
+Stół 3) are spent with it. The beat itself - an invite link made in the members dialog and opened
+on someone else's phone - is spent, as is the payoff of a relative finding a guest's table
+through the guest search on their own phone. The guest panel's *"Rozsadzeni"*, *"58/58 gości przy
+stołach"*, *"Szukaj gościa…"*, *"Wszyscy 58"*, *"Bez miejsca 0"*, the diet chips and *"Przy stole:
+Stół 3"* are chrome, as above; this cut rests its answer on that row by the user's explicit call
+(the plan's open question 5, answered 2026-09-26), because the beat is mum finding it herself. Its
+CTA is *"Wyślij mamie link do planu"* over the *"easywed.app"* pill.
 
 The one exception is the CTA pill itself: *"easywed.app"* recurs by design (section 8). Each video's
 action line above it is its own, and burns like any other line.

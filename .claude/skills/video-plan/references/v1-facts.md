@@ -149,6 +149,31 @@ named in section 2 both need updating — nothing will warn you.
 - **Invite-link collaboration** with owner / editor / viewer roles — `members.role.*`,
   `invite_claimed`. **Account-gated:** `canInvite = Boolean(session) && !isLocalWedding(weddingId)`,
   so a guest-mode video cannot show this without saying so.
+  The flow as `mama-link` draws it, with its evidence at the tag:
+  - The owner reaches `WeddingMembersDialog` from the header's member stack; its dashed
+    `UserPlus` circle (`members.invite` *„Zaproś kogoś”* as a tooltip) is owner-only
+    (`MemberAvatars.tsx`). Editors and viewers open the same dialog read-only.
+  - `InvitationManager`'s role select offers only *Edytor* and *Podgląd*, starts on *Edytor*,
+    and `handleCreate` sets it **back to *Edytor*** once the new invite is fetched
+    (`useWeddingMembers.ts`). The pending row reads *„Zaproszenie linkiem”* over *„{role} ·
+    Wygasa {date}”*; *Kopiuj link* flips to *Skopiowano* for 1500 ms.
+  - An invite lives **14 days**: `expires_at default (now() + interval '14 days')`, and the token
+    is two uuids without dashes, 64 hex characters (`20260422000001_wedding_invitations.sql`).
+    The link is `${origin}/invite/${token}`.
+  - `/invite/$token` runs `requireAuth`, so a signed-out invitee lands on `/login` first; the
+    claim page then shows only *„Dołączanie do wesela...”* (`invite.claiming`) before
+    `invite_claimed` fires and it navigates to `/wedding/$id`.
+  - A viewer on a phone gets `MobileTabBar` with **four** tabs (the assistant is `canEdit`-only,
+    and the tabs read *Goście* / *Stoły* / *Elementy sali* / *Przypomnienia* - not the desktop
+    rail's labels), **no `AddFab`**, and no import button in the header. `GuestListContent`
+    keeps its search and chips but drops *Dodaj gościa* / *Importuj gości* and every row's seat,
+    edit and delete buttons; the row itself is a disabled button that looks unchanged.
+  - **No read-only badge on a phone**: `planner.read_only` is only the wedding name's hover
+    `title` (`WeddingName.header.tsx`), and `planner.read_only_short` is not rendered in the
+    planner at all.
+  - The guest search is a fuzzy subsequence match over the normalised name, diet tags and child
+    bracket (`GuestListContent.tsx` `fuzzyMatch`); it narrows the list and highlights nothing
+    on the canvas.
 - **BYO-key AI** that can add, move and update tables, fixtures and halls, and can run against a
   local model — `ai_chat_message_sent`, `assistant.setup.llamacpp_*`. The key is the user's own.
 - **Privacy posture**: PostHog autocapture off, no cookie banner because there are no cookies to
