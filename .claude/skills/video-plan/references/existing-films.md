@@ -131,6 +131,24 @@ Zbyszek is reused by that same call.
 Scenes 96 + 180 + 180 + 108 = 564 at `MAMA_TRANSITION = 8` x 3 seams -> 540.
 Built from `docs/video-plans/3-story-videos-9x16-2026-09-25.md`, brief `mama-link`.
 
+## The sunday-couch cut - `easywed-couch-vertical`, 682f (22.7 s), 9:16 only
+
+a time chip reading *Niedziela, 19:40* over the couple's laptop, open on the empty hall guest mode
+seeds, and the left voice's first line already up on frame 0, the right voice answering - 20:10,
+in on the room as the dance floor and the bar land and the head table and six round tables pop in
+round it, one pointer placing the first two, and the table count said out loud - back over the
+laptop; 21:05, the guest panel open on 58 unseated names, the head table and its neighbours
+filled first, then close on the bar and Stół 3 seated chair by chair, initials and all - 22:30,
+back over the whole laptop, *Rozsadzeni* at 58/58 - the laptop recedes, the payoff, the CTA. One
+continuous camera, the evening jumping forward on the clock's ticks. The first film to tell the
+whole plan as a story of one evening, with two voices and no names; the mechanic itself - a room
+laid out and filled - is the teaser's and the walkthrough's, retold by the brief's own choice. It
+opens on the seeded unnamed 20x12 m hall rather than the brief's `hall.empty_state`, which a couple
+never sees (see `v1-facts.md`).
+Scenes 96 + 180 + 210 + 120 + 108 = 714 at `SUNDAY_COUCH_TRANSITION = 8` x 4 seams -> 682.
+Built from `docs/video-plans/3-story-videos-9x16-2026-09-25.md`, brief `sunday-couch`, drawn on
+`COUCH_HALL` (`layouts.ts`), 20x12 m, 58 seats.
+
 ## Polish lines already burned on screen
 
 None of these may appear again:
@@ -280,6 +298,21 @@ stołach"*, *"Szukaj gościa…"*, *"Wszyscy 58"*, *"Bez miejsca 0"*, the diet c
 Stół 3"* are chrome, as above; this cut rests its answer on that row by the user's explicit call
 (the plan's open question 5, answered 2026-09-26), because the beat is mum finding it herself. Its
 CTA is *"Wyślij mamie link do planu"* over the *"easywed.app"* pill.
+
+From the sunday-couch cut: the time chip *"Niedziela, 19:40"* ticking to *"20:10"*, *"21:05"* and
+*"22:30"* (the whole Sunday-evening clock device is spent with it), and the two voices' lines, in
+order: *"Dobra, dziś w końcu robimy plan stołów."* (its hook) · *"Herbata i do dzieła."* · *"Parkiet
+na środek."* · *"Stół pary młodej naprzeciwko."* · *"Ile nam tych stołów wyszło?"* · *"Siedem.
+Pasuje."* · *"Babcia blisko nas."* · *"Kuzynki razem - i tak się przesiądą."* · *"Twoi z pracy przy
+barze?"* · *"A gdzie indziej."* · *"To wszyscy?"* · *"Wszyscy siedzą."* · *"Jeden laptop, jedna
+kanapa, cały plan."* (its payoff). As the planner shows them: the seeded hall's chip *"Sala ·
+20×12 m"* (`hall.unnamed`), and the guest panel's *"Bez miejsca"* pill on an unseated row
+(`guests.status.unseated`) - chrome, like the rest of the panel, which it also carries
+(*"Rozsadzeni"*, *"0/58"* climbing to *"58/58 gości przy stołach"*, *"Wszyscy 58"*, *"Bez miejsca
+58"* counting down to *"Bez miejsca 0"*, the diet chips, *"Dodaj gościa"*, *"Importuj gości"*,
+*"Przy stole: Stół pary młodej"*). The beat itself - a whole evening's plan told as a clock and a
+couple's dialogue - is spent. Its CTA is *"Usiądźcie do planu razem"* over the *"easywed.app"*
+pill.
 
 The one exception is the CTA pill itself: *"easywed.app"* recurs by design (section 8). Each video's
 action line above it is its own, and burns like any other line.

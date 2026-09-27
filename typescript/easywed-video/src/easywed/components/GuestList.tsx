@@ -369,22 +369,43 @@ export const GuestList: React.FC<Props> = ({
                         </div>
                       ) : null}
                     </div>
-                    <div
-                      style={{
-                        marginTop: 2,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                        fontSize: 12,
-                        lineHeight: "16px",
-                        fontWeight: 500,
-                        color: colors.primary,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      <Icon name="check" color={colors.primary} size={12} strokeWidth={2.5} />
-                      {tl.guests.seatedAt(guest.table)}
-                    </div>
+                    {guest.table ? (
+                      <div
+                        style={{
+                          marginTop: 2,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
+                          fontSize: 12,
+                          lineHeight: "16px",
+                          fontWeight: 500,
+                          color: colors.primary,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        <Icon name="check" color={colors.primary} size={12} strokeWidth={2.5} />
+                        {tl.guests.seatedAt(guest.table)}
+                      </div>
+                    ) : (
+                      // `guests.status.unseated`: the `bg-accent` pill a guest with no table carries instead.
+                      <div
+                        style={{
+                          marginTop: 4,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          height: 20,
+                          padding: "0 8px",
+                          borderRadius: 999,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          backgroundColor: colors.accentSoft,
+                          color: colors.accent,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {tl.guests.unseated}
+                      </div>
+                    )}
                     {/* The tag row opens as the diet is typed in, pushing the rows below down. */}
                     {guest.diet ? (
                       <div style={{ height: TAGS_HEIGHT * landed(i), overflow: "visible" }}>

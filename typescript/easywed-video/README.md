@@ -31,8 +31,11 @@
 - **the mama-link cut** - 18 seconds for Reels/TikTok, 9:16 only: mum's third question about
   where the uncle sits, a view-only invite link made on the couple's laptop, mum signing in on her
   phone and finding his table herself in the guest list, the CTA.
+- **the sunday-couch cut** - 22.7 seconds for Reels/TikTok, 9:16 only: one Sunday evening on one
+  laptop, told by a clock and two voices - the empty hall at 19:40, the room laid out by 20:10,
+  everyone seated by 22:30, the CTA.
 
-All but the loops, the keep-apart cut and the mama-link cut render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
+All but the loops, the keep-apart, mama-link and sunday-couch cuts render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
 are in Polish.
 
 It is a standalone package on purpose - it sits next to `easywed/` rather than inside it, so it
@@ -80,6 +83,8 @@ pnpm run render:walkthrough-long:vertical  # -> out/pl/easywed-walkthrough-verti
 pnpm run render:keep-apart:vertical  # -> out/pl/easywed-apart-vertical.mp4 (9:16, its only size)
 
 pnpm run render:mama-link:vertical   # -> out/pl/easywed-mama-vertical.mp4  (9:16, its only size)
+
+pnpm run render:sunday-couch:vertical  # -> out/pl/easywed-couch-vertical.mp4 (9:16, its only size)
 
 pnpm run render:all     # all of the above
 pnpm run render:all:en  # all of the above in English -> out/en/
@@ -224,6 +229,15 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `MamaPhone`               | 180f   | mum taps the link, signs in, opens *Goście* and types his name |
 | `MamaCta`                 | 108f   | the phone recedes, the payoff, logo + easywed.app              |
 
+| id                        | length | what it is                                                          |
+| ------------------------- | ------ | ------------------------------------------------------------------- |
+| `easywed-couch-vertical`  | 682f   | the 22.7 s sunday-couch cut, 9:16 only                              |
+| `CouchHook`               | 96f    | 19:40, the laptop on the empty seeded hall, the first line on frame 0 |
+| `CouchHall`               | 180f   | 20:10, the dance floor, the bar and seven tables land; "Siedem"     |
+| `CouchSeating`            | 210f   | 21:05, the guest panel open, the room seated table by table         |
+| `CouchDone`               | 120f   | 22:30, back over the laptop, every chair taken, 58/58               |
+| `CouchCta`                | 108f   | the laptop recedes, the payoff, logo + easywed.app                  |
+
 The long walkthrough's other fifteen chapters are the scenes registered above, from the short
 walkthrough and the other cuts; only `Floors` is its own. The 9:16 cut leaves out `ScaleMeasure`:
 on a phone at v1 the canvas toolbar isn't there, and measuring is a long-press menu item with no
@@ -231,7 +245,7 @@ on a phone at v1 the canvas toolbar isn't there, and measuring is a long-press m
 bottom sheet rather than the desktop's centred dialog.
 
 The scenes are also registered individually (Studio folders "Scenes", "Teaser", "Import",
-"Report", "Kids", "Swap-cut", "Keep-apart", "Mama-link" and "Walkthrough-long") so a single beat can be previewed without scrubbing through the
+"Report", "Kids", "Swap-cut", "Keep-apart", "Mama-link", "Sunday-couch" and "Walkthrough-long") so a single beat can be previewed without scrubbing through the
 whole timeline. The social cuts' scenes are registered at 9:16, the cut they are made for.
 
 The landing-page loops - `easywed-scale`, `easywed-swap` and `easywed-shape` - sit together in the
@@ -245,8 +259,8 @@ src/easywed/
   timeline.ts            scene lengths, fps, dimensions - the single source of truth
   theme.ts               hex mirror of the app's `editorial` palette + brand colors, fonts
   layouts.ts             WIDE_HALL, TALL_HALL, the odd-room loop's L_HALL, the keep-apart
-                         cut's KEEP_APART_HALL and the long walkthrough's second hall,
-                         60 units per metre
+                         cut's KEEP_APART_HALL, the sunday-couch cut's COUCH_HALL and
+                         the long walkthrough's second hall, 60 units per metre
   format.ts              useFormat() - picks hall + type scale from the composition size
   data.ts                the demo wedding: guest list, couple
   geometry.ts            seat positions around round/rectangular tables
@@ -297,6 +311,13 @@ src/easywed/
                          as a viewer on a phone; guests.ts seats the uncle without changing
                          the roster's 58. The laptop is AppFrame's `desktop` frame, and the
                          viewer's guest list is GuestList with `readOnly` and a `query`
+  sunday-couch/          the sunday-couch cut, 9:16 only, in the keep-apart cut's shape: every
+                         scene draws components/CouchPlanner.tsx off one clock (script.ts) -
+                         the time chip, the two voices (SpeechLine, over CaptionLine) and a
+                         camera on the couple's laptop (CouchDesk: AppFrame's `desktop` frame
+                         with its rail badges counted off the plan). The room is COUCH_HALL,
+                         the 20x12 m hall guest mode seeds; the guest panel's progress card
+                         is components/SeatingProgress.tsx, shared with the import cut
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect

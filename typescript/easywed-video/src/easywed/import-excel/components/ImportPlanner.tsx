@@ -4,6 +4,7 @@ import { AppFrame } from "../../components/AppFrame";
 import { HallCanvas, hallAspect } from "../../components/HallCanvas";
 import { Icon, type IconName } from "../../components/Icon";
 import { canvasInsets, PlannerCanvas } from "../../components/PlannerCanvas";
+import { SeatingProgress } from "../../components/SeatingProgress";
 import type { RosterGuest } from "../../data";
 import { useFormat } from "../../format";
 import { tl } from "../../i18n";
@@ -33,41 +34,6 @@ const initials = (name: string) =>
     .split(" ")
     .map((part) => part.charAt(0))
     .join("");
-
-/** `Guests/SeatingProgress`: `guests.progress` and `guests.seated_ratio` over a bar. */
-const SeatingProgress: React.FC<{ seated: number; total: number; scale: number }> = ({ seated, total, scale }) => {
-  const pct = total > 0 ? Math.round((seated / total) * 100) : 0;
-  return (
-    <div
-      style={{
-        padding: 14 * scale,
-        borderRadius: 16 * scale,
-        border: `1px solid ${colors.border}`,
-        backgroundColor: colors.card,
-        fontFamily: fonts.sans,
-      }}
-    >
-      <div
-        style={{
-          marginBottom: 10 * scale,
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "space-between",
-          gap: 12 * scale,
-          fontSize: 13 * scale,
-        }}
-      >
-        <span style={{ fontWeight: 600, color: colors.ink }}>{tl.guests.progress}</span>
-        <span style={{ color: colors.inkSoft, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
-          {tl.guests.seatedRatio(seated, total)}
-        </span>
-      </div>
-      <div style={{ height: 8 * scale, borderRadius: 999, backgroundColor: colors.bgDeep, overflow: "hidden" }}>
-        <div style={{ width: `${pct}%`, height: "100%", borderRadius: 999, backgroundColor: colors.primary }} />
-      </div>
-    </div>
-  );
-};
 
 /** An outline button, as the empty guest list stacks them. */
 const OutlineButton: React.FC<{ icon: IconName; label: string; scale: number }> = ({ icon, label, scale }) => (

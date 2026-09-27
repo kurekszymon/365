@@ -73,6 +73,13 @@ import { MamaInviteScene } from "./easywed/mama-link/scenes/MamaInviteScene";
 import { MamaPhoneScene } from "./easywed/mama-link/scenes/MamaPhoneScene";
 import { MamaCtaScene } from "./easywed/mama-link/scenes/MamaCtaScene";
 import { MAMA_DURATION, MAMA_SCENES } from "./easywed/mama-link/timeline";
+import { SundayCouch } from "./easywed/sunday-couch/SundayCouch";
+import { CouchHookScene } from "./easywed/sunday-couch/scenes/CouchHookScene";
+import { CouchHallScene } from "./easywed/sunday-couch/scenes/CouchHallScene";
+import { CouchSeatingScene } from "./easywed/sunday-couch/scenes/CouchSeatingScene";
+import { CouchDoneScene } from "./easywed/sunday-couch/scenes/CouchDoneScene";
+import { CouchCtaScene } from "./easywed/sunday-couch/scenes/CouchCtaScene";
+import { SUNDAY_COUCH_DURATION, SUNDAY_COUCH_SCENES } from "./easywed/sunday-couch/timeline";
 import { WalkthroughLong } from "./easywed/walkthrough-long/WalkthroughLong";
 import { FloorsScene } from "./easywed/walkthrough-long/scenes/FloorsScene";
 import {
@@ -245,6 +252,17 @@ export const RemotionRoot: React.FC = () => {
         height={VERTICAL_HEIGHT}
       />
 
+      {/* The 22.7 s sunday-couch cut - one evening on one laptop, the empty hall at
+          19:40 to everyone seated at 22:30, told by a clock and two voices; 9:16 only. */}
+      <Composition
+        id="easywed-couch-vertical"
+        component={SundayCouch}
+        durationInFrames={SUNDAY_COUCH_DURATION}
+        fps={FPS}
+        width={VERTICAL_WIDTH}
+        height={VERTICAL_HEIGHT}
+      />
+
       {/* The landing-page loops - 16:9 only, no CTA, each closing on `LoopSeam`
           back to its frame 0 - with their beats nested beside them. */}
       <Folder name="Landing-loops">
@@ -372,6 +390,15 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="MamaInvite" component={MamaInviteScene} durationInFrames={MAMA_SCENES.invite} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="MamaPhone" component={MamaPhoneScene} durationInFrames={MAMA_SCENES.phone} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="MamaCta" component={MamaCtaScene} durationInFrames={MAMA_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+      </Folder>
+
+      {/* The sunday-couch cut's beats, at 9:16 - the only size it is made for. */}
+      <Folder name="Sunday-couch">
+        <Composition id="CouchHook" component={CouchHookScene} durationInFrames={SUNDAY_COUCH_SCENES.hook} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="CouchHall" component={CouchHallScene} durationInFrames={SUNDAY_COUCH_SCENES.hall} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="CouchSeating" component={CouchSeatingScene} durationInFrames={SUNDAY_COUCH_SCENES.seating} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="CouchDone" component={CouchDoneScene} durationInFrames={SUNDAY_COUCH_SCENES.done} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="CouchCta" component={CouchCtaScene} durationInFrames={SUNDAY_COUCH_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
       </Folder>
 
     </>

@@ -31,6 +31,17 @@ const plural = (
 
 export type DietKey = "vegetarian" | "vegan" | "glutenFree";
 
+/** Small counts spelled out, as a line of dialogue says them - index is the number. */
+const PL_NUMBERS = ["Zero", "Jeden", "Dwa", "Trzy", "Cztery", "Pięć", "Sześć", "Siedem", "Osiem", "Dziewięć", "Dziesięć", "Jedenaście", "Dwanaście"];
+const EN_NUMBERS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
+
+/** A count as a word, so a spoken line can quote the plan; a room outgrowing the list fails loudly rather than printing a digit. */
+const spelled = (count: number, words: string[]): string => {
+  const word = words[count];
+  if (word === undefined) throw new Error(`No spelled-out form for ${count}`);
+  return word;
+};
+
 const pl = {
   hall: {
     name: "Sala główna",
@@ -193,6 +204,7 @@ const pl = {
     } as Record<string, string>,
     none: "Brak gości.", // guests.none
     seatedAt: (table: string) => `Przy stole: ${table}`, // guests.status.seated_at
+    unseated: "Bez miejsca", // guests.status.unseated
     more: (count: number) => `+ ${count} gości więcej`,
     progress: "Rozsadzeni", // guests.progress
     // guests.seated_ratio
@@ -376,6 +388,32 @@ const pl = {
     ctaAction: "Wyślij mamie link do planu",
   },
 
+  couch: {
+    /** The time chip: one Sunday evening, read off the corner of the frame. */
+    day: "Niedziela",
+    times: ["19:40", "20:10", "21:05", "22:30"],
+    /** The hook, the left voice. "w" is bound to "końcu" so the line never ends on it. */
+    hook: "Dobra, dziś w\u00a0końcu robimy plan stołów.",
+    /** "i" is bound to "do". */
+    tea: "Herbata i\u00a0do dzieła.",
+    floor: "Parkiet na środek.",
+    headTable: "Stół pary młodej naprzeciwko.",
+    howMany: "Ile nam tych stołów wyszło?",
+    /** The answer is read off the room - `COUCH_HALL.tables.length`, spelled out. */
+    tableCount: (count: number) => `${spelled(count, PL_NUMBERS)}. Pasuje.`,
+    grandma: "Babcia blisko nas.",
+    /** The dash stays with "razem", and "i" is bound to "tak". */
+    cousins: "Kuzynki razem\u00a0- i\u00a0tak się przesiądą.",
+    /** "z" is bound to "pracy". */
+    work: "Twoi z\u00a0pracy przy barze?",
+    /** "A" is bound to "gdzie". */
+    whereElse: "A\u00a0gdzie indziej.",
+    everyone: "To wszyscy?",
+    seated: "Wszyscy siedzą.",
+    payoff: "Jeden laptop, jedna kanapa, cały plan.",
+    ctaAction: "Usiądźcie do planu razem",
+  },
+
   walkthrough: {
     /** "i" is bound to "żadnego" so the line never ends on it. */
     hook: "Pusta sala, lista gości i\u00a0żadnego planu?",
@@ -528,6 +566,7 @@ const en: typeof pl = {
     ageGroup: { adult: "Adult", "0-3": "0-3 years", "3-6": "3-6 years" },
     none: "No guests added yet.",
     seatedAt: (table) => `Seated at ${table}`,
+    unseated: "Unseated",
     more: (count) => `+ ${count} more guests`,
     progress: "Seated",
     seatedRatio: (seated, total) =>
@@ -681,6 +720,25 @@ const en: typeof pl = {
     captionLine: "A link, not a photo of a sheet of paper.",
     payoff: "Mum can check for herself.",
     ctaAction: "Send Mum a link to the plan",
+  },
+
+  couch: {
+    day: "Sunday",
+    times: ["7:40 pm", "8:10 pm", "9:05 pm", "10:30 pm"],
+    hook: "Right, tonight we finally do the seating plan.",
+    tea: "Tea, and let's go.",
+    floor: "Dance floor in the middle.",
+    headTable: "Our table facing it.",
+    howMany: "How many tables did we end up with?",
+    tableCount: (count) => `${spelled(count, EN_NUMBERS)}. That works.`,
+    grandma: "Grandma close to us.",
+    cousins: "Cousins together\u00a0- they'll swap seats anyway.",
+    work: "Your work friends by the bar?",
+    whereElse: "Where else?",
+    everyone: "Is that everyone?",
+    seated: "Everyone's seated.",
+    payoff: "One laptop, one sofa, the whole plan.",
+    ctaAction: "Sit down to the plan together",
   },
 
   walkthrough: {

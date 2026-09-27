@@ -19,6 +19,12 @@ type Props = {
   desktop?: boolean;
   /** Drawn over the dashed invite circle, positioned from its centre - a pointer that presses it. */
   inviteSlot?: React.ReactNode;
+  /**
+   * The tabs' badge counts, as `useTabBadgeCounts` reads them off the plan:
+   * unseated guests, tables, fixtures and open reminders. Left out, the rail
+   * carries `NAV_ITEMS`' fixed counts, as every published film draws it.
+   */
+  badges?: Partial<Record<NavKind, number>>;
 };
 
 /** `useFormat()`'s landscape padding, for a desktop frame drawn inside a portrait composition. */
@@ -141,7 +147,8 @@ const TabIcon: React.FC<{
  * 60px icon strip with its labels underneath; portrait gets the mobile tab bar
  * with the zoom control and add FAB, matching how the app itself adapts.
  */
-export const AppFrame: React.FC<Props> = ({ activeRail, children, desktop = false, inviteSlot }) => {
+export const AppFrame: React.FC<Props> = ({ activeRail, children, desktop = false, inviteSlot, badges }) => {
+  const badgeFor = (kind: NavKind, fixed?: number) => (badges ? badges[kind] : fixed);
   const format = useFormat();
   const tall = desktop ? false : format.tall;
   const pad = desktop ? DESKTOP_PAD : format.pad;
@@ -258,7 +265,7 @@ export const AppFrame: React.FC<Props> = ({ activeRail, children, desktop = fals
                     <TabIcon
                       kind={kind}
                       active={kind === activeRail}
-                      badge={badge}
+                      badge={badgeFor(kind, badge)}
                       size={34 * s}
                     />
                     <span
@@ -302,7 +309,7 @@ export const AppFrame: React.FC<Props> = ({ activeRail, children, desktop = fals
                     width: 78 * s,
                   }}
                 >
-                  <TabIcon kind={kind} active={kind === activeRail} badge={badge} size={36 * s} />
+                  <TabIcon kind={kind} active={kind === activeRail} badge={badgeFor(kind, badge)} size={36 * s} />
                   <span
                     style={{
                       fontFamily: fonts.sans,

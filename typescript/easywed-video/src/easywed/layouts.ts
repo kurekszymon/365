@@ -154,6 +154,32 @@ export const KEEP_APART_HALL = withDerived({
   fixtures: [{ id: "dj", label: tl.hall.djBooth, x: 725, y: 120, width: 180, height: 60 }],
 });
 
+/**
+ * The sunday-couch cut's room: the hall guest mode opens on by itself -
+ * `/wedding/local` seeds `DEFAULT_HALL` when there is none, **unnamed** and a
+ * 20x12 m rectangle - laid out over one evening. The canvas's own
+ * `hall.empty_state` never shows in that flow, since there is always a hall to
+ * draw. The head table faces the dance floor across the room, the bar stands in
+ * the top-right corner with Stół 3 beside it, and every seat ring keeps half a
+ * metre from the walls, the floor and its neighbours, as in the other rooms.
+ * Seven tables and the same 58 seats.
+ */
+export const COUCH_HALL = withDerived({
+  name: "",
+  canvas: { width: 1200, height: 720 },
+  danceFloor: { x: 600, y: 370, width: 300, height: 160 },
+  tables: [
+    { id: "head", label: tl.hall.headTable, shape: "rect", x: 600, y: 110, width: 320, height: 80, seats: 10 },
+    { id: "t1", label: tl.hall.table(1), shape: "round", x: 160, y: 250, width: 130, height: 130, seats: 8 },
+    { id: "t2", label: tl.hall.table(2), shape: "round", x: 160, y: 540, width: 130, height: 130, seats: 8 },
+    { id: "t3", label: tl.hall.table(3), shape: "round", x: 1040, y: 250, width: 130, height: 130, seats: 8 },
+    { id: "t4", label: tl.hall.table(4), shape: "round", x: 1040, y: 540, width: 130, height: 130, seats: 8 },
+    { id: "t5", label: tl.hall.table(5), shape: "round", x: 420, y: 588, width: 130, height: 130, seats: 8 },
+    { id: "t6", label: tl.hall.table(6), shape: "round", x: 780, y: 588, width: 130, height: 130, seats: 8 },
+  ],
+  fixtures: [{ id: "bar", label: tl.hall.bar, x: 1040, y: 60, width: 240, height: 56 }],
+});
+
 /** `HALL_GAP` in the app's `planner.store.ts`: the metres `nextHallPosition` leaves between halls. */
 export const HALL_GAP = 3;
 

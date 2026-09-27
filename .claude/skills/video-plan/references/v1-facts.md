@@ -11,6 +11,13 @@ named in section 2 both need updating — nothing will warn you.
 - **The full planner with no account at all.** `/wedding/local` auto-seeds a hall; there is nothing
   to sign up for, no email, no wall. `PUBLIC_PATHS` in `AuthGate.tsx` lists it; it deliberately has
   no `requireAuth` in `beforeLoad`.
+  - **The canvas's empty state never reaches a couple.** `Canvas.tsx` renders `hall.empty_state`
+    (*„Kliknij, aby zacząć od skonfigurowania sali”*) only when `halls.length === 0`, and
+    `/wedding/local` seeds `DEFAULT_HALL` whenever there is none (`routes/wedding.local.tsx`,
+    "Guest-mode counterpart of seedDefaultHall"), as a signed-in wedding gets one at creation. A new
+    plan therefore opens on an **unnamed 20x12 m rectangle** (`DEFAULT_HALL` in
+    `stores/planner.store.ts`), its chip reading *„Sala · 20×12 m”* (`hall.unnamed`). A film that
+    starts from nothing starts there, not on the empty-state line.
 - **Free for couples**, stated contractually rather than as a promotion — `terms.fees.c1`.
 - **A metric, to-scale floor plan** — `PX_PER_M = 60`, a measuring tool (`measure.*`), snapping
   (`canvas.snap.*`), a 1 m ruled grid with a firmer 5 m ruling.
@@ -108,6 +115,11 @@ named in section 2 both need updating — nothing will warn you.
     table has capacity left — the rest count as `overflowed`. *„Do zaimportowania: N gości”*
     (`guests.import.summary`) sits on the **preview** step after *Dalej*, not on the mapping step.
     On a phone the dialog is a bottom-sheet drawer (`ui/responsive-dialog.tsx`).
+  - The rail's and the phone tab bar's badges are `useTabBadgeCounts` (`Sidebar/tabs.ts`):
+    **guests counts the unseated**, reminders the open ones, tables and fixtures are plain totals
+    (the dance floor is a fixture), and a zero draws no badge. A guest row with no table carries
+    the `bg-accent` pill *„Bez miejsca”* (`guests.status.unseated`) where a seated one reads
+    *„Przy stole: …”* (`Guests/GuestListContent.tsx`).
   - `guests.import.drop_here` is *„Przeciągnij tutaj plik .csv lub .xlsx lub kliknij, aby
     wybrać”*; the progress card is `guests.progress` *„Rozsadzeni”* beside
     `guests.seated_ratio` *„{{seated_count}}/{{count}} gości przy stołach”* — two strings, not
