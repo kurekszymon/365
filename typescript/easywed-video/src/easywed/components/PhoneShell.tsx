@@ -1,32 +1,46 @@
 import React from "react";
-import { BrandMark } from "../../components/BrandMark";
-import { GuestList, matchingGuests, READ_ONLY_LIST_TOP, rowBottom } from "../../components/GuestList";
-import { DRAWER_HANDLE, DrawerHandle } from "../../components/HallPanel";
-import { HallCanvas, hallAspect } from "../../components/HallCanvas";
-import { Icon, type IconName } from "../../components/Icon";
-import { WEDDING, type RosterGuest } from "../../data";
-import { tl } from "../../i18n";
-import type { HallLayout } from "../../layouts";
-import { colors, fonts } from "../../theme";
-import { PHONE } from "./PhoneFrame";
-import { BrowserBar, PAGE_TOP } from "./WebScreens";
+import { BrandMark } from "./BrandMark";
+import { GuestList, LIST_TOP, matchingGuests, READ_ONLY_LIST_TOP, rowBottom, rowTop, ROW_HEIGHT } from "./GuestList";
+import { DRAWER_HANDLE, DrawerHandle } from "./HallPanel";
+import { HallCanvas, hallAspect } from "./HallCanvas";
+import { Icon, type IconName } from "./Icon";
+import { BrowserBar, PAGE_TOP, PHONE } from "./PhoneFrame";
+import { WEDDING, type RosterGuest } from "../data";
+import { tl } from "../i18n";
+import type { HallLayout } from "../layouts";
+import { colors, fonts } from "../theme";
 
 /**
- * The planner on mum's phone, as a viewer gets it at easywed/v1 - the website
- * under her browser's address bar, laid out in the phone's CSS pixels:
+ * The planner on a phone at easywed/v1 - the website under the browser's
+ * address bar, laid out in the phone's CSS pixels. Two people hold it:
  *
- * - `Header`: the mark (the wordmark drops below `sm`), the wedding name, the
- *   member stack - the owner, the couple's unnamed partner and mum, with no
- *   dashed invite circle, which is the owner's (`MemberAvatars`) - then
- *   *Skonfiguruj salę* as an icon, export (import is `canEdit`-only) and the menu.
- * - `Canvas` on a phone: the seated room with `MobileZoomControl` over it, and
- *   no `AddFab` (`canEdit && <AddFab />`). No read-only badge: v1 says so only
- *   in the wedding name's hover title, which a phone never shows.
- * - `MobileTabBar`: four tabs, not five - the assistant is `canEdit`-only.
- * - The tab's sheet: the four tab pills, then `GuestListContent` read-only.
+ * - **`viewer`** - mum in the mama-link cut, signed in with a viewer's role:
+ *   the member stack is the owner, the couple's unnamed partner and mum, with
+ *   no dashed invite circle, which is the owner's (`MemberAvatars`); no import
+ *   in the header, no `AddFab` (`canEdit && <AddFab />`), four tabs (the
+ *   assistant is `canEdit`-only), and the list without its buttons. No
+ *   read-only badge: v1 says so only in the wedding name's hover title, which
+ *   a phone never shows.
+ * - **`guest`** - the couple planning signed out, the owner of a wedding kept
+ *   in this browser: `GuestModeBanner` over the header; the member stack
+ *   collapsed to the owner's invite chip, since a local wedding has no members;
+ *   import and export as one button group; `AddFab` on the canvas; a fifth
+ *   tab for the assistant; and the list with its add and import buttons and
+ *   each row's seat, edit and delete buttons.
+ *
+ * Both get the same `Header` (the mark - the wordmark drops below `sm` - the
+ * wedding name, *Skonfiguruj salę* as an icon, export and the menu), the room
+ * with `MobileZoomControl` over it, `MobileTabBar`, and its sheet: the four
+ * tab pills, then `GuestListContent`.
  */
+export type PhoneMode = "viewer" | "guest";
 
 const HEADER = 48;
+/**
+ * `GuestModeBanner`: `py-2` round the `text-xs` line, which a phone's width
+ * wraps to four lines, and its `border-b`.
+ */
+const GUEST_BANNER = 8 + 4 * 16 + 8 + 1;
 /** `MobileTabBar`: `py-3` round the 36px icon, `gap-1`, the 11px label, then `pb-[env(safe-area-inset-bottom)]`. */
 const TAB_BAR = 12 + 36 + 4 + 15 + 12 + PHONE.safeBottom;
 /** The app's viewport, under the browser's own bar. */
@@ -40,16 +54,19 @@ const PROGRESS = 14 + 18 + 10 + 8 + 14 + 2 + 12;
 const SHEET_PAD_X = 16;
 /** `pb-[max(1rem,env(safe-area-inset-bottom))]`. */
 const SHEET_PAD_BOTTOM = Math.max(16, PHONE.safeBottom);
+/** Where `GuestList` puts its first row: under the add and import buttons, which a viewer doesn't get. */
+const listTopFor = (mode: PhoneMode) => (mode === "guest" ? LIST_TOP : READ_ONLY_LIST_TOP);
 
-/** The header's outline buttons: `h-8`, an icon between `px-2.5`. */
-const HeaderButton: React.FC<{ icon: IconName }> = ({ icon }) => (
+/** The header's outline buttons: `h-8`, an icon between `px-2.5`. `ButtonGroup` joins two at a shared edge. */
+const HeaderButton: React.FC<{ icon: IconName; group?: "first" | "last" }> = ({ icon, group }) => (
   <div
     style={{
       width: 36,
       height: 32,
       boxSizing: "border-box",
-      borderRadius: 8,
+      borderRadius: group === "first" ? "8px 0 0 8px" : group === "last" ? "0 8px 8px 0" : 8,
       border: `1px solid ${colors.border}`,
+      borderLeftWidth: group === "last" ? 0 : 1,
       backgroundColor: colors.card,
       display: "flex",
       alignItems: "center",
@@ -82,25 +99,86 @@ const Avatar: React.FC<{ initials?: string }> = ({ initials }) => (
   </div>
 );
 
-const TABS: { kind: IconName; label: string }[] = [
+/** The owner's dashed invite chip (`members.invite`) - all that is left of the stack in guest mode. */
+const InviteChip: React.FC = () => (
+  <div
+    style={{
+      width: 28,
+      height: 28,
+      boxSizing: "border-box",
+      borderRadius: 999,
+      border: `1px dashed ${colors.inkSoft}80`,
+      backgroundColor: colors.bg,
+      boxShadow: `0 0 0 2px ${colors.bg}`,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    }}
+  >
+    <Icon name="userPlus" color={colors.inkSoft} size={14} />
+  </div>
+);
+
+/**
+ * `GuestModeBanner`: the standing notice that the plan lives only in this
+ * browser, in the planner's selection tones (`bg-planner-soft`,
+ * `text-planner-selected`, `border-planner-table-border`).
+ */
+const GuestBanner: React.FC = () => (
+  <div
+    style={{
+      height: GUEST_BANNER,
+      boxSizing: "border-box",
+      padding: "8px 16px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 12,
+      borderBottom: `1px solid ${colors.tableBorder}`,
+      backgroundColor: colors.selectedSoft,
+      color: colors.selected,
+      fontSize: 12,
+      lineHeight: "16px",
+      textAlign: "center",
+    }}
+  >
+    <Icon name="info" color={colors.selected} size={14} />
+    <span>{tl.app.guestBanner}</span>
+    <span style={{ flexShrink: 0, fontWeight: 500, textDecoration: "underline", textUnderlineOffset: 2 }}>
+      {tl.app.auth.signIn}
+    </span>
+  </div>
+);
+
+type Tab = { kind: IconName; label: string };
+
+const TABS: Tab[] = [
   { kind: "guests", label: tl.app.mobileTabs.guests },
   { kind: "tables", label: tl.app.mobileTabs.tables },
   { kind: "fixtures", label: tl.app.mobileTabs.fixtures },
   { kind: "reminders", label: tl.app.mobileTabs.reminders },
 ];
 
-/** Where each tab's icon sits, in the phone's CSS px - for mum's thumb. */
-export const tabAt = (index: number) => ({
-  x: (PHONE.width / TABS.length) * (index + 0.5),
+/** The bar's tabs: an editor gets the assistant as a fifth (`grid-cols-5`); the sheet's pills stay four. */
+const barTabs = (mode: PhoneMode): Tab[] =>
+  mode === "guest" ? [...TABS, { kind: "assistant", label: tl.app.mobileTabs.assistant }] : TABS;
+
+/** Where each tab's icon sits, in the phone's CSS px - for a thumb. */
+export const tabAt = (index: number, mode: PhoneMode = "viewer") => ({
+  x: (PHONE.width / barTabs(mode).length) * (index + 0.5),
   y: PHONE.height - TAB_BAR + 12 + 18,
 });
 
 /** The sheet's height for the rows a search leaves: it hugs its content up to `max-h-[88dvh]`. */
-const sheetHeight = (rows: RosterGuest[]) =>
+const sheetHeight = (rows: RosterGuest[], mode: PhoneMode = "viewer") =>
   Math.min(
     SHEET_MAX,
-    DRAWER_HANDLE + PILLS + PROGRESS + READ_ONLY_LIST_TOP + (rows.length ? rowBottom(rows, rows.length - 1) : 0) + SHEET_PAD_BOTTOM,
+    DRAWER_HANDLE + PILLS + PROGRESS + listTopFor(mode) + (rows.length ? rowBottom(rows, rows.length - 1) : 0) + SHEET_PAD_BOTTOM,
   );
+
+/** The height of the list's own viewport, under the sheet's sticky block. */
+const listHeightFor = (rows: RosterGuest[], mode: PhoneMode) =>
+  sheetHeight(rows, mode) - DRAWER_HANDLE - PILLS - PROGRESS - listTopFor(mode) - SHEET_PAD_BOTTOM;
 
 /** Where the search field's centre sits once the sheet is up, in the phone's CSS px - for the thumb. */
 export const searchAt = (guests: RosterGuest[], query: string) => {
@@ -108,21 +186,53 @@ export const searchAt = (guests: RosterGuest[], query: string) => {
   return { x: PHONE.width / 2, y: top + DRAWER_HANDLE + PILLS + PROGRESS + 18 };
 };
 
-export const PhoneViewer: React.FC<{
+/** How far the list scrolls to bring its last row to the bottom of the sheet. */
+export const scrollToEnd = (guests: RosterGuest[], mode: PhoneMode) =>
+  Math.max(0, rowBottom(guests, guests.length - 1) - listHeightFor(guests, mode));
+
+/** Where the sheet's top edge sits once it is up, in the phone's CSS px. */
+export const guestSheetTop = (guests: RosterGuest[], mode: PhoneMode) => PHONE.height - sheetHeight(guests, mode);
+
+/**
+ * Row `index` of the unfiltered list once the sheet is up and scrolled by
+ * `scroll`, in the phone's CSS px: its vertical centre, and the centre of its
+ * seat button - the first of the three at the row's right end (`size-9`,
+ * `gap-1`, `pr-2`): the utensils, `guests.assign.action`.
+ */
+export const guestRowAt = (guests: RosterGuest[], index: number, scroll: number, mode: PhoneMode) => {
+  const top =
+    guestSheetTop(guests, mode) + DRAWER_HANDLE + PILLS + PROGRESS + listTopFor(mode) + rowTop(guests, index) - scroll;
+  return {
+    y: top + ROW_HEIGHT / 2,
+    seatButtonX: PHONE.width - SHEET_PAD_X - 8 - 36 * 2.5 - 4 * 2,
+  };
+};
+
+export const PhoneShell: React.FC<{
   hall: HallLayout;
   guests: RosterGuest[];
-  /** Per-table badge counts, as `useTabBadgeCounts` reads them: unseated guests, tables, fixtures, open reminders. */
+  /** Per-tab badge counts, as `useTabBadgeCounts` reads them: unseated guests, tables, fixtures, open reminders. */
   badges: number[];
   /** The guests sheet, 0..1: it slides up from the bottom edge. */
   sheet: number;
-  query: string;
-}> = ({ hall, guests, badges, sheet, query }) => {
-  const seated = guests.filter((guest) => guest.table).length;
-  const height = sheetHeight(matchingGuests(guests, query));
-  const listHeight = height - DRAWER_HANDLE - PILLS - PROGRESS - READ_ONLY_LIST_TOP - SHEET_PAD_BOTTOM;
+  query?: string;
+  /** Who is holding the phone. Left out, it is mum's view-only one, as the mama-link cut drew it. */
+  mode?: PhoneMode;
+  /** How far the list has scrolled under the sheet's sticky block, in CSS px. */
+  scroll?: number;
+  /** Drawn over everything else in the app's viewport - a second sheet opened from the list. */
+  children?: React.ReactNode;
+}> = ({ hall, guests, badges, sheet, query = "", mode = "viewer", scroll = 0, children }) => {
+  const guest = mode === "guest";
+  const tabs = barTabs(mode);
+  const seated = guests.filter((g) => g.table).length;
+  const rows = matchingGuests(guests, query);
+  const height = sheetHeight(rows, mode);
+  const listHeight = listHeightFor(rows, mode);
+  const canvasTop = guest ? GUEST_BANNER + HEADER : HEADER;
 
   // The room fitted into what the header and the tab bar leave of the screen.
-  const room = { width: PHONE.width - 16, height: VIEWPORT - HEADER - TAB_BAR - 24 };
+  const room = { width: PHONE.width - 16, height: VIEWPORT - canvasTop - TAB_BAR - 24 };
   const aspect = hallAspect(hall);
   const drawWidth = Math.min(room.width, room.height * aspect);
 
@@ -131,6 +241,7 @@ export const PhoneViewer: React.FC<{
       <BrowserBar />
 
       <div style={{ position: "absolute", left: 0, right: 0, top: PAGE_TOP, height: VIEWPORT }}>
+        {guest ? <GuestBanner /> : null}
         <div
           style={{
             height: HEADER,
@@ -161,13 +272,24 @@ export const PhoneViewer: React.FC<{
             {WEDDING.couple}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-            <div style={{ display: "flex", paddingLeft: 8 }}>
-              <Avatar initials="AK" />
-              <Avatar />
-              <Avatar />
-            </div>
+            {guest ? (
+              <InviteChip />
+            ) : (
+              <div style={{ display: "flex", paddingLeft: 8 }}>
+                <Avatar initials="AK" />
+                <Avatar />
+                <Avatar />
+              </div>
+            )}
             <HeaderButton icon="landmark" />
-            <HeaderButton icon="download" />
+            {guest ? (
+              <div style={{ display: "flex" }}>
+                <HeaderButton icon="upload" group="first" />
+                <HeaderButton icon="download" group="last" />
+              </div>
+            ) : (
+              <HeaderButton icon="download" />
+            )}
             <HeaderButton icon="menu" />
           </div>
         </div>
@@ -178,7 +300,7 @@ export const PhoneViewer: React.FC<{
             position: "absolute",
             left: 0,
             right: 0,
-            top: HEADER,
+            top: canvasTop,
             bottom: 0,
             backgroundImage: `linear-gradient(135deg, rgba(239, 233, 221, 0.6) 0%, ${colors.bg} 46%, rgba(246, 232, 242, 0.5) 100%)`,
           }}
@@ -224,6 +346,27 @@ export const PhoneViewer: React.FC<{
               </div>
             ))}
           </div>
+
+          {/* `AddFab`: `right-4` at the zoom control's height, `size-14`, opening the add hub. */}
+          {guest ? (
+            <div
+              style={{
+                position: "absolute",
+                right: 16,
+                bottom: 88 + PHONE.safeBottom,
+                width: 56,
+                height: 56,
+                borderRadius: 999,
+                backgroundColor: colors.primary,
+                boxShadow: `0 14px 28px -10px ${colors.primary}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Icon name="plus" color={colors.primaryInk} size={28} />
+            </div>
+          ) : null}
         </div>
 
         <div
@@ -234,7 +377,7 @@ export const PhoneViewer: React.FC<{
             bottom: 0,
             height: TAB_BAR,
             display: "grid",
-            gridTemplateColumns: `repeat(${TABS.length}, minmax(0, 1fr))`,
+            gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))`,
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
             borderTop: `1px solid ${colors.border}`,
@@ -242,7 +385,7 @@ export const PhoneViewer: React.FC<{
             boxShadow: "0 -14px 30px -22px rgba(40, 60, 45, 0.4)",
           }}
         >
-          {TABS.map((tab, i) => (
+          {tabs.map((tab, i) => (
             <div key={tab.kind} style={{ minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, paddingTop: 12 }}>
               {/* `TabBadgeIcon`: `bg-primary/10` round the icon, the count in the accent badge. */}
               <div
@@ -258,7 +401,7 @@ export const PhoneViewer: React.FC<{
                 }}
               >
                 <Icon name={tab.kind} color={colors.primary} size={19} />
-                {badges[i] > 0 ? (
+                {(badges[i] ?? 0) > 0 ? (
                   <div
                     style={{
                       position: "absolute",
@@ -304,13 +447,14 @@ export const PhoneViewer: React.FC<{
 
         {sheet > 0 ? (
           <>
-            {/* `DrawerOverlay`: the scrim and a light blur over the plan. */}
+            {/* `DrawerOverlay` over the plan. The mama-link cut drew it as a
+                light scrim and a blur, and keeps that; the app's is `bg-black/40`. */}
             <div
               style={{
                 position: "absolute",
                 inset: 0,
-                backgroundColor: colors.scrim,
-                backdropFilter: "blur(4px)",
+                backgroundColor: guest ? colors.drawerScrim : colors.scrim,
+                backdropFilter: guest ? undefined : "blur(4px)",
                 opacity: Math.min(1, sheet),
               }}
             />
@@ -396,15 +540,17 @@ export const PhoneViewer: React.FC<{
                   guests={guests}
                   width={PHONE.width - SHEET_PAD_X * 2}
                   tagged={guests.map(() => 1)}
-                  scroll={0}
+                  scroll={scroll}
                   listHeight={listHeight}
                   query={query}
-                  readOnly
+                  readOnly={!guest}
                 />
               </div>
             </div>
           </>
         ) : null}
+
+        {children}
       </div>
     </div>
   );

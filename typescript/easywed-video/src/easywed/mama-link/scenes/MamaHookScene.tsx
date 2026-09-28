@@ -4,7 +4,7 @@ import { Backdrop } from "../../components/Backdrop";
 import { tl } from "../../i18n";
 import { colors, fonts } from "../../theme";
 import { MamaPhone } from "../components/MamaPhone";
-import { PHONE_OUTER } from "../components/PhoneFrame";
+import { PHONE_OUTER } from "../../components/PhoneFrame";
 import { PHOTO_PUSH } from "../script";
 import { MAMA_STARTS } from "../timeline";
 

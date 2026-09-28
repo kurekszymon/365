@@ -2,7 +2,7 @@ import React from "react";
 import { interpolate } from "remotion";
 import { Icon } from "../../components/Icon";
 import { colors, fonts } from "../../theme";
-import { PHONE } from "./PhoneFrame";
+import { PHONE } from "../../components/PhoneFrame";
 
 /**
  * A message thread on mum's phone, deliberately generic: no messaging app's

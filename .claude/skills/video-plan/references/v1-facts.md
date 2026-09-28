@@ -52,6 +52,22 @@ named in section 2 both need updating — nothing will warn you.
     *„Bez stołu”*, rather than vanishing. Any other case (the guest was already at that table, or
     the table had room) merely clears the occupant's pin and leaves them at the table.
     `track("guest_seated", { source: "canvas_seat", displaced })` is fired by the popover itself.
+  - **The guest list seats a guest too** (`Guests/SeatAssignSheet.tsx`, "Guest-first counterpart
+    to `Canvas/SeatAssignPopover`"), opened by the row itself or its utensils button
+    (`guests.assign.action` *„Posadź gościa”*, the first of the row's three buttons, before the
+    pencil and the bin). One sheet, two steps: *„Posadź: {{name}}”* over an outline button per
+    table in store order, `count/capacity` on the right and **disabled** once
+    `count >= table.capacity` (the count leaves out the guest being seated); then the picked
+    table's name with a back arrow over a `grid-cols-4` of seat cards - a taken chair is muted
+    initials over the truncated name, a free one a dashed number over *„Wolne miejsce”*, the
+    guest's own current chair *„Obecne”* - and a footer button, *„Wybierz miejsce”* (disabled)
+    until a chair is picked, then *„Posadź na miejscu {{n}}”*. It offers only free chairs, so it
+    never displaces anyone: `track("guest_seated", { source: "guest_list", displaced: false })`.
+    Which chair a seated guest holds is `resolveSeatOccupants` (`lib/seats.ts`): a guest pinned
+    to a `seatId` keeps it, the rest fill the free chairs in list order - so a gap between two
+    taken chairs exists only when the guests round it were pinned (seated from the canvas).
+  - The utensils button's pulsing ring (`seatHint`, `animate-pulse ring-2`) is onboarding's
+    "seat everyone" hint: it lights **every** row's button for 2.6 s, not one guest's.
   - A marker shows the occupant's initials once it is 14 px or larger (`getInitials`, `seatSizePx`),
     and is inert - no drag, no popover - while the measure tool is on or the viewer cannot edit.
 - **A table dragged across the room takes its guests with it** (`Canvas/useTableSnap.ts`,
@@ -180,6 +196,15 @@ named in section 2 both need updating — nothing will warn you.
     rail's labels), **no `AddFab`**, and no import button in the header. `GuestListContent`
     keeps its search and chips but drops *Dodaj gościa* / *Importuj gości* and every row's seat,
     edit and delete buttons; the row itself is a disabled button that looks unchanged.
+  - An **editor** on a phone (the couple, guest mode included) gets **five** tabs -
+    `grid-cols-5`, the assistant (`assistant.title` *„Asystent”*) last - while the sheet's pills
+    stay four; `AddFab` (`size-14`, `right-4`) on the canvas; import and export as one
+    `ButtonGroup` in the header; and in guest mode `GuestModeBanner` (`guest_mode.banner`, with
+    *„Zaloguj się”*) above the header - four lines at a phone's width - and the member stack
+    collapsed to the owner's dashed invite chip, since a local wedding has no members.
+  - A phone's bottom sheet dims the page with `DrawerOverlay`'s plain `bg-black/40`
+    (`ui/drawer.tsx`, no override in `styles.css`) and **no blur**; a second sheet opened from
+    the first (the seat sheet over the guest list) stacks a second overlay.
   - **No read-only badge on a phone**: `planner.read_only` is only the wedding name's hover
     `title` (`WeddingName.header.tsx`), and `planner.read_only_short` is not rendered in the
     planner at all.

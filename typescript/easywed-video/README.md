@@ -34,8 +34,11 @@
 - **the sunday-couch cut** - 22.7 seconds for Reels/TikTok, 9:16 only: one Sunday evening on one
   laptop, told by a clock and two voices - the empty hall at 19:40, the room laid out by 20:10,
   everyone seated by 22:30, the CTA.
+- **the list-seat cut** - 16 seconds for Reels, 9:16 for now, episode 1 of the Instagram series
+  *Wesele bez spiny*: a cousin who is coming after all, seated on the couple's phone straight from
+  the guest list - the full tables greyed out, the free chair beside his family - the CTA.
 
-All but the loops, the keep-apart, mama-link and sunday-couch cuts render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
+All but the loops, the keep-apart, mama-link, sunday-couch and list-seat cuts render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
 are in Polish.
 
 It is a standalone package on purpose - it sits next to `easywed/` rather than inside it, so it
@@ -85,6 +88,8 @@ pnpm run render:keep-apart:vertical  # -> out/pl/easywed-apart-vertical.mp4 (9:1
 pnpm run render:mama-link:vertical   # -> out/pl/easywed-mama-vertical.mp4  (9:16, its only size)
 
 pnpm run render:sunday-couch:vertical  # -> out/pl/easywed-couch-vertical.mp4 (9:16, its only size)
+
+pnpm run render:list-seat:vertical  # -> out/pl/easywed-listseat-vertical.mp4 (9:16; the 1:1 feed cut is still to come)
 
 pnpm run render:all     # all of the above
 pnpm run render:all:en  # all of the above in English -> out/en/
@@ -238,6 +243,14 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `CouchDone`               | 120f   | 22:30, back over the laptop, every chair taken, 58/58               |
 | `CouchCta`                | 108f   | the laptop recedes, the payoff, logo + easywed.app                  |
 
+| id                          | length | what it is                                                       |
+| --------------------------- | ------ | ---------------------------------------------------------------- |
+| `easywed-listseat-vertical` | 480f   | the 16 s list-seat cut, 9:16 - series episode 1                  |
+| `ListSeatHook`              | 96f    | the guest list on a phone, Tomek *Bez miejsca*, the hook on frame 0 |
+| `ListSeatTables`            | 150f   | his seat button; the table list, every full table greyed out     |
+| `ListSeatSeat`              | 150f   | Stół 5's seats, the free chair picked and confirmed; the payoff  |
+| `ListSeatCta`               | 108f   | the phone recedes under the payoff, logo + easywed.app           |
+
 The long walkthrough's other fifteen chapters are the scenes registered above, from the short
 walkthrough and the other cuts; only `Floors` is its own. The 9:16 cut leaves out `ScaleMeasure`:
 on a phone at v1 the canvas toolbar isn't there, and measuring is a long-press menu item with no
@@ -245,7 +258,7 @@ on a phone at v1 the canvas toolbar isn't there, and measuring is a long-press m
 bottom sheet rather than the desktop's centred dialog.
 
 The scenes are also registered individually (Studio folders "Scenes", "Teaser", "Import",
-"Report", "Kids", "Swap-cut", "Keep-apart", "Mama-link", "Sunday-couch" and "Walkthrough-long") so a single beat can be previewed without scrubbing through the
+"Report", "Kids", "Swap-cut", "Keep-apart", "Mama-link", "Sunday-couch", "List-seat" and "Walkthrough-long") so a single beat can be previewed without scrubbing through the
 whole timeline. The social cuts' scenes are registered at 9:16, the cut they are made for.
 
 The landing-page loops - `easywed-scale`, `easywed-swap` and `easywed-shape` - sit together in the
@@ -266,7 +279,11 @@ src/easywed/
   geometry.ts            seat positions around round/rectangular tables
   Film.tsx               TransitionSeries stitching the five scenes with crossfades
   components/            Backdrop, BrandMark, Wordmark, Icon, AppFrame, PlannerCanvas,
-                         HallCanvas, PlannerTable, ...
+                         HallCanvas, PlannerTable, ... - and the phone: PhoneFrame (the
+                         handset, the thumb's touch and the browser's address bar) and
+                         PhoneShell (the planner on it, as a viewer or as the couple in
+                         guest mode), shared by the mama-link and list-seat cuts; SeriesTag,
+                         the Instagram series' pill
   scenes/                one file per scene
   teaser/                the social cut - its own timeline, Teaser.tsx and scenes,
                          drawn with the same theme, layouts and components
@@ -307,9 +324,9 @@ src/easywed/
   mama-link/             the mama-link cut, 9:16 only: mum's phone (components/MamaPhone.tsx)
                          and the couple's laptop (components/InviteDesk.tsx) both run off
                          one clock (script.ts). Its components are the film's own - a generic
-                         chat thread, the members dialog, the sign-in page and the planner
-                         as a viewer on a phone; guests.ts seats the uncle without changing
-                         the roster's 58. The laptop is AppFrame's `desktop` frame, and the
+                         chat thread, the members dialog and the sign-in page; the planner
+                         on her phone is the shared PhoneShell in its `viewer` mode.
+                         guests.ts seats the uncle without changing the roster's 58. The laptop is AppFrame's `desktop` frame, and the
                          viewer's guest list is GuestList with `readOnly` and a `query`
   sunday-couch/          the sunday-couch cut, 9:16 only, in the keep-apart cut's shape: every
                          scene draws components/CouchPlanner.tsx off one clock (script.ts) -
@@ -318,6 +335,13 @@ src/easywed/
                          with its rail badges counted off the plan). The room is COUCH_HALL,
                          the 20x12 m hall guest mode seeds; the guest panel's progress card
                          is components/SeatingProgress.tsx, shared with the import cut
+  list-seat/             the list-seat cut, 9:16 only so far, in the mama-link cut's shape:
+                         every scene draws components/ListSeatStage.tsx off one clock
+                         (script.ts) - the series tag, the line in the band, and a camera
+                         on the couple's phone (ListSeatPhone: PhoneShell in `guest` mode,
+                         with the SeatAssignSheet redraw over it). guests.ts seats the Lis,
+                         Nowicki and Wrona families at Stół 5 and leaves Tomek last on the
+                         list, still 58
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect

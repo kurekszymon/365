@@ -149,6 +149,23 @@ Scenes 96 + 180 + 210 + 120 + 108 = 714 at `SUNDAY_COUCH_TRANSITION = 8` x 4 sea
 Built from `docs/video-plans/3-story-videos-9x16-2026-09-25.md`, brief `sunday-couch`, drawn on
 `COUCH_HALL` (`layouts.ts`), 20x12 m, 58 seats.
 
+## The list-seat cut - `easywed-listseat-vertical`, 480f (16 s), 9:16 so far
+
+episode 1 of the Instagram series *Wesele bez spiny*, its tag top-left until the CTA. The
+couple's phone, the planner in guest mode, the guest list open and scrolled to its end, where
+*Tomasz Lis* was just written in *Bez miejsca*, the hook up on frame 0 - the camera closes on his
+row, the question - his row's seat button tapped, the sheet's table list with every full table
+greyed out and Stół 5 at 7/8 the one live row, tapped - the sheet swaps to Stół 5's seats, pushed
+in until each card's name reads, the dashed seat 6 between his uncle Marek and his cousin Zuzanna
+picked, *Posadź na miejscu 6*, confirmed - the sheet drops onto his row, now *Przy stole: Stół 5*,
+the chip at *Bez miejsca 0*, the payoff - the phone recedes under it, the CTA. The first film to
+seat a guest from the guest list rather than from the canvas or an import, and the first drawn
+on the couple's own phone. The 1:1 feed cut (`easywed-listseat-square`) is not built yet: it
+waits on the square branch of `useFormat()`, the plan's build-order step 3.
+Scenes 96 + 150 + 150 + 108 = 504 at `LIST_SEAT_TRANSITION = 8` x 3 seams -> 480.
+Built from `docs/video-plans/instagram-reels-series-2026-09-26.md`, brief `list-seat`, drawn on
+`TALL_HALL`.
+
 ## Polish lines already burned on screen
 
 None of these may appear again:
@@ -313,6 +330,26 @@ kanapa, cały plan."* (its payoff). As the planner shows them: the seeded hall's
 *"Przy stole: Stół pary młodej"*). The beat itself - a whole evening's plan told as a clock and a
 couple's dialogue - is spent. Its CTA is *"Usiądźcie do planu razem"* over the *"easywed.app"*
 pill.
+
+From the list-seat cut: *"Kuzyn Tomek jednak przyjedzie."* (its hook) · *"Gdzie go
+posadzić?"* · *"Pełne stoły odpadają same."* · *"Widzisz, obok kogo siądzie."* · *"Tomek siedzi
+przy swoich. Reszta nawet nie drgnęła."* (its payoff) - and, as the seat sheet shows them (app
+strings, verbatim): *"Posadź: Tomasz Lis"* (`guests.assign.title`), the table rows *"Stół pary
+młodej"* *"10/10"*, *"Stół 1"* to *"Stół 6"* at *"8/8"* and *"Stół 5"* at *"7/8"*, the title
+*"Stół 5"* with its back arrow, *"Wolne miejsce"* (`seats.empty`), *"Wybierz miejsce"*
+(`guests.assign.pick_seat`) and *"Posadź na miejscu 6"* (`seats.assign_at`); as the guest-mode
+planner shows them: `GuestModeBanner`'s *"Planujesz jako gość. Twoje zmiany są zapisywane tylko
+na tym urządzeniu - nie będą dostępne na innych urządzeniach ani po wyczyszczeniu danych
+przeglądarki."* beside *"Zaloguj się"*, and the guest panel's *"57/58 gości przy stołach"* and
+*"Bez miejsca 1"* - chrome, as above. Eight names are new and now spent with it (`list-seat/guests.ts`):
+*Tomasz Lis*, *Marek Lis*, *Zuzanna Lis*, *Ewa Lis*, *Adam Wrona*, *Beata Wrona*, *Paweł
+Nowicki*, *Karolina Nowicka*; *Kuzyn Tomek* is spent as a character. The beat itself - a guest
+seated from the guest list through the seat sheet, table list then seat grid - is spent, as is
+the payoff of a guest seated without anyone else moving. Its CTA is *"Posadź gościa prosto z
+listy"* over the *"easywed.app"* pill.
+
+The series tag *"Wesele bez spiny · #N"* recurs by design across the series' episodes, like the
+pill; only its number changes. It is spent as a name for anything else.
 
 The one exception is the CTA pill itself: *"easywed.app"* recurs by design (section 8). Each video's
 action line above it is its own, and burns like any other line.

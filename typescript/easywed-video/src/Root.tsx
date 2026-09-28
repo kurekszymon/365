@@ -80,6 +80,12 @@ import { CouchSeatingScene } from "./easywed/sunday-couch/scenes/CouchSeatingSce
 import { CouchDoneScene } from "./easywed/sunday-couch/scenes/CouchDoneScene";
 import { CouchCtaScene } from "./easywed/sunday-couch/scenes/CouchCtaScene";
 import { SUNDAY_COUCH_DURATION, SUNDAY_COUCH_SCENES } from "./easywed/sunday-couch/timeline";
+import { ListSeat } from "./easywed/list-seat/ListSeat";
+import { ListSeatHookScene } from "./easywed/list-seat/scenes/ListSeatHookScene";
+import { ListSeatTablesScene } from "./easywed/list-seat/scenes/ListSeatTablesScene";
+import { ListSeatSeatScene } from "./easywed/list-seat/scenes/ListSeatSeatScene";
+import { ListSeatCtaScene } from "./easywed/list-seat/scenes/ListSeatCtaScene";
+import { LIST_SEAT_DURATION, LIST_SEAT_SCENES } from "./easywed/list-seat/timeline";
 import { WalkthroughLong } from "./easywed/walkthrough-long/WalkthroughLong";
 import { FloorsScene } from "./easywed/walkthrough-long/scenes/FloorsScene";
 import {
@@ -263,6 +269,18 @@ export const RemotionRoot: React.FC = () => {
         height={VERTICAL_HEIGHT}
       />
 
+      {/* The 16 s list-seat cut, episode 1 of the Instagram series - the cousin who is
+          coming after all, seated from the guest list on a phone; 9:16 for now, the
+          1:1 feed cut waits on the square format. */}
+      <Composition
+        id="easywed-listseat-vertical"
+        component={ListSeat}
+        durationInFrames={LIST_SEAT_DURATION}
+        fps={FPS}
+        width={VERTICAL_WIDTH}
+        height={VERTICAL_HEIGHT}
+      />
+
       {/* The landing-page loops - 16:9 only, no CTA, each closing on `LoopSeam`
           back to its frame 0 - with their beats nested beside them. */}
       <Folder name="Landing-loops">
@@ -399,6 +417,14 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="CouchSeating" component={CouchSeatingScene} durationInFrames={SUNDAY_COUCH_SCENES.seating} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="CouchDone" component={CouchDoneScene} durationInFrames={SUNDAY_COUCH_SCENES.done} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="CouchCta" component={CouchCtaScene} durationInFrames={SUNDAY_COUCH_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+      </Folder>
+
+      {/* The list-seat cut's beats, at 9:16 - the cut it is made for. */}
+      <Folder name="List-seat">
+        <Composition id="ListSeatHook" component={ListSeatHookScene} durationInFrames={LIST_SEAT_SCENES.hook} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="ListSeatTables" component={ListSeatTablesScene} durationInFrames={LIST_SEAT_SCENES.tables} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="ListSeatSeat" component={ListSeatSeatScene} durationInFrames={LIST_SEAT_SCENES.seat} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="ListSeatCta" component={ListSeatCtaScene} durationInFrames={LIST_SEAT_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
       </Folder>
 
     </>

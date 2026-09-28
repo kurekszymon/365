@@ -1,11 +1,12 @@
 import React from "react";
 import { interpolate } from "remotion";
-import { colors, shadow } from "../../theme";
+import { colors, fonts, shadow } from "../theme";
 
 /**
- * Mum's phone: a plain handset with no maker's shape to it - rounded corners,
- * a dark bezel and a camera pill - so it reads as any phone. The screen is
- * laid out in CSS pixels at a phone's width, and the caller scales the whole.
+ * A plain handset with no maker's shape to it - rounded corners, a dark bezel
+ * and a camera pill - so it reads as any phone. The screen is laid out in CSS
+ * pixels at a phone's width, and the caller scales the whole. Mum's phone in
+ * the mama-link cut, and the couple's in the list-seat cut.
  */
 export const PHONE = {
   width: 390,
@@ -112,3 +113,49 @@ export const Touch: React.FC<{ frame: number; at: number; x: number; y: number }
     </>
   );
 };
+
+/**
+ * easywed on a phone is the website in its browser, not an app - so a plain
+ * address bar sits over every page, reading the one address the films also
+ * close on.
+ */
+export const BROWSER_BAR = 50;
+/** Where a page's own layout starts, below the camera strip and the address bar. */
+export const PAGE_TOP = PHONE.safeTop + BROWSER_BAR;
+
+export const BrowserBar: React.FC = () => (
+  <div
+    style={{
+      position: "absolute",
+      left: 0,
+      right: 0,
+      top: 0,
+      height: PAGE_TOP,
+      boxSizing: "border-box",
+      paddingTop: PHONE.safeTop,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.card,
+      borderBottom: `1px solid ${colors.border}`,
+    }}
+  >
+    <div
+      style={{
+        width: PHONE.width - 32,
+        height: 36,
+        borderRadius: 12,
+        backgroundColor: colors.bgDeep,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: fonts.sans,
+        fontSize: 15,
+        fontWeight: 500,
+        color: colors.ink,
+      }}
+    >
+      easywed.app
+    </div>
+  </div>
+);

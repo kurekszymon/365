@@ -1,53 +1,7 @@
 import React from "react";
 import { tl } from "../../i18n";
 import { colors, fonts } from "../../theme";
-import { PHONE } from "./PhoneFrame";
-
-/**
- * What mum's phone shows once she taps the link. It is the website in her
- * browser, not an app - so a plain address bar sits over every page, reading
- * the one address the film also closes on.
- */
-export const BROWSER_BAR = 50;
-/** Where a page's own layout starts, below the camera strip and the address bar. */
-export const PAGE_TOP = PHONE.safeTop + BROWSER_BAR;
-
-export const BrowserBar: React.FC = () => (
-  <div
-    style={{
-      position: "absolute",
-      left: 0,
-      right: 0,
-      top: 0,
-      height: PAGE_TOP,
-      boxSizing: "border-box",
-      paddingTop: PHONE.safeTop,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.card,
-      borderBottom: `1px solid ${colors.border}`,
-    }}
-  >
-    <div
-      style={{
-        width: PHONE.width - 32,
-        height: 36,
-        borderRadius: 12,
-        backgroundColor: colors.bgDeep,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: fonts.sans,
-        fontSize: 15,
-        fontWeight: 500,
-        color: colors.ink,
-      }}
-    >
-      easywed.app
-    </div>
-  </div>
-);
+import { BrowserBar, PAGE_TOP, PHONE } from "../../components/PhoneFrame";
 
 /**
  * The Google sign-in button (`GoogleSignInButton`, Google's own `gsi-material-button`):

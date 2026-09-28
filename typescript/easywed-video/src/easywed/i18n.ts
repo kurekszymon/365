@@ -158,6 +158,18 @@ const pl = {
       tables: "Stoły", // tables
       fixtures: "Elementy sali", // fixtures
       reminders: "Przypo\u00admnienia", // reminders.title
+      /** The fifth tab, which only an editor gets (`canEdit`). */
+      assistant: "Asystent", // assistant.title
+    },
+    /** `GuestModeBanner`, over the planner of a wedding kept only in this browser, and its link. */
+    guestBanner:
+      "Planujesz jako gość. Twoje zmiany są zapisywane tylko na tym urządzeniu - nie będą dostępne na innych urządzeniach ani po wyczyszczeniu danych przeglądarki.", // guest_mode.banner
+    /** `Guests/SeatAssignSheet`: the table list, then the seat grid and its button. */
+    seatAssign: {
+      title: (name: string) => `Posadź: ${name}`, // guests.assign.title
+      pickSeat: "Wybierz miejsce", // guests.assign.pick_seat
+      assignAt: (n: number) => `Posadź na miejscu ${n}`, // seats.assign_at
+      empty: "Wolne miejsce", // seats.empty
     },
     /** `HallsPanelContent` in the same dialog, titled by `usePanelTitle`. */
     hallsList: {
@@ -414,6 +426,21 @@ const pl = {
     ctaAction: "Usiądźcie do planu razem",
   },
 
+  /** The Instagram series' tag, top-left on every Reel until its CTA; numbered in posting order. */
+  series: {
+    tag: (episode: number) => `Wesele bez spiny · #${episode}`,
+  },
+
+  listSeat: {
+    hook: "Kuzyn Tomek jednak przyjedzie.",
+    where: "Gdzie go posadzić?",
+    fullTables: "Pełne stoły odpadają same.",
+    beside: "Widzisz, obok kogo siądzie.",
+    payoff: "Tomek siedzi przy swoich. Reszta nawet nie drgnęła.",
+    /** "z" is bound to "listy" so the line never ends on it. */
+    ctaAction: "Posadź gościa prosto z\u00a0listy",
+  },
+
   walkthrough: {
     /** "i" is bound to "żadnego" so the line never ends on it. */
     hook: "Pusta sala, lista gości i\u00a0żadnego planu?",
@@ -529,6 +556,15 @@ const en: typeof pl = {
       tables: "Tables",
       fixtures: "Fixtures",
       reminders: "Reminders",
+      assistant: "Assistant",
+    },
+    guestBanner:
+      "You're planning as a guest. Your changes are stored only on this device - they won't be available on other devices or if you clear your browser data.",
+    seatAssign: {
+      title: (name) => `Seat ${name}`,
+      pickSeat: "Pick a seat",
+      assignAt: (n) => `Seat at #${n}`,
+      empty: "Empty seat",
     },
     hallsList: {
       title: "Halls",
@@ -739,6 +775,19 @@ const en: typeof pl = {
     seated: "Everyone's seated.",
     payoff: "One laptop, one sofa, the whole plan.",
     ctaAction: "Sit down to the plan together",
+  },
+
+  series: {
+    tag: (episode) => `Stress-free wedding · #${episode}`,
+  },
+
+  listSeat: {
+    hook: "Cousin Tomek is coming after all.",
+    where: "Where do we seat him?",
+    fullTables: "Full tables drop out on their own.",
+    beside: "You see who he'll sit next to.",
+    payoff: "Tomek sits with his family. Nobody else moved an inch.",
+    ctaAction: "Seat a guest straight from the list",
   },
 
   walkthrough: {

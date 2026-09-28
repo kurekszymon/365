@@ -2,7 +2,7 @@ import React from "react";
 import { useCurrentFrame } from "remotion";
 import { Backdrop } from "../../components/Backdrop";
 import { MamaPhone } from "../components/MamaPhone";
-import { PHONE_OUTER } from "../components/PhoneFrame";
+import { PHONE_OUTER } from "../../components/PhoneFrame";
 import { MAMA_STARTS } from "../timeline";
 
 /** Nothing is written over this beat, so the phone takes the frame, clear of a Reel's caption at the bottom. */

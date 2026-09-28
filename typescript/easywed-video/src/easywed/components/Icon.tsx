@@ -39,7 +39,8 @@ export type IconName =
   | "userX"
   | "menu"
   | "minus"
-  | "clock";
+  | "clock"
+  | "info";
 
 const PATHS: Record<IconName, React.ReactNode> = {
   guests: (
@@ -217,6 +218,12 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <circle cx="12" cy="12" r="10" />
       <path d="M12 6v6l4 2" />
+    </>
+  ),
+  info: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4M12 8h.01" />
     </>
   ),
 };

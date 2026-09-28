@@ -50,6 +50,12 @@ export const colors = {
   destructive: "#e7000b",
   /** `DialogOverlay`'s `bg-black/10` - the scrim behind a dialog or drawer. */
   scrim: "rgba(0, 0, 0, 0.1)",
+  /**
+   * `DrawerOverlay`'s `bg-black/40` (`ui/drawer.tsx`) - what a phone's bottom
+   * sheet actually dims the page with, and no blur. The mama-link cut, which
+   * shipped first, drew its sheet over `scrim` and a blur instead.
+   */
+  drawerScrim: "rgba(0, 0, 0, 0.4)",
 
   /** `MeasureOverlay`'s hard-coded `#0d9488` (teal-600): the measuring line, its dots and its label. */
   measure: "#0d9488",

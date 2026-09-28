@@ -21,8 +21,8 @@ import {
   VIEWER,
 } from "../script";
 import { ChatThread, type Message } from "./ChatThread";
-import { PhoneFrame, Touch } from "./PhoneFrame";
-import { PhoneViewer, searchAt, tabAt } from "./PhoneViewer";
+import { PhoneFrame, Touch } from "../../components/PhoneFrame";
+import { PhoneShell, searchAt, tabAt } from "../../components/PhoneShell";
 import { SketchPhoto } from "./SketchPhoto";
 import { ClaimingScreen, GOOGLE_BUTTON_AT, SignInScreen } from "./WebScreens";
 
@@ -95,7 +95,7 @@ export const MamaPhone: React.FC<{ frame: number }> = ({ frame }) => {
       ) : null}
       {viewer > 0 ? (
         <AbsoluteFill style={{ opacity: viewer }}>
-          <PhoneViewer hall={hall} guests={guests} badges={badges} sheet={sheet} query={query} />
+          <PhoneShell hall={hall} guests={guests} badges={badges} sheet={sheet} query={query} />
         </AbsoluteFill>
       ) : null}
 
