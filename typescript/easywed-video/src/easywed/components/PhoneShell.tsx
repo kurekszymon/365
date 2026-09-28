@@ -27,13 +27,22 @@ import { colors, fonts } from "../theme";
  *   import and export as one button group; `AddFab` on the canvas; a fifth
  *   tab for the assistant; and the list with its add and import buttons and
  *   each row's seat, edit and delete buttons.
+ * - **`owner`** - the couple planning signed in, their own wedding: all of
+ *   `guest`'s editing, without `GuestModeBanner`, and the member stack is the
+ *   owner's own avatar ahead of the invite chip (`MemberAvatars` always shows
+ *   an owner the stack, even alone in the wedding).
  *
  * Both get the same `Header` (the mark - the wordmark drops below `sm` - the
  * wedding name, *Skonfiguruj salę* as an icon, export and the menu), the room
  * with `MobileZoomControl` over it, `MobileTabBar`, and its sheet: the four
  * tab pills, then `GuestListContent`.
  */
-export type PhoneMode = "viewer" | "guest";
+export type PhoneMode = "viewer" | "guest" | "owner";
+
+/** Whether the phone holder can edit - `selectCanEdit`: the owner, signed in or not. */
+const canEditIn = (mode: PhoneMode) => mode !== "viewer";
+/** `GuestModeBanner` is for a wedding kept only in this browser. */
+const bannerIn = (mode: PhoneMode) => mode === "guest";
 
 const HEADER = 48;
 /**
@@ -55,7 +64,7 @@ const SHEET_PAD_X = 16;
 /** `pb-[max(1rem,env(safe-area-inset-bottom))]`. */
 const SHEET_PAD_BOTTOM = Math.max(16, PHONE.safeBottom);
 /** Where `GuestList` puts its first row: under the add and import buttons, which a viewer doesn't get. */
-const listTopFor = (mode: PhoneMode) => (mode === "guest" ? LIST_TOP : READ_ONLY_LIST_TOP);
+const listTopFor = (mode: PhoneMode) => (canEditIn(mode) ? LIST_TOP : READ_ONLY_LIST_TOP);
 
 /** The header's outline buttons: `h-8`, an icon between `px-2.5`. `ButtonGroup` joins two at a shared edge. */
 const HeaderButton: React.FC<{ icon: IconName; group?: "first" | "last" }> = ({ icon, group }) => (
@@ -99,7 +108,7 @@ const Avatar: React.FC<{ initials?: string }> = ({ initials }) => (
   </div>
 );
 
-/** The owner's dashed invite chip (`members.invite`) - all that is left of the stack in guest mode. */
+/** The owner's dashed invite chip (`members.invite`) - all that is left of the stack in guest mode, and the end of it signed in. */
 const InviteChip: React.FC = () => (
   <div
     style={{
@@ -161,7 +170,17 @@ const TABS: Tab[] = [
 
 /** The bar's tabs: an editor gets the assistant as a fifth (`grid-cols-5`); the sheet's pills stay four. */
 const barTabs = (mode: PhoneMode): Tab[] =>
-  mode === "guest" ? [...TABS, { kind: "assistant", label: tl.app.mobileTabs.assistant }] : TABS;
+  canEditIn(mode) ? [...TABS, { kind: "assistant", label: tl.app.mobileTabs.assistant }] : TABS;
+
+/**
+ * The canvas's own box, in the phone's CSS px: from under the header down to
+ * the tab bar's top edge, which covers the rest of it. For a film that draws
+ * its own view of the room into `canvas`.
+ */
+export const canvasBox = (mode: PhoneMode) => {
+  const top = PAGE_TOP + (bannerIn(mode) ? GUEST_BANNER + HEADER : HEADER);
+  return { top, height: PHONE.height - TAB_BAR - top };
+};
 
 /** Where each tab's icon sits, in the phone's CSS px - for a thumb. */
 export const tabAt = (index: number, mode: PhoneMode = "viewer") => ({
@@ -220,16 +239,23 @@ export const PhoneShell: React.FC<{
   mode?: PhoneMode;
   /** How far the list has scrolled under the sheet's sticky block, in CSS px. */
   scroll?: number;
+  /**
+   * The canvas's content in place of the whole room fitted to the screen - for
+   * a couple zoomed in on one table. Drawn in the canvas's own CSS px, from
+   * `canvasBox`'s top edge, under the floating controls.
+   */
+  canvas?: React.ReactNode;
   /** Drawn over everything else in the app's viewport - a second sheet opened from the list. */
   children?: React.ReactNode;
-}> = ({ hall, guests, badges, sheet, query = "", mode = "viewer", scroll = 0, children }) => {
-  const guest = mode === "guest";
+}> = ({ hall, guests, badges, sheet, query = "", mode = "viewer", scroll = 0, canvas, children }) => {
+  const canEdit = canEditIn(mode);
+  const banner = bannerIn(mode);
   const tabs = barTabs(mode);
   const seated = guests.filter((g) => g.table).length;
   const rows = matchingGuests(guests, query);
   const height = sheetHeight(rows, mode);
   const listHeight = listHeightFor(rows, mode);
-  const canvasTop = guest ? GUEST_BANNER + HEADER : HEADER;
+  const canvasTop = banner ? GUEST_BANNER + HEADER : HEADER;
 
   // The room fitted into what the header and the tab bar leave of the screen.
   const room = { width: PHONE.width - 16, height: VIEWPORT - canvasTop - TAB_BAR - 24 };
@@ -241,7 +267,7 @@ export const PhoneShell: React.FC<{
       <BrowserBar />
 
       <div style={{ position: "absolute", left: 0, right: 0, top: PAGE_TOP, height: VIEWPORT }}>
-        {guest ? <GuestBanner /> : null}
+        {banner ? <GuestBanner /> : null}
         <div
           style={{
             height: HEADER,
@@ -272,8 +298,15 @@ export const PhoneShell: React.FC<{
             {WEDDING.couple}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-            {guest ? (
+            {mode === "guest" ? (
               <InviteChip />
+            ) : mode === "owner" ? (
+              <div style={{ display: "flex", paddingLeft: 8 }}>
+                <Avatar initials="AK" />
+                <div style={{ marginLeft: -8 }}>
+                  <InviteChip />
+                </div>
+              </div>
             ) : (
               <div style={{ display: "flex", paddingLeft: 8 }}>
                 <Avatar initials="AK" />
@@ -282,7 +315,7 @@ export const PhoneShell: React.FC<{
               </div>
             )}
             <HeaderButton icon="landmark" />
-            {guest ? (
+            {canEdit ? (
               <div style={{ display: "flex" }}>
                 <HeaderButton icon="upload" group="first" />
                 <HeaderButton icon="download" group="last" />
@@ -303,26 +336,29 @@ export const PhoneShell: React.FC<{
             top: canvasTop,
             bottom: 0,
             backgroundImage: `linear-gradient(135deg, rgba(239, 233, 221, 0.6) 0%, ${colors.bg} 46%, rgba(246, 232, 242, 0.5) 100%)`,
+            overflow: canvas ? "hidden" : undefined,
           }}
         >
-          <div
-            style={{
-              position: "absolute",
-              left: (PHONE.width - drawWidth) / 2,
-              top: 12,
-              width: drawWidth,
-              height: drawWidth / aspect,
-              display: "flex",
-            }}
-          >
-            <HallCanvas
-              hall={hall}
-              outline={1}
-              floor={1}
-              tableIn={hall.tables.map(() => 1)}
-              seatFill={hall.tables.map(() => 1)}
-            />
-          </div>
+          {canvas ?? (
+            <div
+              style={{
+                position: "absolute",
+                left: (PHONE.width - drawWidth) / 2,
+                top: 12,
+                width: drawWidth,
+                height: drawWidth / aspect,
+                display: "flex",
+              }}
+            >
+              <HallCanvas
+                hall={hall}
+                outline={1}
+                floor={1}
+                tableIn={hall.tables.map(() => 1)}
+                seatFill={hall.tables.map(() => 1)}
+              />
+            </div>
+          )}
 
           {/* `MobileZoomControl`: `left-4`, 5.5rem above the bottom safe area. */}
           <div
@@ -348,7 +384,7 @@ export const PhoneShell: React.FC<{
           </div>
 
           {/* `AddFab`: `right-4` at the zoom control's height, `size-14`, opening the add hub. */}
-          {guest ? (
+          {canEdit ? (
             <div
               style={{
                 position: "absolute",
@@ -453,8 +489,8 @@ export const PhoneShell: React.FC<{
               style={{
                 position: "absolute",
                 inset: 0,
-                backgroundColor: guest ? colors.drawerScrim : colors.scrim,
-                backdropFilter: guest ? undefined : "blur(4px)",
+                backgroundColor: canEdit ? colors.drawerScrim : colors.scrim,
+                backdropFilter: canEdit ? undefined : "blur(4px)",
                 opacity: Math.min(1, sheet),
               }}
             />
@@ -543,7 +579,7 @@ export const PhoneShell: React.FC<{
                   scroll={scroll}
                   listHeight={listHeight}
                   query={query}
-                  readOnly={!guest}
+                  readOnly={!canEdit}
                 />
               </div>
             </div>

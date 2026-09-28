@@ -37,8 +37,11 @@
 - **the list-seat cut** - 16 seconds for Reels, 9:16 for now, episode 1 of the Instagram series
   *Wesele bez spiny*: a cousin who is coming after all, seated on the couple's phone straight from
   the guest list - the full tables greyed out, the free chair beside his family - the CTA.
+- **the table-shape cut** - 16 seconds for Reels, 9:16 only, episode 2 of *Wesele bez spiny*: one
+  seated round table on the couple's phone turned square, stretched to a 3x1 m long table and
+  stood up along the wall in its form, its eight guests staying put - the CTA.
 
-All but the loops, the keep-apart, mama-link, sunday-couch and list-seat cuts render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
+All but the loops, the keep-apart, mama-link, sunday-couch, list-seat and table-shape cuts render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
 are in Polish.
 
 It is a standalone package on purpose - it sits next to `easywed/` rather than inside it, so it
@@ -90,6 +93,8 @@ pnpm run render:mama-link:vertical   # -> out/pl/easywed-mama-vertical.mp4  (9:1
 pnpm run render:sunday-couch:vertical  # -> out/pl/easywed-couch-vertical.mp4 (9:16, its only size)
 
 pnpm run render:list-seat:vertical  # -> out/pl/easywed-listseat-vertical.mp4 (9:16; the 1:1 feed cut is still to come)
+
+pnpm run render:table-shape:vertical  # -> out/pl/easywed-tableshape-vertical.mp4 (9:16, its only size)
 
 pnpm run render:all     # all of the above
 pnpm run render:all:en  # all of the above in English -> out/en/
@@ -251,6 +256,14 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `ListSeatSeat`              | 150f   | Stół 5's seats, the free chair picked and confirmed; the payoff  |
 | `ListSeatCta`               | 108f   | the phone recedes under the payoff, logo + easywed.app           |
 
+| id                            | length | what it is                                                        |
+| ----------------------------- | ------ | ----------------------------------------------------------------- |
+| `easywed-tableshape-vertical` | 480f   | the 16 s table-shape cut, 9:16 only - series episode 2            |
+| `TableShapeHook`              | 96f    | Stół 3 round on a phone, the hook on frame 0; tapped, its form up |
+| `TableShapeShape`             | 150f   | *Prostokątny*, then 3 and 1 typed; the diagram goes square, long  |
+| `TableShapeTurn`              | 150f   | *Obróć o 90°*; the form closed on the long table along the wall   |
+| `TableShapeCta`               | 108f   | the phone recedes under the payoff, logo + easywed.app            |
+
 The long walkthrough's other fifteen chapters are the scenes registered above, from the short
 walkthrough and the other cuts; only `Floors` is its own. The 9:16 cut leaves out `ScaleMeasure`:
 on a phone at v1 the canvas toolbar isn't there, and measuring is a long-press menu item with no
@@ -258,7 +271,7 @@ on a phone at v1 the canvas toolbar isn't there, and measuring is a long-press m
 bottom sheet rather than the desktop's centred dialog.
 
 The scenes are also registered individually (Studio folders "Scenes", "Teaser", "Import",
-"Report", "Kids", "Swap-cut", "Keep-apart", "Mama-link", "Sunday-couch", "List-seat" and "Walkthrough-long") so a single beat can be previewed without scrubbing through the
+"Report", "Kids", "Swap-cut", "Keep-apart", "Mama-link", "Sunday-couch", "List-seat", "Table-shape" and "Walkthrough-long") so a single beat can be previewed without scrubbing through the
 whole timeline. The social cuts' scenes are registered at 9:16, the cut they are made for.
 
 The landing-page loops - `easywed-scale`, `easywed-swap` and `easywed-shape` - sit together in the
@@ -272,8 +285,9 @@ src/easywed/
   timeline.ts            scene lengths, fps, dimensions - the single source of truth
   theme.ts               hex mirror of the app's `editorial` palette + brand colors, fonts
   layouts.ts             WIDE_HALL, TALL_HALL, the odd-room loop's L_HALL, the keep-apart
-                         cut's KEEP_APART_HALL, the sunday-couch cut's COUCH_HALL and
-                         the long walkthrough's second hall, 60 units per metre
+                         cut's KEEP_APART_HALL, the sunday-couch cut's COUCH_HALL, the
+                         table-shape cut's TABLE_SHAPE_HALL and the long walkthrough's
+                         second hall, 60 units per metre
   format.ts              useFormat() - picks hall + type scale from the composition size
   data.ts                the demo wedding: guest list, couple
   geometry.ts            seat positions around round/rectangular tables
@@ -281,9 +295,11 @@ src/easywed/
   components/            Backdrop, BrandMark, Wordmark, Icon, AppFrame, PlannerCanvas,
                          HallCanvas, PlannerTable, ... - and the phone: PhoneFrame (the
                          handset, the thumb's touch and the browser's address bar) and
-                         PhoneShell (the planner on it, as a viewer or as the couple in
-                         guest mode), shared by the mama-link and list-seat cuts; SeriesTag,
-                         the Instagram series' pill
+                         PhoneShell (the planner on it, as a viewer, or as the couple in
+                         guest mode or signed in, its canvas fitted or a film's own zoomed
+                         view), shared
+                         by the mama-link, list-seat and table-shape cuts; SeriesTag, the
+                         Instagram series' pill
   scenes/                one file per scene
   teaser/                the social cut - its own timeline, Teaser.tsx and scenes,
                          drawn with the same theme, layouts and components
@@ -342,6 +358,13 @@ src/easywed/
                          with the SeatAssignSheet redraw over it). guests.ts seats the Lis,
                          Nowicki and Wrona families at Stół 5 and leaves Tomek last on the
                          list, still 58
+  table-shape/           the table-shape cut, 9:16 only, in the list-seat cut's shape: every
+                         scene draws components/TableShapeStage.tsx off one clock
+                         (script.ts), with shape.ts working out Stół 3 and its form at each
+                         frame - round, square, 3x1, turned - on the canvas and in the form's
+                         seat diagram. The phone (TableShapePhone) is PhoneShell in `owner`
+                         mode with its canvas zoomed onto Stół 3 and the table toolbar, and
+                         components/TableEditSheet.tsx redraws the table form in its drawer
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect

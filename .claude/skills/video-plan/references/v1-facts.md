@@ -83,6 +83,31 @@ named in section 2 both need updating — nothing will warn you.
     uppercased), white, `font-medium`, `fontSize: Math.max(7, seatPx * 0.42)`, shown once
     `seatSizePx(ppm) = clamp(ppm * 0.34, 12, 44)` reaches 14 px (`Canvas/TableSeats.tsx`). A table's
     name is `text-xs` Playfair, `truncate`d to the table's width, over its `N / capacity` count.
+  - How a table changes shape (`EntityForms/TablePanelContent.tsx`, `fields/*`,
+    `Canvas/seatLayout.ts`, `Canvas/Canvas.tsx`, `Canvas/DraggableTable.tsx`): a **first tap
+    selects** a table - the selection ring and a toolbar over it (on a phone a pen,
+    `tables.edit`, then copy, duplicate and a red delete, icons only) - and a second tap, or the
+    pen, opens the form; the same flow on touch and pointer. The form runs *„Nazwa”*
+    (`common.name`), *„Kształt stołu”* - a two-button group, *„Prostokątny”* then *„Okrągły”*;
+    **only those two** (a custom table comes only from an import and reads
+    `tables.shape.custom_readonly` instead) - then *„Średnica”* for a round table, or
+    *„Szerokość”* and *„Wysokość”* side by side and *„Orientacja”*'s one outline button
+    *„Obróć o 90°”* for a rectangular one; *„Liczba miejsc”*; `TableSeatMap`, a live diagram with
+    each taken chair's initials; *„Przypisz gości”*; and the per-seat list. A round table is
+    stored `width = height = Ø` and the form keeps `width`/`height` across the shape switch, so
+    *Prostokątny* makes a **square of the same size**. *Obróć o 90°* toggles `rotation` 0/90 and
+    **swaps the two fields' values**. Every edit keeps `position` - the table's **top-left
+    corner** - so a table grows and turns out of that corner. Guests stay at the unchanged
+    capacity (`applyToStore` slices to it), and a rotation drops only seat *position overrides*
+    (`updateTable`). A rectangle seats its two longer edges - top then bottom, or left then right
+    once it stands taller than wide - each run top-to-bottom / left-to-right. Shape and rotation
+    save on the tap (`updateAndCommit`), and dimensions preview live and save on blur. No
+    analytics event fires for any of it (there is no `table_updated`).
+  - On a phone that form is `MobilePanelDrawer` at its `max-h-[85dvh]`: the form is taller than
+    that, so the sheet stands at 85% of the viewport over a `bg-black/40` overlay and **covers the
+    whole canvas** - the change shows live in the form's own `TableSeatMap`, not on the plan,
+    until the check (`common.done`) closes it. The round preset *„Okrągły 8”* is
+    Ø **1.5 m** (`TABLE_PRESETS`), which no film room matched until `TABLE_SHAPE_HALL`.
 - **Multi-hall and multi-floor** (`hall.floor`, `hall.list_title`), plus custom polygon halls and
   fixtures — stage, dance floor, bar, DJ booth, entrance, or a shape drawn by hand
   (`fixtures.preset.*`, `fixtures.shape.polygon`).

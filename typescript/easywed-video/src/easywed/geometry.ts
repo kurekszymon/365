@@ -20,17 +20,20 @@ export const seatPositions = (table: TableSpec): Point[] => {
     });
   }
 
+  // `computeSeatPositions` seats the two longer edges: top then bottom, or -
+  // for a table standing taller than it is wide, as a rotated one does - left
+  // then right, each run top to bottom. Every published film's rectangle is wide.
+  const horizontal = table.width >= table.height;
   const perSide = Math.ceil(table.seats / 2);
-  const offset = table.height / 2 + SEAT_GAP + SEAT_RADIUS;
+  const edge = horizontal ? table.width : table.height;
+  const offset = (horizontal ? table.height : table.width) / 2 + SEAT_GAP + SEAT_RADIUS;
   return range(table.seats).map((i) => {
-    const top = i < perSide;
-    const indexOnSide = top ? i : i - perSide;
-    const countOnSide = top ? perSide : table.seats - perSide;
-    const step = table.width / (countOnSide + 1);
-    return {
-      x: table.x - table.width / 2 + step * (indexOnSide + 1),
-      y: table.y + (top ? -offset : offset),
-    };
+    const first = i < perSide;
+    const indexOnSide = first ? i : i - perSide;
+    const countOnSide = first ? perSide : table.seats - perSide;
+    const along = -edge / 2 + (edge / (countOnSide + 1)) * (indexOnSide + 1);
+    const across = first ? -offset : offset;
+    return horizontal ? { x: table.x + along, y: table.y + across } : { x: table.x + across, y: table.y + along };
   });
 };
 

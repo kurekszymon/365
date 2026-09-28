@@ -1,7 +1,7 @@
 import React from "react";
 import { interpolate, interpolateColors } from "remotion";
 import type { TableSpec } from "../layouts";
-import { SEAT_RADIUS, seatPositions } from "../geometry";
+import { SEAT_RADIUS, seatPositions, type Point } from "../geometry";
 import { colors, fonts } from "../theme";
 
 type Props = {
@@ -29,6 +29,23 @@ type Props = {
   initials?: string[];
   /** The name's type size. The couple's own names run longer than *Stół 1*. */
   labelSize?: number;
+  /**
+   * The occupancy line's type size, its baseline following it. A canvas drawn
+   * zoomed in keeps the app's fixed 10px line rather than one that grows with
+   * the room. Left out, it is the 17 every published film draws.
+   */
+  countSize?: number;
+  /**
+   * Seat centres in place of `seatPositions(table)`, indexed the same way - a
+   * table between two shapes, its chairs on their way from one layout to the
+   * next. Left out, the seats sit where the table's own shape puts them.
+   */
+  seatsAt?: Point[];
+  /**
+   * A rectangle's corner radius. At half the shorter side a square draws as a
+   * circle, so a round table can turn square by this alone. Left out, 10.
+   */
+  corner?: number;
 };
 
 /** `TableSeats`: `fontSize: Math.max(7, seatPx * 0.42)`, in white on the filled marker. */
@@ -44,8 +61,11 @@ export const PlannerTable: React.FC<Props> = ({
   selected,
   initials,
   labelSize = 22,
+  countSize = 17,
+  seatsAt,
+  corner = 10,
 }) => {
-  const seats = seatPositions(table);
+  const seats = seatsAt ?? seatPositions(table);
   const takenSeats = fills ? fills.reduce((sum, seat) => sum + seat, 0) : fill * table.seats;
   // Scale about the table's own center so it grows into place, then shift by
   // the drag offset.
@@ -108,7 +128,7 @@ export const PlannerTable: React.FC<Props> = ({
           y={table.y - table.height / 2}
           width={table.width}
           height={table.height}
-          rx={10}
+          rx={corner}
           fill={colors.table}
           stroke={selected ? colors.selected : colors.tableBorder}
           strokeWidth={selected ? 3 : 1.5}
@@ -130,10 +150,10 @@ export const PlannerTable: React.FC<Props> = ({
       </text>
       <text
         x={table.x}
-        y={table.y + 22}
+        y={table.y + (22 * countSize) / 17}
         textAnchor="middle"
         fontFamily={fonts.sans}
-        fontSize={17}
+        fontSize={countSize}
         fill={colors.tableInk}
         opacity={0.75}
       >

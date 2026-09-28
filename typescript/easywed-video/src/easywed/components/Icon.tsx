@@ -40,7 +40,10 @@ export type IconName =
   | "menu"
   | "minus"
   | "clock"
-  | "info";
+  | "info"
+  | "squarePen"
+  | "clipboardCopy"
+  | "rotateCw";
 
 const PATHS: Record<IconName, React.ReactNode> = {
   guests: (
@@ -224,6 +227,30 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <circle cx="12" cy="12" r="10" />
       <path d="M12 16v-4M12 8h.01" />
+    </>
+  ),
+  /** lucide `square-pen` - the table toolbar's edit button on a phone. */
+  squarePen: (
+    <>
+      <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" />
+    </>
+  ),
+  /** lucide `clipboard-copy` - the table toolbar's copy button. */
+  clipboardCopy: (
+    <>
+      <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+      <path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v4" />
+      <path d="M21 14H11" />
+      <path d="m15 10-4 4 4 4" />
+    </>
+  ),
+  /** lucide `rotate-cw` - *Obróć o 90°* in the table form. */
+  rotateCw: (
+    <>
+      <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+      <path d="M21 3v5h-5" />
     </>
   ),
 };

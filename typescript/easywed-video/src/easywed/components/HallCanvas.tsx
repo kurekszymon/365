@@ -30,6 +30,8 @@ type Props = {
   seatInitials?: (string[] | undefined)[];
   /** Every table name's type size - see `PlannerTable`'s `labelSize`. */
   labelSize?: number;
+  /** Every occupancy line's type size - see `PlannerTable`'s `countSize`. */
+  countSize?: number;
   /**
    * The hall's polygon outline (`hall.geometry` in the app), in canvas units.
    * The floor and the grid clip to it and the wall follows it, as
@@ -107,6 +109,7 @@ export const HallCanvas: React.FC<Props> = ({
   selectedTableId,
   seatInitials,
   labelSize,
+  countSize,
   walls,
   bare = false,
   children,
@@ -270,6 +273,7 @@ export const HallCanvas: React.FC<Props> = ({
           selected={selectedTableId === table.id}
           initials={seatInitials?.[i]}
           labelSize={labelSize}
+          countSize={countSize}
         />
       ))}
 

@@ -180,6 +180,32 @@ export const COUCH_HALL = withDerived({
   fixtures: [{ id: "bar", label: tl.hall.bar, x: 1040, y: 60, width: 240, height: 56 }],
 });
 
+/**
+ * The table-shape cut's room: `TALL_HALL`'s 14x16 m and its arrangement, but
+ * set with v1's round preset, *Okrągły 8* - Ø 1.5 m (`TABLE_PRESETS`), where
+ * `TALL_HALL`'s 130 units would read 2.1666… m in the table form's
+ * *Średnica*. Stół 3 stands against the left wall with its top-left corner -
+ * what the app keeps as the table's `position` through every edit - on the
+ * metre grid at (1, 8), so the table it becomes, 3x1 m and then turned
+ * upright along that wall, clears Stół 1, Stół 5, the dance floor and the
+ * wall by the same half metre as the other rooms. The same 58 seats.
+ */
+export const TABLE_SHAPE_HALL = withDerived({
+  name: tl.hall.name,
+  canvas: { width: 840, height: 960 },
+  danceFloor: { x: 420, y: 420, width: 300, height: 220 },
+  tables: [
+    { id: "head", label: tl.hall.headTable, shape: "rect", x: 420, y: 110, width: 320, height: 80, seats: 10 },
+    { id: "t1", label: tl.hall.table(1), shape: "round", x: 105, y: 285, width: 90, height: 90, seats: 8 },
+    { id: "t2", label: tl.hall.table(2), shape: "round", x: 735, y: 285, width: 90, height: 90, seats: 8 },
+    { id: "t3", label: tl.hall.table(3), shape: "round", x: 105, y: 525, width: 90, height: 90, seats: 8 },
+    { id: "t4", label: tl.hall.table(4), shape: "round", x: 735, y: 525, width: 90, height: 90, seats: 8 },
+    { id: "t5", label: tl.hall.table(5), shape: "round", x: 255, y: 825, width: 90, height: 90, seats: 8 },
+    { id: "t6", label: tl.hall.table(6), shape: "round", x: 585, y: 825, width: 90, height: 90, seats: 8 },
+  ],
+  fixtures: [{ id: "bar", label: tl.hall.bar, x: 420, y: 640, width: 240, height: 56 }],
+});
+
 /** `HALL_GAP` in the app's `planner.store.ts`: the metres `nextHallPosition` leaves between halls. */
 export const HALL_GAP = 3;
 

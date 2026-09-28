@@ -166,6 +166,26 @@ Scenes 96 + 150 + 150 + 108 = 504 at `LIST_SEAT_TRANSITION = 8` x 3 seams -> 480
 Built from `docs/video-plans/instagram-reels-series-2026-09-26.md`, brief `list-seat`, drawn on
 `TALL_HALL`.
 
+## The table-shape cut - `easywed-tableshape-vertical`, 480f (16 s), 9:16 only
+
+episode 2 of *Wesele bez spiny*, its tag top-left until the CTA. The couple's phone, the planner
+signed in - no `GuestModeBanner`, by the user's call (2026-09-28); the owner's avatar and invite chip
+in the header instead - zoomed in on Stół 3 - round, Ø 1.5 m, every chair initialled - with Stół 1 above it, the
+hook up on frame 0 - a tap selects it, ring and toolbar, and the toolbar's pen opens *Edytuj stół*,
+the drawer at its full 85% over the plan - *Prostokątny* tapped, the form's diagram turning square at
+the same 1.5 m, the thumb scrolling the form so the whole diagram shows - *Szerokość* cleared and
+typed to 3, *Wysokość* to 1, the diagram stretching into a long table, four chairs a side, the
+initials going with them - *Obróć o 90°*, the two values swapping to 1 and 3 and the diagram
+standing upright - the check, the drawer dropping onto the plan: the long table standing along the
+left wall under Stół 1, the dance floor beside it, every chair still initialled, the camera pulling
+back, the payoff - the phone recedes under it, the CTA. The first film to change a table's shape,
+size or orientation, and the first to show the table form. The brief's "table still visible above
+the sheet" is not how v1 draws it: the form outgrows the drawer's `max-h-[85dvh]`, so the sheet
+covers the canvas and the change is seen in the form's own seat diagram, then on the plan.
+Scenes 96 + 150 + 150 + 108 = 504 at `TABLE_SHAPE_TRANSITION = 8` x 3 seams -> 480.
+Built from `docs/video-plans/instagram-reels-series-2026-09-26.md`, brief `table-shape`, drawn on
+`TABLE_SHAPE_HALL` (`layouts.ts`), 14x16 m, 58 seats, its round tables v1's Ø 1.5 m preset.
+
 ## Polish lines already burned on screen
 
 None of these may appear again:
@@ -347,6 +367,20 @@ Nowicki*, *Karolina Nowicka*; *Kuzyn Tomek* is spent as a character. The beat it
 seated from the guest list through the seat sheet, table list then seat grid - is spent, as is
 the payoff of a guest seated without anyone else moving. Its CTA is *"Posadź gościa prosto z
 listy"* over the *"easywed.app"* pill.
+
+From the table-shape cut: *"Okrągłe stoły czy jeden długi?"* (its hook) · *"Sprawdźmy oba."* ·
+*"Klik - i już kanciasty."* · *"Trzy metry, osiem osób."* · *"I wzdłuż ściany."* · *"Ci sami goście,
+inny stół."* (its payoff) - and, as the table form shows them (app strings, verbatim): *"Edytuj
+stół"* (`tables.edit`), *"Nazwa"*, *"Kształt stołu"*, *"Prostokątny"*, *"Okrągły"*, *"Średnica"*,
+*"Orientacja"*, *"Obróć o 90°"*, *"Liczba miejsc"*, *"Przypisz gości"*, the name *"Stół 3"* in its
+field, and the values *"1.5"*, *"3"*, *"1"* and *"8"*. *"Szerokość"* and *"Wysokość"* were already
+burned by the odd-room loop's hall dialog; they recur here as the table form's own field labels by
+the user's explicit call (2026-09-28), as chrome, like the guest panel's - a beat may not rest on
+them. The canvas's table toolbar (pen, copy, duplicate, delete) is icons only. The initials on
+Stół 3's chairs are `rosterFor`'s spent names, drawn as initials only. The beat itself - one seated
+table tried round, square, long and turned upright, its guests staying put - is spent, as is the
+payoff of the same guests at a different table. Its CTA is *"Sprawdźcie oba warianty na planie"*
+over the *"easywed.app"* pill.
 
 The series tag *"Wesele bez spiny · #N"* recurs by design across the series' episodes, like the
 pill; only its number changes. It is spent as a name for anything else.

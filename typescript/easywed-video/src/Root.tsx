@@ -86,6 +86,12 @@ import { ListSeatTablesScene } from "./easywed/list-seat/scenes/ListSeatTablesSc
 import { ListSeatSeatScene } from "./easywed/list-seat/scenes/ListSeatSeatScene";
 import { ListSeatCtaScene } from "./easywed/list-seat/scenes/ListSeatCtaScene";
 import { LIST_SEAT_DURATION, LIST_SEAT_SCENES } from "./easywed/list-seat/timeline";
+import { TableShape } from "./easywed/table-shape/TableShape";
+import { TableShapeHookScene } from "./easywed/table-shape/scenes/TableShapeHookScene";
+import { TableShapeShapeScene } from "./easywed/table-shape/scenes/TableShapeShapeScene";
+import { TableShapeTurnScene } from "./easywed/table-shape/scenes/TableShapeTurnScene";
+import { TableShapeCtaScene } from "./easywed/table-shape/scenes/TableShapeCtaScene";
+import { TABLE_SHAPE_DURATION, TABLE_SHAPE_SCENES } from "./easywed/table-shape/timeline";
 import { WalkthroughLong } from "./easywed/walkthrough-long/WalkthroughLong";
 import { FloorsScene } from "./easywed/walkthrough-long/scenes/FloorsScene";
 import {
@@ -281,6 +287,18 @@ export const RemotionRoot: React.FC = () => {
         height={VERTICAL_HEIGHT}
       />
 
+      {/* The 16 s table-shape cut, episode 2 of the Instagram series - one seated
+          table tried round, square, long and turned along the wall on the
+          couple's phone, its guests staying put; 9:16 only. */}
+      <Composition
+        id="easywed-tableshape-vertical"
+        component={TableShape}
+        durationInFrames={TABLE_SHAPE_DURATION}
+        fps={FPS}
+        width={VERTICAL_WIDTH}
+        height={VERTICAL_HEIGHT}
+      />
+
       {/* The landing-page loops - 16:9 only, no CTA, each closing on `LoopSeam`
           back to its frame 0 - with their beats nested beside them. */}
       <Folder name="Landing-loops">
@@ -425,6 +443,14 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="ListSeatTables" component={ListSeatTablesScene} durationInFrames={LIST_SEAT_SCENES.tables} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="ListSeatSeat" component={ListSeatSeatScene} durationInFrames={LIST_SEAT_SCENES.seat} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="ListSeatCta" component={ListSeatCtaScene} durationInFrames={LIST_SEAT_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+      </Folder>
+
+      {/* The table-shape cut's beats, at 9:16 - the only size it is made for. */}
+      <Folder name="Table-shape">
+        <Composition id="TableShapeHook" component={TableShapeHookScene} durationInFrames={TABLE_SHAPE_SCENES.hook} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="TableShapeShape" component={TableShapeShapeScene} durationInFrames={TABLE_SHAPE_SCENES.shape} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="TableShapeTurn" component={TableShapeTurnScene} durationInFrames={TABLE_SHAPE_SCENES.turn} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="TableShapeCta" component={TableShapeCtaScene} durationInFrames={TABLE_SHAPE_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
       </Folder>
 
     </>

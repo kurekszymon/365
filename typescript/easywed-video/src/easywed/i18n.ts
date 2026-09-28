@@ -171,6 +171,21 @@ const pl = {
       assignAt: (n: number) => `Posadź na miejscu ${n}`, // seats.assign_at
       empty: "Wolne miejsce", // seats.empty
     },
+    /** `TablePanelContent` in the phone's `MobilePanelDrawer`, titled by `usePanelTitle`, top to bottom. */
+    tableForm: {
+      title: "Edytuj stół", // tables.edit - also the canvas toolbar's edit button
+      name: "Nazwa", // common.name
+      shape: "Kształt stołu", // tables.shape
+      rectangular: "Prostokątny", // tables.shape.rectangular
+      round: "Okrągły", // tables.shape.round
+      diameter: "Średnica", // tables.diameter
+      width: "Szerokość", // common.width
+      height: "Wysokość", // common.height
+      rotation: "Orientacja", // tables.rotation
+      flip: "Obróć o 90°", // tables.rotation.flip
+      capacity: "Liczba miejsc", // tables.capacity
+      guests: "Przypisz gości", // tables.guests
+    },
     /** `HallsPanelContent` in the same dialog, titled by `usePanelTitle`. */
     hallsList: {
       title: "Sale", // hall.list_title
@@ -441,6 +456,23 @@ const pl = {
     ctaAction: "Posadź gościa prosto z\u00a0listy",
   },
 
+  tableShape: {
+    hook: "Okrągłe stoły czy jeden długi?",
+    both: "Sprawdźmy oba.",
+    /** "i" is bound to "już" so the line never ends on it. */
+    square: "Klik - i\u00a0już kanciasty.",
+    /** Read off the plan: the width typed and the table's seats, spelled out. */
+    dims: (metres: number, seats: number) =>
+      `${spelled(metres, PL_NUMBERS)} ${plural(metres, { one: "metr", few: "metry", many: "metrów" })}, ${spelled(
+        seats,
+        PL_NUMBERS,
+      ).toLowerCase()} ${plural(seats, { one: "osoba", few: "osoby", many: "osób" })}.`,
+    /** "I" is bound to "wzdłuż" for the same reason. */
+    wall: "I\u00a0wzdłuż ściany.",
+    payoff: "Ci sami goście, inny stół.",
+    ctaAction: "Sprawdźcie oba warianty na planie",
+  },
+
   walkthrough: {
     /** "i" is bound to "żadnego" so the line never ends on it. */
     hook: "Pusta sala, lista gości i\u00a0żadnego planu?",
@@ -565,6 +597,20 @@ const en: typeof pl = {
       pickSeat: "Pick a seat",
       assignAt: (n) => `Seat at #${n}`,
       empty: "Empty seat",
+    },
+    tableForm: {
+      title: "Edit table",
+      name: "Name",
+      shape: "Table shape",
+      rectangular: "Rectangular",
+      round: "Round",
+      diameter: "Diameter",
+      width: "Width",
+      height: "Height",
+      rotation: "Orientation",
+      flip: "Rotate 90°",
+      capacity: "Capacity",
+      guests: "Assign guests",
     },
     hallsList: {
       title: "Halls",
@@ -788,6 +834,20 @@ const en: typeof pl = {
     beside: "You see who he'll sit next to.",
     payoff: "Tomek sits with his family. Nobody else moved an inch.",
     ctaAction: "Seat a guest straight from the list",
+  },
+
+  tableShape: {
+    hook: "Round tables or one long one?",
+    both: "Let's try both.",
+    square: "One tap - and it's square.",
+    dims: (metres, seats) =>
+      `${spelled(metres, EN_NUMBERS)} ${plural(metres, { one: "metre", few: "metres", many: "metres" })}, ${spelled(
+        seats,
+        EN_NUMBERS,
+      ).toLowerCase()} ${plural(seats, { one: "person", few: "people", many: "people" })}.`,
+    wall: "And along the wall.",
+    payoff: "Same guests, different table.",
+    ctaAction: "Try both layouts on the plan",
   },
 
   walkthrough: {
