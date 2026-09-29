@@ -22,6 +22,14 @@ export const colors = {
   inkSoft: "#7b736b",
   border: "#e6e1d8",
 
+  /** `--muted` (`oklch(0.94 0.011 80)`): the add hub's fixture-card icon tiles (`bg-muted`). */
+  muted: "#efeae3",
+  /**
+   * `--accent` (`oklch(0.92 0.03 330)`): a context-menu row under the pointer
+   * (`focus:bg-accent`) - the app's own accent, not `accentSoft`'s badge tone.
+   */
+  accentFill: "#f1deee",
+
   /** `--secondary` / `--primary`: the app's card fills and its black pills. */
   secondary: "#efe9dd",
   primary: "#2b2621",

@@ -40,8 +40,12 @@
 - **the table-shape cut** - 16 seconds for Reels, 9:16 only, episode 2 of *Wesele bez spiny*: one
   seated round table on the couple's phone turned square, stretched to a 3x1 m long table and
   stood up along the wall in its form, its eight guests staying put - the CTA.
+- **the ten-tables cut** - 18 seconds for Reels, 9:16 only, episode 3 of *Wesele bez spiny*: the
+  venue's "ten round tables of eight" typed once into the batch form on the couple's laptop, the
+  ten tables landing in two rows, then the dance floor, the stage and the door dragged into place
+  from the add hub - the CTA.
 
-All but the loops, the keep-apart, mama-link, sunday-couch, list-seat and table-shape cuts render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
+All but the loops, the keep-apart, mama-link, sunday-couch, list-seat, table-shape and ten-tables cuts render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
 are in Polish.
 
 It is a standalone package on purpose - it sits next to `easywed/` rather than inside it, so it
@@ -95,6 +99,8 @@ pnpm run render:sunday-couch:vertical  # -> out/pl/easywed-couch-vertical.mp4 (9
 pnpm run render:list-seat:vertical  # -> out/pl/easywed-listseat-vertical.mp4 (9:16; the 1:1 feed cut is still to come)
 
 pnpm run render:table-shape:vertical  # -> out/pl/easywed-tableshape-vertical.mp4 (9:16, its only size)
+
+pnpm run render:ten-tables:vertical  # -> out/pl/easywed-batch-vertical.mp4 (9:16, its only size)
 
 pnpm run render:all     # all of the above
 pnpm run render:all:en  # all of the above in English -> out/en/
@@ -264,6 +270,14 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `TableShapeTurn`              | 150f   | *Obróć o 90°*; the form closed on the long table along the wall   |
 | `TableShapeCta`               | 108f   | the phone recedes under the payoff, logo + easywed.app            |
 
+| id                       | length | what it is                                                           |
+| ------------------------ | ------ | -------------------------------------------------------------------- |
+| `easywed-batch-vertical` | 540f   | the 18 s ten-tables cut, 9:16 only - series episode 3                |
+| `TenTablesHook`          | 96f    | an empty hall on a laptop, the hook on frame 0; the canvas menu      |
+| `TenTablesBatch`         | 180f   | *Dodaj stoły*: round, 1.5, 10 typed; ten tables land in two rows     |
+| `TenTablesRoom`          | 180f   | *Elementy sali*, the add hub; floor, stage and door dragged; payoff  |
+| `TenTablesCta`           | 108f   | the laptop recedes under the payoff, logo + easywed.app              |
+
 The long walkthrough's other fifteen chapters are the scenes registered above, from the short
 walkthrough and the other cuts; only `Floors` is its own. The 9:16 cut leaves out `ScaleMeasure`:
 on a phone at v1 the canvas toolbar isn't there, and measuring is a long-press menu item with no
@@ -271,7 +285,7 @@ on a phone at v1 the canvas toolbar isn't there, and measuring is a long-press m
 bottom sheet rather than the desktop's centred dialog.
 
 The scenes are also registered individually (Studio folders "Scenes", "Teaser", "Import",
-"Report", "Kids", "Swap-cut", "Keep-apart", "Mama-link", "Sunday-couch", "List-seat", "Table-shape" and "Walkthrough-long") so a single beat can be previewed without scrubbing through the
+"Report", "Kids", "Swap-cut", "Keep-apart", "Mama-link", "Sunday-couch", "List-seat", "Table-shape", "Ten-tables" and "Walkthrough-long") so a single beat can be previewed without scrubbing through the
 whole timeline. The social cuts' scenes are registered at 9:16, the cut they are made for.
 
 The landing-page loops - `easywed-scale`, `easywed-swap` and `easywed-shape` - sit together in the
@@ -286,8 +300,9 @@ src/easywed/
   theme.ts               hex mirror of the app's `editorial` palette + brand colors, fonts
   layouts.ts             WIDE_HALL, TALL_HALL, the odd-room loop's L_HALL, the keep-apart
                          cut's KEEP_APART_HALL, the sunday-couch cut's COUCH_HALL, the
-                         table-shape cut's TABLE_SHAPE_HALL and the long walkthrough's
-                         second hall, 60 units per metre
+                         table-shape cut's TABLE_SHAPE_HALL, the ten-tables cut's
+                         TEN_TABLES_HALL (laid out by addTablesGrid, v1's addTables) and the
+                         long walkthrough's second hall, 60 units per metre
   format.ts              useFormat() - picks hall + type scale from the composition size
   data.ts                the demo wedding: guest list, couple
   geometry.ts            seat positions around round/rectangular tables
@@ -299,7 +314,8 @@ src/easywed/
                          guest mode or signed in, its canvas fitted or a film's own zoomed
                          view), shared
                          by the mama-link, list-seat and table-shape cuts; SeriesTag, the
-                         Instagram series' pill
+                         Instagram series' pill; AddHub, the *Dodaj do sali* picker's body,
+                         for the ten-tables cut's dialog and the try-now cut's sheet
   scenes/                one file per scene
   teaser/                the social cut - its own timeline, Teaser.tsx and scenes,
                          drawn with the same theme, layouts and components
@@ -365,6 +381,13 @@ src/easywed/
                          seat diagram. The phone (TableShapePhone) is PhoneShell in `owner`
                          mode with its canvas zoomed onto Stół 3 and the table toolbar, and
                          components/TableEditSheet.tsx redraws the table form in its drawer
+  ten-tables/            the ten-tables cut, 9:16 only, in the table-shape cut's shape, on the
+                         couple's laptop as the sunday-couch cut draws it: every scene draws
+                         components/TenTablesStage.tsx off one clock (script.ts), with
+                         state.ts reading the form, the fixtures and the pointer off it and
+                         components/desk.ts placing everything on the desk. Its redraws are
+                         the canvas menu, the batch dialog, the *Elementy sali* panel and the
+                         add-hub dialog; jump cuts skip the dialogs v1 opens between beats
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect

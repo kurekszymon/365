@@ -108,6 +108,37 @@ named in section 2 both need updating — nothing will warn you.
     whole canvas** - the change shows live in the form's own `TableSeatMap`, not on the plan,
     until the check (`common.done`) closes it. The round preset *„Okrągły 8”* is
     Ø **1.5 m** (`TABLE_PRESETS`), which no film room matched until `TABLE_SHAPE_HALL`.
+- **Tables in bulk, and the room's furniture, on a desktop** (`Canvas/Canvas.tsx`,
+  `EntityForms/TableBatchPanelContent.tsx`, `planner.store.ts` `addTables`, `Sidebar/*`,
+  `EntityForms/AddHubContent.tsx`, `addPresets.ts`).
+  - A right-click on an empty spot in a hall opens the canvas menu with *„Dodaj stół”*, *„Dodaj
+    stoły”*, *„Dodaj element”*, then a *„Widok”* section (*Styl siatki*, *Odległość przyciągania*,
+    *Miejsca*, *Mierzenie*); the copy/paste rows appear only on a table or fixture, or with
+    something on the clipboard. The click point is snapped to the grid first. *„Dodaj stoły”* is
+    the **only** way into the batch form (`openTablesBatchAdd`, `Canvas.tsx:430`), so bulk tables
+    are a desktop beat. *„Dodaj element”* there does **not** open the add hub: it drops a bare
+    `DEFAULT_FIXTURE` (unnamed 2x1 m rectangle) at the click and opens its form.
+  - The batch form, titled *„Dodaj stoły”*, opens on `INITIAL_FORM`: `DEFAULT_TABLE`'s
+    **rectangular 2x1 m**, 8 seats, and *„Ile”* 2. *Okrągły* keeps the width, so *Średnica* reads 2.
+    The button is `tables.add_many` pluralised on the count (*„Dodaj 2 stoły”*, *„Dodaj 1 stół”*,
+    *„Dodaj 10 stołów”*); `MAX_BATCH_COUNT = 50`. On submit the dialog does **not** close: it
+    switches to *Edytuj stół* for the first new table (`openTableEdit(ids[0])`).
+  - `addTables` lays them row-major from the snapped click, each top-left a footprint plus
+    **0.5 m** from the last, as many columns as fit `hallWidth - start.x` and rows as fit
+    `hallHeight - start.y`, and **silently caps** the batch there (`tables_batch_added { shape,
+    requested, created }` records the shortfall). A batch with no name leaves the tables unnamed:
+    the canvas then draws only `N / capacity` (`TableVisual` shows a name only when `hasName`),
+    while the rail's list calls them *Stół N*. At 0.5 m apart, two neighbours' seat markers
+    (0.3 m off the edge, `SEAT_OFFSET_M`) overlap - but **seats are off by default**
+    (`view.store` `showSeats: false`), so a fresh plan shows none.
+  - The add hub on a desktop is `Sidebar/AddEntityDialog`, *„Dodaj do sali”*, reached only from
+    the rail: its *Stoły* / *Elementy sali* tab opens a 400 px panel **over** the canvas
+    (`SidebarRail`) whose outline *„Dodaj element”* opens the hub pre-filtered to that tab. The
+    rail's own label for fixtures is *„Elementy sali”* (`t("fixtures")`). A card inserts its
+    preset **centred** in the hall and opens *Edytuj element* (`openFixtureEdit`); dragging it
+    then snaps its top-left to the step and clamps it into the hall, so a fixture dragged onto a
+    wall ends flush against it. Presets: *Scena* 3x1.5, *Parkiet* 3x3, *Bar* 2.5x1, *DJ Booth*
+    1.5x1, *Wejście* 1x0.3 (`rounded`), *Niestandardowy* - a starter polygon.
 - **Multi-hall and multi-floor** (`hall.floor`, `hall.list_title`), plus custom polygon halls and
   fixtures — stage, dance floor, bar, DJ booth, entrance, or a shape drawn by hand
   (`fixtures.preset.*`, `fixtures.shape.polygon`).

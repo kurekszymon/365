@@ -43,7 +43,16 @@ export type IconName =
   | "info"
   | "squarePen"
   | "clipboardCopy"
-  | "rotateCw";
+  | "rotateCw"
+  | "table"
+  | "squarePlus"
+  | "magnet"
+  | "presentation"
+  | "music2"
+  | "martini"
+  | "disc3"
+  | "logIn"
+  | "shapes";
 
 const PATHS: Record<IconName, React.ReactNode> = {
   guests: (
@@ -251,6 +260,69 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
       <path d="M21 3v5h-5" />
+    </>
+  ),
+  /** lucide `table` - the canvas menu's *Dodaj stół*. */
+  table: (
+    <>
+      <path d="M12 3v18" />
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <path d="M3 9h18M3 15h18" />
+    </>
+  ),
+  /** lucide `square-plus` - the canvas menu's *Dodaj stoły*. */
+  squarePlus: (
+    <>
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <path d="M8 12h8M12 8v8" />
+    </>
+  ),
+  /** lucide `magnet` - the canvas menu's snap distance. */
+  magnet: (
+    <>
+      <path d="m6 15-4-4 6.75-6.77a7.79 7.79 0 0 1 11 11L13 22l-4-4 6.39-6.36a2.14 2.14 0 0 0-3-3L6 15" />
+      <path d="m5 8 4 4M12 15l4 4" />
+    </>
+  ),
+  /** The add hub's fixture cards (`FIXTURE_ICONS` in `AddHubContent`): stage, dance floor, bar, DJ booth, entrance, custom. */
+  presentation: (
+    <>
+      <path d="M2 3h20" />
+      <path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3" />
+      <path d="m7 21 5-5 5 5" />
+    </>
+  ),
+  music2: (
+    <>
+      <circle cx="8" cy="18" r="4" />
+      <path d="M12 18V2l7 4" />
+    </>
+  ),
+  martini: (
+    <>
+      <path d="M8 22h8M12 11v11" />
+      <path d="m19 3-7 8-7-8Z" />
+    </>
+  ),
+  disc3: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M6 12c0-1.7.7-3.2 1.8-4.2" />
+      <circle cx="12" cy="12" r="2" />
+      <path d="M18 12c0 1.7-.7 3.2-1.8 4.2" />
+    </>
+  ),
+  logIn: (
+    <>
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+      <path d="m10 17 5-5-5-5M15 12H3" />
+    </>
+  ),
+  shapes: (
+    <>
+      <path d="M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <circle cx="17.5" cy="17.5" r="3.5" />
     </>
   ),
 };

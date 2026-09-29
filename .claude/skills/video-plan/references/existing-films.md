@@ -186,6 +186,29 @@ Scenes 96 + 150 + 150 + 108 = 504 at `TABLE_SHAPE_TRANSITION = 8` x 3 seams -> 4
 Built from `docs/video-plans/instagram-reels-series-2026-09-26.md`, brief `table-shape`, drawn on
 `TABLE_SHAPE_HALL` (`layouts.ts`), 14x16 m, 58 seats, its round tables v1's Ø 1.5 m preset.
 
+## The ten-tables cut - `easywed-batch-vertical`, 540f (18 s), 9:16 only
+
+episode 3 of *Wesele bez spiny*, its tag top-left until the CTA. The couple's laptop, signed in
+(AppFrame's `desktop` frame, as sunday-couch drew it), open on an empty 14x16 m *Sala główna* with
+*Miejsca* off - v1's default - the hook up on frame 0 - a right-click near (3, 1) m opens the canvas
+menu, *Dodaj stoły* - the batch dialog on its defaults, *Okrągły* pressed, *Średnica* typed 2 to
+1.5, *Ile* 2 to 10, the button reading *Dodaj 2 stoły*, *Dodaj 1 stół*, *Dodaj 10 stołów* as it
+goes - a jump cut on the click (v1 hands the dialog to *Edytuj stół* rather than closing it) onto
+the room, the ten unnamed tables landing row by row, each reading only `0 / 8` - the rail's
+*Elementy sali*, its panel sliding out over the canvas, *Dodaj element*, the *Dodaj do sali* dialog
+on *Elementy sali*, *Parkiet* - a jump cut past *Edytuj element* onto the dance floor inserted in
+the middle of the hall, nudged to (6, 6) m - jump cuts to *Scena* and *Wejście*, each inserted in
+the middle and dragged, the stage behind the dance floor and the door onto the bottom wall - the
+camera steps back, the payoff - the laptop recedes under it, the CTA. The first film to show the
+batch form, the canvas's right-click menu, the desktop rail's panel and the add hub, and the first
+to lay a room out from the venue's number. The brief's "Dodaj element → Dodaj do sali" from the
+canvas menu is not how v1 runs: that row drops a bare 2x1 m fixture, and the hub is reached from
+the rail's panel - drawn that way, by the user's call (2026-09-29).
+Scenes 96 + 180 + 180 + 108 = 564 at `TEN_TABLES_TRANSITION = 8` x 3 seams -> 540.
+Built from `docs/video-plans/instagram-reels-series-2026-09-26.md`, brief `ten-tables`, drawn on
+`TEN_TABLES_HALL` (`layouts.ts`), 14x16 m, **80 seats** - the batch exactly where v1's `addTables`
+puts it (`addTablesGrid`), not the 58-seat room: the film never shows a guest count.
+
 ## Polish lines already burned on screen
 
 None of these may appear again:
@@ -381,6 +404,30 @@ Stół 3's chairs are `rosterFor`'s spent names, drawn as initials only. The bea
 table tried round, square, long and turned upright, its guests staying put - is spent, as is the
 payoff of the same guests at a different table. Its CTA is *"Sprawdźcie oba warianty na planie"*
 over the *"easywed.app"* pill.
+
+From the ten-tables cut: *"Sala mówi: dziesięć okrągłych po osiem."* (its hook) · *"Okrągłe,
+półtora metra."* · *"Wpisujesz 10."* · *"Stoją. Wszystkie dziesięć."* · *"Parkiet, scena, drzwi."* ·
+*"Dziesięć stołów, osiemdziesiąt miejsc, parkiet przed sceną."* (its payoff) - and, as the canvas
+menu shows them (app strings, verbatim): *"Dodaj stół"* (`tables.add`), *"Dodaj stoły"*
+(`tables.add_batch`), *"Dodaj element"* (`fixtures.add`), *"Widok"*, *"Styl siatki"*,
+*"Odległość przyciągania"* with its *"1 m"*, *"Miejsca"*, *"Mierzenie"*; as the batch dialog shows
+them: its title *"Dodaj stoły"*, *"Stół rodzinny"* (`tables.name_placeholder`), *"Ile"*
+(`tables.batch_count`), and the button *"Dodaj 2 stoły"*, *"Dodaj 1 stół"*, *"Dodaj 10 stołów"*
+(`tables.add_many_*`), with the typed values *"1."*, *"1.5"*, *"10"* and the defaults *"2"*, *"1"*,
+*"8"*; as the rail and its panel show them: *"Elementy sali"* (`fixtures`, the desktop rail's own
+label, and the panel's heading), *"Dodaj element"*, *"Brak elementów sali."* (`fixtures.none`); as
+the add hub shows them: *"Dodaj do sali"*, *"Dotknij, aby wstawić na środek - potem przeciągnij na
+miejsce."* (`hall.add_hub.hint`), *"Stoły"*, *"Elementy sali"*, and the cards *"Scena"*,
+*"Parkiet"*, *"Bar"*, *"DJ Booth"*, *"Wejście"*, *"Niestandardowy"*; and on the canvas the tables'
+*"0 / 8"* and the fixtures *"Parkiet"*, *"Scena"*, *"Wejście"*. The table form's labels - *"Nazwa"*,
+*"Kształt stołu"*, *"Prostokątny"*, *"Okrągły"*, *"Średnica"*, *"Szerokość"*, *"Wysokość"*,
+*"Orientacja"*, *"Obróć o 90°"*, *"Liczba miejsc"* - recur here as the batch form's chrome by the
+user's explicit call (2026-09-29), as the table-shape cut's did; a beat may not rest on them. The
+add hub's chrome (title, hint, tabs, cards) will recur in the try-now cut's add-hub sheet by the
+plan's design (`components/AddHub.tsx`); what is spent is the beat of fixtures inserted from it and
+dragged into place. The beat itself - a count typed once into the batch form and the tables landing
+as a grid - is spent, as is the payoff of the room laid out from the venue's number. Its CTA is
+*"Rozstaw wszystkie stoły naraz"* over the *"easywed.app"* pill.
 
 The series tag *"Wesele bez spiny · #N"* recurs by design across the series' episodes, like the
 pill; only its number changes. It is spent as a name for anything else.

@@ -92,6 +92,12 @@ import { TableShapeShapeScene } from "./easywed/table-shape/scenes/TableShapeSha
 import { TableShapeTurnScene } from "./easywed/table-shape/scenes/TableShapeTurnScene";
 import { TableShapeCtaScene } from "./easywed/table-shape/scenes/TableShapeCtaScene";
 import { TABLE_SHAPE_DURATION, TABLE_SHAPE_SCENES } from "./easywed/table-shape/timeline";
+import { TenTables } from "./easywed/ten-tables/TenTables";
+import { TenTablesHookScene } from "./easywed/ten-tables/scenes/TenTablesHookScene";
+import { TenTablesBatchScene } from "./easywed/ten-tables/scenes/TenTablesBatchScene";
+import { TenTablesRoomScene } from "./easywed/ten-tables/scenes/TenTablesRoomScene";
+import { TenTablesCtaScene } from "./easywed/ten-tables/scenes/TenTablesCtaScene";
+import { TEN_TABLES_DURATION, TEN_TABLES_SCENES } from "./easywed/ten-tables/timeline";
 import { WalkthroughLong } from "./easywed/walkthrough-long/WalkthroughLong";
 import { FloorsScene } from "./easywed/walkthrough-long/scenes/FloorsScene";
 import {
@@ -299,6 +305,18 @@ export const RemotionRoot: React.FC = () => {
         height={VERTICAL_HEIGHT}
       />
 
+      {/* The 18 s ten-tables cut, episode 3 of the Instagram series - the venue's
+          ten round tables typed once into the batch form on the couple's laptop,
+          then the dance floor, stage and door dragged into place; 9:16 only. */}
+      <Composition
+        id="easywed-batch-vertical"
+        component={TenTables}
+        durationInFrames={TEN_TABLES_DURATION}
+        fps={FPS}
+        width={VERTICAL_WIDTH}
+        height={VERTICAL_HEIGHT}
+      />
+
       {/* The landing-page loops - 16:9 only, no CTA, each closing on `LoopSeam`
           back to its frame 0 - with their beats nested beside them. */}
       <Folder name="Landing-loops">
@@ -451,6 +469,14 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="TableShapeShape" component={TableShapeShapeScene} durationInFrames={TABLE_SHAPE_SCENES.shape} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="TableShapeTurn" component={TableShapeTurnScene} durationInFrames={TABLE_SHAPE_SCENES.turn} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="TableShapeCta" component={TableShapeCtaScene} durationInFrames={TABLE_SHAPE_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+      </Folder>
+
+      {/* The ten-tables cut's beats, at 9:16 - the only size it is made for. */}
+      <Folder name="Ten-tables">
+        <Composition id="TenTablesHook" component={TenTablesHookScene} durationInFrames={TEN_TABLES_SCENES.hook} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="TenTablesBatch" component={TenTablesBatchScene} durationInFrames={TEN_TABLES_SCENES.batch} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="TenTablesRoom" component={TenTablesRoomScene} durationInFrames={TEN_TABLES_SCENES.room} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="TenTablesCta" component={TenTablesCtaScene} durationInFrames={TEN_TABLES_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
       </Folder>
 
     </>

@@ -10,7 +10,8 @@ import { Icon, NAV_ITEMS, type IconName, type NavKind } from "./Icon";
 import { Wordmark } from "./Wordmark";
 
 type Props = {
-  activeRail: NavKind;
+  /** The rail tab whose panel is open; `null` when every panel is shut, as the app draws a collapsed rail. */
+  activeRail: NavKind | null;
   children: React.ReactNode;
   /**
    * Draw the desktop planner whatever the composition's shape - for a portrait
@@ -25,6 +26,18 @@ type Props = {
    * carries `NAV_ITEMS`' fixed counts, as every published film draws it.
    */
   badges?: Partial<Record<NavKind, number>>;
+  /**
+   * Rail labels in place of `NAV_ITEMS`' - the desktop rail's own `t(tab)`,
+   * which reads *Elementy sali* for fixtures at v1. Left out, the rail carries
+   * `NAV_ITEMS`' labels, as every published film draws it.
+   */
+  railLabels?: Partial<Record<NavKind, string>>;
+  /**
+   * A rail panel is open: the collapse button then reads `ChevronLeft`, as
+   * `SidebarRail` draws it. Left out, it reads `ChevronRight`, as every
+   * published film draws it.
+   */
+  railOpen?: boolean;
 };
 
 /** `useFormat()`'s landscape padding, for a desktop frame drawn inside a portrait composition. */
@@ -147,8 +160,9 @@ const TabIcon: React.FC<{
  * 60px icon strip with its labels underneath; portrait gets the mobile tab bar
  * with the zoom control and add FAB, matching how the app itself adapts.
  */
-export const AppFrame: React.FC<Props> = ({ activeRail, children, desktop = false, inviteSlot, badges }) => {
+export const AppFrame: React.FC<Props> = ({ activeRail, children, desktop = false, inviteSlot, badges, railLabels, railOpen = false }) => {
   const badgeFor = (kind: NavKind, fixed?: number) => (badges ? badges[kind] : fixed);
+  const labelFor = (kind: NavKind, fixed: string) => railLabels?.[kind] ?? fixed;
   const format = useFormat();
   const tall = desktop ? false : format.tall;
   const pad = desktop ? DESKTOP_PAD : format.pad;
@@ -249,7 +263,7 @@ export const AppFrame: React.FC<Props> = ({ activeRail, children, desktop = fals
                     justifyContent: "center",
                   }}
                 >
-                  <Icon name="chevronRight" color={colors.ink} size={19 * s} />
+                  <Icon name={railOpen ? "chevronLeft" : "chevronRight"} color={colors.ink} size={19 * s} />
                 </div>
                 {NAV_ITEMS.map(({ kind, label, badge }) => (
                   <div
@@ -278,7 +292,7 @@ export const AppFrame: React.FC<Props> = ({ activeRail, children, desktop = fals
                         textAlign: "center",
                       }}
                     >
-                      {label}
+                      {labelFor(kind, label)}
                     </span>
                   </div>
                 ))}

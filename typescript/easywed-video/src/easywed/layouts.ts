@@ -1,4 +1,5 @@
 import { tl } from "./i18n";
+import { range } from "./geometry";
 
 export type TableSpec = {
   id: string;
@@ -230,3 +231,81 @@ export const secondHallBeside = (first: HallLayout): HallLayout =>
     floor: 1,
     position: { x: (first.position?.x ?? 0) + first.meters.width + HALL_GAP, y: first.position?.y ?? 0 },
   });
+
+/** A point or a size in metres, hall-local from the top-left corner, as the app stores `position`. */
+export type Metres = { x: number; y: number };
+
+/**
+ * `addTables` in the app's `planner.store.ts` at v1, for a rectangular hall:
+ * the batch lands row-major from `start` - the canvas menu's snapped click -
+ * each table's top-left corner a tile of its footprint plus a 0.5 m gap from
+ * the last, as many columns as fit the hall's width from `start` and as many
+ * rows as fit its height. The grid is **silently capped**: ask for more than
+ * fits and fewer come back, which is why a film's typed count must be checked
+ * against what this returns rather than assumed.
+ */
+export const addTablesGrid = (
+  hall: { width: number; height: number },
+  footprint: { width: number; height: number },
+  count: number,
+  start: Metres,
+): Metres[] => {
+  const gap = 0.5;
+  const tileW = footprint.width + gap;
+  const tileH = footprint.height + gap;
+  const cols = Math.max(1, Math.floor(Math.max(tileW, hall.width - start.x) / tileW));
+  const rowsCap = Math.max(1, Math.floor(Math.max(tileH, hall.height - start.y) / tileH));
+  return range(Math.min(count, cols * rowsCap)).map((i) => ({
+    x: start.x + (i % cols) * tileW,
+    y: start.y + Math.floor(i / cols) * tileH,
+  }));
+};
+
+/**
+ * What the ten-tables cut types into *Dodaj stoły*: round, Ø 1.5 m, eight
+ * seats, ten of them, opened by a right-click that snaps to (3, 1) m.
+ */
+export const TEN_TABLES_BATCH = { start: { x: 3, y: 1 }, diameter: 1.5, capacity: 8, count: 10 };
+
+const TEN_TABLES_CELLS = addTablesGrid(
+  { width: 14, height: 16 },
+  { width: TEN_TABLES_BATCH.diameter, height: TEN_TABLES_BATCH.diameter },
+  TEN_TABLES_BATCH.count,
+  TEN_TABLES_BATCH.start,
+);
+if (TEN_TABLES_CELLS.length !== TEN_TABLES_BATCH.count) {
+  throw new Error(
+    `addTables would cap the batch at ${TEN_TABLES_CELLS.length} of ${TEN_TABLES_BATCH.count} - the film would type a number the app does not deliver`,
+  );
+}
+
+/**
+ * The ten-tables cut's room: `TALL_HALL`'s 14x16 m, empty when the film
+ * starts, as it ends. The tables are the batch exactly where `addTables` puts
+ * them - x = 3, 5, 7, 9, 11 and y = 1, 3 m - unnamed, as a batch with no name
+ * leaves them (the canvas then shows only `0 / 8`). Under them the three
+ * fixtures from the add hub (`addPresets.ts`), each dragged to a top-left the
+ * 1 m snap allows: *Parkiet* 3x3 m at (6, 6), *Scena* 3x1.5 m behind it at
+ * (6, 10), *Wejście* 1x0.3 m on the bottom wall at (11, 15.7) - clamped flush
+ * to the wall, since the snap alone would put it at 16. Not a 58-seat room:
+ * this film is about the venue's number, and it never shows a guest count.
+ */
+export const TEN_TABLES_HALL = withDerived({
+  name: tl.hall.name,
+  canvas: { width: 840, height: 960 },
+  danceFloor: { x: 7.5 * PX_PER_M, y: 7.5 * PX_PER_M, width: 3 * PX_PER_M, height: 3 * PX_PER_M },
+  tables: TEN_TABLES_CELLS.map((cell, i) => ({
+    id: `t${i + 1}`,
+    label: tl.hall.table(i + 1),
+    shape: "round" as const,
+    x: (cell.x + TEN_TABLES_BATCH.diameter / 2) * PX_PER_M,
+    y: (cell.y + TEN_TABLES_BATCH.diameter / 2) * PX_PER_M,
+    width: TEN_TABLES_BATCH.diameter * PX_PER_M,
+    height: TEN_TABLES_BATCH.diameter * PX_PER_M,
+    seats: TEN_TABLES_BATCH.capacity,
+  })),
+  fixtures: [
+    { id: "stage", label: tl.app.addHub.fixtures.stage, x: 7.5 * PX_PER_M, y: 10.75 * PX_PER_M, width: 3 * PX_PER_M, height: 1.5 * PX_PER_M },
+    { id: "entrance", label: tl.app.addHub.fixtures.entrance, x: 11.5 * PX_PER_M, y: 15.85 * PX_PER_M, width: 1 * PX_PER_M, height: 0.3 * PX_PER_M },
+  ],
+});

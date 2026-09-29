@@ -181,8 +181,13 @@ export const PlannerCanvas: React.FC<{
    * `CanvasToolbar`, its mode switch (`measure.mode.*`) joins the end of the row.
    */
   measureMode?: string;
+  /**
+   * *Miejsca* (`view.store`'s `showSeats`) lit. v1 starts with it off; every
+   * published film draws it on, so that is the default here.
+   */
+  seatsOn?: boolean;
   children: React.ReactNode;
-}> = ({ hall, tall, zoom = "92%", measureMode, children }) => {
+}> = ({ hall, tall, zoom = "92%", measureMode, seatsOn = true, children }) => {
   const scale = chromeScale(tall);
   const insets = canvasInsets(tall);
 
@@ -232,7 +237,7 @@ export const PlannerCanvas: React.FC<{
         {tall ? null : (
           <Tool icon="ruler" label={tl.app.measure} active={measureMode !== undefined} scale={scale} />
         )}
-        <Tool icon="armchair" label={tl.app.seats} active scale={scale} />
+        <Tool icon="armchair" label={tl.app.seats} active={seatsOn} scale={scale} />
         {measureMode !== undefined ? <Tool label={measureMode} active scale={scale} /> : null}
       </div>
 

@@ -42,6 +42,21 @@ const spelled = (count: number, words: string[]): string => {
   return word;
 };
 
+/** Round tens, spelled out, for a count past `PL_NUMBERS` - index is the tens digit. */
+const PL_TENS = ["", "Dziesięć", "Dwadzieścia", "Trzydzieści", "Czterdzieści", "Pięćdziesiąt", "Sześćdziesiąt", "Siedemdziesiąt", "Osiemdziesiąt", "Dziewięćdziesiąt"];
+const EN_TENS = ["", "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+/** `spelled`, reaching round tens too - a seat count read off the room; anything else fails loudly. */
+const spelledCount = (count: number, words: string[], tens: string[]): string =>
+  count < words.length ? spelled(count, words) : count % 10 === 0 && count < 100 ? tens[count / 10] : spelled(count, []);
+
+/** A diameter as a line says it; only the one the film types is spelled, so a changed value fails loudly. */
+const spelledMetres = (metres: number, words: Record<number, string>): string => {
+  const word = words[metres];
+  if (word === undefined) throw new Error(`No spelled-out form for ${metres} m`);
+  return word;
+};
+
 const pl = {
   hall: {
     name: "Sala główna",
@@ -197,6 +212,49 @@ const pl = {
       // hall.entity_count_one|few|many
       entityCount: (count: number) =>
         `${count} ${plural(count, { one: "element", few: "elementy", many: "elementów" })}`,
+    },
+    /** The canvas's right-click menu on an empty spot in the hall (`Canvas.tsx`, `CanvasViewMenu`), top to bottom. */
+    canvasMenu: {
+      addTable: "Dodaj stół", // tables.add
+      addTables: "Dodaj stoły", // tables.add_batch
+      addFixture: "Dodaj element", // fixtures.add
+      view: "Widok", // canvas.view_section
+      gridStyle: "Styl siatki", // canvas.grid.style
+      snap: "Odległość przyciągania", // canvas.snap.label
+      metres: (count: number) => `${count} m`, // common.meters
+      seats: "Miejsca", // seats.toggle
+      measure: "Mierzenie", // measure.tool
+    },
+    /** `TableBatchPanelContent` in `EntityEditDialog`, titled by `usePanelTitle`; its labels are `tableForm`'s. */
+    tableBatch: {
+      title: "Dodaj stoły", // tables.add_batch
+      namePlaceholder: "Stół rodzinny", // tables.name_placeholder
+      count: "Ile", // tables.batch_count
+      // tables.add_many_one|few|many
+      submit: (count: number) =>
+        `Dodaj ${count} ${plural(count, { one: "stół", few: "stoły", many: "stołów" })}`,
+    },
+    /** The desktop rail's fixtures tab and its panel (`SidebarRail`, `EntityListContent`). */
+    fixturesPanel: {
+      title: "Elementy sali", // fixtures - the rail's label and the panel's heading
+      add: "Dodaj element", // fixtures.add
+      none: "Brak elementów sali.", // fixtures.none
+    },
+    /** `AddHubContent`, in `Sidebar/AddEntityDialog` on a desktop. */
+    addHub: {
+      title: "Dodaj do sali", // hall.add_hub.title
+      hint: "Dotknij, aby wstawić na środek - potem przeciągnij na miejsce.", // hall.add_hub.hint
+      tablesTab: "Stoły", // hall.add_hub.tables_tab
+      fixturesTab: "Elementy sali", // hall.add_hub.fixtures_tab
+      tables: { round8: "Okrągły 8", rect6: "Prostokąt 6", oval10: "Owalny 10" }, // tables.preset.*
+      fixtures: {
+        stage: "Scena", // fixtures.preset.stage
+        danceFloor: "Parkiet", // fixtures.preset.dance_floor
+        bar: "Bar", // fixtures.preset.bar
+        djBooth: "DJ Booth", // fixtures.preset.dj_booth
+        entrance: "Wejście", // fixtures.preset.entrance
+        custom: "Niestandardowy", // fixtures.preset.custom
+      },
     },
   },
 
@@ -473,6 +531,28 @@ const pl = {
     ctaAction: "Sprawdźcie oba warianty na planie",
   },
 
+  /** Every count here is read off the room the batch form builds (`TEN_TABLES_HALL`), never typed. */
+  tenTables: {
+    hook: (tables: number, seats: number) =>
+      `Sala mówi: ${spelledCount(tables, PL_NUMBERS, PL_TENS).toLowerCase()} okrągłych po ${spelledCount(
+        seats,
+        PL_NUMBERS,
+        PL_TENS,
+      ).toLowerCase()}.`,
+    round: (diameter: number) => `Okrągłe, ${spelledMetres(diameter, { 1.5: "półtora metra" })}.`,
+    /** The value as it is typed into *Ile*, in digits. */
+    typed: (count: number) => `Wpisujesz ${count}.`,
+    landed: (count: number) => `Stoją. Wszystkie ${spelledCount(count, PL_NUMBERS, PL_TENS).toLowerCase()}.`,
+    fixtures: "Parkiet, scena, drzwi.",
+    payoff: (tables: number, seats: number) =>
+      `${spelledCount(tables, PL_NUMBERS, PL_TENS)} ${plural(tables, { one: "stół", few: "stoły", many: "stołów" })}, ${spelledCount(
+        seats,
+        PL_NUMBERS,
+        PL_TENS,
+      ).toLowerCase()} ${plural(seats, { one: "miejsce", few: "miejsca", many: "miejsc" })}, parkiet przed sceną.`,
+    ctaAction: "Rozstaw wszystkie stoły naraz",
+  },
+
   walkthrough: {
     /** "i" is bound to "żadnego" so the line never ends on it. */
     hook: "Pusta sala, lista gości i\u00a0żadnego planu?",
@@ -620,6 +700,43 @@ const en: typeof pl = {
       unnamedIndex: (index) => `Hall ${index}`,
       floorShort: (floor) => `fl. ${floor}`,
       entityCount: (count) => `${count} ${count === 1 ? "item" : "items"}`,
+    },
+    canvasMenu: {
+      addTable: "Add a table",
+      addTables: "Add tables",
+      addFixture: "Add a fixture",
+      view: "View",
+      gridStyle: "Grid style",
+      snap: "Snap distance",
+      metres: (count) => `${count} m`,
+      seats: "Seats",
+      measure: "Measure",
+    },
+    tableBatch: {
+      title: "Add tables",
+      namePlaceholder: "Family table",
+      count: "How many",
+      submit: (count) => `Add ${count} ${count === 1 ? "table" : "tables"}`,
+    },
+    fixturesPanel: {
+      title: "Fixtures",
+      add: "Add a fixture",
+      none: "No fixtures yet.",
+    },
+    addHub: {
+      title: "Add to room",
+      hint: "Tap to insert it centered - then drag it into place.",
+      tablesTab: "Tables",
+      fixturesTab: "Room elements",
+      tables: { round8: "Round 8", rect6: "Rectangle 6", oval10: "Oval 10" },
+      fixtures: {
+        stage: "Stage",
+        danceFloor: "Dance floor",
+        bar: "Bar",
+        djBooth: "DJ booth",
+        entrance: "Entrance",
+        custom: "Custom",
+      },
     },
   },
 
@@ -848,6 +965,26 @@ const en: typeof pl = {
     wall: "And along the wall.",
     payoff: "Same guests, different table.",
     ctaAction: "Try both layouts on the plan",
+  },
+
+  tenTables: {
+    hook: (tables, seats) =>
+      `The venue says: ${spelledCount(tables, EN_NUMBERS, EN_TENS).toLowerCase()} round tables of ${spelledCount(
+        seats,
+        EN_NUMBERS,
+        EN_TENS,
+      ).toLowerCase()}.`,
+    round: (diameter) => `Round, ${spelledMetres(diameter, { 1.5: "one and a half metres" })}.`,
+    typed: (count) => `You type ${count}.`,
+    landed: (count) => `There they are. All ${spelledCount(count, EN_NUMBERS, EN_TENS).toLowerCase()}.`,
+    fixtures: "Dance floor, stage, door.",
+    payoff: (tables, seats) =>
+      `${spelledCount(tables, EN_NUMBERS, EN_TENS)} ${tables === 1 ? "table" : "tables"}, ${spelledCount(
+        seats,
+        EN_NUMBERS,
+        EN_TENS,
+      ).toLowerCase()} ${seats === 1 ? "seat" : "seats"}, the dance floor in front of the stage.`,
+    ctaAction: "Set out all your tables at once",
   },
 
   walkthrough: {
