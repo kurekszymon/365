@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router"
 import { LocaleLanding } from "@/components/landing/LocaleLanding"
 import i18n from "@/i18n"
+import { landingJsonLd } from "@/lib/seo/landingJsonLd"
 import { rootHead } from "@/lib/seo/localeHead"
 import { tenantSlugFromHost } from "@/lib/tenant/host"
 
@@ -8,7 +9,8 @@ import { tenantSlugFromHost } from "@/lib/tenant/host"
 // language-pinned marketing landing (/pl or /en) based on the detected UI
 // language. The actual app dashboard lives at /home.
 export const Route = createFileRoute("/")({
-  head: rootHead,
+  // "/" renders the Polish landing, so it carries the /pl structured data.
+  head: () => ({ ...rootHead(), scripts: [landingJsonLd("pl")] }),
   beforeLoad: () => {
     // Language detection reads the browser (navigator / localStorage), which
     // isn't available during SSR/prerender - skip on the server so the shell

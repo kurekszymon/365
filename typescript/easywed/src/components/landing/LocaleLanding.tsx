@@ -5,6 +5,7 @@ import { LandingHero } from "./LandingHero"
 import { LandingStories } from "./LandingStories"
 import { LandingFeatures } from "./LandingFeatures"
 import { LandingSteps } from "./LandingSteps"
+import { LandingFaq } from "./LandingFaq"
 import { LandingCta } from "./LandingCta"
 import { VenueOwnersBanner } from "./VenueOwnersBanner"
 import { Button } from "@/components/ui/button"
@@ -78,8 +79,9 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
         <LandingStories lang={lang} />
         <LandingFeatures lang={lang} />
         <LandingSteps lang={lang} />
-        <VenueOwnersBanner lang={lang} />
         <LandingCta lang={lang} />
+        <LandingFaq lang={lang} />
+        <VenueOwnersBanner lang={lang} />
       </main>
 
       <footer className="border-t">
