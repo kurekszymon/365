@@ -7,7 +7,7 @@ import type { HallLayout } from "../layouts";
  * user's call - and the table the couple sat him at. The couple wrote him on
  * the list the way the family calls him, which is why mum's search finds him.
  */
-export const UNCLE = { name: "Zbyszek Pawlak", table: 3 };
+export const UNCLE = { name: "Zbyszek Pawlak", table: 6 };
 
 /**
  * This wedding's guest list: `rosterFor`'s 58, with the uncle on the first
@@ -18,7 +18,12 @@ export const UNCLE = { name: "Zbyszek Pawlak", table: 3 };
 export const guestListFor = (hall: HallLayout): RosterGuest[] => {
   let placed = false;
   return rosterFor(hall.tables).map((guest) => {
-    if (placed || GUESTS.includes(guest) || guest.table !== tl.hall.table(UNCLE.table)) return guest;
+    if (
+      placed ||
+      GUESTS.includes(guest) ||
+      guest.table !== tl.hall.table(UNCLE.table)
+    )
+      return guest;
     placed = true;
     return { name: UNCLE.name, table: guest.table };
   });

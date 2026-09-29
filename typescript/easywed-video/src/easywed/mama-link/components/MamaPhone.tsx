@@ -5,6 +5,7 @@ import { useFormat } from "../../format";
 import { tl } from "../../i18n";
 import { colors, fonts } from "../../theme";
 import { guestListFor, INVITE_URL } from "../guests";
+import { MAMA_STARTS } from "../timeline";
 import {
   BUBBLE_OVER,
   BUBBLES_IN,
@@ -32,9 +33,10 @@ const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 const LINK_AT = { x: 150, y: 640 };
 
 /**
- * Mum's phone at `frame` on the cut's clock: her thread with Ania, the photo of
- * the paper plan and her three questions; the link arriving and her thumb on
- * it; the sign-in page and the claim; then the plan itself, the guest list
+ * The thread at `frame` on the cut's clock. Under the hook it is Ania's phone -
+ * the hook is hers - with the photo she sent and mum's three questions coming
+ * in. From the phone beat on it is mum's: the same thread from her side, the
+ * link arriving and her thumb on it; the sign-in page and the claim; then the plan itself, the guest list
  * opened and her search typed in. Drawn at the phone's own size - the scene
  * places and scales it.
  */
@@ -45,13 +47,18 @@ export const MamaPhone: React.FC<{ frame: number }> = ({ frame }) => {
   const arrive = (from: number) => interpolate(frame, [from, from + BUBBLE_OVER], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
   const linkIn = interpolate(frame, LINK_IN, [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
 
+  // Whose phone it is: Ania's until the laptop has sent the link, then mum's.
+  const anias = frame < MAMA_STARTS.phone;
+  const fromAnia = anias ? "out" : "in";
+  const fromMum = anias ? "in" : "out";
+
   const messages: Message[] = [
-    { side: "in", enter: 1, bare: true, content: <SketchPhoto width={250} height={320} /> },
+    { side: fromAnia, enter: 1, bare: true, content: <SketchPhoto width={250} height={320} /> },
     ...tl.mama.bubbles.map(
-      (text, i): Message => ({ side: "out", enter: arrive(BUBBLES_IN[i]), content: text }),
+      (text, i): Message => ({ side: fromMum, enter: arrive(BUBBLES_IN[i]), content: text }),
     ),
     {
-      side: "in",
+      side: fromAnia,
       enter: linkIn,
       content: (
         <span style={{ fontSize: 16, lineHeight: "22px", color: colors.accent, textDecoration: "underline", wordBreak: "break-all" }}>
@@ -82,7 +89,7 @@ export const MamaPhone: React.FC<{ frame: number }> = ({ frame }) => {
 
   return (
     <PhoneFrame>
-      {viewer < 1 ? <ChatThread name={tl.mama.sender} messages={messages} /> : null}
+      {viewer < 1 ? <ChatThread name={anias ? tl.mama.mum : tl.mama.sender} messages={messages} /> : null}
       {signIn > 0 && claiming < 1 ? (
         <AbsoluteFill style={{ opacity: signIn }}>
           <SignInScreen googlePressed={frame >= TAP_GOOGLE && frame < TAP_GOOGLE + 4} />

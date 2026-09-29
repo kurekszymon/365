@@ -5,14 +5,14 @@ import { colors, fonts } from "../../theme";
 import { PHONE } from "../../components/PhoneFrame";
 
 /**
- * A message thread on mum's phone, deliberately generic: no messaging app's
- * colours, bubble shapes or logo, just two neutral tones from the film's own
- * palette - hers on the right, her daughter's on the left. Laid out in CSS
- * pixels inside `PhoneFrame`.
+ * A message thread between mum and Ania, deliberately generic: no messaging
+ * app's colours, bubble shapes or logo, just the film's own palette - the
+ * phone owner's messages on the right in brand green, the other side's on the
+ * left as neutral cards. Laid out in CSS pixels inside `PhoneFrame`.
  */
 
 export type Message = {
-  /** "out" is mum's own message; "in" is from her daughter. */
+  /** "out" is the phone owner's own message; "in" is from the other side. */
   side: "in" | "out";
   /** Arrival, 0..1: the thread makes room for it, and it rises into place. */
   enter: number;
@@ -41,12 +41,12 @@ const Bubble: React.FC<{ message: Message }> = ({ message }) => {
             borderRadius: 20,
             borderBottomRightRadius: out ? 6 : 20,
             borderBottomLeftRadius: out ? 20 : 6,
-            backgroundColor: out ? colors.bgDeep : colors.card,
+            backgroundColor: out ? colors.brandGreen : colors.card,
             border: out ? "none" : `1px solid ${colors.border}`,
             fontFamily: fonts.sans,
             fontSize: MESSAGE_SIZE,
             lineHeight: "24px",
-            color: colors.ink,
+            color: out ? "#ffffff" : colors.ink,
             opacity: interpolate(e, [0.3, 1], [0, 1], { extrapolateLeft: "clamp" }),
             transform: `translateY(${(1 - e) * 14}px) scale(${interpolate(e, [0, 1], [0.94, 1])})`,
             transformOrigin: out ? "bottom right" : "bottom left",

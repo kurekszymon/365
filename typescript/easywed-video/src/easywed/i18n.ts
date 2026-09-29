@@ -458,8 +458,10 @@ const pl = {
   mama: {
     /** The hook. Mum is asking about the uncle, not the aunt - the teaser and the seat-swap cuts spent her. */
     hook: "Mama pyta już trzeci raz, gdzie siedzi wujek.",
-    /** Whose phone this is - the bride's name in mum's thread. */
+    /** The bride's name, over the thread on mum's phone. */
     sender: "Ania",
+    /** Mum, over the same thread on Ania's phone - the hook's. */
+    mum: "Mama",
     /** Mum's three messages, oldest first. The first one's "A" is bound to "wujek" so it never ends a line. */
     bubbles: [
       "A\u00a0wujek Zbyszek gdzie siedzi?",
@@ -910,6 +912,7 @@ const en: typeof pl = {
   mama: {
     hook: "Mum's asking for the third time where Uncle sits.",
     sender: "Ania",
+    mum: "Mum",
     bubbles: [
       "And where's Uncle Zbyszek sitting?",
       "Send me a photo of the plan",
