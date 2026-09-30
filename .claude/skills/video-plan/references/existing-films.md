@@ -447,3 +447,9 @@ still carry the old line; re-render them before posting.
 
 The lesson stands: do not copy from the existing scenes on the assumption that what shipped was
 checked. Verify a line against `v1-facts.md` and the app at the tag before reusing its claim.
+
+The same goes for the app strings the films redraw. Every film above was built against
+`easywed/v1`, and v1.1 reworded the app, so the burned list quotes v1's wording: *„DJ Booth”* is
+now *„Stoisko DJ-a”*, *„Podgląd”* in the invite dialog is *„Tylko podgląd”*, *„Esc aby wyjść”* is
+*„Esc, aby wyjść”*, *„Imię”* is *„Imię i nazwisko”*. Those lines stay burned as written; a new film
+that redraws the same surface takes the string from the tag, not from the older scene.

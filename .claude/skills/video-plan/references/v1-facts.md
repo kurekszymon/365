@@ -1,18 +1,22 @@
-# What is true at easywed v1
+# What is true at easywed v1.1.2
 
 Section 3 of the `video-plan` skill. Confirmed selling points — **this is the whole pool of real
 material** a video may draw on. Anything not here or in the skill's section 2 reading is not
 established; check it before it reaches a brief, and check it against the do-not-claim list in
 `SKILL.md` section 4, which is where the near-misses live.
 
-Written against the `easywed/v1` tag. When the product is tagged past v1, this file and the tag
-named in section 2 both need updating — nothing will warn you.
+Written against the `easywed/v1` tag and re-checked at `easywed/v1.1.2`. Between the two, `src/`
+changed only under `components/landing/`, the landing's routes and SEO, and the locale files - no
+planner, store, dialog or analytics code - so every mechanism below holds as written. The quoted
+strings were re-read at v1.1.2; eight of them had changed. When the product is tagged again, this
+file and the tag named in section 2 both need updating — nothing will warn you. Start from
+`git diff --stat <old> <new> -- src`.
 
 - **The full planner with no account at all.** `/wedding/local` auto-seeds a hall; there is nothing
   to sign up for, no email, no wall. `PUBLIC_PATHS` in `AuthGate.tsx` lists it; it deliberately has
   no `requireAuth` in `beforeLoad`.
   - **The canvas's empty state never reaches a couple.** `Canvas.tsx` renders `hall.empty_state`
-    (*„Kliknij, aby zacząć od skonfigurowania sali”*) only when `halls.length === 0`, and
+    (*„Zacznij od ustawienia sali”*) only when `halls.length === 0`, and
     `/wedding/local` seeds `DEFAULT_HALL` whenever there is none (`routes/wedding.local.tsx`,
     "Guest-mode counterpart of seedDefaultHall"), as a signed-in wedding gets one at creation. A new
     plan therefore opens on an **unnamed 20x12 m rectangle** (`DEFAULT_HALL` in
@@ -32,7 +36,7 @@ named in section 2 both need updating — nothing will warn you.
     the tool is switched off. On desktop only, a pill at the bottom reads
     *„Kliknij na sali, aby umieścić punkt pomiaru”* or, once a first point is down,
     *„Kliknij ponownie, aby ustawić punkt końcowy”*, followed by an `Esc` key and
-    *„Esc aby wyjść”* (`statusbar.esc_to_exit`).
+    *„Esc, aby wyjść”* (`statusbar.esc_to_exit`; v1 had no comma).
 - **Seat-level assignment straight off the canvas**, and nobody silently double-booked.
   - The popover (`planner/Canvas/SeatAssignPopover.tsx`, opened from a marker in `TableSeats.tsx`):
     a search field (`tables.guests_search_placeholder` *„Szukaj gości”*, a plain lowercased
@@ -77,7 +81,7 @@ named in section 2 both need updating — nothing will warn you.
   **top-left corner** (`position` is the top-left, `left: position.x * ppm`) to the snap step,
   clamps it into the hall under its centre, and `updateTablePosition` rewrites only `position` /
   `hallId`. Guests point at the table by `tableId` / `seatId`, so nobody is unseated. Moving a table
-  fires **no** analytics event at v1, and `wedding_created` is `{ source: "wedding_list" }` - a
+  fires **no** analytics event at the tag, and `wedding_created` is `{ source: "wedding_list" }` - a
   signed-in action, so a guest-mode film cannot name it as its success signal.
   - A seat marker's initials are `getInitials` (the first letters of the first two words,
     uppercased), white, `font-medium`, `fontSize: Math.max(7, seatPx * 0.42)`, shown once
@@ -137,8 +141,8 @@ named in section 2 both need updating — nothing will warn you.
     rail's own label for fixtures is *„Elementy sali”* (`t("fixtures")`). A card inserts its
     preset **centred** in the hall and opens *Edytuj element* (`openFixtureEdit`); dragging it
     then snaps its top-left to the step and clamps it into the hall, so a fixture dragged onto a
-    wall ends flush against it. Presets: *Scena* 3x1.5, *Parkiet* 3x3, *Bar* 2.5x1, *DJ Booth*
-    1.5x1, *Wejście* 1x0.3 (`rounded`), *Niestandardowy* - a starter polygon.
+    wall ends flush against it. Presets: *Scena* 3x1.5, *Parkiet* 3x3, *Bar* 2.5x1, *Stoisko DJ-a*
+    1.5x1 (*DJ Booth* at v1), *Wejście* 1x0.3 (`rounded`), *Niestandardowy* - a starter polygon.
 - **Multi-hall and multi-floor** (`hall.floor`, `hall.list_title`), plus custom polygon halls and
   fixtures — stage, dance floor, bar, DJ booth, entrance, or a shape drawn by hand
   (`fixtures.preset.*`, `fixtures.shape.polygon`).
@@ -209,10 +213,13 @@ named in section 2 both need updating — nothing will warn you.
     per guest, not summed.
   - `DEFAULT_PRINT_FIELDS` (`stores/print.store.ts`) is name + dietary, so diets print by default;
     guests sort alphabetically within a table (`DEFAULT_GUEST_SORT`), tables in numeric order.
-  - The export dialog (`dialogs/guests/ExportGuestsPdfDialog.tsx`) is titled *„Eksportuj do PDF”*
-    and its button reads *„Pobierz PDF”* (`export.pdf.title`, `export.pdf.download`), reached from
-    the header's download menu item *„PDF”*. A video that must not claim a PDF file cannot show that
-    dialog as it is.
+  - The export dialog (`dialogs/guests/ExportGuestsPdfDialog.tsx`) is titled *„Wydrukuj plan”*
+    and its button reads *„Otwórz okno drukowania”* (`export.pdf.title`, `export.pdf.download`),
+    reached from the header's download menu item *„Wydruk”* (`export.format.pdf`). At v1 these
+    read *„Eksportuj do PDF”*, *„Pobierz PDF”* and *„PDF”*, which is why no v1 film shows the
+    dialog. At v1.1.2 it can be drawn as it is without claiming a file - but not
+    `export.pdf.landscape_hint`'s last sentence (*„Możesz tam też zapisać plan jako PDF.”*), which
+    describes the browser's dialog, not easywed.
   - Diet tags are free-form; only the presets `vegetarian`, `vegan`, `gluten-free` have labels
     (`lib/dietary.ts`) and reserved tones - green, teal, amber (`--tag-*` in `styles.css`). The
     guest list's filter row offers a diet chip, with its count, only once someone carries it.
@@ -237,7 +244,9 @@ named in section 2 both need updating — nothing will warn you.
   - The owner reaches `WeddingMembersDialog` from the header's member stack; its dashed
     `UserPlus` circle (`members.invite` *„Zaproś kogoś”* as a tooltip) is owner-only
     (`MemberAvatars.tsx`). Editors and viewers open the same dialog read-only.
-  - `InvitationManager`'s role select offers only *Edytor* and *Podgląd*, starts on *Edytor*,
+  - `InvitationManager`'s role select offers only *Edytor* and *Tylko podgląd*
+    (`members.role.viewer`, *Podgląd* at v1 - the same label is the pending row's `{role}` and
+    the member list's), starts on *Edytor*,
     and `handleCreate` sets it **back to *Edytor*** once the new invite is fetched
     (`useWeddingMembers.ts`). The pending row reads *„Zaproszenie linkiem”* over *„{role} ·
     Wygasa {date}”*; *Kopiuj link* flips to *Skopiowano* for 1500 ms.
@@ -245,7 +254,7 @@ named in section 2 both need updating — nothing will warn you.
     is two uuids without dashes, 64 hex characters (`20260422000001_wedding_invitations.sql`).
     The link is `${origin}/invite/${token}`.
   - `/invite/$token` runs `requireAuth`, so a signed-out invitee lands on `/login` first; the
-    claim page then shows only *„Dołączanie do wesela...”* (`invite.claiming`) before
+    claim page then shows only *„Dołączanie do wesela…”* (`invite.claiming`, one ellipsis glyph at v1.1.2, three dots at v1) before
     `invite_claimed` fires and it navigates to `/wedding/$id`.
   - A viewer on a phone gets `MobileTabBar` with **four** tabs (the assistant is `canEdit`-only,
     and the tabs read *Goście* / *Stoły* / *Elementy sali* / *Przypomnienia* - not the desktop

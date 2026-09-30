@@ -1,6 +1,6 @@
 ---
 name: video-plan
-description: Plan a series of short easywed marketing videos, grounded in what the product actually does at the easywed/v1 tag and in what the Remotion repo can render. Use when asked to plan, brief or prioritise marketing videos, Reels, TikToks or a walkthrough for easywed - not for producing them.
+description: Plan a series of short easywed marketing videos, grounded in what the product actually does at the easywed/v1.1.2 tag and in what the Remotion repo can render. Use when asked to plan, brief or prioritise marketing videos, Reels, TikToks or a walkthrough for easywed - not for producing them.
 ---
 
 Plan a series of short marketing videos for **easywed** (`typescript/easywed`), to be produced in
@@ -29,28 +29,37 @@ landing page — is explicitly out of scope, and so is anything aimed at wedding
 
 ## 2. Read this first
 
-Read all of these before writing a single beat. The product is pinned at the `easywed/v1` tag, so
+Read all of these before writing a single beat. The product is pinned at the `easywed/v1.1.2` tag, so
 read that tag rather than the working tree — and note the monorepo path trap: from inside
 `typescript/easywed/`, `git show` needs the `./` form.
 
 ```bash
 cd typescript/easywed
-git show easywed/v1:./src/i18n/locales/pl.json                    # NOT easywed/v1:src/...
+git show easywed/v1.1.2:./src/i18n/locales/pl.json                    # NOT easywed/v1.1.2:src/...
 ```
 
-From `typescript/easywed/`, at the `easywed/v1` tag:
+From `typescript/easywed/`, at the `easywed/v1.1.2` tag:
 
 - `./src/i18n/locales/pl.json` — the product's own Polish voice. Flat dotted keys, not nested: grep
   the `landing.`, `guests.`, `seats.`, `tables.`, `hall.`, `export.` and `guest_mode.` prefixes.
   Every Polish word on screen should be a word the app itself uses.
 - `./src/i18n/locales/changelog/v1/pl.json` — the best long-form prose in the repo. Its `summary`
   and `i1`–`i7` read as a ready-made script; mine them, do not paraphrase them into marketing-speak.
+  `changelog/v1.1/` and `changelog/v1.1.2/` add no features - both say the planner is unchanged
+  (v1.1 rewrote the app's wording, v1.1.2 the landing page) - so v1's feature set is still the
+  whole of it, but many strings now read differently from v1. Quote the tag, never memory.
 - `./docs/guest-vs-account.md` — the guest-mode vs. account feature matrix. This is what decides
   whether a video can honestly say "bez konta" about the thing it is showing.
 - `./src/components/landing/LocaleLanding.tsx` — the landing section order, i.e. what a viewer sees
-  one second after the CTA lands.
+  one second after the CTA lands: hero → `LandingStories` → features → steps → CTA band → FAQ →
+  the venue banner.
+- `./src/components/landing/LandingStories.tsx` and `LandingLoop.tsx` — the landing's only video
+  slots. There are exactly three, and `LoopName = "swap" | "scale" | "shape"`: `easywed-swap`,
+  `easywed-scale` and `easywed-shape` are already on the page as `/landing/{lang}/easywed-{name}.mp4`
+  with a WebP poster.
 - `./src/lib/analytics/track.ts` — the **closed** `AnalyticsEvents` map. Success signals must be
-  named from this map and nothing else; inventing an event is forbidden. What exists at v1:
+  named from this map and nothing else; inventing an event is forbidden. What exists at the tag
+  (unchanged since v1):
   `wedding_created`, `local_wedding_migrated`, `table_added`, `tables_batch_added`, `guest_added`,
   `guests_imported` (`format: "csv" | "xlsx"`), `guests_exported`, `plan_printed`, `guest_seated`
   (`source: "canvas_seat" | "guest_list"`), `ai_chat_message_sent`, `reminder_created`,
@@ -62,7 +71,7 @@ In `typescript/easywed-video/`:
 - `src/easywed/timeline.ts`, `theme.ts`, `layouts.ts`, `format.ts`, `data.ts`
 - `src/easywed/Film.tsx`, `src/easywed/teaser/Teaser.tsx`, `src/easywed/components/`
 
-## 3. What is true at v1
+## 3. What is true at the tag
 
 **→ `references/v1-facts.md`.** The confirmed selling points: the whole pool of real material a
 video may draw on. Nothing outside that file and section 2's reading is fair game.
@@ -71,18 +80,27 @@ video may draw on. Nothing outside that file and section 2's reading is fair gam
 
 This list stays here rather than in a reference file, because it is the highest-risk part of the
 exercise and must not be one unread file away. The failure mode this whole skill exists to prevent
-is a plan that promises features v1 does not have. Carry the list into the output document verbatim.
+is a plan that promises features the tagged product does not have. Carry the list into the output
+document verbatim.
 
-- ❌ **Live sync.** There is no Realtime. Collaborators see changes on reload.
-  `landing.features.collab.desc` says *"zmiany synchronizują się od razu"* — the landing page
-  over-claims this. Do not amplify it.
+At `easywed/v1` the landing page itself over-claimed three of these (live sync, plus-ones, importing
+the venue's plan). The v1.1.2 landing rewrite removed all three, so the landing is no longer a
+reason to be wary, but it is not a licence either: films and plans written before it may still
+carry the old lines (see the caveat at the end of `existing-films.md`).
+
+- ❌ **Live sync.** There is no Realtime. Collaborators see changes on reload - the landing now
+  says so itself: `landing.features.invite.desc`, *„Wasze zmiany zobaczą przy kolejnym otwarciu
+  strony.”*
 - ❌ **Plus-ones / "osoby towarzyszące".** No such field on the guest model.
-  `landing.features.guests.desc` over-claims this too.
 - ❌ RSVP, sending invitations, collecting guest replies.
 - ❌ Offline or installable. A manifest exists; there is no service worker.
-- ❌ Venue templates, or "import the venue's floor plan". That is manual founder work — a third
-  landing over-claim, in `landing.steps.one.desc` (*"lub zaimportuj jej plan"*).
-- ❌ A generated PDF *file*. Export opens the browser print dialog (`plan_printed` says as much).
+- ❌ Venue templates, or "import the venue's floor plan". That is manual founder work.
+  `landing.venues_banner.subtitle` (*„Pary planują na odwzorowaniu Twojej prawdziwej sali”*) is
+  venue-facing copy, out of scope under section 1 - never carry it into a couple's video.
+- ❌ A generated PDF *file*. Export opens the browser print dialog (`plan_printed` says as much),
+  and at the tag the app now says so too: *„Wydruk”* → *„Wydrukuj plan”* → *„Otwórz okno
+  drukowania”*. `export.pdf.landscape_hint` mentions saving as PDF from that dialog - that is the
+  browser's feature, not easywed's; do not claim it.
 - ❌ Free or included AI. It needs the user's own API key.
 - ❌ Reminders that notify. No push, no email, no calendar. It is a dated to-do list.
 - ❌ A mobile app. Budget, vendors, timeline, registry, place cards, an auto-seat button. Undo/redo.
@@ -149,14 +167,16 @@ The document contains:
    - which app surface it shows
    - which existing components it reuses, and what genuinely new ones it needs
    - caption + hashtags for its channel, in Polish
-   - **a claim-check line** naming the v1 evidence (file, key, or event) for every claim the video
+   - **a claim-check line** naming the evidence at the tag (file, key, or event) for every claim the video
      makes — no brief is complete without one
 4. **A build order** with effort per item, and **open questions for the user**.
 
 Cover all four target formats:
 
 - **9:16** — Reels / TikTok
-- **16:9** — landing-page loops, with **no CTA card**: the page under the video *is* the CTA
+- **16:9** — landing-page loops, with **no CTA card**: the page under the video *is* the CTA. All
+  three landing slots are taken (section 2), so a new loop either replaces one of `swap` / `scale`
+  / `shape` or needs a new `LoopName` and story in the app. Say which, and cost it in the build order.
 - **1:1** — feed posts, each flagged with the `useFormat()` third-branch cost from section 5
 - **60–90 s YouTube walkthrough** — seeded from the existing 28 s film rather than built new
 

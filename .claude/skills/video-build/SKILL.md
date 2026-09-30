@@ -1,6 +1,6 @@
 ---
 name: video-build
-description: Build one brief from a /video-plan document as Remotion compositions in typescript/easywed-video - scenes, timeline, Root registration, render scripts - after re-verifying its copy, claims and frame maths against easywed/v1. Use when asked to build, implement or produce a video from docs/video-plans/ - not for planning new ones.
+description: Build one brief from a /video-plan document as Remotion compositions in typescript/easywed-video - scenes, timeline, Root registration, render scripts - after re-verifying its copy, claims and frame maths against easywed/v1.1.2. Use when asked to build, implement or produce a video from docs/video-plans/ - not for planning new ones.
 ---
 
 Build **one** video from a plan written by `/video-plan`, in the Remotion project at
@@ -22,10 +22,10 @@ finish section 8 for each before starting the next — each video is its own rev
 ## 1. The plan is a strong draft, not a spec
 
 A plan is written from reading code, not from running it, and it gets things wrong. The first plan
-quotes *„Przeciągnij plik tutaj”* as the app's own `guests.import.drop_here`; at `easywed/v1` that
+quotes *„Przeciągnij plik tutaj”* as the app's own `guests.import.drop_here`; at `easywed/v1.1.2` that
 key actually reads *„Przeciągnij tutaj plik .csv lub .xlsx lub kliknij, aby wybrać”*.
 
-So: **the brief decides what the video says and in what order; `easywed/v1` and this repo decide
+So: **the brief decides what the video says and in what order; `easywed/v1.1.2` and this repo decide
 whether it is true and how it is drawn.** When they disagree:
 
 - **Factual or mechanical** — a string that differs at the tag, a key or component that does not
@@ -55,8 +55,8 @@ report at the end of this run.
   keys, and mind the path trap — from inside `typescript/easywed/`, `git show` needs `./`:
 
   ```bash
-  git -C ../easywed grep -n 'guests.import.map_columns' easywed/v1 -- src
-  git -C ../easywed show easywed/v1:./src/components/…/ThatDialog.tsx
+  git -C ../easywed grep -n 'guests.import.map_columns' easywed/v1.1.2 -- src
+  git -C ../easywed show easywed/v1.1.2:./src/components/…/ThatDialog.tsx
   ```
 
 ## 3. Verify the brief before writing code
@@ -65,7 +65,7 @@ Work through this list in chat, not in a file. Collect every stop-and-ask item a
 with AskUserQuestion, then build.
 
 1. **Copy.** For every on-screen string in the hook, the beat table and the CTA:
-   - Where the brief cites an app key, `git show easywed/v1:./src/i18n/locales/pl.json | grep
+   - Where the brief cites an app key, `git show easywed/v1.1.2:./src/i18n/locales/pl.json | grep
      '"that.key"'` and use the value **verbatim**. If the real value is too long for the frame, ask —
      never invent a shorter line and attribute it to the app.
    - It must not appear in the burned list in `existing-films.md`. The *„easywed.app”* pill is the
@@ -76,7 +76,7 @@ with AskUserQuestion, then build.
      where the copy itself quotes something.
 2. **Claims.** Open every file, key, event and matrix row named on the brief's claim-check line. One
    that is missing means the claim is not established — ask. Success signals come only from the
-   closed `AnalyticsEvents` map in `easywed/v1:./src/lib/analytics/track.ts`.
+   closed `AnalyticsEvents` map in `easywed/v1.1.2:./src/lib/analytics/track.ts`.
 3. **Frames.** Recompute `total = Σ scenes − T × (scenes − 1)` and check it against the stated
    total. Beat-table ranges are composition-global; scene *i* (0-based) starts at
    `Σ(scenes before i) − T × i`, and the table must agree. The hook lives in the first 45 frames,
