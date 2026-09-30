@@ -32,8 +32,36 @@ const plural = (
 export type DietKey = "vegetarian" | "vegan" | "glutenFree";
 
 /** Small counts spelled out, as a line of dialogue says them - index is the number. */
-const PL_NUMBERS = ["Zero", "Jeden", "Dwa", "Trzy", "Cztery", "Pięć", "Sześć", "Siedem", "Osiem", "Dziewięć", "Dziesięć", "Jedenaście", "Dwanaście"];
-const EN_NUMBERS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
+const PL_NUMBERS = [
+  "Zero",
+  "Jeden",
+  "Dwa",
+  "Trzy",
+  "Cztery",
+  "Pięć",
+  "Sześć",
+  "Siedem",
+  "Osiem",
+  "Dziewięć",
+  "Dziesięć",
+  "Jedenaście",
+  "Dwanaście",
+];
+const EN_NUMBERS = [
+  "Zero",
+  "One",
+  "Two",
+  "Three",
+  "Four",
+  "Five",
+  "Six",
+  "Seven",
+  "Eight",
+  "Nine",
+  "Ten",
+  "Eleven",
+  "Twelve",
+];
 
 /** A count as a word, so a spoken line can quote the plan; a room outgrowing the list fails loudly rather than printing a digit. */
 const spelled = (count: number, words: string[]): string => {
@@ -43,17 +71,116 @@ const spelled = (count: number, words: string[]): string => {
 };
 
 /** Round tens, spelled out, for a count past `PL_NUMBERS` - index is the tens digit. */
-const PL_TENS = ["", "Dziesięć", "Dwadzieścia", "Trzydzieści", "Czterdzieści", "Pięćdziesiąt", "Sześćdziesiąt", "Siedemdziesiąt", "Osiemdziesiąt", "Dziewięćdziesiąt"];
-const EN_TENS = ["", "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+const PL_TENS = [
+  "",
+  "Dziesięć",
+  "Dwadzieścia",
+  "Trzydzieści",
+  "Czterdzieści",
+  "Pięćdziesiąt",
+  "Sześćdziesiąt",
+  "Siedemdziesiąt",
+  "Osiemdziesiąt",
+  "Dziewięćdziesiąt",
+];
+const EN_TENS = [
+  "",
+  "Ten",
+  "Twenty",
+  "Thirty",
+  "Forty",
+  "Fifty",
+  "Sixty",
+  "Seventy",
+  "Eighty",
+  "Ninety",
+];
 
 /** `spelled`, reaching round tens too - a seat count read off the room; anything else fails loudly. */
-const spelledCount = (count: number, words: string[], tens: string[]): string =>
-  count < words.length ? spelled(count, words) : count % 10 === 0 && count < 100 ? tens[count / 10] : spelled(count, []);
+const spelledCount = (
+  count: number,
+  words: string[],
+  tens: string[],
+): string =>
+  count < words.length
+    ? spelled(count, words)
+    : count % 10 === 0 && count < 100
+      ? tens[count / 10]
+      : spelled(count, []);
+
+/** A reminder's two dates as date-fns prints them in the app, which the film has no copy of. */
+const PL_MONTHS_SHORT = [
+  "sty",
+  "lut",
+  "mar",
+  "kwi",
+  "maj",
+  "cze",
+  "lip",
+  "sie",
+  "wrz",
+  "paź",
+  "lis",
+  "gru",
+];
+const PL_MONTHS_GENITIVE = [
+  "stycznia",
+  "lutego",
+  "marca",
+  "kwietnia",
+  "maja",
+  "czerwca",
+  "lipca",
+  "sierpnia",
+  "września",
+  "października",
+  "listopada",
+  "grudnia",
+];
+const EN_MONTHS_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+const EN_MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+const hhmm = (date: Date) =>
+  `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+const ordinal = (n: number) => {
+  const tens = n % 100;
+  if (tens >= 11 && tens <= 13) return `${n}th`;
+  return `${n}${["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
+};
 
 /** A diameter as a line says it; only the one the film types is spelled, so a changed value fails loudly. */
-const spelledMetres = (metres: number, words: Record<number, string>): string => {
+const spelledMetres = (
+  metres: number,
+  words: Record<number, string>,
+): string => {
   const word = words[metres];
-  if (word === undefined) throw new Error(`No spelled-out form for ${metres} m`);
+  if (word === undefined)
+    throw new Error(`No spelled-out form for ${metres} m`);
   return word;
 };
 
@@ -176,6 +303,19 @@ const pl = {
       /** The fifth tab, which only an editor gets (`canEdit`). */
       assistant: "Asystent", // assistant.title
     },
+    /**
+     * `reminders/*`: the tab's add button and its popover, and a reminder's two
+     * dates - the list's `format(due, "d MMM yyyy, HH:mm")` and the date
+     * picker's `"PPP, HH:mm"`, both in date-fns' `pl` locale.
+     */
+    reminders: {
+      add: "Dodaj przypomnienie", // reminders.add
+      createTitle: "Nowe przypomnienie", // reminders.create.title
+      due: (date: Date) =>
+        `${date.getDate()} ${PL_MONTHS_SHORT[date.getMonth()]} ${date.getFullYear()}, ${hhmm(date)}`,
+      picked: (date: Date) =>
+        `${date.getDate()} ${PL_MONTHS_GENITIVE[date.getMonth()]} ${date.getFullYear()}, ${hhmm(date)}`,
+    },
     /** `GuestModeBanner`, over the planner of a wedding kept only in this browser, and its link. */
     guestBanner:
       "Planujesz jako gość. Twoje zmiany są zapisywane tylko na tym urządzeniu - nie będą dostępne na innych urządzeniach ani po wyczyszczeniu danych przeglądarki.", // guest_mode.banner
@@ -246,7 +386,11 @@ const pl = {
       hint: "Dotknij, aby wstawić na środek - potem przeciągnij na miejsce.", // hall.add_hub.hint
       tablesTab: "Stoły", // hall.add_hub.tables_tab
       fixturesTab: "Elementy sali", // hall.add_hub.fixtures_tab
-      tables: { round8: "Okrągły 8", rect6: "Prostokąt 6", oval10: "Owalny 10" }, // tables.preset.*
+      tables: {
+        round8: "Okrągły 8",
+        rect6: "Prostokąt 6",
+        oval10: "Owalny 10",
+      }, // tables.preset.*
       fixtures: {
         stage: "Scena", // fixtures.preset.stage
         danceFloor: "Parkiet", // fixtures.preset.dance_floor
@@ -541,10 +685,12 @@ const pl = {
         PL_NUMBERS,
         PL_TENS,
       ).toLowerCase()}.`,
-    round: (diameter: number) => `Okrągłe, ${spelledMetres(diameter, { 1.5: "półtora metra" })}.`,
+    round: (diameter: number) =>
+      `Okrągłe, ${spelledMetres(diameter, { 1.5: "półtora metra" })}.`,
     /** The value as it is typed into *Ile*, in digits. */
     typed: (count: number) => `Wpisujesz ${count}.`,
-    landed: (count: number) => `Stoją. Wszystkie ${spelledCount(count, PL_NUMBERS, PL_TENS).toLowerCase()}.`,
+    landed: (count: number) =>
+      `Stoją. Wszystkie ${spelledCount(count, PL_NUMBERS, PL_TENS).toLowerCase()}.`,
     fixtures: "Parkiet, scena, drzwi.",
     payoff: (tables: number, seats: number) =>
       `${spelledCount(tables, PL_NUMBERS, PL_TENS)} ${plural(tables, { one: "stół", few: "stoły", many: "stołów" })}, ${spelledCount(
@@ -553,6 +699,33 @@ const pl = {
         PL_TENS,
       ).toLowerCase()} ${plural(seats, { one: "miejsce", few: "miejsca", many: "miejsc" })}, parkiet przed sceną.`,
     ctaAction: "Rozstaw wszystkie stoły naraz",
+  },
+
+  /**
+   * The list is the couple's own, typed into the app - demo data, not app
+   * strings. No line here says the app will remind anyone: it doesn't.
+   */
+  todoList: {
+    /** A word joiner after the hyphen, so "DJ-a" never breaks across two lines. */
+    hook: "Zaliczka dla DJ-\u2060a… zapłaciliśmy czy nie?",
+    /** "bo po terminie" is held together so the line breaks after the comma. */
+    overdue: "Jest. Na czerwono, bo\u00a0po\u00a0terminie.",
+    done: "Zapłacone. Odhaczone.",
+    /**
+     * Too long for one line at the payoff's size, so its two halves are each
+     * held together and it breaks only at the comma and after the dash - which
+     * also keeps "a" and "w" off a line's end.
+     */
+    payoff:
+      "Co załatwione, a\u00a0co\u00a0jeszcze\u00a0nie\u00a0- w\u00a0jednym\u00a0miejscu.",
+    ctaAction: "Wpiszcie, co jeszcze załatwić",
+    items: {
+      deposit: "Zaliczka dla DJ-a",
+      plan: "Wysłać sali plan stołów",
+      fitting: "Przymiarka garnituru",
+      rings: "Odebrać obrączki",
+      kidsMenu: "Dopytać o menu dla dzieci",
+    },
   },
 
   walkthrough: {
@@ -671,6 +844,14 @@ const en: typeof pl = {
       fixtures: "Fixtures",
       reminders: "Reminders",
       assistant: "Assistant",
+    },
+    reminders: {
+      add: "Add a reminder",
+      createTitle: "New reminder",
+      due: (date) =>
+        `${date.getDate()} ${EN_MONTHS_SHORT[date.getMonth()]} ${date.getFullYear()}, ${hhmm(date)}`,
+      picked: (date) =>
+        `${EN_MONTHS[date.getMonth()]} ${ordinal(date.getDate())}, ${date.getFullYear()}, ${hhmm(date)}`,
     },
     guestBanner:
       "You're planning as a guest. Your changes are stored only on this device - they won't be available on other devices or if you clear your browser data.",
@@ -977,9 +1158,11 @@ const en: typeof pl = {
         EN_NUMBERS,
         EN_TENS,
       ).toLowerCase()}.`,
-    round: (diameter) => `Round, ${spelledMetres(diameter, { 1.5: "one and a half metres" })}.`,
+    round: (diameter) =>
+      `Round, ${spelledMetres(diameter, { 1.5: "one and a half metres" })}.`,
     typed: (count) => `You type ${count}.`,
-    landed: (count) => `There they are. All ${spelledCount(count, EN_NUMBERS, EN_TENS).toLowerCase()}.`,
+    landed: (count) =>
+      `There they are. All ${spelledCount(count, EN_NUMBERS, EN_TENS).toLowerCase()}.`,
     fixtures: "Dance floor, stage, door.",
     payoff: (tables, seats) =>
       `${spelledCount(tables, EN_NUMBERS, EN_TENS)} ${tables === 1 ? "table" : "tables"}, ${spelledCount(
@@ -988,6 +1171,21 @@ const en: typeof pl = {
         EN_TENS,
       ).toLowerCase()} ${seats === 1 ? "seat" : "seats"}, the dance floor in front of the stage.`,
     ctaAction: "Set out all your tables at once",
+  },
+
+  todoList: {
+    hook: "The DJ deposit… did we pay it or not?",
+    overdue: "There it is. Red, because it's overdue.",
+    done: "Paid. Ticked off.",
+    payoff: "What's done and what isn't - in one place.",
+    ctaAction: "Write down what's still to sort out",
+    items: {
+      deposit: "DJ deposit",
+      plan: "Send the venue the seating plan",
+      fitting: "Suit fitting",
+      rings: "Pick up the rings",
+      kidsMenu: "Ask about the kids' menu",
+    },
   },
 
   walkthrough: {

@@ -44,8 +44,12 @@
   venue's "ten round tables of eight" typed once into the batch form on the couple's laptop, the
   ten tables landing in two rows, then the dance floor, the stage and the door dragged into place
   from the add hub - the CTA.
+- **the todo-list cut** - 15 seconds for Reels, 9:16 only, episode 5 of *Wesele bez spiny*: "did we
+  pay the DJ?" answered by the couple's dated list on the phone - the deposit red because it is
+  overdue, ticked off, one more thing added - the CTA. A list, not an alarm: nothing on screen says
+  the app will remind anyone.
 
-All but the loops, the keep-apart, mama-link, sunday-couch, list-seat, table-shape and ten-tables cuts render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
+All but the loops, the keep-apart, mama-link, sunday-couch, list-seat, table-shape, ten-tables and todo-list cuts render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
 are in Polish.
 
 It is a standalone package on purpose - it sits next to `easywed/` rather than inside it, so it
@@ -101,6 +105,8 @@ pnpm run render:list-seat:vertical  # -> out/pl/easywed-listseat-vertical.mp4 (9
 pnpm run render:table-shape:vertical  # -> out/pl/easywed-tableshape-vertical.mp4 (9:16, its only size)
 
 pnpm run render:ten-tables:vertical  # -> out/pl/easywed-batch-vertical.mp4 (9:16, its only size)
+
+pnpm run render:todo-list:vertical  # -> out/pl/easywed-todo-vertical.mp4 (9:16, its only size)
 
 pnpm run render:all     # all of the above
 pnpm run render:all:en  # all of the above in English -> out/en/
@@ -278,6 +284,14 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `TenTablesRoom`          | 180f   | *Elementy sali*, the add hub; floor, stage and door dragged; payoff  |
 | `TenTablesCta`           | 108f   | the laptop recedes under the payoff, logo + easywed.app              |
 
+| id                      | length | what it is                                                        |
+| ----------------------- | ------ | ----------------------------------------------------------------- |
+| `easywed-todo-vertical` | 450f   | the 15 s todo-list cut, 9:16 only - series episode 5              |
+| `TodoHook`              | 96f    | the planner on a phone, the hook on frame 0; *Przypomnienia* up   |
+| `TodoRows`              | 150f   | close on the rows, the deposit red; ticked, struck through        |
+| `TodoAdd`               | 120f   | a jump cut onto the filled-in popover; the fifth row; the payoff  |
+| `TodoCta`               | 108f   | the phone recedes under the payoff, logo + easywed.app            |
+
 The long walkthrough's other fifteen chapters are the scenes registered above, from the short
 walkthrough and the other cuts; only `Floors` is its own. The 9:16 cut leaves out `ScaleMeasure`:
 on a phone at v1 the canvas toolbar isn't there, and measuring is a long-press menu item with no
@@ -388,6 +402,13 @@ src/easywed/
                          components/desk.ts placing everything on the desk. Its redraws are
                          the canvas menu, the batch dialog, the *Elementy sali* panel and the
                          add-hub dialog; jump cuts skip the dialogs v1 opens between beats
+  todo-list/             the todo-list cut, 9:16 only, in the table-shape cut's shape: every
+                         scene draws components/TodoListStage.tsx off one clock (script.ts),
+                         the add scene and the close with `jumped` so the seam into the
+                         add scene is the cut past the typing. reminders.ts is the couple's
+                         list, red computed from its due dates against SEEN_ON. The phone
+                         is PhoneShell in `owner` mode, and components/RemindersSheet.tsx
+                         redraws the *Przypomnienia* drawer and its create popover
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect

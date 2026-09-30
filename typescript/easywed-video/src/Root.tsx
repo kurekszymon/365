@@ -98,6 +98,12 @@ import { TenTablesBatchScene } from "./easywed/ten-tables/scenes/TenTablesBatchS
 import { TenTablesRoomScene } from "./easywed/ten-tables/scenes/TenTablesRoomScene";
 import { TenTablesCtaScene } from "./easywed/ten-tables/scenes/TenTablesCtaScene";
 import { TEN_TABLES_DURATION, TEN_TABLES_SCENES } from "./easywed/ten-tables/timeline";
+import { TodoList } from "./easywed/todo-list/TodoList";
+import { TodoListHookScene } from "./easywed/todo-list/scenes/TodoListHookScene";
+import { TodoListListScene } from "./easywed/todo-list/scenes/TodoListListScene";
+import { TodoListAddScene } from "./easywed/todo-list/scenes/TodoListAddScene";
+import { TodoListCtaScene } from "./easywed/todo-list/scenes/TodoListCtaScene";
+import { TODO_LIST_DURATION, TODO_LIST_SCENES } from "./easywed/todo-list/timeline";
 import { WalkthroughLong } from "./easywed/walkthrough-long/WalkthroughLong";
 import { FloorsScene } from "./easywed/walkthrough-long/scenes/FloorsScene";
 import {
@@ -317,6 +323,17 @@ export const RemotionRoot: React.FC = () => {
         height={VERTICAL_HEIGHT}
       />
 
+      {/* The 15 s todo-list cut, episode 5 of the Instagram series - the DJ deposit
+          found red on the couple's dated list, ticked off, one more added; 9:16 only. */}
+      <Composition
+        id="easywed-todo-vertical"
+        component={TodoList}
+        durationInFrames={TODO_LIST_DURATION}
+        fps={FPS}
+        width={VERTICAL_WIDTH}
+        height={VERTICAL_HEIGHT}
+      />
+
       {/* The landing-page loops - 16:9 only, no CTA, each closing on `LoopSeam`
           back to its frame 0 - with their beats nested beside them. */}
       <Folder name="Landing-loops">
@@ -387,6 +404,14 @@ export const RemotionRoot: React.FC = () => {
           Its other chapters are registered with the films they come from. */}
       <Folder name="Walkthrough-long">
         <Composition id="Floors" component={FloorsScene} durationInFrames={WALKTHROUGH_LONG_SCENES.floors} fps={FPS} width={WIDTH} height={HEIGHT} />
+      </Folder>
+
+      {/* The todo-list cut's beats, at 9:16 - the only size it is made for. */}
+      <Folder name="Todo-list">
+        <Composition id="TodoHook" component={TodoListHookScene} durationInFrames={TODO_LIST_SCENES.hook} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="TodoRows" component={TodoListListScene} durationInFrames={TODO_LIST_SCENES.list} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="TodoAdd" component={TodoListAddScene} durationInFrames={TODO_LIST_SCENES.add} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="TodoCta" component={TodoListCtaScene} durationInFrames={TODO_LIST_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
       </Folder>
 
       {/* The teaser's beats, registered at 9:16 - the cut it is made for, and

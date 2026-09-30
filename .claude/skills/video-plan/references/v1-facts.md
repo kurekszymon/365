@@ -276,6 +276,19 @@ file and the tag named in section 2 both need updating — nothing will warn you
   - The guest search is a fuzzy subsequence match over the normalised name, diet tags and child
     bracket (`GuestListContent.tsx` `fuzzyMatch`); it narrows the list and highlights nothing
     on the canvas.
+- **Reminders are a dated to-do list, and nothing notifies** (`components/reminders/*`,
+  `reminders.store.ts`, `reminder_created { has_due_date }`). The tab (`reminders.title`
+  *„Przypomnienia”*) is `RemindersPanelContent`: an outline *„Dodaj przypomnienie”*
+  (`reminders.add`) over `ReminderList`, which renders in insertion order - no sorting. A row
+  (`ReminderPreview`) is `bg-muted`, the text over a clock and `format(due, "d MMM yyyy, HH:mm")`
+  (*„20 wrz 2026, 18:00”*), `text-destructive` while open and past due (`isPast`, the device's
+  clock); the check sets `status: "completed"` - the row **stays**, struck through, its date back
+  to grey - and the bin deletes it. The popover (`CreateReminderPopover`, as wide as the trigger)
+  is *„Nowe przypomnienie”*, a textarea and a `DatePicker withTime` whose button reads
+  `"PPP, HH:mm"` - *„15 października 2026, 12:00”*, the month in full, not the list's short
+  form. At v1.1.2 the empty fields read *„Co jest do zrobienia?”* and *„Na kiedy?”*
+  (`reminders.create.*`); v1's *„O czym mamy Wam przypomnieć?”* / *„Kiedy Wam przypomnieć?”*,
+  which promised being reminded, are gone.
 - **BYO-key AI** that can add, move and update tables, fixtures and halls, and can run against a
   local model — `ai_chat_message_sent`, `assistant.setup.llamacpp_*`. The key is the user's own.
 - **Privacy posture**: PostHog autocapture off, no cookie banner because there are no cookies to

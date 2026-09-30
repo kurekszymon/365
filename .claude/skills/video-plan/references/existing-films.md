@@ -209,6 +209,23 @@ Built from `docs/video-plans/instagram-reels-series-2026-09-26.md`, brief `ten-t
 `TEN_TABLES_HALL` (`layouts.ts`), 14x16 m, **80 seats** - the batch exactly where v1's `addTables`
 puts it (`addTablesGrid`), not the 58-seat room: the film never shows a guest count.
 
+## The todo-list cut - `easywed-todo-vertical`, 450f (15 s), 9:16 only
+
+episode 5 of *Wesele bez spiny*, its tag top-left until the CTA. The couple's phone, the planner
+signed in as the table-shape cut drew it, the room fitted to the screen and the tab bar's
+*Przypomnienia* carrying 4, the hook up on frame 0 - the thumb taps *Przypomnienia*, its drawer
+rises on four reminders in the order they were added, the DJ deposit's date red at the top - the
+camera closes on the rows, the line saying why it is red - the deposit's check, the text struck
+through, the date back to grey, the badge at 3 - *Dodaj przypomnienie* tapped, then a jump cut on
+the scene seam onto *Nowe przypomnienie* already filled in, so its empty fields are never on
+screen - its button, the fifth row landing at the bottom, the drawer growing by it, the badge back
+at 4 - the camera steps back over all five, the payoff - the phone recedes under it, the CTA. The
+first film to show the reminders tab. No line on screen says the app reminds anyone: it is a list.
+Scenes 96 + 150 + 120 + 108 = 474 at `TODO_LIST_TRANSITION = 8` x 3 seams -> 450.
+Built from `docs/video-plans/instagram-reels-series-2026-09-26.md`, brief `todo-list`, against
+`easywed/v1.1.2`, over `TALL_HALL`; the rows are `todo-list/reminders.ts`, red computed from each
+due date against `SEEN_ON` (1 Oct 2026).
+
 ## Polish lines already burned on screen
 
 None of these may appear again:
@@ -428,6 +445,19 @@ plan's design (`components/AddHub.tsx`); what is spent is the beat of fixtures i
 dragged into place. The beat itself - a count typed once into the batch form and the tables landing
 as a grid - is spent, as is the payoff of the room laid out from the venue's number. Its CTA is
 *"Rozstaw wszystkie stoły naraz"* over the *"easywed.app"* pill.
+
+From the todo-list cut: *"Zaliczka dla DJ-a… zapłaciliśmy czy nie?"* (its hook) · *"Jest. Na
+czerwono, bo po terminie."* · *"Zapłacone. Odhaczone."* · *"Co załatwione, a co jeszcze nie - w
+jednym miejscu."* (its payoff) - the couple's own reminders, typed, not app strings: *"Zaliczka dla
+DJ-a"*, *"Wysłać sali plan stołów"*, *"Przymiarka garnituru"*, *"Odebrać obrączki"*, *"Dopytać o menu
+dla dzieci"*, with the dates *"20 wrz 2026, 18:00"*, *"30 paź 2026, 12:00"*, *"7 lis 2026,
+17:30"*, *"21 lis 2026, 11:00"*, *"15 paź 2026, 12:00"* and, in the popover, *"15 października
+2026, 12:00"* - and, as the reminders tab shows them at v1.1.2 (app strings, verbatim): *"Dodaj
+przypomnienie"* (`reminders.add`, the trigger and the popover's button) and *"Nowe przypomnienie"*
+(`reminders.create.title`). The tab bar's labels and the drawer's pills are chrome. The beat itself
+- an overdue item found red on the list and ticked off, one more added - is spent, as is the
+payoff of the done and the not-yet in one place. Its CTA is *"Wpiszcie, co jeszcze do
+załatwienia"* over the *"easywed.app"* pill.
 
 The series tag *"Wesele bez spiny · #N"* recurs by design across the series' episodes, like the
 pill; only its number changes. It is spent as a name for anything else.
