@@ -17,6 +17,8 @@ import {
   HEIGHT,
   SCENES,
   TOTAL_DURATION,
+  CAROUSEL_HEIGHT,
+  CAROUSEL_WIDTH,
   VERTICAL_HEIGHT,
   VERTICAL_WIDTH,
   WIDTH,
@@ -104,6 +106,7 @@ import { TodoListListScene } from "./easywed/todo-list/scenes/TodoListListScene"
 import { TodoListAddScene } from "./easywed/todo-list/scenes/TodoListAddScene";
 import { TodoListCtaScene } from "./easywed/todo-list/scenes/TodoListCtaScene";
 import { TODO_LIST_DURATION, TODO_LIST_SCENES } from "./easywed/todo-list/timeline";
+import { CarouselEpisode } from "./easywed/carousel/CarouselEpisode";
 import { WalkthroughLong } from "./easywed/walkthrough-long/WalkthroughLong";
 import { FloorsScene } from "./easywed/walkthrough-long/scenes/FloorsScene";
 import {
@@ -333,6 +336,47 @@ export const RemotionRoot: React.FC = () => {
         width={VERTICAL_WIDTH}
         height={VERTICAL_HEIGHT}
       />
+
+      {/* The series' IG carousel: each episode's finished 9:16 render, scaled
+          into a 4:5 slide - the tallest a carousel shows uncropped. */}
+      <Folder name="Carousel">
+        <Composition
+          id="easywed-carousel-listseat"
+          component={CarouselEpisode}
+          durationInFrames={LIST_SEAT_DURATION}
+          fps={FPS}
+          width={CAROUSEL_WIDTH}
+          height={CAROUSEL_HEIGHT}
+          defaultProps={{ file: "easywed-listseat-vertical.mp4" }}
+        />
+        <Composition
+          id="easywed-carousel-tableshape"
+          component={CarouselEpisode}
+          durationInFrames={TABLE_SHAPE_DURATION}
+          fps={FPS}
+          width={CAROUSEL_WIDTH}
+          height={CAROUSEL_HEIGHT}
+          defaultProps={{ file: "easywed-tableshape-vertical.mp4" }}
+        />
+        <Composition
+          id="easywed-carousel-batch"
+          component={CarouselEpisode}
+          durationInFrames={TEN_TABLES_DURATION}
+          fps={FPS}
+          width={CAROUSEL_WIDTH}
+          height={CAROUSEL_HEIGHT}
+          defaultProps={{ file: "easywed-batch-vertical.mp4" }}
+        />
+        <Composition
+          id="easywed-carousel-todo"
+          component={CarouselEpisode}
+          durationInFrames={TODO_LIST_DURATION}
+          fps={FPS}
+          width={CAROUSEL_WIDTH}
+          height={CAROUSEL_HEIGHT}
+          defaultProps={{ file: "easywed-todo-vertical.mp4" }}
+        />
+      </Folder>
 
       {/* The landing-page loops - 16:9 only, no CTA, each closing on `LoopSeam`
           back to its frame 0 - with their beats nested beside them. */}
