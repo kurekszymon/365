@@ -44,12 +44,16 @@
   venue's "ten round tables of eight" typed once into the batch form on the couple's laptop, the
   ten tables landing in two rows, then the dance floor, the stage and the door dragged into place
   from the add hub - the CTA.
+- **the try-now speedrun** - 25.5 seconds for Reels, 9:16 only, episode 4 of *Wesele bez spiny*:
+  a stopwatch from easywed.app's landing page on the couple's phone - *Wypróbujcie bez konta* into
+  guest mode, the seeded hall, *Okrągły 8* from the add hub, *Babcia Jadzia* typed in and seated
+  from the table's form - stopping at 0:18 with no cut in the run, then the CTA.
 - **the todo-list cut** - 15 seconds for Reels, 9:16 only, episode 5 of *Wesele bez spiny*: "did we
   pay the DJ?" answered by the couple's dated list on the phone - the deposit red because it is
   overdue, ticked off, one more thing added - the CTA. A list, not an alarm: nothing on screen says
   the app will remind anyone.
 
-All but the loops, the keep-apart, mama-link, sunday-couch, list-seat, table-shape, ten-tables and todo-list cuts render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
+All but the loops, the keep-apart, mama-link, sunday-couch, list-seat, table-shape, ten-tables, try-now and todo-list cuts render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
 are in Polish.
 
 It is a standalone package on purpose - it sits next to `easywed/` rather than inside it, so it
@@ -107,6 +111,8 @@ pnpm run render:table-shape:vertical  # -> out/pl/easywed-tableshape-vertical.mp
 pnpm run render:ten-tables:vertical  # -> out/pl/easywed-batch-vertical.mp4 (9:16, its only size)
 
 pnpm run render:todo-list:vertical  # -> out/pl/easywed-todo-vertical.mp4 (9:16, its only size)
+
+pnpm run render:try-now:vertical  # -> out/pl/easywed-trynow-vertical.mp4 (9:16, its only size)
 
 pnpm run render:all     # all of the above
 pnpm run render:all:en  # all of the above in English -> out/en/
@@ -292,6 +298,14 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `TodoAdd`               | 120f   | a jump cut onto the filled-in popover; the fifth row; the payoff  |
 | `TodoCta`               | 108f   | the phone recedes under the payoff, logo + easywed.app            |
 
+| id                        | length | what it is                                                              |
+| ------------------------- | ------ | ----------------------------------------------------------------------- |
+| `easywed-trynow-vertical` | 765f   | the 25.5 s try-now speedrun, 9:16 only - series episode 4               |
+| `TryNowHook`              | 96f    | the landing page on a phone, the hook on frame 0; the tap starts the clock |
+| `TryNowTable`             | 225f   | guest mode, the card at 0 of 3; the add hub, *Okrągły 8*, pinched in    |
+| `TryNowSeat`              | 360f   | a guest typed and saved; seated from the table's form; the clock stops  |
+| `TryNowCta`               | 108f   | the phone recedes under the payoff, logo + easywed.app                  |
+
 The long walkthrough's other fifteen chapters are the scenes registered above, from the short
 walkthrough and the other cuts; only `Floors` is its own. The 9:16 cut leaves out `ScaleMeasure`:
 on a phone at v1 the canvas toolbar isn't there, and measuring is a long-press menu item with no
@@ -299,7 +313,7 @@ on a phone at v1 the canvas toolbar isn't there, and measuring is a long-press m
 bottom sheet rather than the desktop's centred dialog.
 
 The scenes are also registered individually (Studio folders "Scenes", "Teaser", "Import",
-"Report", "Kids", "Swap-cut", "Keep-apart", "Mama-link", "Sunday-couch", "List-seat", "Table-shape", "Ten-tables" and "Walkthrough-long") so a single beat can be previewed without scrubbing through the
+"Report", "Kids", "Swap-cut", "Keep-apart", "Mama-link", "Sunday-couch", "List-seat", "Table-shape", "Ten-tables", "Try-now" and "Walkthrough-long") so a single beat can be previewed without scrubbing through the
 whole timeline. The social cuts' scenes are registered at 9:16, the cut they are made for.
 
 The landing-page loops - `easywed-scale`, `easywed-swap` and `easywed-shape` - sit together in the
@@ -315,8 +329,9 @@ src/easywed/
   layouts.ts             WIDE_HALL, TALL_HALL, the odd-room loop's L_HALL, the keep-apart
                          cut's KEEP_APART_HALL, the sunday-couch cut's COUCH_HALL, the
                          table-shape cut's TABLE_SHAPE_HALL, the ten-tables cut's
-                         TEN_TABLES_HALL (laid out by addTablesGrid, v1's addTables) and the
-                         long walkthrough's second hall, 60 units per metre
+                         TEN_TABLES_HALL (laid out by addTablesGrid, v1's addTables), the
+                         try-now speedrun's SEEDED_HALL (v1's empty DEFAULT_HALL) and the long
+                         walkthrough's second hall, 60 units per metre
   format.ts              useFormat() - picks hall + type scale from the composition size
   data.ts                the demo wedding: guest list, couple
   geometry.ts            seat positions around round/rectangular tables
@@ -409,6 +424,16 @@ src/easywed/
                          list, red computed from its due dates against SEEN_ON. The phone
                          is PhoneShell in `owner` mode, and components/RemindersSheet.tsx
                          redraws the *Przypomnienia* drawer and its create popover
+  try-now/               the try-now speedrun, 9:16 only, in the table-shape cut's shape:
+                         every scene draws components/TryNowStage.tsx off one clock
+                         (script.ts), which also drives the stopwatch (RunClock) - nothing
+                         between its start and stop is cut. plan.ts works out v1's fit of
+                         the seeded hall on the phone, the pan, the pinch and what the store
+                         holds at each frame. Its redraws are the landing hero at v1.1.2
+                         (LandingScreen), the canvas and the first-run card (SeededCanvas,
+                         OnboardingCard), the add-hub sheet, the empty guest drawer, the
+                         add-guest drawer and the table form's guest picker; the form itself
+                         is the table-shape cut's TableEditSheet, fresh
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect

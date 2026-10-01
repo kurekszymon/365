@@ -100,6 +100,12 @@ import { TenTablesBatchScene } from "./easywed/ten-tables/scenes/TenTablesBatchS
 import { TenTablesRoomScene } from "./easywed/ten-tables/scenes/TenTablesRoomScene";
 import { TenTablesCtaScene } from "./easywed/ten-tables/scenes/TenTablesCtaScene";
 import { TEN_TABLES_DURATION, TEN_TABLES_SCENES } from "./easywed/ten-tables/timeline";
+import { TryNow } from "./easywed/try-now/TryNow";
+import { TryNowHookScene } from "./easywed/try-now/scenes/TryNowHookScene";
+import { TryNowTableScene } from "./easywed/try-now/scenes/TryNowTableScene";
+import { TryNowSeatScene } from "./easywed/try-now/scenes/TryNowSeatScene";
+import { TryNowCtaScene } from "./easywed/try-now/scenes/TryNowCtaScene";
+import { TRY_NOW_DURATION, TRY_NOW_SCENES } from "./easywed/try-now/timeline";
 import { TodoList } from "./easywed/todo-list/TodoList";
 import { TodoListHookScene } from "./easywed/todo-list/scenes/TodoListHookScene";
 import { TodoListListScene } from "./easywed/todo-list/scenes/TodoListListScene";
@@ -326,6 +332,18 @@ export const RemotionRoot: React.FC = () => {
         height={VERTICAL_HEIGHT}
       />
 
+      {/* The 25.5 s try-now speedrun, episode 4 of the Instagram series - a stopwatch
+          from easywed.app's landing page, through guest mode, to the first guest
+          seated at the first table, with no cut in the run; 9:16 only. */}
+      <Composition
+        id="easywed-trynow-vertical"
+        component={TryNow}
+        durationInFrames={TRY_NOW_DURATION}
+        fps={FPS}
+        width={VERTICAL_WIDTH}
+        height={VERTICAL_HEIGHT}
+      />
+
       {/* The 15 s todo-list cut, episode 5 of the Instagram series - the DJ deposit
           found red on the couple's dated list, ticked off, one more added; 9:16 only. */}
       <Composition
@@ -546,6 +564,14 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="TenTablesBatch" component={TenTablesBatchScene} durationInFrames={TEN_TABLES_SCENES.batch} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="TenTablesRoom" component={TenTablesRoomScene} durationInFrames={TEN_TABLES_SCENES.room} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
         <Composition id="TenTablesCta" component={TenTablesCtaScene} durationInFrames={TEN_TABLES_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+      </Folder>
+
+      {/* The try-now speedrun's beats, at 9:16 - the only size it is made for. */}
+      <Folder name="Try-now">
+        <Composition id="TryNowHook" component={TryNowHookScene} durationInFrames={TRY_NOW_SCENES.hook} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="TryNowTable" component={TryNowTableScene} durationInFrames={TRY_NOW_SCENES.table} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="TryNowSeat" component={TryNowSeatScene} durationInFrames={TRY_NOW_SCENES.seat} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
+        <Composition id="TryNowCta" component={TryNowCtaScene} durationInFrames={TRY_NOW_SCENES.cta} fps={FPS} width={VERTICAL_WIDTH} height={VERTICAL_HEIGHT} />
       </Folder>
 
     </>

@@ -58,6 +58,21 @@ const rows = (round: boolean) => {
   return { ...tops, map: y } as { name: number; shape: number; size: number; rotation?: number; capacity: number; map: number };
 };
 
+/** `FieldContent`'s `gap-1.5` between the picker's trigger and its `text-xs` count. */
+const FOOTER_GAP = 6;
+const FOOTER = 16;
+
+/**
+ * Where `GuestAssignmentPicker`'s trigger sits, from the form's top, under a
+ * seat diagram `previewHeight` tall - and a point at `y` in the form, on the
+ * phone screen once the form has scrolled by `scroll`.
+ */
+export const pickerTriggerTop = (round: boolean, previewHeight: number) =>
+  rows(round).map + previewHeight + GAP + LABEL + LABEL_GAP;
+export const PICKER_TRIGGER_HEIGHT = INPUT;
+export const formToScreen = (y: number, scroll: number) => CONTENT_TOP - scroll + y;
+export const FORM_PAD_X = PAD_X;
+
 /** The centres of what the thumb taps, in the phone's CSS px, with the form unscrolled. */
 export const TAPS = {
   rectangular: { x: PAD_X + CONTENT_WIDTH / 4, y: CONTENT_TOP + rows(true).shape + LABEL + LABEL_GAP + BUTTON_XS / 2 },
@@ -76,8 +91,8 @@ const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </div>
 );
 
-/** An `Input` at a phone's `text-base`, with the caret while it is focused. */
-const Input: React.FC<{ value: string; focused?: boolean }> = ({ value, focused }) => (
+/** An `Input` at a phone's `text-base`, with the caret while it is focused, and its placeholder while it is empty. */
+const Input: React.FC<{ value: string; focused?: boolean; placeholder?: string }> = ({ value, focused, placeholder }) => (
   <div
     style={{
       height: INPUT,
@@ -94,7 +109,7 @@ const Input: React.FC<{ value: string; focused?: boolean }> = ({ value, focused 
       whiteSpace: "nowrap",
     }}
   >
-    {value}
+    {value === "" && placeholder ? <span style={{ color: colors.inkSoft }}>{placeholder}</span> : value}
     {focused ? <div style={{ width: 1.5, height: 18, marginLeft: 1, backgroundColor: colors.ink }} /> : null}
   </div>
 );
@@ -139,7 +154,28 @@ export const TableEditSheet: React.FC<{
   /** How far the form has been scrolled under the header, in CSS px. */
   scroll: number;
   pressed: { rectangular: boolean; rotate: boolean; done: boolean };
-}> = ({ name, capacity, form, preview, initials, guests, enter, scroll, pressed }) => {
+  /**
+   * A table just inserted from a preset, with no name and no guests: the name
+   * field shows `tables.name_placeholder`, every chair is the green empty
+   * marker with its number (`TableSeatMap`), and the picker's trigger reads
+   * `tables.guests_pick`. Left out, the table-shape cut's seated Stół 3.
+   */
+  fresh?: { namePlaceholder: string; guestsPlaceholder: string };
+  /**
+   * What the form shows under the picker's trigger once it is scrolled into
+   * view: its `guests_selected_of_capacity` count, then `TableSeatList` - the
+   * list's title and a row per seat, its occupant or the assign button. Left
+   * out, the table-shape cut's form, which never scrolls that far.
+   */
+  below?: {
+    count: string;
+    seatListTitle: string;
+    seatLabel: (n: number) => string;
+    assign: string;
+    /** Each seat's occupant, indexed like the table's seats. */
+    occupants: ({ initials: string; name: string } | null)[];
+  };
+}> = ({ name, capacity, form, preview, initials, guests, enter, scroll, pressed, fresh, below }) => {
   if (enter <= 0) return null;
   const f = tl.app.tableForm;
   const top = rows(form.round);
@@ -223,7 +259,7 @@ export const TableEditSheet: React.FC<{
           <div style={{ position: "absolute", inset: 0, transform: `translateY(${-scroll}px)` }}>
             <div style={{ position: "absolute", left: 0, right: 0, top: top.name }}>
               <Field label={f.name}>
-                <Input value={name} />
+                <Input value={name} placeholder={fresh?.namePlaceholder} />
               </Field>
             </div>
 
@@ -294,7 +330,8 @@ export const TableEditSheet: React.FC<{
                 width: preview.boxW,
                 height: preview.boxH,
                 borderRadius: 10,
-                backgroundColor: "rgba(234, 229, 217, 0.4)",
+                // No box behind a fresh table's diagram, by the user's call; Stół 3 keeps `bg-muted/40`.
+                backgroundColor: fresh ? undefined : "rgba(234, 229, 217, 0.4)",
               }}
             >
               <div
@@ -321,8 +358,8 @@ export const TableEditSheet: React.FC<{
                     height: PREVIEW_SEAT,
                     boxSizing: "border-box",
                     borderRadius: 999,
-                    border: `1px solid ${colors.seatFilledBorder}`,
-                    backgroundColor: colors.seatFilled,
+                    border: `1px solid ${fresh && !initials[i] ? colors.seatEmptyBorder : colors.seatFilledBorder}`,
+                    backgroundColor: fresh && !initials[i] ? colors.seatEmpty : colors.seatFilled,
                     color: "#ffffff",
                     fontSize: 10,
                     fontWeight: 600,
@@ -331,7 +368,7 @@ export const TableEditSheet: React.FC<{
                     justifyContent: "center",
                   }}
                 >
-                  {initials[i]}
+                  {fresh && !initials[i] ? i + 1 : initials[i]}
                 </div>
               ))}
             </div>
@@ -356,10 +393,95 @@ export const TableEditSheet: React.FC<{
                     textOverflow: "ellipsis",
                   }}
                 >
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{guests.join(", ")}</span>
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", color: fresh && !guests.length ? colors.inkSoft : undefined }}>
+                    {fresh && !guests.length ? fresh.guestsPlaceholder : guests.join(", ")}
+                  </span>
                 </div>
+                {below ? (
+                  <div style={{ marginTop: FOOTER_GAP - LABEL_GAP, height: FOOTER, fontSize: 12, lineHeight: `${FOOTER}px`, color: colors.inkSoft }}>
+                    {below.count}
+                  </div>
+                ) : null}
               </Field>
             </div>
+
+            {/* `TableSeatList`: *Miejsca*, then a bordered row per seat - its occupant as a ghost button, or `+ Przypisz`. */}
+            {below ? (
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  top: pickerTriggerTop(form.round, preview.boxH) + INPUT + FOOTER_GAP + FOOTER + GAP,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14, fontWeight: 500, color: colors.ink }}>
+                  {below.seatListTitle}
+                  <Icon name="info" color={colors.inkSoft} size={14} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {below.occupants.map((occupant, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        height: 44,
+                        boxSizing: "border-box",
+                        padding: "0 10px",
+                        borderRadius: 8,
+                        border: `1px solid ${colors.border}`,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        fontSize: 14,
+                      }}
+                    >
+                      <span style={{ color: colors.inkSoft }}>{below.seatLabel(i + 1)}</span>
+                      {occupant ? (
+                        <span style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 500, color: colors.ink }}>
+                          <span
+                            style={{
+                              width: 20,
+                              height: 20,
+                              borderRadius: 999,
+                              backgroundColor: "rgba(43, 38, 33, 0.1)",
+                              color: colors.primary,
+                              fontSize: 10,
+                              fontWeight: 700,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {occupant.initials}
+                          </span>
+                          {occupant.name}
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            height: 32,
+                            padding: "0 10px",
+                            boxSizing: "border-box",
+                            borderRadius: 8,
+                            border: `1px solid ${colors.border}`,
+                            backgroundColor: colors.bg,
+                            display: "flex",
+                            alignItems: "center",
+                            fontWeight: 500,
+                            color: colors.ink,
+                          }}
+                        >
+                          {below.assign}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

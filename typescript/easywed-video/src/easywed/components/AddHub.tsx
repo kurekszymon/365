@@ -15,11 +15,15 @@ import { Icon, type IconName } from "./Icon";
 
 export type AddHubCategory = "tables" | "fixtures";
 
-/** `TABLE_PRESETS` in `addPresets.ts`: the swatch each card previews. */
+/**
+ * `TABLE_PRESETS` in `addPresets.ts`: the swatch each card previews, and what a
+ * tap inserts - its size in metres and its seats. *Owalny 10* is a plain
+ * rectangular table; only its swatch is a pill.
+ */
 export const TABLE_PRESETS = [
-  { key: "round-8", label: tl.app.addHub.tables.round8, preview: "round" },
-  { key: "rect-6", label: tl.app.addHub.tables.rect6, preview: "rect" },
-  { key: "oval-10", label: tl.app.addHub.tables.oval10, preview: "oval" },
+  { key: "round-8", label: tl.app.addHub.tables.round8, preview: "round", shape: "round", size: { width: 1.5, height: 1.5 }, capacity: 8 },
+  { key: "rect-6", label: tl.app.addHub.tables.rect6, preview: "rect", shape: "rectangular", size: { width: 1.8, height: 0.8 }, capacity: 6 },
+  { key: "oval-10", label: tl.app.addHub.tables.oval10, preview: "oval", shape: "rectangular", size: { width: 2.4, height: 1 }, capacity: 10 },
 ] as const;
 
 /** `FIXTURE_PRESETS` in `addPresets.ts`, in its order, with `FIXTURE_ICONS`' glyphs and each preset's size in metres. */
@@ -49,6 +53,12 @@ const GRID_TOP = HINT + GAP + GROUP + GAP;
 
 /** The body's height at CSS px, for a dialog or sheet sizing itself round it. */
 export const ADD_HUB_HEIGHT = GRID_TOP + CARD_HEIGHT * 2 + GRID_GAP;
+
+/** The same for either tab: the tables' three cards fill one row, the fixtures' six two - for a sheet that hugs its content. */
+export const addHubHeight = (category: AddHubCategory) => {
+  const rows = Math.ceil((category === "tables" ? TABLE_PRESETS : FIXTURE_PRESETS).length / 3);
+  return GRID_TOP + CARD_HEIGHT * rows + GRID_GAP * (rows - 1);
+};
 
 /** A card's centre from the body's top-left, in CSS px - what a pointer or a thumb aims at. */
 export const addHubCardCenter = (width: number, index: number) => {

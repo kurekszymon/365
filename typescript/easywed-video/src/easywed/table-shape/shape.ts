@@ -38,7 +38,7 @@ export const SEATS = TABLE.seats;
 /** The two values typed into the form, in metres. */
 export const TYPED = { width: 3, height: 1 };
 
-type Pose = { round: boolean; width: number; height: number };
+export type Pose = { round: boolean; width: number; height: number };
 
 const DIAMETER = TABLE.width / PX_PER_M;
 /** Round; square at the same size; stretched to the typed width; the typed depth; turned. */
@@ -112,20 +112,20 @@ const PAD = PREVIEW_SEAT / 2 + 4;
 const PREVIEW_SEAT_OFFSET_M = 0.14;
 
 /** `computeSeatPositions` at easywed/v1, in table-local metres. */
-const seatSlots = (pose: Pose, offset: number): Point[] => {
+const seatSlots = (pose: Pose, offset: number, seats: number): Point[] => {
   if (pose.round) {
     const r = pose.width / 2;
-    return Array.from({ length: SEATS }, (_, i) => {
-      const angle = -Math.PI / 2 + (i / SEATS) * 2 * Math.PI;
+    return Array.from({ length: seats }, (_, i) => {
+      const angle = -Math.PI / 2 + (i / seats) * 2 * Math.PI;
       return { x: r + (r + offset) * Math.cos(angle), y: r + (r + offset) * Math.sin(angle) };
     });
   }
   const horizontal = pose.width >= pose.height;
   const edge = horizontal ? pose.width : pose.height;
-  const first = Math.ceil(SEATS / 2);
-  return Array.from({ length: SEATS }, (_, i) => {
+  const first = Math.ceil(seats / 2);
+  return Array.from({ length: seats }, (_, i) => {
     const onFirst = i < first;
-    const count = onFirst ? first : SEATS - first;
+    const count = onFirst ? first : seats - first;
     const d = (((onFirst ? i : i - first) + 1) / (count + 1)) * edge;
     if (horizontal) return { x: d, y: onFirst ? -offset : pose.height + offset };
     return { x: onFirst ? -offset : pose.width + offset, y: d };
@@ -134,9 +134,12 @@ const seatSlots = (pose: Pose, offset: number): Point[] => {
 
 type Preview = { boxW: number; boxH: number; table: { x: number; y: number; w: number; h: number; radius: number }; seats: Point[] };
 
-/** `TableSeatMap`'s diagram for a pose, in px: the box, the footprint in it, and each marker's centre. */
-const previewOf = (pose: Pose): Preview => {
-  const placed = seatSlots(pose, PREVIEW_SEAT_OFFSET_M);
+/**
+ * `TableSeatMap`'s diagram for a pose, in px: the box, the footprint in it, and
+ * each marker's centre. `seats` is Stół 3's unless another table is drawn.
+ */
+export const previewOf = (pose: Pose, seats: number = SEATS): Preview => {
+  const placed = seatSlots(pose, PREVIEW_SEAT_OFFSET_M, seats);
   const minX = Math.min(0, ...placed.map((p) => p.x));
   const maxX = Math.max(pose.width, ...placed.map((p) => p.x));
   const minY = Math.min(0, ...placed.map((p) => p.y));

@@ -52,9 +52,19 @@ export type IconName =
   | "martini"
   | "disc3"
   | "logIn"
-  | "shapes";
+  | "shapes"
+  | "share2";
 
 const PATHS: Record<IconName, React.ReactNode> = {
+  /** lucide `share-2` - the onboarding card's *Udostępnij* once the plan's basics are done. */
+  share2: (
+    <>
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98" />
+    </>
+  ),
   guests: (
     <>
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />

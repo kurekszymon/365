@@ -207,6 +207,21 @@ export const TABLE_SHAPE_HALL = withDerived({
   fixtures: [{ id: "bar", label: tl.hall.bar, x: 420, y: 640, width: 240, height: 56 }],
 });
 
+/**
+ * `DEFAULT_HALL` at easywed/v1 as `/wedding/local` seeds it on a first visit
+ * (`routes/wedding.local.tsx`: no hall, so `addHall(DEFAULT_HALL, { x: 0, y: 0 })`):
+ * unnamed, a 20x12 m rectangle, and nothing in it - no tables, no fixtures, no
+ * dance floor. The try-now cut opens on it. It seats nobody, and the film never
+ * shows a guest count beyond the fresh plan's own *0/0*.
+ */
+export const SEEDED_HALL = withDerived({
+  name: "",
+  canvas: { width: 20 * PX_PER_M, height: 12 * PX_PER_M },
+  danceFloor: { x: 0, y: 0, width: 0, height: 0 },
+  tables: [],
+  fixtures: [],
+});
+
 /** `HALL_GAP` in the app's `planner.store.ts`: the metres `nextHallPosition` leaves between halls. */
 export const HALL_GAP = 3;
 

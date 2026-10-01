@@ -226,6 +226,31 @@ Built from `docs/video-plans/instagram-reels-series-2026-09-26.md`, brief `todo-
 `easywed/v1.1.2`, over `TALL_HALL`; the rows are `todo-list/reminders.ts`, red computed from each
 due date against `SEEN_ON` (1 Oct 2026).
 
+## The try-now speedrun - `easywed-trynow-vertical`, 765f (25.5 s), 9:16 only
+
+episode 4 of *Wesele bez spiny*, its tag top-left and a stopwatch chip top-right until the CTA.
+easywed.app in the couple's phone browser, the landing hero at v1.1.2 whole and left-aligned, the
+hook up on frame 0 - the thumb on *Wypróbujcie bez konta* at 50, the stopwatch starting on it -
+the planner in guest mode on the seeded, unnamed 20x12 m hall, `GuestModeBanner` over the header
+and the first-run card at 0 of 3, which covers the hall's chip until one finger drags the plan
+down - `AddFab`, the *Dodaj do sali* sheet, *Okrągły 8* and its form, the check - the table in the
+middle of the hall at the fitted zoom, where its count truncates, so two fingers pinch in until
+*0 / 8* reads (the card at 1 of 3) - *Goście*, the empty guest drawer, *Dodaj gościa*, its drawer,
+*Babcia Jadzia* typed at 8 frames a character, *Zapisz*, her row with *Bez miejsca* (the card at 2
+of 3) - a tap outside closes the drawer - the table tapped, ring and toolbar, the pen, *Edytuj
+stół* scrolled to *Przypisz gości*, *Wybierz gości*, her row in the popover, chair 1 initialled
+*BJ*, *Wybrani goście: 1 / 8* - the check, the table at *1 / 8* and the card turned to its done
+card - the stopwatch stops at 0:18 (614) and pulses, the payoff - the phone recedes under it, the
+CTA. No cut between 50 and 614: the stopwatch is the film's own time. The first film to show a
+guest typed in, the guest picker in the table form, the first-run card's steps ticking and its
+done card, and a stopwatch.
+Scenes 96 + 225 + 360 + 108 = 789 at `TRY_NOW_TRANSITION = 8` x 3 seams -> 765.
+Built from `docs/video-plans/speedrun-carousel-recap-2026-09-30.md`, brief 1 `try-now`, which
+replaced the 2026-09-26 plan's first `try-now` (built, never registered, never posted - its lines
+were not burned). Drawn on `SEEDED_HALL` (`layouts.ts`), v1's empty `DEFAULT_HALL`, against
+`easywed/v1.1.2`. `GuestModeBanner` and the card are drawn by the user's call (2026-09-30),
+reversing the first build's call to leave them out.
+
 ## Polish lines already burned on screen
 
 None of these may appear again:
@@ -458,6 +483,42 @@ przypomnienie"* (`reminders.add`, the trigger and the popover's button) and *"No
 - an overdue item found red on the list and ticked off, one more added - is spent, as is the
 payoff of the done and the not-yet in one place. Its CTA is *"Wpiszcie, co jeszcze do
 załatwienia"* over the *"easywed.app"* pill.
+
+From the try-now speedrun: *"Macie 60 sekund?"* (its hook) · *"Start."* · *"Sala już czeka."* ·
+*"Stół na ośmioro."* · *"Babcia na liście."* · *"Babcia przy stole."* · *"Babcia siedzi. Zostało 41
+sekund."* (its payoff) - the stopwatch itself, *"0:00"* running to *"0:18"* (the whole
+stopwatch-race device is spent with it), and the couple's typed guest *"Babcia Jadzia"* (user
+data, not an app string; *Babcia Jadzia* is spent as a character) - and, as the app shows them at
+v1.1.2 (app strings, verbatim): the landing hero's *"Planer gości weselnych i plan sali"*
+(`landing.hero.eyebrow`, drawn uppercase), *"Narysujcie salę i rozsadźcie gości weselnych przy
+stołach"* (`landing.hero.title`), *"Sala w prawdziwych wymiarach, stoły tam, gdzie mają stać, i
+każdy gość na swoim miejscu - w przeglądarce, oboje, na jednym planie."* (`landing.hero.subtitle`),
+*"Zacznijcie planować"* (`landing.cta`), *"Wypróbujcie bez konta"* (`landing.hero.try_local`),
+*"Za darmo dla par. Tryb gościa trzyma plan na tym urządzeniu - zalogujcie się później, żeby go
+zapisać."* (`landing.hero.local_hint`), the header's *"easywed."*, *"PL"* / *"EN"*, *"Zaloguj
+się"*; the first-run card's *"Zacznij tutaj"*, *"Rozstaw stoły"*, *"Dodaj pierwszy stół do sali"*,
+*"Wpisz gości albo zaimportuj listę"* (truncated), *"Dodaj"*, *"Posadź"*, *"1 stół"*, *"1 gość"*,
+*"0/0 gości przy stołach"*, *"0/1 gość przy stole"*, and its done card's *"Gdy plan będzie
+gotowy"*, *"Wydrukujesz stąd plan sali i listę gości albo zaprosisz kogoś do wspólnej pracy."*,
+*"Drukuj"*, *"Udostępnij"* (never tapped); the empty guest drawer's *"Brak gości."* (already
+burned by the import cut) and *"Importuj gości"*; the add-guest drawer's *"Dodaj gościa"*,
+*"Imię i nazwisko"*, *"Jan Kowalski"* (`guests.add.name_placeholder`), *"Preferencje
+żywieniowe"*, *"Wege"*, *"Vegan"*, *"Bez glutenu"*, *"Dodaj"*, *"Grupa wiekowa"*, *"Dorosły"*,
+*"0-3 lata"*, *"3-6 lat"*, *"Notatka"*, its placeholder and *"Zapisz"*; the table form's *"Wybierz
+gości"* (`tables.guests_pick`), *"Szukaj gości"*, *"Wybrani goście: 1 / 8"*
+(`tables.guests_selected_of_capacity`), *"Miejsca"* (`tables.seat_list_title`), *"Miejsce 1"* to
+*"Miejsce 5"* (`seats.numbered`), *"+ Przypisz"* (`tables.seat_assign_button`), and *"Stół
+rodzinny"* as a placeholder; and on the canvas *"0 / 8"* and *"1 / 8"*. Two burned lines recur as
+the card's step titles by the user's explicit call (2026-09-30), as chrome, like the guest panel's:
+*"Dodaj gości"* and *"Posadź wszystkich"* - a beat may not rest on them. *"Edytuj stół"*,
+*"Nazwa"*, *"Kształt stołu"*, *"Prostokątny"*, *"Okrągły"*, *"Średnica"*, *"Liczba miejsc"*,
+*"Przypisz gości"*, *"1.5"* and *"8"* recur as the table form's chrome (the table-shape
+precedent); the add hub's chrome, the chip *"Sala · 20×12 m"*, `GuestModeBanner`'s line and its
+*"Zaloguj się"*, the guest panel's *"Rozsadzeni"*, *"Szukaj gościa…"*, *"Wszyscy 1"*, *"Bez miejsca
+1"* and *"Bez miejsca"*, and the tab bar's labels recur as chrome. The beat itself - a timed run
+from the landing page to the first guest seated, and seating a guest from the table form's picker
+- is spent, as is the payoff of the time left over. Its CTA is *"Włączcie stoper i sprawdźcie
+sami"* over the *"easywed.app"* pill.
 
 The series tag *"Wesele bez spiny · #N"* recurs by design across the series' episodes, like the
 pill; only its number changes. It is spent as a name for anything else.

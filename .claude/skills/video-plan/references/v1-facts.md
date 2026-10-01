@@ -22,6 +22,45 @@ file and the tag named in section 2 both need updating — nothing will warn you
     plan therefore opens on an **unnamed 20x12 m rectangle** (`DEFAULT_HALL` in
     `stores/planner.store.ts`), its chip reading *„Sala · 20×12 m”* (`hall.unnamed`). A film that
     starts from nothing starts there, not on the empty-state line.
+  - **The landing page on a phone, at `easywed/v1.1.2`** (`landing/LocaleLanding.tsx`,
+    `LandingHero.tsx`): a sticky `h-14` header (*easywed.*, *PL / EN*, an outline *„Zaloguj się”*),
+    then one left-aligned column (`items-start`) - the uppercase eyebrow `landing.hero.eyebrow`
+    (*„Planer gości weselnych i plan sali”*), the title `landing.hero.title`, the subtitle, then
+    two `lg` buttons, filled *„Zacznijcie planować”* (`landing.cta`, to `/home`) and outline
+    *„Wypróbujcie bez konta”* (`landing.hero.try_local`, to `/wedding/local`), which no longer fit
+    one row at 390 px, so `flex-wrap` stacks them; then `landing.hero.local_hint`, and
+    `LandingLoop name="swap"` below the fold. Unscrolled, the whole hero fits a 390x800 phone.
+  - **A fresh plan opens under the first-run card** (`Onboarding/OnboardingChecklist.tsx`, rendered
+    by `Canvas.tsx` for any editor, guest mode included - `/wedding/local` sets `weddingId` to
+    `LOCAL_WEDDING_ID` and `role: "owner"`): *„Zacznij tutaj”*, a three-step bar, and three rows
+    that tick themselves off from the store - `[hasTables, hasGuests, allSeated]`, their details
+    `tables.count`, `guests.count` and `guests.seated_ratio`. On a phone it is `top-3 right-3
+    w-[17.5rem]` at `z-20`, and at 390 px it covers the top of the fitted 20x12 m hall, its chip's
+    size included; a one-finger drag (`useCanvasPan`) moves the plan clear of it without closing it.
+    A session that started unfinished keeps the card at 3/3 as the done card (*„Gdy plan będzie
+    gotowy”*, `onboarding.done.desc`, *Drukuj* / *Udostępnij*) - it swaps straight from the bar
+    to the done card, with no full bar in between. Steps 2 and 3 are titled *„Dodaj gości”* and
+    *„Posadź wszystkich”*, both burned lines.
+  - **The phone's first view** (`Canvas/useWorldGeometry.ts`): zoom 1 fits the halls into the
+    canvas less `VIEWPORT_MARGIN = 48` a side at `PIXELS_PER_METER = 40`, centred - on a 390 px
+    phone about 14.7 px a metre, so a 1.5 m table is ~22 px and its `px-1 truncate` count
+    (`TableVisual`) shows as *„0…”* until the plan is pinched in.
+  - **A preset card on a phone goes straight to the table's form** (`AddHubContent.tsx`
+    `insertTablePreset` → `openTableEdit`): *Okrągły 8* lands centred, and the same
+    `MobilePanelDrawer` swaps to *„Edytuj stół”* with the check.
+  - **Guests from a phone** (`MobileTabBar`, `GuestListContent`, `AddGuestDialog`): *Goście* opens
+    the list drawer; with nobody on it, `guests.none` and the *Dodaj gościa* / *Importuj gości*
+    buttons only. `AddGuestDialog` is a `ResponsiveDialog`, so a drawer on a phone: *Imię i
+    nazwisko* (placeholder *„Jan Kowalski”*), the diet and age pills, *Notatka*, *Zapisz* -
+    disabled until a name is typed. It saves with `tableId: null` (*„Bez miejsca”*) and fires
+    `guest_added`.
+  - **Seating from the table's form** (`fields/GuestAssignmentPicker.tsx`): *„Przypisz gości”*, a
+    trigger reading *„Wybierz gości”* (or the chosen names), and *„Wybrani goście: {{count}} /
+    {{capacity}}”* **under the trigger, not in the popover**; the popover holds *„Szukaj gości”*
+    and a row per guest. A tap applies at once - `applyToStore` and `persist` in its
+    `onAssignedGuestIdsChange` - not on the drawer's check, and fires no `guest_seated` (only
+    `SeatAssignPopover.tsx:91` and `SeatAssignSheet.tsx:92` track that). Under it, `TableSeatList`:
+    *„Miejsca”*, a row per seat - *„Miejsce N”* and its occupant or *„+ Przypisz”*.
 - **Free for couples**, stated contractually rather than as a promotion — `terms.fees.c1`.
 - **A metric, to-scale floor plan** — `PX_PER_M = 60`, a measuring tool (`measure.*`), snapping
   (`canvas.snap.*`), a 1 m ruled grid with a firmer 5 m ruling.

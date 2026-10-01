@@ -184,6 +184,14 @@ const spelledMetres = (
   return word;
 };
 
+/** A table's seats as the collective numeral a mixed group takes (*na ośmioro*); only the preset's count is spelled, so a changed one fails loudly. */
+const PL_COLLECTIVE: Record<number, string> = { 8: "ośmioro" };
+const collective = (count: number): string => {
+  const word = PL_COLLECTIVE[count];
+  if (word === undefined) throw new Error(`No collective numeral for ${count}`);
+  return word;
+};
+
 const pl = {
   hall: {
     name: "Sala główna",
@@ -340,6 +348,12 @@ const pl = {
       flip: "Obróć o 90°", // tables.rotation.flip
       capacity: "Liczba miejsc", // tables.capacity
       guests: "Przypisz gości", // tables.guests
+      guestsPick: "Wybierz gości", // tables.guests_pick - the picker's trigger while nobody is assigned
+      // tables.guests_selected_of_capacity - under the picker's trigger
+      selectedOf: (count: number, capacity: number) => `Wybrani goście: ${count} / ${capacity}`,
+      seatList: "Miejsca", // tables.seat_list_title - `TableSeatList`, under the picker
+      seatNumbered: (n: number) => `Miejsce ${n}`, // seats.numbered
+      seatAssign: "+ Przypisz", // tables.seat_assign_button
     },
     /** `HallsPanelContent` in the same dialog, titled by `usePanelTitle`. */
     hallsList: {
@@ -400,6 +414,31 @@ const pl = {
         custom: "Niestandardowy", // fixtures.preset.custom
       },
     },
+    /** The landing page's hero on a phone (`LocaleLanding`'s header, `LandingHero`) at easywed/v1.1.2, top to bottom. */
+    landing: {
+      eyebrow: "Planer gości weselnych i plan sali", // landing.hero.eyebrow - drawn uppercase
+      title: "Narysujcie salę i rozsadźcie gości weselnych przy stołach", // landing.hero.title
+      subtitle:
+        "Sala w prawdziwych wymiarach, stoły tam, gdzie mają stać, i każdy gość na swoim miejscu - w przeglądarce, oboje, na jednym planie.", // landing.hero.subtitle
+      start: "Zacznijcie planować", // landing.cta
+      tryLocal: "Wypróbujcie bez konta", // landing.hero.try_local
+      localHint: "Za darmo dla par. Tryb gościa trzyma plan na tym urządzeniu - zalogujcie się później, żeby go zapisać.", // landing.hero.local_hint
+    },
+    /** `Onboarding/OnboardingChecklist` at easywed/v1.1.2: the three steps, then the done card. */
+    onboarding: {
+      title: "Zacznij tutaj", // onboarding.title
+      tablesTitle: "Rozstaw stoły", // onboarding.tables.title
+      tablesTodo: "Dodaj pierwszy stół do sali", // onboarding.tables.todo
+      guestsTitle: "Dodaj gości", // onboarding.guests.title
+      guestsTodo: "Wpisz gości albo zaimportuj listę", // onboarding.guests.todo
+      seatsTitle: "Posadź wszystkich", // onboarding.seats.title
+      add: "Dodaj", // onboarding.tables.cta, onboarding.guests.cta
+      seat: "Posadź", // onboarding.seats.cta
+      doneTitle: "Gdy plan będzie gotowy", // onboarding.done.title
+      doneDesc: "Wydrukujesz stąd plan sali i listę gości albo zaprosisz kogoś do wspólnej pracy.", // onboarding.done.desc
+      print: "Drukuj", // onboarding.done.print
+      share: "Udostępnij", // onboarding.done.share
+    },
   },
 
   guests: {
@@ -416,6 +455,7 @@ const pl = {
     /** `GuestFormFields` / `GuestAgeGroupField`, in the order the form draws them. */
     form: {
       name: "Imię i nazwisko", // guests.add.name
+      namePlaceholder: "Jan Kowalski", // guests.add.name_placeholder
       dietary: "Preferencje żywieniowe", // guests.add.dietary_preferences
       dietaryCustom: "Dodaj", // guests.add.dietary_custom
       ageGroup: "Grupa wiekowa", // guests.add.age_group
@@ -436,6 +476,8 @@ const pl = {
     unseated: "Bez miejsca", // guests.status.unseated
     more: (count: number) => `+ ${count} gości więcej`,
     progress: "Rozsadzeni", // guests.progress
+    // guests.count_one|few|many
+    count: (count: number) => `${count} ${plural(count, { one: "gość", few: "goście", many: "gości" })}`,
     // guests.seated_ratio
     seatedRatio: (seated: number, total: number) =>
       total === 1
@@ -728,6 +770,32 @@ const pl = {
     },
   },
 
+  /**
+   * The speedrun. Its seconds - the hook's limit and what is left of it - are
+   * read off the stopwatch, and the table's seats off the preset; never typed.
+   */
+  tryNow: {
+    /** The number is bound to its noun so the question never breaks between them. */
+    hook: (seconds: number) =>
+      `Macie ${seconds}\u00a0${plural(seconds, { one: "sekundę", few: "sekundy", many: "sekund" })}?`,
+    start: "Start.",
+    hall: "Sala już czeka.",
+    table: (seats: number) => `Stół na ${collective(seats)}.`,
+    /** The guest the couple types - their data, not an app string. */
+    guest: "Babcia Jadzia",
+    listed: "Babcia na liście.",
+    seated: "Babcia przy stole.",
+    /** The second sentence is bound whole, so it keeps a line of its own; the verb agrees with the count. */
+    payoff: (left: number) =>
+      `Babcia siedzi. ${plural(left, { one: "Została", few: "Zostały", many: "Zostało" })}\u00a0${left}\u00a0${plural(left, {
+        one: "sekunda",
+        few: "sekundy",
+        many: "sekund",
+      })}.`,
+    /** "i" is bound to "sprawdźcie" so the line never ends on it. */
+    ctaAction: "Włączcie stoper i\u00a0sprawdźcie sami",
+  },
+
   walkthrough: {
     /** "i" is bound to "żadnego" so the line never ends on it. */
     hook: "Pusta sala, lista gości i\u00a0żadnego planu?",
@@ -874,6 +942,11 @@ const en: typeof pl = {
       flip: "Rotate 90°",
       capacity: "Capacity",
       guests: "Assign guests",
+      guestsPick: "Select guests",
+      selectedOf: (count, capacity) => `Selected guests: ${count} / ${capacity}`,
+      seatList: "Seats",
+      seatNumbered: (n) => `Seat ${n}`,
+      seatAssign: "+ Assign",
     },
     hallsList: {
       title: "Halls",
@@ -921,6 +994,29 @@ const en: typeof pl = {
         custom: "Custom",
       },
     },
+    landing: {
+      eyebrow: "Wedding seating chart & guest planner",
+      title: "Draw your hall, then seat every wedding guest",
+      subtitle:
+        "The room at its real size, the tables where you want them, and every guest with a seat - in the browser, both of you, on the same plan.",
+      start: "Start planning",
+      tryLocal: "Try it without an account",
+      localHint: "Free for couples. Guest mode keeps the plan on this device, so sign in later to save it.",
+    },
+    onboarding: {
+      title: "Start here",
+      tablesTitle: "Arrange the tables",
+      tablesTodo: "Add the first table to your hall",
+      guestsTitle: "Add your guests",
+      guestsTodo: "Type them in or import a list",
+      seatsTitle: "Seat everyone",
+      add: "Add",
+      seat: "Seat",
+      doneTitle: "When your plan is ready",
+      doneDesc: "You can print the hall layout and guest list from here, or invite someone to work on it with you.",
+      print: "Print",
+      share: "Share",
+    },
   },
 
   guests: {
@@ -943,6 +1039,7 @@ const en: typeof pl = {
       ageGroupPlaceholder: "e.g. 6-12",
       note: "Note",
       notePlaceholder: "e.g. allergic to nuts, loves spicy food, etc.",
+      namePlaceholder: "John Doe",
       save: "Save",
     },
     ageGroup: { adult: "Adult", "0-3": "0-3 years", "3-6": "3-6 years" },
@@ -951,6 +1048,7 @@ const en: typeof pl = {
     unseated: "Unseated",
     more: (count) => `+ ${count} more guests`,
     progress: "Seated",
+    count: (count) => `${count} ${count === 1 ? "guest" : "guests"}`,
     seatedRatio: (seated, total) =>
       total === 1
         ? `${seated}/${total} guest seated`
@@ -1186,6 +1284,18 @@ const en: typeof pl = {
       rings: "Pick up the rings",
       kidsMenu: "Ask about the kids' menu",
     },
+  },
+
+  tryNow: {
+    hook: (seconds) => `Got ${seconds}\u00a0seconds?`,
+    start: "Go.",
+    hall: "The hall's already waiting.",
+    table: (seats) => `A table for ${spelled(seats, EN_NUMBERS).toLowerCase()}.`,
+    guest: "Grandma Jadzia",
+    listed: "Grandma's on the list.",
+    seated: "Grandma's at the table.",
+    payoff: (left) => `Grandma's seated. ${left}\u00a0${left === 1 ? "second" : "seconds"}\u00a0to\u00a0spare.`,
+    ctaAction: "Start a stopwatch and try it yourselves",
   },
 
   walkthrough: {

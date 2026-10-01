@@ -177,8 +177,8 @@ const barTabs = (mode: PhoneMode): Tab[] =>
  * the tab bar's top edge, which covers the rest of it. For a film that draws
  * its own view of the room into `canvas`.
  */
-export const canvasBox = (mode: PhoneMode) => {
-  const top = PAGE_TOP + (bannerIn(mode) ? GUEST_BANNER + HEADER : HEADER);
+export const canvasBox = (mode: PhoneMode, banner: boolean = bannerIn(mode)) => {
+  const top = PAGE_TOP + (banner ? GUEST_BANNER + HEADER : HEADER);
   return { top, height: PHONE.height - TAB_BAR - top };
 };
 
@@ -247,9 +247,21 @@ export const PhoneShell: React.FC<{
   canvas?: React.ReactNode;
   /** Drawn over everything else in the app's viewport - a second sheet opened from the list. */
   children?: React.ReactNode;
-}> = ({ hall, guests, badges, sheet, query = "", mode = "viewer", scroll = 0, canvas, children }) => {
+  /**
+   * The header's wedding name. A guest plan opened for the first time has none
+   * (`name: undefined`, which `InlineEdit` draws as an empty button), so pass
+   * `""`. Left out, it is the couple every published film names.
+   */
+  weddingName?: string;
+  /**
+   * Whether `GuestModeBanner` is drawn. Left out, it follows `mode`, as every
+   * published film draws it; a film may leave it out of guest mode by choice,
+   * keeping the rest of guest mode's header.
+   */
+  banner?: boolean;
+}> = ({ hall, guests, badges, sheet, query = "", mode = "viewer", scroll = 0, canvas, children, weddingName = WEDDING.couple, banner: showBanner }) => {
   const canEdit = canEditIn(mode);
-  const banner = bannerIn(mode);
+  const banner = showBanner ?? bannerIn(mode);
   const tabs = barTabs(mode);
   const seated = guests.filter((g) => g.table).length;
   const rows = matchingGuests(guests, query);
@@ -295,7 +307,7 @@ export const PhoneShell: React.FC<{
               textOverflow: "ellipsis",
             }}
           >
-            {WEDDING.couple}
+            {weddingName}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
             {mode === "guest" ? (
