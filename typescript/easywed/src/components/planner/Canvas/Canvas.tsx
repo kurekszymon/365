@@ -308,11 +308,11 @@ export const Canvas = () => {
 
   const hallSurfaceRef = useRef<HallSurfaceMethods>(null)
 
-  // The minimap only earns its space when the whole world is not already framed:
-  // panned off-centre, or zoomed until it overflows the viewport on either axis.
-  const worldOverflows =
-    scaledWidth > containerWidth + 1 || scaledHeight > containerHeight + 1
-  const showMinimap = worldOverflows || pan.x !== 0 || pan.y !== 0
+  // The minimap only earns its space once the venue is zoomed in past the
+  // fit-to-viewport baseline (zoom 1); at or below it the whole world is
+  // already on screen, so panning alone doesn't warrant a navigator. The
+  // epsilon absorbs float drift from stepZoom's log-space round trips.
+  const showMinimap = zoom > 1 + 1e-3
 
   if (halls.length === 0) {
     return (

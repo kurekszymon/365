@@ -1,0 +1,5 @@
+{
+  "title": "A tidier canvas",
+  "summary": "One small change to the planner: the minimap now stays out of the way until you actually need it.",
+  "i1": "The minimap in the corner of the planner only appears once you zoom in. When the whole venue already fits on screen, there's nothing to navigate, so it no longer covers part of the layout."
+}
