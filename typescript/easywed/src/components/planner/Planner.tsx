@@ -7,13 +7,14 @@ import { SidebarRail } from "./Sidebar/SidebarRail"
 import { EntityEditDialog } from "./Sidebar/EntityEditDialog"
 import { Header } from "./Header"
 import { MemberAvatars } from "./Header/MemberAvatars"
+import { VenueButton } from "./Header/VenueButton"
 import { ExportHeader } from "./Header/Export.header"
 import { ImportHeader } from "./Header/Import.header"
 import { PlannerPrintView } from "./PlannerPrintView"
 import { usePrintShortcut } from "./usePrintShortcut"
 import { MobilePanelDrawer } from "./EntityForms/MobilePanelDrawer"
-import { AccountMenu } from "./Header/AccountMenu"
 import { GuestModeBanner } from "./GuestModeBanner"
+import { AccountMenu } from "@/components/account/AccountMenu"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Button } from "@/components/ui/button"
 import { DialogManager } from "@/components/dialogs/DialogManager"
@@ -68,6 +69,7 @@ export const Planner = () => {
                 icon button - sit apart from the run of buttons that follows,
                 instead of splitting it in two. */}
             <MemberAvatars />
+            <VenueButton />
             <Button
               variant="outline"
               onClick={openHalls}

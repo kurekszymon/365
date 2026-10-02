@@ -122,7 +122,13 @@ export const TERMS_SECTIONS: Array<TermsSection> = [
   },
   { id: "ip", clauses: [["c1", 4], "c2", "c3"] },
   { id: "disputes", clauses: ["c1", "c2", ["c3", 3]] },
-  { id: "data", clauses: ["c1", "c2", "c3", "c4", "c5"] },
+  // c6-c8 are the venue disclosure flow, *appended* rather than slotted next to
+  // the art. 9 clause they belong with: c5 already cites "ust. 3" and the
+  // Polityka cites "§ 14 ust. 4", so inserting would silently repoint both.
+  {
+    id: "data",
+    clauses: ["c1", "c2", "c3", "c4", "c5", ["c6", 5], "c7", "c8"],
+  },
   {
     id: "service_changes",
     clauses: ["c1", ["c2", 3], "c3", "c4", ["c5", 2], "c6", "c7", "c8"],
@@ -136,8 +142,8 @@ export const TERMS_SECTIONS: Array<TermsSection> = [
 
 // The model withdrawal form (załącznik nr 2 to the Ustawa o prawach
 // konsumenta), which art. 12 ust. 1 pkt 9 requires the trader to supply rather
-// than just cite. Rendered after the last § as an appendix - it isn't a section
-// of the contract and carries no § number of its own.
+// than cite. Rendered after the last § as an appendix: not a section of the
+// contract, and carrying no § number of its own.
 export const TERMS_APPENDIX = { id: "withdrawal_form", lines: 8 } as const
 
 // Sections with `bullets` render `privacy.<id>.intro` + a list; the rest
@@ -159,7 +165,19 @@ export const PRIVACY_SECTIONS: Array<{ id: string; bullets?: Array<string> }> =
     },
     {
       id: "purposes",
-      bullets: ["service", "account", "analytics", "security", "legal"],
+      // `special` is the art. 9 ust. 2 lifting condition. privacy.data.dietary
+      // admits the policy holds special-category data, so listing art. 6 bases
+      // alone would leave that processing with no condition - and v2 discloses
+      // those tags to a third party.
+      bullets: [
+        "service",
+        "account",
+        "venue",
+        "analytics",
+        "security",
+        "legal",
+        "special",
+      ],
     },
     { id: "storage" },
     { id: "transfers" },
@@ -168,6 +186,14 @@ export const PRIVACY_SECTIONS: Array<{ id: string; bullets?: Array<string> }> =
     {
       id: "sharing",
       bullets: ["supabase", "cloudflare", "posthog", "google", "ai"],
+    },
+    // Its own section rather than a sixth `sharing` bullet: that list is framed
+    // as art. 28 processors ("na podstawie umów powierzenia"), and a Sala
+    // Weselna receiving a slice of the plan is an independent recipient acting
+    // for its own catering purposes, not a sub-processor.
+    {
+      id: "venue",
+      bullets: ["shared", "hidden", "optin", "recipient", "revoke"],
     },
     { id: "guests" },
     { id: "cookies" },
