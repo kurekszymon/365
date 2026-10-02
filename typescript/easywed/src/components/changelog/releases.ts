@@ -21,6 +21,7 @@ export type Release = {
 // entry here plus a folder of the same name holding en.json and pl.json; the
 // test fails if the two disagree or if either language is short.
 export const RELEASES: Array<Release> = [
+  { id: "v1.1.4", version: "1.1.4", date: "2026-10-02", items: 1 },
   { id: "v1.1.3", version: "1.1.3", date: "2026-10-02", items: 1 },
   { id: "v1.1.2", version: "1.1.2", date: "2026-09-29", items: 2 },
   { id: "v1.1", version: "1.1", date: "2026-09-20", items: 2 },

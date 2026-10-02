@@ -18,7 +18,10 @@ export const Brand = () => {
       className="flex shrink-0 items-center gap-2 transition-opacity hover:opacity-80"
     >
       <BrandMark className="h-6 w-6" />
-      <span className="hidden font-heading text-base font-semibold sm:inline">
+      {/* `items-center` centres the line box, but an all-lowercase Playfair
+          wordmark's ink is the x-height band, ~0.15em below the box's middle -
+          the lift puts the mark's centre on it. Inline-block so it applies. */}
+      <span className="hidden -translate-y-[0.15em] font-heading text-base font-semibold sm:inline-block">
         easywed.
       </span>
     </Link>
