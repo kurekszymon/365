@@ -1,6 +1,6 @@
 {
   "title": "Ciasteczka - Twój wybór",
   "summary": "Zanim użyjemy ciasteczka analitycznego, pytamy. Jeśli się nie zgodzisz, wszystko działa tak jak wcześniej.",
-  "i1": "Przy pierwszej wizycie pojawia się baner z pytaniem o ciasteczka. „Zgadzam się” i „Nie zgadzam się” wyglądają tak samo, a decyzję możesz zmienić w każdej chwili - przez „Ustawienia cookies” w stopce strony głównej, w Ustawieniach albo na stronach regulaminu i polityki prywatności.",
+  "i1": "Przy pierwszej wizycie pojawia się baner z pytaniem o ciasteczka. „Zgadzam się” i „Nie zgadzam się” wyglądają tak samo, a decyzję możesz zmienić w każdej chwili - przez „Ustawienia cookies” w menu konta w planerze, w stopce strony głównej, w Ustawieniach albo na stronach regulaminu i polityki prywatności.",
   "i2": "Jeśli się zgodzisz, PostHog nagra przebieg wizyty, żebyśmy widzieli, gdzie planer sprawia kłopot. Cały tekst i pola formularzy są w nagraniu zakryte, więc nie ma w nim imion Twoich gości ani ich diet. Polityka prywatności opisuje to dokładnie - zaktualizowaliśmy ją razem z tą wersją."
 }

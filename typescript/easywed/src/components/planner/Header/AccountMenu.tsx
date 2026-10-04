@@ -1,4 +1,5 @@
 import {
+  CookieIcon,
   LogInIcon,
   LogOutIcon,
   MenuIcon,
@@ -12,6 +13,7 @@ import { ThemeSubmenu } from "./ThemeSubmenu"
 import { supabase } from "@/lib/supabase"
 import { useAuthStore } from "@/stores/auth.store"
 import { useProfileStore } from "@/stores/profile.store"
+import { useConsentStore } from "@/stores/consent.store"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 import { Button } from "@/components/ui/button"
 import {
@@ -40,6 +42,7 @@ export const AccountMenu = () => {
 
   const session = useAuthStore((state) => state.session)
   const displayName = useProfileStore((state) => state.displayName)
+  const openCookieSettings = useConsentStore((state) => state.openSettings)
 
   const label = t("account.menu")
 
@@ -62,8 +65,8 @@ export const AccountMenu = () => {
         <DropdownMenuLabel>{displayName ?? label}</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {/* Above the account actions because these two work the same signed in
-            or out. New tab, like the legal links in Settings: reading the
+        {/* Above the account actions because these work the same signed in or
+            out. New tab, like the legal links in Settings: reading the
             release notes must never cost someone their planner state. The page
             is language-pinned, so the link picks the locale the app is in. */}
         <ThemeSubmenu />
@@ -78,6 +81,12 @@ export const AccountMenu = () => {
             <SparklesIcon />
             {t("account.changelog")}
           </Link>
+        </DropdownMenuItem>
+        {/* The planner's only route to withdrawing consent for a guest, who
+            has no /settings - and withdrawing has to be as easy as agreeing. */}
+        <DropdownMenuItem onSelect={openCookieSettings}>
+          <CookieIcon />
+          {t("consent.settings")}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
 
