@@ -1,6 +1,12 @@
 import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
-import { ExternalLinkIcon, FileTextIcon, ShieldCheckIcon } from "lucide-react"
+import {
+  CookieIcon,
+  ExternalLinkIcon,
+  FileTextIcon,
+  ShieldCheckIcon,
+} from "lucide-react"
+import { CookieSettingsButton } from "@/components/consent/CookieSettingsButton"
 
 /**
  * The Regulamin and Polityka prywatności, reachable from inside the app.
@@ -58,6 +64,9 @@ export const LegalLinksSection = () => {
             />
           </Link>
         ))}
+        <CookieSettingsButton className="flex items-center gap-2 rounded-md py-2 text-left text-sm text-muted-foreground transition-colors hover:text-foreground">
+          <CookieIcon className="size-4 shrink-0" aria-hidden="true" />
+        </CookieSettingsButton>
       </div>
     </div>
   )

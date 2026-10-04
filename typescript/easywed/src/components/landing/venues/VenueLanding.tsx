@@ -8,6 +8,7 @@ import { VenuePricing } from "./VenuePricing"
 import { VenueCta } from "./VenueCta"
 import { salesMailto } from "./salesMailto"
 import type { Lang } from "@/components/landing/LocaleLanding"
+import { CookieSettingsButton } from "@/components/consent/CookieSettingsButton"
 import { Button } from "@/components/ui/button"
 import i18n from "@/i18n"
 
@@ -97,6 +98,10 @@ export function VenueLanding({ lang }: { lang: Lang }) {
             >
               {t("landing.footer.privacy", { lng: lang })}
             </Link>
+            <CookieSettingsButton
+              lng={lang}
+              className="transition-colors hover:text-foreground"
+            />
             <span suppressHydrationWarning>
               © {new Date().getUTCFullYear()} easywed.
             </span>

@@ -22,6 +22,7 @@ import { useThemeStore } from "@/stores/theme.store"
 import { useAiStore } from "@/stores/ai.store"
 import { scrubInviteTokens } from "@/lib/analytics/scrubInviteTokens"
 import { useConsentStore } from "@/stores/consent.store"
+import { CookieBanner } from "@/components/consent/CookieBanner"
 
 const options = {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
@@ -248,6 +249,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <LocalWeddingMigrationPrompt />
           </TooltipProvider>
           <Toaster richColors position="top-right" />
+          <CookieBanner />
         </PostHogProvider>
 
         <TanStackDevtools
