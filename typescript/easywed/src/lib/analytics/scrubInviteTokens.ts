@@ -66,9 +66,11 @@ const redactIn = (bag: unknown, maxDepth: number, depth = 0): void => {
 // Session replay snapshots get their top-level properties scrubbed but are not
 // descended into: rrweb nests recorded hrefs far deeper than MAX_DEPTH, and the
 // payloads are big enough that walking them on every snapshot would be real
-// overhead. Replay is therefore NOT covered by this - if it's enabled on the
-// project, /invite/* needs excluding in the PostHog session-recording settings,
-// or the token needs moving out of the path entirely.
+// overhead. Replay is therefore NOT covered by this. It is on for visitors who
+// accept the cookie banner, and what keeps credentials out of it is the
+// project's replay URL blocklist in PostHog (/invite/, /reset-password,
+// /auth/callback) - keep that list in step with the URLs handled above. Text
+// in recordings is masked separately, by session_recording in __root.tsx.
 const depthFor = (event: CaptureResult): number =>
   event.event === "$snapshot" ? 0 : MAX_DEPTH
 

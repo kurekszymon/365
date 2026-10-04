@@ -2,6 +2,14 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 04.10
+
+- posthog session replay, behind a cookie banner. `cookieless_mode: "on_reject"` + `opt_out_capturing_by_default`: no answer counts as no, which is the cookieless capture everyone had before - accepting is the only thing that writes `ph_*` or starts a recording. the project's cookieless setting stays on, the reject path depends on it
+- banner in the root layout, renders nothing until posthog's `loaded` callback syncs `consent.store` - so nothing in the prerendered html and no hydration mismatch. accept and reject look the same on purpose. "cookie settings" re-opens it from the landing footers, the legal pages and settings - withdrawing has to be as easy as agreeing
+- replay masks every text node and input (`maskTextSelector: "*"`). a recording of the planner is otherwise a recording of the guest list, dietary notes included. no `identify` either, the policy says recordings aren't linked to the account
+- `/invite/`, `/reset-password`, `/auth/callback` on the replay url blocklist in posthog - `scrubInviteTokens` still doesn't walk `$snapshot`
+- privacy policy: two tiers (cookieless on legitimate interest, cookie + replay on consent), banner described, 30-day recording retention. `replayRetentionDays` in legal config, `legal:check` keeps the prose honest about it. regulamin untouched, so no § 16 notice; no accounts yet, so the policy changed in place
+
 ### 15.08
 
 - set version in package.json to 1.0.0
