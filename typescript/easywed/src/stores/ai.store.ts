@@ -5,10 +5,9 @@ import { persist } from "zustand/middleware"
 // OpenAI-compatible endpoint + key + model id, so the same code path works with
 // OpenRouter (recommended default), OpenAI, Azure, a local llama.cpp server, etc.
 //
-// Stored in localStorage via `persist` (matching the `easywed.*` convention in
-// theme.store.ts). `skipHydration` defers the read until RootDocument triggers
-// it after mount, keeping the first client render equal to the server's default
-// and avoiding an SSR hydration mismatch.
+// Stored in localStorage via `persist`, matching theme.store.ts's `easywed.*`
+// convention. `skipHydration` defers the read until RootDocument triggers it
+// after mount, so the first client render matches the server's default.
 //
 // Security note: the key is plaintext in localStorage and readable by any script
 // running on the page (XSS). This matches the BYO-key model and is surfaced to
@@ -19,12 +18,11 @@ export const AI_STORAGE_KEY = "easywed.ai"
 export const DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 export const DEFAULT_MODEL = "qwen/qwen3.5-flash-02-23"
 
-// Quick-fill values for a local llama.cpp server (`llama-server`). It exposes an
+// Quick-fill values for a local llama.cpp server. It exposes an
 // OpenAI-compatible API at /v1 (default port 8080) and ignores both the key and
-// the model id (it serves whatever model was loaded), but the key field must be
-// non-empty for the settings to count as configured, so we send a placeholder.
-// Tool calling requires the server to be started with `--jinja` and a model
-// whose chat template supports tools.
+// the model id, but the key field must be non-empty for the settings to count as
+// configured - hence the placeholder. Tool calling needs the server started with
+// `--jinja` and a model whose chat template supports tools.
 export const LLAMACPP_BASE_URL = "http://localhost:8080/v1"
 export const LLAMACPP_API_KEY = "no-key"
 export const LLAMACPP_MODEL = "lmstudio-community/Qwen3-8B-GGUF:Q4_K_M"
@@ -64,9 +62,9 @@ export const selectIsConfigured = (state: State): boolean =>
   state.baseUrl.trim().length > 0 &&
   state.model.trim().length > 0
 
-// True when the URL would send the API key over plain (unencrypted) http to a
-// non-local host. Localhost http is fine (that's how llama.cpp / Ollama run);
-// a remote http endpoint leaks the key on the wire, so we warn about it.
+// True when the URL would send the API key over plain http to a non-local host.
+// Localhost http is fine - that is how llama.cpp and Ollama run - but a remote
+// http endpoint leaks the key on the wire.
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"])
 
 export const isInsecureRemote = (url: string): boolean => {

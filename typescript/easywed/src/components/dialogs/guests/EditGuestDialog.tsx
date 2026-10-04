@@ -72,7 +72,11 @@ export const EditGuestDialog = () => {
           <ResponsiveDialogTitle>{t("guests.edit")}</ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
         <ResponsiveDialogBody>
-          <GuestFormFields value={form} onChange={setForm} />
+          <GuestFormFields
+            value={form}
+            onChange={setForm}
+            guestId={guest?.id}
+          />
           <Button
             disabled={!form.name.trim()}
             onClick={() => {

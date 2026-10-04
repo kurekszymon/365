@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <title>EasyWed, pilotaż dla sal weselnych</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f5f6ef;
+        --card: #ffffff;
+        --ink: #22301f;
+        --muted: #5d6a5a;
+        --primary: #43684b;
+        --primary-soft: #e4efe2;
+        --accent: #a9592b;
+        --accent-soft: #f6e7dc;
+        --line: #dde3d6;
+      }
+      @page {
+        size: A4;
+        margin: 0;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        width: 210mm;
+        height: 297mm;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          9.6pt/1.45 "Inter",
+          system-ui,
+          sans-serif;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .page {
+        padding: 13mm 15mm 11mm;
+        height: 297mm;
+        display: flex;
+        flex-direction: column;
+        gap: 5mm;
+        overflow: hidden;
+      }
+      h1,
+      h2 {
+        font-family: "Playfair Display", Georgia, serif;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 3mm;
+        font-family: "Playfair Display", serif;
+        font-size: 15pt;
+        font-weight: 700;
+        color: var(--primary);
+      }
+      .brand svg {
+        width: 10mm;
+        height: 10mm;
+      }
+      .tag {
+        font-size: 8pt;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        border: 1.2px solid var(--accent);
+        border-radius: 99px;
+        padding: 1.2mm 3.5mm;
+      }
+
+      .hero h1 {
+        font-size: 23pt;
+        line-height: 1.15;
+        margin-bottom: 2.5mm;
+      }
+      .hero h1 em {
+        font-style: normal;
+        color: var(--primary);
+      }
+      .hero p {
+        font-size: 10.5pt;
+        color: var(--muted);
+        max-width: 165mm;
+      }
+
+      .pain {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 3mm;
+      }
+      .pain div {
+        background: var(--accent-soft);
+        border-radius: 3mm;
+        padding: 3mm 3.5mm;
+        font-size: 9pt;
+      }
+      .pain b {
+        display: block;
+        color: var(--accent);
+        font-size: 9.2pt;
+        margin-bottom: 0.6mm;
+      }
+
+      h2 {
+        font-size: 13.5pt;
+        margin-bottom: 2.5mm;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3mm;
+      }
+      .feat {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 3mm;
+        padding: 3.2mm 3.8mm;
+      }
+      .feat b {
+        display: block;
+        color: var(--primary);
+        font-size: 10pt;
+        margin-bottom: 0.8mm;
+      }
+      .feat p {
+        font-size: 8.9pt;
+        color: var(--ink);
+      }
+
+      .rodo {
+        display: flex;
+        gap: 4mm;
+        align-items: flex-start;
+        background: var(--primary);
+        color: #f5f6ef;
+        border-radius: 3mm;
+        padding: 4mm 5mm;
+      }
+      .rodo .ico {
+        flex: none;
+        width: 9mm;
+        height: 9mm;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.15);
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 8pt;
+      }
+      .rodo b {
+        display: block;
+        font-size: 10.5pt;
+        margin-bottom: 0.8mm;
+      }
+      .rodo p {
+        font-size: 9pt;
+        opacity: 0.95;
+      }
+
+      .cols {
+        display: grid;
+        grid-template-columns: 1.15fr 1fr;
+        gap: 5mm;
+      }
+      .offer {
+        background: var(--card);
+        border: 1.5px solid var(--accent);
+        border-radius: 3mm;
+        padding: 4mm 5mm;
+      }
+      .offer h2 {
+        color: var(--accent);
+      }
+      ul {
+        list-style: none;
+      }
+      li {
+        position: relative;
+        padding-left: 5mm;
+        margin-bottom: 1.3mm;
+        font-size: 9.2pt;
+      }
+      li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 1.9mm;
+        width: 2mm;
+        height: 2mm;
+        border-radius: 50%;
+        background: var(--primary);
+      }
+      .offer li::before {
+        background: var(--accent);
+      }
+      .give {
+        margin-top: 2.5mm;
+        padding-top: 2.5mm;
+        border-top: 1px dashed var(--line);
+        font-size: 9pt;
+        color: var(--muted);
+      }
+      .give b {
+        color: var(--ink);
+      }
+
+      .steps li {
+        padding-left: 8mm;
+        margin-bottom: 2.4mm;
+      }
+      .steps li::before {
+        display: none;
+      }
+      .steps .n {
+        position: absolute;
+        left: 0;
+        top: 0.2mm;
+        width: 5.5mm;
+        height: 5.5mm;
+        border-radius: 50%;
+        background: var(--primary);
+        color: #fff;
+        font-size: 8pt;
+        font-weight: 600;
+        display: grid;
+        place-items: center;
+      }
+      .soon {
+        margin-top: 3mm;
+        font-size: 8.8pt;
+        color: var(--muted);
+        background: var(--primary-soft);
+        border-radius: 2.5mm;
+        padding: 2.5mm 3.5mm;
+      }
+      .soon b {
+        color: var(--primary);
+      }
+
+      footer {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6mm;
+        border-top: 1px solid var(--line);
+        padding-top: 4mm;
+      }
+      .contact {
+        font-size: 9.5pt;
+      }
+      .contact .who {
+        font-family: "Playfair Display", serif;
+        font-size: 13pt;
+        font-weight: 600;
+        margin-bottom: 0.8mm;
+      }
+      .contact span {
+        display: inline-block;
+        margin-right: 5mm;
+      }
+      .contact .ph {
+        background: #fff4b8;
+        padding: 0 1mm;
+      }
+      .qr {
+        display: flex;
+        align-items: center;
+        gap: 3mm;
+        font-size: 8.5pt;
+        color: var(--muted);
+        text-align: right;
+      }
+      .qr img {
+        width: 20mm;
+        height: 20mm;
+      }
+
+      .intro {
+        font-size: 10.3pt;
+        line-height: 1.55;
+        color: var(--ink);
+      }
+      .intro p + p {
+        margin-top: 2mm;
+      }
+      .plain li {
+        margin-bottom: 2mm;
+        font-size: 9.6pt;
+        line-height: 1.5;
+      }
+      .plain li b {
+        color: var(--primary);
+      }
+      .rodo b {
+        display: inline;
+        font-size: 10pt;
+        margin: 0;
+      }
+      .rodo p {
+        font-size: 9.4pt;
+        line-height: 1.5;
+      }
+      .offer p {
+        font-size: 9.4pt;
+        line-height: 1.5;
+      }
+      .offer p + p {
+        margin-top: 2mm;
+      }
+      .side p {
+        font-size: 9.4pt;
+        line-height: 1.5;
+        color: var(--ink);
+      }
+      .side h2 {
+        font-size: 12pt;
+      }
+      .side .block + .block {
+        margin-top: 4mm;
+      }
+      .sign {
+        font-family: "Playfair Display", serif;
+        font-size: 12pt;
+        font-style: italic;
+        color: var(--primary);
+        margin-top: 2mm;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div class="brand">
+          <svg viewBox="0 0 120 120" aria-hidden="true">
+            <circle cx="60" cy="60" r="33" fill="#43684b" />
+            <g fill="#9ec2a2">
+              <circle cx="60" cy="107" r="9" />
+              <circle cx="13" cy="60" r="9" />
+              <circle cx="93" cy="27" r="9" />
+              <circle cx="27" cy="93" r="9" />
+              <circle cx="93" cy="93" r="9" />
+              <circle cx="27" cy="27" r="9" />
+            </g>
+            <circle cx="60" cy="13" r="10" fill="#a9592b" />
+            <circle cx="107" cy="60" r="10" fill="#a9592b" />
+          </svg>
+          easywed
+        </div>
+        <div class="tag">Pilotaż dla sal weselnych 2027</div>
+      </header>
+
+      <section class="hero">
+        <h1>
+          Plan stołów na kartce,<br />w czwartek przed weselem?
+          <em>Da się inaczej.</em>
+        </h1>
+      </section>
+
+      <section class="intro">
+        <p>
+          Nazywam się Szymon i robię easywed, aplikację, w której pary młode
+          układają gości przy stołach. Teraz dokładam do niej część dla sal.
+          Chodzi o to, żebyście nie musieli przepisywać planu z Excela ani
+          zliczać diet z trzech różnych maili.
+        </p>
+        <p>
+          Szukam kilku sal z Wielkopolski, które sprawdzą to ze mną w sezonie
+          2027. Za darmo.
+        </p>
+      </section>
+
+      <section>
+        <h2>Co sala może robić już teraz</h2>
+        <ul class="plain">
+          <li>
+            <b>Widzieć aktualny plan stołów</b> każdej pary, która Wam go
+            udostępni. Jak para coś przestawi, u Was też jest już zmienione.
+          </li>
+          <li>
+            <b>Wydrukować zestawienie dla kuchni.</b> Ile jakich dań i jakie
+            diety przy każdym stole, plus podsumowanie porcji.
+          </li>
+          <li>
+            <b>Wpisać swoje menu.</b> Para wybiera dania od razu przy gościach,
+            a ceny widzą tylko Wasze pary.
+          </li>
+          <li>
+            <b>Mieć własny panel</b> pod adresem <i>twojasala</i>.easywed.app.
+            Obsługę i pary zapraszacie zwykłym linkiem.
+          </li>
+        </ul>
+      </section>
+
+      <section class="rodo">
+        <div class="ico">RODO</div>
+        <p>
+          <b>A co z danymi gości?</b> Po prostu ich nie dostajecie. Widzicie
+          numery miejsc, diety i dania, ale imiona i notatki zostają u pary. Nie
+          musicie ich przechowywać ani pilnować. To para decyduje, czy i kiedy
+          pokaże Wam swój plan.
+        </p>
+      </section>
+
+      <section class="cols">
+        <div class="offer">
+          <h2>Jak wygląda pilotaż</h2>
+          <p>
+            <b>Przez cały sezon 2027 korzystacie za darmo.</b> Nie potrzeba
+            karty i nie podpisujecie niczego na kolejne lata.
+          </p>
+          <p>
+            Zakładam Wam konto, wpisuję menu i przygotowuję przykładowy plan na
+            Waszej sali. Jak coś nie działa albo czegoś brakuje, dzwonicie
+            prosto do mnie.
+          </p>
+          <p class="give" style="margin-top: 2.5mm">
+            <b>W zamian</b> proszę o szczere uwagi w trakcie sezonu. A jeśli
+            będziecie zadowoleni, o kilka zdań rekomendacji.
+          </p>
+        </div>
+        <div class="side">
+          <div class="block">
+            <h2>Czego jeszcze nie ma</h2>
+            <p>
+              Obsługi klientów (CRM) i gotowych szablonów sal. Pracuję nad tym
+              teraz i wolę to zrobić pod Wasze potrzeby niż w ciemno.
+            </p>
+          </div>
+          <div class="block">
+            <h2>Co dalej</h2>
+            <p>
+              Zadzwońcie albo napiszcie. Przyjadę na kwadrans i pokażę wszystko
+              na telefonie, u Was na miejscu.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <div class="contact">
+          <div class="sign">Szymon Kurek</div>
+          <span>tel. +48 535 685 800</span><span>szymon@easywed.app</span
+          ><span>easywed.app</span>
+        </div>
+        <div class="qr">
+          <div>Tak wygląda<br />aplikacja od strony pary</div>
+          <img src="qr.svg" alt="QR: easywed.app" />
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -2,20 +2,33 @@
 
 Personal notes on what's in the schema, why, and how the Supabase CLI flow works. Written from a frontend-proficient perspective.
 
-## What the migration does
+## What the migrations do
 
-6 tables across 2 migration files:
+Sixteen tables and one view, across 31 migration files:
 
 ```
-weddings              ← top-level project
-  ├─ wedding_members  ← join table: who has access, what role
-  ├─ halls            ← 1:1 with wedding (the floor plan)
-  ├─ tables           ← 1:N (seating tables)
-  ├─ guests           ← 1:N, optionally FK → tables
-  └─ reminders        ← 1:N (wedding todo list)
+weddings                     ← top-level project
+  ├─ wedding_members         ← join table: who has access, what role
+  ├─ wedding_invitations     ← join tokens the owner issues
+  ├─ halls                   ← 1:N (the floor plan; usually one)
+  ├─ tables                  ← 1:N (seating tables)
+  ├─ fixtures                ← 1:N (bar, stage, dancefloor - no seats)
+  ├─ guests                  ← 1:N, optionally FK → tables
+  ├─ reminders               ← 1:N (wedding todo list)
+  └─ wedding_menu_selections ← 1:N, FK → menu_options (the dishes ordered)
 
-profiles              ← 1:1 with auth.users, outside the wedding tree
+tenants                      ← a venue, at <slug>.easywed.app
+  ├─ tenant_members          ← staff, and the couples linked to them
+  ├─ tenant_invitations      ← join tokens, mirroring the wedding side
+  └─ menu_packages           ← the catalogue the venue authors
+       └─ menu_courses
+            └─ menu_options
+
+profiles                     ← 1:1 with auth.users, outside both trees
+wedding_seatmap              ← view over guests; all a venue reads of them
 ```
+
+`invitation_orders` was created in `20260425000001` and dropped again in `20260804000001` - ignore it if the history hands it to you.
 
 Frontend analogy: like setting up Zustand stores' TypeScript types once upfront, but enforced at the database level so no client bug can corrupt the shape.
 
@@ -39,14 +52,143 @@ Single most important Postgres concept for SaaS. Without RLS, any authenticated 
 alter table public.halls enable row level security;
 create policy "members can view halls"
   on public.halls for select
-  using (public.is_wedding_member(wedding_id));
+  using (
+    public.wedding_role(wedding_id) in ('owner', 'editor', 'viewer', 'venue')
+  );
 ```
 
-At runtime: when the React app does `supabase.from("halls").select()`, Postgres rewrites it to `SELECT * FROM halls WHERE is_wedding_member(wedding_id)`. Can't forget to add the filter - impossible to leak data.
+At runtime: when the React app does `supabase.from("halls").select()`, Postgres rewrites it to `SELECT * FROM halls WHERE wedding_role(wedding_id) in (...)`. Can't forget to add the filter - impossible to leak data.
 
-Each table has 4 policies: one per operation (SELECT/INSERT/UPDATE/DELETE). `using` applies to reads; `with check` applies to writes. `members can view` vs `editors can modify` is the role gate.
+That policy read `using (public.is_wedding_member(wedding_id))` until `20260817000003` replaced it. The spelling is gone from the whole wedding tree now, and on `guests` restoring it is a personal-data breach - see the venue section below before writing it anywhere.
+
+`using` applies to reads; `with check` applies to writes, and `members can view` vs `editors can modify` is the role gate. The wedding-tree tables run to roughly four policies each, one per operation - but do not read that as a rule, because on the newer tables the **missing** ones are load-bearing: `tenant_members` has no INSERT policy and must not grow one, `tenants` has neither INSERT nor DELETE (provisioning is a psql job), `wedding_menu_selections` has no UPDATE at all (a composite primary key, picked and unpicked), and each of the three menu tables has *two* SELECT policies - one for the venue's own staff, one for couples linked to it.
 
 **Why this matters vs Node/Express**: traditionally you'd write `if (user.canEdit(wedding)) { ... }` in every endpoint - easy to forget one route. RLS pushes the check to the data layer - can't be bypassed by a missed middleware.
+
+## Tenants, the derived `venue` role, and the one policy you must not simplify
+
+Migrations `20260817000001`-`20260817000003` add a **tenant** (a wedding venue at `<slug>.easywed.app`) with its own `tenants` / `tenant_members` tables and five `security definer` functions (`tenant_role`, `is_tenant_member`, `is_tenant_staff`, `my_tenant_id`, `staff_can_view_profile`). Four of them are policy helpers and keep their `anon` EXECUTE grant for the reason in the segfault section below.
+
+`my_tenant_id` is the exception, and the reason written in `20260817000001` does not actually cover it: it appears in **no policy** — it is an RPC in shape, and today it has no caller at all, in SQL or in TypeScript. `fetchMyStaffTenant` does the job instead, because it filters on `role in ('owner','staff')` and `my_tenant_id()` answers for any membership, including a venue's `customer` (`staffTenant.test.ts` pins that difference). So the segfault argument cannot apply to it and revoking `anon` here would be safe. The grant is left alone anyway because there is nothing to buy — the function reads `auth.uid()` and returns null for an anonymous caller — and a blanket "these five stay granted" is one fewer exception for the next person to re-litigate. Worth knowing which argument really applies, in a section that otherwise forbids revisiting the grant.
+
+A couple can link their wedding to a venue (`weddings.tenant_id`) and then, separately, grant it access (`weddings.venue_access`, one of `none` / `pending` / `granted`). Neither column is client-writable: `enforce_wedding_tenant_columns` blocks `authenticated` and `anon` on **INSERT as well as UPDATE**, so the only ways in are `link_wedding_to_venue` and `set_venue_access`. **`set_venue_access` lets the wedding owner grant or revoke, and lets venue staff only revoke** — the grant is the art. 9(2)(a) consent, and the recipient of the data cannot supply it on behalf of the data subject. The INSERT half matters — the weddings INSERT policy only checks `owner_id = auth.uid()`, so without it anyone could POST a wedding that arrives pre-linked and pre-granted, straight past the `open_linking` check.
+
+`wedding_role()` then grows a second branch: `'venue'` when the wedding names a tenant, `venue_access = 'granted'`, and the caller `is_tenant_staff` of it. **No row ever carries that value** — `wedding_members_role_check` is deliberately not widened, because `coalesce` prefers an explicit member row and a hand-written `venue` row would outrank the derived branch and survive `set_venue_access`.
+
+### The `guests` SELECT policy
+
+This is the single highest-risk line in the whole feature, so it is written out here as well as in the migration and in CLAUDE.md.
+
+```sql
+create policy "members can view guests"
+  on public.guests for select
+  using (public.wedding_role(wedding_id) in ('owner', 'editor', 'viewer'));
+```
+
+It names the three member roles **literally**, and must keep doing so. Two edits look like tidying and are a personal-data breach:
+
+- **Reverting it to `is_wedding_member(wedding_id)`.** That is equivalent *today* only because `wedding_role()`'s first branch is a lookup in the same table. The second branch broke the equivalence, and nothing guarantees the first stays a plain lookup. A policy that is safe because of how a helper happens to be implemented is one refactor away from handing every guest name to a third party, silently — nothing errors, the venue simply starts receiving names.
+- **Adding `'venue'` to the list.** `guests` holds full names and the couple's free-text notes about people who never agreed to anything. `privacy.venue.hidden` promises in writing that a venue never receives either.
+
+`reminders` and `wedding_members` are narrowed the same way. `halls`, `tables`, `fixtures` and `weddings` are the ones that gain `'venue'` here — the room, and the wedding's name and date, all named in `privacy.venue.shared`. `wedding_menu_selections` joined them later (`20260822000002`) and is the only addition to that list; every value in it is a uuid of the venue's own catalogue, and it is the first relation in the tree that a venue reads and the couple writes.
+
+A policy admits **rows, not columns**, so `'venue'` on `weddings` puts the whole row within reach, `owner_id` included — a stable `auth.users` uuid that the disclosure did not name. It is reachable rather than disclosed: both venue-side reads project explicit column lists and neither asks for it (`loadWeddingForVenue.ts`, `CrmWeddingList.tsx`). **The answer taken was to name it in the copy** — in `privacy.venue.shared`, and deliberately *not* in the grant dialog's `venue.grant.shared_3`. As content the uuid is nothing: no name, no email, nothing the couple typed, and nothing the venue can resolve against a system of its own. Its one real property is that it is **stable**, so a venue hosting two weddings by the same account sees the same value twice — which is worth a clause on the policy page and is not sayable in a consent bullet without more words than it is worth. `VenueDisclosureList` exists to give the "never sees" half equal weight to the "sees" half, and padding the latter with a random string dilutes the sentence that screen is actually for. That trade cost one more edit: `privacy.venue.optin` used to promise the app shows "exactly this list", which was literally true item-for-item, and now says it shows a short version of both halves with the policy page as the complete one. The alternative — a `wedding_venue_summary` view mirroring `wedding_seatmap`, with `'venue'` dropped from the `weddings` policy — was considered and not taken: it costs `loadWeddingForVenue` its `tenants(id, slug, name)` embed, since PostgREST will not traverse an FK from a view, and buys the concealment of an opaque identifier that carries no name, no address and nothing the couple typed. Revisit it if `weddings` ever grows a column that does.
+
+What the venue reads instead is `wedding_seatmap`, a `security_barrier` view running as its owner (so the `guests` policy above does not filter it) whose entire access control is its own `WHERE`. It projects seat position, `dietary`, `age_group` and — appended by `20260822000003`, since `create or replace view` may only add columns at the end — `menu_option_id`. **No `name` column and no `note` column exist in it to leak**, and the dish is a uuid rather than a label for exactly that reason: a text column here would degrade `venueRls.test.ts`'s blunt "no `name` key" assertion into an allowlist. That test pins the view's **whole key set**, not just the absence of `name` and `note`, so any column added here is a deliberate edit to that file rather than something that arrives unnoticed.
+
+The honest limit, disclosed rather than engineered around: **every free-text field the venue does receive is a channel for a name the projection cannot close.** `dietary` and `age_group` are the two the migration names, and they are the sharpest because they sit on a person — a name typed into a diet tag reaches the venue attached to a seat. They are not the only ones. `halls.name` and `tables.name` come across whole through section 2's widening (`rows.ts` copies both onto the venue's canvas), and in this product a table is routinely called "Stół Kowalskich" — a surname, volunteered, sitting on the floor plan. That is disclosed in `20260817000003` section 2 and covered by `privacy.venue.shared`'s "layout of halls, tables and other plan elements", but it is absent from the HONEST LIMIT block itself, which is the place someone goes to enumerate the channels. Treat this paragraph as the complete list until a migration can restate it. The projection guarantees what *we* send, not what someone put in a field we do send.
+
+`my_wedding_role(p_wedding_id)` exists because narrowing `wedding_members` means the client can no longer derive its own role from the member rows it fetches — a venue reads zero of them, and "no row" is indistinguishable from "no access".
+
+### `tenant_members` has no INSERT policy, on purpose
+
+Membership of a venue is not something a venue may decide about a person. An earlier `"staff can add members"` policy let staff insert any `user_id` they could name as their `customer`, which did three things to an account that had agreed to nothing: handed the venue that user's `profiles.display_name` (`staff_can_view_profile` keys off this table), barred them from ever joining another venue (`tenant_members_one_per_user` is unique), and satisfied the invitation-only gate in `link_wedding_to_venue`.
+
+Joining a *wedding* needs a token the owner generated plus `claim_wedding_invitation`, which the joiner calls. The tenant side now has the same shape — see below — so the INSERT policy is still absent and the only write path is a definer RPC the *recipient* calls.
+
+### `tenant_invitations` and `claim_tenant_invitation` (`20260820000001`)
+
+The token flow that closes the gap the previous section used to describe. Until this migration, `tenants.open_linking` defaulted to false, the invitation-only branch of `link_wedding_to_venue` looked for a `tenant_members` row with role `customer`, and nothing but hand-written SQL could produce one — so **no couple could link to an invitation-only venue at all**.
+
+`tenant_invitations` mirrors `wedding_invitations` field for field (token, `invited_by`, 14-day `expires_at`, `claimed_at` / `claimed_by`), and the three properties that make that shape safe carry over: the row names no user, the claim is made by the recipient with their own session, and invitees need no SELECT because the definer function reads the row itself.
+
+**Both INSERT policies pin every column the caller could otherwise choose** (`20260820000001` for the tenant side, `20260828000001` for the wedding side — the latter is its own migration because `20260422000001` is applied on remote and applied migrations are never edited). A `with check` constrains the columns it names and is silent about the rest, and every column of these tables is client-supplied on INSERT: defaults are defaults, not guarantees. Constraining only `invited_by` / `tenant_id` / `role` left three forgeries open to a legitimate inserter — `claimed_at` + `claimed_by` set at insert time, minting a record that a named account accepted a link they never saw (both managers render exactly that row); an `expires_at` far in the future, turning a 14-day link into a standing credential; and a chosen `token`, whose entire security is that nobody who was not sent it can guess it. So both policies now add `claimed_at is null and claimed_by is null and expires_at > now() and expires_at <= now() + interval '30 days' and token ~ '^[0-9a-f]{64}$'`. The 30 days is an outer bound rather than an equality against the default, so the default can be tuned without revisiting the policy.
+
+The token shape is a **policy clause rather than a CHECK on the column**, and that is a decision worth not undoing: a CHECK would additionally bind psql and any future definer function, but the forgery being closed is specifically "a client supplies a column instead of taking its default", and a CHECK would outlaw `seed.sql`'s deliberately hand-typeable fixtures (`seed-live-editor-invite`), which exist so `/invite/$token` and `/venue/invite/$token` can be reached by typing them in development. It would also have to validate against every row already on remote at push time. What it does not cover is an RPC added later that mints tokens itself; neither claim function writes that column today. Both sides are asserted — `tenantInvitations.test.ts` and `weddingInvitations.test.ts`, the latter added with the migration because the applied half was the untested half.
+
+One field is mirrored from the **repaired** `wedding_invitations`, not the original: `claimed_by` is `on delete set null` inline. Copied literally from `20260422000001` it would have been `ON DELETE NO ACTION` and would have reintroduced the exact undeletable-account bug `20260731000002` exists to fix — anyone who claimed a venue invite gets 23503 out of `delete_own_account`. When copying a table shape, copy the migrations that repaired it too: an FK to `auth.users` is `cascade` or `set null`, never `no action`, and `delete_own_account` is what breaks when it is.
+
+Two things are **not** symmetrical with the wedding side, and both are deliberate:
+
+- **The role split on INSERT.** Any staff member may invite a `customer`; only the owner may invite `staff` (`role = 'customer' or tenant_role(tenant_id) = 'owner'`). A customer row buys exactly one thing — the ability to call `link_wedding_to_venue` for this venue — while a staff row is a key to the whole CRM, including the seat map of every granted wedding. Note this is the *opposite* asymmetry to the DELETE policy from `20260817000001`, where any staff member may remove another: removal subtracts access and the owner can undo it, creation does neither. `owner` is absent from the CHECK entirely.
+- **`PT409`.** `tenant_members_one_per_user` allows one membership per account, so claiming into a second venue cannot succeed. It gets its own SQLSTATE because retrying cannot fix it — the only ways forward are leaving the other venue or using a different account, and a generic failure says neither. Checked before the insert *and* caught as a `unique_violation` around it, since the pre-check races and the unique index is not the one `on conflict` absorbs.
+
+The same migration adds `"members can leave their tenant"` (`user_id = auth.uid() and role <> 'owner'`) on `tenant_members`. It belongs with this change rather than with `20260817000001`: until a couple could put themselves on a roster by consent, nobody was stuck on one, and a membership with no exit would bar them from every other venue permanently. Leaving touches no wedding — membership and `venue_access` are separate decisions with separate RPCs, and neither implies the other.
+
+Client side: `claimTenantInvitation` in `src/lib/sync/tenant.ts`, the claim page at `/venue/invite/$token`, and the CRM roster at `/crm/roster`. The claim route lives under the `/invite/` segment on purpose — `scrubInviteTokens` matches that substring anywhere, so both token routes are redacted out of PostHog by one pattern. `robots.txt` cannot share the trick and needs its own `Disallow: /venue/invite/`, because Disallow is a prefix match from the root. `src/lib/sync/tenantInvitations.test.ts` asserts the whole matrix against the running database.
+
+### Venue menus (`20260822000001`)
+
+A venue's product is its menu, so `menu_packages` → `menu_courses` → `menu_options` is the catalogue it authors in `/crm/menus`. Three tables, one tenant, no couple involved yet: applying this migration is a no-op for every existing user, and nothing in the wedding tree changes.
+
+Four things in it are decisions rather than defaults:
+
+- **The composite foreign keys.** `menu_courses` and `menu_options` carry a denormalised `tenant_id`, and it is held correct by `foreign key (tenant_id, menu_package_id) references menu_packages (tenant_id, id)` — which is what the `unique (tenant_id, id)` on the parents exists for. That is the same guarantee `20260816000001` needed a `security definer` trigger for, with nothing to execute and nothing to keep in step. It also lets all twelve policies be one `is_tenant_staff(tenant_id)` call with no join to walk. `src/lib/sync/menuRls.test.ts` asserts the isolation **per table** for exactly this reason: three tables, three policies, and a missing one on `menu_options` would still leave the other two green.
+- **`menu_courses.per_guest_choice`.** The whole two-shapes decision in one boolean instead of two parallel data models. False is a buffet — the couple picks `choose_count` dishes for everyone. True is a plated course (Bagatelka's `MENU SERWOWANE`) — the couple narrows the list and each guest is then assigned one of the survivors.
+- **`archived_at`, not a soft delete.** A venue retiring last year's offer must not blank the choices of a couple who already ordered from it. Hard DELETE stays reachable through RLS for a typo caught before anyone ordered, behind a confirm in the UI — and now for that case only: the three FKs pointing here from the wedding tree are `on delete restrict`, so a dish, course or package a couple holds refuses the delete with `23503` and `archived_at` is the only way to retire it. `useTenantMenus` branches on that code and says "archive it instead" rather than "please try again". See the paragraph on the restrict flip below for why they are not `set null`.
+- **The two reorder RPCs are invoker-rights, not `security definer`.** Staff already hold UPDATE through the policies, so RLS filters the statement and a cross-tenant id is a silent no-op rather than something to authorize by hand. Each carries `and c.menu_package_id = p_menu_package_id` (or the option equivalent) so ids from another list do nothing instead of scrambling it, and there are two functions rather than one with a `p_kind text` switch — a text parameter that selects a table is one refactor from dynamic SQL. `position` is a plain non-unique integer: every read orders `position, created_at, id`, so a duplicate costs an arbitrary but *stable* order.
+
+`tenants.currency` (shape CHECK `^[A-Z]{3}$`, not an ISO allowlist) arrives with it and is deliberately **not** added to `tenant_public()` — prices are for staff and linked couples, and that projection is the anonymous branding lookup. Prices are integer minor units; `src/lib/money.ts` owns the formatting and the parser, which is hand-written because `Math.round(4.055 * 100)` is 405.
+
+### The couple's menu (`20260822000002`)
+
+`weddings.menu_package_id` plus `wedding_menu_selections (wedding_id, menu_option_id)`. The column is an **ordinary client-writable one** with an ordinary UPDATE policy, unlike `tenant_id` and `venue_access` — choosing a package discloses nothing and grants nobody anything. `enforce_wedding_tenant_columns` names those two literally in both branches, so this column does not trip it and **must not be added there**.
+
+`wedding_menu_selections` is a table rather than a `uuid[]` on `weddings` because an array has no referential integrity, makes pick/unpick a read-modify-write that two devices lose each other's changes through, and gives a cleanup trigger nothing to hang off. The composite primary key makes both operations idempotent single statements.
+
+Two boundaries move here, and both are stated in the migration header:
+
+- It is the **first relation in the wedding tree that the derived `venue` role may SELECT and the couple writes**. Safe here and only here: every value in it is a uuid of the venue's own catalogue. Staff stay read-only — that is asserted, not assumed, because "read-only by construction" (`20260817000003`) stops being true the moment one writable relation exists. If phone ordering ever needs it, the shape is a definer `venue_propose_menu_selection(...)` the couple confirms, not a write policy.
+- The catalogue becomes readable by people who are not tenant staff, via one `exists (select 1 from weddings w where w.tenant_id = <table>.tenant_id and is_wedding_member(w.id))` per table. That `is_wedding_member` is **not** the mistake `20260817000003` warns about: it runs the other way round, asking whether the *caller* is a member of a wedding linked to this tenant, and no wedding-tree row is reachable through it. Deliberately not gated on `venue_access` — a menu is the venue's own published data, and a couple deciding whether to grant access needs to see the offer first.
+
+Three `security definer` trigger functions keep a choice a choice from this wedding's menu: `enforce_wedding_menu_package` (the package belongs to the linked tenant), `reset_wedding_menu_on_package_change` (switching package wipes the selections — a wipe, not a "keep what still fits" sweep, since every option row belongs to exactly one package), and `enforce_menu_selection_in_package`. Definer because an invoker-rights integrity check is really asking "can you *see* such a row", and those answers part company the moment a policy changes.
+
+**Archiving retires an offer; it does not cancel an order**, and that asymmetry is a parameter rather than a predicate. `menu_option_in_package` takes `_require_active`, and exactly one caller passes it: `enforce_menu_selection_in_package`, so a couple cannot newly *pick* a dish (or a dish on a course) the venue has archived — the picker never showed it, so such a request did not come from the UI. `enforce_guest_menu_option` (`20260822000003`) deliberately passes the default, so seating the remaining guests on a dish the wedding already selected keeps working after the venue archives it for next season. Enforcing it in both places would let a catalogue edit freeze planning on a wedding that did nothing wrong; enforcing it in neither is the bug this replaced. `menuRls.test.ts` pins both directions.
+
+**The three FKs into the catalogue are `on delete restrict`, and that is a security boundary, not a preference.** `weddings.menu_package_id`, `wedding_menu_selections.menu_option_id` and `guests.menu_option_id` (`20260822000003`) all point at rows venue staff hold DELETE on. Shipped as `set null` / `cascade` / `set null`, they made one `delete from menu_options` a write into three tables of the couple's wedding — including `guests`, whose SELECT policy names the three member roles literally so that no venue ever reads it, and via `clear_guests_menu_option`, a `security definer` function doing an unscoped `update public.guests` with RLS and `venue_access` both out of the picture. "Read-only by construction" was a statement about *policies*; referential actions were the hole. Restrict closes it: staff can still hard-delete a dish nobody ordered, and anything a couple holds has to be archived. The reasoning lives in `20260822000002` section 1 and the other two FKs cross-reference it; `menuRls.test.ts` asserts the refusal on all three levels and that the couple's rows are untouched after the attempt.
+
+**Retiring a venue is a clear, not a refusal.** `weddings.tenant_id` is `on delete set null` and `menu_packages.tenant_id` is `on delete cascade`, so one `delete from tenants` fires both in an order nothing specifies — referential triggers run in name order, i.e. creation order, i.e. which migration happened to be written first. The older FK wins today, so `UPDATE ONLY weddings SET tenant_id = NULL` reaches `enforce_wedding_menu_package` while the couple still holds a package of the venue being deleted, and the refusal aborts the whole delete with `23514` — falsifying the sentence `20260817000002` is built on, that a retired venue must not take a couple's wedding with it. The trigger is not `current_user`-gated, so `psql` provisioning (the only way a tenant is deleted at all — `tenants` has no DELETE policy) hits it too. So the function has a third branch: `tg_op = 'UPDATE'` **and** the tenant is *becoming* null **and** `menu_package_id` is unchanged ⇒ null the package and return. Every other shape still raises, tenant A → tenant B included, so `link_wedding_to_venue`'s own `menu_package_id = null` stays load-bearing.
+
+That branch is why trigger 2 is `after update ... when (new.menu_package_id is distinct from old.menu_package_id)` rather than `after update of menu_package_id`. `update of` matches the statement's **SET list**, not the row that ends up stored, and the SET list of that referential update names one column — `tenant_id`. A retired venue would otherwise leave the couple's selections (and, from `20260822000003`, their guests' dishes) behind, pointing at a package the wedding no longer orders. The `when` clause is evaluated after BEFORE triggers have had `NEW`, so it sees the cleared value and fires; it also stops an `update ... set menu_package_id = <the same package>` wiping a menu it did not change.
+
+Not covered by `menuRls.test.ts`: deleting a tenant needs privileges no signed-in client has, and the suites hold only anon-key sessions. Verified with `psql` instead — `begin; delete from public.tenants where id = <bagatelka>;` leaves both linked weddings with a null `tenant_id`, a null `menu_package_id` and no selections, and their guests, halls, tables and fixtures untouched.
+
+**The restrict flip was re-checked on that same path, in both referential orders**, because a retired tenant cascades into `menu_packages` while a linked wedding still holds one — so the new refusal and the clear above walk the same delete. It survives: the restrict check is an after-row event appended to the *same* trigger queue as the retirement clear, so it evaluates after `enforce_wedding_menu_package` has nulled the package, and `restrict` behaves like `no action` in this timing. Re-running the delete with `weddings_tenant_id_fkey` dropped and recreated — which gives its RI triggers newer oids, so they sort *after* `menu_packages`' cascade instead of before it, confirmed in `pg_trigger` — gives the identical end state: both weddings unlinked, package null, no selections, all 44 guests present with no dish. The refusal still fires when nothing clears the reference, which is the case the flip is for. Changing either the FK actions or that trigger branch means redoing this check.
+
+**`link_wedding_to_venue` is replaced in this migration**, adding `menu_package_id = null` to its UPDATE. That RPC re-links an already-linked wedding on purpose, its UPDATE now fires the first trigger, and a wedding still holding the old venue's package would fail with `23514` — changing venue would simply stop working. `menuRls.test.ts` covers exactly that round trip, on a throwaway wedding rather than the seeded one, because re-linking resets `venue_access` to `'pending'` and `venueRls.test.ts` runs concurrently against the same database.
+
+`choose_count` is deliberately **not** enforced in the database: it needs a counting subquery per insert, it would refuse the transient state of swapping a dish (a delete plus an insert), and the failure mode is benign — six soups renders correctly as six soups, unlike an over-capacity table, which silently drops guests from the canvas while still printing them. The client counts it in the picker.
+
+### The per-guest dish (`20260822000003`)
+
+`guests.menu_option_id`, and it is the one migration in the menu stack that **moves the privacy boundary** — hence its own change, with the disclosure copy amended in the same diff.
+
+What makes it defensible is the column type. `dietary` and `age_group`, the two per-guest fields a venue already reads, are strings the couple types, and their honest limit is that a name typed into a diet tag reaches the venue. A uuid of the venue's own catalogue cannot carry a name. This is the first per-guest column the venue reads that is *structurally* incapable of leaking one, and `venueRls.test.ts` asserts the value is a uuid-or-null rather than trusting the projection.
+
+Two more triggers, both `security definer` for the reason the ones in `20260822000002` are:
+
+- `enforce_guest_menu_option` — the dish must be in the wedding's package **and its course must have `per_guest_choice = true`**. The second half matters as much as the first: a per-guest dish on a buffet course would tally as a plated portion, look right on the report and be wrong in the room. It deliberately does *not* require membership of `wedding_menu_selections` — that is a soft rule the couple transiently breaks by unpicking a dish guests already hold, and enforcing it here turns an unpick into a refusal. It short-circuits on null and on an unchanged value, so seat moves, renames and `reassignTableGuests` never pay for it.
+- `clear_guests_menu_option` — **statement-level** `AFTER DELETE` on `wedding_menu_selections` with a transition table, so a bulk unpick (or the package wipe) is one `UPDATE` rather than one per row. Repair rather than refusal, the same direction as soft deletes and orphan adoption. `reset_wedding_menu_on_package_change` is replaced in the same migration to null the column too, ahead of its `DELETE`, so the wedding is never momentarily in a state where a guest holds a dish from a package it no longer orders.
+
+**`wedding_seatmap` is replaced, and that is the sharpest edge in the stack.** `create or replace view` preserves grants but silently accepts a definition that has lost the storage parameter or the `WHERE` — and this view runs as its owner with `security_invoker` off, so that `WHERE` is its entire access control and `security_barrier` is what stops a caller-supplied PostgREST predicate being pushed below it. Both are re-declared character for character. `CREATE OR REPLACE VIEW` may only append, so the first six columns keep their order. Verify with `psql -c "select reloptions from pg_class where relname='wedding_seatmap';"` → `{security_barrier=true}`; nothing else fails if the barrier is gone.
+
+No join to `menu_options` for the dish name. The view's whole safety argument is "there is nothing in the projection to redact, so no call site can forget to", and a text column would degrade the key-absence test into an allowlist distinguishing `name` from `menu_option_name`. It is also the wrong direction on cost — `wedding_role()` already runs per row. The venue resolves names client-side from the catalogue it wrote, read **unfiltered by `archived_at`** so a dish archived after a couple ordered it is still nameable.
+
+### Why `link_wedding_to_venue`'s refusals carry `PT` SQLSTATEs
+
+`PT404` (no such venue), `PT410` (venue not active) and `PT403` (invitation only) — one code per refusal the couple can actually cause, because each renders a different sentence and the SQLSTATE is the only part of a PostgREST error that is a contract. `PTxyz` is PostgREST's convention for "answer with HTTP xyz", so the statuses come out as 404/410/403 rather than a default. This replaces a `error.message.includes("invitation only")` match in `src/lib/sync/venue.ts`: rewording a `raise` would have degraded that case into the generic "could not link, try again" — the one refusal where retrying is exactly the wrong advice. The two refusals a couple cannot trigger from the dialog (no session, not the owner) stay `42501`.
+
+All of this is asserted, not asserted-about: `src/lib/sync/venueRls.test.ts` runs two signed-in clients against the local stack and checks the row counts, the seat map's **key absence**, the write refusals, revocation, and cross-tenant isolation. It skips when Docker is down.
 
 ## `profiles` - and what deliberately isn't in it
 

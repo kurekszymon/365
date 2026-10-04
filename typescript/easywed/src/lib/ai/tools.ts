@@ -49,10 +49,9 @@ const clampPosition = (
 
 const fmt = (n: number) => n.toFixed(1)
 
-// User-facing label for a tool result. Ids are internal-only (the chip subtitle
-// shows these strings verbatim to the user), so we refer to objects by name,
-// falling back to a localized "the <shape> table/fixture" when unnamed. The
-// shape picks the variant via i18next `context` (…label.table_round, etc.).
+// User-facing label for a tool result - the chip subtitle shows these verbatim,
+// so objects are named rather than identified by id, falling back to a localized
+// "the <shape> table/fixture". The shape picks the variant via i18next `context`.
 const tableLabel = (t: { name: string; shape: TableShape }) =>
   t.name.trim()
     ? i18n.t("assistant.tool.label.named", { name: t.name.trim() })
@@ -76,16 +75,14 @@ const notFound = (message: string): ToolResult => ({
   message,
 })
 
-// Every dimension the model can set is CHECK-constrained to be positive
-// (tables/fixtures/halls all carry `width > 0`, `height > 0`, and tables
-// `capacity > 0`), and the store writes are fire-and-forget: a zero, a negative
-// or a NaN would be applied optimistically, bounce off the constraint, and
-// leave the canvas showing something the database refused behind a generic
-// "save failed" toast. Screening here is the only place that can say which
-// field was wrong, and the only place that can refuse before the store changes.
+// Every dimension the model can set is CHECK-constrained positive, and the store
+// writes are fire-and-forget: a zero, a negative or a NaN would be applied
+// optimistically, bounce off the constraint, and leave the canvas showing
+// something the database refused behind a generic "save failed" toast. Screening
+// here is the only place that can name the bad field and refuse before the store
+// changes.
 //
-// `undefined` passes: an omitted field means "keep the current value" (or take
-// the preset default), which every tool below already handles.
+// `undefined` passes: an omitted field means "keep the current value".
 const invalidMeasures = (
   fields: Record<string, number | undefined>
 ): Array<string> =>
@@ -93,14 +90,11 @@ const invalidMeasures = (
     .filter(([, v]) => v !== undefined && !(Number.isFinite(v) && v > 0))
     .map(([field]) => field)
 
-// Whether `height` is worth checking at all for a given shape.
-//
-// A round table's diameter and a circle fixture's both come from `width` -
-// getSizeForShape and fixtureSize collapse height into it and never read the
-// value that was passed in. Validating it anyway would refuse the whole request
-// over a number already destined for the bin, and a model filling in every
-// field of the schema whether or not it applies is exactly how that happens.
-// `width` still matters for those shapes; it IS the diameter.
+// Whether `height` is worth checking for a given shape. A round table's diameter
+// and a circle fixture's both come from `width` - getSizeForShape and fixtureSize
+// never read the height passed in - so validating it would refuse the request
+// over a number destined for the bin, which is exactly what a model filling in
+// every schema field produces. `width` still matters: it IS the diameter.
 const heightIfUsed = (
   shape: TableShape | FixtureShape,
   height: number | undefined
@@ -125,17 +119,14 @@ const rejectMeasures = (fields: Array<string>): ToolResult => ({
 const roundCapacity = (capacity: number | undefined): number | undefined =>
   capacity === undefined ? undefined : Math.round(capacity)
 
-// Floors are whole and may be negative (a basement is floor -1), so there is no
-// positivity check here - but there does have to be a finiteness one.
-// `Math.trunc` passes Infinity and NaN straight through, and JSON has no
-// literal for either, but `1e309` parses to Infinity perfectly happily - so a
-// model could put a value into an `integer` column that Postgres will not take.
+// Floors are whole and may be negative (a basement is floor -1), so no positivity
+// check - but there has to be a finiteness one. `Math.trunc` passes Infinity and
+// NaN through, and while JSON has no literal for either, `1e309` parses to
+// Infinity happily, putting a value into an `integer` column Postgres refuses.
 //
-// Non-finite becomes null rather than a refusal, matching HallPanelContent,
-// which does exactly this for a hand-typed floor. Floor is optional metadata
-// and the tool's result never quotes it back, so dropping it costs the user
-// nothing; a dimension is different, which is why invalidMeasures refuses
-// instead of substituting.
+// Non-finite becomes null rather than a refusal, matching HallPanelContent. Floor
+// is optional metadata the result never quotes back, so dropping it costs
+// nothing; a dimension is different, which is why invalidMeasures refuses.
 const truncFloor = (
   floor: number | null | undefined
 ): number | null | undefined => {
@@ -144,20 +135,18 @@ const truncFloor = (
 }
 
 // Positions take the same untrusted path as the measures above but can't reuse
-// their check: 0 is a perfectly good coordinate, and an out-of-bounds one is
-// meant to be clamped rather than rejected.
+// their check: 0 is a good coordinate, and out-of-bounds is clamped rather than
+// rejected.
 //
-// NaN and NaN only. clampRectIntoHall already handles every other number
-// correctly - `Math.min(Math.max(0, x), max)` pins ±Infinity to the hall edge,
-// which is the right answer for "put it as far right as it goes" - but the same
-// expression returns NaN for NaN, so that one value would reach the numeric
-// column intact. Screening ±Infinity here as well would quietly turn a
-// clamp-to-edge request into a jump back to the origin.
+// NaN and NaN only. clampRectIntoHall handles every other number correctly -
+// `Math.min(Math.max(0, x), max)` pins ±Infinity to the hall edge, the right
+// answer for "as far right as it goes" - but returns NaN for NaN, so that one
+// value would reach the numeric column intact. Screening ±Infinity too would
+// turn a clamp-to-edge request into a jump back to the origin.
 //
-// Falls back rather than refusing: for an add the fallback is the same 0 an
-// omitted coordinate already gets, and for a move it is the object's current
-// position - and since the result message reports the position it actually
-// ended at, the model's summary stays true either way.
+// Falls back rather than refusing: an add gets the same 0 an omitted coordinate
+// does, a move keeps its current position, and the result message reports where
+// it actually ended, so the model's summary stays true.
 const usablePosition = (value: number | undefined, fallback: number): number =>
   value === undefined || Number.isNaN(value) ? fallback : value
 
@@ -394,12 +383,11 @@ export const tools = {
       const assignedIds = planner.guests
         .filter((g) => g.tableId === input.id)
         .map((g) => g.id)
-      // Refuse before touching the store. The DB does reject this now
-      // (enforce_table_capacity_floor), but saveTable is fire-and-forget, so
-      // letting it through would apply the shrink optimistically and leave the
-      // canvas disagreeing with the row behind a "save failed" toast. The form
-      // avoids the same trap by truncating its guest list; the assistant has no
-      // equivalent, so it declines and says why.
+      // Refuse before touching the store. `enforce_table_capacity_floor` rejects
+      // it too, but saveTable is fire-and-forget, so letting it through applies
+      // the shrink optimistically and leaves the canvas disagreeing with the row
+      // behind a "save failed" toast. The form truncates its guest list instead;
+      // the assistant has no equivalent, so it declines and says why.
       if (capacity != null && capacity < assignedIds.length)
         return {
           status: "cancelled",
