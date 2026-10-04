@@ -113,6 +113,7 @@ import { TodoListAddScene } from "./easywed/todo-list/scenes/TodoListAddScene";
 import { TodoListCtaScene } from "./easywed/todo-list/scenes/TodoListCtaScene";
 import { TODO_LIST_DURATION, TODO_LIST_SCENES } from "./easywed/todo-list/timeline";
 import { CarouselEpisode } from "./easywed/carousel/CarouselEpisode";
+import { STRESS_AWAY_DURATION, StressAway } from "./easywed/stress-away/StressAway";
 import { WalkthroughLong } from "./easywed/walkthrough-long/WalkthroughLong";
 import { FloorsScene } from "./easywed/walkthrough-long/scenes/FloorsScene";
 import {
@@ -393,6 +394,30 @@ export const RemotionRoot: React.FC = () => {
           width={CAROUSEL_WIDTH}
           height={CAROUSEL_HEIGHT}
           defaultProps={{ file: "easywed-todo-vertical.mp4" }}
+        />
+        <Composition
+          id="easywed-stress-away"
+          component={StressAway}
+          durationInFrames={STRESS_AWAY_DURATION}
+          fps={FPS}
+          width={CAROUSEL_WIDTH}
+          height={CAROUSEL_HEIGHT}
+        />
+        <Composition
+          id="easywed-stress-away-square"
+          component={StressAway}
+          durationInFrames={STRESS_AWAY_DURATION}
+          fps={FPS}
+          width={CAROUSEL_WIDTH}
+          height={CAROUSEL_WIDTH}
+        />
+        <Composition
+          id="easywed-stress-away-vertical"
+          component={StressAway}
+          durationInFrames={STRESS_AWAY_DURATION}
+          fps={FPS}
+          width={VERTICAL_WIDTH}
+          height={VERTICAL_HEIGHT}
         />
       </Folder>
 
