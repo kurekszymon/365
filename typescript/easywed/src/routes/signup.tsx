@@ -133,10 +133,11 @@ function Signup() {
           </div>
 
           {/* Accepting the Regulamin is contract formation, so it may be
-              required. Analytics consent deliberately is NOT here: PostHog runs
-              cookieless, and conditioning signup on consent that is not
-              necessary for the contract would make it invalid under art. 7(4)
-              GDPR. Unticked by default - a pre-ticked box is not acceptance. */}
+              required. Analytics consent deliberately is NOT here: it belongs
+              to the cookie banner, and conditioning signup on consent that is
+              not necessary for the contract would make it invalid under
+              art. 7(4) GDPR. Unticked by default - a pre-ticked box is not
+              acceptance. */}
           <div className="flex items-start gap-2.5 pt-1">
             <Checkbox
               id="accept-terms"

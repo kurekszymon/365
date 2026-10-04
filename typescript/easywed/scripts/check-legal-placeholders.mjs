@@ -86,6 +86,7 @@ const readConfig = (path, valuePattern) => {
 
 const region = readConfig("infra.supabaseRegion", '"[^"]+"')?.slice(1, -1)
 const analyticsMonths = readConfig("infra.analyticsRetentionMonths", "\\d+")
+const replayDays = readConfig("infra.replayRetentionDays", "\\d+")
 const backupDays = readConfig("infra.backupRetentionDays", "null|\\d+")
 
 const mustMention = (key, needle, why) => {
@@ -110,6 +111,14 @@ if (analyticsMonths) {
     "privacy.retention.analytics",
     analyticsMonths,
     "config.ts says that is the retention"
+  )
+}
+
+if (replayDays) {
+  mustMention(
+    "privacy.retention.analytics",
+    replayDays,
+    "config.ts says that is how long session recordings are kept"
   )
 }
 
