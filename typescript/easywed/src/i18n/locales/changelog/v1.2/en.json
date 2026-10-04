@@ -1,0 +1,6 @@
+{
+  "title": "Cookies - your choice",
+  "summary": "We now ask before using an analytics cookie. If you say no, everything works as it did before.",
+  "i1": "On your first visit a banner asks about cookies. \"Accept\" and \"Reject\" look exactly the same, and you can change your mind at any time - through \"Cookie settings\" in the planner's account menu, in the landing page footer, in Settings, or on the terms and privacy policy pages.",
+  "i2": "If you agree, PostHog records how your visit went, so we can see where the planner gets in your way. All text and form fields are blanked out in the recording, so your guests' names and diets are never in it. The privacy policy spells this out - we updated it with this release."
+}

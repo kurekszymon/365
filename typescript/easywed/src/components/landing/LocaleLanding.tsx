@@ -8,6 +8,7 @@ import { LandingSteps } from "./LandingSteps"
 import { LandingFaq } from "./LandingFaq"
 import { LandingCta } from "./LandingCta"
 import { VenueOwnersBanner } from "./VenueOwnersBanner"
+import { CookieSettingsButton } from "@/components/consent/CookieSettingsButton"
 import { Button } from "@/components/ui/button"
 import { localeDocPath } from "@/lib/site"
 import { useAuthStore } from "@/stores/auth.store"
@@ -117,6 +118,10 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
             >
               {t("landing.footer.privacy", { lng: lang })}
             </Link>
+            <CookieSettingsButton
+              lng={lang}
+              className="transition-colors hover:text-foreground"
+            />
             <span suppressHydrationWarning>
               © {new Date().getUTCFullYear()} easywed.
             </span>

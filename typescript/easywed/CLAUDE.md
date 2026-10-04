@@ -34,13 +34,13 @@ The same planner UI serves both. `docs/guest-vs-account.md` is the feature matri
 The app uses a specific pattern that spans three places and is easy to miss:
 
 1. **Zustand stores** (`src/stores/*.ts`) hold the client state. `planner.store.ts` (halls/tables/fixtures/guests/seats, ~1.1k lines) is the big one; `global.store.ts` carries the current `weddingId`, wedding name/date, `role`, members and viewport. The rest are single-purpose UI/tooling stores.
-2. **`src/lib/sync/loadWedding.ts`** hydrates the planner/reminders/global stores from Supabase in one parallel `Promise.all`, given a wedding id. Called from `src/routes/wedding.$id.tsx` with an `AbortController`. Its sibling **`loadWeddingForVenue.ts`** does the same for a venue's peek: no guests/reminders/members request at all, seats from the `wedding_seatmap` view, and every seat labelled `venue.anonymous_guest` **at the load boundary** so every downstream renderer (canvas, guest list, `PlannerPrintView`) works unchanged. The row→entity mappers both share live in `sync/rows.ts`; there is deliberately no shared *guest* mapper, because the two paths read different relations.
+2. **`src/lib/sync/loadWedding.ts`** hydrates the planner/reminders/global stores from Supabase in one parallel `Promise.all`, given a wedding id. Called from `src/routes/wedding.$id.tsx` with an `AbortController`. Its sibling **`loadWeddingForVenue.ts`** does the same for a venue's peek: no guests/reminders/members request at all, seats from the `wedding_seatmap` view, and every seat labelled `venue.anonymous_guest` **at the load boundary** so every downstream renderer (canvas, guest list, `PlannerPrintView`) works unchanged. The row→entity mappers both share live in `sync/rows.ts`; there is deliberately no shared _guest_ mapper, because the two paths read different relations.
 3. **`src/lib/sync/mutations/`** - one module per entity (`wedding`, `hall`, `tables`, `guests`, `fixtures`, `reminders`, `layout`, `menu`), re-exported from `mutations/index.ts`. Store actions optimistically update Zustand state first, then fire-and-forget the matching mutation (`void insertTable(...)`).
 
 **Everything funnels through `run()` in `mutations/shared.ts`.** It is the contract, and it does four things:
 
 - returns `Promise<boolean>` - `true` = persisted, `false` = failed - so callers can chain on `ok`;
-- on failure (returned error *or* thrown/rejected promise) it `console.error`s and toasts `sync.save_failed` under a fixed toast id, so a burst of failed writes collapses into one toast;
+- on failure (returned error _or_ thrown/rejected promise) it `console.error`s and toasts `sync.save_failed` under a fixed toast id, so a burst of failed writes collapses into one toast;
 - short-circuits to `true` for the local wedding, before the Postgrest thenable is ever awaited - no request is sent in guest mode, and the optimistic `set()` + `persist` already counted as the write;
 - short-circuits to `false` with a `console.warn` (no toast) when `selectCanEdit` says the current role is read-only.
 
@@ -52,7 +52,7 @@ There is still **no rollback layer**: a failed cloud write leaves optimistic sta
 
 ### Roles and read-only mode
 
-`WeddingRole` is `owner | editor | viewer | venue`. The first three are rows in `wedding_members`; `venue` is **derived** by `wedding_role()` and never stored (see the venue section below). `selectCanEdit(state)` in `global.store.ts` mirrors the RLS predicate (`wedding_role(...) in ('owner','editor')`) and fails closed on `undefined` (pre-load *and* no-membership). It is an **allowlist**, which is why `venue` needed no change there - keep it one, since a `role !== "viewer"` formulation would silently admit the venue. The UI gates write affordances on it; `run()` re-checks as defence in depth. Guest mode carries role `"owner"`.
+`WeddingRole` is `owner | editor | viewer | venue`. The first three are rows in `wedding_members`; `venue` is **derived** by `wedding_role()` and never stored (see the venue section below). `selectCanEdit(state)` in `global.store.ts` mirrors the RLS predicate (`wedding_role(...) in ('owner','editor')`) and fails closed on `undefined` (pre-load _and_ no-membership). It is an **allowlist**, which is why `venue` needed no change there - keep it one, since a `role !== "viewer"` formulation would silently admit the venue. The UI gates write affordances on it; `run()` re-checks as defence in depth. Guest mode carries role `"owner"`.
 
 The role is read from the `my_wedding_role` RPC in `loadWedding.ts`, not from the member rows - a venue reads zero of those.
 
@@ -81,10 +81,10 @@ All tables have RLS enabled; access is gated by `public.is_wedding_member(weddin
 
 A tenant (a wedding venue at `<slug>.easywed.app`) can be granted a **peek** at a linked couple's wedding, and `wedding_role()` derives `'venue'` for its staff. **Read the venue sections of `docs/supabase.md` before touching any policy on the wedding tree, the `wedding_seatmap` view, or `tenant_members`** - they carry the reasoning, the disclosure copy each rule is load-bearing for, and the honest limits on what the projection can close. What follows is only the tripwire, because down here the failure mode is silent:
 
-- **`guests`, `reminders` and `wedding_members` SELECT are narrowed to `wedding_role(...) in ('owner','editor','viewer')` and must stay literal.** Reverting them to `is_wedding_member(wedding_id)` and adding `'venue'` to the list both look like tidying, and both are a personal-data breach that raises no error. `halls`, `tables`, `fixtures`, `weddings` and `wedding_menu_selections` are the ones that *do* admit `'venue'`.
+- **`guests`, `reminders` and `wedding_members` SELECT are narrowed to `wedding_role(...) in ('owner','editor','viewer')` and must stay literal.** Reverting them to `is_wedding_member(wedding_id)` and adding `'venue'` to the list both look like tidying, and both are a personal-data breach that raises no error. `halls`, `tables`, `fixtures`, `weddings` and `wedding_menu_selections` are the ones that _do_ admit `'venue'`.
 - **`wedding_seatmap` is what a venue reads instead of `guests`**: a `security_barrier` view running as its owner, with no `name` and no `note` column in it to leak. A `create or replace` must re-declare `security_barrier` and the identical `WHERE` - dropping either removes the access control with no error.
 - **No `wedding_members` row ever carries `'venue'`**, and `wedding_members_role_check` is deliberately not widened: `coalesce` prefers an explicit member row, so a hand-written one would outrank the derived branch and survive a revoke.
-- **`tenant_members` has no INSERT policy and must not grow one.** Joining a venue is the recipient's act, never the venue's - `tenant_invitations` + `claim_tenant_invitation` are the door, and the *claimer* calls the definer RPC.
+- **`tenant_members` has no INSERT policy and must not grow one.** Joining a venue is the recipient's act, never the venue's - `tenant_invitations` + `claim_tenant_invitation` are the door, and the _claimer_ calls the definer RPC.
 - **Neither `weddings.tenant_id` nor `weddings.venue_access` is client-writable** (`enforce_wedding_tenant_columns`, on INSERT as well as UPDATE); `link_wedding_to_venue` and `set_venue_access` are the only ways in.
 
 `venueRls.test.ts` and `tenantInvitations.test.ts` assert the whole matrix against the running database and are the spec (both skip when the local stack is down). The seat-map case pins the view's **entire key set**, so any new column there is a deliberate edit to that file.
@@ -150,11 +150,13 @@ Multi-hall: entity `position` is **hall-local meters** (top-left origin); the ha
 
 ### Analytics and privacy
 
-`src/lib/analytics/track.ts` declares `AnalyticsEvents` as a **closed** map: every property is a count, enum, or boolean we write ourselves, so no user-typed string (guest/table/hall names, notes, AI prompts) can reach PostHog. Autocapture and cookies are off in `__root.tsx`; `scrubInviteTokens.ts` strips invite tokens (bearer credentials in the URL path) from events. If a new event needs a string, make it a literal union in that map. A tenant is attributed with a PostHog **group** (`identifyTenantGroup`, keyed on the tenant's uuid), never an event property - that keeps the map closed and keeps venue slugs and names out of event payloads.
+`src/lib/analytics/track.ts` declares `AnalyticsEvents` as a **closed** map: every property is a count, enum, or boolean we write ourselves, so no user-typed string (guest/table/hall names, notes, AI prompts) can reach PostHog. Autocapture is off in `__root.tsx`; `scrubInviteTokens.ts` strips invite tokens and Supabase auth tokens (bearer credentials in the URL) from events. If a new event needs a string, make it a literal union in that map. A tenant is attributed with a PostHog **group** (`identifyTenantGroup`, keyed on the tenant's uuid), never an event property - that keeps the map closed and keeps venue slugs and names out of event payloads.
+
+Consent: PostHog runs with `cookieless_mode: "on_reject"` + `opt_out_capturing_by_default`, so a visitor who has not answered the cookie banner (`components/consent/CookieBanner.tsx`) gets the same cookieless capture as one who rejected. Only accepting enables the `ph_*` cookie/localStorage entry and session replay. `lib/analytics/consent.ts` wraps opt-in/out; `consent.store.ts` drives the banner, re-opened by `CookieSettingsButton` (landing footers, legal pages, Settings) and the planner's `AccountMenu`. Replay masks every text node and input (`session_recording` in `__root.tsx`) and the privacy policy promises that - don't relax it, and don't add `posthog.identify`, without rewriting `privacy.*`. Credential-bearing URLs are kept out of recordings by the replay URL blocklist in the PostHog project, and the project's cookieless setting must stay ON or pending/rejected visitors' events are dropped.
 
 ### Legal documents
 
-`src/lib/legal/config.ts` holds every legal *decision* (trader identity, effective dates, operational facts) in one file; `provider.ts` maps it to i18n interpolation vars and `dates.ts` formats per locale. Prose lives in the locale files. `pnpm run legal:check` blocks deploys while placeholders remain.
+`src/lib/legal/config.ts` holds every legal _decision_ (trader identity, effective dates, operational facts) in one file; `provider.ts` maps it to i18n interpolation vars and `dates.ts` formats per locale. Prose lives in the locale files. `pnpm run legal:check` blocks deploys while placeholders remain.
 
 ## Reference docs
 

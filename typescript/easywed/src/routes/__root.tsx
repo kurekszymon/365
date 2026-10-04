@@ -24,20 +24,41 @@ import { ErrorFallback } from "@/components/ErrorFallback"
 import { useThemeStore } from "@/stores/theme.store"
 import { useAiStore } from "@/stores/ai.store"
 import { scrubInviteTokens } from "@/lib/analytics/scrubInviteTokens"
+import { useConsentStore } from "@/stores/consent.store"
+import { CookieBanner } from "@/components/consent/CookieBanner"
 import { OG_IMAGE, SITE_ORIGIN } from "@/lib/site"
 
 const options = {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
   defaults: "2026-01-30",
-  // Load-bearing beyond the cookie banner it saves: session replay cannot start
-  // in cookieless mode, and scrubInviteTokens deliberately does not walk into
-  // $snapshot payloads. Turning this off silently enables replay of the planner -
-  // guest list, names and all - with un-redacted invite tokens in the recorded
-  // URLs. Read the note at the bottom of scrubInviteTokens.ts first.
-  cookieless_mode: "always",
-  // Off because autocapture reports the text of whatever was clicked, and in the
-  // planner that is a wedding guest's name - beyond what privacy.data.usage
-  // promises. Product events are declared explicitly; see lib/analytics/track.
+  // Cookieless unless the visitor accepts the cookie banner. Together with
+  // opt_out_capturing_by_default, "no answer yet" is treated as a rejection:
+  // events still flow, cookieless, with nothing written to the device - the
+  // baseline every visitor had before the banner. Accepting is what enables
+  // the ph_* cookie/localStorage entry and session replay. See
+  // lib/analytics/consent.ts. The project's cookieless setting in PostHog must
+  // stay ON, or every pending/rejected visitor's events are dropped.
+  cookieless_mode: "on_reject",
+  opt_out_capturing_by_default: true,
+  // Replay of the planner would otherwise show the guest list - names, and
+  // dietary notes that can reveal health - which are third parties' data and
+  // beyond what the privacy policy promises. Masking every text node keeps
+  // layout, clicks and navigation, which is all replay is for here.
+  // scrubInviteTokens does not walk into $snapshot payloads, so the URLs that
+  // carry credentials (/invite/, /reset-password, /auth/callback) are kept out
+  // by the URL blocklist in the PostHog project's replay settings - read the
+  // note at the bottom of scrubInviteTokens.ts before changing any of this.
+  session_recording: {
+    maskAllInputs: true,
+    maskTextSelector: "*",
+  },
+  // init runs in PostHogProvider's effect, after its children's effects, so
+  // the banner can't read the stored answer on mount - it waits for this.
+  loaded: () => useConsentStore.getState().sync(),
+  // Off because autocapture reports the text of whatever was clicked, and in
+  // the planner that is a wedding guest's name - a third party with no
+  // relationship to us, and beyond what privacy.data.analytics promises.
+  // Product events are declared explicitly instead; see lib/analytics/track.
   autocapture: false,
   // Invite tokens are bearer credentials and they live in the URL path, which
   // pageview capture would otherwise ship verbatim. See scrubInviteTokens.
@@ -237,6 +258,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <LocalWeddingMigrationPrompt />
           </TooltipProvider>
           <Toaster richColors position="top-right" />
+          <CookieBanner />
         </PostHogProvider>
 
         <TanStackDevtools

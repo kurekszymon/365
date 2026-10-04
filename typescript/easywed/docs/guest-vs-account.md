@@ -76,6 +76,7 @@ Reminders carry two extra wrinkles the planner/global keys don't:
 | Guest list, CSV/XLSX import & export |  ✅   |    ✅     | parsed in-browser either way                   |
 | Print / PDF export                   |  ✅   |    ✅     |                                                |
 | AI assistant                         |  ✅   |    ✅     | bring-your-own key, settings in `localStorage` |
+| Cookie consent, session replay       |  ✅   |    ✅     | per browser, not per account; footer/Settings  |
 | Wedding name and date                |  ✅   |    ✅     | guest default: `wedding.default_local_name`    |
 | Reminders                            |  ✅   |    ✅     | `easywed.reminders.local`, migrated on sign-in |
 | **Inviting members**                 |  ❌   |    ✅     | free-plan gate, see below                      |

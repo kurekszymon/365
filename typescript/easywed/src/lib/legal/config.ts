@@ -72,7 +72,7 @@ export const LEGAL_CONFIG = {
      * Do not move this again without running § 16 ust. 2 from the top.
      */
     termsEffective: "2026-08-31",
-    privacyUpdated: "2026-08-31",
+    privacyUpdated: "2026-10-04",
     /**
      * The day the acceptance gate started running. A separate literal rather
      * than `termsEffective`: derived, it would absolve everyone who dodged the
@@ -94,9 +94,15 @@ export const LEGAL_CONFIG = {
     /** PostHog free-plan event retention. 7 years on any paid plan. */
     analyticsRetentionMonths: 12,
     /**
-     * Null means no database backups exist - the Supabase Free plan: no daily
-     * backups, no PITR. The privacy policy says deletion is immediate and
-     * irreversible on that basis.
+     * How long PostHog keeps session recordings - only made for visitors who
+     * accepted the cookie banner. 30 days on the free plan; a paid plan
+     * raises it, and `privacy.retention.analytics` has to follow.
+     */
+    replayRetentionDays: 30,
+    /**
+     * Null means no database backups exist, which is the current state on the
+     * Supabase Free plan: no daily backups, no PITR. The privacy policy says
+     * deletion is immediate and irreversible on that basis.
      *
      * Setting a number means backups exist, and `privacy.retention.backups` has
      * to be rewritten in both languages to name the period; the check enforces
