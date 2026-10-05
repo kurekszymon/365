@@ -19,7 +19,10 @@ import { colors, fonts } from "../../theme";
  * slides out full to the right - both ends are an empty stage, so a replay
  * reads as the next table coming in.
  */
-const LINES = ["One guest seated", "per day", "keeps the stress away"];
+/** Two lines; the first ends on the accent, set in italic terracotta. */
+const LEAD = "One guest";
+const ACCENT = "per day";
+const TAIL = "keeps the stress away";
 
 const SLIDE_IN_TO = 18;
 /** Seat indices clockwise from 12 o'clock: the logo's two, then the rest shuffled. */
@@ -124,23 +127,23 @@ export const StressAway: React.FC = () => {
           color: colors.ink,
         }}
       >
-        <div style={{ textAlign: "center" }}>
-          {LINES.map((line, i) => (
-            <div
-              key={line}
-              style={{
-                fontFamily: fonts.heading,
-                fontWeight: 400,
-                fontStyle: i === 1 ? "italic" : "normal",
-                fontSize: TEXT,
-                lineHeight: 1.18,
-                letterSpacing: "0.005em",
-                color: i === 1 ? colors.terracotta : colors.ink,
-              }}
-            >
-              {line}
-            </div>
-          ))}
+        <div
+          style={{
+            textAlign: "center",
+            fontFamily: fonts.heading,
+            fontWeight: 400,
+            fontSize: TEXT,
+            lineHeight: 1.18,
+            letterSpacing: "0.005em",
+          }}
+        >
+          <div>
+            {LEAD}{" "}
+            <span style={{ fontStyle: "italic", color: colors.terracotta }}>
+              {ACCENT}
+            </span>
+          </div>
+          <div>{TAIL}</div>
         </div>
 
         <div
