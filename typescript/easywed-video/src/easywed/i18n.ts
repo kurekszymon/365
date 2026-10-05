@@ -8,191 +8,32 @@
  *
  * Strings that redraw the app are its own `pl.json` / `en.json` values at
  * easywed/v1, verbatim; the key is noted beside them.
+ *
+ * Strings for one group of films live in that group's own `i18n.ts`; this
+ * file holds the app's own strings and merges the groups into `tl`.
  */
 
-export type Lang = "pl" | "en";
+import {
+  plural,
+  PL_MONTHS_SHORT,
+  PL_MONTHS_GENITIVE,
+  EN_MONTHS_SHORT,
+  EN_MONTHS,
+  hhmm,
+  ordinal,
+  type DietKey,
+  type Lang,
+  LANG,
+} from "./lang";
+import * as chillWed from "./chill-wed/i18n";
+import * as stories from "./stories/i18n";
+import * as landingLoops from "./landing-loops/i18n";
+import * as features from "./features/i18n";
+import * as showcase from "./showcase/i18n";
 
-export const LANG: Lang = process.env.REMOTION_LANG === "en" ? "en" : "pl";
+export { LANG, locale, type DietKey, type Lang } from "./lang";
 
-/** For `Intl` - plural rules, collation, dates. */
-const LOCALE: Record<Lang, string> = { pl: "pl-PL", en: "en-GB" };
-export const locale = LOCALE[LANG];
-
-const pluralRules = new Intl.PluralRules(locale);
-
-/** The `_one` / `_few` / `_many` form i18next picks for a count. */
-const plural = (
-  count: number,
-  forms: { one: string; few: string; many: string },
-) => {
-  const rule = pluralRules.select(count);
-  return rule === "one" ? forms.one : rule === "few" ? forms.few : forms.many;
-};
-
-export type DietKey = "vegetarian" | "vegan" | "glutenFree";
-
-/** Small counts spelled out, as a line of dialogue says them - index is the number. */
-const PL_NUMBERS = [
-  "Zero",
-  "Jeden",
-  "Dwa",
-  "Trzy",
-  "Cztery",
-  "Pięć",
-  "Sześć",
-  "Siedem",
-  "Osiem",
-  "Dziewięć",
-  "Dziesięć",
-  "Jedenaście",
-  "Dwanaście",
-];
-const EN_NUMBERS = [
-  "Zero",
-  "One",
-  "Two",
-  "Three",
-  "Four",
-  "Five",
-  "Six",
-  "Seven",
-  "Eight",
-  "Nine",
-  "Ten",
-  "Eleven",
-  "Twelve",
-];
-
-/** A count as a word, so a spoken line can quote the plan; a room outgrowing the list fails loudly rather than printing a digit. */
-const spelled = (count: number, words: string[]): string => {
-  const word = words[count];
-  if (word === undefined) throw new Error(`No spelled-out form for ${count}`);
-  return word;
-};
-
-/** Round tens, spelled out, for a count past `PL_NUMBERS` - index is the tens digit. */
-const PL_TENS = [
-  "",
-  "Dziesięć",
-  "Dwadzieścia",
-  "Trzydzieści",
-  "Czterdzieści",
-  "Pięćdziesiąt",
-  "Sześćdziesiąt",
-  "Siedemdziesiąt",
-  "Osiemdziesiąt",
-  "Dziewięćdziesiąt",
-];
-const EN_TENS = [
-  "",
-  "Ten",
-  "Twenty",
-  "Thirty",
-  "Forty",
-  "Fifty",
-  "Sixty",
-  "Seventy",
-  "Eighty",
-  "Ninety",
-];
-
-/** `spelled`, reaching round tens too - a seat count read off the room; anything else fails loudly. */
-const spelledCount = (
-  count: number,
-  words: string[],
-  tens: string[],
-): string =>
-  count < words.length
-    ? spelled(count, words)
-    : count % 10 === 0 && count < 100
-      ? tens[count / 10]
-      : spelled(count, []);
-
-/** A reminder's two dates as date-fns prints them in the app, which the film has no copy of. */
-const PL_MONTHS_SHORT = [
-  "sty",
-  "lut",
-  "mar",
-  "kwi",
-  "maj",
-  "cze",
-  "lip",
-  "sie",
-  "wrz",
-  "paź",
-  "lis",
-  "gru",
-];
-const PL_MONTHS_GENITIVE = [
-  "stycznia",
-  "lutego",
-  "marca",
-  "kwietnia",
-  "maja",
-  "czerwca",
-  "lipca",
-  "sierpnia",
-  "września",
-  "października",
-  "listopada",
-  "grudnia",
-];
-const EN_MONTHS_SHORT = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-const EN_MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-const hhmm = (date: Date) =>
-  `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-const ordinal = (n: number) => {
-  const tens = n % 100;
-  if (tens >= 11 && tens <= 13) return `${n}th`;
-  return `${n}${["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
-};
-
-/** A diameter as a line says it; only the one the film types is spelled, so a changed value fails loudly. */
-const spelledMetres = (
-  metres: number,
-  words: Record<number, string>,
-): string => {
-  const word = words[metres];
-  if (word === undefined)
-    throw new Error(`No spelled-out form for ${metres} m`);
-  return word;
-};
-
-/** A table's seats as the collective numeral a mixed group takes (*na ośmioro*); only the preset's count is spelled, so a changed one fails loudly. */
-const PL_COLLECTIVE: Record<number, string> = { 8: "ośmioro" };
-const collective = (count: number): string => {
-  const word = PL_COLLECTIVE[count];
-  if (word === undefined) throw new Error(`No collective numeral for ${count}`);
-  return word;
-};
-
-const pl = {
+const sharedPl = {
   hall: {
     name: "Sala główna",
     headTable: "Stół pary młodej", // a table name; landing.preview.head_table was dropped in v1.1
@@ -202,11 +43,13 @@ const pl = {
     djBooth: "DJ Booth", // fixtures.preset.dj_booth - the Polish locale keeps it in English
     cakeTable: "Stół z tortem",
   },
+
   diet: {
     vegetarian: "Wege", // guests.dietary.*
     vegan: "Vegan",
     glutenFree: "Bez glutenu",
   } satisfies Record<DietKey, string>,
+
   notes: {
     lateArrival: "dojedzie po ślubie",
     highChair: "krzesełko dla dziecka",
@@ -350,7 +193,8 @@ const pl = {
       guests: "Przypisz gości", // tables.guests
       guestsPick: "Wybierz gości", // tables.guests_pick - the picker's trigger while nobody is assigned
       // tables.guests_selected_of_capacity - under the picker's trigger
-      selectedOf: (count: number, capacity: number) => `Wybrani goście: ${count} / ${capacity}`,
+      selectedOf: (count: number, capacity: number) =>
+        `Wybrani goście: ${count} / ${capacity}`,
       seatList: "Miejsca", // tables.seat_list_title - `TableSeatList`, under the picker
       seatNumbered: (n: number) => `Miejsce ${n}`, // seats.numbered
       seatAssign: "+ Przypisz", // tables.seat_assign_button
@@ -422,7 +266,8 @@ const pl = {
         "Sala w prawdziwych wymiarach, stoły tam, gdzie mają stać, i każdy gość na swoim miejscu - w przeglądarce, oboje, na jednym planie.", // landing.hero.subtitle
       start: "Zacznijcie planować", // landing.cta
       tryLocal: "Wypróbujcie bez konta", // landing.hero.try_local
-      localHint: "Za darmo dla par. Tryb gościa trzyma plan na tym urządzeniu - zalogujcie się później, żeby go zapisać.", // landing.hero.local_hint
+      localHint:
+        "Za darmo dla par. Tryb gościa trzyma plan na tym urządzeniu - zalogujcie się później, żeby go zapisać.", // landing.hero.local_hint
     },
     /** `Onboarding/OnboardingChecklist` at easywed/v1.1.2: the three steps, then the done card. */
     onboarding: {
@@ -435,7 +280,8 @@ const pl = {
       add: "Dodaj", // onboarding.tables.cta, onboarding.guests.cta
       seat: "Posadź", // onboarding.seats.cta
       doneTitle: "Gdy plan będzie gotowy", // onboarding.done.title
-      doneDesc: "Wydrukujesz stąd plan sali i listę gości albo zaprosisz kogoś do wspólnej pracy.", // onboarding.done.desc
+      doneDesc:
+        "Wydrukujesz stąd plan sali i listę gości albo zaprosisz kogoś do wspólnej pracy.", // onboarding.done.desc
       print: "Drukuj", // onboarding.done.print
       share: "Udostępnij", // onboarding.done.share
     },
@@ -477,7 +323,8 @@ const pl = {
     more: (count: number) => `+ ${count} gości więcej`,
     progress: "Rozsadzeni", // guests.progress
     // guests.count_one|few|many
-    count: (count: number) => `${count} ${plural(count, { one: "gość", few: "goście", many: "gości" })}`,
+    count: (count: number) =>
+      `${count} ${plural(count, { one: "gość", few: "goście", many: "gości" })}`,
     // guests.seated_ratio
     seatedRatio: (seated: number, total: number) =>
       total === 1
@@ -518,295 +365,9 @@ const pl = {
     guestsLower: "goście", // guests, lowercased as the view does
     guests: "Goście",
   },
-
-  demo: {
-    tagline: "Planer rozsadzenia gości weselnych.", // landing.footer.tagline
-    outroTitle: "Narysujcie salę. Posadźcie wszystkich.", // after landing.hero.title
-    features: [
-      "Plan sali „przeciągnij i upuść”",
-      "Import CSV i XLSX",
-      "Plan gotowy do druku",
-      "Sale i piętra",
-      "Planujcie razem",
-    ],
-    outroAction: "Ustaw pierwszy stół",
-    hall: {
-      step: "Krok 01",
-      title: "Narysujcie salę", // landing.steps.one.title
-      subtitle:
-        "Stoły okrągłe i prostokątne, parkiet i wyposażenie - ustaw salę dokładnie tak, jak będzie wyglądać w dniu wesela.", // the film's own line; landing.features.planner.desc was dropped in v1.1
-      yourHall: "Twoja sala",
-    },
-    guests: {
-      step: "Krok 02",
-      title: "Dodajcie gości", // landing.steps.two.title
-      // landing.features.guests.desc, with its plus-ones - a field v1 does not
-      // have - swapped for the age groups it does (guests.add.age_group,
-      // lib/ageGroup.ts). "i" and "z" are bound to the next word.
-      subtitle:
-        "Diety, grupy wiekowe i\u00a0przypisane miejsca są zawsze przy nazwisku - koniec z\u00a0trzema arkuszami naraz.",
-      importPill: "Import z CSV lub Excela",
-      exportPill: "Plan gotowy do druku",
-    },
-    seating: {
-      step: "Krok 03",
-      title: "Posadźcie wszystkich", // landing.steps.three.title
-      subtitle:
-        "Przeciągnij gości na miejsca, wyrównaj obłożenie stołów i wyeksportuj gotowy plan do druku dla sali.",
-      ofSeated: (total: number) => `z ${total} gości przy stołach`,
-      emptySeat: "Wolne miejsce", // seats.empty
-      taken: "Zajęte",
-    },
-  },
-
-  teaser: {
-    /** Revealed word by word. */
-    question: ["Ile", "osób", "siedzi", "przy", "stole", "4?"],
-    sting: "Trzy dni przed weselem.",
-    files: ["goscie.xlsx", "goscie_final.xlsx", "goscie_final_OSTATECZNA.xlsx"],
-    notes: ["Ciocia Basia NIE obok Marka", "Wujek Janusz - bez glutenu?"],
-    chaos: "Arkusz, karteczki i grupa na czacie.",
-    plan: "Albo jeden plan sali.",
-    hasSeat: "gości ma swoje miejsce",
-    ctaTitle: "Rozsadź gości w jeden wieczór",
-    ctaAction: "Zacznij dziś wieczorem",
-  },
-
-  importFilm: {
-    /** Revealed word by word; "w" is bound to "Excelu." with a no-break space so the line never ends on it. */
-    line: ["Twoja", "lista", "gości", "mieszka", "w Excelu."],
-    ctaAction: "Wczytaj swoją listę gości",
-  },
-
-  report: {
-    /** Each message revealed unit by unit; a unit keeps a lone "o" off a line's end. */
-    messages: [
-      ["Sala", "prosi", "o plan stołów."],
-      ["Florystka", "pyta,", "jak", "rozłożyć", "winietki."],
-      ["Kuchnia", "pyta,", "gdzie", "podać", "dania wege."],
-    ],
-    payoff: "Wydrukuj i podaj dalej.",
-    ctaAction: "Dodaj preferencje żywieniowe gości",
-  },
-
-  scale: {
-    hook: "Zmieszczą się te stoły?",
-    payoff: "Odległości w metrach, nie na oko.",
-  },
-
-  swap: {
-    /** "się" is bound to "przesiąść?" so the question never breaks after it. */
-    hook: "Ktoś musi się przesiąść?",
-    payoff: "Przesiadka bez przepisywania listy.",
-  },
-
-  swapCut: {
-    hook: "Ciocia chce siedzieć przy innym stole?",
-    /** "z" is bound to "planu." so the line never ends on it. */
-    payoff: "Nikt nie znika z\u00a0planu.",
-    /** "i" is bound to "wybierz" for the same reason. */
-    ctaAction: "Kliknij miejsce i\u00a0wybierz gościa",
-  },
-
-  kids: {
-    /** Revealed word by word; "na" is bound to "weselu?" so the line never ends on it. */
-    hook: ["Ile", "dzieci", "będzie", "na weselu?"],
-    payoff: "Każde dziecko policzone.",
-    ctaAction: "Oznacz dzieci na liście gości",
-  },
-
-  shape: {
-    hook: "Sala nie jest prostokątem?",
-    /** "naprawdę" is bound to "stoją." so the last word never wraps alone. */
-    payoff: "Ściany tam, gdzie naprawdę\u00a0stoją.",
-  },
-
-  keepApart: {
-    /** Two tables the couple named themselves (`tables.name_placeholder` is *Stół rodzinny*). */
-    mumsFamily: "Rodzina mamy",
-    dadsFamily: "Rodzina taty",
-    /**
-     * The hook. "i" is bound to "mikrofon?", and the answer is bound into one
-     * piece - a non-breaking hyphen keeps "DJ-a" whole - so the line breaks
-     * after the question.
-     */
-    hook: "Wujek Zbyszek i\u00a0mikrofon? Daleko\u00a0od\u00a0DJ\u2011a.",
-    /** "w" is bound to "stół?" so the line never breaks after it. */
-    parentsLine: "Twoi rodzice nie mogą siedzieć stół w\u00a0stół?",
-    dragLine: "Cały stół na drugą stronę parkietu.",
-    /** "swoich" is bound to "miejscach." so the last word never wraps alone. */
-    guestsLine: "Goście zostają na swoich\u00a0miejscach.",
-    /** "z" is bound to "gośćmi." so the line never ends on it. */
-    payoff: "Przesuwacie stół, razem z\u00a0gośćmi.",
-    ctaAction: "Zacznij planowanie bez konta",
-  },
-
-  mama: {
-    /** The hook. Mum is asking about the uncle, not the aunt - the teaser and the seat-swap cuts spent her. */
-    hook: "Mama pyta już trzeci raz, gdzie siedzi wujek.",
-    /** The bride's name, over the thread on mum's phone. */
-    sender: "Ania",
-    /** Mum, over the same thread on Ania's phone - the hook's. */
-    mum: "Mama",
-    /** Mum's three messages, oldest first. The first one's "A" is bound to "wujek" so it never ends a line. */
-    bubbles: [
-      "A\u00a0wujek Zbyszek gdzie siedzi?",
-      "Wyślij ten plan jakoś inaczej",
-      "Bo nie widać nic na tym zdjęciu",
-    ],
-    /** What mum types into the guest search - the name she knows him by. */
-    search: "Zbyszek",
-    captionLine: "Zamiast zdjęcia kartki - link.",
-    payoff: "Mama sprawdzi sama.",
-    ctaAction: "Wyślij mamie link do planu",
-  },
-
-  couch: {
-    /** The time chip: one Sunday evening, read off the corner of the frame. */
-    day: "Niedziela",
-    times: ["19:40", "20:10", "21:05", "22:30"],
-    /** The hook, the left voice. "w" is bound to "końcu" so the line never ends on it. */
-    hook: "Dobra, dziś w\u00a0końcu robimy plan stołów.",
-    /** "i" is bound to "do". */
-    tea: "Herbata i\u00a0do dzieła.",
-    floor: "Parkiet na środek.",
-    headTable: "Stół pary młodej naprzeciwko.",
-    howMany: "Ile nam tych stołów wyszło?",
-    /** The answer is read off the room - `COUCH_HALL.tables.length`, spelled out. */
-    tableCount: (count: number) => `${spelled(count, PL_NUMBERS)}. Pasuje.`,
-    grandma: "Babcia blisko nas.",
-    /** The dash stays with "razem", and "i" is bound to "tak". */
-    cousins: "Kuzynki razem\u00a0- i\u00a0tak się przesiądą.",
-    /** "z" is bound to "pracy". */
-    work: "Twoi z\u00a0pracy przy barze?",
-    /** "A" is bound to "gdzie". */
-    whereElse: "A\u00a0gdzie indziej.",
-    everyone: "To wszyscy?",
-    seated: "Wszyscy siedzą.",
-    payoff: "Jeden laptop, jedna kanapa, cały plan.",
-    ctaAction: "Usiądźcie do planu razem",
-  },
-
-  /** The Instagram series' tag, top-left on every Reel until its CTA; numbered in posting order. */
-  series: {
-    tag: (episode: number) => `Wesele bez spiny · #${episode}`,
-  },
-
-  listSeat: {
-    hook: "Kuzyn Tomek jednak przyjedzie.",
-    where: "Gdzie go posadzić?",
-    fullTables: "Pełne stoły odpadają same.",
-    beside: "Widzisz, obok kogo siądzie.",
-    payoff: "Tomek siedzi przy swoich. Reszta nawet nie drgnęła.",
-    /** "z" is bound to "listy" so the line never ends on it. */
-    ctaAction: "Posadź gościa prosto z\u00a0listy",
-  },
-
-  tableShape: {
-    hook: "Okrągłe stoły czy jeden długi?",
-    both: "Sprawdźmy oba.",
-    /** "i" is bound to "już" so the line never ends on it. */
-    square: "Klik - i\u00a0już kanciasty.",
-    /** Read off the plan: the width typed and the table's seats, spelled out. */
-    dims: (metres: number, seats: number) =>
-      `${spelled(metres, PL_NUMBERS)} ${plural(metres, { one: "metr", few: "metry", many: "metrów" })}, ${spelled(
-        seats,
-        PL_NUMBERS,
-      ).toLowerCase()} ${plural(seats, { one: "osoba", few: "osoby", many: "osób" })}.`,
-    /** "I" is bound to "wzdłuż" for the same reason. */
-    wall: "I\u00a0wzdłuż ściany.",
-    payoff: "Ci sami goście, inny stół.",
-    ctaAction: "Sprawdźcie oba warianty na planie",
-  },
-
-  /** Every count here is read off the room the batch form builds (`TEN_TABLES_HALL`), never typed. */
-  tenTables: {
-    hook: (tables: number, seats: number) =>
-      `Sala mówi: ${spelledCount(tables, PL_NUMBERS, PL_TENS).toLowerCase()} okrągłych po ${spelledCount(
-        seats,
-        PL_NUMBERS,
-        PL_TENS,
-      ).toLowerCase()}.`,
-    round: (diameter: number) =>
-      `Okrągłe, ${spelledMetres(diameter, { 1.5: "półtora metra" })}.`,
-    /** The value as it is typed into *Ile*, in digits. */
-    typed: (count: number) => `Wpisujesz ${count}.`,
-    landed: (count: number) =>
-      `Stoją. Wszystkie ${spelledCount(count, PL_NUMBERS, PL_TENS).toLowerCase()}.`,
-    fixtures: "Parkiet, scena, drzwi.",
-    payoff: (tables: number, seats: number) =>
-      `${spelledCount(tables, PL_NUMBERS, PL_TENS)} ${plural(tables, { one: "stół", few: "stoły", many: "stołów" })}, ${spelledCount(
-        seats,
-        PL_NUMBERS,
-        PL_TENS,
-      ).toLowerCase()} ${plural(seats, { one: "miejsce", few: "miejsca", many: "miejsc" })}, parkiet przed sceną.`,
-    ctaAction: "Rozstaw wszystkie stoły naraz",
-  },
-
-  /**
-   * The list is the couple's own, typed into the app - demo data, not app
-   * strings. No line here says the app will remind anyone: it doesn't.
-   */
-  todoList: {
-    /** A word joiner after the hyphen, so "DJ-a" never breaks across two lines. */
-    hook: "Zaliczka dla DJ-\u2060a… zapłaciliśmy czy nie?",
-    /** "bo po terminie" is held together so the line breaks after the comma. */
-    overdue: "Jest. Na czerwono, bo\u00a0po\u00a0terminie.",
-    done: "Zapłacone. Odhaczone.",
-    /**
-     * Too long for one line at the payoff's size, so its two halves are each
-     * held together and it breaks only at the comma and after the dash - which
-     * also keeps "a" and "w" off a line's end.
-     */
-    payoff:
-      "Co załatwione, a\u00a0co\u00a0jeszcze\u00a0nie\u00a0- w\u00a0jednym\u00a0miejscu.",
-    ctaAction: "Wpiszcie, co jeszcze załatwić",
-    items: {
-      deposit: "Zaliczka dla DJ-a",
-      plan: "Wysłać sali plan stołów",
-      fitting: "Przymiarka garnituru",
-      rings: "Odebrać obrączki",
-      kidsMenu: "Dopytać o menu dla dzieci",
-    },
-  },
-
-  /**
-   * The speedrun. Its seconds - the hook's limit and what is left of it - are
-   * read off the stopwatch, and the table's seats off the preset; never typed.
-   */
-  tryNow: {
-    /** The number is bound to its noun so the question never breaks between them. */
-    hook: (seconds: number) =>
-      `Macie ${seconds}\u00a0${plural(seconds, { one: "sekundę", few: "sekundy", many: "sekund" })}?`,
-    start: "Start.",
-    hall: "Sala już czeka.",
-    table: (seats: number) => `Stół na ${collective(seats)}.`,
-    /** The guest the couple types - their data, not an app string. */
-    guest: "Babcia Jadzia",
-    listed: "Babcia na liście.",
-    seated: "Babcia przy stole.",
-    /** The second sentence is bound whole, so it keeps a line of its own; the verb agrees with the count. */
-    payoff: (left: number) =>
-      `Babcia siedzi. ${plural(left, { one: "Została", few: "Zostały", many: "Zostało" })}\u00a0${left}\u00a0${plural(left, {
-        one: "sekunda",
-        few: "sekundy",
-        many: "sekund",
-      })}.`,
-    /** "i" is bound to "sprawdźcie" so the line never ends on it. */
-    ctaAction: "Włączcie stoper i\u00a0sprawdźcie sami",
-  },
-
-  walkthrough: {
-    /** "i" is bound to "żadnego" so the line never ends on it. */
-    hook: "Pusta sala, lista gości i\u00a0żadnego planu?",
-    /** Each "na" is bound to the word after it, so neither line ends on one. */
-    floors: "Obiad na\u00a0dole, tańce na\u00a0górze?",
-    outroTitle: "Wasza sala, Wasi goście, jeden plan.",
-    outroAction: "Narysujcie swoją salę",
-  },
 };
 
-const en: typeof pl = {
+const sharedEn: typeof sharedPl = {
   hall: {
     name: "Main hall",
     headTable: "Head table",
@@ -816,11 +377,13 @@ const en: typeof pl = {
     djBooth: "DJ booth",
     cakeTable: "Cake table",
   },
+
   diet: {
     vegetarian: "Vegetarian",
     vegan: "Vegan",
     glutenFree: "Gluten-free",
   },
+
   notes: {
     lateArrival: "arriving after the ceremony",
     highChair: "needs a high chair",
@@ -943,7 +506,8 @@ const en: typeof pl = {
       capacity: "Capacity",
       guests: "Assign guests",
       guestsPick: "Select guests",
-      selectedOf: (count, capacity) => `Selected guests: ${count} / ${capacity}`,
+      selectedOf: (count, capacity) =>
+        `Selected guests: ${count} / ${capacity}`,
       seatList: "Seats",
       seatNumbered: (n) => `Seat ${n}`,
       seatAssign: "+ Assign",
@@ -1001,7 +565,8 @@ const en: typeof pl = {
         "The room at its real size, the tables where you want them, and every guest with a seat - in the browser, both of you, on the same plan.",
       start: "Start planning",
       tryLocal: "Try it without an account",
-      localHint: "Free for couples. Guest mode keeps the plan on this device, so sign in later to save it.",
+      localHint:
+        "Free for couples. Guest mode keeps the plan on this device, so sign in later to save it.",
     },
     onboarding: {
       title: "Start here",
@@ -1013,7 +578,8 @@ const en: typeof pl = {
       add: "Add",
       seat: "Seat",
       doneTitle: "When your plan is ready",
-      doneDesc: "You can print the hall layout and guest list from here, or invite someone to work on it with you.",
+      doneDesc:
+        "You can print the hall layout and guest list from here, or invite someone to work on it with you.",
       print: "Print",
       share: "Share",
     },
@@ -1085,225 +651,24 @@ const en: typeof pl = {
     guestsLower: "guests",
     guests: "Guests",
   },
+};
 
-  demo: {
-    tagline: "A seating planner for your wedding.",
-    outroTitle: "Draw your hall. Sit everyone down.",
-    features: [
-      "Drag & drop floor plan",
-      "CSV & XLSX import",
-      "A plan you can print",
-      "Halls & floors",
-      "Plan together",
-    ],
-    outroAction: "Place your first table",
-    hall: {
-      step: "Step 01",
-      title: "Draw the hall",
-      subtitle:
-        "Round and rectangular tables, the dance floor, and fixtures - lay out the hall exactly as it will look on the day.",
-      yourHall: "Your hall",
-    },
-    guests: {
-      step: "Step 02",
-      title: "Add your guests",
-      subtitle:
-        "Dietary needs, age groups, and seat assignments live next to every name - no more cross-checking three spreadsheets.",
-      importPill: "Import from CSV or Excel",
-      exportPill: "A plan you can print",
-    },
-    seating: {
-      step: "Step 03",
-      title: "Seat everyone",
-      subtitle:
-        "Drag guests onto seats, balance the tables, and print the finished plan for the venue.",
-      ofSeated: (total) => `of ${total} guests seated`,
-      emptySeat: "Empty seat",
-      taken: "Taken",
-    },
-  },
+const pl = {
+  ...sharedPl,
+  ...chillWed.pl,
+  ...stories.pl,
+  ...landingLoops.pl,
+  ...features.pl,
+  ...showcase.pl,
+};
 
-  teaser: {
-    question: ["How", "many", "guests", "at", "table", "4?"],
-    sting: "Three days before the wedding.",
-    files: ["guests.xlsx", "guests_final.xlsx", "guests_final_FINAL.xlsx"],
-    notes: ["Aunt Barbara NOT next to Mark", "Uncle John - gluten-free?"],
-    chaos: "A spreadsheet, sticky notes and a group chat.",
-    plan: "Or one hall plan.",
-    hasSeat: "guests have a seat",
-    ctaTitle: "Seat your guests in one evening",
-    ctaAction: "Start tonight",
-  },
-
-  importFilm: {
-    line: ["Your", "guest", "list", "lives", "in Excel."],
-    ctaAction: "Bring in your guest list",
-  },
-
-  report: {
-    messages: [
-      ["The venue", "wants", "the table plan."],
-      ["The florist", "asks", "how to", "lay out", "place cards."],
-      ["The kitchen", "asks", "where", "to serve", "veggie meals."],
-    ],
-    payoff: "Print it and pass it on.",
-    ctaAction: "Add your guests' dietary needs",
-  },
-
-  scale: {
-    hook: "Will these tables fit?",
-    payoff: "Distances in metres, not by eye.",
-  },
-
-  swap: {
-    hook: "Someone has to move?",
-    payoff: "Reseat without rewriting the list.",
-  },
-
-  swapCut: {
-    hook: "Auntie wants to sit at a\u00a0different table?",
-    payoff: "Nobody drops off the plan.",
-    ctaAction: "Click a seat and pick a guest",
-  },
-
-  kids: {
-    hook: ["How", "many", "children", "are coming?"],
-    payoff: "Every child counted.",
-    ctaAction: "Tag the children on your guest list",
-  },
-
-  shape: {
-    hook: "Your room isn't a rectangle?",
-    payoff: "Walls where they really stand.",
-  },
-
-  keepApart: {
-    mumsFamily: "Mum's family",
-    dadsFamily: "Dad's family",
-    hook: "Uncle Zbyszek and a\u00a0microphone? Far\u00a0from\u00a0the\u00a0DJ.",
-    parentsLine: "Your parents can't sit at neighbouring tables?",
-    dragLine: "The whole table, across the dance floor.",
-    guestsLine: "The guests keep their seats.",
-    payoff: "Move the table, guests and all.",
-    ctaAction: "Start planning without an account",
-  },
-
-  mama: {
-    hook: "Mum's asking for the third time where Uncle sits.",
-    sender: "Ania",
-    mum: "Mum",
-    bubbles: [
-      "And where's Uncle Zbyszek sitting?",
-      "Send me a photo of the plan",
-      "I can't see a thing in that photo",
-    ],
-    search: "Zbyszek",
-    captionLine: "A link, not a photo of a sheet of paper.",
-    payoff: "Mum can check for herself.",
-    ctaAction: "Send Mum a link to the plan",
-  },
-
-  couch: {
-    day: "Sunday",
-    times: ["7:40 pm", "8:10 pm", "9:05 pm", "10:30 pm"],
-    hook: "Right, tonight we finally do the seating plan.",
-    tea: "Tea, and let's go.",
-    floor: "Dance floor in the middle.",
-    headTable: "Our table facing it.",
-    howMany: "How many tables did we end up with?",
-    tableCount: (count) => `${spelled(count, EN_NUMBERS)}. That works.`,
-    grandma: "Grandma close to us.",
-    cousins: "Cousins together\u00a0- they'll swap seats anyway.",
-    work: "Your work friends by the bar?",
-    whereElse: "Where else?",
-    everyone: "Is that everyone?",
-    seated: "Everyone's seated.",
-    payoff: "One laptop, one sofa, the whole plan.",
-    ctaAction: "Sit down to the plan together",
-  },
-
-  series: {
-    tag: (episode) => `Stress-free wedding · #${episode}`,
-  },
-
-  listSeat: {
-    hook: "Cousin Tomek is coming after all.",
-    where: "Where do we seat him?",
-    fullTables: "Full tables drop out on their own.",
-    beside: "You see who he'll sit next to.",
-    payoff: "Tomek sits with his family. Nobody else moved an inch.",
-    ctaAction: "Seat a guest straight from the list",
-  },
-
-  tableShape: {
-    hook: "Round tables or one long one?",
-    both: "Let's try both.",
-    square: "One tap - and it's square.",
-    dims: (metres, seats) =>
-      `${spelled(metres, EN_NUMBERS)} ${plural(metres, { one: "metre", few: "metres", many: "metres" })}, ${spelled(
-        seats,
-        EN_NUMBERS,
-      ).toLowerCase()} ${plural(seats, { one: "person", few: "people", many: "people" })}.`,
-    wall: "And along the wall.",
-    payoff: "Same guests, different table.",
-    ctaAction: "Try both layouts on the plan",
-  },
-
-  tenTables: {
-    hook: (tables, seats) =>
-      `The venue says: ${spelledCount(tables, EN_NUMBERS, EN_TENS).toLowerCase()} round tables of ${spelledCount(
-        seats,
-        EN_NUMBERS,
-        EN_TENS,
-      ).toLowerCase()}.`,
-    round: (diameter) =>
-      `Round, ${spelledMetres(diameter, { 1.5: "one and a half metres" })}.`,
-    typed: (count) => `You type ${count}.`,
-    landed: (count) =>
-      `There they are. All ${spelledCount(count, EN_NUMBERS, EN_TENS).toLowerCase()}.`,
-    fixtures: "Dance floor, stage, door.",
-    payoff: (tables, seats) =>
-      `${spelledCount(tables, EN_NUMBERS, EN_TENS)} ${tables === 1 ? "table" : "tables"}, ${spelledCount(
-        seats,
-        EN_NUMBERS,
-        EN_TENS,
-      ).toLowerCase()} ${seats === 1 ? "seat" : "seats"}, the dance floor in front of the stage.`,
-    ctaAction: "Set out all your tables at once",
-  },
-
-  todoList: {
-    hook: "The DJ deposit… did we pay it or not?",
-    overdue: "There it is. Red, because it's overdue.",
-    done: "Paid. Ticked off.",
-    payoff: "What's done and what isn't - in one place.",
-    ctaAction: "Write down what's still to sort out",
-    items: {
-      deposit: "DJ deposit",
-      plan: "Send the venue the seating plan",
-      fitting: "Suit fitting",
-      rings: "Pick up the rings",
-      kidsMenu: "Ask about the kids' menu",
-    },
-  },
-
-  tryNow: {
-    hook: (seconds) => `Got ${seconds}\u00a0seconds?`,
-    start: "Go.",
-    hall: "The hall's already waiting.",
-    table: (seats) => `A table for ${spelled(seats, EN_NUMBERS).toLowerCase()}.`,
-    guest: "Grandma Jadzia",
-    listed: "Grandma's on the list.",
-    seated: "Grandma's at the table.",
-    payoff: (left) => `Grandma's seated. ${left}\u00a0${left === 1 ? "second" : "seconds"}\u00a0to\u00a0spare.`,
-    ctaAction: "Start a stopwatch and try it yourselves",
-  },
-
-  walkthrough: {
-    hook: "An empty hall, a guest list and no plan?",
-    floors: "Dinner downstairs, dancing upstairs?",
-    outroTitle: "Your hall, your guests, one plan.",
-    outroAction: "Draw your hall",
-  },
+const en: typeof pl = {
+  ...sharedEn,
+  ...chillWed.en,
+  ...stories.en,
+  ...landingLoops.en,
+  ...features.en,
+  ...showcase.en,
 };
 
 const translations: Record<Lang, typeof pl> = { pl, en };

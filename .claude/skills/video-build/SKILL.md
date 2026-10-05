@@ -11,7 +11,7 @@ Target for this run: **$ARGUMENTS**
 - `import-excel` — that brief id, from the newest plan in `docs/video-plans/`
 - `docs/video-plans/full-series-2026-09-11.md import-excel` — that brief, from that plan
 - empty — the newest plan, first step of its **Build order** whose composition ids are not yet
-  registered in `src/Root.tsx`. Say which brief you picked before touching anything.
+  registered in any `src/easywed/{group}/Compositions.tsx`. Say which brief you picked before touching anything.
 
 "Newest" is the latest `{date}` in the filename, then the highest `-N` suffix. If the id matches no
 brief, list the plan's brief ids and ask. Asked for several videos, build them one at a time and
@@ -46,9 +46,10 @@ report at the end of this run.
 - `.claude/skills/video-plan/SKILL.md` — section 4 (do not claim), section 5 (production
   constraints) and section 8 (creative rules) bind the build exactly as they bound the plan.
 - `.claude/skills/video-plan/references/v1-facts.md` and `references/existing-films.md`.
-- In `typescript/easywed-video/`: `README.md`, `package.json`, `src/Root.tsx`, and in
-  `src/easywed/`: `timeline.ts`, `format.ts`, `layouts.ts`, `data.ts`, `theme.ts`, `geometry.ts`.
-- **All of `src/easywed/teaser/`** — the template for a self-contained cut: its own timeline, its
+- In `typescript/easywed-video/`: `README.md`, `package.json`, and in `src/easywed/`: `timeline.ts`,
+  `format.ts`, `layouts.ts`, `data.ts`, `theme.ts`, `geometry.ts`, plus the target group's
+  `Compositions.tsx` and `i18n.ts`. Skip `src/Root.tsx`, it only renders the groups.
+- **All of `src/easywed/showcase/teaser/`** — the template for a self-contained cut: its own timeline, its
   own `TransitionSeries`, its own scenes, drawing on the shared theme, layouts and components.
 - Every component the brief lists under *Reuses*. Read its props; do not infer them from the name.
 - For every app surface the brief redraws, the real component at the tag. Find it from its i18n
@@ -84,7 +85,7 @@ with AskUserQuestion, then build.
 4. **Numbers on screen.** Every count, dimension and distance is computed from `layouts.ts` or
    `data.ts` while rendering — as `PlanScene` reads `hall.totalSeats` — and never typed. When the
    brief's example number disagrees with the computation, the computation wins.
-5. **Ids.** Composition ids are one flat namespace across `Root.tsx`, scenes included (`Intro`,
+5. **Ids.** Composition ids are one flat namespace across every group's `Compositions.tsx`, scenes included (`Intro`,
    `Hall`, `Guests`, `Seating`, `Outro`, `Hook`, `Chaos`, `Plan`, `Cta` are taken). Ids and folder
    names allow only `a-z A-Z 0-9 -`. Films are lowercase `easywed-…`, with `-vertical` and
    `-square` twins.
@@ -96,10 +97,16 @@ with AskUserQuestion, then build.
 
 ## 4. Where things go
 
+Films are grouped by series, matching `out/{lang}/{group}/`: `showcase` (demo, teaser,
+walkthrough), `features` (single-feature cuts), `landing-loops` (16:9 loops), `stories` (9:16
+story cuts), `chill-wed` (the „Wesele bez spiny” Instagram series and its carousel) and
+`animations` (standalone pieces). Put the film in the group its plan belongs to. If none fits,
+ask before you create a new group.
+
 Mirror the teaser:
 
 ```
-src/easywed/{slug}/
+src/easywed/{group}/{slug}/
   timeline.ts        {SLUG}_SCENES, {SLUG}_TRANSITION, {SLUG}_DURATION
   {Name}.tsx         the TransitionSeries, shaped like teaser/Teaser.tsx
   scenes/            one {Beat}Scene.tsx per beat
@@ -158,12 +165,15 @@ scenes, and suggest the user commit it on its own.
 
 ## 7. Register it
 
-- **`src/Root.tsx`** — the film's compositions after the teaser's, with a one-line comment, plus a
-  `<Folder>` named after the video holding each scene at its primary aspect ratio.
+- **`src/easywed/{group}/Compositions.tsx`** — the film's compositions after the group's last film,
+  with a one-line comment, plus a `<Folder>` named after the video holding each scene at its
+  primary aspect ratio. A new group gets its own `Compositions.tsx`, rendered in `src/Root.tsx`.
+- **`src/easywed/{group}/i18n.ts`** — the film's lines under its own key, in both `pl` and `en`.
+  A new group's file is spread into `pl` and `en` in `src/easywed/i18n.ts`.
 - **`package.json`** — `render:{slug}` (and `:vertical` / `:square`) rendering to
-  `out/{composition-id}.mp4`, each appended to `render:all`.
-- **`README.md`** — a compositions table for the film, its render commands, and a line in
-  *Structure*.
+  `out/${REMOTION_LANG:-pl}/{group}/{composition-id}.mp4`, each appended to `render:all`.
+- **`README.md`** — a compositions table for the film, its render commands, and a line under its
+  group in *Structure*.
 
 ## 8. Verify
 

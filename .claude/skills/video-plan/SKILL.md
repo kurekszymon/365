@@ -69,7 +69,9 @@ In `typescript/easywed-video/`:
 
 - `README.md` — compositions, render scripts, and how one set of scenes serves two aspect ratios
 - `src/easywed/timeline.ts`, `theme.ts`, `layouts.ts`, `format.ts`, `data.ts`
-- `src/easywed/Film.tsx`, `src/easywed/teaser/Teaser.tsx`, `src/easywed/components/`
+- `src/easywed/showcase/demo/Film.tsx`, `src/easywed/showcase/teaser/Teaser.tsx`,
+  `src/easywed/components/`. Films sit in groups under `src/easywed/{group}/`, one per series
+  (see the README's *Structure*).
 
 ## 3. What is true at the tag
 

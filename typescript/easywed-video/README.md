@@ -121,9 +121,10 @@ pnpm run lint           # eslint + tsc
 
 ## Languages
 
-Every film renders in Polish (the default) or English. All on-screen strings live in
-`src/easywed/i18n.ts` as one `pl` object and an `en` object typed `typeof pl`, so a key missing
-from either side fails `tsc`. Scenes read the active language through `tl`:
+Every film renders in Polish (the default) or English. The app's own strings live in
+`src/easywed/i18n.ts`, and each group's film lines in its own `src/easywed/{group}/i18n.ts`; every
+file has a `pl` object and an `en` object typed `typeof pl`, so a key missing from either side
+fails `tsc`. `i18n.ts` merges them into one `tl`. Scenes read the active language through `tl`:
 
 ```tsx
 <SceneLabel step={tl.demo.hall.step} title={tl.demo.hall.title} subtitle={tl.demo.hall.subtitle} />
@@ -154,7 +155,8 @@ to update when a new video ships.
 
 `/video-build <id>` (`.claude/skills/video-build/`) then builds one brief from such a plan: it
 re-checks the brief's copy, claims and frame maths against `easywed/v1`, adds the film under
-`src/easywed/{id}/` in the teaser's shape, registers it in `Root.tsx` and `package.json`, checks
+`src/easywed/{group}/{id}/` in the teaser's shape, registers it in its group's `Compositions.tsx`
+and `package.json`, checks
 stills, and adds the new on-screen lines to the burned list so the next plan won't reuse them.
 
 ## Compositions
@@ -335,7 +337,9 @@ src/easywed/
   format.ts              useFormat() - picks hall + type scale from the composition size
   data.ts                the demo wedding: guest list, couple
   geometry.ts            seat positions around round/rectangular tables
-  Film.tsx               TransitionSeries stitching the five scenes with crossfades
+  lang.ts                LANG, locale and the helpers the string files share - plurals,
+                         spelled-out numbers, months
+  i18n.ts                the app's own strings, merged with each group's i18n.ts into `tl`
   components/            Backdrop, BrandMark, Wordmark, Icon, AppFrame, PlannerCanvas,
                          HallCanvas, PlannerTable, ... - and the phone: PhoneFrame (the
                          handset, the thumb's touch and the browser's address bar) and
@@ -345,86 +349,95 @@ src/easywed/
                          by the mama-link, list-seat and table-shape cuts; SeriesTag, the
                          Instagram series' pill; AddHub, the *Dodaj do sali* picker's body,
                          for the ten-tables cut's dialog and the try-now cut's sheet
-  scenes/                one file per scene
-  teaser/                the social cut - its own timeline, Teaser.tsx and scenes,
+
+  Each group below has its own Compositions.tsx (its Studio registrations, rendered by
+  src/Root.tsx) and, apart from animations/, an i18n.ts with its films' lines.
+
+  showcase/              the overview films
+    demo/                the full film: Film.tsx stitches scenes/ (one file per scene) with crossfades
+    teaser/              the social cut - its own timeline, Teaser.tsx and scenes,
                          drawn with the same theme, layouts and components
-  import-excel/          the import cut, in the teaser's shape; its dialog redraw lives in
+    walkthrough-long/    the 83 s YouTube tour: its timeline reads each chapter's length from
+                         the film it comes from; FloorsScene adds secondHallBeside()
+                         (layouts.ts) through components/HallsPanel.tsx, the *Sale* list,
+                         and the odd-room chapters then shape that hall rather than L_HALL
+  features/              the single-feature cuts
+    import-excel/        the import cut, in the teaser's shape; its dialog redraw lives in
                          components/ImportDialog.tsx, since the long walkthrough reuses it
-  kitchen-report/        the kitchen-report cut, in the teaser's shape; the printed report
+    kitchen-report/      the kitchen-report cut, in the teaser's shape; the printed report
                          lives in components/PrintSheet.tsx, since the long walkthrough reuses
                          it, and the guest list in components/GuestList.tsx, since the
                          kids-count cut draws it too
-  kids-count/            the kids-count cut, in the teaser's shape; guests.ts puts five
+    kids-count/          the kids-count cut, in the teaser's shape; guests.ts puts five
                          children on the roster without changing its 58, and
                          components/EditGuestDrawer.tsx redraws the edit-guest form. The
                          guest list itself is components/GuestList.tsx, shared with the
                          kitchen-report cut
-  to-scale/              the to-scale landing loop - three scenes drawn off one shared clock
+  landing-loops/         the 16:9 landing loops
+    to-scale/            the to-scale landing loop - three scenes drawn off one shared clock
                          (script.ts), closed by components/LoopSeam.tsx, which the other
                          landing loops reuse
-  seat-swap/             the seat-swap landing loop, in the to-scale loop's shape; seating.ts
+    seat-swap/           the seat-swap landing loop, in the to-scale loop's shape; seating.ts
                          works out who sits where at each frame and what the seat popover
                          (components/SeatPopover.tsx) therefore lists. The social cut of the
                          same move lives beside it - SeatSwapCut.tsx, cutScript.ts, the
                          SwapCut* scenes and components/SwapCutPlanner.tsx - and shares
                          seating.ts and the popover
-  odd-room/              the odd-room landing loop, in the to-scale loop's shape, drawn on
+    odd-room/            the odd-room landing loop, in the to-scale loop's shape, drawn on
                          L_HALL (layouts.ts) with HallCanvas's `walls` polygon; script.ts
                          derives the outline from the frame, and its components redraw the
                          shape-edit pill and the vertex handles. The hall dialog lives in
                          components/HallPanel.tsx, since the long walkthrough draws it too
-  walkthrough-long/      the 83 s YouTube tour: its timeline reads each chapter's length from
-                         the film it comes from; FloorsScene adds secondHallBeside()
-                         (layouts.ts) through components/HallsPanel.tsx, the *Sale* list,
-                         and the odd-room chapters then shape that hall rather than L_HALL
-  keep-apart/            the keep-apart cut, 9:16 only, in the seat-swap cut's shape: every
+  stories/               the 9:16 story cuts
+    keep-apart/          the keep-apart cut, 9:16 only, in the seat-swap cut's shape: every
                          planner scene draws components/ApartPlanner.tsx off one clock
                          (script.ts) - the two table drags, the pointer and a camera that
                          zooms the canvas. Its lines use components/CaptionLine.tsx, shared
                          with the story cuts still to come
-  mama-link/             the mama-link cut, 9:16 only: mum's phone (components/MamaPhone.tsx)
+    mama-link/           the mama-link cut, 9:16 only: mum's phone (components/MamaPhone.tsx)
                          and the couple's laptop (components/InviteDesk.tsx) both run off
                          one clock (script.ts). Its components are the film's own - a generic
                          chat thread, the members dialog and the sign-in page; the planner
                          on her phone is the shared PhoneShell in its `viewer` mode.
                          guests.ts seats the uncle without changing the roster's 58. The laptop is AppFrame's `desktop` frame, and the
                          viewer's guest list is GuestList with `readOnly` and a `query`
-  sunday-couch/          the sunday-couch cut, 9:16 only, in the keep-apart cut's shape: every
+    sunday-couch/        the sunday-couch cut, 9:16 only, in the keep-apart cut's shape: every
                          scene draws components/CouchPlanner.tsx off one clock (script.ts) -
                          the time chip, the two voices (SpeechLine, over CaptionLine) and a
                          camera on the couple's laptop (CouchDesk: AppFrame's `desktop` frame
                          with its rail badges counted off the plan). The room is COUCH_HALL,
                          the 20x12 m hall guest mode seeds; the guest panel's progress card
                          is components/SeatingProgress.tsx, shared with the import cut
-  list-seat/             the list-seat cut, 9:16 only so far, in the mama-link cut's shape:
+  chill-wed/             „Wesele bez spiny”, the Instagram series
+    list-seat/           the list-seat cut, 9:16 only so far, in the mama-link cut's shape:
                          every scene draws components/ListSeatStage.tsx off one clock
                          (script.ts) - the series tag, the line in the band, and a camera
                          on the couple's phone (ListSeatPhone: PhoneShell in `guest` mode,
                          with the SeatAssignSheet redraw over it). guests.ts seats the Lis,
                          Nowicki and Wrona families at Stół 5 and leaves Tomek last on the
                          list, still 58
-  table-shape/           the table-shape cut, 9:16 only, in the list-seat cut's shape: every
+    table-shape/         the table-shape cut, 9:16 only, in the list-seat cut's shape: every
                          scene draws components/TableShapeStage.tsx off one clock
                          (script.ts), with shape.ts working out Stół 3 and its form at each
                          frame - round, square, 3x1, turned - on the canvas and in the form's
                          seat diagram. The phone (TableShapePhone) is PhoneShell in `owner`
                          mode with its canvas zoomed onto Stół 3 and the table toolbar, and
                          components/TableEditSheet.tsx redraws the table form in its drawer
-  ten-tables/            the ten-tables cut, 9:16 only, in the table-shape cut's shape, on the
+    ten-tables/          the ten-tables cut, 9:16 only, in the table-shape cut's shape, on the
                          couple's laptop as the sunday-couch cut draws it: every scene draws
                          components/TenTablesStage.tsx off one clock (script.ts), with
                          state.ts reading the form, the fixtures and the pointer off it and
                          components/desk.ts placing everything on the desk. Its redraws are
                          the canvas menu, the batch dialog, the *Elementy sali* panel and the
                          add-hub dialog; jump cuts skip the dialogs v1 opens between beats
-  todo-list/             the todo-list cut, 9:16 only, in the table-shape cut's shape: every
+    todo-list/           the todo-list cut, 9:16 only, in the table-shape cut's shape: every
                          scene draws components/TodoListStage.tsx off one clock (script.ts),
                          the add scene and the close with `jumped` so the seam into the
                          add scene is the cut past the typing. reminders.ts is the couple's
                          list, red computed from its due dates against SEEN_ON. The phone
                          is PhoneShell in `owner` mode, and components/RemindersSheet.tsx
                          redraws the *Przypomnienia* drawer and its create popover
-  try-now/               the try-now speedrun, 9:16 only, in the table-shape cut's shape:
+    try-now/             the try-now speedrun, 9:16 only, in the table-shape cut's shape:
                          every scene draws components/TryNowStage.tsx off one clock
                          (script.ts), which also drives the stopwatch (RunClock) - nothing
                          between its start and stop is cut. plan.ts works out v1's fit of
@@ -434,17 +447,20 @@ src/easywed/
                          OnboardingCard), the add-hub sheet, the empty guest drawer, the
                          add-guest drawer and the table form's guest picker; the form itself
                          is the table-shape cut's TableEditSheet, fresh
+    carousel/            CarouselEpisode - a finished 9:16 episode scaled into a 4:5 slide
+  animations/            standalone animations
+    stress-away/         StressAway, at 4:5, 1:1 and 9:16
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect
 ratios the same way the walkthrough does. Its own beats and its shorter crossfade live in
-`teaser/timeline.ts` rather than the shared one - a teaser cuts where a walkthrough dissolves.
+`showcase/teaser/timeline.ts` rather than the shared one - a teaser cuts where a walkthrough dissolves.
 
 ## How one set of scenes renders two aspect ratios
 
 There is no second set of components. `useFormat()` reads `useVideoConfig()` and derives
-`tall = height > width`, then hands each scene its room plan and type scale - so `Root.tsx` only
-registers a second size and the scenes adapt themselves:
+`tall = height > width`, then hands each scene its room plan and type scale - so a group's
+`Compositions.tsx` only registers a second size and the scenes adapt themselves:
 
 - **Room** - portrait gets `TALL_HALL`, a genuinely different plan (two columns of tables
   flanking the dance floor, head table on top), not the landscape hall cropped. Both come to the
@@ -486,4 +502,4 @@ video follows it.
 - Copy is lifted from the landing page strings in `easywed/src/i18n/locales/pl.json` and
   `en.json`, so the video and the site say the same thing.
 
-If the app's palette or copy changes, `theme.ts` and `i18n.ts` are the two places to update.
+If the app's palette or copy changes, `theme.ts` and the `i18n.ts` files are the places to update.
