@@ -67,52 +67,52 @@ itself fetches the right version, so `pnpm install` is all the setup there is.
 ```bash
 pnpm run dev              # Remotion Studio on http://localhost:3000
 pnpm run dev:en           # the same, in English
-pnpm run render           # -> out/pl/easywed-demo.mp4          (16:9)
-pnpm run render:vertical  # -> out/pl/easywed-demo-vertical.mp4 (9:16)
-pnpm run render:gif       # -> out/pl/easywed-demo.gif (960px wide, every 2nd frame)
+pnpm run render           # -> out/pl/showcase/easywed-demo.mp4 (16:9)
+pnpm run render:vertical  # -> out/pl/showcase/easywed-demo-vertical.mp4 (9:16)
+pnpm run render:gif       # -> out/pl/showcase/easywed-demo.gif (960px wide, every 2nd frame)
 
-pnpm run render:teaser           # -> out/pl/easywed-teaser.mp4          (16:9)
-pnpm run render:teaser:vertical  # -> out/pl/easywed-teaser-vertical.mp4 (9:16)
+pnpm run render:teaser           # -> out/pl/showcase/easywed-teaser.mp4 (16:9)
+pnpm run render:teaser:vertical  # -> out/pl/showcase/easywed-teaser-vertical.mp4 (9:16)
 
-pnpm run render:import-excel           # -> out/pl/easywed-import.mp4          (16:9)
-pnpm run render:import-excel:vertical  # -> out/pl/easywed-import-vertical.mp4 (9:16)
+pnpm run render:import-excel           # -> out/pl/features/easywed-import.mp4 (16:9)
+pnpm run render:import-excel:vertical  # -> out/pl/features/easywed-import-vertical.mp4 (9:16)
 
-pnpm run render:kitchen-report           # -> out/pl/easywed-report.mp4          (16:9)
-pnpm run render:kitchen-report:vertical  # -> out/pl/easywed-report-vertical.mp4 (9:16)
+pnpm run render:kitchen-report           # -> out/pl/features/easywed-report.mp4 (16:9)
+pnpm run render:kitchen-report:vertical  # -> out/pl/features/easywed-report-vertical.mp4 (9:16)
 
-pnpm run render:kids-count           # -> out/pl/easywed-kids.mp4          (16:9)
-pnpm run render:kids-count:vertical  # -> out/pl/easywed-kids-vertical.mp4 (9:16)
+pnpm run render:kids-count           # -> out/pl/features/easywed-kids.mp4 (16:9)
+pnpm run render:kids-count:vertical  # -> out/pl/features/easywed-kids-vertical.mp4 (9:16)
 
-pnpm run render:to-scale         # -> out/pl/easywed-scale.mp4        (16:9, at 960x540 for its page slot)
-pnpm run render:to-scale:poster  # -> out/pl/easywed-scale-poster.png (frame 0 at 960x540, the <video> poster)
+pnpm run render:to-scale         # -> out/pl/landing-loops/easywed-scale.mp4 (16:9, at 960x540 for its page slot)
+pnpm run render:to-scale:poster  # -> out/pl/landing-loops/easywed-scale-poster.png (frame 0 at 960x540, the <video> poster)
 
-pnpm run render:seat-swap         # -> out/pl/easywed-swap.mp4        (16:9, at 960x540 for its page slot)
-pnpm run render:seat-swap:poster  # -> out/pl/easywed-swap-poster.png (frame 0 at 960x540, the <video> poster)
+pnpm run render:seat-swap         # -> out/pl/landing-loops/easywed-swap.mp4 (16:9, at 960x540 for its page slot)
+pnpm run render:seat-swap:poster  # -> out/pl/landing-loops/easywed-swap-poster.png (frame 0 at 960x540, the <video> poster)
 
-pnpm run render:seat-swap-cut           # -> out/pl/easywed-swap-cut.mp4          (16:9)
-pnpm run render:seat-swap-cut:vertical  # -> out/pl/easywed-swap-cut-vertical.mp4 (9:16)
+pnpm run render:seat-swap-cut           # -> out/pl/features/easywed-swap-cut.mp4 (16:9)
+pnpm run render:seat-swap-cut:vertical  # -> out/pl/features/easywed-swap-cut-vertical.mp4 (9:16)
 
-pnpm run render:odd-room         # -> out/pl/easywed-shape.mp4        (16:9, at 960x540 for its page slot)
-pnpm run render:odd-room:poster  # -> out/pl/easywed-shape-poster.png (frame 0 at 960x540, the <video> poster)
+pnpm run render:odd-room         # -> out/pl/landing-loops/easywed-shape.mp4 (16:9, at 960x540 for its page slot)
+pnpm run render:odd-room:poster  # -> out/pl/landing-loops/easywed-shape-poster.png (frame 0 at 960x540, the <video> poster)
 
-pnpm run render:walkthrough-long           # -> out/pl/easywed-walkthrough.mp4          (16:9)
-pnpm run render:walkthrough-long:vertical  # -> out/pl/easywed-walkthrough-vertical.mp4 (9:16)
+pnpm run render:walkthrough-long           # -> out/pl/showcase/easywed-walkthrough.mp4 (16:9)
+pnpm run render:walkthrough-long:vertical  # -> out/pl/showcase/easywed-walkthrough-vertical.mp4 (9:16)
 
-pnpm run render:keep-apart:vertical  # -> out/pl/easywed-apart-vertical.mp4 (9:16, its only size)
+pnpm run render:keep-apart:vertical  # -> out/pl/stories/easywed-apart-vertical.mp4 (9:16, its only size)
 
-pnpm run render:mama-link:vertical   # -> out/pl/easywed-mama-vertical.mp4  (9:16, its only size)
+pnpm run render:mama-link:vertical   # -> out/pl/stories/easywed-mama-vertical.mp4 (9:16, its only size)
 
-pnpm run render:sunday-couch:vertical  # -> out/pl/easywed-couch-vertical.mp4 (9:16, its only size)
+pnpm run render:sunday-couch:vertical  # -> out/pl/stories/easywed-couch-vertical.mp4 (9:16, its only size)
 
-pnpm run render:list-seat:vertical  # -> out/pl/easywed-listseat-vertical.mp4 (9:16; the 1:1 feed cut is still to come)
+pnpm run render:list-seat:vertical  # -> out/pl/chill-wed/easywed-listseat-vertical.mp4 (9:16; the 1:1 feed cut is still to come)
 
-pnpm run render:table-shape:vertical  # -> out/pl/easywed-tableshape-vertical.mp4 (9:16, its only size)
+pnpm run render:table-shape:vertical  # -> out/pl/chill-wed/easywed-tableshape-vertical.mp4 (9:16, its only size)
 
-pnpm run render:ten-tables:vertical  # -> out/pl/easywed-batch-vertical.mp4 (9:16, its only size)
+pnpm run render:ten-tables:vertical  # -> out/pl/chill-wed/easywed-batch-vertical.mp4 (9:16, its only size)
 
-pnpm run render:todo-list:vertical  # -> out/pl/easywed-todo-vertical.mp4 (9:16, its only size)
+pnpm run render:todo-list:vertical  # -> out/pl/chill-wed/easywed-todo-vertical.mp4 (9:16, its only size)
 
-pnpm run render:try-now:vertical  # -> out/pl/easywed-trynow-vertical.mp4 (9:16, its only size)
+pnpm run render:try-now:vertical  # -> out/pl/chill-wed/easywed-trynow-vertical.mp4 (9:16, its only size)
 
 pnpm run render:all     # all of the above
 pnpm run render:all:en  # all of the above in English -> out/en/
@@ -130,11 +130,11 @@ from either side fails `tsc`. Scenes read the active language through `tl`:
 ```
 
 The language comes from `REMOTION_LANG` - Remotion only forwards `REMOTION_`-prefixed variables to
-the bundle - and every render script writes to `out/${REMOTION_LANG:-pl}/`, so the two never
+the bundle - and every render script writes to `out/${REMOTION_LANG:-pl}/<group>/`, so the two never
 overwrite each other:
 
 ```bash
-REMOTION_LANG=en pnpm run render:teaser  # -> out/en/easywed-teaser.mp4
+REMOTION_LANG=en pnpm run render:teaser  # -> out/en/showcase/easywed-teaser.mp4
 ```
 
 Strings that redraw the app are its own `pl.json` / `en.json` values at `easywed/v1`, with the
