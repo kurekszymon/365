@@ -449,7 +449,7 @@ src/easywed/
                          is the table-shape cut's TableEditSheet, fresh
     carousel/            CarouselEpisode - a finished 9:16 episode scaled into a 4:5 slide
   animations/            standalone animations
-    stress-away/         StressAway, at 4:5, 1:1 and 9:16
+    stress-away/         StressAway, a looping 9:16 Reel
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect

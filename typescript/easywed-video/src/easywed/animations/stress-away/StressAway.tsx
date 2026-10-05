@@ -1,42 +1,54 @@
 import React from "react";
-import { AbsoluteFill, interpolate, interpolateColors, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import {
+  AbsoluteFill,
+  Easing,
+  interpolate,
+  interpolateColors,
+  spring,
+  useCurrentFrame,
+  useVideoConfig,
+} from "remotion";
 import { Backdrop } from "../../components/Backdrop";
 import { colors, fonts } from "../../theme";
 
 /**
- * An IG post in 4:5, 1:1 and 9:16: the three-line motto, then the logo's table taking its
- * guests one at a time - 12 and 3 o'clock first, so it becomes the real mark,
- * then the other six in a shuffled order - and the plan slide's signature
- * underneath (`.claude/skills/plan-slide/template.html`).
+ * A 9:16 Reel: the three-line motto and the plan slide's signature
+ * (`.claude/skills/plan-slide/template.html`) hold still, and only the table
+ * moves. It slides in empty from the left, seats 12 and 3 o'clock first so it
+ * becomes the logo, then the other six one at a time in a shuffled order, and
+ * slides out full to the right - both ends are an empty stage, so a replay
+ * reads as the next table coming in.
  */
 const LINES = ["One guest seated", "per day", "keeps the stress away"];
-const LINE_FROM = 8;
-const LINE_STEP = 16;
 
-const MARK_FROM = 62;
+const SLIDE_IN_TO = 18;
 /** Seat indices clockwise from 12 o'clock: the logo's two, then the rest shuffled. */
 const FILL_ORDER = [0, 2, 5, 1, 4, 7, 3, 6];
-const FILL_AT = [96, 118, 156, 170, 184, 198, 212, 226];
-const SIGNATURE_FROM = 252;
+/** The logo's two close together, a beat to read it, then the rest in quick succession. */
+const FILL_AT = [28, 46, 76, 84, 92, 100, 108, 116];
+/** Once the last guest's bounce has settled. */
+const SLIDE_OUT_FROM = 130;
 
-export const STRESS_AWAY_DURATION = 330;
+export const STRESS_AWAY_DURATION = 148;
 
-/**
- * Per format, keyed by height. The 4:5 keeps the plan slide's 120/160 padding
- * (carousel dots cover the bottom ~8%); the 9:16 keeps clear of the Reels
- * chrome - the top bar, and the caption and buttons over the bottom ~20%.
- */
-const LAYOUTS: Record<number, { padTop: number; padBottom: number; text: number; mark: number; sigMark: number; sigText: number }> = {
-  1080: { padTop: 80, padBottom: 90, text: 66, mark: 340, sigMark: 56, sigText: 42 },
-  1350: { padTop: 120, padBottom: 160, text: 78, mark: 440, sigMark: 62, sigText: 46 },
-  1920: { padTop: 280, padBottom: 400, text: 88, mark: 560, sigMark: 72, sigText: 54 },
-};
+/** Clear of the Reels chrome (top bar; caption and buttons over the bottom ~20%) and inside the feed's centred 4:5 crop (y 285-1635). */
+const PAD_TOP = 320;
+const PAD_BOTTOM = 360;
+const TEXT = 88;
+const MARK = 560;
+const SIG_MARK = 72;
+const SIG_TEXT = 54;
 
 const TABLE_RADIUS = 33;
 const ORBIT = 47;
 
 const Mark: React.FC<{ size: number; fills: number[] }> = ({ size, fills }) => (
-  <svg width={size} height={size} viewBox="-60 -60 120 120" style={{ overflow: "visible" }}>
+  <svg
+    width={size}
+    height={size}
+    viewBox="-60 -60 120 120"
+    style={{ overflow: "visible" }}
+  >
     <circle r={TABLE_RADIUS} fill={colors.brandGreen} />
     {fills.map((fill, i) => {
       const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
@@ -59,7 +71,11 @@ const Mark: React.FC<{ size: number; fills: number[] }> = ({ size, fills }) => (
             cx={cx}
             cy={cy}
             r={9 + fill}
-            fill={interpolateColors(settled, [0, 1], [colors.brandGreenSoft, colors.terracotta])}
+            fill={interpolateColors(
+              settled,
+              [0, 1],
+              [colors.brandGreenSoft, colors.terracotta],
+            )}
           />
         </g>
       );
@@ -67,72 +83,88 @@ const Mark: React.FC<{ size: number; fills: number[] }> = ({ size, fills }) => (
   </svg>
 );
 
+const SIGNATURE_FILLS = [1, 0, 1, 0, 0, 0, 0, 0];
+
 export const StressAway: React.FC = () => {
   const frame = useCurrentFrame();
-  const { fps, height } = useVideoConfig();
-  const layout = LAYOUTS[height] ?? LAYOUTS[1350];
+  const { fps, width } = useVideoConfig();
 
-  const markIn = spring({ frame: frame - MARK_FROM, fps, config: { damping: 14, mass: 0.7 } });
-  const fills = Array.from({ length: 8 }, (_, seat) =>
-    spring({ frame: frame - FILL_AT[FILL_ORDER.indexOf(seat)], fps, config: { damping: 9, mass: 0.5 } }),
+  // Off-canvas on both sides: half the canvas plus half the mark, with room for the ripple.
+  const offstage = width / 2 + MARK / 2 + 40;
+  const slideIn = interpolate(frame, [0, SLIDE_IN_TO], [-offstage, 0], {
+    extrapolateRight: "clamp",
+    easing: Easing.out(Easing.cubic),
+  });
+  const slideOut = interpolate(
+    frame,
+    [SLIDE_OUT_FROM, STRESS_AWAY_DURATION - 1],
+    [0, offstage],
+    {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+      easing: Easing.in(Easing.cubic),
+    },
   );
-  const signature = spring({ frame: frame - SIGNATURE_FROM, fps, config: { damping: 200 } });
+
+  const fills = Array.from({ length: 8 }, (_, seat) =>
+    spring({
+      frame: frame - FILL_AT[FILL_ORDER.indexOf(seat)],
+      fps,
+      config: { damping: 9, mass: 0.5 },
+    }),
+  );
 
   return (
     <Backdrop>
       <AbsoluteFill
         style={{
           alignItems: "center",
-          padding: `${layout.padTop}px 32px ${layout.padBottom}px`,
+          padding: `${PAD_TOP}px 32px ${PAD_BOTTOM}px`,
           boxSizing: "border-box",
           color: colors.ink,
         }}
       >
         <div style={{ textAlign: "center" }}>
-          {LINES.map((line, i) => {
-            const t = spring({ frame: frame - (LINE_FROM + i * LINE_STEP), fps, config: { damping: 200 } });
-            return (
-              <div
-                key={line}
-                style={{
-                  fontFamily: fonts.heading,
-                  fontWeight: 400,
-                  fontStyle: i === 1 ? "italic" : "normal",
-                  fontSize: layout.text,
-                  lineHeight: 1.18,
-                  letterSpacing: "0.005em",
-                  color: i === 1 ? colors.terracotta : colors.ink,
-                  opacity: t,
-                  transform: `translateY(${interpolate(t, [0, 1], [28, 0])}px)`,
-                }}
-              >
-                {line}
-              </div>
-            );
-          })}
-        </div>
-
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ transform: `scale(${markIn})`, opacity: Math.min(markIn * 1.5, 1) }}>
-            <Mark size={layout.mark} fills={fills} />
-          </div>
+          {LINES.map((line, i) => (
+            <div
+              key={line}
+              style={{
+                fontFamily: fonts.heading,
+                fontWeight: 400,
+                fontStyle: i === 1 ? "italic" : "normal",
+                fontSize: TEXT,
+                lineHeight: 1.18,
+                letterSpacing: "0.005em",
+                color: i === 1 ? colors.terracotta : colors.ink,
+              }}
+            >
+              {line}
+            </div>
+          ))}
         </div>
 
         <div
           style={{
+            flex: 1,
             display: "flex",
             alignItems: "center",
-            gap: layout.sigText * 0.4,
-            opacity: signature,
-            transform: `translateY(${interpolate(signature, [0, 1], [16, 0])}px)`,
+            justifyContent: "center",
           }}
         >
-          <Mark size={layout.sigMark} fills={[1, 0, 1, 0, 0, 0, 0, 0]} />
+          <div style={{ transform: `translateX(${slideIn + slideOut}px)` }}>
+            <Mark size={MARK} fills={fills} />
+          </div>
+        </div>
+
+        <div
+          style={{ display: "flex", alignItems: "center", gap: SIG_TEXT * 0.4 }}
+        >
+          <Mark size={SIG_MARK} fills={SIGNATURE_FILLS} />
           <span
             style={{
               fontFamily: fonts.heading,
               fontWeight: 600,
-              fontSize: layout.sigText,
+              fontSize: SIG_TEXT,
               color: colors.ink,
               letterSpacing: "-0.005em",
               lineHeight: 1,
