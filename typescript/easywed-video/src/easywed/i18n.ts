@@ -30,6 +30,7 @@ import * as stories from "./stories/i18n";
 import * as landingLoops from "./landing-loops/i18n";
 import * as features from "./features/i18n";
 import * as showcase from "./showcase/i18n";
+import * as animations from "./animations/i18n";
 
 export { LANG, locale, type DietKey, type Lang } from "./lang";
 
@@ -660,6 +661,7 @@ const pl = {
   ...landingLoops.pl,
   ...features.pl,
   ...showcase.pl,
+  ...animations.pl,
 };
 
 const en: typeof pl = {
@@ -669,6 +671,7 @@ const en: typeof pl = {
   ...landingLoops.en,
   ...features.en,
   ...showcase.en,
+  ...animations.en,
 };
 
 const translations: Record<Lang, typeof pl> = { pl, en };

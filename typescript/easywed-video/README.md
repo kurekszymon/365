@@ -348,10 +348,13 @@ src/easywed/
                          view), shared
                          by the mama-link, list-seat and table-shape cuts; SeriesTag, the
                          Instagram series' pill; AddHub, the *Dodaj do sali* picker's body,
-                         for the ten-tables cut's dialog and the try-now cut's sheet
+                         for the ten-tables cut's dialog and the try-now cut's sheet;
+                         LoopReel and TableMark, the brand loops' stage (motto, sliding
+                         middle, signature) and the logo's table with any seat count,
+                         per-seat labels and a highlighted chair
 
   Each group below has its own Compositions.tsx (its Studio registrations, rendered by
-  src/Root.tsx) and, apart from animations/, an i18n.ts with its films' lines.
+  src/Root.tsx) and an i18n.ts with its films' lines.
 
   showcase/              the overview films
     demo/                the full film: Film.tsx stitches scenes/ (one file per scene) with crossfades
@@ -449,7 +452,7 @@ src/easywed/
                          is the table-shape cut's TableEditSheet, fresh
     carousel/            CarouselEpisode - a finished 9:16 episode scaled into a 4:5 slide
   animations/            standalone animations
-    stress-away/         StressAway, a looping 9:16 Reel
+    stress-away/         StressAway, a looping 9:16 Reel on LoopReel
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect
