@@ -142,7 +142,11 @@ file and the tag named in section 2 both need updating — nothing will warn you
     **swaps the two fields' values**. Every edit keeps `position` - the table's **top-left
     corner** - so a table grows and turns out of that corner. Guests stay at the unchanged
     capacity (`applyToStore` slices to it), and a rotation drops only seat *position overrides*
-    (`updateTable`). A rectangle seats its two longer edges - top then bottom, or left then right
+    (`updateTable`). A seat's id is its index (`seatIdForIndex`, `seat-${i}`) and a seated guest
+    keeps that id, so when a round table's capacity grows every chair re-spaces to
+    `i / capacity` of a turn and the **new seats are the last indices** - the end of the clockwise
+    run, just before 12 o'clock - not gaps between the old ones (`planner.store.ts`,
+    `Canvas/seatLayout.ts` `effectiveSeats`; the same at v1.1.2 and v1.2.0). A rectangle seats its two longer edges - top then bottom, or left then right
     once it stands taller than wide - each run top-to-bottom / left-to-right. Shape and rotation
     save on the tap (`updateAndCommit`), and dimensions preview live and save on blur. No
     analytics event fires for any of it (there is no `table_updated`).

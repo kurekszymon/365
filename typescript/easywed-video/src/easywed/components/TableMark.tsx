@@ -27,6 +27,13 @@ type Props = {
   labels?: (seat: SeatAt) => React.ReactNode;
   /** A chair that breathes its ring without filling, `progress` pacing the ring as a fill does. */
   highlight?: { seat: number; progress: number };
+  /**
+   * The seat count the chairs are spaced for, `fills.length` by default. It can
+   * be fractional while chairs are added: chair `i` sits at `i / seats` of a
+   * turn, as `computeSeatPositions` spaces it for a whole count, and a chair at
+   * or past `seats` is still growing in from under 12 o'clock's.
+   */
+  seats?: number;
 };
 
 export const TableMark: React.FC<Props> = ({
@@ -34,12 +41,19 @@ export const TableMark: React.FC<Props> = ({
   fills,
   labels,
   highlight,
+  seats: spacedFor = fills.length,
 }) => {
   const seats = fills.map((fill, index) => ({
     index,
     fill,
-    angle: (index / fills.length) * Math.PI * 2 - Math.PI / 2,
+    angle: (index / spacedFor) * Math.PI * 2 - Math.PI / 2,
+    grown: Math.min(Math.max(spacedFor - index, 0), 1),
   }));
+  // Chairs still growing go underneath, so they come out from under the others.
+  const drawOrder = [
+    ...seats.filter((seat) => seat.grown < 1),
+    ...seats.filter((seat) => seat.grown === 1),
+  ];
 
   return (
     <svg
@@ -49,7 +63,7 @@ export const TableMark: React.FC<Props> = ({
       style={{ overflow: "visible" }}
     >
       <circle r={TABLE_RADIUS} fill={colors.brandGreen} />
-      {seats.map(({ index, fill, angle }) => {
+      {drawOrder.map(({ index, fill, angle, grown }) => {
         const cx = Math.cos(angle) * ORBIT;
         const cy = Math.sin(angle) * ORBIT;
         const settled = Math.min(fill, 1);
@@ -61,7 +75,7 @@ export const TableMark: React.FC<Props> = ({
             <circle
               cx={cx}
               cy={cy}
-              r={10 + ring * 8}
+              r={(10 + ring * 8) * grown}
               fill="none"
               stroke={colors.terracotta}
               strokeWidth={1.5}
@@ -70,7 +84,7 @@ export const TableMark: React.FC<Props> = ({
             <circle
               cx={cx}
               cy={cy}
-              r={9 + fill}
+              r={(9 + fill) * grown}
               fill={interpolateColors(
                 settled,
                 [0, 1],

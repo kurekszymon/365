@@ -14,10 +14,24 @@ export const pl = {
       ["keeps the stress away"],
     ] as Motto,
   },
+  extraChair: {
+    motto: [
+      ["Jeszcze dwie osoby?"],
+      [{ accent: "dwa krzesła więcej" }],
+      ["przy tym samym stole"],
+    ] as Motto,
+  },
 };
 
 export const en: typeof pl = {
   stressAway: {
     motto: [["One guest", { accent: "per day" }], ["keeps the stress away"]],
+  },
+  extraChair: {
+    motto: [
+      ["Two more coming?"],
+      [{ accent: "two more chairs" }],
+      ["at the same table"],
+    ],
   },
 };

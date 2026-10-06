@@ -44,7 +44,9 @@ export const LoopReel: React.FC<{
   durationInFrames: number;
   /** What slides through - the mark, and anything that travels with it. */
   children: React.ReactNode;
-}> = ({ motto, durationInFrames, children }) => {
+  /** The motto's size, for a line too long to stay on one line at the default. */
+  textSize?: number;
+}> = ({ motto, durationInFrames, children, textSize = TEXT }) => {
   const frame = useCurrentFrame();
   const { width } = useVideoConfig();
 
@@ -80,7 +82,7 @@ export const LoopReel: React.FC<{
             textAlign: "center",
             fontFamily: fonts.heading,
             fontWeight: 400,
-            fontSize: TEXT,
+            fontSize: textSize,
             lineHeight: 1.18,
             letterSpacing: "0.005em",
           }}

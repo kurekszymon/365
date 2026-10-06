@@ -251,6 +251,41 @@ were not burned). Drawn on `SEEDED_HALL` (`layouts.ts`), v1's empty `DEFAULT_HAL
 `easywed/v1.1.2`. `GuestModeBanner` and the card are drawn by the user's call (2026-09-30),
 reversing the first build's call to leave them out.
 
+## The stress-away loop - `easywed-stress-away-vertical`, 148f (4.9 s), 9:16 only
+
+the first brand loop, and the one `LoopReel` and `TableMark` were lifted from: the motto on top and
+the *easywed.* signature at the bottom, both static from frame 0, no CTA card (the caption carries
+the action line). The logo's table slides in empty from the left (0-18) - 12 o'clock's chair fills
+at 28 and 3 o'clock's at 46, so it becomes the logo - a beat to read it - then the other six fill
+one at a time in a shuffled order (5, 1, 4, 7, 3, 6 by index), every 8 frames from 76 to 116, each
+with a bounce and a terracotta ring - the last settles by 130 - it slides out full to the right,
+an empty stage on the last frame that matches frame 0. The beat - the logo's table filling seat
+by seat until it is full - is spent, and so is a loop that ends on a full table.
+One shot with no `TransitionSeries`: 18 in + 112 filling and settling + 18 out = 148.
+Not built from a plan. The motto is **English in both languages** by the user's call (2026-10-06):
+*"One guest"* / *"per day"* (italic, terracotta, on the first line) / *"keeps the stress away"* -
+it bends "an apple a day keeps the doctor away", which has no Polish twin, so the Polish caption
+carries the meaning. An earlier three-line version, *"One guest seated"* / *"per day"* /
+*"keeps the stress away"*, was replaced before posting.
+
+## The extra-chair loop - `easywed-extra-chair-vertical`, 138f (4.6 s), 9:16 only
+
+a brand loop on `LoopReel` (motto on top, the *easywed.* signature at the bottom, both static from
+frame 0; no CTA card, the action line is the caption's): the logo's table slides in full, 8 of 8 in
+terracotta - held - the seat count goes 8 -> 10, the eight chairs close up round the same table and
+the two new chairs come out soft green from under 12 o'clock as the last two seats clockwise (about
+10 and 11 o'clock, where `seat-8` and `seat-9` sit) - a beat, 8 seated and 2 free - the two new
+chairs fill one after the other with `stress-away`'s bounce and ring - held at 10 of 10 - it slides
+out right, an empty stage on the last frame that matches frame 0. The table's radius never changes.
+The beat - a full table given more chairs that re-space round it, seated guests staying put - is
+spent.
+Beats 18 in + 18 full + 30 chairs + 10 free + 30 sit + 14 hold + 18 out = 138, one shot with no
+`TransitionSeries`.
+Built from `docs/video-plans/stress-loops-9x16-2026-10-06.md`, brief 1 `extra-chair`, against
+`easywed/v1.2.0`. Its motto is set at 76 px rather than the stage's 88 (the user's call,
+2026-10-06), so its third line stays on one line. English via `REMOTION_LANG=en`: *"Two more
+coming?"* / *"two more chairs"* / *"at the same table"*.
+
 ## Polish lines already burned on screen
 
 None of these may appear again:
@@ -519,6 +554,14 @@ precedent); the add hub's chrome, the chip *"Sala · 20×12 m"*, `GuestModeBanne
 from the landing page to the first guest seated, and seating a guest from the table form's picker
 - is spent, as is the payoff of the time left over. Its CTA is *"Włączcie stoper i sprawdźcie
 sami"* over the *"easywed.app"* pill.
+
+The stress-away loop's motto is English on screen in both languages, so it burns no Polish line;
+its English lines *"One guest per day"* and *"keeps the stress away"* are spent all the same, and a
+Polish rendering of them would repeat the beat.
+
+The extra-chair loop's motto: *"Jeszcze dwie osoby?"* · *"dwa krzesła"* · *"więcej przy tym samym
+stole"*, and its caption's action line *"Dostawcie krzesło na planie - easywed.app"*. The signature
+*"easywed."* recurs on every brand loop by design.
 
 The series tag *"Wesele bez spiny · #N"* recurs by design across the series' episodes, like the
 pill; only its number changes. It is spent as a name for anything else.

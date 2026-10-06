@@ -52,9 +52,15 @@
   pay the DJ?" answered by the couple's dated list on the phone - the deposit red because it is
   overdue, ticked off, one more thing added - the CTA. A list, not an alarm: nothing on screen says
   the app will remind anyone.
+- **the stress-away loop** - 4.9 seconds for Reels, 9:16 only, the first brand loop: a motto
+  bending "an apple a day", in English in both languages, over the logo's table sliding in empty,
+  becoming the logo seat by seat until it is full, and sliding out. No CTA - the caption carries it.
+- **the extra-chair loop** - 4.6 seconds for Reels, 9:16 only, a brand loop on the stress-away
+  stage: the logo's table slides in full, its seat count goes from 8 to 10 so the chairs close up
+  round the same table, two more guests sit down, and it slides out. No CTA - the caption carries it.
 
-All but the loops, the keep-apart, mama-link, sunday-couch, list-seat, table-shape, ten-tables, try-now and todo-list cuts render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
-are in Polish.
+All but the loops, the keep-apart, mama-link, sunday-couch, list-seat, table-shape, ten-tables, try-now, todo-list, stress-away and extra-chair cuts render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
+are in Polish - except the stress-away loop's motto, which is English in both languages.
 
 It is a standalone package on purpose - it sits next to `easywed/` rather than inside it, so it
 stays out of that project's tsconfig, ESLint and Vite scope.
@@ -113,6 +119,10 @@ pnpm run render:ten-tables:vertical  # -> out/pl/chill-wed/easywed-batch-vertica
 pnpm run render:todo-list:vertical  # -> out/pl/chill-wed/easywed-todo-vertical.mp4 (9:16, its only size)
 
 pnpm run render:try-now:vertical  # -> out/pl/chill-wed/easywed-trynow-vertical.mp4 (9:16, its only size)
+
+pnpm run render:stress-away  # -> out/pl/animations/easywed-stress-away-vertical.mp4 (9:16, its only size)
+
+pnpm run render:extra-chair  # -> out/pl/animations/easywed-extra-chair-vertical.mp4 (9:16, its only size)
 
 pnpm run render:all     # all of the above
 pnpm run render:all:en  # all of the above in English -> out/en/
@@ -308,6 +318,11 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `TryNowSeat`              | 360f   | a guest typed and saved; seated from the table's form; the clock stops  |
 | `TryNowCta`               | 108f   | the phone recedes under the payoff, logo + easywed.app                  |
 
+| id                             | length | what it is                                                           |
+| ------------------------------ | ------ | -------------------------------------------------------------------- |
+| `easywed-stress-away-vertical` | 148f   | the 4.9 s stress-away loop, 9:16 only - one shot, no scenes to split |
+| `easywed-extra-chair-vertical` | 138f   | the 4.6 s extra-chair loop, 9:16 only - one shot, no scenes to split |
+
 The long walkthrough's other fifteen chapters are the scenes registered above, from the short
 walkthrough and the other cuts; only `Floors` is its own. The 9:16 cut leaves out `ScaleMeasure`:
 on a phone at v1 the canvas toolbar isn't there, and measuring is a long-press menu item with no
@@ -350,8 +365,9 @@ src/easywed/
                          Instagram series' pill; AddHub, the *Dodaj do sali* picker's body,
                          for the ten-tables cut's dialog and the try-now cut's sheet;
                          LoopReel and TableMark, the brand loops' stage (motto, sliding
-                         middle, signature) and the logo's table with any seat count,
-                         per-seat labels and a highlighted chair
+                         middle, signature) and the logo's table with any seat count -
+                         fractional while chairs are added - per-seat labels and a
+                         highlighted chair
 
   Each group below has its own Compositions.tsx (its Studio registrations, rendered by
   src/Root.tsx) and an i18n.ts with its films' lines.
@@ -453,6 +469,8 @@ src/easywed/
     carousel/            CarouselEpisode - a finished 9:16 episode scaled into a 4:5 slide
   animations/            standalone animations
     stress-away/         StressAway, a looping 9:16 Reel on LoopReel
+    extra-chair/         ExtraChair, a looping 9:16 Reel on LoopReel: a full table's seat
+                         count goes 8 -> 10 and two more guests sit; its beats in timeline.ts
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect
