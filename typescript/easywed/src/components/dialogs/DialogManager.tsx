@@ -6,7 +6,7 @@ import {
   ExportGuestsPdfDialog,
   ImportGuestsDialog,
 } from "./guests"
-import { DeleteHallDialog } from "./planner"
+import { DeleteHallDialog, LayoutPresetsDialog } from "./planner"
 import { VenueAccessDialog, WeddingMembersDialog } from "./weddings"
 import type { Dialog } from "@/stores/dialog.store"
 import { useDialogStore } from "@/stores/dialog.store"
@@ -22,6 +22,9 @@ const WRITE_DIALOGS: ReadonlySet<Dialog> = new Set([
   "Guest.Edit",
   "Guest.Import",
   "Planner.Hall.Delete",
+  // Applying a preset replaces the layout; saving one copies a plan out of
+  // this wedding, which a viewer has no business doing either.
+  "Planner.LayoutPresets",
   // Not a planner write, and canEdit is not the rule that decides it - the RPCs
   // behind it check `weddings.owner_id`, so an editor is refused there. It is
   // here for the role canEdit *does* decide: a venue must never reach the
@@ -66,6 +69,8 @@ export const DialogManager = () => {
       return <ExportGuestsPdfDialog />
     case "Planner.Hall.Delete":
       return <DeleteHallDialog />
+    case "Planner.LayoutPresets":
+      return <LayoutPresetsDialog />
     default:
       return <></>
   }

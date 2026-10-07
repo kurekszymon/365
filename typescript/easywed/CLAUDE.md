@@ -73,7 +73,7 @@ Both guards treat "not settled yet" (`!isReady`, `termsStatus === "unknown"`) as
 
 ### Supabase schema and RLS
 
-Schema lives in `supabase/migrations/`. Live tables: `weddings`, `wedding_members`, `halls`, `tables`, `fixtures`, `guests`, `reminders`, `wedding_invitations`, `tenants`, `tenant_members`, `tenant_invitations`, `menu_packages`, `menu_courses`, `menu_options`, `wedding_menu_selections`, and `profiles` (1:1 with `auth.users`, outside the wedding tree). One view: `wedding_seatmap`. `invitation_orders` was created and later dropped (`20260804000001`) - ignore it.
+Schema lives in `supabase/migrations/`. Live tables: `weddings`, `wedding_members`, `halls`, `tables`, `fixtures`, `guests`, `reminders`, `wedding_invitations`, `tenants`, `tenant_members`, `tenant_invitations`, `menu_packages`, `menu_courses`, `menu_options`, `wedding_menu_selections`, `layout_presets` (a venue's saved room layouts - a snapshot a linked couple copies in via `replace_planner_layout`, never a live link), and `profiles` (1:1 with `auth.users`, outside the wedding tree). One view: `wedding_seatmap`. `invitation_orders` was created and later dropped (`20260804000001`) - ignore it.
 
 All tables have RLS enabled; access is gated by `public.is_wedding_member(wedding_id)` and `public.wedding_role(wedding_id)` helper functions (both `security definer` to avoid recursion through `wedding_members`' own policies).
 
