@@ -1,32 +1,22 @@
 import { useEffect } from "react"
 import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
-import { LandingHero } from "./LandingHero"
-import { LandingStories } from "./LandingStories"
-import { LandingFeatures } from "./LandingFeatures"
-import { LandingSteps } from "./LandingSteps"
-import { LandingFaq } from "./LandingFaq"
-import { LandingCta } from "./LandingCta"
-import { VenueOwnersBanner } from "./VenueOwnersBanner"
+import { TransportHero } from "./TransportHero"
+import { TransportCargo } from "./TransportCargo"
+import { TransportSteps } from "./TransportSteps"
+import { TransportCta } from "./TransportCta"
+import { transportMailto } from "./transportMailto"
+import type { Lang } from "@/components/landing/LocaleLanding"
 import { CookieSettingsButton } from "@/components/consent/CookieSettingsButton"
 import { Button } from "@/components/ui/button"
-import { useAuthStore } from "@/stores/auth.store"
 import i18n from "@/i18n"
 
-export type Lang = "pl" | "en"
-
-// Public, language-pinned landing used for shareable locale URLs (/pl, /en).
-// Text renders with an explicit `lng` so the server output is deterministic
-// (no dependency on the browser language detector, which is undefined on the
-// server) and hydration stays stable. The global i18n language is synced on
-// the client so navigating into the app keeps the chosen language; <html lang>
-// is owned by the root shell (derived from the path).
-export function LocaleLanding({ lang }: { lang: Lang }) {
+// Campaign page for the Poznań transport pilot (/pl/transport, /en/transport).
+// Same locale-pinned rendering rules as LocaleLanding: text renders with an
+// explicit `lng` for stable SSR output, and the global i18n language syncs
+// on the client.
+export function TransportLanding({ lang }: { lang: Lang }) {
   const { t } = useTranslation()
-  // Session hydrates client-side (null on the server), so both server and the
-  // first client render show "Sign in" - the label flips after hydration once
-  // an authenticated session is known, keeping SSR/hydration output stable.
-  const isSignedIn = useAuthStore((s) => s.isReady && s.session !== null)
 
   useEffect(() => {
     void i18n.changeLanguage(lang)
@@ -42,7 +32,7 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
           <div className="flex items-center gap-4">
             <nav className="flex items-center gap-1 text-sm font-medium">
               <Link
-                to="/pl"
+                to="/pl/transport"
                 className={
                   lang === "pl"
                     ? "text-foreground"
@@ -53,7 +43,7 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
               </Link>
               <span className="text-muted-foreground/50">/</span>
               <Link
-                to="/en"
+                to="/en/transport"
                 className={
                   lang === "en"
                     ? "text-foreground"
@@ -63,25 +53,20 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
                 EN
               </Link>
             </nav>
-            <Button asChild variant="outline" size="sm">
-              {isSignedIn ? (
-                <Link to="/home">{t("auth.go_to_app", { lng: lang })}</Link>
-              ) : (
-                <Link to="/login">{t("auth.sign_in", { lng: lang })}</Link>
-              )}
+            <Button asChild size="sm">
+              <a href={transportMailto(lang)}>
+                {t("transport.contact", { lng: lang })}
+              </a>
             </Button>
           </div>
         </div>
       </header>
 
       <main className="flex-1">
-        <LandingHero lang={lang} />
-        <LandingStories lang={lang} />
-        <LandingFeatures lang={lang} />
-        <LandingSteps lang={lang} />
-        <LandingCta lang={lang} />
-        <LandingFaq lang={lang} />
-        <VenueOwnersBanner lang={lang} />
+        <TransportHero lang={lang} />
+        <TransportCargo lang={lang} />
+        <TransportSteps lang={lang} />
+        <TransportCta lang={lang} />
       </main>
 
       <footer className="border-t">
@@ -93,18 +78,6 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
             - {t("landing.footer.tagline", { lng: lang })}
           </p>
           <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-            <Link
-              to={lang === "pl" ? "/pl/venues" : "/en/venues"}
-              className="transition-colors hover:text-foreground"
-            >
-              {t("landing.footer.venues", { lng: lang })}
-            </Link>
-            <Link
-              to={lang === "pl" ? "/pl/transport" : "/en/transport"}
-              className="transition-colors hover:text-foreground"
-            >
-              {t("landing.footer.transport", { lng: lang })}
-            </Link>
             <Link
               to={lang === "pl" ? "/pl/changelog" : "/en/changelog"}
               className="transition-colors hover:text-foreground"

@@ -23,11 +23,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as WeddingLocalRouteImport } from './routes/wedding.local'
 import { Route as WeddingIdRouteImport } from './routes/wedding.$id'
 import { Route as PlVenuesRouteImport } from './routes/pl_.venues'
+import { Route as PlTransportRouteImport } from './routes/pl_.transport'
 import { Route as PlTermsRouteImport } from './routes/pl_.terms'
 import { Route as PlPrivacyRouteImport } from './routes/pl_.privacy'
 import { Route as PlChangelogRouteImport } from './routes/pl_.changelog'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as EnVenuesRouteImport } from './routes/en_.venues'
+import { Route as EnTransportRouteImport } from './routes/en_.transport'
 import { Route as EnTermsRouteImport } from './routes/en_.terms'
 import { Route as EnPrivacyRouteImport } from './routes/en_.privacy'
 import { Route as EnChangelogRouteImport } from './routes/en_.changelog'
@@ -107,6 +109,11 @@ const PlVenuesRoute = PlVenuesRouteImport.update({
   path: '/pl/venues',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlTransportRoute = PlTransportRouteImport.update({
+  id: '/pl_/transport',
+  path: '/pl/transport',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlTermsRoute = PlTermsRouteImport.update({
   id: '/pl_/terms',
   path: '/pl/terms',
@@ -130,6 +137,11 @@ const InviteTokenRoute = InviteTokenRouteImport.update({
 const EnVenuesRoute = EnVenuesRouteImport.update({
   id: '/en_/venues',
   path: '/en/venues',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnTransportRoute = EnTransportRouteImport.update({
+  id: '/en_/transport',
+  path: '/en/transport',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EnTermsRoute = EnTermsRouteImport.update({
@@ -189,11 +201,13 @@ export interface FileRoutesByFullPath {
   '/en/changelog': typeof EnChangelogRoute
   '/en/privacy': typeof EnPrivacyRoute
   '/en/terms': typeof EnTermsRoute
+  '/en/transport': typeof EnTransportRoute
   '/en/venues': typeof EnVenuesRoute
   '/invite/$token': typeof InviteTokenRoute
   '/pl/changelog': typeof PlChangelogRoute
   '/pl/privacy': typeof PlPrivacyRoute
   '/pl/terms': typeof PlTermsRoute
+  '/pl/transport': typeof PlTransportRoute
   '/pl/venues': typeof PlVenuesRoute
   '/wedding/$id': typeof WeddingIdRouteWithChildren
   '/wedding/local': typeof WeddingLocalRouteWithChildren
@@ -218,11 +232,13 @@ export interface FileRoutesByTo {
   '/en/changelog': typeof EnChangelogRoute
   '/en/privacy': typeof EnPrivacyRoute
   '/en/terms': typeof EnTermsRoute
+  '/en/transport': typeof EnTransportRoute
   '/en/venues': typeof EnVenuesRoute
   '/invite/$token': typeof InviteTokenRoute
   '/pl/changelog': typeof PlChangelogRoute
   '/pl/privacy': typeof PlPrivacyRoute
   '/pl/terms': typeof PlTermsRoute
+  '/pl/transport': typeof PlTransportRoute
   '/pl/venues': typeof PlVenuesRoute
   '/wedding/$id/planner': typeof WeddingIdPlannerRoute
   '/wedding/local/planner': typeof WeddingLocalPlannerRoute
@@ -246,11 +262,13 @@ export interface FileRoutesById {
   '/en_/changelog': typeof EnChangelogRoute
   '/en_/privacy': typeof EnPrivacyRoute
   '/en_/terms': typeof EnTermsRoute
+  '/en_/transport': typeof EnTransportRoute
   '/en_/venues': typeof EnVenuesRoute
   '/invite/$token': typeof InviteTokenRoute
   '/pl_/changelog': typeof PlChangelogRoute
   '/pl_/privacy': typeof PlPrivacyRoute
   '/pl_/terms': typeof PlTermsRoute
+  '/pl_/transport': typeof PlTransportRoute
   '/pl_/venues': typeof PlVenuesRoute
   '/wedding/$id': typeof WeddingIdRouteWithChildren
   '/wedding/local': typeof WeddingLocalRouteWithChildren
@@ -277,11 +295,13 @@ export interface FileRouteTypes {
     | '/en/changelog'
     | '/en/privacy'
     | '/en/terms'
+    | '/en/transport'
     | '/en/venues'
     | '/invite/$token'
     | '/pl/changelog'
     | '/pl/privacy'
     | '/pl/terms'
+    | '/pl/transport'
     | '/pl/venues'
     | '/wedding/$id'
     | '/wedding/local'
@@ -306,11 +326,13 @@ export interface FileRouteTypes {
     | '/en/changelog'
     | '/en/privacy'
     | '/en/terms'
+    | '/en/transport'
     | '/en/venues'
     | '/invite/$token'
     | '/pl/changelog'
     | '/pl/privacy'
     | '/pl/terms'
+    | '/pl/transport'
     | '/pl/venues'
     | '/wedding/$id/planner'
     | '/wedding/local/planner'
@@ -333,11 +355,13 @@ export interface FileRouteTypes {
     | '/en_/changelog'
     | '/en_/privacy'
     | '/en_/terms'
+    | '/en_/transport'
     | '/en_/venues'
     | '/invite/$token'
     | '/pl_/changelog'
     | '/pl_/privacy'
     | '/pl_/terms'
+    | '/pl_/transport'
     | '/pl_/venues'
     | '/wedding/$id'
     | '/wedding/local'
@@ -363,11 +387,13 @@ export interface RootRouteChildren {
   EnChangelogRoute: typeof EnChangelogRoute
   EnPrivacyRoute: typeof EnPrivacyRoute
   EnTermsRoute: typeof EnTermsRoute
+  EnTransportRoute: typeof EnTransportRoute
   EnVenuesRoute: typeof EnVenuesRoute
   InviteTokenRoute: typeof InviteTokenRoute
   PlChangelogRoute: typeof PlChangelogRoute
   PlPrivacyRoute: typeof PlPrivacyRoute
   PlTermsRoute: typeof PlTermsRoute
+  PlTransportRoute: typeof PlTransportRoute
   PlVenuesRoute: typeof PlVenuesRoute
   WeddingIdRoute: typeof WeddingIdRouteWithChildren
   WeddingLocalRoute: typeof WeddingLocalRouteWithChildren
@@ -473,6 +499,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlVenuesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pl_/transport': {
+      id: '/pl_/transport'
+      path: '/pl/transport'
+      fullPath: '/pl/transport'
+      preLoaderRoute: typeof PlTransportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pl_/terms': {
       id: '/pl_/terms'
       path: '/pl/terms'
@@ -506,6 +539,13 @@ declare module '@tanstack/react-router' {
       path: '/en/venues'
       fullPath: '/en/venues'
       preLoaderRoute: typeof EnVenuesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/en_/transport': {
+      id: '/en_/transport'
+      path: '/en/transport'
+      fullPath: '/en/transport'
+      preLoaderRoute: typeof EnTransportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/en_/terms': {
@@ -611,11 +651,13 @@ const rootRouteChildren: RootRouteChildren = {
   EnChangelogRoute: EnChangelogRoute,
   EnPrivacyRoute: EnPrivacyRoute,
   EnTermsRoute: EnTermsRoute,
+  EnTransportRoute: EnTransportRoute,
   EnVenuesRoute: EnVenuesRoute,
   InviteTokenRoute: InviteTokenRoute,
   PlChangelogRoute: PlChangelogRoute,
   PlPrivacyRoute: PlPrivacyRoute,
   PlTermsRoute: PlTermsRoute,
+  PlTransportRoute: PlTransportRoute,
   PlVenuesRoute: PlVenuesRoute,
   WeddingIdRoute: WeddingIdRouteWithChildren,
   WeddingLocalRoute: WeddingLocalRouteWithChildren,
