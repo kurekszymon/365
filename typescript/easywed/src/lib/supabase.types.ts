@@ -220,6 +220,50 @@ export type Database = {
           },
         ]
       }
+      layout_presets: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          fixtures: Json
+          halls: Json
+          id: string
+          name: string
+          tables: Json
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          fixtures?: Json
+          halls: Json
+          id?: string
+          name: string
+          tables?: Json
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          fixtures?: Json
+          halls?: Json
+          id?: string
+          name?: string
+          tables?: Json
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "layout_presets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_courses: {
         Row: {
           archived_at: string | null

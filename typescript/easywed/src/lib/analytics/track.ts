@@ -95,6 +95,13 @@ export type AnalyticsEvents = {
    * answer is fixed, and it is in the policy.
    */
   venue_access_granted: undefined
+  /**
+   * Venue staff saved the current planner layout as one of the venue's presets.
+   * Nothing about the layout rides along - its name is venue-typed text.
+   */
+  layout_preset_saved: undefined
+  /** A couple replaced their layout with a copy of their venue's preset. */
+  layout_preset_applied: undefined
   /** Venue staff opened one customer's seat map in the CRM. */
   venue_peek_opened: undefined
   /**

@@ -6,7 +6,7 @@ type Guests =
   | "Guest.Import"
   | "Guests.Export.Csv"
   | "Guests.Export.Pdf"
-type Planner = "Planner.Hall.Delete"
+type Planner = "Planner.Hall.Delete" | "Planner.LayoutPresets"
 type Weddings = "Wedding.Members" | "Wedding.Venue"
 export type Dialog = Weddings | Guests | Planner
 
