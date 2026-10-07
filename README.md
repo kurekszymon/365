@@ -12,6 +12,8 @@ Created this repo to (due to lack of a better word) _force_ myself to do somethi
   - [webgpu](#webgpu)
   - [rust](#rust)
   - [easywed](#easywed)
+  - [easywed-video](#easywed-video)
+  - [astro](#astro)
 
 ## articles
 
@@ -22,24 +24,21 @@ Created this repo to (due to lack of a better word) _force_ myself to do somethi
 
 ### not mine
 
-- Karpathy's description of his microgpt project, with intro to gpt https://karpathy.github.io/2026/02/12/microgpt/
-- set of aricles on memory (V8) https://v8.dev/blog/tags/memory
-- researching about js memory usage for numbers vs rust/cpp:
-  https://angular.love/here-is-what-you-need-to-know-about-javascripts-number-type
-- rust optional parameters (function arguments)
-  https://hoverbear.org/blog/optional-arguments/
-- gpui rendering 120 fps for text editor
-  https://zed.dev/blog/videogame#gpui-rendering
-- idempotency is easy until the second request is different https://blog.dochia.dev/blog/idempotency/
-- webrtc is the problem https://moq.dev/blog/webrtc-is-the-problem/
-- What forces layout/reflow https://gist.github.com/paulirish/5d52fb081b3570c81e3a
-- Understanding Monomorphism to Improve Your JS Performance up to 60x https://www.builder.io/blog/monomorphic-javascript
-- What's up with monomorphism https://mrale.ph/blog/2015/01/11/whats-up-with-monomorphism.html
-- [You don't know html lists]https://blog.frankmtaylor.com/2026/05/13/you-dont-know-html-lists/
-- Appearing productive in the workplace https://nooneshappy.com/article/appearing-productive-in-the-workplace/
-- auth migrations https://blog.val.town/better-auth
-- making your own programming language is easier https://lisyarus.github.io/blog/posts/making-your-own-programming-language.html
-- if ai writes your code, why use python https://medium.com/@NMitchem/if-ai-writes-your-code-why-use-python-bf8c4ba1a055
+- [Karpathy's description of his microgpt project, with intro to gpt](https://karpathy.github.io/2026/02/12/microgpt/)
+- [set of articles on memory (V8)](https://v8.dev/blog/tags/memory)
+- [researching about js memory usage for numbers vs rust/cpp](https://angular.love/here-is-what-you-need-to-know-about-javascripts-number-type)
+- [rust optional parameters (function arguments)](https://hoverbear.org/blog/optional-arguments/)
+- [gpui rendering 120 fps for text editor](https://zed.dev/blog/videogame#gpui-rendering)
+- [idempotency is easy until the second request is different](https://blog.dochia.dev/blog/idempotency/)
+- [webrtc is the problem](https://moq.dev/blog/webrtc-is-the-problem/)
+- [What forces layout/reflow](https://gist.github.com/paulirish/5d52fb081b3570c81e3a)
+- [Understanding Monomorphism to Improve Your JS Performance up to 60x](https://www.builder.io/blog/monomorphic-javascript)
+- [What's up with monomorphism](https://mrale.ph/blog/2015/01/11/whats-up-with-monomorphism.html)
+- [You don't know html lists](https://blog.frankmtaylor.com/2026/05/13/you-dont-know-html-lists/)
+- [Appearing productive in the workplace](https://nooneshappy.com/article/appearing-productive-in-the-workplace/)
+- [auth migrations](https://blog.val.town/better-auth)
+- [making your own programming language is easier](https://lisyarus.github.io/blog/posts/making-your-own-programming-language.html)
+- [if ai writes your code, why use python](https://medium.com/@NMitchem/if-ai-writes-your-code-why-use-python-bf8c4ba1a055)
 
 ### papers
 
@@ -84,11 +83,26 @@ key takeways:
 
 ### easywed
 
-wedding planner app to help couples and wedding planners plan seats and tables around wedding halls, support CAD import/export.
+wedding seating planner ([easywed.app](https://easywed.app)) for couples and venues: draw the hall to scale, import the guest list, seat everyone. works without an account (localStorage), venues get `<slug>.easywed.app` with a small crm.
 
-- tanstack start
-- zustand
-- supabase
+- tanstack start, prerendered to cloudflare pages
+- zustand, optimistic writes synced to supabase (auth, postgres, rls)
+- posthog, cookieless until the cookie banner says yes
+- i18next (pl/en), shadcn/ui, dnd-kit, BYO-key ai assistant
+
+[read more](./typescript/easywed/README.md)
+
+### easywed-video
+
+marketing films for easywed (walkthroughs, reels/tiktok cuts, landing page loops) made with [remotion](https://remotion.dev), rendered in polish or english.
+
+[read more](./typescript/easywed-video/README.md)
+
+### astro
+
+**project goal** check what astro is about and deploy my personal website with it (blog in mdx, deployed to cloudflare pages).
+
+[read more](./typescript/astro/README.md)
 
 ### webgpu
 
