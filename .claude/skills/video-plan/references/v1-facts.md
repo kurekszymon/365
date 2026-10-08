@@ -150,6 +150,13 @@ file and the tag named in section 2 both need updating — nothing will warn you
     once it stands taller than wide - each run top-to-bottom / left-to-right. Shape and rotation
     save on the tap (`updateAndCommit`), and dimensions preview live and save on blur. No
     analytics event fires for any of it (there is no `table_updated`).
+  - Renaming a table: *„Nazwa”* is `fields/TableNameField.tsx` (`common.name`, placeholder
+    `tables.name_placeholder` *„Stół rodzinny”*, which shows while the field is empty). Each
+    keystroke applies at once (`update` → `applyToStore` → `updateTable`, the name `trim()`med) and
+    saves on blur, so the canvas label follows the typing, and an emptied name draws only the
+    count (`hasName`). Guests hold the table by `tableId`, so a rename moves nobody, and it fires
+    no event. The form, the toolbar and `TableVisual` are unchanged from `v1` to `v1.2.0`
+    (verified 2026-10-08 for the ciocie-single cut).
   - On a phone that form is `MobilePanelDrawer` at its `max-h-[85dvh]`: the form is taller than
     that, so the sheet stands at 85% of the viewport over a `bg-black/40` overlay and **covers the
     whole canvas** - the change shows live in the form's own `TableSeatMap`, not on the plan,

@@ -286,6 +286,26 @@ Built from `docs/video-plans/stress-loops-9x16-2026-10-06.md`, brief 1 `extra-ch
 2026-10-06), so its third line stays on one line. English via `REMOTION_LANG=en`: *"Two more
 coming?"* / *"two more chairs"* / *"at the same table"*.
 
+## The ciocie-single cut - `easywed-ciocie-vertical`, 480f (16 s), 9:16 only
+
+a comedy strand of its own, outside *Wesele bez spiny* - no series tag (the user's call,
+2026-10-08). The couple's phone, signed in as the table-shape cut drew it, pinched in on the top of
+the room - every table full, every chair initialled, Stół 2 top right - the hook up on frame 0 and
+held while they work - Stół 2 tapped, ring and toolbar, the pen, *Edytuj stół* at its 85% -
+*Nazwa* tapped, *Stół 2* backspaced to the placeholder, *Single* typed at 8 frames a character -
+the check, the drawer dropping onto the plan, the label reading *Single*, the first caption - a
+jump cut onto Stół 5, bottom left, already selected - the pen, *Stół 5* backspaced, *Ciocie* typed
+at 6 a character - the check, the label, the second caption - two fingers pinch out over the whole
+room, the initials going as the markers drop under 14 px, *Single* and *Ciocie* at opposite
+corners with *Parkiet* between them, the payoff - the room holds, then recedes under it, the CTA.
+The first film to rename a table, and the first to pinch a plan out. Nothing is moved and nobody
+reseated: the joke is that the room already kept them apart.
+Scenes 96 + 150 + 150 + 108 = 504 at `CIOCIE_TRANSITION = 8` x 3 seams -> 480.
+Built from `docs/video-plans/funny-reels-9x16-2026-10-08.md`, brief `ciocie-single`, against
+`easywed/v1.1.2` (the table form, toolbar and canvas label are unchanged through `v1.2.0`), drawn on
+`CIOCIE_HALL` (`layouts.ts`): `TALL_HALL`'s arrangement at Ø 1.8 m, 58 seats - so *Średnica*
+reads 1.8 rather than `TALL_HALL`'s 2.1666…, and both names fit untruncated at the room-wide zoom.
+
 ## Polish lines already burned on screen
 
 None of these may appear again:
@@ -562,6 +582,19 @@ Polish rendering of them would repeat the beat.
 The extra-chair loop's motto: *"Jeszcze dwie osoby?"* · *"dwa krzesła"* · *"więcej przy tym samym
 stole"*, and its caption's action line *"Dostawcie krzesło na planie - easywed.app"*. The signature
 *"easywed."* recurs on every brand loop by design.
+
+From the ciocie-single cut: *"Ciocie pytają singli: „A ty kiedy?”"* (its hook) · *"Single -
+tutaj."* · *"Ciocie - tam."* · *"Przez cały parkiet nikt nie zapyta."* (its payoff) - and the
+couple's typed table names *"Single"* and *"Ciocie"* (user data, not app strings - both now spent,
+on the canvas and in the form's field). *Ciocie* and *single* are spent as the comedy pair; the
+aunties' *"A ty kiedy?"* is spent as a question. As the table form shows them, *"Edytuj stół"*,
+*"Nazwa"*, *"Kształt stołu"*, *"Prostokątny"*, *"Okrągły"*, *"Średnica"*, *"Liczba miejsc"*,
+*"Przypisz gości"*, *"Stół rodzinny"* (as the emptied field's placeholder), *"Stół 2"* and *"Stół 5"*
+in its field, and the values *"1.8"* and *"8"*, recur as the table form's chrome by the table-shape
+precedent; the canvas's *"Parkiet"*, *"Bar"*, *"Stół pary młodej"*, *"8 / 8"*, *"10 / 10"*, the chip
+*"Sala główna · 14×16 m"* and the tab bar recur as chrome. The beat itself - two tables renamed
+in the form and the plan read for who sits where - is spent, as is the payoff of a distance the room
+already keeps. Its CTA is *"Nazwijcie stoły po swojemu"* over the *"easywed.app"* pill.
 
 The series tag *"Wesele bez spiny · #N"* recurs by design across the series' episodes, like the
 pill; only its number changes. It is spent as a name for anything else.

@@ -75,6 +75,7 @@ export const FORM_PAD_X = PAD_X;
 
 /** The centres of what the thumb taps, in the phone's CSS px, with the form unscrolled. */
 export const TAPS = {
+  name: { x: PHONE.width / 2, y: CONTENT_TOP + rows(true).name + LABEL + LABEL_GAP + INPUT / 2 },
   rectangular: { x: PAD_X + CONTENT_WIDTH / 4, y: CONTENT_TOP + rows(true).shape + LABEL + LABEL_GAP + BUTTON_XS / 2 },
   width: { x: PAD_X + dimWidth / 2, y: CONTENT_TOP + rows(false).size + LABEL + LABEL_GAP + INPUT / 2 },
   height: { x: PAD_X + dimWidth + DIM_GAP + dimWidth / 2, y: CONTENT_TOP + rows(false).size + LABEL + LABEL_GAP + INPUT / 2 },
@@ -109,8 +110,18 @@ const Input: React.FC<{ value: string; focused?: boolean; placeholder?: string }
       whiteSpace: "nowrap",
     }}
   >
-    {value === "" && placeholder ? <span style={{ color: colors.inkSoft }}>{placeholder}</span> : value}
-    {focused ? <div style={{ width: 1.5, height: 18, marginLeft: 1, backgroundColor: colors.ink }} /> : null}
+    {/* An empty field keeps its caret ahead of the placeholder, as a browser draws it. */}
+    {value === "" && placeholder ? (
+      <>
+        {focused ? <div style={{ width: 1.5, height: 18, marginRight: 1, backgroundColor: colors.ink }} /> : null}
+        <span style={{ color: colors.inkSoft }}>{placeholder}</span>
+      </>
+    ) : (
+      <>
+        {value}
+        {focused ? <div style={{ width: 1.5, height: 18, marginLeft: 1, backgroundColor: colors.ink }} /> : null}
+      </>
+    )}
   </div>
 );
 
@@ -175,7 +186,13 @@ export const TableEditSheet: React.FC<{
     /** Each seat's occupant, indexed like the table's seats. */
     occupants: ({ initials: string; name: string } | null)[];
   };
-}> = ({ name, capacity, form, preview, initials, guests, enter, scroll, pressed, fresh, below }) => {
+  /**
+   * The name field being typed into: its focus ring and caret, and
+   * `tables.name_placeholder` for the moment it is empty. Left out, the field
+   * shows `name` at rest, as the table-shape cut draws it.
+   */
+  nameField?: { focused: boolean; placeholder: string };
+}> = ({ name, capacity, form, preview, initials, guests, enter, scroll, pressed, fresh, below, nameField }) => {
   if (enter <= 0) return null;
   const f = tl.app.tableForm;
   const top = rows(form.round);
@@ -259,7 +276,7 @@ export const TableEditSheet: React.FC<{
           <div style={{ position: "absolute", inset: 0, transform: `translateY(${-scroll}px)` }}>
             <div style={{ position: "absolute", left: 0, right: 0, top: top.name }}>
               <Field label={f.name}>
-                <Input value={name} placeholder={fresh?.namePlaceholder} />
+                <Input value={name} focused={nameField?.focused} placeholder={nameField?.placeholder ?? fresh?.namePlaceholder} />
               </Field>
             </div>
 

@@ -34,6 +34,10 @@
 - **the sunday-couch cut** - 22.7 seconds for Reels/TikTok, 9:16 only: one Sunday evening on one
   laptop, told by a clock and two voices - the empty hall at 19:40, the room laid out by 20:10,
   everyone seated by 22:30, the CTA.
+- **the ciocie-single cut** - 16 seconds for Reels/TikTok, 9:16 only: the aunties' "a ty kiedy?"
+  answered on the couple's phone by renaming two tables - Stół 2 to *Single*, Stół 5 to *Ciocie* -
+  in the table form, then pinching out to find the whole dance floor already between them - the
+  CTA.
 - **the list-seat cut** - 16 seconds for Reels, 9:16 for now, episode 1 of the Instagram series
   *Wesele bez spiny*: a cousin who is coming after all, seated on the couple's phone straight from
   the guest list - the full tables greyed out, the free chair beside his family - the CTA.
@@ -59,7 +63,7 @@
   stage: the logo's table slides in full, its seat count goes from 8 to 10 so the chairs close up
   round the same table, two more guests sit down, and it slides out. No CTA - the caption carries it.
 
-All but the loops, the keep-apart, mama-link, sunday-couch, list-seat, table-shape, ten-tables, try-now, todo-list, stress-away and extra-chair cuts render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
+All but the loops, the keep-apart, mama-link, sunday-couch, ciocie-single, list-seat, table-shape, ten-tables, try-now, todo-list, stress-away and extra-chair cuts render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
 are in Polish - except the stress-away loop's motto, which is English in both languages.
 
 It is a standalone package on purpose - it sits next to `easywed/` rather than inside it, so it
@@ -109,6 +113,8 @@ pnpm run render:keep-apart:vertical  # -> out/pl/stories/easywed-apart-vertical.
 pnpm run render:mama-link:vertical   # -> out/pl/stories/easywed-mama-vertical.mp4 (9:16, its only size)
 
 pnpm run render:sunday-couch:vertical  # -> out/pl/stories/easywed-couch-vertical.mp4 (9:16, its only size)
+
+pnpm run render:ciocie-single:vertical  # -> out/pl/stories/easywed-ciocie-vertical.mp4 (9:16, its only size)
 
 pnpm run render:list-seat:vertical  # -> out/pl/chill-wed/easywed-listseat-vertical.mp4 (9:16; the 1:1 feed cut is still to come)
 
@@ -278,6 +284,14 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | `CouchDone`               | 120f   | 22:30, back over the laptop, every chair taken, 58/58               |
 | `CouchCta`                | 108f   | the laptop recedes, the payoff, logo + easywed.app                  |
 
+| id                        | length | what it is                                                          |
+| ------------------------- | ------ | ------------------------------------------------------------------- |
+| `easywed-ciocie-vertical` | 480f   | the 16 s ciocie-single cut, 9:16 only                               |
+| `CiocieHook`              | 96f    | the phone pinched in on Stół 2, every chair initialled, the hook    |
+| `CiocieSingle`            | 150f   | tapped, *Edytuj stół*, *Nazwa* cleared and *Single* typed           |
+| `CiocieAunts`             | 150f   | a jump cut to Stół 5, *Ciocie* typed; pinched out over the room     |
+| `CiocieCta`               | 108f   | the room holds under the payoff, recedes, logo + easywed.app        |
+
 | id                          | length | what it is                                                       |
 | --------------------------- | ------ | ---------------------------------------------------------------- |
 | `easywed-listseat-vertical` | 480f   | the 16 s list-seat cut, 9:16 - series episode 1                  |
@@ -330,7 +344,7 @@ on a phone at v1 the canvas toolbar isn't there, and measuring is a long-press m
 bottom sheet rather than the desktop's centred dialog.
 
 The scenes are also registered individually (Studio folders "Scenes", "Teaser", "Import",
-"Report", "Kids", "Swap-cut", "Keep-apart", "Mama-link", "Sunday-couch", "List-seat", "Table-shape", "Ten-tables", "Try-now" and "Walkthrough-long") so a single beat can be previewed without scrubbing through the
+"Report", "Kids", "Swap-cut", "Keep-apart", "Mama-link", "Sunday-couch", "Ciocie-single", "List-seat", "Table-shape", "Ten-tables", "Try-now" and "Walkthrough-long") so a single beat can be previewed without scrubbing through the
 whole timeline. The social cuts' scenes are registered at 9:16, the cut they are made for.
 
 The landing-page loops - `easywed-scale`, `easywed-swap` and `easywed-shape` - sit together in the
@@ -345,6 +359,7 @@ src/easywed/
   theme.ts               hex mirror of the app's `editorial` palette + brand colors, fonts
   layouts.ts             WIDE_HALL, TALL_HALL, the odd-room loop's L_HALL, the keep-apart
                          cut's KEEP_APART_HALL, the sunday-couch cut's COUCH_HALL, the
+                         ciocie-single cut's CIOCIE_HALL (TALL_HALL at Ø 1.8 m), the
                          table-shape cut's TABLE_SHAPE_HALL, the ten-tables cut's
                          TEN_TABLES_HALL (laid out by addTablesGrid, v1's addTables), the
                          try-now speedrun's SEEDED_HALL (v1's empty DEFAULT_HALL) and the long
@@ -427,6 +442,13 @@ src/easywed/
                          with its rail badges counted off the plan). The room is COUCH_HALL,
                          the 20x12 m hall guest mode seeds; the guest panel's progress card
                          is components/SeatingProgress.tsx, shared with the import cut
+    ciocie-single/       the ciocie-single cut, 9:16 only, in the table-shape cut's shape but
+                         with no series tag: every scene draws components/CiocieStage.tsx off
+                         one clock (script.ts), the jump cut to Stół 5 included. CiociePhone
+                         is PhoneShell in `owner` mode with its own pinched-in canvas, and
+                         reuses table-shape's TableEditSheet (its `nameField` prop) for the
+                         form; rename.ts derives each name, the in-app view and the seat
+                         initials (drawn only at 14 px and up, as the app does) from the frame
   chill-wed/             „Wesele bez spiny”, the Instagram series
     list-seat/           the list-seat cut, 9:16 only so far, in the mama-link cut's shape:
                          every scene draws components/ListSeatStage.tsx off one clock

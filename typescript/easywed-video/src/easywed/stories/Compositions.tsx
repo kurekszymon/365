@@ -23,8 +23,14 @@ import {
   SUNDAY_COUCH_DURATION,
   SUNDAY_COUCH_SCENES,
 } from "./sunday-couch/timeline";
+import { CiocieSingle } from "./ciocie-single/CiocieSingle";
+import { CiocieHookScene } from "./ciocie-single/scenes/CiocieHookScene";
+import { CiocieSingleScene } from "./ciocie-single/scenes/CiocieSingleScene";
+import { CiocieAuntsScene } from "./ciocie-single/scenes/CiocieAuntsScene";
+import { CiocieCtaScene } from "./ciocie-single/scenes/CiocieCtaScene";
+import { CIOCIE_DURATION, CIOCIE_SCENES } from "./ciocie-single/timeline";
 
-/** The 9:16 story cuts - keep-apart, mama-link, sunday-couch - with their beats. */
+/** The 9:16 story cuts - keep-apart, mama-link, sunday-couch, ciocie-single - with their beats. */
 export const StoriesCompositions: React.FC = () => {
   return (
     <>
@@ -57,6 +63,17 @@ export const StoriesCompositions: React.FC = () => {
         id="easywed-couch-vertical"
         component={SundayCouch}
         durationInFrames={SUNDAY_COUCH_DURATION}
+        fps={FPS}
+        width={VERTICAL_WIDTH}
+        height={VERTICAL_HEIGHT}
+      />
+
+      {/* The 16 s ciocie-single cut - Stół 2 renamed *Single*, Stół 5 *Ciocie*, the dance
+      floor already between them; 9:16 only, the unsuffixed id left free for a 16:9 loop. */}
+      <Composition
+        id="easywed-ciocie-vertical"
+        component={CiocieSingle}
+        durationInFrames={CIOCIE_DURATION}
         fps={FPS}
         width={VERTICAL_WIDTH}
         height={VERTICAL_HEIGHT}
@@ -172,6 +189,42 @@ export const StoriesCompositions: React.FC = () => {
           id="CouchCta"
           component={CouchCtaScene}
           durationInFrames={SUNDAY_COUCH_SCENES.cta}
+          fps={FPS}
+          width={VERTICAL_WIDTH}
+          height={VERTICAL_HEIGHT}
+        />
+      </Folder>
+
+      {/* The ciocie-single cut's beats, at 9:16 - the only size it is made for. */}
+      <Folder name="Ciocie-single">
+        <Composition
+          id="CiocieHook"
+          component={CiocieHookScene}
+          durationInFrames={CIOCIE_SCENES.hook}
+          fps={FPS}
+          width={VERTICAL_WIDTH}
+          height={VERTICAL_HEIGHT}
+        />
+        <Composition
+          id="CiocieSingle"
+          component={CiocieSingleScene}
+          durationInFrames={CIOCIE_SCENES.single}
+          fps={FPS}
+          width={VERTICAL_WIDTH}
+          height={VERTICAL_HEIGHT}
+        />
+        <Composition
+          id="CiocieAunts"
+          component={CiocieAuntsScene}
+          durationInFrames={CIOCIE_SCENES.ciocie}
+          fps={FPS}
+          width={VERTICAL_WIDTH}
+          height={VERTICAL_HEIGHT}
+        />
+        <Composition
+          id="CiocieCta"
+          component={CiocieCtaScene}
+          durationInFrames={CIOCIE_SCENES.cta}
           fps={FPS}
           width={VERTICAL_WIDTH}
           height={VERTICAL_HEIGHT}

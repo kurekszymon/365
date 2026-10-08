@@ -208,6 +208,22 @@ export const TABLE_SHAPE_HALL = withDerived({
 });
 
 /**
+ * The ciocie-single cut's room: `TALL_HALL`'s 14x16 m and its exact
+ * arrangement - Stół 2 top right at (12, 5.5) m, Stół 5 bottom left at
+ * (4.17, 13.33) m, the dance floor centred at (7, 7) m between them - but set
+ * with Ø 1.8 m round tables. `TALL_HALL`'s 130 units would read
+ * 2.1666666666666665 in the table form's *Średnica*, which the cut opens; and
+ * the app truncates a name to the table's width less `px-1`, so v1's Ø 1.5 m
+ * preset leaves too little room for *Single* at the whole-room zoom the
+ * payoff pulls back to. The tables only shrink, so every clearance grows.
+ * The same 58 seats.
+ */
+export const CIOCIE_HALL = withDerived({
+  ...TALL_HALL,
+  tables: TALL_HALL.tables.map((table) => (table.shape === "round" ? { ...table, width: 108, height: 108 } : table)),
+});
+
+/**
  * `DEFAULT_HALL` at easywed/v1 as `/wedding/local` seeds it on a first visit
  * (`routes/wedding.local.tsx`: no hall, so `addHall(DEFAULT_HALL, { x: 0, y: 0 })`):
  * unnamed, a 20x12 m rectangle, and nothing in it - no tables, no fixtures, no

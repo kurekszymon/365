@@ -67,6 +67,23 @@ export const pl = {
     payoff: "Jeden laptop, jedna kanapa, cały plan.",
     ctaAction: "Usiądźcie do planu razem",
   },
+
+  ciocie: {
+    /**
+     * The hook. The aunties' question is a real quotation, so it alone carries
+     * Polish quotes; it is bound into one piece, so the line breaks after
+     * "singli:" and "A" never ends a line.
+     */
+    hook: "Ciocie pytają singli: \u201eA\u00a0ty\u00a0kiedy?\u201d",
+    /** The two names the couple types over *Stół 2* and *Stół 5* - user data, not app strings. */
+    singles: "Single",
+    aunts: "Ciocie",
+    singlesLine: "Single - tutaj.",
+    auntsLine: "Ciocie - tam.",
+    /** "nikt nie zapyta." is bound into one piece, so the last word never wraps alone. */
+    payoff: "Przez cały parkiet nikt\u00a0nie\u00a0zapyta.",
+    ctaAction: "Nazwijcie stoły po swojemu",
+  },
 };
 
 export const en: typeof pl = {
@@ -113,5 +130,15 @@ export const en: typeof pl = {
     seated: "Everyone's seated.",
     payoff: "One laptop, one sofa, the whole plan.",
     ctaAction: "Sit down to the plan together",
+  },
+
+  ciocie: {
+    hook: "The aunts ask the singles: \u201cSo when's it your\u00a0turn?\u201d",
+    singles: "Singles",
+    aunts: "Aunts",
+    singlesLine: "Singles - here.",
+    auntsLine: "Aunts - there.",
+    payoff: "A whole dance floor away, nobody\u00a0asks.",
+    ctaAction: "Name your tables your own way",
   },
 };
