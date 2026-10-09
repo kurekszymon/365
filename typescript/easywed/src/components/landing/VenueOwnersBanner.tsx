@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import type { Lang } from "./LocaleLanding"
 import { Button } from "@/components/ui/button"
+import { localeDocPath } from "@/lib/site"
 
 // Cross-sell strip on the couples landing pointing venue owners at the B2B
 // page (/pl/venues, /en/venues).
@@ -21,7 +22,7 @@ export function VenueOwnersBanner({ lang }: { lang: Lang }) {
           </p>
         </div>
         <Button asChild size="lg" variant="outline" className="shrink-0">
-          <Link to={lang === "pl" ? "/pl/venues" : "/en/venues"}>
+          <Link to={localeDocPath("venues", lang)}>
             {t("landing.venues_banner.cta", { lng: lang })}
             <ArrowRight className="size-4" />
           </Link>

@@ -1,7 +1,7 @@
 import React from "react";
 import { interpolate, interpolateColors } from "remotion";
 import type { TableSpec } from "../layouts";
-import { SEAT_RADIUS, seatPositions } from "../geometry";
+import { SEAT_RADIUS, seatPositions, type Point } from "../geometry";
 import { colors, fonts } from "../theme";
 
 type Props = {
@@ -10,15 +10,63 @@ type Props = {
   enter: number;
   /** Share of the table's seats that are taken, 0..1. */
   fill: number;
+  /**
+   * Per-seat override, indexed like `seatPositions(table)`, each 0..1. The seat
+   * swap needs one chair to empty while the rest stay taken, which `fill` alone
+   * - a share, filled in seat order - cannot say. Left out, the table fills in
+   * order from `fill`, exactly as every published film draws it.
+   */
+  fills?: number[];
   /** Extra offset, used while a table is being dragged. */
   dx?: number;
   dy?: number;
   selected?: boolean;
+  /**
+   * The occupants' initials, indexed like `seatPositions(table)` - what
+   * `TableSeats` writes on a taken marker (`getInitials`). Left out, markers
+   * stay blank, as every published film draws them.
+   */
+  initials?: string[];
+  /** The name's type size. The couple's own names run longer than *Stół 1*. */
+  labelSize?: number;
+  /**
+   * The occupancy line's type size, its baseline following it. A canvas drawn
+   * zoomed in keeps the app's fixed 10px line rather than one that grows with
+   * the room. Left out, it is the 17 every published film draws.
+   */
+  countSize?: number;
+  /**
+   * Seat centres in place of `seatPositions(table)`, indexed the same way - a
+   * table between two shapes, its chairs on their way from one layout to the
+   * next. Left out, the seats sit where the table's own shape puts them.
+   */
+  seatsAt?: Point[];
+  /**
+   * A rectangle's corner radius. At half the shorter side a square draws as a
+   * circle, so a round table can turn square by this alone. Left out, 10.
+   */
+  corner?: number;
 };
 
-export const PlannerTable: React.FC<Props> = ({ table, enter, fill, dx = 0, dy = 0, selected }) => {
-  const seats = seatPositions(table);
-  const takenSeats = fill * table.seats;
+/** `TableSeats`: `fontSize: Math.max(7, seatPx * 0.42)`, in white on the filled marker. */
+const INITIALS_SIZE = SEAT_RADIUS * 2 * 0.42;
+
+export const PlannerTable: React.FC<Props> = ({
+  table,
+  enter,
+  fill,
+  fills,
+  dx = 0,
+  dy = 0,
+  selected,
+  initials,
+  labelSize = 22,
+  countSize = 17,
+  seatsAt,
+  corner = 10,
+}) => {
+  const seats = seatsAt ?? seatPositions(table);
+  const takenSeats = fills ? fills.reduce((sum, seat) => sum + seat, 0) : fill * table.seats;
   // Scale about the table's own center so it grows into place, then shift by
   // the drag offset.
   const transform = `translate(${dx} ${dy}) translate(${table.x} ${table.y}) scale(${enter}) translate(${-table.x} ${-table.y})`;
@@ -29,22 +77,39 @@ export const PlannerTable: React.FC<Props> = ({ table, enter, fill, dx = 0, dy =
       opacity={interpolate(enter, [0, 0.4], [0, 1], { extrapolateRight: "clamp" })}
     >
       {seats.map((seat, i) => {
-        const taken = interpolate(takenSeats, [i, i + 1], [0, 1], {
-          extrapolateLeft: "clamp",
-          extrapolateRight: "clamp",
-        });
+        const taken =
+          fills?.[i] ??
+          interpolate(fill * table.seats, [i, i + 1], [0, 1], {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          });
         // A small pop as the guest lands, settling back to the resting size.
         const pop = 1 + Math.sin(taken * Math.PI) * 0.35;
         return (
-          <circle
-            key={i}
-            cx={seat.x}
-            cy={seat.y}
-            r={SEAT_RADIUS * pop}
-            fill={interpolateColors(taken, [0, 1], [colors.seatEmpty, colors.seatFilled])}
-            stroke={interpolateColors(taken, [0, 1], [colors.seatEmptyBorder, colors.seatFilledBorder])}
-            strokeWidth={1.5}
-          />
+          <g key={i}>
+            <circle
+              cx={seat.x}
+              cy={seat.y}
+              r={SEAT_RADIUS * pop}
+              fill={interpolateColors(taken, [0, 1], [colors.seatEmpty, colors.seatFilled])}
+              stroke={interpolateColors(taken, [0, 1], [colors.seatEmptyBorder, colors.seatFilledBorder])}
+              strokeWidth={1.5}
+            />
+            {initials?.[i] && taken > 0.5 ? (
+              <text
+                x={seat.x}
+                y={seat.y}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontFamily={fonts.sans}
+                fontSize={INITIALS_SIZE}
+                fontWeight={500}
+                fill={colors.primaryInk}
+              >
+                {initials[i]}
+              </text>
+            ) : null}
+          </g>
         );
       })}
 
@@ -63,7 +128,7 @@ export const PlannerTable: React.FC<Props> = ({ table, enter, fill, dx = 0, dy =
           y={table.y - table.height / 2}
           width={table.width}
           height={table.height}
-          rx={10}
+          rx={corner}
           fill={colors.table}
           stroke={selected ? colors.selected : colors.tableBorder}
           strokeWidth={selected ? 3 : 1.5}
@@ -77,7 +142,7 @@ export const PlannerTable: React.FC<Props> = ({ table, enter, fill, dx = 0, dy =
         y={table.y - 2}
         textAnchor="middle"
         fontFamily={fonts.heading}
-        fontSize={22}
+        fontSize={labelSize}
         fontWeight={600}
         fill={colors.tableInk}
       >
@@ -85,10 +150,10 @@ export const PlannerTable: React.FC<Props> = ({ table, enter, fill, dx = 0, dy =
       </text>
       <text
         x={table.x}
-        y={table.y + 22}
+        y={table.y + (22 * countSize) / 17}
         textAnchor="middle"
         fontFamily={fonts.sans}
-        fontSize={17}
+        fontSize={countSize}
         fill={colors.tableInk}
         opacity={0.75}
       >

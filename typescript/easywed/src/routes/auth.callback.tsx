@@ -1,7 +1,7 @@
 import { useEffect } from "react"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
-import { sanitizeNextPath } from "@/lib/auth/guards"
+import { authLandingPath } from "@/lib/auth/guards"
 import { useAuthStore } from "@/stores/auth.store"
 import { useProfileStore } from "@/stores/profile.store"
 
@@ -40,7 +40,10 @@ function AuthCallback() {
     // are not supposed to see yet.
     if (termsStatus === "unknown") return
 
-    navigate({ to: sanitizeNextPath(next) ?? "/home", replace: true })
+    // Google sign-in happens on whichever origin the form was served from, so
+    // this lands staff in the CRM on a venue host and arms the venue check on
+    // the apex - see authLandingPath.
+    navigate({ to: authLandingPath(next), replace: true })
   }, [isReady, session, termsStatus, next, navigate])
 
   return (

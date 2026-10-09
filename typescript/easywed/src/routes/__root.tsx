@@ -11,10 +11,13 @@ import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { PostHogProvider } from "@posthog/react"
 import appCss from "../styles.css?url"
+import type { PostHogConfig } from "posthog-js"
 import i18n from "@/i18n"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 import { AuthGate } from "@/components/auth/AuthGate"
+import { TenantGate } from "@/components/tenant/TenantGate"
+import { redirectApexOnlyPathToApex } from "@/lib/tenant/apexRedirect"
 import { requireAcceptedTerms } from "@/lib/auth/guards"
 import { LocalWeddingMigrationPrompt } from "@/components/auth/LocalWeddingMigrationPrompt"
 import { ErrorFallback } from "@/components/ErrorFallback"
@@ -23,6 +26,7 @@ import { useAiStore } from "@/stores/ai.store"
 import { scrubInviteTokens } from "@/lib/analytics/scrubInviteTokens"
 import { useConsentStore } from "@/stores/consent.store"
 import { CookieBanner } from "@/components/consent/CookieBanner"
+import { OG_IMAGE, SITE_ORIGIN } from "@/lib/site"
 
 const options = {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
@@ -59,7 +63,7 @@ const options = {
   // Invite tokens are bearer credentials and they live in the URL path, which
   // pageview capture would otherwise ship verbatim. See scrubInviteTokens.
   before_send: scrubInviteTokens,
-} as const
+} as Partial<PostHogConfig>
 
 function NotFound() {
   const { t } = useTranslation()
@@ -82,6 +86,9 @@ export const Route = createRootRoute({
   // path instead of following the flow - a per-route guard would only cover the
   // routes we remembered to annotate.
   beforeLoad: ({ location }) => {
+    // Before the terms gate, because it leaves this origin entirely: no point
+    // deciding whether someone owes an acceptance on a host they are leaving.
+    redirectApexOnlyPathToApex(location.pathname)
     requireAcceptedTerms(location.pathname)
   },
   head: () => {
@@ -95,14 +102,12 @@ export const Route = createRootRoute({
         {
           charSet: "utf-8",
         },
-        // Deliberately no maximum-scale / user-scalable=no. Blocking pinch-zoom
-        // is a WCAG 1.4.4 failure, and it was never what protected the planner:
+        // Deliberately no maximum-scale / user-scalable=no: blocking pinch-zoom
+        // is a WCAG 1.4.4 failure, and it never protected the planner anyway -
         // the canvas claims its own two-finger gesture through
-        // `touch-action: none` (the `touch-none` class on the Canvas container
-        // and every draggable), which is what stops the browser applying its
-        // pan/zoom there. iOS Safari has ignored these two directives since
-        // iOS 10 regardless, so they only ever bound Android Chrome - where
-        // they cost zoom on the guest list, forms and dialogs for nothing.
+        // `touch-action: none`. iOS Safari has ignored both directives since
+        // iOS 10, so they only ever bound Android Chrome, where they cost zoom
+        // on the guest list, forms and dialogs for nothing.
         {
           name: "viewport",
           content: "width=device-width, initial-scale=1",
@@ -114,11 +119,10 @@ export const Route = createRootRoute({
           name: "description",
           content: description,
         },
-        // Default the whole app to noindex and let the marketing routes opt
-        // back in (localeHead / rootHead emit "index, follow"). Inverted on
-        // purpose: signed-in surfaces vastly outnumber indexable pages, and
-        // Search Console was showing /home and /login ranking for nothing.
-        // A missed opt-in costs one page; a missed opt-out leaks the app.
+        // Default the whole app to noindex and let the marketing routes opt back
+        // in (localeHead / rootHead emit "index, follow"). Inverted on purpose:
+        // signed-in surfaces vastly outnumber indexable pages, and a missed
+        // opt-in costs one page where a missed opt-out leaks the app.
         {
           name: "robots",
           content: "noindex, nofollow",
@@ -133,7 +137,7 @@ export const Route = createRootRoute({
         },
         {
           property: "og:url",
-          content: "https://easywed.app",
+          content: SITE_ORIGIN,
         },
         {
           property: "og:title",
@@ -153,7 +157,7 @@ export const Route = createRootRoute({
         },
         {
           property: "og:image",
-          content: "https://easywed.app/og-image.png",
+          content: OG_IMAGE,
         },
         {
           property: "og:image:type",
@@ -185,7 +189,7 @@ export const Route = createRootRoute({
         },
         {
           name: "twitter:image",
-          content: "https://easywed.app/og-image.png",
+          content: OG_IMAGE,
         },
         {
           name: "twitter:image:alt",
@@ -245,7 +249,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           options={options}
         >
           <TooltipProvider>
-            <AuthGate>{children}</AuthGate>
+            {/* Inside AuthGate, not beside it: the branding lookup is
+                anonymous, but resolving the caller's tenant role needs a
+                settled session. */}
+            <AuthGate>
+              <TenantGate>{children}</TenantGate>
+            </AuthGate>
             <LocalWeddingMigrationPrompt />
           </TooltipProvider>
           <Toaster richColors position="top-right" />

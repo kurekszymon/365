@@ -37,15 +37,13 @@ export const insertTables = (tables: Array<Table>): Promise<boolean> => {
  * Persists a whole table edit - attributes, seat overrides, and the roster with
  * each guest's pin - as one transaction.
  *
- * Deliberately not a sequence of separate writes, which is what this replaced.
- * The two capacity triggers want opposite orderings: `enforce_table_capacity`
- * checks an arriving guest against the capacity already in the DB, so a growth
- * has to write capacity first, while `enforce_table_capacity_floor` checks a
- * shrink against the roster already in the DB, so a shrink has to write the
- * departures first. No fixed client-side order satisfies both, and the old one
- * also left a window where the guests had been cleared off the table but the
- * re-assign hadn't landed - a failure there unseated the whole table while the
- * store still showed everyone in place. See the save_table migration.
+ * Deliberately not a sequence of separate writes: the two capacity triggers want
+ * opposite orderings. `enforce_table_capacity` checks an arriving guest against
+ * the capacity already in the DB, so a growth writes capacity first;
+ * `enforce_table_capacity_floor` checks a shrink against the roster already in
+ * the DB, so a shrink writes the departures first. No fixed client-side order
+ * satisfies both, and separate writes also leave a window where the guests are
+ * off the table and the re-assign has not landed. See the save_table migration.
  */
 export const saveTableRow = (
   table: Table,

@@ -18,15 +18,14 @@ const STEP_COUNT = 3
  * teaches (lay out the room → add guests → seat everyone), except each step
  * ticks itself off from real store state instead of being narrated up front.
  *
- * That derivation is the point. There is no "has seen onboarding" flag to
- * migrate, no welcome modal standing between the user and the canvas, and the
- * card cannot go stale - it is a view of the plan, so finishing the plan is
- * what removes it. `onboarding.store` only records the escape hatch.
+ * That derivation is the point: no "has seen onboarding" flag to migrate, no
+ * welcome modal between the user and the canvas, and no way to go stale - it is
+ * a view of the plan, so finishing the plan removes it. `onboarding.store` only
+ * records the escape hatch.
  *
- * Assumes at least one hall exists, and may rely on it: Canvas renders this
- * only after its own `halls.length === 0` early return has sent the hall-less
- * case to CanvasEmptyState, which carries its own single call to action. So
- * there is no "configure a hall first" step here - it would be unreachable.
+ * Assumes at least one hall exists, and may: Canvas renders this only after its
+ * own `halls.length === 0` early return has sent the hall-less case to
+ * CanvasEmptyState. So a "configure a hall first" step would be unreachable.
  */
 export const OnboardingChecklist = () => {
   const { t } = useTranslation()
@@ -56,19 +55,15 @@ export const OnboardingChecklist = () => {
   const doneCount = [hasTables, hasGuests, allSeated].filter(Boolean).length
   const allDone = doneCount === STEP_COUNT
 
-  // The three steps clear on one table with one guest seated at it, so this
-  // is "you've done a lap of the basics", not "your plan is finished" - the
-  // done card's copy points at where print and share live rather than passing
-  // judgement on the plan. Someone who already knows their way around gets
-  // nothing from that, so a wedding that arrives complete skips it: loadWedding
-  // writes halls/tables/guests in one setState and this component only mounts
-  // once halls are non-empty, so the very first render already sees the real
-  // plan and seeding from it separates "arrived complete" from "walked the
-  // steps in front of me".
+  // The three steps clear on one table with one guest seated, so the done card
+  // means "you've done a lap of the basics" rather than "your plan is finished",
+  // and it points at where print and share live. Someone who already knows their
+  // way around gets nothing from that, so a wedding arriving complete skips it:
+  // loadWedding writes halls/tables/guests in one setState and this only mounts
+  // once halls are non-empty, so the first render already sees the real plan.
   //
-  // Never updated after that first render, and it doesn't need to be: arriving
-  // complete dismisses permanently just below, and arriving unfinished pins
-  // this true for the life of the card.
+  // Never updated after that first render, and does not need to be: arriving
+  // complete dismisses permanently below, arriving unfinished pins this true.
   const [sawUnfinished] = useState(!allDone)
 
   useEffect(() => {
@@ -156,11 +151,10 @@ export const OnboardingChecklist = () => {
                   : t("onboarding.tables.todo")
               }
               done={hasTables}
-              // Straight into the preset picker, panel and all: the step says
-              // "arrange the tables", so stopping at a list and leaving the
-              // user to find its add button is one click of nothing. Not
-              // `openAddHub` - `add_hub` is the mobile FAB's panel view and
-              // renders nothing on desktop.
+              // Straight into the preset picker: the step says "arrange the
+              // tables", so stopping at a list and leaving the user to find its
+              // add button is one click of nothing. Not `openAddHub` - `add_hub`
+              // is the mobile FAB's view and renders nothing on desktop.
               ctaLabel={t("onboarding.tables.cta")}
               onCta={() => {
                 openTab("tables")
@@ -178,11 +172,9 @@ export const OnboardingChecklist = () => {
               done={hasGuests}
               ctaLabel={t("onboarding.guests.cta")}
               // Panel *and* dialog: the dialog alone adds one guest and closes
-              // onto the same bare canvas, teaching nothing about where the
-              // list lives. Opening the panel behind it means dismissing the
-              // dialog reveals the guest that was just added, in the place
-              // guests are managed from - and the panel's own Add / Import
-              // buttons for the next one.
+              // onto the same bare canvas, teaching nothing about where the list
+              // lives. With the panel behind it, dismissing the dialog reveals
+              // the new guest where guests are managed from.
               onCta={() => {
                 openTab("guests")
                 openDialog("Guest.Add")
@@ -199,9 +191,9 @@ export const OnboardingChecklist = () => {
               // No one to seat yet - step 2's button is the one to press, and
               // two live buttons would split the instruction.
               ctaLabel={hasGuests ? t("onboarding.seats.cta") : undefined}
-              // Not openTab: with the guest panel already open on this tab
-              // that lands as a dead click. hintSeating flashes the per-guest
-              // seat buttons, which is where seating actually happens.
+              // Not openTab: with the guest panel already on this tab that is a
+              // dead click. hintSeating flashes the per-guest seat buttons,
+              // which is where seating happens.
               onCta={hasGuests ? hintSeating : undefined}
             />
           </ul>

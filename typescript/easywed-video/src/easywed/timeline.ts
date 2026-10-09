@@ -6,6 +6,10 @@ export const HEIGHT = 1080;
 export const VERTICAL_WIDTH = 1080;
 export const VERTICAL_HEIGHT = 1920;
 
+/** The IG carousel slide, 4:5 - the tallest a carousel shows without cropping. */
+export const CAROUSEL_WIDTH = 1080;
+export const CAROUSEL_HEIGHT = 1350;
+
 /** Per-scene lengths, in frames. */
 export const SCENES = {
   intro: 120,

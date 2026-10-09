@@ -119,9 +119,9 @@ export const useAiChatStore = create<State & Action>((set, get) => {
 
       const controller = new AbortController()
 
-      // Commit history only on success (below). If the turn aborts or errors,
-      // the canonical history stays on its last complete turn instead of ending
-      // on a dangling user message that would double up on the next send.
+      // Commit history only on success (below), so an aborted or errored turn
+      // leaves the canonical history on its last complete turn rather than on a
+      // dangling user message that would double up on the next send.
       set((state) => ({
         messages: [
           ...state.messages,
@@ -159,9 +159,9 @@ export const useAiChatStore = create<State & Action>((set, get) => {
               settleTool(assistantId, id, "error", error),
           },
         })
-        // The turn may have finished in the same tick the user cleared/aborted.
-        // If so the abort raced past this success path; committing now would
-        // resurrect the conversation the user just wiped. Bail before mutating.
+        // The turn may have finished in the same tick the user cleared or
+        // aborted, racing past this success path - committing would resurrect
+        // the conversation they just wiped.
         if (controller.signal.aborted) return
         set((state) => ({
           history: [
@@ -185,10 +185,9 @@ export const useAiChatStore = create<State & Action>((set, get) => {
         }))
         // An abort (clear / unmount) is intentional - stay silent, don't toast.
         if (controller.signal.aborted) {
-          // Drop the assistant placeholder if nothing streamed yet; otherwise it
-          // lingers with empty text and no chips and renders as a perpetual
-          // "thinking" spinner. Keep it when partial text/tools exist - that's
-          // real (now-cancelled) output worth showing.
+          // Drop the assistant placeholder if nothing streamed, or it lingers as
+          // a perpetual "thinking" spinner. Keep it when partial text or tools
+          // exist - that is real, now-cancelled output worth showing.
           set((state) => ({
             messages: state.messages.filter(
               (m) =>

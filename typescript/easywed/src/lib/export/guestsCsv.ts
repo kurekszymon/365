@@ -1,7 +1,9 @@
 import type { TFunction } from "i18next"
 import type { Guest } from "@/stores/planner.store"
 import type { GuestSort } from "@/lib/export/guests"
+import { dishNameIndex } from "@/lib/menu"
 import { useGlobalStore } from "@/stores/global.store"
+import { useMenuStore } from "@/stores/menu.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import {
   DEFAULT_GUEST_SORT,
@@ -10,7 +12,22 @@ import {
 } from "@/lib/export/guests"
 import { downloadBlob } from "@/lib/export/downloadBlob"
 
-export const GUEST_FIELDS = ["name", "table", "dietary", "note"] as const
+/**
+ * The columns an export may carry, in emitted order.
+ *
+ * `dish` is the per-guest menu choice, and it is **safe for re-import**:
+ * `guestsImport` maps by column *index* over its own closed
+ * `GUEST_IMPORT_FIELDS` and ignores unrecognised headers, so a flat export
+ * round-trips as before with the dish dropped. Asserted, not assumed - "the file
+ * I exported yesterday no longer imports" would be a silent regression.
+ */
+export const GUEST_FIELDS = [
+  "name",
+  "table",
+  "dietary",
+  "dish",
+  "note",
+] as const
 export type GuestField = (typeof GUEST_FIELDS)[number]
 
 export const FORMAT_MODES = ["flat", "grouped"] as const
@@ -64,6 +81,11 @@ export const buildRows = (
   const active = effectiveFields(fields, formatMode)
   const { tables, guests } = usePlannerStore.getState()
   const tableNameById = new Map(tables.map((tbl) => [tbl.id, tbl.name]))
+  // Read from the store the way `buildFilename` reads global.store - this module
+  // is called from dialogs and from the print path. Unfiltered by `archived_at`,
+  // for the reason on `dishNameIndex`; empty for a wedding with no venue, which
+  // makes the column blank rather than broken in guest mode.
+  const dishNameById = dishNameIndex(useMenuStore.getState().options)
   const unassignedLabel = t("export.unassigned")
 
   const header = active.map((f) => t(`export.col.${f}`))
@@ -76,6 +98,9 @@ export const buildRows = (
         : unassignedLabel
     }
     if (f === "dietary") return g.dietary.join(", ")
+    if (f === "dish") {
+      return g.menuOptionId ? (dishNameById.get(g.menuOptionId) ?? "") : ""
+    }
     return g.note ?? ""
   }
 
@@ -85,10 +110,10 @@ export const buildRows = (
   })
 
   if (formatMode === "flat") {
-    // Flat has no section headings, so "by seat" only means something once the
-    // rows are grouped by table first: tables in natural order, seat order
-    // within each, unassigned last. Columns are untouched either way, so a flat
-    // export stays re-importable under both sorts.
+    // Flat has no section headings, so "by seat" only means something once rows
+    // are grouped by table: tables in natural order, seat order within each,
+    // unassigned last. Columns are untouched, so a flat export stays
+    // re-importable under both sorts.
     if (sort === "seat") {
       const { groups, unassigned } = groupGuestsByTable(tables, guests, "seat")
       const ordered = [...groups.flatMap((g) => g.guests), ...unassigned]

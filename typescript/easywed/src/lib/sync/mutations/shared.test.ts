@@ -77,6 +77,18 @@ describe("run", () => {
     expect(wasInvoked()).toBe(false)
   })
 
+  // The client half of the venue peek. The database is what actually refuses
+  // the write - src/lib/sync/venueRls.test.ts asserts that against a real
+  // PostgreSQL - and this pins down that the client never issues it, so a
+  // venue's read-only surface costs no failed round trips and shows no toast.
+  it("blocks a venue's write without sending the request", async () => {
+    useGlobalStore.setState({ weddingId: "cloud-uuid", role: "venue" })
+    const { query, wasInvoked } = neverAwaited()
+
+    await expect(run("test", query)).resolves.toBe(false)
+    expect(wasInvoked()).toBe(false)
+  })
+
   it("blocks a write when the role hasn't loaded yet", async () => {
     useGlobalStore.setState({ weddingId: "cloud-uuid", role: undefined })
     const { query, wasInvoked } = neverAwaited()

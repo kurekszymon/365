@@ -19,11 +19,15 @@ import { usePrintStore } from "@/stores/print.store"
 import { useViewStore } from "@/stores/view.store"
 import { useMeasuresStore } from "@/stores/measures.store"
 import { groupGuestsByTable } from "@/lib/export/guests"
+import { dishNameIndex, tallyByOption } from "@/lib/menu"
+import { useMenuStore } from "@/stores/menu.store"
 import { dietaryLabel } from "@/lib/dietary"
 import { ageGroupLabel, childAgeGroup } from "@/lib/ageGroup"
 import { cn } from "@/lib/utils"
 
-// TODO: only planner is printable - other pages would be blank
+// TODO: the print stylesheet only covers the planner - printing any other route
+// produces a blank page.
+
 // A4 landscape minus 10mm margins ≈ 277mm × 190mm.
 // At 96 CSS DPI that's ~1047 × 718 px.
 const PRINT_AREA_PX = { width: 1047, height: 718 }
@@ -34,25 +38,30 @@ const SECTION_PADDING_PX = 48
 // styles.css. A portrait print job is left to the engine's shrink-to-fit.
 
 // The "table" column is never passed here (grouping carries it), so only the
-// other three fields are handled.
+// other four fields are handled. `dishName` and `t` are parameters rather than
+// store/hook reads so this helper stays pure - it runs once per guest per render.
 const renderGuestFields = (
   g: Guest,
   fields: Array<GuestField>,
-  t: TFunction
+  t: TFunction,
+  dishName: (id: string) => string | null
 ) => {
   const parts: Array<string> = []
   for (const f of fields) {
     if (f === "name") parts.push(g.name)
     else if (f === "dietary" && g.dietary.length > 0)
       parts.push(g.dietary.map((d) => dietaryLabel(t, d)).join(", "))
-    else if (f === "note" && g.note) parts.push(g.note)
+    else if (f === "dish" && g.menuOptionId) {
+      const dish = dishName(g.menuOptionId)
+      if (dish) parts.push(dish)
+    } else if (f === "note" && g.note) parts.push(g.note)
   }
   return parts
 }
 
-// Adults are the default, so a guest only carries an age annotation when they
-// fall in a child bracket - a printed list of 120 "(adult)" suffixes helps
-// nobody, while "(0-3 years)" is exactly what catering needs.
+// Adults are the default, so only child brackets get an age annotation: a
+// printed list of 120 "(adult)" suffixes helps nobody, while "(0-3 years)" is
+// what catering needs.
 const ageSuffix = (g: Guest, enabled: boolean, t: TFunction): string | null => {
   if (!enabled) return null
   const group = childAgeGroup(g.ageGroup)
@@ -97,6 +106,10 @@ export const PlannerPrintView = () => {
       halls: s.halls,
     }))
   )
+
+  // Empty for a wedding with no venue, so the dish column and the tally below
+  // both disappear on their own rather than needing to be gated.
+  const menuOptions = useMenuStore((s) => s.options)
 
   const hallsById = useMemo(() => new Map(halls.map((h) => [h.id, h])), [halls])
   // Union of the hall rects in world meters - the print frame in full mode.
@@ -162,8 +175,8 @@ export const PlannerPrintView = () => {
   )
 
   // Tightest rect (meters) around the placed tables + fixtures, padded so seat
-  // markers (which sit outside the table edge) aren't clipped. Falls back to the
-  // full hall when there's nothing to frame. Used only in fit-to-content mode.
+  // markers are not clipped. Falls back to the full hall when there is nothing
+  // to frame. Fit-to-content mode only.
   const contentBounds = useMemo(() => {
     let minX = Infinity
     let minY = Infinity
@@ -242,6 +255,29 @@ export const PlannerPrintView = () => {
   }, [guests, includeSeats])
 
   const unassignedLabel = t("export.unassigned")
+
+  // Dish names for the `dish` field and the tally below, unfiltered by
+  // `archived_at` for the reason on `dishNameIndex`. Empty for a wedding with no
+  // venue, so both disappear on their own rather than needing to be gated.
+  const dishNameById = useMemo(() => dishNameIndex(menuOptions), [menuOptions])
+  const dishName = (id: string) => dishNameById.get(id) ?? null
+
+  // How many portions of each dish, and how many guests have none - the number
+  // the kitchen cooks from, so it belongs on the printed page. Rendered only
+  // when the `dish` field is in the export: DEFAULT_PRINT_FIELDS omits it, and a
+  // tally of a column that is not shown would be a puzzle.
+  const dishTally = useMemo(
+    () =>
+      fields.includes("dish")
+        ? tallyByOption(
+            guests.map((g) => g.menuOptionId),
+            dishName
+          )
+        : { rows: [], unnamed: 0 },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [fields, guests, dishNameById]
+  )
+  const withDish = guests.filter((g) => g.menuOptionId).length
 
   const generatedStr = new Date().toLocaleDateString(i18n.language)
   const weddingDateStr = date ? date.toLocaleDateString(i18n.language) : null
@@ -410,6 +446,42 @@ export const PlannerPrintView = () => {
       <section className="p-6 print:break-before-page">
         <h2 className="mb-4 text-lg font-semibold">{t("guests")}</h2>
 
+        {/* The kitchen's number, above the list rather than after it: a chef
+            reading this wants the portion counts, and the per-guest rows are
+            the backing detail. Absent unless the dish column was asked for. */}
+        {dishTally.rows.length + dishTally.unnamed > 0 && (
+          <div className="mb-5 break-inside-avoid rounded border border-gray-300 p-3">
+            <h3 className="mb-1 text-sm font-semibold">
+              {t("export.dish_tally")}
+            </h3>
+            <p className="mb-2 text-xs text-gray-500">
+              {t("export.dish_assigned", {
+                count: withDish,
+                total: guests.length,
+              })}
+            </p>
+            <ul className="grid grid-cols-2 gap-x-6 gap-y-0.5 text-xs">
+              {dishTally.rows.map((dish) => (
+                <li key={dish.id} className="flex justify-between gap-2">
+                  <span>{dish.name}</span>
+                  <span className="font-semibold">{dish.count}</span>
+                </li>
+              ))}
+              {/* Portions whose dish the catalogue could not name. Listed, so
+                  the line above adds up: without this the header counted every
+                  guest holding a dish while the list counted only the nameable
+                  ones, and the difference was invisible on a page the kitchen
+                  cooks from. */}
+              {dishTally.unnamed > 0 && (
+                <li className="flex justify-between gap-2 text-gray-500">
+                  <span>{t("export.dish_unnamed")}</span>
+                  <span className="font-semibold">{dishTally.unnamed}</span>
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
+
         <div className="columns-2 gap-8 [&>*]:mb-5">
           {groups.map(({ table, guests: tableGuests }) => (
             <div key={table.id} className="break-inside-avoid">
@@ -427,7 +499,7 @@ export const PlannerPrintView = () => {
               ) : (
                 <ol className="grid grid-cols-1 gap-y-1 text-xs">
                   {tableGuests.map((g, idx) => {
-                    const parts = renderGuestFields(g, fields, t)
+                    const parts = renderGuestFields(g, fields, t, dishName)
                     const age = ageSuffix(g, includeAgeGroups, t)
                     return (
                       <li key={g.id} className="flex gap-1">
@@ -458,7 +530,7 @@ export const PlannerPrintView = () => {
               </h3>
               <ol className="grid grid-cols-1 gap-y-1 text-xs">
                 {unassigned.map((g, idx) => {
-                  const parts = renderGuestFields(g, fields, t)
+                  const parts = renderGuestFields(g, fields, t, dishName)
                   const age = ageSuffix(g, includeAgeGroups, t)
                   return (
                     <li key={g.id} className="flex gap-1">
