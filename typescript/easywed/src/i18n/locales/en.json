@@ -571,6 +571,8 @@
   "members.change_name": "Change name",
   "account.menu": "Account",
   "account.changelog": "What's new",
+  "account.changelog_new": "New",
+  "account.changelog_unseen": "New release notes",
   "settings.title": "Settings",
   "settings.back": "Back",
   "settings.display_name.label": "Display name",
