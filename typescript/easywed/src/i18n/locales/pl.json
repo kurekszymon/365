@@ -588,6 +588,8 @@
   "members.change_name": "Zmień nazwę",
   "account.menu": "Konto",
   "account.changelog": "Co nowego",
+  "account.changelog_new": "Nowość",
+  "account.changelog_unseen": "Nowe zmiany w aplikacji",
   "venue.loading": "Wczytywanie…",
   "venue.entry_title": "{{name}} planuje wesela z easywed.",
   "venue.entry_body": "Zaplanuj rozsadzenie gości w sali, w której odbędzie się Twoje wesele - a sala zobaczy gotowy układ stołów i zestawienie diet do kuchni.",

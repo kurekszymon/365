@@ -588,6 +588,8 @@
   "members.change_name": "Change name",
   "account.menu": "Account",
   "account.changelog": "What's new",
+  "account.changelog_new": "New",
+  "account.changelog_unseen": "New release notes",
   "venue.loading": "Loading…",
   "venue.entry_title": "{{name}} plans weddings with easywed.",
   "venue.entry_body": "Plan your seating in the venue that will host your wedding - and the venue sees the finished table layout and a dietary summary for the kitchen.",

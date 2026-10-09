@@ -16,7 +16,9 @@ import { useAuthStore } from "@/stores/auth.store"
 import { useProfileStore } from "@/stores/profile.store"
 import { useConsentStore } from "@/stores/consent.store"
 import { useIsMobile } from "@/hooks/useMediaQuery"
+import { useUnseenRelease } from "@/components/changelog/useUnseenRelease"
 import { Button } from "@/components/ui/button"
+import { NotificationDot } from "@/components/ui/notification-dot"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +47,9 @@ export const AccountMenu = () => {
   const displayName = useProfileStore((state) => state.displayName)
   const openCookieSettings = useConsentStore((state) => state.openSettings)
 
+  const { unseen: hasNewRelease, markSeen: markReleaseSeen } =
+    useUnseenRelease()
+
   const label = t("account.menu")
 
   return (
@@ -52,8 +57,15 @@ export const AccountMenu = () => {
       <Tooltip>
         <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" aria-label={label}>
+            {/* `relative` anchors the corner dot. It pulses here, where it is
+                the only hint that something waits inside the menu. */}
+            <Button variant="outline" aria-label={label} className="relative">
               {isMobile ? <MenuIcon /> : <UserRoundIcon />}
+              <NotificationDot
+                show={hasNewRelease}
+                pulse
+                label={t("account.changelog_unseen")}
+              />
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
@@ -76,9 +88,16 @@ export const AccountMenu = () => {
             to={localeDocPath("changelog", i18n.language)}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={markReleaseSeen}
           >
             <SparklesIcon />
             {t("account.changelog")}
+            {hasNewRelease && (
+              <span className="ml-auto flex items-center gap-1.5 pl-3 text-xs font-medium text-destructive">
+                {t("account.changelog_new")}
+                <NotificationDot placement="inline" size="sm" />
+              </span>
+            )}
           </Link>
         </DropdownMenuItem>
         {/* The planner's only route to withdrawing consent for a guest, who
