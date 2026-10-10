@@ -1,6 +1,7 @@
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import type { Lang } from "@/components/landing/LocaleLanding"
+import { CookieSettingsButton } from "@/components/consent/CookieSettingsButton"
 import { LegalPageShell } from "@/components/legal/LegalPageShell"
 import { PRIVACY_SECTIONS } from "@/components/legal/legalStructure"
 import { legalVars } from "@/lib/legal/provider"
@@ -18,6 +19,14 @@ export function PrivacyPolicy({ lang }: { lang: Lang }) {
       title={tr("privacy.title")}
       updated={tr("privacy.updated")}
     >
+      {/* The policy tells readers to change their choice here, so the page
+          that says so has to offer it too. Kept out of LegalPageShell, which
+          the terms and the changelog share. */}
+      <CookieSettingsButton
+        lng={lang}
+        className="mt-1 text-sm text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
+      />
+
       <p className="mt-6 leading-relaxed text-muted-foreground">
         {tr("privacy.intro")}
       </p>

@@ -1,0 +1,5 @@
+{
+  "title": "Cookie settings where they belong",
+  "summary": "A small tidy-up on the information pages.",
+  "i1": "The \"Cookie settings\" link now appears only on the privacy policy, which is where it's explained. It no longer shows up on the terms of service or on this page."
+}
