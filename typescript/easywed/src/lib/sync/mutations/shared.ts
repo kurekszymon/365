@@ -32,35 +32,31 @@ const log = (label: string, error: unknown) => {
 }
 
 // Runs a Supabase write, logs + toasts on failure, and reports success as a
-// boolean. Every mutation funnels through this so they share one contract:
+// boolean. Every mutation funnels through this, so they share one contract:
 // `true` = persisted (to Supabase, or locally for a guest wedding - see the
-// local-gate check below), `false` = failed. Callers can chain on `ok`.
-// The try/catch matters: most callers do `void mutation(...)`, so a *rejected*
-// promise (aborted fetch, network drop, thrown error) would otherwise become an
-// unhandled rejection that never surfaces. Catching it keeps the contract - any
-// failure, returned-as-error or thrown, becomes a toast + `false`.
+// local gate below), `false` = failed. Callers can chain on `ok`.
+//
+// The try/catch is load-bearing: most callers do `void mutation(...)`, so a
+// *rejected* promise (aborted fetch, network drop, thrown error) would become an
+// unhandled rejection that never surfaces. Any failure, returned or thrown,
+// becomes a toast + `false`.
 export const run = async <T extends { error: unknown }>(
   label: string,
   query: PromiseLike<T>
 ): Promise<boolean> => {
-  // Guests plan against a device-local wedding with no Supabase row behind
-  // it. `query` is a lazy Postgrest thenable, so returning before it's
-  // awaited means no request is ever sent - every mutation funnels through
-  // here, so this single check covers row-scoped mutations that never call
-  // getWeddingId() too (position/seat/soft-delete writes). Treated as a
-  // successful no-op, not a failure: the caller's optimistic `set()` already
-  // applied the change and the `persist` middleware already wrote it to
-  // localStorage before `run()` was ever called - callers that branch on the
-  // boolean (e.g. import dialogs) should proceed as if it persisted, since it did.
+  // Guests plan against a device-local wedding with no Supabase row. `query` is
+  // a lazy Postgrest thenable, so returning before it is awaited sends no
+  // request - and since every mutation funnels through here, this one check also
+  // covers row-scoped writes that never call getWeddingId(). A successful no-op
+  // rather than a failure: the optimistic `set()` and `persist` already wrote it
+  // to localStorage before `run()` was called, so it did persist.
   if (isLocalWedding(useGlobalStore.getState().weddingId)) return true
 
-  // Defence in depth behind the UI gating, not a substitute for it: by the time
-  // a mutation reaches here the caller's optimistic `set()` has already applied,
-  // so this prevents a guaranteed-to-fail request, not the store divergence.
-  // Anything that lands here is a write affordance a viewer should never have
-  // been offered - hence a warn rather than the user-facing toast below, which
-  // would be blaming them for a bug of ours. Checked after the local gate: guest
-  // mode carries role "owner", but the sentinel short-circuits either way.
+  // Defence in depth behind the UI gating, not a substitute: the optimistic
+  // `set()` has already applied by the time a mutation reaches here, so this
+  // prevents a guaranteed-to-fail request, not the divergence. Anything landing
+  // here is a write affordance a viewer should never have been offered - hence a
+  // warn rather than a toast blaming them for a bug of ours.
   if (!selectCanEdit(useGlobalStore.getState())) {
     console.warn(`[sync] ${label} blocked: read-only role`)
     return false
