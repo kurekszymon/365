@@ -594,6 +594,7 @@
   "venue.entry_title": "{{name}} planuje wesela z easywed.",
   "venue.entry_body": "Zaplanuj rozsadzenie gości w sali, w której odbędzie się Twoje wesele - a sala zobaczy gotowy układ stołów i zestawienie diet do kuchni.",
   "venue.cta_couple": "Zaplanuj swoje wesele",
+  "venue.couple_invite_hint": "Wesele w tej sali? {{name}} wyśle Ci link z zaproszeniem - otwórz go, żeby powiązać swój plan z salą.",
   "venue.cta_staff": "Pracujesz tutaj? Przejdź do panelu",
   "venue.not_found_title": "Nie znamy takiej sali",
   "venue.not_found_body": "Pod adresem „{{slug}}” nie ma żadnej sali korzystającej z easywed. Sprawdź, czy adres jest wpisany poprawnie.",

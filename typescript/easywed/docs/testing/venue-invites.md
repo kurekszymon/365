@@ -10,25 +10,24 @@ Covers the stacked branches `easywed/invites-*`. Automated coverage lives in
 | 1 | `easywed/invites-1-db` | `main` | committed |
 | 2 | `easywed/invites-2-claim-page` | 1 | committed |
 | 3 | `easywed/invites-3-couple-dialog` | 2 | committed |
-| 4 | `easywed/invites-4-crm-roster` | 3 | ready to commit (below) |
-| 5 | `easywed/invites-5-docs` | 4 | planned: `current-state.md`, `/venue` copy |
+| 4 | `easywed/invites-4-crm-roster` | 3 | committed |
+| 5 | `easywed/invites-5-docs` | 4 | ready to commit (below) |
 
-### Phase 4 commit
+### Phase 5 commit
 
 ```bash
-git switch -c easywed/invites-4-crm-roster
+git switch -c easywed/invites-5-docs
 git add -A
 git commit -F - <<'EOF'
-easywed: CRM roster invite labels and accepted-invitation history
+easywed: document invitation flow; /venue invite hint, apexOrigin links
 
-- optional label on a new invitation ("Smiths, 12 June"), staff-only, sent
-  as tenant_invitations.label; leads the row in the unclaimed list
-- "Accepted invitations" section: label, who accepted and when; a claimer
-  who has since left shows as left, not by name (the name came through
-  membership); the venue's only signal that a couple said yes
-- expired invitations sorted below live ones
-- customer invite help: send it to the person who created the plan
-- i18n en + pl; docs/testing: Phase 4 manual steps
+- /venue: hint under "Plan your wedding" that the venue sends an
+  invitation link; signup CTA and the CRM 403 link use apexOrigin() so
+  pnpm dev stays local (VenueMessage footer keeps SITE_ORIGIN - prerendered)
+- current-state.md: invitation functions and refusals, roster, invitation
+  page, VenueLinkStep, analytics, tests, gaps 11.3/11.4/11.6/11.7, file map
+- CLAUDE.md: invite route is preview-first; never claim on page load
+- docs/testing: Phase 5 checks
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 EOF
@@ -136,6 +135,16 @@ As venue@ on `bagatelka.localhost:3000/crm/roster` after a fresh `supabase db re
 | 10 | PostHog / network on step 4 | `tenant_invite_created { role }` only - the label is not in the payload. |
 | 11 | Sign in as a staff member (claim `seed-live-staff-invite` with a fresh account) | Role select collapses to "Couple"; label field still offered. |
 | 12 | Phone width, PL and EN | No horizontal scroll; Polish copy uses the plural "Wy" form like the rest of the CRM. |
+
+## Phase 5 - /venue copy and links
+
+| # | Do | Expect |
+|---|---|---|
+| 1 | Signed out, open `bagatelka.localhost:3000/venue` | Under **Plan your wedding**: "Booked here? Sala Bagatelka will send you an invitation link...". PL: "Wesele w tej sali? Sala Bagatelka wyśle Ci link...". |
+| 2 | Hover / click **Plan your wedding** | Goes to `http://localhost:3000/signup` (not `https://easywed.app`). |
+| 3 | As owner@ (a bagatelka customer, not staff) open `bagatelka.localhost:3000/crm` | 403 card; its button goes to `http://localhost:3000/home`. |
+| 4 | Hard-reload `bagatelka.localhost:3000/venue` with the console open | No hydration mismatch warning. |
+| 5 | Read `docs/current-state.md` §6 and §11 | Matches what Phases 2-4 do (spot-check against the steps above). |
 
 ## Suspended venue by hand (optional)
 

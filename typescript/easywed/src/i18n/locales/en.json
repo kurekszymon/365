@@ -594,6 +594,7 @@
   "venue.entry_title": "{{name}} plans weddings with easywed.",
   "venue.entry_body": "Plan your seating in the venue that will host your wedding - and the venue sees the finished table layout and a dietary summary for the kitchen.",
   "venue.cta_couple": "Plan your wedding",
+  "venue.couple_invite_hint": "Booked here? {{name}} will send you an invitation link - open it to connect your plan with the venue.",
   "venue.cta_staff": "Work here? Go to the CRM",
   "venue.not_found_title": "No such venue",
   "venue.not_found_body": "There is no venue on easywed. at \"{{slug}}\". Check the address for a typo.",

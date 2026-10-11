@@ -1,6 +1,6 @@
 # Venue / tenant side - current state
 
-Snapshot as of **2026-10-11**, `main` at `7275861` (v1.3.1).
+Snapshot as of **2026-10-11**, `main` at `7275861` (v1.3.1), updated for the `easywed/invites-*` stack (invitation preview, accept-and-link, membership-based linking, roster labels and history).
 
 It covers everything a venue ("tenant") touches:
 
@@ -22,9 +22,9 @@ It covers everything a venue ("tenant") touches:
 | Host → tenant resolution | Done | `src/lib/tenant/host.ts` |
 | Provisioning a venue | psql only | `scripts/provision-venue.sql` |
 | Staff roles (owner / staff) and couple role (customer) | Done | `tenant_members` |
-| Couple links a wedding to a venue by slug | Done | `link_wedding_to_venue` |
+| Couple links a wedding to its venue | Done, invitation-based (no slug field) | `accept_customer_invitation`, `link_wedding_to_venue`, `VenueLinkStep` |
 | Couple grants or revokes the venue's read access | Done | `set_venue_access`, `VenueAccessDialog` |
-| Invitation links (staff and couple) | Done | `tenant_invitations`, `/crm/roster`, `/venue/invite/$token` |
+| Invitation links (staff and couple) | Done: preview first, explicit Join / Accept, labels, accepted history | `tenant_invitations`, `/crm/roster`, `/venue/invite/$token` |
 | CRM: wedding list, pseudonymised seat-map peek, diet and dish counts, kitchen print | Done, read-only | `routes/crm/*` |
 | CRM: menu catalogue editor | Done | `/crm/menus` |
 | Couple's Menu tab (package, dishes, dish per guest) | Done | `components/planner/Menu/` |
@@ -125,9 +125,12 @@ psql "$DB_URL" -v slug=palacwiosna -v name='Pałac Wiosna' -v owner_email='owner
 |---|---|---|---|
 | `bagatelka` | `venue@easywed.test` | false | yes |
 | `dworek` | `venue2@easywed.test` | **true** | yes |
+| `stodola` | none | false | yes, **`status = 'suspended'`** - exists so the PT410 paths are testable |
 
 - "Anna & Piotr" is linked to `bagatelka` and granted.
 - "Tomasz & Kasia" is unlinked.
+- Accounts in no venue: `solo@`, `editor@`, `viewer@`. `owner@` is a bagatelka `customer`.
+- Hand-typeable invitation tokens (live customer x2, live staff, claimed, expired, suspended) are listed in the `tenant_invitations` block of `seed.sql` and in `docs/testing/venue-invites.md`.
 
 ---
 
@@ -214,7 +217,7 @@ Once linked, `tenant_id` can never be cleared from the client. There is no unlin
 
 | Step | What it does |
 |---|---|
-| `VenueLinkStep` | Empty slug field (`useState("")`). Shows a "replacing X" warning when switching venue |
+| `VenueLinkStep` | **No slug field.** Reads the account's venue membership (`fetchMyVenueMembership`) and offers "Link to <venue>". No membership: explains the invitation link. "Change venue" when the membership *is* the linked venue: points at the new venue's invitation link. A failed read shows a retry, not the "ask for an invitation" text. Shows the "replacing X" warning when switching venue |
 | `VenueStatusStep` | Revoke when `granted`, otherwise "grant". Also "change venue" |
 | `VenueGrantStep` | The consent screen: what is shared and what is hidden, the art. 9 wording, a policy link |
 
@@ -236,6 +239,7 @@ Once linked, `tenant_id` can never be cleared from the client. There is no unlin
 | `token` | Default: two uuids, dashes stripped (64 hex). The INSERT policy requires `^[0-9a-f]{64}$` |
 | `expires_at` | Default now + 14 days. The policy caps it at 30 days |
 | `claimed_at`, `claimed_by` | Must be null on insert |
+| `label` | Optional staff note on who the link is for, 1-80 chars (CHECK). Staff-only via SELECT; never returned by the preview; never in analytics |
 
 The INSERT policy also requires `invited_by = auth.uid()`, and `role = 'customer'` unless the inviter is the owner.
 
@@ -248,48 +252,58 @@ RLS:
 
 Also added in this migration: a `tenant_members` DELETE policy "members can leave their tenant" (non-owners, own row).
 
-### `claim_tenant_invitation(_token)`
+### The three functions
 
-Definer, `authenticated` only.
+| Function | Who | What |
+|---|---|---|
+| `tenant_invitation_preview(_token)` | `anon`, `authenticated` | Venue name, slug, logo, primary colour, status, invite role and expiry for a live token; no rows for unknown / claimed / expired. No label, no tenant id |
+| `claim_tenant_invitation(_token)` | `authenticated` | Joins the caller in the invite's role. Used for **staff** links |
+| `accept_customer_invitation(_token, _wedding_id, _leave_current)` | `authenticated` | Joins as `customer` **and** links one owned wedding (via `link_wedding_to_venue`) in one transaction. Used for **couple** links |
 
-| Error | Meaning |
-|---|---|
-| `PT404` | Unknown, claimed or expired token |
-| `PT409` | Account belongs to another venue |
+Refusals:
 
-- It does **not** check `tenants.status`, so a suspended venue's invites can still be claimed.
-- Claiming into a tenant you already belong to is a no-op, and the token is not burned.
+| Code | `claim` | `accept` |
+|---|---|---|
+| `PT404` | unknown, claimed or expired | same, plus any staff token |
+| `PT410` | venue suspended | venue suspended |
+| `PT409` | account belongs to another venue | account is **staff/owner** of another venue (whatever `_leave_current` says) |
+| `PT412` | - | account is a **customer** of another venue; retry with `_leave_current => true` swaps the membership atomically |
+| `42501` | no session | no session, or not `owner_id` of the wedding - checked **before** the token is burned |
+
+- Joining a venue you already belong to is a no-op and does not burn the token (both functions).
+- The accept's link step keeps `link_wedding_to_venue`'s behaviour: same venue -> no-op (a granted wedding stays granted); different venue -> `pending`, menu cleared.
+- Leaving a venue through `_leave_current` does not touch weddings still linked to it.
 
 ### Copying the link (`components/crm/useTenantRoster.ts` `handleCopy`)
 
 | Role | URL |
 |---|---|
-| `staff` | `tenantUrl(slug, "/venue/invite/<token>")` → `https://<slug>.easywed.app/venue/invite/<token>` |
-| `customer` | `${apexOrigin()}/venue/invite/<token>` → `https://easywed.app/venue/invite/<token>` |
+| `staff` | `tenantUrl(slug, "/venue/invite/<token>")` -> `https://<slug>.easywed.app/venue/invite/<token>` |
+| `customer` | `${apexOrigin()}/venue/invite/<token>` -> `https://easywed.app/venue/invite/<token>` |
 
 If the clipboard fails, the URL is shown in a read-only input.
 
-### Roster list (`CrmRosterInvitations.tsx`)
+### Roster (`/crm/roster`)
 
-- The list shows `invitations.filter(i => !i.claimed_at)`. **Claimed invites disappear from the UI**, though the row is kept in the DB.
-- **Expired invites stay in the list**, labelled "expired", with the copy button hidden and revoke still offered.
-- There is no label or recipient on an invite, only role and expiry date.
+- **New invitation:** role (staff only for the owner) and an optional label ("Who is it for"). Customer help text says to send it to the person who created the plan.
+- **Unclaimed invitations:** led by the label when set, role and expiry beneath. Expired rows stay listed (no copy button, revoke offered) but are **sorted below live ones**.
+- **Accepted invitations:** label, who accepted and when. A claimer who has since left shows as "no longer on your list", not by name (the name reached the venue through membership). This is the venue's only signal that a couple said yes, since a `pending` wedding stays invisible to it.
 
-### Claim page (`routes/venue_.invite.$token.tsx`)
+### Invitation page (`routes/venue_.invite.$token.tsx`, `components/tenant/invite/*`)
 
-1. `requireAuth` runs first.
-2. Then `claimTenantInvitation` (`lib/sync/tenant.ts`) and a card naming the venue.
-3. The onward link:
-   - **staff** → `tenantUrl(slug, "/crm")`;
-   - **customer** → `${apexOrigin()}/home`.
-4. The couple then has to open the wedding, click the Venue button and **type the slug**. Nothing pre-fills it.
+1. **Preview** via `tenant_invitation_preview`, signed out or in. Nothing is spent by opening the link. Invalid -> "ask the venue for a new link"; suspended -> a suspended card naming the venue; transport failure -> "try again".
+2. **Origin hop** (`lib/tenant/inviteOrigin.ts`): a customer invite moves to the apex, a staff invite to its venue's host, before anyone signs in - sessions are per-origin.
+3. **Signed out:** the venue's name with "Create account" / "Sign in", both carrying `next` back to the invite (it survives email confirmation and `/accept-terms`). No `requireAuth` bounce.
+4. **Staff:** an explicit "Join the team" -> `claim_tenant_invitation` -> link to `tenantUrl(slug, "/crm")`. An existing customer of the same venue keeps the customer role and is told so.
+5. **Couple:** a picker of **owned** plans plus "Start a new plan" (created with `lib/sync/createWedding.ts`, reused across retries). Rows flag "already linked here" / "linked to X" (with the menu-wipe warning). Plans only shared with the account are not listed, with a note to forward the link to their owner. `PT412` asks "Leave X?" before retrying with `_leave_current`.
+6. **After accepting:** `/wedding/$id/planner?venue=review`. `wedding.$id.tsx` opens the Venue dialog once the role settles as `owner` and strips the param. Granting access remains the separate `VenueGrantStep`.
 
-Analytics: `track("tenant_invite_claimed", { role })`. `/invite/` in the path is covered by `scrubInviteTokens`.
+Analytics: `tenant_invite_previewed { role }`, `tenant_invite_claimed { role }`, `tenant_invite_accepted { wedding, switched_venue }`. `/invite/` in the path is covered by `scrubInviteTokens`.
 
 ### Members (`CrmRosterMembers.tsx`)
 
 - Lists members with display names. Every non-owner row has a remove button.
-- This removal is the **only** `tenant_members` write in client code. There is no "leave venue" UI, even though the policy allows it.
+- This removal and the swap inside `accept_customer_invitation` are the only `tenant_members` deletes reachable from the client. There is no standalone "leave venue" UI, even though the policy allows it.
 
 ---
 
@@ -298,7 +312,7 @@ Analytics: `track("tenant_invite_claimed", { role })`. `/invite/` in the path is
 ### `/venue` (`routes/venue.tsx`)
 
 - Branded front door: logo or name, plus the tagline or a default line.
-- "Plan your wedding" → `${SITE_ORIGIN}/signup`, with no venue carried.
+- "Plan your wedding" → `${apexOrigin()}/signup`, with no venue carried - by design: a hint under it says the venue will send an invitation link, which is what carries the venue.
 - "Staff" → `/crm`.
 - Signed-in staff are forwarded to `/crm`.
 - Handles not-found, suspended and the apex case.
@@ -407,11 +421,13 @@ Files: `20261007000001`, `lib/sync/layoutPresets.ts`, `components/dialogs/planne
 
 | Event | Emitted from |
 |---|---|
-| `venue_access_requested { source }` | `VenueLinkStep`, with `source: "couple"` only. **`"venue"` is declared but never emitted**: the comment says "the CRM-initiated request arrives with the customer roster", i.e. planned, not built |
+| `venue_access_requested { source }` | `VenueLinkStep` and the invitation page's accept, with `source: "couple"` only. **`"venue"` is declared but never emitted**: the comment says "the CRM-initiated request arrives with the customer roster", i.e. planned, not built |
 | `venue_access_granted` | `VenueGrantStep` |
 | `venue_peek_opened` | `/crm/wedding/$id` |
 | `layout_preset_saved`, `layout_preset_applied` | Preset dialog |
-| `tenant_invite_created { role }`, `tenant_invite_claimed { role }` | Roster, claim page |
+| `tenant_invite_created { role }`, `tenant_invite_claimed { role }` | Roster, invitation page |
+| `tenant_invite_previewed { role }`, `tenant_invite_accepted { wedding, switched_venue }` | Invitation page |
+| `wedding_created { source: "wedding_list" \| "venue_invite" }` | Wedding list, invitation page ("Start a new plan") |
 | `menu_package_saved`, `menu_package_selected`, `menu_selection_completed`, `menu_guest_dish_assigned { source }` | Menu editor and Menu tab |
 
 ---
@@ -421,13 +437,17 @@ Files: `20261007000001`, `lib/sync/layoutPresets.ts`, `components/dialogs/planne
 | File | Covers |
 |---|---|
 | `lib/sync/venueRls.test.ts` | What a granted venue can and cannot read, read-only role, can't enrol members, isolation, uniform refusals from `set_venue_access`, revocation |
-| `lib/sync/tenantInvitations.test.ts` | Token worth, claim and burn, PT404/PT409, customer unlocks linking but not staff, leave, who may invite whom, pinned columns |
+| `lib/sync/tenantInvitations.test.ts` | Token worth, claim and burn, PT404/PT409/PT410, customer unlocks linking but not staff, leave, who may invite whom, pinned columns; preview (anon, key set, invalid states, suspended); accept (happy path, editor partner doesn't burn, non-owner, staff token, same venue, granted stays granted, PT412 switch, staff never swapped); labels |
 | `lib/sync/menuRls.test.ts` | Catalogue isolation, reorder RPCs, couple reads, package scoping, re-link clearing, selections, per-guest dish, archived dishes, hard-delete restrict |
 | `lib/sync/layoutPresetsRls.test.ts`, `layoutPresets.test.ts` | Staff CRUD scope, payload checks, couple read-only, apply re-keying |
 | `lib/sync/tenant.test.ts`, `tenantBranding.test.ts`, `staffTenant.test.ts` | Client helpers |
-| `lib/tenant/host.test.ts`, `origins.test.ts`, `apexRedirect.test.ts` | Host parsing, origins, apex redirect |
+| `lib/tenant/host.test.ts`, `origins.test.ts`, `apexRedirect.test.ts`, `inviteOrigin.test.ts` | Host parsing, origins, apex redirect, which origin an invite belongs on |
 
-Nothing tests the suspended-tenant behaviour described in §11.2.
+Manual click-through for the whole invitation flow: `docs/testing/venue-invites.md`.
+
+Test files run concurrently against one database; `staffTenant.test.ts` signs out with `scope: "local"` because the default global sign-out revoked the sibling suites' sessions.
+
+The PT410 paths are tested against the seeded suspended `stodola`; nothing tests the rest of §11.2, because the rest is not enforced.
 
 ---
 
@@ -449,9 +469,9 @@ Nothing tests the suspended-tenant behaviour described in §11.2.
 
 ### 11.2 Suspension is enforced in the UI only
 
-`tenants.status` is checked **only** in `link_wedding_to_venue` (and rendered by `venue.tsx` / `crm.tsx`). Grepping the migrations finds no other `status` check. Specifically:
+`tenants.status` is checked **only** in `link_wedding_to_venue`, `claim_tenant_invitation` and `accept_customer_invitation` - which stops the roster growing - and rendered by `venue.tsx` / `crm.tsx`. Specifically:
 
-- `is_tenant_staff`, `wedding_role` and `claim_tenant_invitation` ignore it.
+- `is_tenant_staff` and `wedding_role` ignore it.
 - A suspended venue's staff therefore keep, at the API level:
   - their menus, invitations and presets;
   - the `venue` role on every granted wedding.
@@ -459,11 +479,12 @@ Nothing tests the suspended-tenant behaviour described in §11.2.
 
 ### 11.3 Linking-flow gaps
 
-1. **A customer invite doesn't carry the venue into the link step.** After claiming, the couple lands on `/home` and must type the slug into an empty field. Their `customer` membership is readable (`tenant_members` SELECT, `user_id = auth.uid()`), but nothing uses it to suggest the venue.
-2. **The front door drops the venue.** `/venue` → `/signup` carries nothing; the `routes/venue.tsx` comment records that `?venue=` was removed because nothing read it.
+1. ~~A customer invite doesn't carry the venue into the link step.~~ **Fixed:** accepting a customer invite links a chosen (or new) plan in the same call and lands in the Venue dialog; the dialog itself offers the account's venue by name.
+2. **The front door drops the venue - by design now.** `/venue` -> `/signup` carries nothing; a hint says the venue sends an invitation link, and that link is what carries the venue.
 3. **No unlink.** Once linked, a wedding can be revoked or relinked, but `tenant_id` can never return to null from the client.
-4. **The venue can't see pending links.** RLS hides them, and there is no count or request flow. `venue_access_requested { source: "venue" }` is declared but not emitted.
-5. **No "leave venue" UI.** A couple who is a `customer` of venue A gets `PT409` on venue B's invite, with no way out except SQL or being removed by A's staff.
+4. **The venue can't see pending links.** RLS hides them, and there is no count or request flow. `venue_access_requested { source: "venue" }` is declared but not emitted. The roster's Accepted list is the only signal that a couple accepted.
+5. **Switching venue works through the new venue's link; there is still no standalone "leave venue" UI.** A customer of venue A opening venue B's invite is asked "Leave A?" and swapped atomically. Staff of a venue still cannot become a couple elsewhere on the same account (`PT409`), and a couple who simply wants off A's list has no button for it.
+6. **Open linking is unreachable from the UI.** The slug field is gone; `open_linking` still exists in the schema, the seed (`dworek`, used by `menuRls.test.ts`) and `provision-venue.sql`.
 
 ### 11.4 CRM gaps
 
@@ -473,10 +494,7 @@ Nothing tests the suspended-tenant behaviour described in §11.2.
 4. **Presets can't be managed from the CRM.** They are saved only from the apex planner. There is no restore, rename or delete UI.
 5. **Read-only toward the couple.** Staff cannot enter dishes, edit the layout, or annotate a wedding. There are no event-level fields (headcount confirmation, deadlines, notes).
 6. **No export from the CRM.** The kitchen report is `window.print` via `triggerPdfExport`; there is no CSV of counts.
-7. **Invite list hygiene.**
-   - Invites carry no label or recipient.
-   - Expired invites linger until revoked.
-   - Claimed invites vanish with no history view.
+7. **Invite list hygiene - mostly done.** Labels, an Accepted history and expired-last sorting exist. Expired invites still linger until revoked (deliberately - a vanished link reads as "never sent"), and a label cannot be edited after creation (no UPDATE policy).
 8. **Branding is mostly inert.** `accent_color` is unused, `primary_color` only tints the text wordmark, `locale` is unused, and the login and signup pages are unbranded.
 9. **Menu rules.** `choose_count` is unenforced, and there are no totals or children's pricing.
 
@@ -490,7 +508,7 @@ Nothing tests the suspended-tenant behaviour described in §11.2.
 |---|---|
 | `CLAUDE.md` | Named `tenantOrigin(slug)`, which does not exist; the code uses `tenantUrl`. **Fixed** in `CLAUDE.md` |
 | `routes/crm/index.tsx` header comment | Said hall templates "arrive with the migration that gives them a table", although presets shipped in `20261007000001`. **Fixed** |
-| `routes/crm.tsx` (403 link) and `routes/venue.tsx` (signup link, footer link) | Use `SITE_ORIGIN` (production) rather than `apexOrigin()`, so on `*.localhost` these links go to production. Every other cross-origin link in the tenant tree uses `apexOrigin()` / `tenantUrl()` |
+| `routes/crm.tsx` (403 link) and `routes/venue.tsx` (signup link) | Used `SITE_ORIGIN`, so on `*.localhost` they went to production. **Fixed** - both use `apexOrigin()`. `venue.tsx`'s `VenueMessage` footer keeps `SITE_ORIGIN` on purpose: it renders in the prerendered loading state, where a client-only origin would mismatch the server HTML |
 | `my_tenant_id()` | Defined, no caller |
 
 ### 11.7 Marketing copy vs code (`venues.*` in `pl.json`)
@@ -498,7 +516,7 @@ Nothing tests the suspended-tenant behaviour described in §11.2.
 | Promise | Code reality |
 |---|---|
 | "Para, jej planner i Twoja obsługa otwierają ten sam plan" | Staff see a pseudonymised, read-only copy, and only after the couple grants access |
-| "Wyślij parze link do planowania w Twojej sali" | The customer link adds the couple to the roster. They still have to create a wedding, type the slug and grant access |
+| "Wyślij parze link do planowania w Twojej sali" | Close: the link adds the couple to the roster and links a chosen or new plan in one step. They still grant access separately, by design |
 | "Digitalizujemy Twoją salę" / "Jeden szablon" | Done by hand: someone draws a template wedding in the apex planner and saves a preset |
 | "Raporty… zestawienie diet" | True: the dietary counts and kitchen print exist |
 
@@ -511,25 +529,29 @@ supabase/migrations/
   20260817000001_tenants.sql                tenants, tenant_members, helpers, tenant_public(), immutable slug/status
   20260817000002_wedding_tenant_link.sql    weddings.tenant_id / venue_access, link_wedding_to_venue, set_venue_access
   20260817000003_venue_role.sql             derived 'venue' role, narrowed SELECTs, wedding_seatmap, my_wedding_role
-  20260820000001_tenant_invitations.sql     tenant_invitations, claim_tenant_invitation, leave policy
+  20260820000001_tenant_invitations.sql     tenant_invitations (+label), claim, preview, accept_customer_invitation, leave policy
   20260822000001_venue_menus.sql            menu_packages / courses / options, reorder RPCs, tenants.currency
   20260822000002_wedding_menu_selection.sql weddings.menu_package_id, wedding_menu_selections, link_wedding_to_venue v2
   20260822000003_guest_menu_choice.sql      guests.menu_option_id, wedding_seatmap + menu_option_id
   20261007000001_layout_presets.sql         layout_presets
   (20260816000001, 20260828000001 are couple-side hardening, not venue features)
 scripts/provision-venue.sql                 create tenant + owner (psql only)
-supabase/seed.sql                           bagatelka (invite-only), dworek (open_linking)
+supabase/seed.sql                           bagatelka (invite-only), dworek (open_linking), stodola (suspended), invite tokens
+docs/testing/venue-invites.md               manual test plan for the invitation flow
 
 src/lib/tenant/{host,apexRedirect}.ts       slug parsing, apexOrigin, tenantUrl, apex-only redirect
-src/lib/sync/tenant.ts                      tenant_public, role, fetchMyStaffTenant, claim
+src/lib/tenant/inviteOrigin.ts              which origin an invitation belongs on
+src/lib/sync/tenant.ts                      tenant_public, role, fetchMyStaffTenant, membership, claim, preview, accept
 src/lib/sync/venue.ts                       couple: link + access
+src/lib/sync/createWedding.ts               new cloud wedding + default hall (wedding list, invitation page)
 src/lib/sync/loadWeddingForVenue.ts         CRM peek loader (pseudonymised)
 src/lib/sync/{menuCatalogue.ts,mutations/menu.ts,layoutPresets.ts}
 src/lib/auth/{guards,venueLanding}.ts       requireTenantMember, authLandingPath, landing marker
 src/hooks/{useVenueStaffLanding,useStaffTenant}.ts
 src/stores/{tenant,menu}.store.ts
 src/components/tenant/{TenantGate,TenantBranding}.tsx
-src/components/crm/*                        wedding list, peek summary, kitchen tally, roster, menus
+src/components/tenant/invite/*              invitation page states (card, sign-in, staff join, customer accept, picker, switch)
+src/components/crm/*                        wedding list, peek summary, kitchen tally, roster (+ accepted history), menus
 src/components/dialogs/weddings/Venue*.tsx  couple link / grant / revoke
 src/components/dialogs/planner/LayoutPreset*
 src/components/planner/Header/VenueButton.tsx, planner/Menu/*, dialogs/guests/GuestMenuChoiceField.tsx
