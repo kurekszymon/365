@@ -141,7 +141,9 @@ export function useCustomerInviteAccept({
     if (!result.ok) {
       if (result.reason === "switch_required") {
         const current = await fetchMyVenueMembership(userId)
-        setSwitchFrom({ name: current?.name ?? null })
+        setSwitchFrom({
+          name: current.ok ? (current.membership?.name ?? null) : null,
+        })
         setSubmitting(false)
         return
       }

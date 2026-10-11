@@ -107,8 +107,10 @@ describe("tenant helpers resolve when the transport rejects", () => {
     await expect(fetchInviteWeddings("u1")).resolves.toBeNull()
   })
 
-  it("fetchMyVenueMembership answers null", async () => {
-    await expect(fetchMyVenueMembership("u1")).resolves.toBeNull()
+  it("fetchMyVenueMembership answers failed, not 'no membership'", async () => {
+    // "No membership" tells the couple to go and get an invitation; a dropped
+    // request must not.
+    await expect(fetchMyVenueMembership("u1")).resolves.toEqual({ ok: false })
   })
 
   it("acceptCustomerInvitation answers a generic failure", async () => {

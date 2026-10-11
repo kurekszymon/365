@@ -3,6 +3,40 @@
 Covers the stacked branches `easywed/invites-*`. Automated coverage lives in
 `src/lib/sync/tenantInvitations.test.ts` (DB) and `src/lib/tenant/inviteOrigin.test.ts`.
 
+## Stack
+
+| # | Branch | Based on | Status |
+|---|---|---|---|
+| 1 | `easywed/invites-1-db` | `main` | committed |
+| 2 | `easywed/invites-2-claim-page` | 1 | committed |
+| 3 | `easywed/invites-3-couple-dialog` | 2 | ready to commit (below) |
+| 4 | `easywed/invites-4-crm-roster` | 3 | planned: invite label, accepted history, expired last, help copy |
+| 5 | `easywed/invites-5-docs` | 4 | planned: `current-state.md`, `/venue` copy |
+
+### Phase 3 commit
+
+```bash
+git switch -c easywed/invites-3-couple-dialog
+git add -A
+git commit -F - <<'EOF'
+easywed: venue dialog links to the couple's own venue, no slug field
+
+- VenueLinkStep reads the account's venue membership and offers
+  "Link to <venue>"; with open linking off that is the only venue
+  link_wedding_to_venue accepts (one membership per account)
+- no membership -> explain the invitation link instead of a dead-end
+  input; "change venue" to the same venue -> point at the new venue's
+  invitation, which handles the switch
+- fetchMyVenueMembership distinguishes a failed read from "no venue", so
+  a dropped request shows a retry rather than "ask for an invitation"
+- i18n: drop slug keys, add member/no-invite/change copy (en + pl,
+  gender-neutral Polish)
+- docs/testing: Phase 3 manual steps
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+EOF
+```
+
 ## Setup
 
 ```bash
@@ -71,7 +105,21 @@ Use a private window per account so sessions don't mix.
 | 21 | any | repeat 1-3 at phone width (~375px), PL and EN | No horizontal scroll, no raw `venue_invite.*` keys. |
 | 22 | any | PostHog debug / network tab on 1-3 | `tenant_invite_previewed {role}`, `wedding_created {source}`, `tenant_invite_claimed {role}`, `tenant_invite_accepted {wedding, switched_venue}`. No token, label or venue name in any payload. |
 
-Expected until Phase 3: the Venue dialog's link step still shows the old slug field.
+## Phase 3 - couple's Venue dialog
+
+The Venue button is in the planner header, owner only. No step below should
+show a text input for a venue address.
+
+| # | As | Do | Expect |
+|---|---|---|---|
+| 1 | owner@ | `/home` -> create a wedding -> **Venue** | "You're on the list of couples at Sala Bagatelka..." + **Link to Sala Bagatelka**. |
+| 2 | owner@ | click it | Status step: "linked to Sala Bagatelka, and the venue still sees nothing" + grant button. |
+| 3 | owner@ | "Anna & Piotr" -> Venue -> **Change venue** | "Sala Bagatelka is the venue on your account. To move this plan... open the invitation link". **Cancel** returns to the granted status, nothing changed. |
+| 4 | viewer@ | `/home` -> create a wedding -> Venue | "Plans are linked to a venue by invitation..." - no input, no link button. |
+| 5 | venue@ | `/home` -> create a wedding -> Venue | **Link to Sala Bagatelka** (venue staff planning their own wedding may link to their own venue). |
+| 6 | owner@ | after Phase 2 step 10 (now a dworek customer): "Anna & Piotr" -> Venue -> Change venue | **Link to Dworek pod Debem** + "You are currently linked to Sala Bagatelka... clears the menu" warning. Clicking moves it to dworek, pending. (Destructive to the seed - `supabase db reset` after.) |
+| 7 | owner@ | DevTools -> Network -> Offline, then open Venue on an unlinked plan | "Couldn't check which venue you're with" + **Try again** (not the "ask for an invitation" text). Back online -> Try again -> link button. |
+| 8 | any | 1-4 on phone width (dialog renders as a drawer), PL and EN | No raw `venue.link.*` keys; Polish copy has no gendered forms. |
 
 ## Suspended venue by hand (optional)
 

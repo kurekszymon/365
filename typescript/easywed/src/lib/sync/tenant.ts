@@ -411,13 +411,24 @@ export type MyVenueMembership = {
 }
 
 /**
- * The venue this account belongs to, in any role, or null.
+ * `failed` is kept apart from "no membership" (`membership: null`): the venue
+ * dialog answers the second with "ask your venue for an invitation link", and
+ * telling that to a couple who *is* on a venue's list - because one request
+ * dropped - sends them chasing an invitation they already accepted.
+ */
+export type MyVenueMembershipResult =
+  | { ok: true; membership: MyVenueMembership | null }
+  | { ok: false }
+
+/**
+ * The venue this account belongs to, in any role.
  *
  * The couple-side sibling of `fetchMyStaffTenant`: same single-row read (the
  * `tenant_members` SELECT policy shows everyone their own row), without the
  * staff filter. The invitation page uses it to name the venue a switch would
- * leave; the venue dialog uses it to offer "link to <your venue>" instead of a
- * slug field.
+ * leave; the venue dialog uses it to offer "link to <your venue>" - which,
+ * with open linking off, is the only venue `link_wedding_to_venue` will accept
+ * from this account (`tenant_members_one_per_user`).
  *
  * Filtered on `user_id` for the reason `fetchTenantRole` is: a staff caller can
  * see their whole roster, and an unfiltered `.maybeSingle()` would error.
@@ -425,8 +436,8 @@ export type MyVenueMembership = {
 export const fetchMyVenueMembership = (
   userId: string,
   signal?: AbortSignal
-): Promise<MyVenueMembership | null> =>
-  total(
+): Promise<MyVenueMembershipResult> =>
+  total<MyVenueMembershipResult>(
     "fetchMyVenueMembership",
     async () => {
       const query = supabase
@@ -440,7 +451,7 @@ export const fetchMyVenueMembership = (
 
       if (error) {
         console.error("[tenant] fetchMyVenueMembership failed", error)
-        return null
+        return { ok: false }
       }
 
       const tenant = data?.tenants
@@ -449,12 +460,20 @@ export const fetchMyVenueMembership = (
         !tenant ||
         (role !== "owner" && role !== "staff" && role !== "customer")
       ) {
-        return null
+        return { ok: true, membership: null }
       }
 
-      return { tenantId: tenant.id, slug: tenant.slug, name: tenant.name, role }
+      return {
+        ok: true,
+        membership: {
+          tenantId: tenant.id,
+          slug: tenant.slug,
+          name: tenant.name,
+          role,
+        },
+      }
     },
-    null
+    { ok: false }
   )
 
 export type CustomerAcceptFailure =
