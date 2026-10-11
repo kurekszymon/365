@@ -328,6 +328,7 @@ Context: two modes - **local dev** (Docker Postgres on your machine) and **remot
 
 - **`supabase db push`**: applies local, unapplied migrations to the remote (hosted) project. Looks at `supabase_migrations.schema_migrations` (tracks which migrations have run), finds ones you have locally but remote doesn't, runs them in order. Idempotent.
 - **`supabase db pull`**: opposite - pulls remote schema into a new migration file locally. Useful when someone changed the remote via the dashboard.
+- **Provisioning a venue**: `scripts/provision-venue.sql`, run with `psql` as `postgres` against the remote - usage is in its header. Tenants have no INSERT policy, so this is the only way one is created. The `<slug>.easywed.app` custom domain on Cloudflare Pages is a separate, manual step.
 
 ### Migration file contract
 
