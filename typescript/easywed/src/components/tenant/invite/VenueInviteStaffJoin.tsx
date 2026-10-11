@@ -92,7 +92,13 @@ export const VenueInviteStaffJoin = ({
     >
       {status.kind === "error" ? (
         <p className="text-sm text-destructive">
-          {t(`venue_invite.error.${status.reason}`)}
+          {/* `name` for `error.suspended`, the one reason whose sentence names
+              the venue; the other reasons' strings ignore it. Reachable even
+              though the page checks the preview's status first - a venue can
+              be suspended between the preview and the click. */}
+          {t(`venue_invite.error.${status.reason}`, {
+            name: preview.tenant.name,
+          })}
         </p>
       ) : null}
       <Button onClick={() => void join()} disabled={status.kind === "joining"}>
