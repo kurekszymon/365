@@ -31,9 +31,17 @@ const PASSWORD = "password123"
 
 const reachable = await probeLocalStack()
 
-/** Signs the app client in and hands back the user id the app would pass. */
+/**
+ * Signs the app client in and hands back the user id the app would pass.
+ *
+ * `scope: "local"` on every sign-out here, and it is not a nicety: supabase-js
+ * defaults to "global", which revokes *every* session of that user server-side.
+ * The sibling suites run concurrently against the same database and sign in as
+ * these same seed accounts, so a global sign-out here logs their clients out
+ * mid-test - `getUser()` comes back null and `auth.uid()` with it.
+ */
 const signIn = async (email: string): Promise<string> => {
-  await supabase.auth.signOut()
+  await supabase.auth.signOut({ scope: "local" })
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password: PASSWORD,
@@ -44,7 +52,7 @@ const signIn = async (email: string): Promise<string> => {
 
 describe.skipIf(!reachable)("fetchMyStaffTenant", () => {
   afterAll(async () => {
-    await supabase.auth.signOut()
+    await supabase.auth.signOut({ scope: "local" })
   })
 
   it("names the venue a staff account runs, slug and all", async () => {

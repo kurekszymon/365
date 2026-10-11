@@ -19,7 +19,10 @@ import type { Database } from "@/lib/supabase.types"
  * Skipped, not failed, when the local stack is down - see venueRls.test.ts.
  *
  * Fixtures come from supabase/seed.sql: `bagatelka` is invitation-only,
- * `dworek` is open, and solo@easywed.test is the only account in no tenant.
+ * `dworek` is open, `stodola` is suspended, and solo@, editor@ and viewer@ are
+ * in no tenant. solo@ is the one this suite moves between tenants; editor@ is
+ * only ever asserted *not* to join, because layoutPresetsRls.test.ts relies on
+ * them being in none and the suites share a database concurrently.
  */
 
 const SUPABASE_URL =
@@ -28,6 +31,10 @@ const SUPABASE_KEY =
   process.env.VITE_SUPABASE_KEY ?? import.meta.env.VITE_SUPABASE_KEY
 
 const BAGATELKA = "50000000-0000-4000-8000-000000000001"
+const DWOREK = "50000000-0000-4000-8000-000000000002"
+// "Anna & Piotr": owned by owner@, editor@ is a member, granted to bagatelka.
+const COUPLE_WEDDING = "20000000-0000-4000-8000-000000000001"
+const EDITOR_USER = "10000000-0000-4000-8000-000000000002"
 // solo@easywed.test, who belongs to no tenant and owns "Tomasz & Kasia".
 const SOLO_USER = "10000000-0000-4000-8000-000000000004"
 const SOLO_WEDDING = "20000000-0000-4000-8000-000000000002"
@@ -79,8 +86,11 @@ describe.skipIf(!reachable)("tenant invitations", () => {
   let solo: SupabaseClient<Database>
   // Already a 'customer' of bagatelka.
   let couple: SupabaseClient<Database>
+  // Editor - not owner - of "Anna & Piotr", in no tenant: the wrong partner.
+  let editor: SupabaseClient<Database>
 
   let venueUserId: string
+  let otherVenueUserId: string
   let tokenSeq = 0
 
   /**
@@ -102,14 +112,84 @@ describe.skipIf(!reachable)("tenant invitations", () => {
     return token
   }
 
+  /** The same, minted by `dworek`'s owner - the "other venue" of a switch. */
+  const mintDworekInvitation = async (): Promise<string> => {
+    const token = testToken(++tokenSeq)
+    const { error } = await otherVenue.from("tenant_invitations").insert({
+      tenant_id: DWOREK,
+      role: "customer",
+      token,
+      invited_by: otherVenueUserId,
+    })
+    if (error) throw error
+    return token
+  }
+
+  /** Whether a token is still unspent, read as the venue that issued it. */
+  const claimedAt = async (
+    issuer: SupabaseClient<Database>,
+    token: string
+  ): Promise<string | null> => {
+    const { data, error } = await issuer
+      .from("tenant_invitations")
+      .select("claimed_at")
+      .eq("token", token)
+      .single()
+    if (error) throw error
+    return data.claimed_at
+  }
+
+  /**
+   * A wedding of the caller's own that nothing else reads, deleted by the
+   * returned function. Never the seeded ones: venueRls.test.ts and
+   * menuRls.test.ts assert their link state concurrently.
+   *
+   * The id is generated here rather than read back with `.insert().select()`,
+   * which RLS refuses until the AFTER trigger has written the owner's
+   * `wedding_members` row (the gotcha in CLAUDE.md).
+   */
+  const scratchWedding = async (
+    owner: SupabaseClient<Database>
+  ): Promise<{ id: string; drop: () => Promise<void> }> => {
+    const id = crypto.randomUUID()
+    // From the client's own session rather than `auth.getUser()`, which is a
+    // round trip to the auth server per call and nothing this needs.
+    const ownerId = (await owner.auth.getSession()).data.session!.user.id
+    const { error } = await owner
+      .from("weddings")
+      .insert({ id, owner_id: ownerId, name: "Invite accept probe" })
+    if (error) throw error
+    return {
+      id,
+      drop: async () => {
+        await owner.from("weddings").delete().eq("id", id)
+      },
+    }
+  }
+
+  const weddingLink = async (
+    reader: SupabaseClient<Database>,
+    weddingId: string
+  ) => {
+    const { data, error } = await reader
+      .from("weddings")
+      .select("tenant_id, venue_access, menu_package_id")
+      .eq("id", weddingId)
+      .single()
+    if (error) throw error
+    return data
+  }
+
   beforeAll(async () => {
-    ;[venue, otherVenue, solo, couple] = await Promise.all([
+    ;[venue, otherVenue, solo, couple, editor] = await Promise.all([
       signIn("venue@easywed.test"),
       signIn("venue2@easywed.test"),
       signIn("solo@easywed.test"),
       signIn("owner@easywed.test"),
+      signIn("editor@easywed.test"),
     ])
     venueUserId = (await venue.auth.getUser()).data.user!.id
+    otherVenueUserId = (await otherVenue.auth.getUser()).data.user!.id
   })
 
   // Every test puts the fixture back, so the suite does not need a freshly reset
@@ -124,10 +204,14 @@ describe.skipIf(!reachable)("tenant invitations", () => {
   // PT403 it asserts comes from solo's membership being gone.
   afterEach(async () => {
     await solo.from("tenant_members").delete().eq("user_id", SOLO_USER)
-    await venue
-      .from("tenant_invitations")
-      .delete()
-      .like("token", `${TEST_TOKEN_PREFIX}%`)
+    await Promise.all(
+      [venue, otherVenue].map((issuer) =>
+        issuer
+          .from("tenant_invitations")
+          .delete()
+          .like("token", `${TEST_TOKEN_PREFIX}%`)
+      )
+    )
   })
 
   describe("what a venue cannot do to a stranger", () => {
@@ -271,6 +355,367 @@ describe.skipIf(!reachable)("tenant invitations", () => {
         .eq("token", token)
         .single()
       expect(invite?.claimed_at).toBeNull()
+    })
+  })
+
+  describe("a suspended venue", () => {
+    // Seeded rather than minted: `status` is unwritable from the client, and
+    // the INSERT policy would refuse nothing here anyway - suspension is not
+    // checked there. The row is never spent, so it survives every run.
+    const SUSPENDED_TOKEN = "seed-suspended-customer-invite"
+
+    it("refuses a claim with PT410", async () => {
+      const { error } = await solo.rpc("claim_tenant_invitation", {
+        _token: SUSPENDED_TOKEN,
+      })
+      expect(error?.code).toBe("PT410")
+    })
+
+    it("refuses an accept with PT410, and leaves the token live", async () => {
+      const { error } = await solo.rpc("accept_customer_invitation", {
+        _token: SUSPENDED_TOKEN,
+        _wedding_id: SOLO_WEDDING,
+      })
+      expect(error?.code).toBe("PT410")
+
+      // Still previewable, which is only true of an unspent token.
+      const { data } = await solo.rpc("tenant_invitation_preview", {
+        _token: SUSPENDED_TOKEN,
+      })
+      expect(data).toHaveLength(1)
+    })
+  })
+
+  describe("tenant_invitation_preview", () => {
+    it("names the venue and role to a signed-out visitor", async () => {
+      const token = await mintInvitation()
+
+      // `client()` with no sign-in is the anon role - the visitor who has not
+      // created an account yet.
+      const { data, error } = await client().rpc("tenant_invitation_preview", {
+        _token: token,
+      })
+
+      expect(error).toBeNull()
+      expect(data).toEqual([
+        expect.objectContaining({
+          role: "customer",
+          tenant_slug: "bagatelka",
+          tenant_name: "Sala Bagatelka",
+          tenant_status: "active",
+        }),
+      ])
+    })
+
+    it("projects exactly the venue's public face", async () => {
+      const token = await mintInvitation()
+      const { data } = await client().rpc("tenant_invitation_preview", {
+        _token: token,
+      })
+
+      // Pinned, so `label` (staff's note about the recipient), `invited_by` or
+      // the tenant id can only arrive by a deliberate edit of this line.
+      expect(Object.keys(data![0]).sort()).toEqual([
+        "expires_at",
+        "logo_url",
+        "primary_color",
+        "role",
+        "tenant_name",
+        "tenant_slug",
+        "tenant_status",
+      ])
+    })
+
+    it.each([
+      ["unknown", "no-such-token"],
+      ["claimed", "seed-claimed-customer-invite"],
+      ["expired", "seed-expired-customer-invite"],
+    ])("returns nothing for an %s token", async (_label, token) => {
+      const { data, error } = await client().rpc("tenant_invitation_preview", {
+        _token: token,
+      })
+      expect(error).toBeNull()
+      expect(data).toEqual([])
+    })
+
+    it("still names a suspended venue, with its status", async () => {
+      const { data } = await client().rpc("tenant_invitation_preview", {
+        _token: "seed-suspended-customer-invite",
+      })
+      expect(data).toEqual([
+        expect.objectContaining({
+          tenant_slug: "stodola",
+          tenant_status: "suspended",
+        }),
+      ])
+    })
+  })
+
+  describe("accept_customer_invitation", () => {
+    it("joins and links in one call, and spends the token", async () => {
+      const token = await mintInvitation()
+      const wedding = await scratchWedding(solo)
+
+      try {
+        const { data, error } = await solo.rpc("accept_customer_invitation", {
+          _token: token,
+          _wedding_id: wedding.id,
+        })
+
+        expect(error).toBeNull()
+        expect(data).toBe(BAGATELKA)
+
+        const { data: rows } = await solo
+          .from("tenant_members")
+          .select("tenant_id, role")
+          .eq("user_id", SOLO_USER)
+        expect(rows).toEqual([{ tenant_id: BAGATELKA, role: "customer" }])
+
+        // 'pending' - accepting is not the art. 9 consent; that stays a
+        // separate set_venue_access(true).
+        expect(await weddingLink(solo, wedding.id)).toMatchObject({
+          tenant_id: BAGATELKA,
+          venue_access: "pending",
+        })
+        expect(await claimedAt(venue, token)).not.toBeNull()
+      } finally {
+        await wedding.drop()
+      }
+    })
+
+    it("refuses the editor partner without spending the token", async () => {
+      // The case the function exists for: before it, the claim succeeded and
+      // burned the link for someone link_wedding_to_venue would then refuse.
+      const token = await mintInvitation()
+
+      const { error } = await editor.rpc("accept_customer_invitation", {
+        _token: token,
+        _wedding_id: COUPLE_WEDDING,
+      })
+
+      expect(error?.code).toBe("42501")
+      expect(await claimedAt(venue, token)).toBeNull()
+
+      const { data: rows } = await editor
+        .from("tenant_members")
+        .select("tenant_id")
+        .eq("user_id", EDITOR_USER)
+      expect(rows).toEqual([])
+    })
+
+    it("refuses a wedding the caller does not own", async () => {
+      const token = await mintInvitation()
+
+      const { error } = await solo.rpc("accept_customer_invitation", {
+        _token: token,
+        _wedding_id: COUPLE_WEDDING,
+      })
+
+      expect(error?.code).toBe("42501")
+      expect(await claimedAt(venue, token)).toBeNull()
+    })
+
+    it("refuses a staff token as if it were unknown", async () => {
+      const token = await mintInvitation("staff")
+
+      const { error } = await solo.rpc("accept_customer_invitation", {
+        _token: token,
+        _wedding_id: SOLO_WEDDING,
+      })
+
+      expect(error?.code).toBe("PT404")
+      expect(await claimedAt(venue, token)).toBeNull()
+    })
+
+    it("refuses a signed-out caller", async () => {
+      const token = await mintInvitation()
+
+      const { error } = await client().rpc("accept_customer_invitation", {
+        _token: token,
+        _wedding_id: SOLO_WEDDING,
+      })
+
+      expect(error).not.toBeNull()
+      expect(await claimedAt(venue, token)).toBeNull()
+    })
+
+    it("links an existing customer without spending the token", async () => {
+      // owner@ is bagatelka's customer already. Same rule as the claim: the
+      // link stays live for whoever it was actually meant for.
+      const token = await mintInvitation()
+      const wedding = await scratchWedding(couple)
+
+      try {
+        const { error } = await couple.rpc("accept_customer_invitation", {
+          _token: token,
+          _wedding_id: wedding.id,
+        })
+
+        expect(error).toBeNull()
+        expect(await weddingLink(couple, wedding.id)).toMatchObject({
+          tenant_id: BAGATELKA,
+          venue_access: "pending",
+        })
+        expect(await claimedAt(venue, token)).toBeNull()
+
+        const { data: rows } = await couple
+          .from("tenant_members")
+          .select("role")
+          .eq("user_id", COUPLE_USER)
+        expect(rows).toEqual([{ role: "customer" }])
+      } finally {
+        await wedding.drop()
+      }
+    })
+
+    it("leaves a wedding already granted to this venue granted", async () => {
+      // The same-venue no-op inside link_wedding_to_venue, reached through the
+      // new door. A reset here would revoke a live grant and wipe a chosen menu.
+      const before = await weddingLink(couple, COUPLE_WEDDING)
+      expect(before.venue_access).toBe("granted")
+
+      const { error } = await couple.rpc("accept_customer_invitation", {
+        _token: await mintInvitation(),
+        _wedding_id: COUPLE_WEDDING,
+      })
+
+      expect(error).toBeNull()
+      expect(await weddingLink(couple, COUPLE_WEDDING)).toEqual(before)
+    })
+
+    describe("switching venue", () => {
+      it("asks first (PT412) and changes nothing", async () => {
+        const wedding = await scratchWedding(solo)
+
+        try {
+          await solo.rpc("accept_customer_invitation", {
+            _token: await mintInvitation(),
+            _wedding_id: wedding.id,
+          })
+          const dworekToken = await mintDworekInvitation()
+
+          const { error } = await solo.rpc("accept_customer_invitation", {
+            _token: dworekToken,
+            _wedding_id: wedding.id,
+          })
+
+          expect(error?.code).toBe("PT412")
+          expect(await claimedAt(otherVenue, dworekToken)).toBeNull()
+          expect(await weddingLink(solo, wedding.id)).toMatchObject({
+            tenant_id: BAGATELKA,
+          })
+
+          const { data: rows } = await solo
+            .from("tenant_members")
+            .select("tenant_id")
+            .eq("user_id", SOLO_USER)
+          expect(rows).toEqual([{ tenant_id: BAGATELKA }])
+        } finally {
+          await wedding.drop()
+        }
+      })
+
+      it("swaps the membership and re-links only the named wedding", async () => {
+        const first = await scratchWedding(solo)
+        const second = await scratchWedding(solo)
+
+        try {
+          for (const w of [first, second]) {
+            await solo.rpc("accept_customer_invitation", {
+              _token: await mintInvitation(),
+              _wedding_id: w.id,
+            })
+          }
+          const dworekToken = await mintDworekInvitation()
+
+          const { data, error } = await solo.rpc("accept_customer_invitation", {
+            _token: dworekToken,
+            _wedding_id: second.id,
+            _leave_current: true,
+          })
+
+          expect(error).toBeNull()
+          expect(data).toBe(DWOREK)
+
+          const { data: rows } = await solo
+            .from("tenant_members")
+            .select("tenant_id, role")
+            .eq("user_id", SOLO_USER)
+          expect(rows).toEqual([{ tenant_id: DWOREK, role: "customer" }])
+
+          expect(await weddingLink(solo, second.id)).toMatchObject({
+            tenant_id: DWOREK,
+            venue_access: "pending",
+            menu_package_id: null,
+          })
+          // Leaving a venue is not unlinking from it: membership and the
+          // wedding link are separate decisions (20260820000001 §3).
+          expect(await weddingLink(solo, first.id)).toMatchObject({
+            tenant_id: BAGATELKA,
+          })
+          expect(await claimedAt(otherVenue, dworekToken)).not.toBeNull()
+        } finally {
+          await Promise.all([first.drop(), second.drop()])
+        }
+      })
+
+      it("never swaps away a staff membership", async () => {
+        const wedding = await scratchWedding(solo)
+
+        try {
+          await solo.rpc("claim_tenant_invitation", {
+            _token: await mintInvitation("staff"),
+          })
+          const dworekToken = await mintDworekInvitation()
+
+          const { error } = await solo.rpc("accept_customer_invitation", {
+            _token: dworekToken,
+            _wedding_id: wedding.id,
+            _leave_current: true,
+          })
+
+          expect(error?.code).toBe("PT409")
+          expect(await claimedAt(otherVenue, dworekToken)).toBeNull()
+
+          const { data: rows } = await solo
+            .from("tenant_members")
+            .select("tenant_id, role")
+            .eq("user_id", SOLO_USER)
+          expect(rows).toEqual([{ tenant_id: BAGATELKA, role: "staff" }])
+        } finally {
+          await wedding.drop()
+        }
+      })
+    })
+  })
+
+  describe("invitation labels", () => {
+    const insertWithLabel = (label: string) =>
+      venue.from("tenant_invitations").insert({
+        tenant_id: BAGATELKA,
+        role: "customer",
+        token: testToken(++tokenSeq),
+        invited_by: venueUserId,
+        label,
+      })
+
+    it("stores a label for staff to read back", async () => {
+      const { error } = await insertWithLabel("Kowalscy, 12.06")
+      expect(error).toBeNull()
+
+      const { data } = await venue
+        .from("tenant_invitations")
+        .select("label")
+        .eq("label", "Kowalscy, 12.06")
+      expect(data).toEqual([{ label: "Kowalscy, 12.06" }])
+    })
+
+    it.each([
+      ["empty", ""],
+      ["over 80 characters", "x".repeat(81)],
+    ])("refuses an %s label", async (_case, label) => {
+      const { error } = await insertWithLabel(label)
+      expect(error?.code).toBe("23514")
     })
   })
 

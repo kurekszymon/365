@@ -547,6 +547,7 @@ export type Database = {
           expires_at: string
           id: string
           invited_by: string
+          label: string | null
           role: string
           tenant_id: string
           token: string
@@ -558,6 +559,7 @@ export type Database = {
           expires_at?: string
           id?: string
           invited_by: string
+          label?: string | null
           role: string
           tenant_id: string
           token?: string
@@ -569,6 +571,7 @@ export type Database = {
           expires_at?: string
           id?: string
           invited_by?: string
+          label?: string | null
           role?: string
           tenant_id?: string
           token?: string
@@ -873,6 +876,10 @@ export type Database = {
       }
     }
     Functions: {
+      accept_customer_invitation: {
+        Args: { _leave_current?: boolean; _token: string; _wedding_id: string }
+        Returns: string
+      }
       claim_tenant_invitation: { Args: { _token: string }; Returns: string }
       claim_wedding_invitation: { Args: { _token: string }; Returns: string }
       delete_own_account: { Args: never; Returns: undefined }
@@ -933,6 +940,18 @@ export type Database = {
       }
       shares_wedding_with: { Args: { _user_id: string }; Returns: boolean }
       staff_can_view_profile: { Args: { _user_id: string }; Returns: boolean }
+      tenant_invitation_preview: {
+        Args: { _token: string }
+        Returns: {
+          expires_at: string
+          logo_url: string
+          primary_color: string
+          role: string
+          tenant_name: string
+          tenant_slug: string
+          tenant_status: string
+        }[]
+      }
       tenant_public: {
         Args: { _slug: string }
         Returns: {

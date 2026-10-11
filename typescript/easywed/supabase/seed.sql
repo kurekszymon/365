@@ -149,7 +149,14 @@ insert into public.tenants (id, slug, name, status, locale, logo_url, primary_co
   ('50000000-0000-4000-8000-000000000001', 'bagatelka', 'Sala Bagatelka', 'active', 'pl',
    null, '#7c3f58', '#e8c3b0', 'Wesela i przyjecia w sercu Mazowsza', false),
   ('50000000-0000-4000-8000-000000000002', 'dworek', 'Dworek pod Debem', 'active', 'pl',
-   null, '#2f4f3e', '#c8d5c0', 'Kameralne przyjecia w zabytkowym dworku', true);
+   null, '#2f4f3e', '#c8d5c0', 'Kameralne przyjecia w zabytkowym dworku', true),
+  -- Suspended, with no members at all: it exists only so the PT410 branches of
+  -- claim_tenant_invitation / accept_customer_invitation, and the suspended
+  -- preview card, can be reached without a service-role key. `status` is
+  -- unwritable from the client (enforce_tenant_immutable_columns), so this is
+  -- the only way a test can meet one.
+  ('50000000-0000-4000-8000-000000000003', 'stodola', 'Stodola pod Lasem', 'suspended', 'pl',
+   null, '#5b4636', '#e6d5c3', null, false);
 
 -- Each venue's own account, plus the couple of "Anna & Piotr" as one of
 -- bagatelka's customers - which is what the invitation-only linking check in
@@ -160,20 +167,43 @@ insert into public.tenant_members (tenant_id, user_id, role) values
   ('50000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000006', 'owner'),
   ('50000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'customer');
 
--- One spent tenant invitation (how Anna became bagatelka's customer, as far as
--- the CRM roster is concerned) and one still live, so /crm/roster has both
--- states and the claim route is reachable:
---   http://localhost:3000/venue/invite/seed-live-customer-invite
+-- Tenant invitations, so /crm/roster has every state and the invitation page
+-- is reachable by typing a token:
+--   http://localhost:3000/venue/invite/<token>
 --
--- The live one is claimable by solo@easywed.test, the only seeded account that
--- belongs to no tenant - every other one trips tenant_members_one_per_user,
--- which is itself the PT409 branch worth exercising by hand.
-insert into public.tenant_invitations (tenant_id, token, role, invited_by, claimed_by, claimed_at, expires_at) values
+--   seed-claimed-customer-invite    spent - how Anna became bagatelka's customer
+--   seed-live-customer-invite       live customer invite to bagatelka
+--   seed-live-customer-invite-2     a second one, so one manual run does not
+--                                   leave nothing to click
+--   seed-live-staff-invite          live staff invite to bagatelka; its link is
+--                                   copied for bagatelka.localhost:3000
+--   seed-expired-customer-invite    expired - the "invalid link" card
+--   seed-suspended-customer-invite  live, but to the suspended `stodola`
+--
+-- The accounts in no tenant are solo@, editor@ and viewer@, so any of them can
+-- accept a customer invite. editor@ is the interesting one: a member, not the
+-- owner, of "Anna & Piotr", which is the wrong-partner case. owner@ is
+-- bagatelka's customer already (the same-venue no-op, and the switch prompt on
+-- a dworek link); venue@ / venue2@ are staff, which is the PT409 branch.
+--
+-- Labels are on the live ones only, as staff would write them. Rows that skip
+-- the INSERT policy (the expired one) are fine here - seed runs as postgres.
+insert into public.tenant_invitations (tenant_id, token, role, invited_by, claimed_by, claimed_at, expires_at, label) values
   ('50000000-0000-4000-8000-000000000001', 'seed-claimed-customer-invite', 'customer',
    '10000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-000000000001',
-   now() - interval '5 days', now() + interval '9 days'),
+   now() - interval '5 days', now() + interval '9 days', 'Kowalska i Nowak'),
   ('50000000-0000-4000-8000-000000000001', 'seed-live-customer-invite', 'customer',
-   '10000000-0000-4000-8000-000000000005', null, null, now() + interval '14 days');
+   '10000000-0000-4000-8000-000000000005', null, null, now() + interval '14 days', 'Zielinscy, 14.06'),
+  ('50000000-0000-4000-8000-000000000001', 'seed-live-customer-invite-2', 'customer',
+   '10000000-0000-4000-8000-000000000005', null, null, now() + interval '14 days', 'Wisniewscy, 30.08'),
+  ('50000000-0000-4000-8000-000000000001', 'seed-live-staff-invite', 'staff',
+   '10000000-0000-4000-8000-000000000005', null, null, now() + interval '14 days', 'Nowa kelnerka'),
+  ('50000000-0000-4000-8000-000000000001', 'seed-expired-customer-invite', 'customer',
+   '10000000-0000-4000-8000-000000000005', null, null, now() - interval '1 day', null),
+  -- `stodola` has no members, so bagatelka's owner stands in as `invited_by`
+  -- (the column is only an auth.users FK). Nothing reads it for this row.
+  ('50000000-0000-4000-8000-000000000003', 'seed-suspended-customer-invite', 'customer',
+   '10000000-0000-4000-8000-000000000005', null, null, now() + interval '14 days', null);
 
 -- ---------------------------------------------------------------------------
 -- Menus

@@ -23,7 +23,10 @@
 --      own session. That call is the consent - a `tenant_members` row is what
 --      hands the venue this person's `profiles.display_name` through
 --      `staff_can_view_profile`, so the person who is disclosed has to be the
---      one who acts.
+--      one who acts. The client makes that call only from an explicit button on
+--      the invitation page, never on page load: opening a link is not a
+--      decision, and `tenant_invitation_preview` (section 4b) is what lets the
+--      page name the venue before anything is spent.
 --   3. Invitees need no SELECT on this table. `claim_tenant_invitation` runs as
 --      definer and reads the row itself, so holding a token grants nothing but
 --      the ability to spend it.
@@ -71,6 +74,13 @@ create table public.tenant_invitations (
   -- claimer is gone. `invited_by` above cascades because that row is the
   -- departing staff member's own.
   claimed_by uuid references auth.users(id) on delete set null,
+  -- Staff's own note on who the link was for ("Kowalscy, 12.06"), because the
+  -- row names nobody until it is claimed and a roster of identical "customer,
+  -- expires on" rows cannot be told apart. Free text, so it stays out of every
+  -- analytics payload, and readable only by staff through the SELECT policy
+  -- below - never by the token holder, whom `tenant_invitation_preview` does
+  -- not show it to. Set at insert only: there is no UPDATE policy.
+  label text check (label is null or char_length(label) between 1 and 80),
   created_at timestamptz not null default now()
 );
 
@@ -233,7 +243,13 @@ create policy "members can leave their tenant"
 -- into a generic retry prompt.
 --
 --   PT404  no such invitation, already claimed, or expired
+--   PT410  the venue is suspended
 --   PT409  this account already belongs to a different venue
+--
+-- PT410 is checked here, matching `link_wedding_to_venue`, so a suspended
+-- venue cannot grow its roster through links it issued before suspension. It
+-- is *not* the general access control suspension might suggest - see the
+-- `tenants.status` note in CLAUDE.md: the helpers still ignore it.
 --
 -- PT409 is the one that genuinely needs its own sentence. It is not a typo the
 -- user can fix by retrying - `tenant_members_one_per_user` allows exactly one
@@ -265,6 +281,13 @@ begin
 
   if not found then
     raise exception 'Invitation invalid or expired' using errcode = 'PT404';
+  end if;
+
+  if not exists (
+    select 1 from public.tenants t
+    where t.id = inv.tenant_id and t.status = 'active'
+  ) then
+    raise exception 'Venue is not active' using errcode = 'PT410';
   end if;
 
   select tenant_id into v_existing_tenant
@@ -312,6 +335,191 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
+-- 4b. tenant_invitation_preview
+-- ---------------------------------------------------------------------------
+-- What the invitation page shows *before* anything is spent: which venue, which
+-- role, until when. It is what lets the claim become an explicit act instead of
+-- a side effect of opening a URL, and what lets a signed-out visitor see "Sala
+-- Bagatelka invites you" instead of a bare login form.
+--
+-- Granted to `anon`, and that is safe for the reason section 2's third property
+-- gives: the token *is* the credential, so holding it already entitles the
+-- holder to spend it. What the preview adds is the venue's public face, which
+-- `tenant_public()` hands to anyone with the slug anyway. It deliberately does
+-- *not* return `label`, `invited_by` or the tenant id - the label is staff's
+-- note about the recipient, not something to show the recipient.
+--
+-- Unknown, claimed and expired tokens all return no rows, the same collapse as
+-- PT404: a token that cannot be spent has no venue worth naming. A suspended
+-- venue's live token *does* return a row, with its status, so the page can say
+-- "this venue is not accepting new couples" instead of "invalid link".
+create function public.tenant_invitation_preview(_token text)
+returns table (
+  role text,
+  expires_at timestamptz,
+  tenant_slug text,
+  tenant_name text,
+  tenant_status text,
+  logo_url text,
+  primary_color text
+)
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select i.role, i.expires_at, t.slug, t.name, t.status,
+         t.logo_url, t.primary_color
+  from public.tenant_invitations i
+  join public.tenants t on t.id = i.tenant_id
+  where i.token = _token
+    and i.claimed_at is null
+    and i.expires_at > now();
+$$;
+
+-- ---------------------------------------------------------------------------
+-- 4c. accept_customer_invitation
+-- ---------------------------------------------------------------------------
+-- The couple's whole act in one transaction: join the venue as a customer and
+-- point one of *their own* weddings at it. Two RPCs from the client would be
+-- two failure points with a half-done state between them - joined, but the
+-- wedding unlinked, and the token already spent.
+--
+-- Why it exists alongside claim_tenant_invitation rather than replacing it:
+--
+--   * **The owner check runs before the token is burned.** Only
+--     `weddings.owner_id` may link (`link_wedding_to_venue`), so a link sent to
+--     the editor partner used to be claimed - and spent - by someone who could
+--     never use it. Here that partner gets 42501 and the link survives for the
+--     person it was meant for.
+--   * **Switching venue is an explicit, atomic choice.**
+--     `tenant_members_one_per_user` gives each account one venue, so a customer
+--     of venue A following venue B's link got PT409 with no way out. Now they
+--     get PT412, the client asks "leave A?", and the retry with
+--     `_leave_current` swaps the row in the same transaction as the link. Only
+--     a *customer* row is ever swapped: staff and owner rows are keys to a CRM,
+--     and leaving one is not a side effect of planning a wedding - PT409
+--     regardless of the flag.
+--
+-- Staff invitations are refused here (PT404, as if unknown): they go through
+-- claim_tenant_invitation on the venue's own host, where staff sign in.
+--
+-- Leaving A does not touch any wedding still linked to A. Section 3 explains
+-- why membership and `venue_access` are separate decisions; only the wedding
+-- named here moves, and `link_wedding_to_venue` drops it to 'pending' and clears
+-- its menu exactly as a manual re-link would.
+--
+-- `link_wedding_to_venue` is called rather than inlined so there is one
+-- definition of what linking means. Its final version is in 20260822000002;
+-- plpgsql resolves the call when it runs, so defining this before it is fine.
+-- Its checks re-run (owner, active, membership - now satisfied) and its
+-- same-venue no-op means a wedding already granted to this venue stays granted.
+-- `auth.uid()` reads the request's JWT claims, which a nested definer call does
+-- not change.
+--
+--   PT404  no such customer invitation, already claimed, or expired
+--   PT410  the venue is suspended
+--   42501  not signed in, or not the owner of that wedding
+--   PT409  this account is staff or owner of another venue
+--   PT412  this account is a customer of another venue; retry with
+--          `_leave_current => true` to switch
+create function public.accept_customer_invitation(
+  _token text,
+  _wedding_id uuid,
+  _leave_current boolean default false
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  inv public.tenant_invitations%rowtype;
+  v_tenant public.tenants%rowtype;
+  v_existing public.tenant_members%rowtype;
+  v_joined boolean := false;
+begin
+  if auth.uid() is null then
+    raise exception 'Not authenticated' using errcode = '42501';
+  end if;
+
+  -- Same lock as claim_tenant_invitation: two concurrent accepts of one token
+  -- serialize here, and the second finds it claimed.
+  select * into inv
+  from public.tenant_invitations
+  where token = _token
+    and role = 'customer'
+    and claimed_at is null
+    and expires_at > now()
+  for update;
+
+  if not found then
+    raise exception 'Invitation invalid or expired' using errcode = 'PT404';
+  end if;
+
+  select * into v_tenant from public.tenants where id = inv.tenant_id;
+
+  if v_tenant.status <> 'active' then
+    raise exception 'Venue is not active' using errcode = 'PT410';
+  end if;
+
+  if not exists (
+    select 1 from public.weddings w
+    where w.id = _wedding_id and w.owner_id = auth.uid()
+  ) then
+    raise exception 'Only the wedding owner can accept for it'
+      using errcode = '42501';
+  end if;
+
+  select * into v_existing
+  from public.tenant_members
+  where user_id = auth.uid();
+
+  if v_existing.tenant_id is not null
+    and v_existing.tenant_id <> inv.tenant_id
+  then
+    if v_existing.role <> 'customer' then
+      raise exception 'This account already belongs to another venue'
+        using errcode = 'PT409';
+    end if;
+
+    if not _leave_current then
+      raise exception 'This account is a customer of another venue'
+        using errcode = 'PT412';
+    end if;
+
+    delete from public.tenant_members
+    where user_id = auth.uid()
+      and tenant_id = v_existing.tenant_id;
+  end if;
+
+  -- The insert and its race guard are claim_tenant_invitation's, for the same
+  -- reasons; read the comments there.
+  begin
+    insert into public.tenant_members (tenant_id, user_id, role)
+    values (inv.tenant_id, auth.uid(), 'customer')
+    on conflict (tenant_id, user_id) do nothing;
+
+    v_joined := found;
+  exception
+    when unique_violation then
+      raise exception 'This account already belongs to another venue'
+        using errcode = 'PT409';
+  end;
+
+  if v_joined then
+    update public.tenant_invitations
+    set claimed_at = now(), claimed_by = auth.uid()
+    where id = inv.id;
+  end if;
+
+  perform public.link_wedding_to_venue(_wedding_id, v_tenant.slug);
+
+  return v_tenant.id;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
 -- 5. Grants
 -- ---------------------------------------------------------------------------
 -- Authorizes its own caller and is meaningless without a session. `revoke ...
@@ -324,3 +532,14 @@ $$;
 -- reason to reach it.
 revoke all on function public.claim_tenant_invitation(text) from public, anon;
 grant execute on function public.claim_tenant_invitation(text) to authenticated;
+
+revoke all on function public.accept_customer_invitation(text, uuid, boolean)
+  from public, anon;
+grant execute on function public.accept_customer_invitation(text, uuid, boolean)
+  to authenticated;
+
+-- `anon` on purpose - section 4b. Revoked from PUBLIC first and granted back by
+-- name, so the grant is a decision written here rather than an inheritance.
+revoke all on function public.tenant_invitation_preview(text) from public;
+grant execute on function public.tenant_invitation_preview(text)
+  to anon, authenticated;
