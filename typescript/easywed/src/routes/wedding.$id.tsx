@@ -4,9 +4,20 @@ import { useTranslation } from "react-i18next"
 import { requireAuth } from "@/lib/auth/guards"
 import { loadWedding } from "@/lib/sync/loadWedding"
 import { ErrorFallback } from "@/components/ErrorFallback"
+import { useDialogStore } from "@/stores/dialog.store"
 import { useGlobalStore } from "@/stores/global.store"
 
+/**
+ * `venue=review` is how the venue invitation hands over: the couple has just
+ * accepted, the wedding is `pending`, and the next thing they need is the venue
+ * dialog - where granting access is a separate, explicit choice. A single
+ * literal rather than a free string, so nothing else can be smuggled in.
+ */
+type WeddingSearch = { venue?: "review" }
+
 export const Route = createFileRoute("/wedding/$id")({
+  validateSearch: (s: Record<string, unknown>): WeddingSearch =>
+    s.venue === "review" ? { venue: "review" } : {},
   beforeLoad: ({ params }) => {
     requireAuth(`/wedding/${params.id}`)
   },
@@ -19,6 +30,8 @@ function WeddingLayout() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const role = useGlobalStore((state) => state.role)
+  const { venue: venueHandoff } = Route.useSearch()
+  const openDialog = useDialogStore((state) => state.open)
 
   const [resolvedId, setResolvedId] = useState<string | null>(null)
   const [errorState, setErrorState] = useState<{
@@ -61,6 +74,29 @@ function WeddingLayout() {
     if (role !== "venue") return
     void navigate({ to: "/crm/wedding/$id", params: { id }, replace: true })
   }, [role, id, navigate])
+
+  // Opens the venue dialog once, then drops the param so a reload or a shared
+  // URL does not reopen it. Gated on the *loaded* owner role, for two reasons:
+  // DialogManager closes `Wedding.Venue` for anyone who cannot edit, so opening
+  // it before the role settles would be undone on the spot; and the dialog is
+  // owner-only by design (VenueButton), so an editor following a stale URL
+  // simply gets the planner.
+  //
+  // The param is cleared on every settled role, not just owner, so it never
+  // lingers in the address bar. The planner path is named rather than `"."`:
+  // from this layout `"."` can resolve to `/wedding/$id`, whose index redirect
+  // would bounce through and remount the planner under the open dialog. The
+  // handoff only ever targets the planner (venue invitation page).
+  useEffect(() => {
+    if (!venueHandoff || resolvedId !== id || role === undefined) return
+    if (role === "owner") openDialog("Wedding.Venue")
+    void navigate({
+      to: "/wedding/$id/planner",
+      params: { id },
+      search: {},
+      replace: true,
+    })
+  }, [venueHandoff, resolvedId, id, role, openDialog, navigate])
 
   const error = errorState?.id === id ? errorState.message : null
   const loading = !error && resolvedId !== id

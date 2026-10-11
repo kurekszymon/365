@@ -5,7 +5,7 @@ import { toast } from "sonner"
 import type { WeddingSummary } from "@/components/weddings/WeddingListItem"
 import type { RemoveMode } from "@/components/weddings/RemoveWeddingDialog"
 import { supabase } from "@/lib/supabase"
-import { seedDefaultHall } from "@/lib/sync/mutations"
+import { createWedding } from "@/lib/sync/createWedding"
 import { useVenueStaffLanding } from "@/hooks/useVenueStaffLanding"
 import { useAuthStore } from "@/stores/auth.store"
 import { track } from "@/lib/analytics/track"
@@ -120,33 +120,21 @@ function Home() {
   const handleCreate = async () => {
     if (!session || creating) return
     setCreating(true)
-    const { data, error } = await supabase
-      .from("weddings")
-      .insert({
-        owner_id: session.user.id,
-        name:
-          weddings.length === 0
-            ? t("wedding")
-            : `${t("wedding")} ${weddings.length}`, // rename to count
-        date: null,
-      })
-      .select("id")
-      .single()
-    if (error) {
-      setCreating(false)
-      console.error(error)
+    const id = await createWedding(
+      session.user.id,
+      weddings.length === 0
+        ? t("wedding")
+        : `${t("wedding")} ${weddings.length}` // rename to count
+    )
+    setCreating(false)
+    if (!id) {
       // Without this the click is dead: the button just re-enables and nothing
       // else on screen changes.
       toast.error(t("weddings.create_failed"))
       return
     }
-    // Awaited, not fire-and-forget: navigating first would race loadWedding
-    // against this insert and land the user on the blank canvas the seed exists
-    // to prevent. One round trip, and the create button stays busy for it.
-    await seedDefaultHall(data.id)
-    setCreating(false)
     track("wedding_created", { source: "wedding_list" })
-    navigate({ to: "/wedding/$id", params: { id: data.id } })
+    navigate({ to: "/wedding/$id", params: { id } })
   }
 
   // Wait for the first getSession() before deciding which landing to show, or an
