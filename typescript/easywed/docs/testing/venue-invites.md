@@ -9,29 +9,26 @@ Covers the stacked branches `easywed/invites-*`. Automated coverage lives in
 |---|---|---|---|
 | 1 | `easywed/invites-1-db` | `main` | committed |
 | 2 | `easywed/invites-2-claim-page` | 1 | committed |
-| 3 | `easywed/invites-3-couple-dialog` | 2 | ready to commit (below) |
-| 4 | `easywed/invites-4-crm-roster` | 3 | planned: invite label, accepted history, expired last, help copy |
+| 3 | `easywed/invites-3-couple-dialog` | 2 | committed |
+| 4 | `easywed/invites-4-crm-roster` | 3 | ready to commit (below) |
 | 5 | `easywed/invites-5-docs` | 4 | planned: `current-state.md`, `/venue` copy |
 
-### Phase 3 commit
+### Phase 4 commit
 
 ```bash
-git switch -c easywed/invites-3-couple-dialog
+git switch -c easywed/invites-4-crm-roster
 git add -A
 git commit -F - <<'EOF'
-easywed: venue dialog links to the couple's own venue, no slug field
+easywed: CRM roster invite labels and accepted-invitation history
 
-- VenueLinkStep reads the account's venue membership and offers
-  "Link to <venue>"; with open linking off that is the only venue
-  link_wedding_to_venue accepts (one membership per account)
-- no membership -> explain the invitation link instead of a dead-end
-  input; "change venue" to the same venue -> point at the new venue's
-  invitation, which handles the switch
-- fetchMyVenueMembership distinguishes a failed read from "no venue", so
-  a dropped request shows a retry rather than "ask for an invitation"
-- i18n: drop slug keys, add member/no-invite/change copy (en + pl,
-  gender-neutral Polish)
-- docs/testing: Phase 3 manual steps
+- optional label on a new invitation ("Smiths, 12 June"), staff-only, sent
+  as tenant_invitations.label; leads the row in the unclaimed list
+- "Accepted invitations" section: label, who accepted and when; a claimer
+  who has since left shows as left, not by name (the name came through
+  membership); the venue's only signal that a couple said yes
+- expired invitations sorted below live ones
+- customer invite help: send it to the person who created the plan
+- i18n en + pl; docs/testing: Phase 4 manual steps
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 EOF
@@ -120,6 +117,25 @@ show a text input for a venue address.
 | 6 | owner@ | after Phase 2 step 10 (now a dworek customer): "Anna & Piotr" -> Venue -> Change venue | **Link to Dworek pod Debem** + "You are currently linked to Sala Bagatelka... clears the menu" warning. Clicking moves it to dworek, pending. (Destructive to the seed - `supabase db reset` after.) |
 | 7 | owner@ | DevTools -> Network -> Offline, then open Venue on an unlinked plan | "Couldn't check which venue you're with" + **Try again** (not the "ask for an invitation" text). Back online -> Try again -> link button. |
 | 8 | any | 1-4 on phone width (dialog renders as a drawer), PL and EN | No raw `venue.link.*` keys; Polish copy has no gendered forms. |
+
+## Phase 4 - CRM roster
+
+As venue@ on `bagatelka.localhost:3000/crm/roster` after a fresh `supabase db reset`.
+
+| # | Do | Expect |
+|---|---|---|
+| 1 | Load the page | Unclaimed list: "Zielinscy, 14.06", "Wisniewscy, 30.08", "Nowa kelnerka" (each with role · valid until), the expired seed row **last** with "Invitation expired" and no copy button. |
+| 2 | Accepted section | "Kowalska i Nowak" - "Couple · Accepted by Anna Kowalska on <date>". |
+| 3 | Customer help text under the role select | "Send it to the person who created the couple's wedding plan...". |
+| 4 | Type "Testowi, 01.09" in **Who is it for** -> Create invitation link | New row at the top led by "Testowi, 01.09"; the label field clears; role resets to Couple. |
+| 5 | Create one with the label empty | Row led by "Couple" (role), no "·" prefix. |
+| 6 | Try typing more than 80 characters into the label | Input stops at 80. |
+| 7 | Copy step 4's link, accept it as solo@ (Phase 2 flow), reload the roster | Row moves from Unclaimed to Accepted: "Testowi, 01.09 - Couple · Accepted by Tomasz Zielinski on <today>". solo also appears in The list. |
+| 8 | Remove solo from The list, reload | Accepted row now reads "Accepted on <date> - this person is no longer on your list" (no name). |
+| 9 | As solo@, open step 4's link again | Invalid card - the preview never reveals the label. |
+| 10 | PostHog / network on step 4 | `tenant_invite_created { role }` only - the label is not in the payload. |
+| 11 | Sign in as a staff member (claim `seed-live-staff-invite` with a fresh account) | Role select collapses to "Couple"; label field still offered. |
+| 12 | Phone width, PL and EN | No horizontal scroll; Polish copy uses the plural "Wy" form like the rest of the CRM. |
 
 ## Suspended venue by hand (optional)
 
