@@ -100,3 +100,4 @@ docs/               supabase.md, guest-vs-account.md, DEVLOG.md, copy-voice.md, 
 - [`docs/supabase.md`](./docs/supabase.md): schema, policies, the venue role, CLI flow
 - [`docs/guest-vs-account.md`](./docs/guest-vs-account.md): guest vs signed-in feature matrix
 - [`docs/DEVLOG.md`](./docs/DEVLOG.md): development log
+- [`docs/current-state.md`](./docs/current-state.md): venue/tenant side as built, and what is missing

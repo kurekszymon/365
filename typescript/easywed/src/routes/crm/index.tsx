@@ -8,11 +8,11 @@ import { useTenantStore } from "@/stores/tenant.store"
 /**
  * The CRM overview.
  *
- * Still thin: hall templates arrive with the migration that gives them a table,
- * and will add their own nav entry in crm.tsx the way /crm/menus did. What is
- * here now is the one list the venue role makes possible - the weddings whose
- * couples granted access - and it is what makes /crm/wedding/$id reachable
- * without anyone pasting an id.
+ * Still thin. Venue layouts (`layout_presets`, 20261007000001) have shipped but
+ * have no CRM page: staff save them from the apex planner's halls panel, which
+ * is what `crm.overview_body` tells them. What is here is the one list the venue
+ * role makes possible - the weddings whose couples granted access - and it is
+ * what makes /crm/wedding/$id reachable without anyone pasting an id.
  */
 export const Route = createFileRoute("/crm/")({
   component: CrmOverview,
