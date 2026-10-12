@@ -179,7 +179,7 @@ export type TenantClaimResult =
   | { ok: true; tenant: ClaimedTenant }
   | { ok: false; reason: TenantClaimFailure }
 
-type TenantClaimFailure = "invalid" | "other_venue" | "failed"
+type TenantClaimFailure = "invalid" | "suspended" | "other_venue" | "failed"
 
 /**
  * The SQLSTATEs `claim_tenant_invitation` raises, mapped to the sentence the
@@ -193,6 +193,7 @@ type TenantClaimFailure = "invalid" | "other_venue" | "failed"
  */
 const CLAIM_FAILURES: Record<string, TenantClaimFailure> = {
   PT404: "invalid",
+  PT410: "suspended",
   PT409: "other_venue",
 }
 
@@ -268,6 +269,273 @@ export const claimTenantInvitation = (
           role: role ?? "customer",
         },
       }
+    },
+    { ok: false, reason: "failed" }
+  )
+
+/** What a live invitation says about itself before anything is spent. */
+export type TenantInvitePreview = {
+  role: "staff" | "customer"
+  expiresAt: string
+  tenant: PublicTenant
+}
+
+/**
+ * `invalid` is the database's verdict (unknown, claimed or expired - the
+ * preview collapses them, as PT404 does); `failed` is no verdict at all.
+ * Kept apart because only one of them is worth a "try again".
+ */
+export type TenantInvitePreviewResult =
+  | { kind: "ok"; preview: TenantInvitePreview }
+  | { kind: "invalid" }
+  | { kind: "failed" }
+
+/**
+ * Names the venue and role behind a token, without spending it.
+ *
+ * Callable signed out (`tenant_invitation_preview` is granted to `anon`), which
+ * is what lets the invitation page greet a visitor with the venue's name before
+ * asking them to make an account - and what makes the claim an explicit click
+ * rather than a side effect of opening the URL (20260820000001 §4b).
+ *
+ * Mapped onto `PublicTenant` so `TenantWordmark` / `tenantStyle` render it
+ * as-is. The preview carries no id, accent or tagline, and nothing on the
+ * invitation page reads them: the id is deliberately withheld, and the empty
+ * string is never used as one.
+ */
+export const previewTenantInvitation = (
+  token: string,
+  signal?: AbortSignal
+): Promise<TenantInvitePreviewResult> =>
+  total<TenantInvitePreviewResult>(
+    "previewTenantInvitation",
+    async () => {
+      const query = supabase.rpc("tenant_invitation_preview", { _token: token })
+      const { data, error } = await (signal ? query.abortSignal(signal) : query)
+
+      if (error) {
+        console.error("[tenant] previewTenantInvitation failed", error)
+        return { kind: "failed" }
+      }
+
+      const row = data.at(0)
+      if (!row) return { kind: "invalid" }
+
+      return {
+        kind: "ok",
+        preview: {
+          // The CHECK pins both; narrowed rather than asserted, and an
+          // unexpected value reads as the role with fewer doors.
+          role: row.role === "staff" ? "staff" : "customer",
+          expiresAt: row.expires_at,
+          tenant: {
+            id: "",
+            slug: row.tenant_slug,
+            name: row.tenant_name,
+            status: row.tenant_status === "active" ? "active" : "suspended",
+            logoUrl: row.logo_url,
+            primaryColor: row.primary_color,
+            accentColor: null,
+            tagline: null,
+          },
+        },
+      }
+    },
+    { kind: "failed" }
+  )
+
+/** One of the caller's weddings, as the invitation's wedding picker needs it. */
+export type InviteWedding = {
+  id: string
+  name: string
+  /** Only an owner can link (`link_wedding_to_venue`), so only these are offered. */
+  isOwner: boolean
+  /** The venue it is linked to now, if any - what a re-link would replace. */
+  venue: { tenantId: string; slug: string; name: string } | null
+}
+
+/**
+ * Every wedding the caller can see, with its current venue.
+ *
+ * All of them rather than only owned ones, because the picker has something to
+ * say about the rest: a plan shared with you is not yours to link, and the
+ * honest next step is "forward this link to the person who created it" - which
+ * the page can only offer if it knows there are such plans.
+ *
+ * The embedded `tenants` row is readable through "wedding members can view
+ * their linked venue" (20260817000002). `null` on failure; the page renders a
+ * retry rather than an empty list, which would read as "you have no weddings"
+ * and push a returning user into creating a duplicate.
+ */
+export const fetchInviteWeddings = (
+  userId: string,
+  signal?: AbortSignal
+): Promise<Array<InviteWedding> | null> =>
+  total(
+    "fetchInviteWeddings",
+    async () => {
+      const query = supabase
+        .from("weddings")
+        .select("id, name, owner_id, tenants (id, slug, name)")
+        .order("created_at", { ascending: false })
+
+      const { data, error } = await (signal ? query.abortSignal(signal) : query)
+
+      if (error) {
+        console.error("[tenant] fetchInviteWeddings failed", error)
+        return null
+      }
+
+      return data.map((row) => ({
+        id: row.id,
+        name: row.name,
+        isOwner: row.owner_id === userId,
+        venue: row.tenants
+          ? {
+              tenantId: row.tenants.id,
+              slug: row.tenants.slug,
+              name: row.tenants.name,
+            }
+          : null,
+      }))
+    },
+    null
+  )
+
+/** The caller's one venue membership, whatever its role. */
+export type MyVenueMembership = {
+  tenantId: string
+  slug: string
+  name: string
+  role: TenantRole
+}
+
+/**
+ * `failed` is kept apart from "no membership" (`membership: null`): the venue
+ * dialog answers the second with "ask your venue for an invitation link", and
+ * telling that to a couple who *is* on a venue's list - because one request
+ * dropped - sends them chasing an invitation they already accepted.
+ */
+export type MyVenueMembershipResult =
+  | { ok: true; membership: MyVenueMembership | null }
+  | { ok: false }
+
+/**
+ * The venue this account belongs to, in any role.
+ *
+ * The couple-side sibling of `fetchMyStaffTenant`: same single-row read (the
+ * `tenant_members` SELECT policy shows everyone their own row), without the
+ * staff filter. The invitation page uses it to name the venue a switch would
+ * leave; the venue dialog uses it to offer "link to <your venue>" - which,
+ * with open linking off, is the only venue `link_wedding_to_venue` will accept
+ * from this account (`tenant_members_one_per_user`).
+ *
+ * Filtered on `user_id` for the reason `fetchTenantRole` is: a staff caller can
+ * see their whole roster, and an unfiltered `.maybeSingle()` would error.
+ */
+export const fetchMyVenueMembership = (
+  userId: string,
+  signal?: AbortSignal
+): Promise<MyVenueMembershipResult> =>
+  total<MyVenueMembershipResult>(
+    "fetchMyVenueMembership",
+    async () => {
+      const query = supabase
+        .from("tenant_members")
+        .select("role, tenants (id, slug, name)")
+        .eq("user_id", userId)
+
+      const { data, error } = await (
+        signal ? query.abortSignal(signal) : query
+      ).maybeSingle()
+
+      if (error) {
+        console.error("[tenant] fetchMyVenueMembership failed", error)
+        return { ok: false }
+      }
+
+      const tenant = data?.tenants
+      const role = data?.role
+      if (
+        !tenant ||
+        (role !== "owner" && role !== "staff" && role !== "customer")
+      ) {
+        return { ok: true, membership: null }
+      }
+
+      return {
+        ok: true,
+        membership: {
+          tenantId: tenant.id,
+          slug: tenant.slug,
+          name: tenant.name,
+          role,
+        },
+      }
+    },
+    { ok: false }
+  )
+
+export type CustomerAcceptFailure =
+  | "invalid"
+  | "suspended"
+  | "not_owner"
+  | "other_venue"
+  | "switch_required"
+  | "failed"
+
+export type CustomerAcceptResult =
+  | { ok: true; tenantId: string }
+  | { ok: false; reason: CustomerAcceptFailure }
+
+/**
+ * The SQLSTATEs `accept_customer_invitation` raises (20260820000001 §4c).
+ *
+ * `switch_required` (PT412) is not an error to show but a question to ask: the
+ * caller is a customer of another venue, and the retry with `leaveCurrent`
+ * swaps the membership. `other_venue` (PT409) is the staff case, where no flag
+ * helps. 42501 is "not the owner of that wedding" in practice - the page only
+ * offers owned weddings, so reaching it means the list went stale.
+ */
+const ACCEPT_FAILURES: Record<string, CustomerAcceptFailure> = {
+  PT404: "invalid",
+  PT410: "suspended",
+  "42501": "not_owner",
+  PT409: "other_venue",
+  PT412: "switch_required",
+}
+
+/**
+ * Joins the venue as a customer and links one of the caller's weddings to it,
+ * in one transaction.
+ *
+ * The wedding lands in `pending`: this is not the art. 9(2)(a) consent, which
+ * stays `set_venue_access(true)` against the disclosure dialog. The caller is
+ * expected to open that dialog next rather than treat this as the end.
+ */
+export const acceptCustomerInvitation = (
+  token: string,
+  weddingId: string,
+  leaveCurrent = false
+): Promise<CustomerAcceptResult> =>
+  total<CustomerAcceptResult>(
+    "acceptCustomerInvitation",
+    async () => {
+      const { data, error } = await supabase.rpc("accept_customer_invitation", {
+        _token: token,
+        _wedding_id: weddingId,
+        _leave_current: leaveCurrent,
+      })
+
+      if (error || !data) {
+        console.error("[tenant] acceptCustomerInvitation failed", error)
+        return {
+          ok: false,
+          reason: ACCEPT_FAILURES[error?.code ?? ""] ?? "failed",
+        }
+      }
+
+      return { ok: true, tenantId: data }
     },
     { ok: false, reason: "failed" }
   )

@@ -17,7 +17,30 @@ export type TenantInvitation = {
   token: string
   expires_at: string
   claimed_at: string | null
+  claimed_by: string | null
+  /** Staff's note on who the link was for. Staff-only, never tracked. */
+  label: string | null
   created_at: string
+}
+
+/** The DB CHECK on `tenant_invitations.label` (20260820000001). */
+export const INVITE_LABEL_MAX = 80
+
+/**
+ * A spent invitation, with what the roster can say about who spent it.
+ *
+ * `claimer` is three-valued on purpose:
+ *   - `{ onRoster: true, name }` - still a member; `name` is null if they never
+ *     set one;
+ *   - `{ onRoster: false }` - they left or were removed, so
+ *     `staff_can_view_profile` no longer hands over their name (it keys off
+ *     current membership) - or their account is gone and `claimed_by` was
+ *     nulled. Either way the venue is no longer entitled to the name, and the
+ *     row says so rather than inventing one.
+ */
+export type AcceptedInvitation = TenantInvitation & {
+  claimed_at: string
+  claimer: { onRoster: true; name: string | null } | { onRoster: false }
 }
 
 export type TenantMember = {
@@ -52,10 +75,15 @@ export function useTenantRoster(tenantId: string | undefined) {
   const canInviteStaff = tenantRole === "owner"
 
   const [role, setRole] = useState<TenantInviteRole>("customer")
+  const [label, setLabel] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [invitations, setInvitations] = useState<Array<TenantInvitation>>([])
   const [members, setMembers] = useState<Array<TenantMember>>([])
   const [loaded, setLoaded] = useState(false)
+  // When the list was read - the "now" expiry is sorted against. Captured in
+  // the fetch callback because reading the clock during render is impure, and
+  // it is the honest reference anyway: the rows are as of that moment.
+  const [loadedAt, setLoadedAt] = useState(0)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [fallbackUrl, setFallbackUrl] = useState<{
     id: string
@@ -95,7 +123,9 @@ export function useTenantRoster(tenantId: string | undefined) {
       const [invitationsRes, membersRes] = await Promise.all([
         supabase
           .from("tenant_invitations")
-          .select("id, role, token, expires_at, claimed_at, created_at")
+          .select(
+            "id, role, token, expires_at, claimed_at, claimed_by, label, created_at"
+          )
           .eq("tenant_id", tenantId)
           .order("created_at", { ascending: false })
           .abortSignal(effectiveSignal),
@@ -130,6 +160,7 @@ export function useTenantRoster(tenantId: string | undefined) {
       if (isAborted()) return
 
       setErrorKey(null)
+      setLoadedAt(Date.now())
       setInvitations(invitationsRes.data as Array<TenantInvitation>)
       setMembers(
         membersRes.data.map((member) => ({
@@ -161,9 +192,18 @@ export function useTenantRoster(tenantId: string | undefined) {
     setSubmitting(true)
     setErrorKey(null)
 
+    // Trimmed, and null rather than "" - the CHECK refuses an empty label,
+    // and a label is optional. The input's maxLength keeps it under the bound.
+    const trimmed = label.trim().slice(0, INVITE_LABEL_MAX)
+
     const { error: insertError } = await supabase
       .from("tenant_invitations")
-      .insert({ tenant_id: tenantId, role, invited_by: session.user.id })
+      .insert({
+        tenant_id: tenantId,
+        role,
+        invited_by: session.user.id,
+        label: trimmed === "" ? null : trimmed,
+      })
 
     if (insertError) {
       console.error("[crm] create invitation failed", insertError)
@@ -179,8 +219,8 @@ export function useTenantRoster(tenantId: string | undefined) {
       return
     }
 
-    // Role only - the token is a bearer credential and the invitation names
-    // nobody until it is claimed.
+    // Role only - the token is a bearer credential, the invitation names
+    // nobody until it is claimed, and the label is text staff typed.
     track("tenant_invite_created", { role })
 
     // Re-fetch to pick up the token the database generated, on the load effect's
@@ -192,7 +232,8 @@ export function useTenantRoster(tenantId: string | undefined) {
 
     setSubmitting(false)
     setRole("customer")
-  }, [tenantId, session, submitting, role, canInviteStaff, refresh])
+    setLabel("")
+  }, [tenantId, session, submitting, role, label, canInviteStaff, refresh])
 
   const handleRevoke = useCallback(
     async (id: string) => {
@@ -289,16 +330,49 @@ export function useTenantRoster(tenantId: string | undefined) {
     [slug]
   )
 
+  const isExpired = (i: TenantInvitation) =>
+    new Date(i.expires_at).getTime() <= loadedAt
+
+  // Live first, newest first within each group (the fetch order). Expired rows
+  // stay listed - see CrmRosterInvitations for why - but below the ones a
+  // venue can still send.
+  const pending = invitations
+    .filter((i) => !i.claimed_at)
+    .sort((a, b) => Number(isExpired(a)) - Number(isExpired(b)))
+
+  const memberNames = new Map(members.map((m) => [m.user_id, m.display_name]))
+
+  const accepted: Array<AcceptedInvitation> = invitations
+    .filter(
+      (i): i is TenantInvitation & { claimed_at: string } =>
+        i.claimed_at !== null
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.claimed_at).getTime() - new Date(a.claimed_at).getTime()
+    )
+    .map((i) => ({
+      ...i,
+      claimer:
+        i.claimed_by !== null && memberNames.has(i.claimed_by)
+          ? { onRoster: true, name: memberNames.get(i.claimed_by) ?? null }
+          : { onRoster: false },
+    }))
+
   return {
     canInviteStaff,
     role,
     setRole,
+    label,
+    setLabel,
     submitting,
     loaded,
-    // Claimed rows stay as a record of how someone joined, but are neither
-    // revocable nor copyable - the membership they created is what matters now,
-    // and that is in the member list.
-    pending: invitations.filter((i) => !i.claimed_at),
+    pending,
+    // Claimed rows are the record of how someone joined. Neither revocable nor
+    // copyable - the membership they created is what matters now - but worth
+    // seeing: it is how a venue learns a couple accepted (a *pending* wedding
+    // stays invisible to it until the couple grants access).
+    accepted,
     members,
     /** The current failure as a sentence, resolved in the current language. */
     error: errorKey ? t(errorKey) : null,

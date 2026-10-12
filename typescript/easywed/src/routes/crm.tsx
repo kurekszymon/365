@@ -1,7 +1,7 @@
 import { Link, Outlet, createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { requireTenantMember } from "@/lib/auth/guards"
-import { SITE_ORIGIN } from "@/lib/site"
+import { apexOrigin } from "@/lib/tenant/host"
 import { selectIsTenantStaff, useTenantStore } from "@/stores/tenant.store"
 import { TenantWordmark, tenantStyle } from "@/components/tenant/TenantBranding"
 import { AccountMenu } from "@/components/account/AccountMenu"
@@ -78,7 +78,10 @@ function CrmLayout() {
         title={t("crm.forbidden_title")}
         body={t("crm.forbidden_body", { name: tenant.name })}
         // The one useful onward move for a couple who followed a stale link.
-        action={{ href: `${SITE_ORIGIN}/home`, label: t("crm.forbidden_cta") }}
+        // `apexOrigin()`, not SITE_ORIGIN, so `pnpm dev` stays on localhost;
+        // safe from a hydration mismatch because this state only exists once
+        // the tenant and role have resolved on the client.
+        action={{ href: `${apexOrigin()}/home`, label: t("crm.forbidden_cta") }}
       />
     )
   }

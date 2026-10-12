@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
+import { CrmRosterAccepted } from "@/components/crm/CrmRosterAccepted"
 import { CrmRosterInviteForm } from "@/components/crm/CrmRosterInviteForm"
 import { CrmRosterInvitations } from "@/components/crm/CrmRosterInvitations"
 import { CrmRosterMembers } from "@/components/crm/CrmRosterMembers"
@@ -52,6 +53,8 @@ function CrmRoster() {
         <CrmRosterInviteForm
           role={roster.role}
           setRole={roster.setRole}
+          label={roster.label}
+          setLabel={roster.setLabel}
           canInviteStaff={roster.canInviteStaff}
           submitting={roster.submitting}
           onCreate={() => void roster.handleCreate()}
@@ -70,6 +73,17 @@ function CrmRoster() {
             onCopy={(invitation) => void roster.handleCopy(invitation)}
             onRevoke={(id) => void roster.handleRevoke(id)}
           />
+        ) : (
+          <p className="text-sm text-muted-foreground">{t("crm.loading")}</p>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="font-heading text-lg font-semibold">
+          {t("crm.roster.accepted_title")}
+        </h2>
+        {roster.loaded ? (
+          <CrmRosterAccepted invitations={roster.accepted} />
         ) : (
           <p className="text-sm text-muted-foreground">{t("crm.loading")}</p>
         )}

@@ -1,16 +1,21 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
-import type { ClaimedTenant, TenantClaimResult } from "@/lib/sync/tenant"
-import { requireAuth } from "@/lib/auth/guards"
-import { claimTenantInvitation } from "@/lib/sync/tenant"
-import { apexOrigin, tenantUrl } from "@/lib/tenant/host"
+import type { TenantInvitePreviewResult } from "@/lib/sync/tenant"
+import { previewTenantInvitation } from "@/lib/sync/tenant"
+import { inviteHopUrl } from "@/lib/tenant/inviteOrigin"
+import { apexOrigin } from "@/lib/tenant/host"
 import { track } from "@/lib/analytics/track"
+import { useAuthStore } from "@/stores/auth.store"
 import { Button } from "@/components/ui/button"
+import { VenueInviteCard } from "@/components/tenant/invite/VenueInviteCard"
+import { VenueInviteCustomerAccept } from "@/components/tenant/invite/VenueInviteCustomerAccept"
+import { VenueInviteSignIn } from "@/components/tenant/invite/VenueInviteSignIn"
+import { VenueInviteStaffJoin } from "@/components/tenant/invite/VenueInviteStaffJoin"
 
 /**
- * Claiming a venue invitation.
+ * A venue invitation: preview first, act second.
  *
  * The path shape is load-bearing, not tidy: the token is a bearer credential,
  * and both `scrubInviteTokens` and `robots.txt` match on the literal segment
@@ -18,122 +23,133 @@ import { Button } from "@/components/ui/button"
  * that already exists. Filed as `venue_.invite.$token` so it does not nest under
  * the anonymous entry page at `/venue`.
  *
- * Unlike `/invite/$token`, this ends on a card rather than a redirect:
+ * The order of the states is the design:
  *
- *   - the couple needs to be told *what* they joined, by name, before anything
- *     else - the venue is the party they may go on to disclose to;
- *   - joining is not the end of the flow. A `customer` row buys one thing, the
- *     ability to link a wedding to this venue, and that is a separate act on a
- *     separate screen; /home would show an unchanged wedding list.
+ *   1. **Preview** (`tenant_invitation_preview`, callable signed out). Nothing
+ *      is spent by opening the link - the claim used to happen on page load,
+ *      which made "opened a URL" count as consent and let the wrong partner
+ *      burn a couple's link.
+ *   2. **Right origin.** A customer invite belongs on the apex, a staff invite
+ *      on its venue's host; sessions are per-origin, so the page moves before
+ *      it asks anyone to sign in (inviteOrigin.ts).
+ *   3. **Session.** Signed out gets the venue's name and two doors carrying
+ *      `next` back here - no `requireAuth` bounce, which would show a bare
+ *      login form with no hint of why.
+ *   4. **Act.** Staff click Join (`claim_tenant_invitation`). A couple picks a
+ *      plan and clicks Accept (`accept_customer_invitation`), then lands in the
+ *      planner with the venue dialog open - linking is not the consent, and
+ *      the dialog is where that is given.
+ *
+ * Public in AuthGate by prefix (`/venue`), so it renders without waiting for
+ * the session; the auth-dependent states wait on `isReady` themselves, which
+ * lets the preview request run in parallel with session hydration.
  */
 export const Route = createFileRoute("/venue_/invite/$token")({
-  beforeLoad: ({ params }) => {
-    requireAuth(`/venue/invite/${params.token}`)
-  },
-  component: TenantInviteClaim,
+  component: VenueInvitePage,
 })
 
-type Status =
-  | { kind: "claiming" }
-  | { kind: "joined"; tenant: ClaimedTenant }
-  | { kind: "error"; reason: string }
-
-function TenantInviteClaim() {
+function VenueInvitePage() {
   const { t } = useTranslation()
   const { token } = Route.useParams()
-  const [status, setStatus] = useState<Status>({ kind: "claiming" })
+  const isReady = useAuthStore((s) => s.isReady)
+  const userId = useAuthStore((s) => s.session?.user.id)
+
+  const [result, setResult] = useState<TenantInvitePreviewResult | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     const controller = new AbortController()
 
-    // Effect-owned external call; the setState below is a sync from the
-    // server, not a synchronous cascading render.
-    void claimTenantInvitation(token, controller.signal).then(
-      (result: TenantClaimResult) => {
-        if (controller.signal.aborted) return
-
-        if (!result.ok) {
-          setStatus({ kind: "error", reason: result.reason })
-          return
-        }
-
-        // Role only - no tenant id, no token. The venue is attributed with a
-        // PostHog group where that matters; see identifyTenantGroup.
-        track("tenant_invite_claimed", { role: roleBucket(result.tenant.role) })
-        setStatus({ kind: "joined", tenant: result.tenant })
-      }
-    )
+    // Effect-owned external call; the setState is a sync from the server.
+    void previewTenantInvitation(token, controller.signal).then((next) => {
+      if (controller.signal.aborted) return
+      setResult(next)
+    })
 
     return () => controller.abort()
-  }, [token])
+  }, [token, reloadKey])
 
-  if (status.kind === "claiming") {
-    return <Card title={t("venue_invite.claiming")} />
+  const preview = result?.kind === "ok" ? result.preview : null
+  const hop = preview
+    ? inviteHopUrl(preview.role, preview.tenant.slug, token)
+    : null
+
+  useEffect(() => {
+    if (hop) window.location.replace(hop)
+  }, [hop])
+
+  // Once per page view, and only on the origin the invite belongs on - the
+  // hop is a second page view of the same invitation, not a second visitor.
+  const tracked = useRef(false)
+  useEffect(() => {
+    if (!preview || hop || tracked.current) return
+    tracked.current = true
+    track("tenant_invite_previewed", { role: preview.role })
+  }, [preview, hop])
+
+  if (!result || hop) {
+    return <VenueInviteCard title={t("venue_invite.checking")} />
   }
 
-  if (status.kind === "error") {
+  if (result.kind === "failed") {
     return (
-      <Card
+      <VenueInviteCard
         title={t("venue_invite.error_title")}
-        body={t(`venue_invite.error.${status.reason}`)}
-        // Whatever went wrong, the wedding list is where this account's own work
-        // is - the only onward move that is right for every reason, PT409
-        // included, where the fix is on another account.
-        action={{
-          href: `${apexOrigin()}/home`,
-          label: t("venue_invite.error_cta"),
-        }}
+        body={t("venue_invite.error.failed")}
+      >
+        <Button
+          onClick={() => {
+            setResult(null)
+            setReloadKey((k) => k + 1)
+          }}
+        >
+          {t("common.try_again")}
+        </Button>
+      </VenueInviteCard>
+    )
+  }
+
+  if (result.kind === "invalid") {
+    return (
+      <VenueInviteCard
+        title={t("venue_invite.error_title")}
+        body={t("venue_invite.error.invalid")}
+      >
+        <Button asChild variant="outline">
+          <a href={`${apexOrigin()}/home`}>{t("venue_invite.error_cta")}</a>
+        </Button>
+      </VenueInviteCard>
+    )
+  }
+
+  const { preview: live } = result
+
+  if (live.tenant.status === "suspended") {
+    return (
+      <VenueInviteCard
+        tenant={live.tenant}
+        title={t("venue_invite.error_title")}
+        body={t("venue_invite.error.suspended", { name: live.tenant.name })}
       />
     )
   }
 
-  const { tenant } = status
-  const isStaff = tenant.role === "owner" || tenant.role === "staff"
+  if (!isReady) {
+    return (
+      <VenueInviteCard
+        tenant={live.tenant}
+        title={t("venue_invite.checking")}
+      />
+    )
+  }
 
-  return (
-    <Card
-      title={t("venue_invite.joined_title", { name: tenant.name })}
-      body={t(
-        isStaff ? "venue_invite.joined_staff" : "venue_invite.joined_customer"
-      )}
-      // Staff work in the CRM on the venue's host; a couple plans on the apex.
-      // Sessions are per-origin, so sending either to the other's origin lands
-      // them on a sign-in screen for no reason - the reason apexOrigin/tenantUrl
-      // exist rather than a SITE_ORIGIN constant.
-      action={{
-        href: isStaff ? tenantUrl(tenant.slug, "/crm") : `${apexOrigin()}/home`,
-        label: t(
-          isStaff
-            ? "venue_invite.joined_cta_staff"
-            : "venue_invite.joined_cta_customer"
-        ),
-      }}
-    />
-  )
-}
+  if (!userId) {
+    return <VenueInviteSignIn token={token} preview={live} />
+  }
 
-/** 'owner' never arrives from a claim - the CHECK forbids inviting one. */
-const roleBucket = (role: ClaimedTenant["role"]): "staff" | "customer" =>
-  role === "customer" ? "customer" : "staff"
-
-function Card({
-  title,
-  body,
-  action,
-}: {
-  title: string
-  body?: string
-  action?: { href: string; label: string }
-}) {
-  return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-4 p-6 text-center">
-      <h1 className="font-heading text-2xl font-semibold">{title}</h1>
-      {body ? <p className="max-w-md text-muted-foreground">{body}</p> : null}
-      {action ? (
-        <Button asChild>
-          <a href={action.href}>{action.label}</a>
-        </Button>
-      ) : null}
-    </div>
+  return live.role === "staff" ? (
+    <VenueInviteStaffJoin token={token} preview={live} />
+  ) : (
+    <VenueInviteCustomerAccept token={token} userId={userId} preview={live} />
   )
 }

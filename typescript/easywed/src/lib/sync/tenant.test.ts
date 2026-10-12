@@ -1,9 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
+  acceptCustomerInvitation,
   claimTenantInvitation,
+  fetchInviteWeddings,
   fetchMyStaffTenant,
+  fetchMyVenueMembership,
   fetchPublicTenant,
   fetchTenantRole,
+  previewTenantInvitation,
 } from "./tenant"
 
 /**
@@ -85,6 +89,32 @@ describe("tenant helpers resolve when the transport rejects", () => {
     // Not one of the named reasons: PT404 and PT409 are verdicts the database
     // reached, and a request that never arrived reached none.
     await expect(claimTenantInvitation("tok-123")).resolves.toEqual({
+      ok: false,
+      reason: "failed",
+    })
+  })
+
+  it("previewTenantInvitation answers failed, not invalid", async () => {
+    // "invalid" is a verdict and renders "ask the venue for a new link"; a
+    // request that never arrived must render "try again" instead.
+    await expect(previewTenantInvitation("tok-123")).resolves.toEqual({
+      kind: "failed",
+    })
+  })
+
+  it("fetchInviteWeddings answers null, not an empty list", async () => {
+    // An empty list reads as "you have no weddings" and offers a new one.
+    await expect(fetchInviteWeddings("u1")).resolves.toBeNull()
+  })
+
+  it("fetchMyVenueMembership answers failed, not 'no membership'", async () => {
+    // "No membership" tells the couple to go and get an invitation; a dropped
+    // request must not.
+    await expect(fetchMyVenueMembership("u1")).resolves.toEqual({ ok: false })
+  })
+
+  it("acceptCustomerInvitation answers a generic failure", async () => {
+    await expect(acceptCustomerInvitation("tok-123", "w1")).resolves.toEqual({
       ok: false,
       reason: "failed",
     })

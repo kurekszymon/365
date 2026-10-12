@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { SITE_ORIGIN } from "@/lib/site"
+import { apexOrigin } from "@/lib/tenant/host"
 import { selectIsTenantStaff, useTenantStore } from "@/stores/tenant.store"
 import { TenantWordmark, tenantStyle } from "@/components/tenant/TenantBranding"
 import { Button } from "@/components/ui/button"
@@ -88,17 +89,25 @@ function VenueEntry() {
           apex and sessions are per-origin, so signing up here would create a
           session the couple cannot use anywhere they will actually plan.
 
-          Plain /signup, with no referral attached. This carried a ?venue=<slug>
-          parameter that nothing consumed: signup's validateSearch returns only
-          `next`, so the value was dropped at the route boundary, and there is
-          no store between account creation and VenueAccessDialog for it to sit
-          in. Carrying the referral across is a real feature and this is where
-          it would start - but it has to arrive with the half that reads it,
-          rather than as a parameter that only looks like it works.
+          Plain /signup, with no referral attached, and that is now the design
+          rather than a gap: venues link by invitation, so an account made here
+          cannot link to this venue until the venue sends the couple an
+          invitation link (/venue/invite/$token), which carries the venue
+          itself. The hint under the button says so. (A ?venue=<slug> parameter
+          used to ride along here; nothing ever read it.)
+
+          `apexOrigin()` rather than SITE_ORIGIN so `pnpm dev` stays local. No
+          hydration risk: this branch renders only once TenantGate has
+          resolved the tenant on the client. VenueMessage's footer below keeps
+          SITE_ORIGIN because it *is* prerendered (the loading state), and a
+          client-only origin there would mismatch the server HTML.
         */}
         <Button asChild>
-          <a href={`${SITE_ORIGIN}/signup`}>{t("venue.cta_couple")}</a>
+          <a href={`${apexOrigin()}/signup`}>{t("venue.cta_couple")}</a>
         </Button>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          {t("venue.couple_invite_hint", { name: tenant.name })}
+        </p>
         <a
           href="/crm"
           className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"

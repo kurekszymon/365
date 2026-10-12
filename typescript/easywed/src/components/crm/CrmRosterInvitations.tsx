@@ -16,7 +16,8 @@ import { Button } from "@/components/ui/button"
  * Expired rows stay listed rather than being filtered out. An invitation that
  * quietly vanished would read as "I never sent it" and get sent again, which is
  * exactly the loop the venue is trying to escape when a couple says the link
- * did not work.
+ * did not work. They are sorted below the live ones (useTenantRoster), so the
+ * links a venue can still send stay at the top.
  */
 export const CrmRosterInvitations = ({
   invitations,
@@ -53,10 +54,15 @@ export const CrmRosterInvitations = ({
           >
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex min-w-0 flex-1 flex-col">
-                <span className="font-medium">
-                  {t(`crm.role.${invitation.role}`)}
+                {/* The label leads when there is one - it is the only thing
+                    that tells two invitations apart - with the role beneath. */}
+                <span className="truncate font-medium">
+                  {invitation.label ?? t(`crm.role.${invitation.role}`)}
                 </span>
                 <span className="text-xs text-muted-foreground">
+                  {invitation.label
+                    ? `${t(`crm.role.${invitation.role}`)} · `
+                    : ""}
                   {expired
                     ? t("crm.roster.expired")
                     : t("crm.roster.expires", {

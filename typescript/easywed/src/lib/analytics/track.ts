@@ -13,8 +13,11 @@ import type { TableShape } from "@/stores/planner.store"
  * string has to declare a literal union here.
  */
 export type AnalyticsEvents = {
-  /** A signed-in user created an empty wedding from the wedding list. */
-  wedding_created: { source: "wedding_list" }
+  /**
+   * A signed-in user created an empty wedding - from the wedding list, or on
+   * the spot while accepting a venue invitation.
+   */
+  wedding_created: { source: "wedding_list" | "venue_invite" }
   /** A guest-mode plan in localStorage was adopted into an account. */
   local_wedding_migrated: {
     halls: number
@@ -118,6 +121,24 @@ export type AnalyticsEvents = {
    * `venue_access_granted`, separately and later.
    */
   tenant_invite_claimed: { role: "staff" | "customer" }
+  /**
+   * The invitation page named a live invitation's venue - the top of the
+   * invite funnel, before any account exists. Fired once per page view, for
+   * signed-in and signed-out visitors alike.
+   */
+  tenant_invite_previewed: { role: "staff" | "customer" }
+  /**
+   * A couple accepted a customer invitation, which joins the roster *and* links
+   * one wedding (accept_customer_invitation). Fired alongside
+   * `tenant_invite_claimed { role: "customer" }` - that one keeps its meaning
+   * and its history; this one adds the two cuts only the new flow has. Both
+   * are enums: whether the plan was made on the spot, and whether accepting
+   * moved the couple off another venue's roster.
+   */
+  tenant_invite_accepted: {
+    wedding: "existing" | "new"
+    switched_venue: boolean
+  }
   /**
    * A venue saved one menu package in the CRM. Counts only - how many courses a
    * real offer has, how many dishes, how many venues use the plated shape. The

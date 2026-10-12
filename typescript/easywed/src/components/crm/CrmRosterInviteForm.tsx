@@ -1,8 +1,10 @@
 import { useTranslation } from "react-i18next"
 
+import { INVITE_LABEL_MAX } from "./useTenantRoster"
 import type { TenantInviteRole } from "./useTenantRoster"
 import { Button } from "@/components/ui/button"
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -19,16 +21,25 @@ import {
  * 20260820000001). Hiding the option rather than showing it and refusing the
  * insert is the honest shape: the alternative offers a choice the database will
  * not honour.
+ *
+ * The label is optional and for the venue only: an invitation names nobody
+ * until it is claimed, so without it a list of "Couple, valid until ..." rows
+ * cannot be told apart. The recipient never sees it - the invitation page's
+ * preview does not return it.
  */
 export const CrmRosterInviteForm = ({
   role,
   setRole,
+  label,
+  setLabel,
   canInviteStaff,
   submitting,
   onCreate,
 }: {
   role: TenantInviteRole
   setRole: (role: TenantInviteRole) => void
+  label: string
+  setLabel: (label: string) => void
   canInviteStaff: boolean
   submitting: boolean
   onCreate: () => void
@@ -64,6 +75,20 @@ export const CrmRosterInviteForm = ({
               : "crm.roster.invite_help_customer"
           )}
         </FieldDescription>
+      </Field>
+
+      <Field>
+        <FieldLabel htmlFor="tenant-invite-label">
+          {t("crm.roster.invite_label")}
+        </FieldLabel>
+        <Input
+          id="tenant-invite-label"
+          value={label}
+          maxLength={INVITE_LABEL_MAX}
+          placeholder={t("crm.roster.invite_label_placeholder")}
+          onChange={(e) => setLabel(e.target.value)}
+        />
+        <FieldDescription>{t("crm.roster.invite_label_help")}</FieldDescription>
       </Field>
 
       <Button onClick={onCreate} disabled={submitting} className="self-start">
