@@ -7,9 +7,8 @@ import { cn } from "@/lib/utils"
 
 export type LoopName = "swap" | "scale" | "shape"
 
-// A rendered loop of the real planner (from the Remotion project next door),
-// standing in for the CSS mock the hero used to draw. The picture is
-// decorative - the caption beside it carries the meaning - so the media itself
+// A rendered loop of the real planner (from the Remotion project next door).
+// The picture is decorative - the caption beside it carries the meaning - so the media itself
 // is aria-hidden and the pause control is the only thing a reader reaches.
 //
 // What keeps it cheap and quiet:

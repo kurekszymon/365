@@ -10,7 +10,7 @@ const PAN_START_THRESHOLD_PX = 4
 
 export function useCanvasPan(pan: Position, setPan: (p: Position) => void) {
   const [isPanning, setIsPanning] = useState(false)
-  // Pointers currently down, so a two-finger pinch (handled by usePinchZoom)
+  // Pointers currently down, so a two-finger pinch (handled by Canvas's usePinch)
   // doesn't also pan.
   const pointers = useRef(new Set<number>())
   // The in-flight drag's controller; aborting it tears the whole drag down.

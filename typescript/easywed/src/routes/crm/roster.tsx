@@ -13,11 +13,9 @@ import { useTenantStore } from "@/stores/tenant.store"
  * there.
  *
  * This is the screen that makes an invitation-only venue usable at all.
- * `tenants.open_linking` defaults to false, and `link_wedding_to_venue`'s
- * invitation-only branch looks for a `tenant_members` row with role
- * 'customer' - which, until 20260820000001, nothing but a hand-written SQL
- * statement could produce. A couple could not link to a venue that had not
- * opened itself to the world.
+ * `tenants.open_linking` defaults to false, so `link_wedding_to_venue` only
+ * accepts a couple who is already a member of the venue - and a customer
+ * invitation issued here is the only way to become one.
  *
  * No guard of its own: /crm's layout has already decided the caller is staff of
  * a resolved, active tenant before this renders.

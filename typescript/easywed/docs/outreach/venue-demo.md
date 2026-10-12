@@ -64,12 +64,12 @@ The demo is 15 minutes, on site, following the one-pager (`easywed-pilot-sale.ht
    - In the planner on easywed.app, signed in as the staff account, create a wedding named "Szablon - Pałac Wiosna".
    - Draw the room to scale: walls (custom shape if it isn't a rectangle), tables with real capacities, dance floor, bar, stage, entrance.
 6. **Save it as a layout.** In the halls panel choose "Zapisz jako układ sali" and name it e.g. "Sala główna, 140 osób".
-7. **Create a staff invite for the couple account.**
+7. **Create a couple invite for the couple account.**
    - At `/crm/roster`, create a "Para młoda" invite link.
-   - Open it as the couple account and claim it. This is the real invite-only path, rehearsed once.
+   - This is the real invite-only path, rehearsed once.
 8. **Build the couple's wedding.** As the couple, on easywed.app:
-   1. Create a wedding, e.g. "Ania i Tomek", dated next June.
-   2. Choose "Sala weselna", type the slug, then "Powiąż z salą".
+   1. Open the invite link, choose "Zacznij nowy plan" and "Akceptuj i powiąż". This joins the venue's list and links the new plan in one step, landing in the planner with the "Sala weselna" dialog open.
+   2. Rename the wedding, e.g. "Ania i Tomek", and date it next June.
    3. Choose "Zacznij od układu: Pałac Wiosna" and apply the layout.
    4. Import `demo-goscie.xlsx` and seat most guests, leaving about 10 unseated for the live drag.
    5. In the Menu tab, pick a package and dishes, then assign dishes to guests.
@@ -98,7 +98,7 @@ The demo is 15 minutes, on site, following the one-pager (`easywed-pilot-sale.ht
 - A generated PDF file (it's the print dialog)
 - Staff entering menu choices for a couple
 - That the CRM shows the couple's chosen package or their set-menu picks: it counts per-guest plated dishes only
-- That the invite link alone connects the couple: they still create the wedding, type the slug and confirm sharing
+- That the invite link alone shares the plan: accepting it links the wedding, but the couple still confirms sharing separately
 - That suspension or ending the pilot cuts staff access: it only hides the CRM screens
 - Any other venue as a customer
 

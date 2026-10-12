@@ -43,7 +43,8 @@ export const insertTables = (tables: Array<Table>): Promise<boolean> => {
  * `enforce_table_capacity_floor` checks a shrink against the roster already in
  * the DB, so a shrink writes the departures first. No fixed client-side order
  * satisfies both, and separate writes also leave a window where the guests are
- * off the table and the re-assign has not landed. See the save_table migration.
+ * off the table and the re-assign has not landed. See
+ * 20260804000002_table_capacity_floor.sql.
  */
 export const saveTableRow = (
   table: Table,

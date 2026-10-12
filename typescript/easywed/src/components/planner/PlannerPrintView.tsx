@@ -25,8 +25,8 @@ import { dietaryLabel } from "@/lib/dietary"
 import { ageGroupLabel, childAgeGroup } from "@/lib/ageGroup"
 import { cn } from "@/lib/utils"
 
-// TODO: the print stylesheet only covers the planner - printing any other route
-// produces a blank page.
+// TODO: the print stylesheet hides everything but this view, so printing a
+// route that does not render it produces a blank page.
 
 // A4 landscape minus 10mm margins ≈ 277mm × 190mm.
 // At 96 CSS DPI that's ~1047 × 718 px.
@@ -430,7 +430,7 @@ export const PlannerPrintView = () => {
                 widthPx={viewWidth * ppm}
                 heightPx={viewHeight * ppm}
                 origin={{ x: originX, y: originY }}
-                // mandatory props
+                // Read-only here: no pending point, no drag, no edits.
                 pendingPoint={null}
                 cursorPos={null}
                 activeDrag={null}

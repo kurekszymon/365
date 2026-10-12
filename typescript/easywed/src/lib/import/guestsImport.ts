@@ -31,8 +31,8 @@ export const normalize = (value: string): string =>
 // Header aliases per field (english + polish). Compared after `normalize`, so
 // list them without diacritics.
 const HEADER_ALIASES: Record<GuestImportField, Array<string>> = {
-  name: ["name", "guest", "full name", "imie", "imię", "gosc", "nazwisko"],
-  table: ["table", "stol", "stół", "stolik"],
+  name: ["name", "guest", "full name", "imie", "gosc", "nazwisko"],
+  table: ["table", "stol", "stolik"],
   dietary: ["dietary", "diet", "dieta", "preferencje", "dietary preferences"],
   note: ["note", "notes", "notatka", "uwagi", "comment", "komentarz"],
 }

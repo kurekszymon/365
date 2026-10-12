@@ -26,9 +26,8 @@ import { VenueInviteStaffJoin } from "@/components/tenant/invite/VenueInviteStaf
  * The order of the states is the design:
  *
  *   1. **Preview** (`tenant_invitation_preview`, callable signed out). Nothing
- *      is spent by opening the link - the claim used to happen on page load,
- *      which made "opened a URL" count as consent and let the wrong partner
- *      burn a couple's link.
+ *      is spent by opening the link. Do not claim on page load: opening a URL
+ *      is not consent, and it let the wrong partner burn a couple's link.
  *   2. **Right origin.** A customer invite belongs on the apex, a staff invite
  *      on its venue's host; sessions are per-origin, so the page moves before
  *      it asks anyone to sign in (inviteOrigin.ts).

@@ -79,9 +79,9 @@ export const loadWedding = async (id: string, signal: AbortSignal) => {
       .abortSignal(signal),
 
     // Every member, not just this user's row: the header avatar stack shows
-    // editors they aren't alone in here, and RLS ("members can view co-members")
-    // permits it for any role. Ordered by created_at so the owner - inserted
-    // first by the trigger - leads the stack and the order stays stable.
+    // editors they aren't alone in here. RLS ("members can view co-members")
+    // admits owner/editor/viewer; a venue reads zero rows. Ordered by
+    // created_at so the owner - inserted first by the trigger - leads the stack.
     userId
       ? supabase
           .from("wedding_members")

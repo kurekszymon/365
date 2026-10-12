@@ -112,6 +112,20 @@ export const rectInsidePolygon = (
 // with grid snapping pass their snap step so results stay grid-aligned.
 const DEFAULT_CLAMP_STEP = 0.25
 
+// Grid positions along one axis (0, step, ... capped at `max`), ordered by
+// distance to `target` so clampRectIntoHall searches nearest-first and
+// short-circuits. mm-rounded to match the persisted coordinate grid.
+const axisCandidates = (
+  target: number,
+  max: number,
+  step: number
+): Array<number> => {
+  const vals: Array<number> = []
+  for (let v = 0; v <= max + EPS; v += step) vals.push(round3(Math.min(v, max)))
+  vals.sort((a, b) => Math.abs(a - target) - Math.abs(b - target))
+  return vals
+}
+
 /**
  * Clamps an entity's AABB into a hall (hall-local coords) - the single
  * containment entry point shared by the store, the canvas and the AI tools.
@@ -127,20 +141,6 @@ const DEFAULT_CLAMP_STEP = 0.25
  * Entities are judged by their AABB even when they carry polygon geometry,
  * matching the fixture stance where `size` drives all clamp logic.
  */
-// Grid positions along one axis (0, step, ... capped at `max`), ordered by
-// distance to `target` so clampRectIntoHall searches nearest-first and
-// short-circuits. mm-rounded to match the persisted coordinate grid.
-const axisCandidates = (
-  target: number,
-  max: number,
-  step: number
-): Array<number> => {
-  const vals: Array<number> = []
-  for (let v = 0; v <= max + EPS; v += step) vals.push(round3(Math.min(v, max)))
-  vals.sort((a, b) => Math.abs(a - target) - Math.abs(b - target))
-  return vals
-}
-
 export const clampRectIntoHall = (
   pos: Position,
   size: Size,

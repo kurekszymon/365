@@ -14,7 +14,7 @@ import {
  * into instead of an empty grid.
  *
  * Deliberately outside `run()`, the one exception in this folder: it fires
- * from the wedding list, *before* global.store has switched to the new
+ * from `createWedding`, *before* global.store has switched to the new
  * wedding, so `run()` would read a stale (or undefined) role, fail closed on
  * selectCanEdit and silently drop the write. It also takes `weddingId`
  * explicitly for the same reason - `getWeddingId()` isn't pointing here yet.

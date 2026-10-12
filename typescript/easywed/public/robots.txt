@@ -15,10 +15,9 @@ Disallow: /venue/invite/
 # Auth callbacks carry tokens in the URL fragment and query.
 Disallow: /auth/
 
-# Wedding ids are dynamic, so there is no prerendered HTML for them and they
-# fall back to index.html - which is the landing, and says index,follow. Block
-# the crawl rather than serve marketing copy under a wedding URL. /wedding/local
-# is static and prerendered, so it is allowed through to be read as noindex.
+# Wedding ids are dynamic, so there is no prerendered HTML for them: they fall
+# back to the SPA shell (404.html). Block the crawl outright. /wedding/local is
+# static and prerendered, so it is allowed through to be read as noindex.
 Disallow: /wedding/
 Allow: /wedding/local
 
@@ -29,8 +28,8 @@ Allow: /wedding/local
 Disallow: /crm/wedding/
 
 # Note what is deliberately NOT disallowed: /home, /login, /signup, /settings,
-# /venue and /crm are prerendered with a noindex meta tag instead. Disallow and noindex do not
-# stack - a blocked URL cannot be fetched, so the noindex is never read and
+# /venue and the static /crm pages are prerendered with a noindex meta tag
+# instead. Disallow and noindex do not stack - a blocked URL cannot be fetched, so the noindex is never read and
 # Google keeps listing the bare URL from inbound links. That is exactly how
 # /home, /login and /wedding/local ended up in the index with zero clicks.
 # Letting these be crawled is what gets them removed. They render nothing

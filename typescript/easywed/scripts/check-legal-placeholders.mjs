@@ -1,8 +1,8 @@
 // Publish gate for the two legal documents.
 //
-// `config.ts` and the locale files carry `[PLACEHOLDER]` markers for details
-// that only exist on paper - the trader's name, address, NIP and REGON.
-// Nothing in the app fails on them: the pages render, every key resolves,
+// `config.ts` and the locale files use `[PLACEHOLDER]` markers for details
+// that are not filled in yet - originally the trader's name, address, NIP and
+// REGON. Nothing in the app fails on them: the pages render, every key resolves,
 // `pnpm test` stays green, and the Regulamin that has to identify the trader
 // (art. 8 ust. 1 pkt 1 UŚUDE, art. 12 UPK, art. 13 RODO) instead identifies
 // "[NIP]".
@@ -125,8 +125,7 @@ if (replayDays) {
 // Backups are a structural difference, not a number: with none, the policy says
 // deletion is irreversible; with backups, it has to name the period instead.
 // Both directions are checked - a policy promising to overwrite backups within
-// 30 days when no backups exist is as wrong as one that omits a real period,
-// and it is the likelier mistake, since it is what the sentence said before.
+// 30 days when no backups exist is as wrong as one that omits a real period.
 const RETENTION_PERIOD = /\d+\s*(dni|dzie[ńn]|dnia|days?|miesi\w*|months?)/i
 
 if (backupDays === "null") {

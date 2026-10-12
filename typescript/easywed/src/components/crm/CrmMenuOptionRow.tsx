@@ -24,7 +24,7 @@ import {
  * One dish.
  *
  * Both text fields commit on blur rather than on every keystroke: a dish name
- * is 96 characters of Polish, and a write per character is a write per
+ * can run to 120 characters, and a write per character is a write per
  * character. The draft is local until then, so an abandoned edit costs nothing.
  *
  * Nothing here routes a dish name through `t()`. It is text the venue typed -

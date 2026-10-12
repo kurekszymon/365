@@ -3,8 +3,11 @@
 # same path robots.txt takes.
 #
 # The CSP is Report-Only on purpose. Violations show up in the browser console
-# (there is no report collector wired up) and block nothing. Read the notes
-# under connect-src before switching the header name to Content-Security-Policy.
+# (there is no report collector wired up) and block nothing. Before switching
+# the header name to Content-Security-Policy: connect-src admits only
+# OpenRouter, so every other BYO-key AI endpoint (a local llama.cpp server,
+# OpenAI, Azure) would be blocked, and img-src would block a venue's
+# `logo_url`, which may sit on any https host.
 
 # The landing loops are large and never change within a deploy, so they are
 # cached hard. Deliberately NOT `immutable` and deliberately not a year: these

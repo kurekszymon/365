@@ -9,7 +9,7 @@
 // `page/` is the exception that contributes its keys unprefixed - it is the
 // page's own chrome (title, SEO) rather than a release.
 //
-// Adding a release is a new folder (`v1.1/en.json`, `v1.1/pl.json`) plus its
+// Adding a release is a new folder (`v1.4/en.json`, `v1.4/pl.json`) plus its
 // entry in components/changelog/releases.ts. Nothing here needs editing; the
 // glob picks the folder up, and changelogKeys.test.ts fails if the folders and
 // the release table disagree, or if one language is short.

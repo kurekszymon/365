@@ -1,6 +1,5 @@
-// Barrel for the per-entity Supabase mutation modules. The shared plumbing in
-// `./shared` (run/log/getWeddingId, row mappers) stays internal and is
-// intentionally not re-exported here, preserving the module's public surface.
+// Barrel for the per-entity mutation modules. `./shared` (run, getWeddingId,
+// row mappers) is deliberately not re-exported.
 export * from "./wedding"
 export * from "./hall"
 export * from "./tables"

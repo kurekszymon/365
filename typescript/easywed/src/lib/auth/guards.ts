@@ -45,7 +45,7 @@ export const sanitizeNextPath = (next: unknown): string | undefined => {
  *   - an explicit `next`, someone's interrupted destination, which beats any
  *     guess made here;
  *   - "/crm" on a venue host, since a tenant origin has no couple-facing surface
- *     and /home is apex-only - the old default sent staff through
+ *     and /home is apex-only - a hardcoded /home sends staff through
  *     `redirectApexOnlyPathToApex` to an origin where their session does not
  *     exist. The role is not consulted: it is a round trip away, and the CRM
  *     shell renders a named 403 for a customer who arrives;
@@ -85,14 +85,14 @@ export const requireAuth = (nextPath: string) => {
 // The legal documents: the acceptance screen links to /pl/terms and /en/terms in
 // a new tab, so redirecting those away asks someone to accept a document we then
 // refuse to show them. /pl and /en cover the whole locale-pinned public site,
-// which is marketing rather than the app. What this closes is /home, /wedding,
-// /settings and /invite.
+// which is marketing rather than the app. What this closes is the app itself:
+// /home, /wedding, /settings, /invite, /venue and /crm.
 //
 // /reset-password: a recovery link creates a real session, so this guard sees a
 // signed-in user and bounces them to /accept-terms, which sends them on to
-// /home - and the password they came to change never is. Only reachable by
-// someone predating enforcedSince or mid-signup, but the failure is a locked-out
-// user.
+// /home - and the password they came to change never is. Only an account whose
+// acceptance went missing (e.g. an OAuth sign-up that lost its marker) can hit
+// this, but the failure is a locked-out user.
 const TERMS_EXEMPT_PATHS = [
   "/",
   "/pl",

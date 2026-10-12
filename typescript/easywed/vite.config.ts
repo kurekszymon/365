@@ -37,12 +37,11 @@ const alternateRefs = (sub: string) => [
   { href: `${SITE}/pl${sub}`, hreflang: "x-default" },
 ]
 
-// App surfaces. Prerendered so the URL returns real HTML - a crawler can only
-// read the noindex meta tag off a page it can actually fetch - but excluded from
-// the sitemap, which is a list of pages you want indexed and so the exact
-// opposite of these. They must be listed by hand: without them the route falls
-// through to Cloudflare's SPA fallback, which serves index.html, and index.html
-// is now the landing - so /home would answer with indexable marketing copy.
+// App surfaces. Prerendered so the URL answers 200 with real HTML - a crawler
+// can only read the noindex meta tag off a page it can actually fetch - but
+// excluded from the sitemap, which is a list of pages you want indexed and so
+// the exact opposite of these. They must be listed by hand: anything unlisted
+// falls through to the SPA shell, served as 404.html (see `spa` below).
 const APP_ROUTES = [
   "/home",
   "/login",
@@ -54,10 +53,9 @@ const APP_ROUTES = [
   "/wedding/local",
   "/wedding/local/planner",
   // Tenant-host surfaces. They render nothing without the right host and the
-  // right session, but they still have to answer with real HTML: the noindex
-  // meta tag they inherit from the root route can only be read off a page a
-  // crawler can actually fetch. The rest of the CRM is added here as each
-  // section ships.
+  // right session, but still answer with real noindex HTML for the reason
+  // above. Static CRM sections go here as they ship; the dynamic
+  // /crm/wedding/$id must not - robots.txt blocks that prefix instead.
   "/venue",
   "/crm",
   "/crm/roster",

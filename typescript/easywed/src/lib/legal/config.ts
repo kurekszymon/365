@@ -62,7 +62,7 @@ export const LEGAL_CONFIG = {
    */
   dates: {
     /**
-     * Bumped from 2026-08-15 for the v2 venue-link amendment (§ 14 ust. 4 said
+     * Bumped from 2026-08-15 for the venue-link amendment (§ 14 ust. 4 said
      * the User must not enter art. 9 data at all, while the product now
      * discloses dietary tags to a linked Sala Weselna; § 14 ust. 3 had the
      * controller/processor direction backwards for that flow). § 16 ust. 3
@@ -121,7 +121,7 @@ export const LEGAL_CONFIG = {
    * placeholder scan catches fields nobody filled in; it cannot catch a field
    * filled in wrongly - a stale effective date, an address from before a move.
    *
-   * Currently false: the v2 venue-link amendment is in flight. `legal:check`
+   * Currently false: the venue-link amendment is in flight. `legal:check`
    * fails while it is, blocking `deploy:pages` until a human has re-read the
    * amended Regulamin and Polityka, confirmed the § 16 ust. 2 notice went out,
    * and confirmed the 14 days have run. Flip back to true only then.

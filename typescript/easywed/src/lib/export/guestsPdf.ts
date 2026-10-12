@@ -33,7 +33,7 @@ export const triggerPdfExport = (
   options: PdfExportOptions = DEFAULT_OPTIONS
 ) => {
   // flushSync forces React to commit the store updates before window.print()
-  // https:// react.dev/reference/react-dom/flushSync#usage
+  // https://react.dev/reference/react-dom/flushSync#usage
   flushSync(() => {
     usePrintStore.getState().setFields(fields)
     usePrintStore.getState().setSort(options.sort)

@@ -170,8 +170,8 @@ export const CrmMenuCourseEditor = ({
             value={course.choose_count}
             // Nothing on change, deliberately: `NumberInput` holds the raw text
             // in its own draft while focused, so `value` is not read until
-            // committed. A change handler here could only do the per-keystroke
-            // write this field is being taken off.
+            // committed. A change handler here could only reintroduce the
+            // per-keystroke write.
             onValueChange={() => {}}
             onBlur={(e) => commitChooseCount(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}

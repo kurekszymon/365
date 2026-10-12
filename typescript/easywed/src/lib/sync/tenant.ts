@@ -205,9 +205,10 @@ const CLAIM_FAILURES: Record<string, TenantClaimFailure> = {
  * table has no INSERT policy and why this goes through a definer RPC called with
  * the *recipient's* session (20260820000001).
  *
- * Joining as `customer` buys one thing: the ability to call
- * `link_wedding_to_venue` for an invitation-only venue. Not the art. 9(2)(a)
- * consent for the guest list - that is a separate `set_venue_access(true)`.
+ * Only the staff join calls this. A couple's invitation goes through
+ * `acceptCustomerInvitation`, which joins *and* links a wedding in one
+ * transaction - neither is the art. 9(2)(a) consent for the guest list, which
+ * stays a separate `set_venue_access(true)`.
  */
 export const claimTenantInvitation = (
   token: string,

@@ -19,8 +19,7 @@ import { tenantSlugFromHost } from "@/lib/tenant/host"
  *
  * The apex costs nothing. `tenantSlugFromHost` is pure string parsing, so on
  * easywed.app the first effect settles to "none" synchronously on mount and no
- * request is ever issued - which is what makes v2 invisible to every existing
- * user.
+ * request is ever issued, so tenant support costs apex visitors nothing.
  */
 export function TenantGate({ children }: { children: React.ReactNode }) {
   const router = useRouter()

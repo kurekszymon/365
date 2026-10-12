@@ -127,9 +127,7 @@ export const CanvasToolbar = () => {
             type="button"
             className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] backdrop-blur-sm max-md:py-2 ${
               showSeats
-                ? // Same themed active treatment as the measure toggle - the old
-                  // hardcoded emerald classes didn't follow the palette or dark
-                  // mode.
+                ? // Same themed active treatment as the measure toggle.
                   "border-planner-selected bg-planner-soft text-planner-selected"
                 : "text-muted-foreground hover:text-foreground"
             }`}

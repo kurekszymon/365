@@ -87,9 +87,10 @@ export type AnalyticsEvents = {
    * disclosure - `pending` shows the venue nothing. The venue itself is
    * attributed with a PostHog **group**, never a property here.
    *
-   * "venue" is declared but not yet emitted (the CRM-initiated request arrives
-   * with the customer roster); declaring it now keeps the property from widening
-   * later, which is the change that quietly reshapes an existing insight.
+   * "venue" is declared but not emitted: even the customer-invitation flow,
+   * which the venue starts, is recorded as "couple" when the couple accepts.
+   * Declaring it now keeps the property from widening later, which is the
+   * change that quietly reshapes an existing insight.
    */
   venue_access_requested: { source: "couple" | "venue" }
   /**
@@ -116,8 +117,8 @@ export type AnalyticsEvents = {
   tenant_invite_created: { role: "staff" | "customer" }
   /**
    * Someone spent a venue invitation and joined the roster. Not `invite_claimed`,
-   * which is a wedding membership: this only lets a couple *ask* an
-   * invitation-only venue for a link. The disclosure decision is still
+   * which is a wedding membership. For a customer it fires alongside
+   * `tenant_invite_accepted`. Joining discloses nothing - that is still
    * `venue_access_granted`, separately and later.
    */
   tenant_invite_claimed: { role: "staff" | "customer" }

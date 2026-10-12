@@ -10,9 +10,8 @@ import { useMenuStore } from "@/stores/menu.store"
  * reasons that all matter here:
  *
  *   - `run()` reports one boolean and one generic toast. Linking fails for
- *     reasons the user can act on ("no venue with that address", "this venue
- *     links by invitation only"), and collapsing those leaves someone retyping
- *     a slug that was never the problem.
+ *     distinct reasons (the venue is suspended, links by invitation only) that
+ *     the dialog words differently, and a generic "could not save" loses that.
  *   - `run()` short-circuits to `true` for the local wedding without sending
  *     anything. Guest mode has no wedding row to link, so a silent success is
  *     the wrong answer.

@@ -59,11 +59,10 @@ export const Planner = () => {
             <Header.WeddingName />
           </Header.Title>
           <div className="ml-auto flex items-center gap-2">
-            {/* Replaces the old owner-only invite button: the avatar stack
-                opens the same dialog, but shows every role who else is in
-                here. In guest mode the member list is empty, so it collapses
-                to the owner's invite chip alone - which still opens the
-                dialog and its upgrade notice, as before.
+            {/* The avatar stack opens the members dialog and shows every role
+                who else is in here. In guest mode the member list is empty,
+                so it collapses to the owner's invite chip alone - which still
+                opens the dialog and its upgrade notice.
 
                 It leads the row so the avatars - the one item that isn't an
                 icon button - sit apart from the run of buttons that follows,

@@ -61,10 +61,8 @@ function CrmMenus() {
         </p>
       </div>
 
-      {/* Retry beside the message, not just the message. A failed load used to
-          be terminal for this screen - the banner sat there and the only way
-          back was a page reload. The next successful write clears it too, so
-          this is the way out of a *load* failure specifically. */}
+      {/* Retry beside the message: the next successful write clears the
+          banner too, but a failed *load* has no write to wait for. */}
       {menus.error ? (
         <div className="flex flex-wrap items-center gap-3">
           <p className="text-sm text-destructive">{menus.error}</p>

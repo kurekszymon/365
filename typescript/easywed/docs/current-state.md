@@ -1,6 +1,6 @@
 # Venue / tenant side - current state
 
-Snapshot as of **2026-10-11**, `main` at `7275861` (v1.3.1), updated for the `easywed/invites-*` stack (invitation preview, accept-and-link, membership-based linking, roster labels and history).
+Snapshot as of **2026-10-12**, `main` at `1b5f0a4` (v1.3.1 plus the merged `easywed/invites-*` stack: invitation preview, accept-and-link, membership-based linking, roster labels and history).
 
 It covers everything a venue ("tenant") touches:
 
@@ -61,7 +61,7 @@ Helpers in the same file:
 - `apexOrigin()`: keeps the scheme and port, drops the slug label.
 - `tenantUrl(slug, path)`: on previews it appends `?tenant=`, and it strips `www`.
 
-> `CLAUDE.md` used to name a `tenantOrigin(slug)` helper, which was renamed to `tenantUrl(slug, path)` (see DEVLOG). The landing hop is `tenantUrl(slug, "/crm")` in `hooks/useVenueStaffLanding.ts`.
+The sign-in landing hop is `tenantUrl(slug, "/crm")` in `hooks/useVenueStaffLanding.ts`.
 
 Other routing pieces:
 
@@ -412,7 +412,7 @@ Files: `20261007000001`, `lib/sync/layoutPresets.ts`, `components/dialogs/planne
 **Apply (couple):**
 
 - `applyLayoutPreset` → `rekeyLayout` → `replace_planner_layout` through `run()`, then `loadWedding`.
-- This hard-replaces the layout, so every guest is unseated.
+- This hard-replaces the layout, so every guest is unseated - **except that it currently fails outright** when any guest is pinned to a seat (see §11.5).
 - The inline confirmation states the table count and seated count.
 
 ---
@@ -421,7 +421,7 @@ Files: `20261007000001`, `lib/sync/layoutPresets.ts`, `components/dialogs/planne
 
 | Event | Emitted from |
 |---|---|
-| `venue_access_requested { source }` | `VenueLinkStep` and the invitation page's accept, with `source: "couple"` only. **`"venue"` is declared but never emitted**: the comment says "the CRM-initiated request arrives with the customer roster", i.e. planned, not built |
+| `venue_access_requested { source }` | `VenueLinkStep` and the invitation page's accept, with `source: "couple"` only. **`"venue"` is declared but never emitted** - even the venue-started customer invitation is recorded as `"couple"` when the couple accepts |
 | `venue_access_granted` | `VenueGrantStep` |
 | `venue_peek_opened` | `/crm/wedding/$id` |
 | `layout_preset_saved`, `layout_preset_applied` | Preset dialog |
@@ -479,12 +479,11 @@ The PT410 paths are tested against the seeded suspended `stodola`; nothing tests
 
 ### 11.3 Linking-flow gaps
 
-1. ~~A customer invite doesn't carry the venue into the link step.~~ **Fixed:** accepting a customer invite links a chosen (or new) plan in the same call and lands in the Venue dialog; the dialog itself offers the account's venue by name.
-2. **The front door drops the venue - by design now.** `/venue` -> `/signup` carries nothing; a hint says the venue sends an invitation link, and that link is what carries the venue.
-3. **No unlink.** Once linked, a wedding can be revoked or relinked, but `tenant_id` can never return to null from the client.
-4. **The venue can't see pending links.** RLS hides them, and there is no count or request flow. `venue_access_requested { source: "venue" }` is declared but not emitted. The roster's Accepted list is the only signal that a couple accepted.
-5. **Switching venue works through the new venue's link; there is still no standalone "leave venue" UI.** A customer of venue A opening venue B's invite is asked "Leave A?" and swapped atomically. Staff of a venue still cannot become a couple elsewhere on the same account (`PT409`), and a couple who simply wants off A's list has no button for it.
-6. **Open linking is unreachable from the UI.** The slug field is gone; `open_linking` still exists in the schema, the seed (`dworek`, used by `menuRls.test.ts`) and `provision-venue.sql`.
+1. **The front door drops the venue - by design.** `/venue` -> `/signup` carries nothing; a hint says the venue sends an invitation link, and that link is what carries the venue.
+2. **No unlink.** Once linked, a wedding can be revoked or relinked, but `tenant_id` can never return to null from the client.
+3. **The venue can't see pending links.** RLS hides them, and there is no count or request flow. `venue_access_requested { source: "venue" }` is declared but not emitted. The roster's Accepted list is the only signal that a couple accepted.
+4. **Switching venue works through the new venue's link; there is still no standalone "leave venue" UI.** A customer of venue A opening venue B's invite is asked "Leave A?" and swapped atomically. Staff of a venue still cannot become a couple elsewhere on the same account (`PT409`), and a couple who simply wants off A's list has no button for it.
+5. **Open linking is unreachable from the UI.** The slug field is gone; `open_linking` still exists in the schema, the seed (`dworek`, used by `menuRls.test.ts`) and `provision-venue.sql`.
 
 ### 11.4 CRM gaps
 
@@ -498,20 +497,12 @@ The PT410 paths are tested against the seeded suspended `stodola`; nothing tests
 8. **Branding is mostly inert.** `accent_color` is unused, `primary_color` only tints the text wordmark, `locale` is unused, and the login and signup pages are unbranded.
 9. **Menu rules.** `choose_count` is unenforced, and there are no totals or children's pricing.
 
-### 11.5 Local dev
+### 11.5 Known bugs (found 2026-10-12)
 
-- Fixed: `supabase/config.toml` now allow-lists `dworek.localhost:3000` alongside `bagatelka.localhost:3000`.
+1. **Applying a layout preset fails when any guest is seat-pinned.** `replace_planner_layout` hard-deletes `tables`; the FK's `on delete set null` clears `guests.table_id` but leaves `seat_id`, which trips `guests_seat_requires_table` and aborts the RPC. Reproduced with `psql`. Fix needs a new migration (clear `seat_id` for the wedding's guests before the delete).
+2. **Password reset on a venue host signs staff out.** `/forgot-password` builds the reset link on the current origin, and `reset-password.tsx` then hardcodes `navigate({ to: "/home" })`; `/home` is apex-only, so the root guard sends them to an origin with no session. Should be `authLandingPath()`.
 
-### 11.6 Doc and code drift found while checking
-
-| Location | Drift |
-|---|---|
-| `CLAUDE.md` | Named `tenantOrigin(slug)`, which does not exist; the code uses `tenantUrl`. **Fixed** in `CLAUDE.md` |
-| `routes/crm/index.tsx` header comment | Said hall templates "arrive with the migration that gives them a table", although presets shipped in `20261007000001`. **Fixed** |
-| `routes/crm.tsx` (403 link) and `routes/venue.tsx` (signup link) | Used `SITE_ORIGIN`, so on `*.localhost` they went to production. **Fixed** - both use `apexOrigin()`. `venue.tsx`'s `VenueMessage` footer keeps `SITE_ORIGIN` on purpose: it renders in the prerendered loading state, where a client-only origin would mismatch the server HTML |
-| `my_tenant_id()` | Defined, no caller |
-
-### 11.7 Marketing copy vs code (`venues.*` in `pl.json`)
+### 11.6 Marketing copy vs code (`venues.*` in `pl.json`)
 
 | Promise | Code reality |
 |---|---|

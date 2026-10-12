@@ -9,10 +9,8 @@ import type { Lang } from "./LocaleLanding"
 // The rows alternate sides on desktop, which is what the `lg:order-first` on
 // every other loop is for. In DOM order the caption comes first, so on mobile
 // - one column, no ordering - each loop is introduced by the heading that says
-// what it is. The loop used to come first there, on the theory that the video
-// is what stops the scroll; what it actually produced was the hero loop and
-// this one stacked back to back, two silent videos deep before any heading
-// explains either.
+// what it is. Loop-first would stack the hero loop and this one back to back,
+// two silent videos deep before any heading explains either.
 const STORIES: Array<{ key: string; loop: LoopName }> = [
   { key: "scale", loop: "scale" },
   { key: "shape", loop: "shape" },

@@ -2,7 +2,7 @@ import { Link, createFileRoute, redirect } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
 export const Route = createFileRoute("/wedding/$id/")({
-  // Hub is kept for later; for now we skip it and go straight to the planner.
+  // The hub is unused for now: every visit goes straight to the planner.
   beforeLoad: ({ params }) => {
     throw redirect({
       to: "/wedding/$id/planner",
@@ -35,17 +35,6 @@ function WeddingHub() {
               {t("wedding.hub.planner_desc")}
             </p>
           </Link>
-
-          {/* <Link
-            to="/wedding/$id/reminders"
-            params={{ id }}
-            className="rounded-md border bg-card p-4 hover:bg-accent"
-          >
-            <p className="font-medium">{t("wedding.hub.reminders")}</p>
-            <p className="text-sm text-muted-foreground">
-              {t("wedding.hub.reminders_desc")}
-            </p>
-          </Link> */}
         </div>
       </div>
     </div>

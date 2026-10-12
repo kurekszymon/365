@@ -167,8 +167,8 @@ export const PRIVACY_SECTIONS: Array<{ id: string; bullets?: Array<string> }> =
       id: "purposes",
       // `special` is the art. 9 ust. 2 lifting condition. privacy.data.dietary
       // admits the policy holds special-category data, so listing art. 6 bases
-      // alone would leave that processing with no condition - and v2 discloses
-      // those tags to a third party.
+      // alone would leave that processing with no condition - and the venue
+      // link discloses those tags to a third party.
       bullets: [
         "service",
         "account",

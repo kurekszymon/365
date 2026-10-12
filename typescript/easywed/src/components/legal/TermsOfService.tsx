@@ -12,9 +12,8 @@ export function TermsOfService({ lang }: { lang: Lang }) {
   const { t } = useTranslation()
   // One object for ~270 `t()` calls, not one per call. Both halves have to be
   // memoized together: spreading `vars` into a fresh `{ lng, ...vars }` at each
-  // call site would rebuild the merged object 270 times a render, which is what
-  // this comment used to claim it avoided. i18next only reads the options, so
-  // the same reference is safe to hand to every call.
+  // call site would rebuild the merged object 270 times a render. i18next only
+  // reads the options, so the same reference is safe to hand to every call.
   const options = useMemo(() => ({ lng: lang, ...legalVars(lang) }), [lang])
   const tr = (key: string) => t(key, options)
 

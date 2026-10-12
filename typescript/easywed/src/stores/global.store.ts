@@ -106,7 +106,7 @@ export const useGlobalStore = create<State & Action>()(
       },
 
       setMembers: (members) => set({ members }),
-      // Written by loadWedding and by the two venue RPCs, which re-read the
+      // Written by the two venue calls in sync/venue.ts, which re-read the
       // wedding rather than guessing: `venue_access` is server-owned (see
       // enforce_wedding_tenant_columns), so an optimistic update here would
       // assert something only the database is entitled to say.

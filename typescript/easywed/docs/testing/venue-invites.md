@@ -1,37 +1,9 @@
 # Venue invitations - manual test plan
 
-Covers the stacked branches `easywed/invites-*`. Automated coverage lives in
-`src/lib/sync/tenantInvitations.test.ts` (DB) and `src/lib/tenant/inviteOrigin.test.ts`.
-
-## Stack
-
-| # | Branch | Based on | Status |
-|---|---|---|---|
-| 1 | `easywed/invites-1-db` | `main` | committed |
-| 2 | `easywed/invites-2-claim-page` | 1 | committed |
-| 3 | `easywed/invites-3-couple-dialog` | 2 | committed |
-| 4 | `easywed/invites-4-crm-roster` | 3 | committed |
-| 5 | `easywed/invites-5-docs` | 4 | ready to commit (below) |
-
-### Phase 5 commit
-
-```bash
-git switch -c easywed/invites-5-docs
-git add -A
-git commit -F - <<'EOF'
-easywed: document invitation flow; /venue invite hint, apexOrigin links
-
-- /venue: hint under "Plan your wedding" that the venue sends an
-  invitation link; signup CTA and the CRM 403 link use apexOrigin() so
-  pnpm dev stays local (VenueMessage footer keeps SITE_ORIGIN - prerendered)
-- current-state.md: invitation functions and refusals, roster, invitation
-  page, VenueLinkStep, analytics, tests, gaps 11.3/11.4/11.6/11.7, file map
-- CLAUDE.md: invite route is preview-first; never claim on page load
-- docs/testing: Phase 5 checks
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-EOF
-```
+Click-through for the invitation flow that shipped with the `easywed/invites-*`
+stack (merged in #94). Automated coverage lives in
+`src/lib/sync/tenantInvitations.test.ts` (DB) and
+`src/lib/tenant/inviteOrigin.test.ts`.
 
 ## Setup
 

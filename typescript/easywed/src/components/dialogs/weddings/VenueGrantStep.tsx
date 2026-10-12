@@ -9,16 +9,16 @@ import { setVenueAccess } from "@/lib/sync/venue"
 import { track } from "@/lib/analytics/track"
 
 /**
- * The consent screen. Track A item 6, and not optional.
+ * The consent screen, and not optional.
  *
- * `privacy.venue.optin` - a published document, effective on a date the § 16
- * ust. 2 notice period is running against - states that "aplikacja pokazuje
- * dokladnie te liste i prosi o potwierdzenie". This component is that sentence.
- * Shipping the grant without it would not merely be a thinner UI; it would make
- * a binding published statement false.
+ * `privacy.venue.optin` - a published document - states that before the grant
+ * "the app shows you a short version of this list - both halves of it ... and
+ * asks you to confirm". This component is that sentence. Shipping the grant
+ * without it would make a binding published statement false.
  *
- * So the two lists below mirror `privacy.venue.shared` and
- * `privacy.venue.hidden` item for item, and the caveat is the policy's own
+ * So the two lists below are a short version of `privacy.venue.shared` and
+ * `privacy.venue.hidden`, covering every category in each, and the caveat is
+ * the policy's own
  * honest limit repeated where the decision is actually made: `dietary` and
  * `age_group` are free text, so the projection guarantee covers the fields we
  * never send, not what someone typed into the fields we do.
@@ -68,10 +68,10 @@ export const VenueGrantStep = ({
         items={[
           t("venue.grant.shared_1"),
           t("venue.grant.shared_2"),
-          // The per-guest dish, added with 20260822000003. This list is not
-          // decoration: privacy.venue.optin promises in writing that "the app
-          // shows you exactly this list", so a column the venue reads and this
-          // list does not name makes a published document false.
+          // The per-guest dish (20260822000003). This list is not decoration:
+          // privacy.venue.optin promises in writing that the app shows this
+          // list, so a column the venue reads and this list does not name
+          // makes a published document false.
           t("venue.grant.shared_4"),
           t("venue.grant.shared_3"),
         ]}
@@ -91,10 +91,7 @@ export const VenueGrantStep = ({
       <p className="text-sm text-muted-foreground">{t("venue.grant.legal")}</p>
 
       {/* New tab, like every other legal link in the app: reading the policy
-          must never cost someone the plan they have open. `<Link>` rather than
-          a bare `<a href>` - this was the one legal link in the app doing a
-          full document load, which throws away the planner state the new tab
-          was opened to preserve. */}
+          must never cost someone the plan they have open. */}
       <Link
         to={localeDocPath("privacy", i18n.language)}
         target="_blank"

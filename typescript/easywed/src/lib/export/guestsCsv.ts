@@ -50,8 +50,8 @@ const sanitizeCell = (value: string): string =>
   CSV_INJECTION_LEAD.test(value) ? `\t${value}` : value
 
 // RFC 4180 quoting: wrap a cell in double quotes (escaping inner quotes) only
-// when it contains a quote, comma or newline. Replaces papaparse's `unparse`
-// for our one-row-at-a-time emit so we don't carry a CSV lib just for this.
+// when it contains a quote, comma or newline. Hand-rolled so we don't carry a
+// CSV library for one serializer.
 const csvCell = (value: string): string =>
   /["\r\n,]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value
 const csvRow = (cells: Array<string>): string =>

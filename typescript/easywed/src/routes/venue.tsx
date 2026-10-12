@@ -89,12 +89,10 @@ function VenueEntry() {
           apex and sessions are per-origin, so signing up here would create a
           session the couple cannot use anywhere they will actually plan.
 
-          Plain /signup, with no referral attached, and that is now the design
-          rather than a gap: venues link by invitation, so an account made here
-          cannot link to this venue until the venue sends the couple an
-          invitation link (/venue/invite/$token), which carries the venue
-          itself. The hint under the button says so. (A ?venue=<slug> parameter
-          used to ride along here; nothing ever read it.)
+          Plain /signup, with no referral attached: venues link by invitation,
+          so an account made here cannot link to this venue until the venue
+          sends the couple an invitation link (/venue/invite/$token), which
+          carries the venue itself. The hint under the button says so.
 
           `apexOrigin()` rather than SITE_ORIGIN so `pnpm dev` stays local. No
           hydration risk: this branch renders only once TenantGate has

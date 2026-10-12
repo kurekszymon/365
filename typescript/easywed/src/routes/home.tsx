@@ -124,7 +124,7 @@ function Home() {
       session.user.id,
       weddings.length === 0
         ? t("wedding")
-        : `${t("wedding")} ${weddings.length}` // rename to count
+        : `${t("wedding")} ${weddings.length}`
     )
     setCreating(false)
     if (!id) {
@@ -157,8 +157,7 @@ function Home() {
           </div>
 
           {/* This is where the landing CTA lands, so signing up has to be one
-              of the choices on screen - previously the only route to /signup
-              was a link inside the login form. */}
+              of the choices on screen. */}
           <div className="flex flex-col gap-2">
             <Button asChild>
               <Link to="/wedding/local">{t("guest_mode.start_planning")}</Link>

@@ -6,9 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { track } from "@/lib/analytics/track"
 
-// Canned prompts shown above the input, matching the mockup's suggestion-chip
-// row. Tapping one sends it immediately through the existing `send` action -
-// no new logic, just a shortcut for a common request.
+// Canned prompts shown above the input. Tapping one sends it immediately
+// through the same `send` action as the composer.
 const SUGGESTIONS = [
   "assistant.suggestion.balance_tables",
   "assistant.suggestion.seat_unassigned",

@@ -56,7 +56,7 @@ const reminders = (): Array<Reminder> => [
 
 // Guest-mode state as it actually sits on disk when the dialog opens: three
 // persisted keys. Split from the in-memory half below because the two come
-// apart in production - see the OAuth case in `seedLocalStorageOnly`'s test.
+// apart in production - see the "no guest-mode state" (OAuth) test below.
 const seedLocalStorage = () => {
   localStorage.setItem(
     PLANNER_STORAGE_KEY,

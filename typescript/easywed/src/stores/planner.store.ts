@@ -613,9 +613,9 @@ const createPlannerStore = (
       .guests.filter((g) => g.tableId === id)
       .map((g) => ({ id: g.id, seatId: g.seatId ?? null }))
 
-    // One transaction rather than the four chained writes this replaced - the
-    // attributes, the pruned seat overrides and the roster all land together or
-    // not at all. saveTableRow explains why the ordering can't live out here.
+    // One transaction: the attributes, the pruned seat overrides and the roster
+    // land together or not at all. saveTableRow explains why the ordering can't
+    // live out here.
     void saveTableRow({ ...table, seats: prunedSeats }, roster)
   },
   duplicateTable: (id) => {

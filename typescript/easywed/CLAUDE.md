@@ -33,8 +33,8 @@ The same planner UI serves both. `docs/guest-vs-account.md` is the feature matri
 
 The app uses a specific pattern that spans three places and is easy to miss:
 
-1. **Zustand stores** (`src/stores/*.ts`) hold the client state. `planner.store.ts` (halls/tables/fixtures/guests/seats, ~1.1k lines) is the big one; `global.store.ts` carries the current `weddingId`, wedding name/date, `role`, members and viewport. The rest are single-purpose UI/tooling stores.
-2. **`src/lib/sync/loadWedding.ts`** hydrates the planner/reminders/global stores from Supabase in one parallel `Promise.all`, given a wedding id. Called from `src/routes/wedding.$id.tsx` with an `AbortController`. Its sibling **`loadWeddingForVenue.ts`** does the same for a venue's peek: no guests/reminders/members request at all, seats from the `wedding_seatmap` view, and every seat labelled `venue.anonymous_guest` **at the load boundary** so every downstream renderer (canvas, guest list, `PlannerPrintView`) works unchanged. The row→entity mappers both share live in `sync/rows.ts`; there is deliberately no shared _guest_ mapper, because the two paths read different relations.
+1. **Zustand stores** (`src/stores/*.ts`) hold the client state. `planner.store.ts` (halls/tables/fixtures/guests/seats, ~1.1k lines) is the big one; `global.store.ts` carries the current `weddingId`, wedding name/date, `role`, members and the linked venue (pan/zoom lives in `view.store.ts`). The rest are single-purpose UI/tooling stores.
+2. **`src/lib/sync/loadWedding.ts`** hydrates the planner/reminders/global/menu stores from Supabase in one parallel `Promise.all` (the venue's menu catalogue follows as a second, unawaited round trip), given a wedding id. Called from `src/routes/wedding.$id.tsx` with an `AbortController`. Its sibling **`loadWeddingForVenue.ts`** does the same for a venue's peek: no guests/reminders/members request at all, seats from the `wedding_seatmap` view, and every seat labelled `venue.anonymous_guest` **at the load boundary** so every downstream renderer (canvas, guest list, `PlannerPrintView`) works unchanged. The row→entity mappers both share live in `sync/rows.ts`; there is deliberately no shared _guest_ mapper, because the two paths read different relations.
 3. **`src/lib/sync/mutations/`** - one module per entity (`wedding`, `hall`, `tables`, `guests`, `fixtures`, `reminders`, `layout`, `menu`), re-exported from `mutations/index.ts`. Store actions optimistically update Zustand state first, then fire-and-forget the matching mutation (`void insertTable(...)`).
 
 **Everything funnels through `run()` in `mutations/shared.ts`.** It is the contract, and it does four things:
@@ -94,8 +94,8 @@ Key hardening already in place:
 
 - `weddings.owner_id` is immutable from the client, enforced by the `enforce_wedding_owner_immutable` trigger (migration `20260731000003_leave_wedding.sql`). The older `revoke update (owner_id) ... from authenticated` in `20260418000002` reads like it does this but is a **no-op**: hosted Supabase grants `authenticated` table-level UPDATE, and a column revoke can't subtract from a table grant. Same for `revoke update (id) on public.profiles` - harmless there, since the UPDATE policy's `with check` already pins the column. Ownership transfer must go through a `security definer` RPC.
 - Triggers handle `updated_at`, auto-insert the `owner` row into `wedding_members` on wedding creation, and enforce table capacity server-side in both directions (`enforce_table_capacity`, `enforce_table_capacity_floor`).
-- CHECK constraints enforce enum-like fields (`shape`, `dietary`) at the DB layer - the TS unions in `planner.store.ts` mirror them.
-- Table/fixture deletes are **soft** (`deleted_at`; `loadWedding` filters `is null`). The one hard delete is inside the `replace_planner_layout` RPC.
+- CHECK constraints enforce enum-like fields (`shape`) at the DB layer - the TS unions in `planner.store.ts` mirror them. Free-form `dietary` and `age_group` get shape rules (count/length) instead, mirrored in `lib/dietary.ts` / `lib/ageGroup.ts`.
+- Table, fixture and guest deletes are **soft** (`deleted_at`; `loadWedding` filters `is null`). Halls and reminders have no `deleted_at` and are hard-deleted, and `replace_planner_layout` hard-deletes the whole layout.
 
 **Gotchas:**
 
@@ -130,7 +130,7 @@ Reminders are **not** a route - they're a tab in the planner sidebar (`component
 
 ### Planner (the main feature)
 
-`src/components/planner/` is `Canvas/` (the dnd-kit drag surface), `Header/`, `Sidebar/`, `Guests/`, `EntityForms/` and `PlannerPrintView.tsx` (driven by `print.store.ts`). Two things the folder names don't say: the same form content renders in `Sidebar/EntityEditDialog` on desktop and `MobilePanelDrawer` on mobile via the shared `PanelBody`, and reusable field components live in `EntityForms/fields/` rather than beside their form.
+`src/components/planner/` is `Canvas/` (the dnd-kit drag surface), `Header/`, `Sidebar/`, `Guests/`, `EntityForms/`, `Menu/`, `Onboarding/` (the first-run checklist) and `PlannerPrintView.tsx` (driven by `print.store.ts`). Two things the folder names don't say: the same form content renders in `Sidebar/EntityEditDialog` on desktop and `MobilePanelDrawer` on mobile via the shared `PanelBody`, and reusable field components live in `EntityForms/fields/` rather than beside their form.
 
 Multi-hall: entity `position` is **hall-local meters** (top-left origin); the hall's world position is added at render time, so moving a hall never rewrites its children. Table shapes are `round`, `rectangular`, or `custom` (polygon `Geometry`); round uses `width` as diameter. Rotation is only `0 | 90`.
 

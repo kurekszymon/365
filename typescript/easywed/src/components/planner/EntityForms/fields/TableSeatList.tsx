@@ -21,7 +21,7 @@ type TableSeatListProps = {
   fillHeight?: boolean
 }
 
-// Numbered seat list for the table edit form's "Szczegóły stołu" sub-view.
+// Numbered seat list in the table edit form.
 // Reuses `SeatAssignPopover` per seat (same search/clear/displacement logic as
 // the canvas's seat markers) rather than a third assign UI. Seat ids are
 // order-based only (no geometry), so this also works for `custom` polygon

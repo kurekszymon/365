@@ -75,9 +75,9 @@ export const run = async <T extends { error: unknown }>(
   }
 }
 
-// Maps a store Table/Fixture to its DB row (sans wedding_id, which inserts add
-// and the layout RPC supplies separately). Shared by the insert paths and the
-// `replace_planner_layout` payload so the field mapping lives in one place.
+// Map a store Hall/Table/Fixture to its DB row, minus wedding_id (inserts add
+// it; the layout RPC takes it as a separate argument). Shared by the insert
+// paths and the `replace_planner_layout` payload.
 export const hallRow = (h: Hall) => ({
   id: h.id,
   name: h.name,
@@ -131,7 +131,7 @@ export const withGeometry = <T extends { geometry?: Geometry | null }>(
 }
 
 // Position-only and soft-delete writes are identical across tables/fixtures, so
-// they're parameterized by table name; the named exports below are thin wrappers.
+// they're parameterized by table name; tables.ts / fixtures.ts wrap them.
 // `hallId` rides along on cross-hall moves so the reassignment and the new
 // position land in one write.
 export const updatePos = (

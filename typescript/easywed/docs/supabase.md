@@ -4,7 +4,7 @@ Personal notes on what's in the schema, why, and how the Supabase CLI flow works
 
 ## What the migrations do
 
-Sixteen tables and one view, across 31 migration files:
+Seventeen tables and one view, across 32 migration files:
 
 ```
 weddings                     ← top-level project
@@ -20,6 +20,7 @@ weddings                     ← top-level project
 tenants                      ← a venue, at <slug>.easywed.app
   ├─ tenant_members          ← staff, and the couples linked to them
   ├─ tenant_invitations      ← join tokens, mirroring the wedding side
+  ├─ layout_presets          ← saved room layouts a couple copies in
   └─ menu_packages           ← the catalogue the venue authors
        └─ menu_courses
             └─ menu_options
@@ -42,7 +43,7 @@ If a wedding is deleted, Postgres auto-deletes all its halls/tables/guests/remin
 
 `guests.table_id references tables(id) on delete set null` is different - deleting a table doesn't delete its guests, it just unassigns them. Matches `deleteTable` in `planner.store.ts`.
 
-**Soft vs hard delete:** normal table/fixture deletes are _soft_ (`deleted_at` is set; `loadWedding` filters on `deleted_at is null`). The one exception is the `replace_planner_layout` RPC used by the local-wedding migration (adopting a guest-mode plan into a fresh cloud wedding), which _hard_-`delete from`s all tables and fixtures for the wedding before inserting the new layout. This is intentional - it is an explicit "replace everything" action - but it means replaced layouts leave no tombstones for the rows they removed. Guest assignments to the wiped tables fall back to `NULL` via the `on delete set null` FK above.
+**Soft vs hard delete:** table, fixture and guest deletes are _soft_ (`deleted_at` is set; `loadWedding` filters on `deleted_at is null`). Halls and reminders have no `deleted_at` and are hard-deleted. The other hard delete is the `replace_planner_layout` RPC - used by the local-wedding migration and by applying a venue's layout preset - which `delete from`s every hall, table and fixture of the wedding before inserting the new layout. That is intentional (an explicit "replace everything"), but replaced layouts leave no tombstones. Guests at the wiped tables are meant to fall back to unassigned via the `on delete set null` FK above - but a guest pinned to a seat keeps `seat_id`, so the FK's `set null` trips `guests_seat_requires_table` and the whole RPC fails. Applying a preset to a wedding with any seat-pinned guest is refused today.
 
 ## Row-Level Security (RLS) - the big one
 
@@ -110,7 +111,7 @@ Joining a *wedding* needs a token the owner generated plus `claim_wedding_invita
 
 ### `tenant_invitations` and `claim_tenant_invitation` (`20260820000001`)
 
-The token flow that closes the gap the previous section used to describe. Until this migration, `tenants.open_linking` defaulted to false, the invitation-only branch of `link_wedding_to_venue` looked for a `tenant_members` row with role `customer`, and nothing but hand-written SQL could produce one — so **no couple could link to an invitation-only venue at all**.
+The token flow that closes the gap the previous section describes. Before this migration, `tenants.open_linking` defaulted to false, the invitation-only branch of `link_wedding_to_venue` required a `tenant_members` row, and nothing but hand-written SQL could produce one — so **no couple could link to an invitation-only venue at all**.
 
 `tenant_invitations` mirrors `wedding_invitations` field for field (token, `invited_by`, 14-day `expires_at`, `claimed_at` / `claimed_by`), and the three properties that make that shape safe carry over: the row names no user, the claim is made by the recipient with their own session, and invitees need no SELECT because the definer function reads the row itself.
 
@@ -140,7 +141,7 @@ The same migration adds `"members can leave their tenant"` (`user_id = auth.uid(
 
 Seed fixtures for clicking through it by hand are listed in the `tenant_invitations` block of `supabase/seed.sql` (live, staff, expired and suspended tokens). Test files share one database and run concurrently, which is why `staffTenant.test.ts` signs out with `scope: "local"`: the supabase-js default, `"global"`, revokes every session of that seed account, including the ones the sibling suites are mid-test with.
 
-Client side: `claimTenantInvitation` in `src/lib/sync/tenant.ts`, the claim page at `/venue/invite/$token`, and the CRM roster at `/crm/roster`. The claim route lives under the `/invite/` segment on purpose — `scrubInviteTokens` matches that substring anywhere, so both token routes are redacted out of PostHog by one pattern. `robots.txt` cannot share the trick and needs its own `Disallow: /venue/invite/`, because Disallow is a prefix match from the root. `src/lib/sync/tenantInvitations.test.ts` asserts the whole matrix against the running database.
+Client side: `claimTenantInvitation` (staff) and `acceptCustomerInvitation` (couples) in `src/lib/sync/tenant.ts`, the invitation page at `/venue/invite/$token`, and the CRM roster at `/crm/roster`. The claim route lives under the `/invite/` segment on purpose — `scrubInviteTokens` matches that substring anywhere, so both token routes are redacted out of PostHog by one pattern. `robots.txt` cannot share the trick and needs its own `Disallow: /venue/invite/`, because Disallow is a prefix match from the root. `src/lib/sync/tenantInvitations.test.ts` asserts the whole matrix against the running database.
 
 ### Venue menus (`20260822000001`)
 
@@ -287,10 +288,13 @@ Triggers are "on event X, run function Y" - like `useEffect` but running inside 
 
 - **`set_updated_at`**: on every UPDATE, bump `updated_at = now()`. Automatic, can't be forgotten.
 - **`handle_new_wedding`**: when a wedding is INSERTed, auto-insert an `owner` row in `wedding_members`. Avoids a race where the creator briefly isn't a member of their own wedding.
-- **`enforce_table_capacity`**: on guest INSERT/UPDATE, counts current assignees and rejects if over capacity. Mirrors the client check in `assignGuestToTable` - client for UX, DB for correctness under races.
+- **`enforce_table_capacity`**: on guest INSERT/UPDATE, counts current assignees and rejects if over capacity. Mirrors the client checks (`assignGuestToSeat`, `buildGuests` in the import) - client for UX, DB for correctness under races.
+- **`enforce_table_capacity_floor`** (`20260804000002`): the other direction - refuses shrinking a table's capacity below the guests already at it. The two want opposite write orders, which is why a table edit goes through the `save_table` RPC.
 - **`handle_new_user`**: on `auth.users` INSERT, create the matching `profiles` row (see above).
 
 - **`enforce_wedding_owner_immutable`**: on every `weddings` UPDATE, rejects a changed `owner_id` when the caller is `authenticated` or `anon` (see below).
+
+The rest are covered where they matter: the `wedding_id`-immutability and same-wedding checks (`20260816000001`), `enforce_wedding_tenant_columns` and `tenants_immutable_columns` (venue section above), and the menu triggers (`20260822000002` / `…003`).
 
 **Local vs remote gotcha, and why the column revokes don't work:** on a local `supabase db reset`, the `authenticated` role ends up with no CRUD grants on `public` tables (`relacl` shows only `Dxtm`) - hosted Supabase grants them via default privileges. That difference hides a real bug rather than just being an inconvenience: column-level statements like `revoke update (owner_id) on weddings` and `revoke update (id) on profiles` are **no-ops on remote precisely because the table-level grant is there** - a column revoke cannot subtract from a table grant, and the column privilege was never separately granted, so there is nothing to revoke. Locally they *appear* to hold only because `authenticated` has no grant at all. Both are defence in depth at best; the real guards are the trigger below (`owner_id`) and the UPDATE policy's `with check (id = auth.uid())` (`profiles.id`).
 
@@ -308,7 +312,7 @@ Nothing stopped that until this trigger. The `revoke` above does nothing (see th
 
 ```sql
 capacity integer not null check (capacity > 0),
-shape text not null check (shape in ('round', 'rectangular')),
+shape text not null check (shape in ('round', 'rectangular', 'custom')),
 dietary text[] not null check (public.dietary_tags_valid(dietary)),
 age_group text check (age_group is null or char_length(age_group) between 1 and 24)
 ```

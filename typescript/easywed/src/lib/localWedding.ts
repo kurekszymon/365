@@ -63,10 +63,10 @@ const safeRemoveItem = (key: string): void => {
   }
 }
 
-// Gates writes so the planner/global stores only ever persist to localStorage
-// while the local wedding is the active one - editing a cloud wedding (same
-// store instances) must never leak into these keys. Reads always pass
-// through.
+// Gates writes so the planner/global/reminders stores only persist to
+// localStorage while the local wedding is the active one - editing a cloud
+// wedding (same store instances) must never leak into these keys. Reads always
+// pass through.
 export const createLocalGatedStorage = (): StateStorage => ({
   getItem: (name) => safeGetItem(name),
   setItem: (name, value) => {

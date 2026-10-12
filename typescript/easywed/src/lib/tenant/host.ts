@@ -2,7 +2,7 @@
 //
 // Pure string parsing, zero network, zero store reads: `TenantGate` and the root
 // `beforeLoad` both need the answer *synchronously*, before any await, so the
-// apex pays nothing for v2.
+// apex pays nothing for tenant support.
 //
 // **Not a security boundary.** A slug that survives this is still looked up
 // through `tenant_public()` and guarded by RLS. The reserved list and the regex

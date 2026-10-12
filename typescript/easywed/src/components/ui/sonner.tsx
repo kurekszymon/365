@@ -7,7 +7,8 @@ import {
   Loader2Icon,
 } from "lucide-react"
 
-// The app has no theme system (light-only), so we don't pull in next-themes.
+// Every palette in theme.store is light - it switches palettes, not light/dark -
+// so the toaster takes no theme and next-themes is not pulled in.
 const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner

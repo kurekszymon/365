@@ -8,7 +8,7 @@ import {
 
 // `tenantSlugFromHost` runs synchronously in `beforeLoad` on every navigation,
 // including every existing apex user's. Two things have to hold and neither is
-// visible at a call site: the apex is null (nobody pays for v2), and nothing
+// visible at a call site: the apex is null (no apex visitor pays for tenants), and nothing
 // that is not a real tenant slug gets far enough to become an RPC.
 
 describe("tenantSlugFromHost", () => {

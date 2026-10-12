@@ -33,9 +33,8 @@ const PUBLIC_PATHS = [
 ]
 
 // Hydrates the Supabase session into the auth store and re-runs router
-// matches on any auth change. Route-level beforeLoad handlers own the
-// actual redirect decisions (see src/routes/index.tsx, wedding.$id.tsx,
-// reminders/index.tsx, login.tsx, invite.$token.tsx).
+// matches on any auth change. It never redirects: the decisions live in
+// lib/auth/guards.ts, called from route beforeLoad handlers.
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const isReady = useAuthStore((s) => s.isReady)
   const setSession = useAuthStore((s) => s.setSession)

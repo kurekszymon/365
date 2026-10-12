@@ -10,7 +10,7 @@ Polish is the main language, and English is fully supported.
 - **Guests**: dietary tags, notes, CSV/XLSX import with column mapping, and export to CSV (flat or grouped by table) or a printable PDF.
 - **Guest mode**: no account needed, and the whole plan lives in `localStorage`. Signing up later adopts the plan into the account in one atomic RPC.
 - **Sharing**: invite links for `owner` / `editor` / `viewer`, plus a derived `venue` role that sees a pseudonymised seat map (no guest names or notes).
-- **Venues (tenants)**: `<slug>.easywed.app` hosts a venue landing page and a staff CRM with menu packages, linked weddings, a kitchen report and staff invitations.
+- **Venues (tenants)**: `<slug>.easywed.app` hosts a venue landing page and a staff CRM with menu packages, linked weddings, a kitchen report, and staff and couple invitations. Venue layout presets are saved from the planner.
 - **Reminders** and a **menu** tab (when the wedding is linked to a venue).
 - **AI assistant** (bring your own key): any OpenAI-compatible endpoint (OpenRouter by default, with llama.cpp presets). Requests go straight from the browser to that endpoint, and the assistant edits the layout through tools.
 
@@ -66,7 +66,7 @@ VITE_PUBLIC_POSTHOG_HOST=
 | `pnpm typecheck`             | `tsc --noEmit`                                                       |
 | `pnpm lint` / `format`       | ESLint / Prettier                                                    |
 | `pnpm types:gen`             | Supabase types from the local DB                                     |
-| `pnpm legal:check`           | fails while `src/lib/legal/config.ts` has placeholders               |
+| `pnpm legal:check`           | fails while `src/lib/legal/config.ts` has placeholders or `launchReviewed: false` |
 | `pnpm deploy:pages`          | `legal:check` → build → `wrangler pages deploy`                      |
 
 `supabase db reset` re-applies every migration and is the fast loop while you edit one. Once a migration is pushed to remote, never edit it; add a new one instead.
@@ -86,7 +86,7 @@ src/
 supabase/
   migrations/       schema, RLS, triggers, RPCs
 templates/          Supabase auth email templates
-docs/               supabase.md, guest-vs-account.md, DEVLOG.md, copy-voice.md, outreach/
+docs/               supabase.md, guest-vs-account.md, current-state.md, DEVLOG.md, copy-voice.md, testing/, outreach/
 ```
 
 ## Related

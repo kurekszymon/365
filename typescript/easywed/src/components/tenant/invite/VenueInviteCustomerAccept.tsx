@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button"
  * A signed-in couple holding a customer invitation, on the apex: pick a plan,
  * accept, and land in it with the venue dialog open.
  *
- * Nothing is spent until "Accept": the page used to claim on load, which also
- * let the wrong partner burn a link they could never use. The orchestration
+ * Nothing is spent until "Accept": claiming on load would let the wrong
+ * partner burn a link they could never use. The orchestration
  * lives in `useCustomerInviteAccept`; this only lays the pieces out.
  */
 export const VenueInviteCustomerAccept = ({
