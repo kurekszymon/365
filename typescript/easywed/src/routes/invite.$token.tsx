@@ -13,7 +13,9 @@ export const Route = createFileRoute("/invite/$token")({
   component: InviteClaim,
 })
 
-type Status = { kind: "claiming" } | { kind: "error"; message: string }
+type Status =
+  | { kind: "claiming" }
+  | { kind: "error"; reason: "invalid" | "failed" }
 
 function InviteClaim() {
   const { t } = useTranslation()
@@ -30,10 +32,11 @@ function InviteClaim() {
       .then(({ data, error }) => {
         if (controller.signal.aborted) return
         if (error || !data) {
-          setStatus({
-            kind: "error",
-            message: error?.message ?? t("invite.invalid"),
-          })
+          if (error) console.error("[invite] claim failed", error)
+          // The RPC raises plain P0001 for a bad or expired token; anything
+          // else (network, 5xx) is worth a retry rather than a new link.
+          const invalid = !error || error.code === "P0001"
+          setStatus({ kind: "error", reason: invalid ? "invalid" : "failed" })
           return
         }
         // No properties: the token is a bearer credential (which is why
@@ -44,12 +47,12 @@ function InviteClaim() {
       })
 
     return () => controller.abort()
-  }, [token, navigate, t])
+  }, [token, navigate])
 
   return (
     <div className="flex min-h-svh items-center justify-center p-6 text-sm">
       {status.kind === "error" ? (
-        <p className="text-destructive">{status.message}</p>
+        <p className="text-destructive">{t(`invite.${status.reason}`)}</p>
       ) : (
         <p className="text-muted-foreground">{t("invite.claiming")}</p>
       )}

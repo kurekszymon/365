@@ -774,7 +774,7 @@
   "venue.link.no_invite": "Plans are linked to a venue by invitation. Ask your venue for an invitation link and open it while signed in to this account - it will offer this plan.",
   "venue.link.change_via_invite": "{{name}} is the venue on your account. To move this plan to a different venue, open the invitation link that venue sends you - it will ask before switching.",
   "venue.change": "Change venue",
-  "venue.link.error.not_found": "No venue at that address. Check the spelling.",
+  "venue.link.error.not_found": "This venue is no longer on easywed. Ask them for a new invitation link.",
   "venue.link.error.suspended": "This venue is not accepting links at the moment. Contact them directly.",
   "venue.link.error.invitation_only": "This venue accepts links by invitation only. Open the invitation link the venue sent you.",
   "venue.link.error.failed": "Could not link the venue. Please try again.",
@@ -839,6 +839,7 @@
   "members.locked.cta": "Sign in to invite people",
 
   "invite.claiming": "Joining wedding…",
+  "invite.failed": "Could not join the wedding. Check your connection and reload the page.",
   "invite.invalid": "This invitation is invalid or expired. Ask whoever invited you for a new link.",
 
   "wedding": "Wedding",

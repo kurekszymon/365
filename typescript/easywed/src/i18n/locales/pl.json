@@ -782,7 +782,7 @@
   "venue.link.no_invite": "Plan wiąże się z salą przez zaproszenie. Poproś salę o link z zaproszeniem i otwórz go po zalogowaniu na to konto - zaproponuje ten plan.",
   "venue.link.change_via_invite": "Na Twoim koncie jest sala {{name}}. Żeby przenieść ten plan do innej sali, otwórz link z zaproszeniem od tej sali - zapyta, zanim cokolwiek zmieni.",
   "venue.change": "Zmień salę",
-  "venue.link.error.not_found": "Nie ma sali pod tym adresem. Sprawdź pisownię.",
+  "venue.link.error.not_found": "Tej sali nie ma już w easywed. Poproś ją o nowy link z zaproszeniem.",
   "venue.link.error.suspended": "Ta sala w tej chwili nie przyjmuje powiązań. Skontaktuj się z nią bezpośrednio.",
   "venue.link.error.invitation_only": "Ta sala przyjmuje powiązania tylko na zaproszenie. Otwórz link z zaproszeniem od tej sali.",
   "venue.link.error.failed": "Nie udało się powiązać sali. Spróbuj ponownie.",
@@ -848,6 +848,7 @@
   "members.locked.cta": "Zaloguj się, aby zapraszać",
 
   "invite.claiming": "Dołączanie do wesela…",
+  "invite.failed": "Nie udało się dołączyć do wesela. Sprawdź połączenie i odśwież stronę.",
   "invite.invalid": "To zaproszenie jest nieprawidłowe lub wygasło. Poproś osobę, która Cię zaprosiła, o nowy link.",
 
   "wedding": "Wesele",

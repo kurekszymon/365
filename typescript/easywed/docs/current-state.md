@@ -501,6 +501,8 @@ The PT410 paths are tested against the seeded suspended `stodola`; nothing tests
 
 1. **Applying a layout preset fails when any guest is seat-pinned.** `replace_planner_layout` hard-deletes `tables`; the FK's `on delete set null` clears `guests.table_id` but leaves `seat_id`, which trips `guests_seat_requires_table` and aborts the RPC. Reproduced with `psql`. Fix needs a new migration (clear `seat_id` for the wedding's guests before the delete).
 2. **Password reset on a venue host signs staff out.** `/forgot-password` builds the reset link on the current origin, and `reset-password.tsx` then hardcodes `navigate({ to: "/home" })`; `/home` is apex-only, so the root guard sends them to an origin with no session. Should be `authLandingPath()`.
+3. **Kitchen numbering puts unseated guests first.** `loadWeddingForVenue.ts` sorts seats by `tableOrder(table_id)`, which maps a null table to `"~"` meaning "last" - but `localeCompare` orders `~` before letters and digits, so unseated guests get the lowest pseudonym numbers. Compare nulls explicitly instead.
+4. **Seat overrides are dropped when a guest plan moves into an account.** `replace_planner_layout` never writes `tables.seats`, so custom seat positions from guest mode are lost on migration (and on preset apply, which is a fresh layout anyway).
 
 ### 11.6 Marketing copy vs code (`venues.*` in `pl.json`)
 
