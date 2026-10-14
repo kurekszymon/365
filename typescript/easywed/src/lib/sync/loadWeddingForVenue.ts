@@ -145,7 +145,7 @@ export const loadWeddingForVenue = async (id: string, signal: AbortSignal) => {
   // the list - still a head count the kitchen needs.
   const seatRows = [...seatsRes.data].sort(
     (a, b) =>
-      tableOrder(a.table_id).localeCompare(tableOrder(b.table_id)) ||
+      compareTables(a.table_id, b.table_id) ||
       seatOrder(a.seat_id) - seatOrder(b.seat_id) ||
       (a.id ?? "").localeCompare(b.id ?? "")
   )
@@ -225,10 +225,16 @@ export const clearVenuePeek = () => {
   useMenuStore.getState().clear()
 }
 
-// Unassigned rows sort last in both keys. `~` is above every character a uuid
-// can contain, so it puts a null table after every real one without a second
-// comparison branch.
-const tableOrder = (tableId: string | null): string => tableId ?? "~"
+// Unassigned rows sort last in both keys. The null table is compared
+// explicitly: a sentinel string like "~" looks like it sorts last, but
+// `localeCompare` ranks punctuation before letters and digits, which put
+// unseated guests at the top and gave them the lowest pseudonym numbers.
+export const compareTables = (a: string | null, b: string | null): number => {
+  if (a === b) return 0
+  if (a === null) return 1
+  if (b === null) return -1
+  return a.localeCompare(b)
+}
 
 const seatOrder = (seatId: string | null): number =>
   seatId === null ? Number.MAX_SAFE_INTEGER : (seatIndexFromId(seatId) ?? 0)

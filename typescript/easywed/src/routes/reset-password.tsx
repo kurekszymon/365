@@ -3,6 +3,7 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { supabase } from "@/lib/supabase"
 import { authErrorKey } from "@/lib/auth/authErrors"
+import { authLandingPath } from "@/lib/auth/guards"
 import { useAuthStore } from "@/stores/auth.store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -53,7 +54,10 @@ function ResetPassword() {
 
     // The recovery session is a real session, so this is where they are signed
     // in from. replace, so Back doesn't return to a form whose token is spent.
-    navigate({ to: "/home", replace: true })
+    // Not a hardcoded /home: the reset link is built on the origin it was
+    // requested from, and /home is apex-only, so staff resetting on a venue
+    // host would be carried to an origin their session does not exist on.
+    navigate({ to: authLandingPath(), replace: true })
   }
 
   const isLoading = status.kind === "loading"
