@@ -64,7 +64,7 @@ export const MobilePanelDrawer = () => {
             <button
               type="button"
               onClick={close}
-              className="flex size-9 items-center justify-center rounded-full bg-primary text-primary-foreground"
+              className="flex size-9 pressable items-center justify-center rounded-full bg-primary text-primary-foreground active:bg-primary/85"
               aria-label={t("common.done")}
             >
               <CheckIcon className="size-5" />
@@ -73,7 +73,7 @@ export const MobilePanelDrawer = () => {
             <button
               type="button"
               onClick={close}
-              className="rounded-sm text-muted-foreground hover:text-foreground"
+              className="-m-1 pressable rounded-full p-1 text-muted-foreground hover:text-foreground active:bg-muted active:text-foreground"
               aria-label={t("common.close")}
             >
               <XIcon className="size-5" />

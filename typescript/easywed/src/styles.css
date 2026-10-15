@@ -299,6 +299,22 @@ body.is-panning * {
     color-mix(in oklch, var(--planner-selected) 18%, transparent);
 }
 
+/* Pressed-state feedback for hand-rolled buttons (shadcn's Button has its
+   own). Phones have no hover, so without this a tap gives no response until
+   whatever it opens appears. Shrinks on press; each button adds its own
+   `active:` tint. The short transition makes the press land at once and the
+   release ease back. The grey iOS/Android tap flash is turned off because
+   the tint replaces it. */
+@utility pressable {
+  -webkit-tap-highlight-color: transparent;
+  transition-property: scale, background-color, color, opacity;
+  transition-duration: 100ms;
+  transition-timing-function: ease-out;
+  &:active {
+    scale: 0.95;
+  }
+}
+
 /* https://developers.google.com/identity/branding-guidelines */
 .gsi-material-button {
   -moz-user-select: none;

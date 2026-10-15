@@ -23,10 +23,10 @@ export const CanvasActionButton = ({
       <button
         type="button"
         className={cn(
-          "cursor-pointer rounded-md border bg-background p-1 shadow-sm",
+          "pressable cursor-pointer rounded-md border bg-background p-1 shadow-sm",
           variant === "danger"
-            ? "border-red-200 text-red-600 hover:bg-red-50"
-            : "border-planner-table-border text-planner-table-foreground hover:bg-planner-soft"
+            ? "border-red-200 text-red-600 hover:bg-red-50 active:bg-red-100"
+            : "border-planner-table-border text-planner-table-foreground hover:bg-planner-soft active:bg-planner-soft"
         )}
         aria-label={label}
         onClick={onClick}

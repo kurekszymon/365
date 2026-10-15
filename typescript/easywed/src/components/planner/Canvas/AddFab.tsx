@@ -16,7 +16,7 @@ export const AddFab = () => {
       data-no-pan
       onClick={() => openAddHub()}
       aria-label={t("hall.add_hub.title")}
-      className="absolute right-4 bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] z-20 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_14px_28px_-10px_var(--color-primary)]"
+      className="absolute right-4 bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] z-20 flex size-14 pressable items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_14px_28px_-10px_var(--color-primary)] active:bg-primary/85"
     >
       <PlusIcon className="size-7" />
     </button>

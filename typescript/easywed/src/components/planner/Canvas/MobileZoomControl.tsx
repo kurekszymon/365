@@ -21,7 +21,7 @@ export const MobileZoomControl = ({
       <button
         type="button"
         aria-label={t("canvas.zoom.in")}
-        className="flex size-9 items-center justify-center text-foreground"
+        className="flex size-9 pressable items-center justify-center rounded-full text-foreground active:bg-muted"
         onClick={zoomIn}
       >
         <PlusIcon className="size-4" />
@@ -29,7 +29,7 @@ export const MobileZoomControl = ({
       <button
         type="button"
         aria-label={t("canvas.zoom.out")}
-        className="flex size-9 items-center justify-center text-foreground"
+        className="flex size-9 pressable items-center justify-center rounded-full text-foreground active:bg-muted"
         onClick={zoomOut}
       >
         <MinusIcon className="size-4" />

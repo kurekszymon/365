@@ -15,6 +15,15 @@ import { cn } from "@/lib/utils"
 
 const TABS: Array<MobileListTab> = ["guests", "tables", "fixtures", "reminders"]
 
+// The tab whose drawer is open takes the primary colour, like a native tab
+// bar. A press dims the icon + label rather than tinting the cell - the cells
+// are edge-to-edge, so a background tint would read as a hard block.
+const tabButtonClass = (isActive: boolean) =>
+  cn(
+    "flex pressable flex-col items-center gap-1 py-3 active:opacity-60",
+    isActive ? "text-primary" : "text-muted-foreground"
+  )
+
 /**
  * Mobile counterpart of the desktop `Sidebar/SidebarRail`: a fixed bottom bar
  * with Guests / Tables / Fixtures buttons (replacing the old guests-only
@@ -48,6 +57,8 @@ export const MobileTabBar = () => {
   useEffect(() => {
     if (panelView) close()
   }, [panelView, close])
+  // The assistant has no list drawer - its "open" state is the panel view.
+  const isAiChatOpen = panelView?.kind === "ai_chat"
 
   const openAiChat = usePanelStore((state) => state.openAiChat)
   // Every assistant tool is a write, so a viewer gets no assistant tab - same
@@ -79,7 +90,8 @@ export const MobileTabBar = () => {
             key={tab}
             type="button"
             onClick={() => openTab(tab)}
-            className="flex flex-col items-center gap-1 py-3 text-muted-foreground"
+            aria-current={isOpen && listTab === tab ? "true" : undefined}
+            className={tabButtonClass(isOpen && listTab === tab)}
           >
             <TabBadgeIcon tab={tab} badgeCount={badgeCount[tab]} />
             <span className="max-w-full truncate px-0.5 text-[11px] font-semibold">
@@ -91,7 +103,8 @@ export const MobileTabBar = () => {
           <button
             type="button"
             onClick={() => openAiChat()}
-            className="flex flex-col items-center gap-1 py-3 text-muted-foreground"
+            aria-current={isAiChatOpen ? "true" : undefined}
+            className={tabButtonClass(isAiChatOpen)}
           >
             <TabBadgeIcon tab="ai_chat" badgeCount={0} />
             <span className="max-w-full truncate px-0.5 text-[11px] font-semibold">
@@ -113,11 +126,12 @@ export const MobileTabBar = () => {
                 key={tab}
                 type="button"
                 onClick={() => openTab(tab)}
+                aria-current={listTab === tab ? "true" : undefined}
                 className={cn(
-                  "truncate rounded-full px-2 py-2 text-sm font-semibold transition-colors",
+                  "pressable truncate rounded-full px-2 py-2 text-sm font-semibold",
                   listTab === tab
                     ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
+                    : "bg-muted text-muted-foreground active:bg-accent"
                 )}
               >
                 {tabLabel(tab)}
