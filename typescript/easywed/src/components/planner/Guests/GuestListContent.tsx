@@ -369,7 +369,7 @@ export const GuestListContent = () => {
                         {t("guests.status.seated_at", { table: seatedAt })}
                       </p>
                     ) : (
-                      <span className="mt-1 inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold text-accent-foreground">
+                      <span className="mt-1 inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-2xs font-bold text-accent-foreground">
                         {t("guests.status.unseated")}
                       </span>
                     )}

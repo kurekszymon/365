@@ -151,7 +151,12 @@ function ResponsiveDialogTitle({
 }: React.ComponentProps<typeof DialogTitle>) {
   const isDrawer = useIsDrawer()
   // Serif title across every dialog/drawer for a warmer, more editorial feel.
-  const classes = cn("font-heading text-lg", className)
+  // Playfair is a high-contrast display face - its hairlines thin out below
+  // ~20px - so it's set at 20px and the 600 weight, never smaller or lighter.
+  const classes = cn(
+    "font-heading text-xl leading-tight font-semibold",
+    className
+  )
   return isDrawer ? (
     <DrawerTitle className={classes} {...props} />
   ) : (

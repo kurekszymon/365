@@ -59,7 +59,9 @@ export const MobilePanelDrawer = () => {
     <Drawer open={isOpen} onOpenChange={(open) => !open && close()}>
       <DrawerContent aria-describedby={undefined}>
         <DrawerHeader className="flex flex-row items-center justify-between">
-          <DrawerTitle className="font-heading text-lg">{title}</DrawerTitle>
+          <DrawerTitle className="font-heading text-xl leading-tight font-semibold">
+            {title}
+          </DrawerTitle>
           {isFormView ? (
             <button
               type="button"

@@ -177,7 +177,7 @@ export const SeatAssignSheet = ({
                       <span className="flex size-8 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">
                         {getInitials(occupant.name)}
                       </span>
-                      <span className="w-full truncate text-[10px] text-muted-foreground">
+                      <span className="w-full truncate text-2xs text-muted-foreground">
                         {occupant.name}
                       </span>
                     </div>
@@ -201,7 +201,7 @@ export const SeatAssignSheet = ({
                     <span className="flex size-8 items-center justify-center rounded-full border border-dashed text-[10px] text-muted-foreground">
                       {index + 1}
                     </span>
-                    <span className="w-full truncate text-[10px] text-muted-foreground">
+                    <span className="w-full truncate text-2xs text-muted-foreground">
                       {isCurrentGuest ? t("seats.current") : t("seats.empty")}
                     </span>
                   </button>

@@ -206,7 +206,7 @@ export const SeatAssignPopover = ({
               .filter((section) => section.items.length > 0)
               .map((section) => (
                 <div key={section.key} className="space-y-1">
-                  <p className="px-1 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+                  <p className="px-1 text-2xs font-medium tracking-wide text-muted-foreground uppercase">
                     {section.label}
                   </p>
                   {section.items.map((guest) =>

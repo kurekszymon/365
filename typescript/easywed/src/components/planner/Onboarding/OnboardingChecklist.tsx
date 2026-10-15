@@ -95,7 +95,7 @@ export const OnboardingChecklist = () => {
             {allDone ? t("onboarding.done.title") : t("onboarding.title")}
           </p>
           {allDone && (
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="mt-1 text-2xs text-muted-foreground">
               {t("onboarding.done.desc")}
             </p>
           )}

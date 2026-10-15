@@ -53,7 +53,7 @@ export const StatusBar = ({ isMeasureStarted }: StatusBarProps) => {
           {t(isMeasureStarted ? "measure.statusbar_drop" : "measure.statusbar")}
         </span>
         <span className="flex items-center gap-1.5">
-          <kbd className="rounded border border-planner-table-border bg-background px-1.5 py-0.5 font-mono text-[10px]">
+          <kbd className="rounded border border-planner-table-border bg-background px-1.5 py-0.5 font-mono text-2xs">
             Esc
           </kbd>
           <span className="text-planner-selected/80">

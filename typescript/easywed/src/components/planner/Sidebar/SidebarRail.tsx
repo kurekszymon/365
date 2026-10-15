@@ -123,7 +123,7 @@ export const SidebarRail = () => {
                 badgeCount={badgeCount[tab]}
                 active={isActive}
               />
-              <span className="px-0.5 text-center text-[10px] leading-tight font-bold text-muted-foreground">
+              <span className="px-0.5 text-center text-2xs leading-tight font-bold text-muted-foreground">
                 {tabLabel(tab)}
               </span>
             </button>

@@ -34,7 +34,7 @@ export function LocaleLanding({ lang }: { lang: Lang }) {
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
-      <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b floating-surface">
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-6">
           <Link to="/" className="font-heading text-xl font-semibold">
             easywed.

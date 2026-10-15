@@ -220,7 +220,7 @@ export const GuestAssignmentPicker = ({
                               <p>
                                 {getSeatedElsewhereMessage(seatedElsewhereAt)}
                               </p>
-                              <p className="text-[11px] opacity-90">
+                              <p className="text-2xs opacity-90">
                                 {t("tables.seated_elsewhere.hint")}
                               </p>
                             </div>

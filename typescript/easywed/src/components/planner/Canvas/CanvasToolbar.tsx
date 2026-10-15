@@ -57,7 +57,7 @@ export const CanvasToolbar = () => {
     >
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="flex shrink-0 items-center rounded-md border bg-background/80 text-[10px] text-muted-foreground backdrop-blur-sm">
+          <div className="flex shrink-0 items-center rounded-md border floating-surface text-2xs text-muted-foreground">
             <button
               type="button"
               className="cursor-pointer px-1.5 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 max-md:px-2.5 max-md:py-2"
@@ -91,7 +91,7 @@ export const CanvasToolbar = () => {
           <button
             type="button"
             onClick={() => setGridStyle(NEXT_GRID_STYLE[gridStyle])}
-            className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-sm max-md:py-2"
+            className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border floating-surface px-2 py-1 text-2xs text-muted-foreground max-md:py-2"
           >
             {GRID_ICON[gridStyle]}
             <span className="max-md:hidden">
@@ -106,10 +106,10 @@ export const CanvasToolbar = () => {
         <TooltipTrigger asChild>
           <button
             type="button"
-            className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] backdrop-blur-sm max-md:py-2 ${
+            className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 text-2xs max-md:py-2 ${
               isMeasuring
                 ? "border-planner-selected bg-planner-soft text-planner-selected"
-                : "text-muted-foreground hover:text-foreground"
+                : "floating-surface text-muted-foreground hover:text-foreground"
             }`}
             onClick={toggleMeasuring}
             aria-pressed={isMeasuring}
@@ -125,13 +125,13 @@ export const CanvasToolbar = () => {
         <TooltipTrigger asChild>
           <button
             type="button"
-            className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[10px] backdrop-blur-sm max-md:py-2 ${
+            className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 text-2xs max-md:py-2 ${
               showSeats
                 ? // Same themed active treatment as the measure toggle - the old
                   // hardcoded emerald classes didn't follow the palette or dark
                   // mode.
                   "border-planner-selected bg-planner-soft text-planner-selected"
-                : "text-muted-foreground hover:text-foreground"
+                : "floating-surface text-muted-foreground hover:text-foreground"
             }`}
             onClick={toggleSeats}
             aria-pressed={showSeats}
@@ -148,7 +148,7 @@ export const CanvasToolbar = () => {
           <TooltipTrigger asChild>
             <button
               type="button"
-              className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-planner-selected bg-planner-soft px-2 py-1 text-[10px] text-planner-selected backdrop-blur-sm max-md:py-2"
+              className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-planner-selected bg-planner-soft px-2 py-1 text-2xs text-planner-selected max-md:py-2"
               onClick={() =>
                 setMeasureMode(measureMode === "center" ? "border" : "center")
               }

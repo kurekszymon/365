@@ -94,7 +94,7 @@ export const MobileTabBar = () => {
             className={tabButtonClass(isOpen && listTab === tab)}
           >
             <TabBadgeIcon tab={tab} badgeCount={badgeCount[tab]} />
-            <span className="max-w-full truncate px-0.5 text-[11px] font-semibold">
+            <span className="max-w-full truncate px-0.5 text-2xs font-semibold">
               {tabLabel(tab)}
             </span>
           </button>
@@ -107,7 +107,7 @@ export const MobileTabBar = () => {
             className={tabButtonClass(isAiChatOpen)}
           >
             <TabBadgeIcon tab="ai_chat" badgeCount={0} />
-            <span className="max-w-full truncate px-0.5 text-[11px] font-semibold">
+            <span className="max-w-full truncate px-0.5 text-2xs font-semibold">
               {t("assistant.title")}
             </span>
           </button>
