@@ -28,7 +28,10 @@ import {
   padVersion,
   parseReleases,
   parseSemver,
+  parseTagRefs,
   previousTag as previousTagFor,
+  tagDrift,
+  tagForVersion,
   utcIsoDate,
 } from "./lib/release.mjs"
 
@@ -64,7 +67,14 @@ if (!releases?.length) fail(`could not read RELEASES from ${RELEASES_PATH}`)
 const latest = releases[0]
 
 const tag = `${TAG_PREFIX}${version}`
-const tags = git("tag", "-l", `${TAG_PREFIX}*`).split("\n").filter(Boolean)
+const localTags = parseTagRefs(
+  git(
+    "for-each-ref",
+    `refs/tags/${TAG_PREFIX}*`,
+    "--format=%(refname:short) %(objectname)"
+  )
+)
+const tags = [...localTags.keys()]
 // Already tagged means this is a redeploy of a shipped release (a hotfix
 // build, a rollback, a preview from the tag), so "is it new" doesn't apply
 // and "is it today" becomes "is it the day it was tagged" - see 3a.
@@ -73,6 +83,59 @@ const redeploy = tags.includes(tag)
 // The release this one is measured against: the newest tag below its version.
 // For a rollback that is the tag before it, not the newer one rolled back from.
 const previousTag = previousTagFor(tags, TAG_PREFIX, version)
+
+// --- 0. The tags are the remote's --------------------------------------------
+
+// 0a. Everything below reads the local tags, which are only as fresh as the
+//     last fetch. A tag missing here makes a shipped version look unreleased
+//     (2a passes, 3a wants today) and 4a diff against an older release; a tag
+//     that differs points at a commit that isn't the one that shipped. Both
+//     are errors. A local tag not on the remote is only a warning - it is
+//     right here, just not shared yet. No network is a warning, not a block:
+//     a deploy shouldn't depend on reaching GitHub.
+let remoteTagNames = []
+try {
+  const remoteTags = parseTagRefs(
+    execFileSync(
+      "git",
+      ["ls-remote", "--tags", "origin", `refs/tags/${TAG_PREFIX}*`],
+      {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+        timeout: 15_000,
+        // Fail instead of waiting on a password or passphrase prompt nobody
+        // expects from a check.
+        env: {
+          ...process.env,
+          GIT_TERMINAL_PROMPT: "0",
+          GIT_SSH_COMMAND:
+            process.env.GIT_SSH_COMMAND ?? "ssh -o BatchMode=yes",
+        },
+      }
+    )
+  )
+  remoteTagNames = [...remoteTags.keys()]
+  const { notFetched, notPushed, differs } = tagDrift(localTags, remoteTags)
+  if (notFetched.length) {
+    errors.push(
+      `origin has tags this clone doesn't: ${notFetched.join(", ")} - run \`git fetch --tags\``
+    )
+  }
+  if (differs.length) {
+    errors.push(
+      `local and origin disagree on ${differs.join(", ")} - one of them was re-tagged; work out which is the shipped commit before deploying`
+    )
+  }
+  if (notPushed.length) {
+    warnings.push(
+      `tags not pushed to origin: ${notPushed.join(", ")} - \`git push origin ${notPushed.join(" ")}\``
+    )
+  }
+} catch {
+  warnings.push(
+    "could not reach origin to compare tags - the checks below use local tags only"
+  )
+}
 
 // --- 1. Version and release table agree --------------------------------------
 
@@ -123,6 +186,22 @@ if (!redeploy && lastTag) {
 if (redeploy && git("rev-parse", "HEAD") !== git("rev-list", "-n", "1", tag)) {
   warnings.push(
     `${tag} already exists but HEAD is not the tagged commit - you are deploying ${version} with changes the tag does not have`
+  )
+}
+
+// 2c. The release below this one in RELEASES was tagged. Tagging is a manual
+//     step after the deploy, and a skipped one is otherwise invisible: this
+//     release is then measured against an older tag and passes. A warning,
+//     because the commit to tag has to be picked by hand. Origin's tags count
+//     too - a tag that just isn't fetched is 0a's error, not a missing tag.
+const below = releases[1]
+const belowVersion = below && padVersion(below.version ?? "")
+if (
+  belowVersion &&
+  !tagForVersion([...tags, ...remoteTagNames], TAG_PREFIX, belowVersion)
+) {
+  warnings.push(
+    `${below.id} (${belowVersion}) has no ${TAG_PREFIX}* tag, so this release is measured against ${previousTag ?? "nothing"} - tag the commit it was deployed from: git tag -a ${TAG_PREFIX}${belowVersion} <commit> -m "easywed v${belowVersion}"`
   )
 }
 

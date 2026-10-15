@@ -7,7 +7,10 @@ import {
   padVersion,
   parseReleases,
   parseSemver,
+  parseTagRefs,
   previousTag,
+  tagDrift,
+  tagForVersion,
   utcIsoDate,
 } from "./release.mjs"
 
@@ -101,6 +104,50 @@ describe("tags", () => {
     expect(newestTag(["easywed/v1.10.0", "easywed/v1.9.0"], prefix)).toBe(
       "easywed/v1.10.0"
     )
+  })
+
+  it("finds a version's tag even when the tag is short", () => {
+    expect(tagForVersion(tags, prefix, "1.1.0")).toBe("easywed/v1.1")
+    expect(tagForVersion(tags, prefix, "1.3.2")).toBe("easywed/v1.3.2")
+    expect(tagForVersion(tags, prefix, "1.2.0")).toBeUndefined()
+  })
+})
+
+describe("tag drift", () => {
+  const a = "a".repeat(40)
+  const b = "b".repeat(40)
+  const c = "c".repeat(40)
+
+  it("reads for-each-ref and ls-remote output alike, dropping peeled refs", () => {
+    expect(parseTagRefs(`easywed/v1 ${a}\neasywed/v1.1 ${b}\n`)).toEqual(
+      new Map([
+        ["easywed/v1", a],
+        ["easywed/v1.1", b],
+      ])
+    )
+    expect(
+      parseTagRefs(
+        `${a}\trefs/tags/easywed/v1\n${c}\trefs/tags/easywed/v1^{}\n`
+      )
+    ).toEqual(new Map([["easywed/v1", a]]))
+  })
+
+  it("splits unfetched, unpushed and moved tags", () => {
+    const local = new Map([
+      ["easywed/v1", a],
+      ["easywed/v1.1", b],
+      ["easywed/v1.3.0", a],
+    ])
+    const remote = new Map([
+      ["easywed/v1", a],
+      ["easywed/v1.1", c],
+      ["easywed/v1.2.0", a],
+    ])
+    expect(tagDrift(local, remote)).toEqual({
+      notFetched: ["easywed/v1.2.0"],
+      notPushed: ["easywed/v1.3.0"],
+      differs: ["easywed/v1.1"],
+    })
   })
 })
 

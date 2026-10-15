@@ -120,3 +120,40 @@ export function orderingProblems(releases) {
   }
   return problems
 }
+
+/** The tag for an X.Y.Z version, matched padded - "1.1.0" finds "v1.1". */
+export function tagForVersion(tags, prefix, version) {
+  return tags.find((tag) => padVersion(tag.slice(prefix.length)) === version)
+}
+
+/**
+ * `name sha` lines (for-each-ref) or `sha\trefs/tags/name` lines (ls-remote)
+ * → Map of tag name to the tag object's sha. ls-remote also lists each
+ * annotated tag peeled to its commit as `name^{}`; those are dropped, so both
+ * sides compare tag objects.
+ */
+export function parseTagRefs(output) {
+  const refs = new Map()
+  for (const line of output.split("\n")) {
+    const parts = line.trim().split(/\s+/)
+    if (parts.length !== 2) continue
+    const [name, sha] = /^[0-9a-f]{40}$/.test(parts[0])
+      ? [parts[1].replace(/^refs\/tags\//, ""), parts[0]]
+      : parts
+    if (!name.endsWith("^{}")) refs.set(name, sha)
+  }
+  return refs
+}
+
+/** How the local tags differ from the remote's, each list sorted by name. */
+export function tagDrift(local, remote) {
+  const names = (map, keep) => [...map.keys()].filter(keep).sort()
+  return {
+    notFetched: names(remote, (name) => !local.has(name)),
+    notPushed: names(local, (name) => !remote.has(name)),
+    differs: names(
+      local,
+      (name) => remote.has(name) && remote.get(name) !== local.get(name)
+    ),
+  }
+}
