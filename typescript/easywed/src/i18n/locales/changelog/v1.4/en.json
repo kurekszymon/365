@@ -1,7 +1,7 @@
 {
   "title": "A plan that moves like it's real",
   "summary": "The canvas feels smoother to work with, a deleted table can be brought back, and the planner sits better on a phone.",
-  "i1": "Flick the plan and it keeps gliding before it slows down, then eases back if you drag past the edge. Zooming in and out, resetting the view and fitting the hall now glide instead of jumping, and a table, room element or hall you drop slides gently into its snapped place.",
+  "i1": "Flick the plan and it keeps gliding for a moment before it slows down, stopping at the edge. Zooming in and out, resetting the view and fitting the hall now glide instead of jumping.",
   "i2": "Delete a table or a room element and an \"Undo\" button appears for a few seconds. One tap puts it back exactly where it was, with its guests back in their seats.",
   "i3": "On a phone, buttons on the plan react when you press them, the bottom bar highlights the list that's open, and a field you tap in a panel scrolls into view once the keyboard is up. Windows and panels share one look, and the planner stays light even when the phone's browser tries to darken every page."
 }

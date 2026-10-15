@@ -2,7 +2,6 @@ import { useDndMonitor } from "@dnd-kit/core"
 import { useState } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { hallAtPoint, nearestHall, snapPositionToGrid } from "./utils"
-import { markDropSettle } from "./useDropSettle"
 import type { Fixture, Hall, Position, Table } from "@/stores/planner.store"
 import type { SnapStep } from "@/stores/view.store"
 import { clampRectIntoHall } from "@/lib/geometry"
@@ -24,9 +23,7 @@ interface UseTableSnapParams {
  *   to the nearest hall), snaps the new hall-local position to the grid,
  *   clamps it inside that hall, and persists it - reassigning the entity's
  *   hallId when the drop crossed into another hall. Measurement endpoints
- *   anchored to the object are shifted by its world-space delta, and the gap
- *   between the release point and the committed spot is handed to
- *   useDropSettle so the entity springs into place instead of jumping.
+ *   anchored to the object are shifted by its world-space delta.
  * - hall (dragged by its label chip): snaps and persists the hall's world
  *   position, shifting measurements anchored to its entities along.
  * Returns the live drag offset (for the measurement overlay) and the hall
@@ -143,25 +140,19 @@ export function useTableSnap({
         crossedHalls ? target.id : undefined
       )
 
-    // The object's world-space move, including any hall change.
-    const worldDx =
-      target.position.x +
-      next.x -
-      ((sourceHall?.position.x ?? 0) + entity.position.x)
-    const worldDy =
-      target.position.y +
-      next.y -
-      ((sourceHall?.position.y ?? 0) + entity.position.y)
-
-    // Where it was let go of, relative to where it now sits - the gap the
-    // settle spring closes.
-    markDropSettle(id, {
-      x: delta.x - worldDx * ppm,
-      y: delta.y - worldDy * ppm,
-    })
-
-    // Measurements live in world coords, so shift anchored endpoints along.
-    if (weddingId) shiftMeasurementPoints(weddingId, id, worldDx, worldDy)
+    if (weddingId) {
+      // Measurements live in world coords, so shift anchored endpoints by the
+      // object's world-space delta (including any hall change).
+      const worldDx =
+        target.position.x +
+        next.x -
+        ((sourceHall?.position.x ?? 0) + entity.position.x)
+      const worldDy =
+        target.position.y +
+        next.y -
+        ((sourceHall?.position.y ?? 0) + entity.position.y)
+      shiftMeasurementPoints(weddingId, id, worldDx, worldDy)
+    }
   }
 
   useDndMonitor({
@@ -209,10 +200,6 @@ export function useTableSnap({
         const next =
           snapStep === "off" ? raw : snapPositionToGrid(raw, snapStep)
         updateHallPosition(hall.id, next.x, next.y)
-        markDropSettle(`hall-${hall.id}`, {
-          x: e.delta.x - (next.x - hall.position.x) * ppm,
-          y: e.delta.y - (next.y - hall.position.y) * ppm,
-        })
         // Windowing behavior: the hall you just dragged lands on top of the
         // overlap stack.
         raiseHall(hall.id)
@@ -232,16 +219,9 @@ export function useTableSnap({
         }
       }
     },
-    onDragCancel: (e) => {
+    onDragCancel: () => {
       setActiveDrag(null)
       setDropTargetHallId(null)
-      // Escape puts it back where it started - glide back the whole way rather
-      // than vanishing from under the pointer.
-      const type = e.active.data.current?.type
-      if (type === "table-drag" || type === "fixture-drag")
-        markDropSettle(String(e.active.id), e.delta)
-      else if (type === "hall-drag")
-        markDropSettle(`hall-${e.active.data.current?.hallId}`, e.delta)
     },
   })
 

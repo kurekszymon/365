@@ -1,14 +1,8 @@
 import { describe, expect, it } from "vitest"
-import {
-  createVelocityTracker,
-  rubberband,
-  rubberbandClamp,
-  springStep,
-  stepAxis,
-} from "./momentum"
+import { createVelocityTracker, springStep, stepAxis } from "./momentum"
 import type { Axis } from "./momentum"
 
-// stepAxis snaps to the bound inside this distance.
+// Slack for float error in the spring's no-overshoot check.
 const REST = 0.5
 
 function settle(axis: Axis, min: number, max: number, maxMs = 10_000) {
@@ -25,27 +19,6 @@ function settle(axis: Axis, min: number, max: number, maxMs = 10_000) {
   throw new Error("did not settle")
 }
 
-describe("rubberband", () => {
-  it("follows less the further it is pulled, and never exceeds the dimension", () => {
-    const near = rubberband(10, 400)
-    const far = rubberband(1000, 400)
-    expect(near).toBeGreaterThan(0)
-    expect(near).toBeLessThan(10)
-    expect(far / 1000).toBeLessThan(near / 10)
-    expect(rubberband(1e9, 400)).toBeLessThan(400)
-  })
-
-  it("is symmetric", () => {
-    expect(rubberband(-50, 400)).toBeCloseTo(-rubberband(50, 400))
-  })
-
-  it("leaves in-bounds values alone", () => {
-    expect(rubberbandClamp(5, 0, 10, 400)).toBe(5)
-    expect(rubberbandClamp(15, 0, 10, 400)).toBeLessThan(15)
-    expect(rubberbandClamp(15, 0, 10, 400)).toBeGreaterThan(10)
-  })
-})
-
 describe("stepAxis", () => {
   it("glides forward and comes to rest inside the bounds", () => {
     const end = settle({ value: 0, velocity: 1000 }, -10_000, 10_000)
@@ -54,18 +27,10 @@ describe("stepAxis", () => {
     expect(end.value).toBeLessThan(510)
   })
 
-  it("springs back to the bound from an overscroll without crossing it", () => {
-    const end = settle({ value: 80, velocity: 0 }, -100, 0)
-    expect(end.value).toBe(0)
-    expect(end.low).toBeGreaterThanOrEqual(-REST)
-  })
-
-  it("bounces softly off the edge instead of stopping dead", () => {
+  it("stops dead at the bound it runs into", () => {
     const end = settle({ value: -20, velocity: 2000 }, -100, 0)
     expect(end.value).toBe(0)
-    // Ran past the bound, then came back.
-    expect(end.peak).toBeGreaterThan(0)
-    expect(end.peak).toBeLessThan(200)
+    expect(end.peak).toBe(0)
   })
 })
 

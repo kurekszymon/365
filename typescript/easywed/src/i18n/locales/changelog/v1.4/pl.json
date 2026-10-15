@@ -1,7 +1,7 @@
 {
   "title": "Płynniejszy plan i przycisk „Cofnij”",
   "summary": "Plan przesuwa się płynniej, usunięty stół można przywrócić, a na telefonie pracuje się wygodniej.",
-  "i1": "Plan przesunięty szybkim ruchem sunie jeszcze przez chwilę i stopniowo zwalnia, a przeciągnięty za krawędź łagodnie wraca. Przybliżanie, oddalanie, reset widoku i dopasowanie do sali działają płynnie, bez skoków. Upuszczony stół, element sali czy cała sala gładko dosuwa się na swoje miejsce.",
+  "i1": "Plan przesunięty szybkim ruchem sunie jeszcze przez chwilę i stopniowo zwalnia, aż zatrzyma się na krawędzi. Przybliżanie, oddalanie, reset widoku i dopasowanie do sali działają płynnie, bez skoków.",
   "i2": "Po usunięciu stołu lub elementu sali przez kilka sekund widać przycisk „Cofnij”. Wystarczy go kliknąć, żeby wszystko wróciło na miejsce - razem z gośćmi przy stole.",
   "i3": "Na telefonie przyciski na planie lepiej reagują na dotyk, a dolny pasek podświetla otwartą listę. Gdy wypełniasz pole w panelu, ekran sam się przewinie, żeby klawiatura go nie zasłaniała. Okna i panele mają teraz jednolity wygląd, a planer nie ciemnieje, nawet jeśli przeglądarka w telefonie wymusza ciemny motyw na wszystkich stronach."
 }

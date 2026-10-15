@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { createVelocityTracker, rubberbandClamp, stepAxis } from "./momentum"
+import { createVelocityTracker, stepAxis } from "./momentum"
 import type React from "react"
 import type { Position } from "@/stores/planner.store"
 
@@ -19,17 +19,14 @@ const MAX_FRAME_MS = 32
 type CanvasPanOptions = {
   /** Live pan from the store - read at gesture start and on every glide frame. */
   getPan: () => Position
-  /** Writes the pan as given. Overscroll is this hook's own business. */
+  /** Writes the pan as given - this hook clamps before writing. */
   setPan: (p: Position) => void
   clampPan: (p: Position) => Position
-  /** Viewport size, which scales how far the rubber band can stretch. */
-  getViewportSize: () => { width: number; height: number }
 }
 
 export function useCanvasPan(options: CanvasPanOptions) {
   const [isPanning, setIsPanning] = useState(false)
-  // The canvas re-renders every frame of a pan, so the latest clamp/viewport
-  // closures are read through a ref instead of being captured at press time.
+  // The canvas re-renders every frame of a pan, so the latest clamp closures are read through a ref instead of being captured at press time.
   const optionsRef = useRef(options)
   useEffect(() => {
     optionsRef.current = options
@@ -40,15 +37,10 @@ export function useCanvasPan(options: CanvasPanOptions) {
   // The in-flight drag's controller; aborting it tears the whole drag down.
   const abortRef = useRef<AbortController | null>(null)
   const glideRef = useRef(0)
-  // True from the first pan move until the glide settles. While it is, the pan
-  // may legitimately sit outside clampPan's range (rubber band), so Canvas's
-  // re-clamp effect must stand down.
-  const activeRef = useRef(false)
 
   const stopGlide = useCallback(() => {
     if (glideRef.current) cancelAnimationFrame(glideRef.current)
     glideRef.current = 0
-    activeRef.current = false
   }, [])
 
   function bounds() {
@@ -60,8 +52,8 @@ export function useCanvasPan(options: CanvasPanOptions) {
     }
   }
 
-  // Carries the release velocity into a decaying glide, and springs any
-  // overscroll back to the edge. Yields as soon as anything else writes the
+  // Carries the release velocity into a decaying glide that stops at the edge.
+  // Yields as soon as anything else writes the
   // pan (wheel, pinch, minimap, zoom reset) - the newest input always wins.
   function startGlide(velocity: Position) {
     const start = optionsRef.current.getPan()
@@ -69,14 +61,12 @@ export function useCanvasPan(options: CanvasPanOptions) {
     let y = { value: start.y, velocity: velocity.y }
     let written = start
     let last: number | null = null
-    activeRef.current = true
 
     const tick = (now: number) => {
       const { getPan, setPan } = optionsRef.current
       const current = getPan()
       if (current.x !== written.x || current.y !== written.y) {
         glideRef.current = 0
-        activeRef.current = false
         return
       }
       const dt = last === null ? 16 : Math.min(now - last, MAX_FRAME_MS)
@@ -90,7 +80,6 @@ export function useCanvasPan(options: CanvasPanOptions) {
       setPan(written)
       if (nx.atRest && ny.atRest) {
         glideRef.current = 0
-        activeRef.current = false
         return
       }
       glideRef.current = requestAnimationFrame(tick)
@@ -165,21 +154,17 @@ export function useCanvasPan(options: CanvasPanOptions) {
       if (!moved) {
         if (Math.hypot(dx, dy) <= PAN_START_THRESHOLD_PX) return
         moved = true
-        activeRef.current = true
         setIsPanning(true)
         // Force the grabbing cursor everywhere for the rest of the drag (see
         // body.is-panning in styles.css) so it doesn't flip over the toolbar.
         document.body.classList.add("is-panning")
       }
       // Tracking from the start keeps the offset absolute, so dragging past the
-      // edge and back follows the pointer without drift. Past the edge the
-      // content follows with growing resistance instead of stopping dead.
-      const { min, max } = bounds()
-      const { width, height } = optionsRef.current.getViewportSize()
-      pending = {
-        x: rubberbandClamp(startPan.x + dx, min.x, max.x, width),
-        y: rubberbandClamp(startPan.y + dy, min.y, max.y, height),
-      }
+      // clamp limit and back follows the pointer without drift.
+      pending = optionsRef.current.clampPan({
+        x: startPan.x + dx,
+        y: startPan.y + dy,
+      })
       if (!rafId) rafId = requestAnimationFrame(flush)
     }
     const release = (ev: PointerEvent) => {
@@ -210,26 +195,15 @@ export function useCanvasPan(options: CanvasPanOptions) {
       document.body.style.userSelect = ""
       document.body.classList.remove("is-panning")
       setIsPanning(false)
-      activeRef.current = false
-      if (!moved) return
-
-      if (!released) {
-        // Pinch or unmount: no glide, but don't leave the pan stretched.
-        const { getPan, setPan, clampPan } = optionsRef.current
-        setPan(clampPan(getPan()))
-        return
-      }
+      // Pinch or unmount: no glide.
+      if (!moved || !released) return
       // A mouse drag is precise placement, so it stops where it is let go;
       // touch and pen carry their momentum, like any scroll view.
       const v =
         pointerType === "mouse"
           ? { x: 0, y: 0 }
           : tracker.velocity(performance.now())
-      const fling = Math.hypot(v.x, v.y) >= MIN_FLING_VELOCITY
-      const pan = optionsRef.current.getPan()
-      const clamped = optionsRef.current.clampPan(pan)
-      const overscrolled = clamped.x !== pan.x || clamped.y !== pan.y
-      if (fling || overscrolled) startGlide(fling ? v : { x: 0, y: 0 })
+      if (Math.hypot(v.x, v.y) >= MIN_FLING_VELOCITY) startGlide(v)
     })
     return caughtGlide
   }
@@ -249,12 +223,8 @@ export function useCanvasPan(options: CanvasPanOptions) {
     [stopGlide]
   )
 
-  /** True while the pan may sit in the rubber band (dragging or gliding). */
-  const isPanGestureActive = useCallback(() => activeRef.current, [])
-
   return {
     isPanning,
-    isPanGestureActive,
     stopGlide,
     onPointerDown,
     onPointerUp,
