@@ -9,6 +9,7 @@ import {
 import { useTranslation } from "react-i18next"
 import { CanvasActionButton } from "./CanvasActionButton"
 import { TableVisual } from "./TableVisual"
+import { useDropSettle } from "./useDropSettle"
 import { seatSizePx } from "./utils"
 import { SEAT_OFFSET_M } from "./seatLayout"
 import type { Guest, Table } from "@/stores/planner.store"
@@ -61,10 +62,12 @@ const DraggableTableBase = ({
     data: { type: "table-drag" },
     disabled: isMeasuring,
   })
+  // Springs the table from where it was let go into its snapped spot.
+  const ref = useDropSettle(table.id, transform !== null, setDragRef)
 
   return (
     <TableVisual
-      ref={setDragRef}
+      ref={ref}
       table={table}
       guestsAssigned={guestsAssigned}
       ppm={ppm}

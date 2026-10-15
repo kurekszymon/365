@@ -7,6 +7,7 @@ import { HallOutline } from "./HallOutline"
 import { DraggableTable } from "./DraggableTable"
 import { DraggableFixture } from "./DraggableFixture"
 import { DimensionLabel } from "./DimensionLabel"
+import { useDropSettle } from "./useDropSettle"
 import type { Fixture, Guest, Hall, Table } from "@/stores/planner.store"
 import type { GridSpacing, GridStyle } from "@/stores/view.store"
 import { cn } from "@/lib/utils"
@@ -65,6 +66,9 @@ const HallViewBase = ({
     data: { type: "hall-drag", hallId: hall.id },
     disabled: isMeasuring,
   })
+  // The chip is the drag handle, but the whole hall group is what moves - so
+  // the settle spring rides on the wrapper, not on the chip.
+  const settleRef = useDropSettle(`hall-${hall.id}`, transform !== null)
 
   const widthPx = hall.size.width * ppm
   const heightPx = hall.size.height * ppm
@@ -84,6 +88,7 @@ const HallViewBase = ({
     // floor. Cross-hall stacking is then purely DOM order (the z-sorted
     // array from HallSurface), with zIndex 30 lifting a dragged/raised hall.
     <div
+      ref={settleRef}
       className="absolute isolate"
       style={{
         left,

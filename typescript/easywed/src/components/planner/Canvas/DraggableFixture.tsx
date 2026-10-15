@@ -9,6 +9,7 @@ import {
 import { useTranslation } from "react-i18next"
 import { CanvasActionButton } from "./CanvasActionButton"
 import { FixtureVisual } from "./FixtureVisual"
+import { useDropSettle } from "./useDropSettle"
 import type { Fixture } from "@/stores/planner.store"
 import { cn } from "@/lib/utils"
 import { usePlannerStore } from "@/stores/planner.store"
@@ -45,10 +46,12 @@ const DraggableFixtureBase = ({ fixture, ppm }: DraggableFixtureProps) => {
     data: { type: "fixture-drag" },
     disabled: isMeasuring,
   })
+  // Springs the fixture from where it was let go into its snapped spot.
+  const ref = useDropSettle(fixture.id, transform !== null, setNodeRef)
 
   return (
     <FixtureVisual
-      ref={setNodeRef}
+      ref={ref}
       fixture={fixture}
       ppm={ppm}
       transform={transform}
