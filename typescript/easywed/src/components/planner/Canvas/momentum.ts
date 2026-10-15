@@ -1,5 +1,6 @@
-// Pan physics for the canvas: rubber-banding past the edge while dragging, and
-// a per-axis integrator for the post-release glide. X and Y run as independent
+// Camera physics for the canvas: rubber-banding past the edge while dragging,
+// a per-axis integrator for the post-release glide, and the spring both that
+// and the animated zoom/fit (useCameraAnimation) run on. X and Y run as independent
 // axes so a diagonal flick doesn't desync when one axis hits its bound first.
 
 // Per-millisecond velocity retention for the glide - the scroll-view value.
@@ -7,8 +8,7 @@ export const DECELERATION_RATE = 0.998
 
 // Critically damped (no overshoot) return spring for the overscroll. Response
 // is the spring's period in seconds: lower is snappier.
-const SPRING_RESPONSE_S = 0.4
-const SPRING_OMEGA = (2 * Math.PI) / SPRING_RESPONSE_S
+const OVERSCROLL_RESPONSE_S = 0.4
 
 // Below this the glide is imperceptible, so the axis is treated as at rest.
 const REST_VELOCITY = 10 // px/s
@@ -47,8 +47,33 @@ export function rubberbandClamp(
 
 export type Axis = {
   value: number
-  /** px/s */
+  /** units/s */
   velocity: number
+}
+
+/**
+ * Advances a critically damped spring (no overshoot) toward `target` by
+ * `dtMs`, carrying the axis's velocity - so re-targeting mid-flight bends the
+ * motion instead of restarting it. `responseS` is the spring's period in
+ * seconds: lower is snappier.
+ */
+export function springStep(
+  axis: Axis,
+  dtMs: number,
+  target: number,
+  responseS = OVERSCROLL_RESPONSE_S
+): Axis {
+  const omega = (2 * Math.PI) / responseS
+  let { value, velocity } = axis
+  let remaining = dtMs
+  while (remaining > 0) {
+    const h = Math.min(remaining, MAX_SUBSTEP_MS) / 1000
+    const accel = -omega * omega * (value - target) - 2 * omega * velocity
+    velocity += accel * h
+    value += velocity * h
+    remaining -= MAX_SUBSTEP_MS
+  }
+  return { value, velocity }
 }
 
 /**
@@ -77,23 +102,14 @@ export function stepAxis(
   }
 
   const target = value < min ? min : max
-  let remaining = dtMs
-  while (remaining > 0) {
-    const h = Math.min(remaining, MAX_SUBSTEP_MS) / 1000
-    const accel =
-      -SPRING_OMEGA * SPRING_OMEGA * (value - target) -
-      2 * SPRING_OMEGA * velocity
-    velocity += accel * h
-    value += velocity * h
-    remaining -= MAX_SUBSTEP_MS
-  }
+  const next = springStep(axis, dtMs, target)
   if (
-    Math.abs(value - target) < REST_DISTANCE &&
-    Math.abs(velocity) < REST_VELOCITY
+    Math.abs(next.value - target) < REST_DISTANCE &&
+    Math.abs(next.velocity) < REST_VELOCITY
   ) {
     return { value: target, velocity: 0, atRest: true }
   }
-  return { value, velocity, atRest: false }
+  return { ...next, atRest: false }
 }
 
 type Sample = { t: number; x: number; y: number }

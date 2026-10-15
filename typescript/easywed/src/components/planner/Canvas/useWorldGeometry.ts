@@ -130,6 +130,30 @@ export function useWorldGeometry(
     [scaledWidth, scaledHeight, containerWidth, containerHeight]
   )
 
+  // clampPan for an arbitrary zoom rather than the rendered one - an animated
+  // zoom writes zoom and pan in the same frame, so it can't wait a render for
+  // clampPan to catch up. Independent of the current zoom/pan, like fitRect.
+  const clampPanAt = useCallback(
+    (p: Position, atZoom: number): Position => {
+      const atScale = baseScale * atZoom
+      const boundsX = axisPanBounds(
+        worldWidthPx * atScale,
+        containerWidth,
+        LABEL_GUTTER_X
+      )
+      const boundsY = axisPanBounds(
+        worldHeightPx * atScale,
+        containerHeight,
+        LABEL_GUTTER_Y
+      )
+      return {
+        x: Math.max(boundsX.min, Math.min(boundsX.max, p.x)),
+        y: Math.max(boundsY.min, Math.min(boundsY.max, p.y)),
+      }
+    },
+    [baseScale, worldWidthPx, worldHeightPx, containerWidth, containerHeight]
+  )
+
   // The pan that, at `newZoom`, keeps the world point currently under `focal`
   // (client coords; defaults to the container centre) pinned in place. Without
   // this, zooming always grows the layout from its centre, so the spot you're
@@ -240,6 +264,7 @@ export function useWorldGeometry(
     isInAnyHall,
     hallScreenOffset,
     clampPan,
+    clampPanAt,
     zoomToPan,
     fitRect,
   }

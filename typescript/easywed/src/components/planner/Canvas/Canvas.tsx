@@ -34,6 +34,7 @@ import {
 } from "./utils"
 import { useWorldGeometry } from "./useWorldGeometry"
 import { useCanvasPan } from "./useCanvasPan"
+import { useCameraAnimation } from "./useCameraAnimation"
 import { useCanvasWheelPan } from "./useCanvasWheelPan"
 import { useCanvasClipboard } from "./useCanvasClipboard"
 import type { HallSurfaceMethods } from "./HallSurface"
@@ -76,9 +77,7 @@ export const Canvas = () => {
   const snapStep = useViewStore((state) => state.snapStep)
   const gridStyle = useViewStore((state) => state.gridStyle)
   const gridSpacing = useViewStore((state) => state.gridSpacing)
-  const stepZoom = useViewStore((state) => state.stepZoom)
   const setPan = useViewStore((state) => state.setPan)
-  const resetZoomAndPan = useViewStore((state) => state.resetZoomAndPan)
   const isMeasuring = useViewStore((state) => state.isMeasuring)
   const toggleMeasuring = useViewStore((state) => state.toggleMeasuring)
 
@@ -152,6 +151,7 @@ export const Canvas = () => {
     isInAnyHall,
     hallScreenOffset,
     clampPan,
+    clampPanAt,
     zoomToPan,
     fitRect,
   } = useWorldGeometry(
@@ -163,10 +163,33 @@ export const Canvas = () => {
     pan
   )
 
-  // Entering shape-edit mode jumps the view to frame the target entity (with
+  const {
+    isPanning,
+    isPanGestureActive,
+    stopGlide,
+    onPointerDown,
+    onPointerUp,
+  } = useCanvasPan({
+    getPan: () => useViewStore.getState().pan,
+    setPan,
+    clampPan,
+    getViewportSize: () => ({
+      width: containerWidth,
+      height: containerHeight,
+    }),
+  })
+
+  // Zoom buttons, reset and fit spring the camera rather than jumping it.
+  const {
+    animateTo: animateCamera,
+    stepZoom,
+    cancel: cancelCamera,
+  } = useCameraAnimation(clampPanAt, stopGlide)
+
+  // Entering shape-edit mode springs the view to frame the target entity (with
   // margin for the vertex handles and the floating toolbar) - otherwise the
   // mode can start with the shape half hidden behind the sidebar or off-screen.
-  // The ref-guard makes the jump truly once per entity, not a camera lock:
+  // The ref-guard makes the move truly once per entity, not a camera lock:
   // the effect's `fitRect` dep changes identity whenever the world bounds
   // change, which for HALL editing is every committed vertex drag (the hall's
   // AABB moves) - without the guard the camera would re-zoom on every drop.
@@ -203,9 +226,8 @@ export const Canvas = () => {
     if (!rect) return
     const fitted = fitRect(rect)
     if (!fitted) return
-    setZoom(fitted.zoom)
-    setPan(fitted.pan)
-  }, [shapeEditView, fitRect, setZoom, setPan])
+    animateCamera(fitted)
+  }, [shapeEditView, fitRect, animateCamera])
 
   // Resolves a world-space point to a drop hall (under the point, else the
   // nearest one) and that hall's local coords, clamped inside it. This is how
@@ -240,17 +262,6 @@ export const Canvas = () => {
       from: () => [zoom, 0],
     }
   )
-
-  const { isPanning, isPanGestureActive, onPointerDown, onPointerUp } =
-    useCanvasPan({
-      getPan: () => useViewStore.getState().pan,
-      setPan,
-      clampPan,
-      getViewportSize: () => ({
-        width: containerWidth,
-        height: containerHeight,
-      }),
-    })
 
   // Two-finger trackpad / wheel panning, alongside the pointer-drag pan above.
   useCanvasWheelPan(
@@ -485,6 +496,8 @@ export const Canvas = () => {
             hallSurfaceRef.current?.handleMeasureDown(x, y, e.shiftKey)
             return
           }
+          // Grabbing the canvas takes the camera back from a zoom/fit flight.
+          cancelCamera()
           // A press that catches a glide in flight is a "stop", so its click
           // must not also select or deselect.
           pointerMovedRef.current = onPointerDown(e)
@@ -556,7 +569,7 @@ export const Canvas = () => {
 
             <div data-no-pan className="absolute bottom-4 left-4 z-20">
               <ScalePill
-                reset={resetZoomAndPan}
+                reset={() => animateCamera({ zoom: 1, pan: { x: 0, y: 0 } })}
                 scale={zoom}
                 zoomIn={() => stepZoom(1)}
                 zoomOut={() => stepZoom(-1)}

@@ -45,11 +45,11 @@ export function useCanvasPan(options: CanvasPanOptions) {
   // re-clamp effect must stand down.
   const activeRef = useRef(false)
 
-  function stopGlide() {
+  const stopGlide = useCallback(() => {
     if (glideRef.current) cancelAnimationFrame(glideRef.current)
     glideRef.current = 0
     activeRef.current = false
-  }
+  }, [])
 
   function bounds() {
     const { clampPan } = optionsRef.current
@@ -246,7 +246,7 @@ export function useCanvasPan(options: CanvasPanOptions) {
       abortRef.current?.abort()
       stopGlide()
     },
-    []
+    [stopGlide]
   )
 
   /** True while the pan may sit in the rubber band (dragging or gliding). */
@@ -255,6 +255,7 @@ export function useCanvasPan(options: CanvasPanOptions) {
   return {
     isPanning,
     isPanGestureActive,
+    stopGlide,
     onPointerDown,
     onPointerUp,
   }

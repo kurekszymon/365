@@ -3,6 +3,7 @@ import {
   createVelocityTracker,
   rubberband,
   rubberbandClamp,
+  springStep,
   stepAxis,
 } from "./momentum"
 import type { Axis } from "./momentum"
@@ -65,6 +66,29 @@ describe("stepAxis", () => {
     // Ran past the bound, then came back.
     expect(end.peak).toBeGreaterThan(0)
     expect(end.peak).toBeLessThan(200)
+  })
+})
+
+describe("springStep", () => {
+  it("reaches the target without overshooting it", () => {
+    let a: Axis = { value: 0, velocity: 0 }
+    let peak = 0
+    for (let t = 0; t < 1000; t += 16) {
+      a = springStep(a, 16, 100, 0.35)
+      peak = Math.max(peak, a.value)
+    }
+    expect(a.value).toBeCloseTo(100, 1)
+    expect(peak).toBeLessThanOrEqual(100 + REST)
+  })
+
+  it("keeps its velocity when re-targeted mid-flight", () => {
+    let a: Axis = { value: 0, velocity: 0 }
+    for (let t = 0; t < 80; t += 16) a = springStep(a, 16, 100, 0.35)
+    const before = a.velocity
+    a = springStep(a, 16, 200, 0.35)
+    expect(before).toBeGreaterThan(0)
+    // Bends toward the new target from the motion it had, no restart from 0.
+    expect(a.velocity).toBeGreaterThan(before)
   })
 })
 
