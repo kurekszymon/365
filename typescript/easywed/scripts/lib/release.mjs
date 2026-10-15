@@ -51,10 +51,44 @@ export function parseReleases(source) {
   return entries
 }
 
-/** Local calendar day as YYYY-MM-DD - the day the person deploying sees. */
-export function localIsoDate(now = new Date()) {
-  const pad = (n) => String(n).padStart(2, "0")
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+/**
+ * UTC calendar day as YYYY-MM-DD. `hasUnseenRelease` reads a release date as
+ * UTC midnight, so the gate has to agree on what "today" is - a local day
+ * would be a day ahead for the first hour or two after midnight in Poland,
+ * and flag the release to people who signed in after it went live.
+ */
+export function utcIsoDate(now = new Date()) {
+  return now.toISOString().slice(0, 10)
+}
+
+/**
+ * The tag a release is measured against: the newest one whose version sorts
+ * strictly below `version`. Not simply the newest other tag - redeploying an
+ * older release (a rollback) would otherwise be diffed against a newer one.
+ */
+export function previousTag(tags, prefix, version) {
+  let best
+  for (const tag of tags) {
+    const padded = padVersion(tag.slice(prefix.length))
+    if (!padded || compareSemver(padded, version) >= 0) continue
+    if (!best || compareSemver(padded, best.version) > 0) {
+      best = { tag, version: padded }
+    }
+  }
+  return best?.tag
+}
+
+/** The newest tag by version, whatever it is. */
+export function newestTag(tags, prefix) {
+  let best
+  for (const tag of tags) {
+    const padded = padVersion(tag.slice(prefix.length))
+    if (!padded) continue
+    if (!best || compareSemver(padded, best.version) > 0) {
+      best = { tag, version: padded }
+    }
+  }
+  return best?.tag
 }
 
 /** "2026-10-15" → "15.10", the heading format DEVLOG.md uses. */

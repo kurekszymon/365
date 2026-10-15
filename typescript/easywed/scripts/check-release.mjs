@@ -23,11 +23,13 @@ import readline from "node:readline/promises"
 import {
   compareSemver,
   devlogHeading,
-  localIsoDate,
+  newestTag,
   orderingProblems,
   padVersion,
   parseReleases,
   parseSemver,
+  previousTag as previousTagFor,
+  utcIsoDate,
 } from "./lib/release.mjs"
 
 const RELEASES_PATH = "src/components/changelog/releases.ts"
@@ -46,15 +48,6 @@ const git = (...args) =>
     stdio: ["ignore", "pipe", "ignore"],
   }).trimEnd()
 
-const tagExists = (tag) => {
-  try {
-    git("rev-parse", "-q", "--verify", `refs/tags/${tag}`)
-    return true
-  } catch {
-    return false
-  }
-}
-
 const fail = (message) => {
   console.error(`\nRelease check failed: ${message}\n`)
   process.exit(1)
@@ -71,14 +64,15 @@ if (!releases?.length) fail(`could not read RELEASES from ${RELEASES_PATH}`)
 const latest = releases[0]
 
 const tag = `${TAG_PREFIX}${version}`
+const tags = git("tag", "-l", `${TAG_PREFIX}*`).split("\n").filter(Boolean)
 // Already tagged means this is a redeploy of a shipped release (a hotfix
-// build, a preview from the tag), so "is it new" and "is it today" don't apply.
-const redeploy = tagExists(tag)
+// build, a rollback, a preview from the tag), so "is it new" doesn't apply
+// and "is it today" becomes "is it the day it was tagged" - see 3a.
+const redeploy = tags.includes(tag)
 
-// The release this one is measured against: the newest tag that isn't its own.
-const previousTag = git("tag", "-l", `${TAG_PREFIX}*`, "--sort=-v:refname")
-  .split("\n")
-  .find((name) => name && name !== tag)
+// The release this one is measured against: the newest tag below its version.
+// For a rollback that is the tag before it, not the newer one rolled back from.
+const previousTag = previousTagFor(tags, TAG_PREFIX, version)
 
 // --- 1. Version and release table agree --------------------------------------
 
@@ -109,15 +103,16 @@ for (const problem of orderingProblems(releases)) {
 
 // --- 2. Newer than what shipped ----------------------------------------------
 
-// 2a. A new release is a higher version than the last tag. Old tags are short
-//     ("v1", "v1.1"), so they are padded too. Skipped on a redeploy, where the
-//     version is the tag's own by definition.
-const previousVersion = previousTag?.slice(TAG_PREFIX.length)
-if (!redeploy && previousVersion) {
-  const padded = padVersion(previousVersion)
-  if (padded && compareSemver(version, padded) <= 0) {
+// 2a. A new release is a higher version than every tag - the newest one, not
+//     previousTag, which is below this version by construction. Old tags are
+//     short ("v1", "v1.1"), so they are padded too. Skipped on a redeploy,
+//     where the version is the tag's own by definition.
+const lastTag = newestTag(tags, TAG_PREFIX)
+if (!redeploy && lastTag) {
+  const padded = padVersion(lastTag.slice(TAG_PREFIX.length))
+  if (compareSemver(version, padded) <= 0) {
     errors.push(
-      `${version} is not newer than the last tag ${previousTag} - bump package.json`
+      `${version} is not newer than the last tag ${lastTag} - bump package.json`
     )
   }
 }
@@ -133,15 +128,37 @@ if (redeploy && git("rev-parse", "HEAD") !== git("rev-list", "-n", "1", tag)) {
 
 // --- 3. The date ---------------------------------------------------------------
 
-// 3a. The release is dated the day it goes live (local calendar day). Notes
-//     are often written a day or two ahead, and the date then silently lies -
-//     see the header for what that does to the unseen-release dot. Skipped on
-//     a redeploy, which keeps the date the release first went out.
-const today = localIsoDate()
-if (!redeploy && latest.date !== today) {
-  errors.push(
-    `${latest.id} is dated ${latest.date} but today is ${today} - set the date in ${RELEASES_PATH} to the day it goes live (it drives the unseen-release dot)`
+// 3a. The release is dated the day it goes live, as a UTC day - the same day
+//     `hasUnseenRelease` reads it as. Notes are often written a day or two
+//     ahead, and the date then silently lies - see the header for what that
+//     does to the unseen-release dot.
+//
+//     A redeploy keeps the date the release first went out, which is the day
+//     it was tagged (the tag comes after the deploy). Checking that instead of
+//     skipping means tagging *before* the first deploy can't switch the date
+//     check off: the tag is from today, so a stale date still fails.
+if (redeploy) {
+  const taggedOn = utcIsoDate(
+    new Date(
+      git(
+        "for-each-ref",
+        `refs/tags/${tag}`,
+        "--format=%(creatordate:iso-strict)"
+      )
+    )
   )
+  if (latest.date !== taggedOn) {
+    errors.push(
+      `${latest.id} is dated ${latest.date} but ${tag} was created ${taggedOn} (UTC) - if it was tagged ahead of the deploy, delete the tag, fix the date, and tag after deploying`
+    )
+  }
+} else {
+  const today = utcIsoDate()
+  if (latest.date !== today) {
+    errors.push(
+      `${latest.id} is dated ${latest.date} but today is ${today} (UTC) - set the date in ${RELEASES_PATH} to the day it goes live (it drives the unseen-release dot)`
+    )
+  }
 }
 
 // 3b. DEVLOG.md has a "### DD.MM" heading for the release date. A warning for
@@ -158,10 +175,12 @@ if (!devlog.split("\n").some((line) => line.trim() === heading)) {
 //     version bump, the RELEASES entry, the notes folder. 1a only proves the
 //     files agree *now* - this catches agreeing on a release that already
 //     shipped, e.g. new code deployed with nothing bumped. Diffed against the
-//     working commit, so only committed changes count (see 5a).
+//     working commit, so only committed changes count (see 5a) - also on a
+//     redeploy, so a hotfix on top of the tag still has its migrations and
+//     legal changes seen by 4b.
 let changedSincePrevious = []
 if (previousTag) {
-  const range = `${previousTag}..${redeploy ? tag : "HEAD"}`
+  const range = `${previousTag}..HEAD`
   changedSincePrevious = git(
     "diff",
     "--name-only",
@@ -197,8 +216,7 @@ if (previousTag) {
   // dependencies too, and a touched file would pass a release with no bump.
   const versionAt = (ref) =>
     JSON.parse(git("show", `${ref}:./package.json`)).version
-  const head = redeploy ? tag : "HEAD"
-  if (versionAt(head) === versionAt(previousTag)) {
+  if (versionAt("HEAD") === versionAt(previousTag)) {
     missing("package.json", "the version bump")
   }
 
@@ -215,7 +233,7 @@ if (previousTag) {
   )
 }
 
-// 4b. Not checks themselves - what changed since the last tag decides which
+// 4b. Not checks themselves - what changed since previousTag decides which
 //     conditional items the manual checklist asks (migrations → db push,
 //     legal config → change notice).
 const newMigrations = changedSincePrevious.filter(
@@ -266,7 +284,7 @@ try {
 }
 
 console.log(
-  `\nRelease ${version} · ${latest.date} · ${latest.items} note(s) · ${redeploy ? "redeploy of" : "since"} ${redeploy ? tag : (previousTag ?? "-")} · ${ref}\n`
+  `\nRelease ${version} · ${latest.date} · ${latest.items} note(s) · ${redeploy ? `redeploy of ${tag}, ` : ""}since ${previousTag ?? "-"} · ${ref}\n`
 )
 
 for (const warning of warnings) console.warn(`  warning  ${warning}`)

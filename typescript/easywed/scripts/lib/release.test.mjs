@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest"
 import {
   compareSemver,
   devlogHeading,
-  localIsoDate,
+  newestTag,
   orderingProblems,
   padVersion,
   parseReleases,
   parseSemver,
+  previousTag,
+  utcIsoDate,
 } from "./release.mjs"
 
 describe("versions", () => {
@@ -76,9 +78,36 @@ describe("orderingProblems", () => {
   })
 })
 
+describe("tags", () => {
+  const prefix = "easywed/v"
+  const tags = ["v1", "v1.1", "v1.3.0", "v1.3.1", "v1.3.2"].map(
+    (t) => `easywed/${t}`
+  )
+
+  it("measures a new release against the newest tag", () => {
+    expect(previousTag(tags, prefix, "1.4.0")).toBe("easywed/v1.3.2")
+  })
+
+  it("measures a rollback against the tag below it, not a newer one", () => {
+    expect(previousTag(tags, prefix, "1.3.1")).toBe("easywed/v1.3.0")
+  })
+
+  it("pads short tags and has nothing below the first", () => {
+    expect(previousTag(tags, prefix, "1.1.0")).toBe("easywed/v1")
+    expect(previousTag(tags, prefix, "1.0.0")).toBeUndefined()
+  })
+
+  it("finds the newest tag by version, not by name", () => {
+    expect(newestTag(["easywed/v1.10.0", "easywed/v1.9.0"], prefix)).toBe(
+      "easywed/v1.10.0"
+    )
+  })
+})
+
 describe("dates", () => {
-  it("formats the local calendar day", () => {
-    expect(localIsoDate(new Date(2026, 0, 5, 23, 30))).toBe("2026-01-05")
+  it("formats the UTC calendar day, which hasUnseenRelease reads", () => {
+    // 00:30 in Warsaw on the 16th is still the 15th in UTC.
+    expect(utcIsoDate(new Date("2026-10-16T00:30:00+02:00"))).toBe("2026-10-15")
   })
 
   it("matches the DEVLOG heading format", () => {
