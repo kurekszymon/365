@@ -44,6 +44,15 @@ export const CanvasContextMenu = ({
   // hack to render at correct position
   const [contentKey, setContentKey] = useState(0)
 
+  const capture = (e: Pick<MouseEvent, "target" | "clientX" | "clientY">) => {
+    const captured = findCapturedElement(e.target)
+    if (!captured) return null
+    setCapturedPos({ x: e.clientX, y: e.clientY })
+    setInHall(isInAnyHall(e.clientX, e.clientY))
+    setTarget(captured)
+    return captured
+  }
+
   return (
     <ContextMenu
       onOpenChange={(open) => {
@@ -52,18 +61,18 @@ export const CanvasContextMenu = ({
     >
       <ContextMenuTrigger
         asChild
+        // On touch, Radix opens the menu from its own long-press timer started
+        // here, never going through onContextMenu - and iOS Safari fires no
+        // native contextmenu at all. Capture the press point now, or the menu
+        // opens on the defaults (not in a hall) with every add item disabled.
+        onPointerDown={(e) => {
+          if (e.pointerType === "touch" || e.pointerType === "pen") capture(e)
+        }}
         onContextMenu={(e) => {
-          const captured = findCapturedElement(e.target)
           // Suppress the menu only while a drag is in progress (a long-press can
           // fire contextmenu mid-drag). Otherwise right-clicking / long-pressing
           // a table/fixture opens the menu with its copy actions.
-          if (!captured || active) {
-            e.preventDefault()
-            return
-          }
-          setCapturedPos({ x: e.clientX, y: e.clientY })
-          setInHall(isInAnyHall(e.clientX, e.clientY))
-          setTarget(captured)
+          if (active || !capture(e)) e.preventDefault()
         }}
       >
         {children}

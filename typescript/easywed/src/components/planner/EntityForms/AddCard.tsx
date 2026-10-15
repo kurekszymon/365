@@ -15,7 +15,9 @@ export const AddCard = ({ label, onClick, children }: AddCardProps) => (
     onClick={onClick}
     className="flex flex-col items-center gap-2.5 rounded-2xl border p-4 text-center transition-colors hover:bg-accent/50"
   >
-    {children}
+    {/* Fixed-height slot so a tall swatch (round table) doesn't push its
+        label below the others in the row. */}
+    <div className="flex h-11 items-center justify-center">{children}</div>
     <span className="text-[11.5px] font-semibold">{label}</span>
   </button>
 )

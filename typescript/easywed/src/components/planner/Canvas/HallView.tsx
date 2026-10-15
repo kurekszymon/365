@@ -37,6 +37,9 @@ interface HallViewProps {
   // never escape above a later-DOM hall on its own - raising the whole source
   // hall keeps the drag preview visible when it crosses into the next hall.
   raise?: boolean
+  // A lone hall has nothing to be arranged against, so it gets no drag
+  // handle - the chip just opens the hall's settings.
+  draggable?: boolean
 }
 
 const HallViewBase = ({
@@ -53,6 +56,7 @@ const HallViewBase = ({
   showSeats,
   isDropTarget,
   raise,
+  draggable = true,
 }: HallViewProps) => {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
@@ -64,7 +68,7 @@ const HallViewBase = ({
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: `hall-${hall.id}`,
     data: { type: "hall-drag", hallId: hall.id },
-    disabled: isMeasuring,
+    disabled: isMeasuring || !draggable,
   })
   // The chip is the drag handle, but the whole hall group is what moves - so
   // the settle spring rides on the wrapper, not on the chip.
@@ -181,14 +185,18 @@ const HallViewBase = ({
         type="button"
         data-no-pan
         className={cn(
-          "absolute top-1 left-1 z-20 flex max-w-[calc(100%-0.5rem)] cursor-grab items-center gap-1 rounded-md border bg-card/90 py-0.5 pr-2 pl-1 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm",
-          "touch-none hover:bg-card active:cursor-grabbing"
+          "absolute top-1 left-1 z-20 flex max-w-[calc(100%-0.5rem)] items-center gap-1 rounded-md border bg-card/90 py-0.5 pr-2 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm hover:bg-card",
+          draggable
+            ? "cursor-grab touch-none pl-1 active:cursor-grabbing"
+            : "pl-2"
         )}
         onClick={() => openHallEdit(hall.id)}
-        {...listeners}
+        {...(draggable ? listeners : {})}
         {...attributes}
       >
-        <GripVerticalIcon className="size-3.5 shrink-0 text-muted-foreground" />
+        {draggable && (
+          <GripVerticalIcon className="size-3.5 shrink-0 text-muted-foreground" />
+        )}
         <span className="truncate">{label}</span>
       </button>
     </div>

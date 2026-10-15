@@ -258,6 +258,7 @@ export const HallSurface = ({
               showSeats={showSeats}
               isDropTarget={hall.id === dropTargetHallId}
               raise={hall.id === dragSourceHallId}
+              draggable={halls.length > 1}
             />
           )
         })}
