@@ -241,9 +241,16 @@ export const Canvas = () => {
     }
   )
 
-  const { isPanning, onPointerDown, onPointerUp } = useCanvasPan(pan, (p) =>
-    setPan(clampPan(p))
-  )
+  const { isPanning, isPanGestureActive, onPointerDown, onPointerUp } =
+    useCanvasPan({
+      getPan: () => useViewStore.getState().pan,
+      setPan,
+      clampPan,
+      getViewportSize: () => ({
+        width: containerWidth,
+        height: containerHeight,
+      }),
+    })
 
   // Two-finger trackpad / wheel panning, alongside the pointer-drag pan above.
   useCanvasWheelPan(
@@ -254,11 +261,14 @@ export const Canvas = () => {
 
   // Re-clamp the existing pan whenever the allowed range can shrink (zoom out,
   // container resize, hall resize) so a previously-valid pan can't leave the
-  // hall stranded off-screen.
+  // hall stranded off-screen. Stands down while a pan gesture owns the camera:
+  // the rubber band puts the pan past the clamp on purpose, and the gesture
+  // springs it back itself.
   useEffect(() => {
+    if (isPanGestureActive()) return
     const next = clampPan(pan)
     if (next.x !== pan.x || next.y !== pan.y) setPan(next)
-  }, [clampPan, pan, setPan])
+  }, [clampPan, pan, setPan, isPanGestureActive])
 
   // ⌘/Ctrl+C copies the selected table/fixture; ⌘/Ctrl+V pastes it under the
   // cursor (or hall centre if the pointer hasn't been over the canvas). Disabled
@@ -475,8 +485,9 @@ export const Canvas = () => {
             hallSurfaceRef.current?.handleMeasureDown(x, y, e.shiftKey)
             return
           }
-          pointerMovedRef.current = false
-          onPointerDown(e)
+          // A press that catches a glide in flight is a "stop", so its click
+          // must not also select or deselect.
+          pointerMovedRef.current = onPointerDown(e)
         }}
         onPointerMove={(e) => {
           pointerClientRef.current = { x: e.clientX, y: e.clientY }
