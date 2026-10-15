@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
+import { track } from "@/lib/analytics/track"
 
 export interface MeasurementPoint {
   x: number
@@ -60,6 +61,9 @@ export const useMeasuresStore = create<State & Action>()(
             [weddingId]: [...(state.byWedding[weddingId] ?? []), { id, a, b }],
           },
         }))
+        track("measure_added", {
+          snapped: ((a.objectId ? 1 : 0) + (b.objectId ? 1 : 0)) as 0 | 1 | 2,
+        })
       },
 
       deleteMeasurement: (weddingId, id) => {

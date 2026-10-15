@@ -1,5 +1,9 @@
 import posthog from "posthog-js"
-import type { TableShape } from "@/stores/planner.store"
+import type {
+  FixtureShape,
+  HallPreset,
+  TableShape,
+} from "@/stores/planner.store"
 
 /**
  * Every product event this app sends, and the exact properties it may carry.
@@ -86,8 +90,83 @@ export type AnalyticsEvents = {
   /** A message sent to the AI planner. Never the message itself. */
   ai_chat_message_sent: { source: "composer" | "suggestion" }
   reminder_created: { has_due_date: boolean }
+  /**
+   * A table or fixture deleted from the canvas (the selected item's trash
+   * button or the context menu) - the deletes that offer an Undo toast. The
+   * AI's deletes go through a confirmation instead and aren't counted, so
+   * this is the denominator for `entity_delete_undone`.
+   */
+  entity_deleted: {
+    kind: "table" | "fixture"
+    source: "action_button" | "context_menu"
+  }
+  /**
+   * The Undo on a delete's toast, counted only when the restore went through.
+   * `seconds` is how long after the delete it was pressed - bunching near the
+   * toast's 6s lifetime would mean the toast closes too soon.
+   */
+  entity_delete_undone: {
+    kind: "table" | "fixture"
+    source: "action_button" | "context_menu"
+    seconds: number
+  }
+  /**
+   * An invite link created in the members dialog. The denominator for
+   * `invite_claimed` - without it a low claim count can't tell "nobody
+   * shares" from "invitees don't follow through".
+   */
+  invite_created: { role: "editor" | "viewer" }
   /** An invite link redeemed into a membership. */
   invite_claimed: undefined
+  /**
+   * An account created from the sign-up page. For email that's signUp()
+   * succeeding - the account exists, its address not yet confirmed. For Google
+   * it's the first return from the OAuth round trip with a brand-new account
+   * (the moment the pending terms acceptance gets written), so a Google user
+   * who already had an account isn't counted. A Google account first created
+   * from /login isn't either: that form carries no terms checkbox, so there is
+   * no marker to notice it by.
+   */
+  signup_completed: { method: "email" | "google" }
+  /** One hall created. Like `table_added`, counted in the store. */
+  hall_added: { preset: HallPreset }
+  /**
+   * One fixture placed - the add hub, a canvas drop, a paste or the AI, as
+   * with `table_added`.
+   */
+  fixture_added: { shape: FixtureShape }
+  /**
+   * A cloud write that failed (the "couldn't save" toast). There's no
+   * rollback, so each one is a moment the screen and the database disagree
+   * until the next load. `entity` is bucketed from the mutation's label;
+   * `offline` separates a dropped connection from a real bug.
+   */
+  sync_save_failed: {
+    entity:
+      | "wedding"
+      | "hall"
+      | "table"
+      | "fixture"
+      | "guest"
+      | "reminder"
+      | "layout"
+      | "other"
+    offline: boolean
+  }
+  /**
+   * The outline editor opened for a hall or fixture. Counted on opening rather
+   * than saving: every vertex drag saves, so saves measure fiddliness, not use.
+   */
+  shape_edit_opened: { target: "hall" | "fixture" }
+  /** One measurement line drawn; `snapped` is how many ends stuck to an object. */
+  measure_added: { snapped: 0 | 1 | 2 }
+  /** A copied table or fixture pasted. Also counts as `table_added`/`fixture_added`. */
+  entity_pasted: {
+    kind: "table" | "fixture"
+    trigger: "keyboard" | "context_menu"
+  }
+  /** The duplicate button on a selected table or fixture. */
+  entity_duplicated: { kind: "table" | "fixture" }
 }
 
 // Events declared as `undefined` are called bare - `track("invite_claimed")`.

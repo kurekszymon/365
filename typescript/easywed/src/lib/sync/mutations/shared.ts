@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase"
 import i18n from "@/i18n"
 import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 import { isLocalWedding } from "@/lib/localWedding"
+import { track } from "@/lib/analytics/track"
 
 // Geometry's typed shape (object with `vertices` and `closed`) is structurally
 // compatible with `Json` at runtime, but TS rejects the assignment because the
@@ -29,7 +30,30 @@ export const getWeddingId = (): string | null => {
 const log = (label: string, error: unknown) => {
   console.error(`[sync] ${label}`, error)
   toast.error(i18n.t("sync.save_failed"), { id: "sync-error" })
+  track("sync_save_failed", {
+    entity: entityOf(label),
+    offline: typeof navigator !== "undefined" && !navigator.onLine,
+  })
 }
+
+// Buckets a mutation label ("insertTable", "updatePos:fixtures", ...) into
+// the closed set analytics accepts - the label itself never leaves. Order
+// matters: "reassignTableGuests" and "softDeleteTable unassign" write guest
+// rows but are table edits, so table is checked before guest.
+const ENTITY_PATTERNS = [
+  ["layout", /layout/],
+  ["hall", /hall/],
+  ["fixture", /fixture/],
+  ["table", /table/],
+  ["guest", /guest/],
+  ["reminder", /reminder/],
+  ["wedding", /wedding/],
+] as const
+
+const entityOf = (label: string) =>
+  ENTITY_PATTERNS.find(([, pattern]) =>
+    pattern.test(label.toLowerCase())
+  )?.[0] ?? "other"
 
 // Runs a Supabase write, logs + toasts on failure, and reports success as a
 // boolean. Every mutation funnels through this so they share one contract:

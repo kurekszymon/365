@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import type { Position } from "./planner.store"
+import { track } from "@/lib/analytics/track"
 
 export type PanelView =
   | { kind: "halls.list" }
@@ -55,11 +56,13 @@ export const usePanelStore = create<State & Action>((set) => ({
     set({ view: { kind: "fixture.edit", fixtureId }, selectedId: fixtureId }),
   // selectedId stays null: the selection ring + action buttons would overlap
   // the vertex handles.
-  openShapeEdit: (id, entityKind) =>
+  openShapeEdit: (id, entityKind) => {
     set({
       view: { kind: "shape.edit", entityKind, id },
       selectedId: null,
-    }),
+    })
+    track("shape_edit_opened", { target: entityKind })
+  },
   openAddHub: () => set({ view: { kind: "add_hub" }, selectedId: null }),
   openAiChat: () => set({ view: { kind: "ai_chat" }, selectedId: null }),
   select: (id) => set({ selectedId: id }),

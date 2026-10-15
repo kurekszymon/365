@@ -689,6 +689,7 @@ const createPlannerStore = (
     }
     set((state) => ({ tables: [...state.tables, copy] }))
     void insertTable(copy)
+    track("entity_duplicated", { kind: "table" })
     return newId
   },
   deleteTable: (id) => {
@@ -808,6 +809,7 @@ const createPlannerStore = (
     })
     pendingHallInserts.set(id, insert)
     void insert
+    track("hall_added", { preset: newHall.preset })
     return id
   },
   raiseHall: (id) => {
@@ -1139,6 +1141,7 @@ const createPlannerStore = (
     }
     set((state) => ({ fixtures: [...state.fixtures, newFixture] }))
     afterHallInsert(newFixture.hallId, () => void insertFixture(newFixture))
+    track("fixture_added", { shape: newFixture.shape })
     return fixtureId
   },
   updateFixture: (id, fixture) => {
@@ -1201,6 +1204,7 @@ const createPlannerStore = (
     }
     set((state) => ({ fixtures: [...state.fixtures, copy] }))
     void insertFixture(copy)
+    track("entity_duplicated", { kind: "fixture" })
     return newId
   },
   deleteFixture: (id) => {

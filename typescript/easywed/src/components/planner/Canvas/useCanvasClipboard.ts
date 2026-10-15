@@ -4,6 +4,7 @@ import type { Position } from "@/stores/planner.store"
 import { useClipboardStore } from "@/stores/clipboard.store"
 import { usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
+import { track } from "@/lib/analytics/track"
 
 // Copy/paste for canvas tables and fixtures. Copy snapshots the currently
 // selected element into the clipboard store; paste recreates it at a given
@@ -45,22 +46,30 @@ export const useCanvasClipboard = () => {
     [copyId]
   )
 
-  const paste = useCallback((position: Position, hallId: string) => {
-    const item = useClipboardStore.getState().item
-    if (!item) return
-    const { addTable, addFixture } = usePlannerStore.getState()
-    const { openTableEdit, openFixtureEdit } = usePanelStore.getState()
+  const paste = useCallback(
+    (
+      position: Position,
+      hallId: string,
+      trigger: "keyboard" | "context_menu"
+    ) => {
+      const item = useClipboardStore.getState().item
+      if (!item) return
+      track("entity_pasted", { kind: item.kind, trigger })
+      const { addTable, addFixture } = usePlannerStore.getState()
+      const { openTableEdit, openFixtureEdit } = usePanelStore.getState()
 
-    // addTable/addFixture regenerate id and position, so the snapshot's own
-    // id/position are ignored; the paste target's hall wins over the copied
-    // hallId. Size, shape, seats and geometry carry over; guests do not -
-    // paste makes an empty copy.
-    if (item.kind === "table") {
-      openTableEdit(addTable({ ...item.table, hallId }, [], position))
-    } else {
-      openFixtureEdit(addFixture({ ...item.fixture, hallId }, position))
-    }
-  }, [])
+      // addTable/addFixture regenerate id and position, so the snapshot's own
+      // id/position are ignored; the paste target's hall wins over the copied
+      // hallId. Size, shape, seats and geometry carry over; guests do not -
+      // paste makes an empty copy.
+      if (item.kind === "table") {
+        openTableEdit(addTable({ ...item.table, hallId }, [], position))
+      } else {
+        openFixtureEdit(addFixture({ ...item.fixture, hallId }, position))
+      }
+    },
+    []
+  )
 
   return { copySelected, copyTarget, paste }
 }

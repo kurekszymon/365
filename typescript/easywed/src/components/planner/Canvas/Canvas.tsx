@@ -314,7 +314,8 @@ export const Canvas = () => {
           snapStep === "off"
             ? resolved.position
             : snapPositionToGrid(resolved.position, snapStep),
-          resolved.hall.id
+          resolved.hall.id,
+          "keyboard"
         )
       }
     }
@@ -391,7 +392,7 @@ export const Canvas = () => {
                     className="text-destructive focus:bg-destructive/10 focus:text-destructive"
                     onSelect={() => {
                       if (panel.selectedId === target.id) panel.deselect()
-                      deleteTableWithUndo(target.id)
+                      deleteTableWithUndo(target.id, "context_menu")
                     }}
                   >
                     <Trash2Icon className="size-4" />
@@ -403,7 +404,7 @@ export const Canvas = () => {
                     className="text-destructive focus:bg-destructive/10 focus:text-destructive"
                     onSelect={() => {
                       if (panel.selectedId === target.id) panel.deselect()
-                      deleteFixtureWithUndo(target.id)
+                      deleteFixtureWithUndo(target.id, "context_menu")
                     }}
                   >
                     <Trash2Icon className="size-4" />
@@ -414,7 +415,8 @@ export const Canvas = () => {
                   <CanvasContextMenuItem
                     disabled={!inHall || !targetHallId}
                     onSelect={() =>
-                      targetHallId && paste(snapped, targetHallId)
+                      targetHallId &&
+                      paste(snapped, targetHallId, "context_menu")
                     }
                   >
                     <ClipboardPasteIcon className="size-4" />

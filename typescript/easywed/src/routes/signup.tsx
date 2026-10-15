@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { supabase } from "@/lib/supabase"
 import { redirectAuthedAwayFromLogin } from "@/lib/auth/guards"
 import { authErrorKey } from "@/lib/auth/authErrors"
+import { track } from "@/lib/analytics/track"
 import { TERMS_VERSION } from "@/lib/legal/dates"
 import { rememberAcceptedTerms } from "@/lib/sync/termsAcceptance"
 import { Button } from "@/components/ui/button"
@@ -57,7 +58,7 @@ function Signup() {
     // matters for a user somehow created outside the trigger's watch.
     rememberAcceptedTerms()
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -71,6 +72,11 @@ function Signup() {
       return handleError(error)
     }
 
+    // An address that already has an account gets the same "check your inbox"
+    // answer (Supabase won't say which addresses exist), but no identities -
+    // nothing was created, so nothing to count.
+    if (data.user?.identities?.length)
+      track("signup_completed", { method: "email" })
     setStatus({ kind: "success" })
   }
 

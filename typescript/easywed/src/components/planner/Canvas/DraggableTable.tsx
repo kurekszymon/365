@@ -133,7 +133,7 @@ const DraggableTableBase = ({
                 variant="danger"
                 onClick={(e) => {
                   e.stopPropagation()
-                  deleteTableWithUndo(table.id)
+                  deleteTableWithUndo(table.id, "action_button")
                   deselectPanel()
                 }}
               />

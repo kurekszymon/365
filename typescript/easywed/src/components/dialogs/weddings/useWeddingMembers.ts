@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase"
 import { fetchDisplayNames } from "@/lib/sync/profile"
 import { isLocalWedding } from "@/lib/localWedding"
 import i18n from "@/i18n"
+import { track } from "@/lib/analytics/track"
 
 export type InviteRole = "editor" | "viewer"
 export type MemberRole = "owner" | InviteRole
@@ -168,6 +169,7 @@ export function useWeddingMembers(isOpen: boolean) {
       setError(insertError.message)
       return
     }
+    track("invite_created", { role })
 
     // Re-fetch to get the token the DB generated.
     await refresh()

@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase"
+import { track } from "@/lib/analytics/track"
 import { TERMS_ENFORCED_SINCE, TERMS_VERSION } from "@/lib/legal/dates"
 
 // Which version of the Regulamin the user ticked the box for, held across an
@@ -139,6 +140,10 @@ export const recordPendingTermsAcceptance = async (
     return
   }
 
+  // A blank terms_version filled from a fresh sign-up marker is exactly a new
+  // account made with Google from the sign-up page: email sign-ups get theirs
+  // from handle_new_user and returned early above.
+  track("signup_completed", { method: "google" })
   safeRemoveItem(PENDING_KEY)
 }
 

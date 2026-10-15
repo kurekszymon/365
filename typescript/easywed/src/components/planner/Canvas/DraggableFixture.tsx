@@ -104,7 +104,7 @@ const DraggableFixtureBase = ({ fixture, ppm }: DraggableFixtureProps) => {
                 variant="danger"
                 onClick={(e) => {
                   e.stopPropagation()
-                  deleteFixtureWithUndo(fixture.id)
+                  deleteFixtureWithUndo(fixture.id, "action_button")
                   deselectPanel()
                 }}
               />
