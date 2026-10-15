@@ -44,11 +44,10 @@ export const DeleteAccountDialog = ({
   useEffect(() => {
     if (!open) return
 
-    // No user id while the dialog is open means the session went away under us
-    // (/settings is auth-guarded, so this takes an expiry race). Returning
-    // early would leave `blocking` null forever - the dialog stuck on
-    // "checking your weddings", with no button, no error and no retry. Same
-    // exit as a failed check below.
+    // No user id while the dialog is open means the session went away (an expiry
+    // race, since /settings is auth-guarded). Returning early would leave
+    // `blocking` null forever - stuck on "checking your weddings" with no
+    // button, error or retry. Same exit as a failed check below.
     if (!userId) {
       toast.error(t("settings.delete.check_failed"))
       onOpenChange(false)
@@ -78,16 +77,15 @@ export const DeleteAccountDialog = ({
     const result = await deleteOwnAccount()
 
     if (!result.ok) {
-      // The server refused because someone gained access between the check on
-      // open and this click - a co-member joining in another tab, or an invite
-      // claimed in the window the RPC's row lock narrows but can't close. A
-      // toast alone would leave the confirm field and an enabled button on
-      // screen with nothing naming what's in the way, so re-query and switch
-      // the dialog into its blocked state instead.
+      // Someone gained access between the check on open and this click - a
+      // co-member joining in another tab, or an invite claimed in the window the
+      // RPC's row lock narrows but cannot close. A toast alone would leave the
+      // confirm field and an enabled button on screen with nothing naming what
+      // is in the way, so re-query and switch into the blocked state.
       //
-      // `deleting` stays true across the re-query: clearing it first would
-      // re-arm the destructive button for the length of that round trip, in
-      // the one state where we already know the next click would also fail.
+      // `deleting` stays true across the re-query: clearing it would re-arm the
+      // destructive button for that round trip, in the one state where we
+      // already know the next click fails.
       if (result.reason === "shared_weddings" && userId) {
         const weddings = await fetchSharedOwnedWeddings(userId).catch(
           () => null
@@ -109,11 +107,10 @@ export const DeleteAccountDialog = ({
       return
     }
 
-    // Leave /settings before dropping the session, not after. signOut fires
-    // SIGNED_OUT, AuthGate calls router.invalidate(), and this route's
-    // requireAuth("/settings") would redirect to /login?next=/settings -
-    // racing the navigate below and stranding a just-deleted user on a login
-    // page pointing at a route they no longer have.
+    // Leave /settings before dropping the session: signOut fires SIGNED_OUT,
+    // AuthGate calls router.invalidate(), and requireAuth("/settings") redirects
+    // to /login?next=/settings - racing the navigate below and stranding a
+    // just-deleted user on a login page pointing at a route they no longer have.
     await navigate({ to: i18n.resolvedLanguage === "pl" ? "/pl" : "/en" })
 
     // Local scope only: the user row is already gone, so a server-side

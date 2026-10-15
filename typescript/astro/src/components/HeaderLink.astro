@@ -13,12 +13,10 @@ const isActive = href === pathname || href === '/' + (subpath?.[0] || '');
 	<slot />
 </a>
 <style>
-	a {
-		display: inline-block;
-		text-decoration: none;
-	}
-
+	/* Current-page cue that doesn't change the link's width (bold would nudge
+	   it sideways between pages). */
 	a.active {
-		text-decoration: underline;
+		color: var(--fg);
+		text-decoration-thickness: 2px;
 	}
 </style>

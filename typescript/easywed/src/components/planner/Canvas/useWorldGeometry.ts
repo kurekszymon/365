@@ -15,20 +15,18 @@ const FIT_MARGIN_PX = 96
 const PAN_PADDING = 48
 
 // Start-side (top/left) gutters reserved when the world fits the viewport, so
-// the dimension labels that sit just outside a hall's top and left edges (the
-// vertical label at hallLeft - 52, the horizontal one at hallTop - 28) stay
-// on-screen instead of sliding under the viewport edge when panned to the limit.
+// the dimension labels just outside a hall's top and left edges (at
+// hallLeft - 52 and hallTop - 28) stay on-screen when panned to the limit.
 const LABEL_GUTTER_X = 64
 const LABEL_GUTTER_Y = 36
 
-// Allowed pan range on one axis. The world is centered at offset 0.
+// Allowed pan range on one axis; the world is centered at offset 0.
 //
-// When the world is larger than the viewport it may pan symmetrically until
-// either edge sits PAN_PADDING inside the opposite viewport edge (so the edge
-// stays visible). When it's smaller, it may slide until its far (right/bottom)
-// edge reaches the viewport edge, but the near (top/left) side stops
-// `startGutter` short so the dimension labels there remain visible. Passing
-// startGutter = 0 restores a plain edge-to-edge slide.
+// Larger than the viewport, it pans symmetrically until either edge sits
+// PAN_PADDING inside the opposite viewport edge. Smaller, it slides until its
+// far edge reaches the viewport edge, but the near side stops `startGutter`
+// short so the dimension labels stay visible. startGutter = 0 restores a plain
+// edge-to-edge slide.
 function axisPanBounds(scaled: number, container: number, startGutter: number) {
   const overflow = scaled - container
   if (overflow >= 0) {
@@ -131,9 +129,9 @@ export function useWorldGeometry(
   )
 
   // The pan that, at `newZoom`, keeps the world point currently under `focal`
-  // (client coords; defaults to the container centre) pinned in place. Without
-  // this, zooming always grows the layout from its centre, so the spot you're
-  // looking at slides away. Returns a clamped pan.
+  // (client coords, defaulting to the container centre) pinned in place -
+  // without it, zoom grows from the centre and the spot you are looking at
+  // slides away. Returns a clamped pan.
   function zoomToPan(
     newZoom: number,
     focal?: { x: number; y: number }
@@ -172,11 +170,10 @@ export function useWorldGeometry(
     }
   }
 
-  // Zoom + clamped pan that frame a world-space rect (meters) with a
-  // FIT_MARGIN_PX gutter, centered in the viewport - used to jump the view to
-  // an entity (e.g. entering shape-edit mode). Deliberately independent of the
-  // current zoom/pan so its identity only changes on resize / world changes,
-  // letting effects depend on it without re-firing every pan frame.
+  // Zoom + clamped pan framing a world-space rect with a FIT_MARGIN_PX gutter,
+  // centered - used to jump the view to an entity. Deliberately independent of
+  // the current zoom/pan, so its identity changes only on resize or world
+  // change and effects can depend on it without re-firing every pan frame.
   const fitRect = useCallback(
     (rect: WorldBounds): { zoom: number; pan: Position } | null => {
       if (containerWidth <= 0 || containerHeight <= 0) return null

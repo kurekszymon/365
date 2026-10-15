@@ -1,7 +1,7 @@
 import type { ModelMessage } from "ai"
 
-// The store keeps the full conversation, but every turn also re-embeds a full
-// layout snapshot in the system prompt, so the model payload would grow without
+// The store keeps the full conversation, and every turn also prepends a full
+// layout snapshot (buildLayoutMessage), so the model payload would grow without
 // bound. Cap how much history we actually send.
 export const MAX_HISTORY_MESSAGES = 24
 

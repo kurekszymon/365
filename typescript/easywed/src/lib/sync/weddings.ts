@@ -29,11 +29,10 @@ const forgetIfCurrent = (weddingId: string) => {
 export const deleteWedding = async (
   weddingId: string
 ): Promise<{ error: string | null }> => {
-  // `.select()` is load-bearing, not decoration. A DELETE whose rows are all
-  // filtered out by RLS is not an error to PostgREST - it answers 204 with no
-  // body, which supabase-js reports as { data: null, error: null }. Without
-  // asking for the deleted rows back we'd read "you aren't the owner" as
-  // success and tell the user their wedding is gone while it sits there.
+  // `.select()` is load-bearing: a DELETE RLS filters to nothing answers 204,
+  // which supabase-js reports as `{ data: null, error: null }`. Without asking
+  // for the deleted rows back, "you aren't the owner" reads as success and the
+  // user is told their wedding is gone while it sits there.
   const { data, error } = await supabase
     .from("weddings")
     .delete()
@@ -61,12 +60,11 @@ export const deleteWedding = async (
  * wedding instead.
  *
  * Deliberately leaves the wedding_invitations row that brought them in: DELETE
- * on that table is owner-only ("owners delete invites"), so a leaving member
- * has no way to clear it, and the owner keeps an accurate record that the link
- * was used. Consequence: after someone leaves, the owner's invitation list
- * still shows a claimed invite naming them. Re-inviting means issuing a new
- * link - the old one is spent either way. Cleaning this up properly needs a DB
- * change (a trigger on membership delete), not a client-side one.
+ * there is owner-only, so a leaving member cannot clear it, and the owner keeps
+ * an accurate record that the link was used. The consequence is that the owner's
+ * invitation list still shows a claimed invite naming them; re-inviting means a
+ * new link either way. Cleaning it up needs a trigger on membership delete, not
+ * a client-side change.
  */
 export const leaveWedding = async (
   weddingId: string,

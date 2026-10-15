@@ -1,4 +1,5 @@
 import React from "react";
+import { tl } from "../i18n";
 
 /**
  * The app's glyphs. Same lucide icons the planner uses (`Sidebar/tabs.ts`,
@@ -12,6 +13,7 @@ export type IconName =
   | "reminders"
   | "assistant"
   | "arrowLeft"
+  | "arrowRight"
   | "chevronLeft"
   | "chevronRight"
   | "landmark"
@@ -28,9 +30,41 @@ export type IconName =
   | "trash"
   | "check"
   | "fileUp"
-  | "printer";
+  | "printer"
+  | "chevronDown"
+  | "x"
+  | "fileSpreadsheet"
+  | "pencilRuler"
+  | "copy"
+  | "userX"
+  | "menu"
+  | "minus"
+  | "clock"
+  | "info"
+  | "squarePen"
+  | "clipboardCopy"
+  | "rotateCw"
+  | "table"
+  | "squarePlus"
+  | "magnet"
+  | "presentation"
+  | "music2"
+  | "martini"
+  | "disc3"
+  | "logIn"
+  | "shapes"
+  | "share2";
 
 const PATHS: Record<IconName, React.ReactNode> = {
+  /** lucide `share-2` - the onboarding card's *Udostępnij* once the plan's basics are done. */
+  share2: (
+    <>
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98" />
+    </>
+  ),
   guests: (
     <>
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -41,9 +75,9 @@ const PATHS: Record<IconName, React.ReactNode> = {
   ),
   tables: (
     <>
-      <path d="M3 2v7a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2V2" />
-      <path d="M6 11v11" />
-      <path d="M18 22v-7h3V7a5 5 0 0 0-3 4.6V15h3" />
+      <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+      <path d="M7 2v20" />
+      <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
     </>
   ),
   fixtures: (
@@ -69,6 +103,12 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <path d="M19 12H5" />
       <path d="M12 19l-7-7 7-7" />
+    </>
+  ),
+  arrowRight: (
+    <>
+      <path d="M5 12h14" />
+      <path d="M12 5l7 7-7 7" />
     </>
   ),
   chevronLeft: <path d="M15 18l-6-6 6-6" />,
@@ -162,6 +202,139 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <rect x="6" y="14" width="12" height="8" rx="1" />
     </>
   ),
+  chevronDown: <path d="M6 9l6 6 6-6" />,
+  x: <path d="M18 6 6 18M6 6l12 12" />,
+  fileSpreadsheet: (
+    <>
+      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z" />
+      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+      <path d="M8 13h2M14 13h2M8 17h2M14 17h2" />
+    </>
+  ),
+  pencilRuler: (
+    <>
+      <path d="M13 7 8.7 2.7a2.4 2.4 0 0 0-3.4 0L2.7 5.3a2.4 2.4 0 0 0 0 3.4L7 13" />
+      <path d="m8 6 2-2" />
+      <path d="m18 16 2-2" />
+      <path d="m17 11 4.3 4.3c.94.94.94 2.46 0 3.4l-2.6 2.6c-.94.94-2.46.94-3.4 0L11 17" />
+      <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+      <path d="m15 5 4 4" />
+    </>
+  ),
+  copy: (
+    <>
+      <rect x="8" y="8" width="14" height="14" rx="2" />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+    </>
+  ),
+  userX: (
+    <>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="m17 8 5 5M22 8l-5 5" />
+    </>
+  ),
+  menu: <path d="M4 6h16M4 12h16M4 18h16" />,
+  minus: <path d="M5 12h14" />,
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v6l4 2" />
+    </>
+  ),
+  info: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4M12 8h.01" />
+    </>
+  ),
+  /** lucide `square-pen` - the table toolbar's edit button on a phone. */
+  squarePen: (
+    <>
+      <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" />
+    </>
+  ),
+  /** lucide `clipboard-copy` - the table toolbar's copy button. */
+  clipboardCopy: (
+    <>
+      <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+      <path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v4" />
+      <path d="M21 14H11" />
+      <path d="m15 10-4 4 4 4" />
+    </>
+  ),
+  /** lucide `rotate-cw` - *Obróć o 90°* in the table form. */
+  rotateCw: (
+    <>
+      <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+      <path d="M21 3v5h-5" />
+    </>
+  ),
+  /** lucide `table` - the canvas menu's *Dodaj stół*. */
+  table: (
+    <>
+      <path d="M12 3v18" />
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <path d="M3 9h18M3 15h18" />
+    </>
+  ),
+  /** lucide `square-plus` - the canvas menu's *Dodaj stoły*. */
+  squarePlus: (
+    <>
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <path d="M8 12h8M12 8v8" />
+    </>
+  ),
+  /** lucide `magnet` - the canvas menu's snap distance. */
+  magnet: (
+    <>
+      <path d="m6 15-4-4 6.75-6.77a7.79 7.79 0 0 1 11 11L13 22l-4-4 6.39-6.36a2.14 2.14 0 0 0-3-3L6 15" />
+      <path d="m5 8 4 4M12 15l4 4" />
+    </>
+  ),
+  /** The add hub's fixture cards (`FIXTURE_ICONS` in `AddHubContent`): stage, dance floor, bar, DJ booth, entrance, custom. */
+  presentation: (
+    <>
+      <path d="M2 3h20" />
+      <path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3" />
+      <path d="m7 21 5-5 5 5" />
+    </>
+  ),
+  music2: (
+    <>
+      <circle cx="8" cy="18" r="4" />
+      <path d="M12 18V2l7 4" />
+    </>
+  ),
+  martini: (
+    <>
+      <path d="M8 22h8M12 11v11" />
+      <path d="m19 3-7 8-7-8Z" />
+    </>
+  ),
+  disc3: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M6 12c0-1.7.7-3.2 1.8-4.2" />
+      <circle cx="12" cy="12" r="2" />
+      <path d="M18 12c0 1.7-.7 3.2-1.8 4.2" />
+    </>
+  ),
+  logIn: (
+    <>
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+      <path d="m10 17 5-5-5-5M15 12H3" />
+    </>
+  ),
+  shapes: (
+    <>
+      <path d="M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <circle cx="17.5" cy="17.5" r="3.5" />
+    </>
+  ),
 };
 
 export const Icon: React.FC<{
@@ -189,9 +362,9 @@ export type NavKind = "guests" | "tables" | "fixtures" | "reminders" | "assistan
 
 /** The planner's tab strip, in the app's order, with its badge counts. */
 export const NAV_ITEMS: { kind: NavKind; label: string; badge?: number }[] = [
-  { kind: "guests", label: "Guests" },
-  { kind: "tables", label: "Tables", badge: 7 },
-  { kind: "fixtures", label: "Elements", badge: 2 },
-  { kind: "reminders", label: "Reminders", badge: 1 },
-  { kind: "assistant", label: "Assistant" },
+  { kind: "guests", label: tl.app.nav.guests },
+  { kind: "tables", label: tl.app.nav.tables, badge: 7 },
+  { kind: "fixtures", label: tl.app.nav.fixtures, badge: 2 },
+  { kind: "reminders", label: tl.app.nav.reminders, badge: 1 },
+  { kind: "assistant", label: tl.app.nav.assistant },
 ];

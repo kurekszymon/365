@@ -2,29 +2,30 @@ import type { BeforeSendFn, CaptureResult } from "posthog-js"
 
 // The claim URL carries the invite token as a path segment (/invite/<token>),
 // and that token is a bearer credential: claim_wedding_invitation grants
-// wedding membership to whoever presents it, with no email binding and no
-// second factor. PostHog captures the current URL on every pageview, so without
-// this the live token lands in the analytics event store - and again in
-// $referrer on the very next navigation.
+// membership to whoever presents it, with no email binding and no second factor.
+// PostHog captures the current URL on every pageview, so without this the live
+// token lands in the event store, and again in $referrer on the next navigation.
 //
-// The segment is replaced rather than the event dropped, so an invite open
-// stays countable while the recorded URL is worthless to anyone reading events.
+// The segment is replaced rather than the event dropped, so an invite open stays
+// countable while the recorded URL is worthless to anyone reading events.
+//
+// Unanchored, so it also covers /venue/invite/<token>, a bearer credential for
+// the same reason. That route is filed under the shared `/invite/` segment
+// deliberately, so one pattern redacts both. robots.txt cannot share the trick:
+// Disallow is a prefix match from the root and needs its own line.
 const INVITE_TOKEN = /(\/invite\/)[^/?#]+/g
 
 export const redactInviteToken = (value: string): string =>
   value.replace(INVITE_TOKEN, "$1<redacted>")
 
 // The other credential that arrives in a URL: Supabase hands the session back
-// through the address bar on the pages it redirects to. The client runs the
-// implicit flow, so /reset-password lands as
-// #access_token=...&refresh_token=...&type=recovery, and /auth/callback the
-// same after a Google sign-in; the ?code= form is covered too in case flowType
-// ever moves to PKCE. A recovery token is an account takeover for whoever can
-// read it, and it would otherwise sit in $current_url, then in $referrer on the
-// navigation to /home straight after.
+// through the address bar. The client runs the implicit flow, so /reset-password
+// lands as #access_token=...&refresh_token=...&type=recovery and /auth/callback
+// the same after a Google sign-in; ?code= is covered in case flowType ever moves
+// to PKCE. A recovery token is an account takeover for whoever can read it.
 //
-// Matched on the delimiter so a query key that merely ends in "code" doesn't
-// hit, and stopped at & or # so only the value is replaced.
+// Matched on the delimiter so a query key merely ending in "code" does not hit,
+// and stopped at & or # so only the value is replaced.
 const AUTH_CREDENTIAL = /([?#&](?:code|access_token|refresh_token)=)[^&#]*/g
 
 export const redactAuthCredential = (value: string): string =>
@@ -33,11 +34,10 @@ export const redactAuthCredential = (value: string): string =>
 const redactSecrets = (value: string): string =>
   redactAuthCredential(redactInviteToken(value))
 
-// Deliberately keyed on the value rather than a list of property names.
-// PostHog derives its person properties by prefixing - $initial_current_url is
-// built from $current_url at runtime, not declared anywhere - so the set of
-// keys that can hold a URL isn't fixed, and an allowlist would quietly miss the
-// next one it invents.
+// Keyed on the value rather than a list of property names: PostHog derives
+// person properties by prefixing ($initial_current_url is built from
+// $current_url at runtime, declared nowhere), so the set of keys that can hold a
+// URL is not fixed and an allowlist would miss the next one it invents.
 const carriesSecret = (value: string): boolean =>
   value.includes("/invite/") ||
   value.includes("code=") ||

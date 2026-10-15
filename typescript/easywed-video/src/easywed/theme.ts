@@ -22,6 +22,14 @@ export const colors = {
   inkSoft: "#7b736b",
   border: "#e6e1d8",
 
+  /** `--muted` (`oklch(0.94 0.011 80)`): the add hub's fixture-card icon tiles (`bg-muted`). */
+  muted: "#efeae3",
+  /**
+   * `--accent` (`oklch(0.92 0.03 330)`): a context-menu row under the pointer
+   * (`focus:bg-accent`) - the app's own accent, not `accentSoft`'s badge tone.
+   */
+  accentFill: "#f1deee",
+
   /** `--secondary` / `--primary`: the app's card fills and its black pills. */
   secondary: "#efe9dd",
   primary: "#2b2621",
@@ -46,6 +54,29 @@ export const colors = {
   selected: "#9c4f89",
   selectedSoft: "#f6e8f2",
 
+  /** `--destructive` (red-600 in every palette): a dialog's required-field asterisk. */
+  destructive: "#e7000b",
+  /** `DialogOverlay`'s `bg-black/10` - the scrim behind a dialog or drawer. */
+  scrim: "rgba(0, 0, 0, 0.1)",
+  /**
+   * `DrawerOverlay`'s `bg-black/40` (`ui/drawer.tsx`) - what a phone's bottom
+   * sheet actually dims the page with, and no blur. The mama-link cut, which
+   * shipped first, drew its sheet over `scrim` and a blur instead.
+   */
+  drawerScrim: "rgba(0, 0, 0, 0.4)",
+
+  /** `MeasureOverlay`'s hard-coded `#0d9488` (teal-600): the measuring line, its dots and its label. */
+  measure: "#0d9488",
+
+  /**
+   * `SeatAssignPopover`'s *elsewhere* rows - the amber "this moves them" tone:
+   * `border-amber-300/80 bg-amber-50/70 text-amber-900`, Tailwind v4's own
+   * oklch amber converted to hex.
+   */
+  amber50: "#fffbeb",
+  amber300: "#ffd230",
+  amber900: "#7b3306",
+
   brandGreen: "#43684b",
   brandGreenSoft: "#9ec2a2",
   brandGreenMist: "#d9ead9",
@@ -55,6 +86,26 @@ export const colors = {
   seatEmptyBorder: "#6f9a79",
   seatFilled: "#a9592b",
   seatFilledBorder: "#7f4220",
+
+  /** `--tag-green` / `--tag-teal` / `--tag-amber` (`styles.css`, oklch as hex): the diet tags' reserved tones. */
+  tagGreen: "#337344",
+  tagTeal: "#157171",
+  tagAmber: "#915c08",
+  /**
+   * `--tag-violet`, the one tone `lib/ageGroup.ts` reserves for every child
+   * bracket (`AGE_GROUP_TONE`). `oklch(0.5 0.11 300)` as hex - a blue-violet,
+   * two hue families away from `accent` (336deg), so a bracket badge never
+   * reads as a selection.
+   */
+  tagViolet: "#6d5398",
+
+  /** The print view (`PlannerPrintView`): `bg-white text-black` and Tailwind v4's gray-500..800. */
+  paper: "#ffffff",
+  paperInk: "#000000",
+  paperGray500: "#6a7282",
+  paperGray600: "#4a5565",
+  paperGray700: "#364153",
+  paperGray800: "#1e2939",
 };
 
 export const shadow = {

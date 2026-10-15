@@ -1,5 +1,3 @@
-// i still don't know if that's correct idea, but might as well just try since it's most likely another personal prejct
-
 import { create } from "zustand"
 
 type Guests =
@@ -8,8 +6,8 @@ type Guests =
   | "Guest.Import"
   | "Guests.Export.Csv"
   | "Guests.Export.Pdf"
-type Planner = "Planner.Hall.Delete"
-type Weddings = "Wedding.Members"
+type Planner = "Planner.Hall.Delete" | "Planner.LayoutPresets"
+type Weddings = "Wedding.Members" | "Wedding.Venue"
 export type Dialog = Weddings | Guests | Planner
 
 // Optional context a dialog needs to open - e.g. which guest `Guest.Edit`

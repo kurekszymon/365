@@ -49,9 +49,9 @@ export const useViewStore = create<State & Action>()(
       resetZoomAndPan: () => set({ zoom: 1, pan: { x: 0, y: 0 } }),
       stepZoom: (direction) =>
         set((state) => ({
-          // ref: https://gamedev.net/forums/topic/666225-equation-for-zooming/
-          // Math.exp is the inverse of Math.log, so it's converting to log-space, applying the zoom delta, then converting back.
-          // modify the direction (+ or -) to control zoom in vs zoom out
+          // Step in log space so each click scales by the same factor at any
+          // zoom level; `direction` (+/-) picks in vs out.
+          // https://gamedev.net/forums/topic/666225-equation-for-zooming/
           zoom: clampZoom(Math.exp(Math.log(state.zoom) + direction * 0.08)),
         })),
       setZoom: (zoom) => set({ zoom: clampZoom(zoom) }),

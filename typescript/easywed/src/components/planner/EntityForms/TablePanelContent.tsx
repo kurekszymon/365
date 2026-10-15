@@ -15,9 +15,8 @@ import { getEffectiveSize, usePlannerStore } from "@/stores/planner.store"
 import { cn } from "@/lib/utils"
 
 /**
- * Edit form for one table. Add flows don't come through here anymore - new
- * tables are inserted directly from a preset (add hub, canvas context menu)
- * and then routed to this edit view.
+ * Edit form for one table. There is no add form: new tables are inserted
+ * directly from a preset (add hub, canvas context menu) and then routed here.
  *
  * `fillHeight` (desktop dialog only): fill a fixed-height shell - center the
  * preview in the left column's leftover space and scroll only the seat list.

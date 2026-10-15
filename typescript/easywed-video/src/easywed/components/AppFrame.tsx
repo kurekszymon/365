@@ -1,6 +1,7 @@
 import React from "react";
 import { AbsoluteFill } from "remotion";
 import { WEDDING } from "../data";
+import { tl } from "../i18n";
 import { useFormat } from "../format";
 import { colors, fonts, shadow } from "../theme";
 import { Backdrop } from "./Backdrop";
@@ -9,15 +10,44 @@ import { Icon, NAV_ITEMS, type IconName, type NavKind } from "./Icon";
 import { Wordmark } from "./Wordmark";
 
 type Props = {
-  activeRail: NavKind;
+  /** The rail tab whose panel is open; `null` when every panel is shut, as the app draws a collapsed rail. */
+  activeRail: NavKind | null;
   children: React.ReactNode;
+  /**
+   * Draw the desktop planner whatever the composition's shape - for a portrait
+   * film that shows the couple's laptop. Left out, the frame follows `useFormat()`.
+   */
+  desktop?: boolean;
+  /** Drawn over the dashed invite circle, positioned from its centre - a pointer that presses it. */
+  inviteSlot?: React.ReactNode;
+  /**
+   * The tabs' badge counts, as `useTabBadgeCounts` reads them off the plan:
+   * unseated guests, tables, fixtures and open reminders. Left out, the rail
+   * carries `NAV_ITEMS`' fixed counts, as every published film draws it.
+   */
+  badges?: Partial<Record<NavKind, number>>;
+  /**
+   * Rail labels in place of `NAV_ITEMS`' - the desktop rail's own `t(tab)`,
+   * which reads *Elementy sali* for fixtures at v1. Left out, the rail carries
+   * `NAV_ITEMS`' labels, as every published film draws it.
+   */
+  railLabels?: Partial<Record<NavKind, string>>;
+  /**
+   * A rail panel is open: the collapse button then reads `ChevronLeft`, as
+   * `SidebarRail` draws it. Left out, it reads `ChevronRight`, as every
+   * published film draws it.
+   */
+  railOpen?: boolean;
 };
+
+/** `useFormat()`'s landscape padding, for a desktop frame drawn inside a portrait composition. */
+const DESKTOP_PAD = 44;
 
 /**
  * The header's member stack: the signed-in owner plus the dashed "invite"
  * circle the app shows next to it.
  */
-const Members: React.FC<{ size: number }> = ({ size }) => (
+const Members: React.FC<{ size: number; inviteSlot?: React.ReactNode }> = ({ size, inviteSlot }) => (
   <div style={{ display: "flex", alignItems: "center", gap: size * 0.16 }}>
     <div
       style={{
@@ -46,9 +76,15 @@ const Members: React.FC<{ size: number }> = ({ size }) => (
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        position: inviteSlot ? "relative" : undefined,
       }}
     >
       <Icon name="userPlus" color={colors.inkSoft} size={size * 0.42} />
+      {inviteSlot ? (
+        <div style={{ position: "absolute", left: "50%", top: "50%", width: 0, height: 0, zIndex: 10 }}>
+          {inviteSlot}
+        </div>
+      ) : null}
     </div>
   </div>
 );
@@ -124,8 +160,12 @@ const TabIcon: React.FC<{
  * 60px icon strip with its labels underneath; portrait gets the mobile tab bar
  * with the zoom control and add FAB, matching how the app itself adapts.
  */
-export const AppFrame: React.FC<Props> = ({ activeRail, children }) => {
-  const { tall, pad } = useFormat();
+export const AppFrame: React.FC<Props> = ({ activeRail, children, desktop = false, inviteSlot, badges, railLabels, railOpen = false }) => {
+  const badgeFor = (kind: NavKind, fixed?: number) => (badges ? badges[kind] : fixed);
+  const labelFor = (kind: NavKind, fixed: string) => railLabels?.[kind] ?? fixed;
+  const format = useFormat();
+  const tall = desktop ? false : format.tall;
+  const pad = desktop ? DESKTOP_PAD : format.pad;
   // The app's chrome is designed at browser scale; everything here is that
   // spec times a constant so it stays legible at 1080p.
   const s = tall ? 1.5 : 1.7;
@@ -171,7 +211,7 @@ export const AppFrame: React.FC<Props> = ({ activeRail, children }) => {
 
             <div style={{ flex: 1 }} />
 
-            <Members size={21 * s} />
+            <Members size={21 * s} inviteSlot={inviteSlot} />
             {tall ? null : (
               <div
                 style={{
@@ -189,7 +229,7 @@ export const AppFrame: React.FC<Props> = ({ activeRail, children }) => {
                 }}
               >
                 <Icon name="landmark" color={colors.ink} size={15 * s} />
-                Configure hall
+                {tl.app.configureHall}
               </div>
             )}
             <HeaderButton name="upload" scale={s} />
@@ -201,7 +241,9 @@ export const AppFrame: React.FC<Props> = ({ activeRail, children }) => {
             {tall ? null : (
               <nav
                 style={{
-                  width: 60 * s,
+                  // Wider than the app's 60px strip: "Przypomnienia" spills out
+                  // of it at this type size, and a rail label can't wrap.
+                  width: 76 * s,
                   padding: `${14 * s}px 0`,
                   display: "flex",
                   flexDirection: "column",
@@ -221,7 +263,7 @@ export const AppFrame: React.FC<Props> = ({ activeRail, children }) => {
                     justifyContent: "center",
                   }}
                 >
-                  <Icon name="chevronRight" color={colors.ink} size={19 * s} />
+                  <Icon name={railOpen ? "chevronLeft" : "chevronRight"} color={colors.ink} size={19 * s} />
                 </div>
                 {NAV_ITEMS.map(({ kind, label, badge }) => (
                   <div
@@ -237,20 +279,20 @@ export const AppFrame: React.FC<Props> = ({ activeRail, children }) => {
                     <TabIcon
                       kind={kind}
                       active={kind === activeRail}
-                      badge={badge}
+                      badge={badgeFor(kind, badge)}
                       size={34 * s}
                     />
                     <span
                       style={{
                         fontFamily: fonts.sans,
-                        fontSize: 10 * s,
+                        fontSize: 9 * s,
                         fontWeight: 700,
                         lineHeight: 1.15,
                         color: colors.inkSoft,
                         textAlign: "center",
                       }}
                     >
-                      {label}
+                      {labelFor(kind, label)}
                     </span>
                   </div>
                 ))}
@@ -281,7 +323,7 @@ export const AppFrame: React.FC<Props> = ({ activeRail, children }) => {
                     width: 78 * s,
                   }}
                 >
-                  <TabIcon kind={kind} active={kind === activeRail} badge={badge} size={36 * s} />
+                  <TabIcon kind={kind} active={kind === activeRail} badge={badgeFor(kind, badge)} size={36 * s} />
                   <span
                     style={{
                       fontFamily: fonts.sans,

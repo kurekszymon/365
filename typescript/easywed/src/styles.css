@@ -421,7 +421,7 @@ body.is-panning * {
   html,
   body {
     background: white !important;
-    /* The app ships `width=device-width` + `user-scalable=no`, so on phones the
+    /* The app ships `width=device-width`, so on phones the
        layout viewport is ~390px. Left alone, the print root would lay out
        against that instead of the paper, and the fixed-px hall canvas would
        overflow it. Let the page box drive the width instead. */

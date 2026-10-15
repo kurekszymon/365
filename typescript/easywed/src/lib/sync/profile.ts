@@ -28,15 +28,13 @@ export const fetchDisplayName = async (
 /**
  * Display names for a set of members, keyed by user id.
  *
- * Every user has a profiles row - handle_new_user creates one at signup and
- * the migration backfilled the rest - so the normal shape for someone who
- * hasn't chosen a name is a present key mapped to `null`, not a missing key.
- * Callers should treat both the same and fall back to the role label, because
- * a missing key is still possible: a row this user can't read under the
- * profiles SELECT policy, or a partial result after the failure below.
+ * Every user has a profiles row, so the normal shape for someone who has not
+ * chosen a name is a present key mapped to `null`. Callers should treat a
+ * missing key the same and fall back to the role label - it is still possible: a
+ * row this user cannot read under the SELECT policy, or a partial result.
  *
- * Failure is non-fatal by design: a member list that renders roles instead of
- * names is still useful, so this logs and returns what it has.
+ * Failure is non-fatal: a member list rendering roles instead of names is still
+ * useful, so this logs and returns what it has.
  */
 export const fetchDisplayNames = async (
   userIds: Array<string>,
@@ -68,20 +66,17 @@ export const fetchDisplayNames = async (
  * Update first, insert only if there was no row.
  *
  * Deliberately not an upsert: PostgREST builds `on conflict (id) do update set`
- * from every key in the payload, `id` included, and an upsert that writes `id`
- * has to satisfy the UPDATE policy's `with check (id = auth.uid())` on top of
- * the insert path. Updating one named column sidesteps the question entirely.
- * (An earlier version of this note blamed the migration's
- * `revoke update (id) ... from authenticated`; that revoke is a no-op on remote
- * as well as locally, so it was never what made this shape necessary - see
- * docs/supabase.md.)
+ * from every key in the payload, `id` included, so an upsert writing `id` has to
+ * satisfy the UPDATE policy's `with check (id = auth.uid())` on top of the
+ * insert path. Updating one named column sidesteps the question. (Not because of
+ * the migration's `revoke update (id)`, which is a no-op - see docs/supabase.md.)
  *
  * `.select("id")` makes the "no such row" case observable instead of a silent
- * no-op; the signup trigger and the backfill mean it should never fire, but a
- * user created outside the trigger's watch self-heals through the insert policy.
+ * no-op. It should never fire, but a user created outside the signup trigger's
+ * watch self-heals through the insert policy.
  *
- * `name` is stored trimmed, or null to clear it - the DB CHECK rejects
- * untrimmed and empty strings, so normalizing here keeps the two in step.
+ * `name` is stored trimmed, or null to clear it - the DB CHECK rejects untrimmed
+ * and empty strings, so normalizing here keeps the two in step.
  */
 export const saveDisplayName = async (
   userId: string,

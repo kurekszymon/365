@@ -88,9 +88,8 @@ const MessageBubble = ({ message }: { message: ChatMessage }) => {
   )
 }
 
-// Reskinned as a proposal card (mirrors the mockup's two-flex-1-button
-// footer inside the assistant's own bubble), but keeps its actual semantics -
-// this confirms a destructive tool call (delete), not a neutral AI proposal.
+// Styled as a card inside the assistant's bubble, but it confirms a
+// destructive tool call (delete), not a neutral AI proposal.
 const ConfirmRow = () => {
   const { t } = useTranslation()
   const pendingConfirm = useAiChatStore(selectPendingConfirm)

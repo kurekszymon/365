@@ -1,6 +1,6 @@
 import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { getInitials, seatSizePx } from "./utils"
+import { seatSizePx } from "./utils"
 import { constrainSeatPosition, effectiveSeats } from "./seatLayout"
 import { SeatAssignPopover } from "./SeatAssignPopover"
 import type {
@@ -9,6 +9,7 @@ import type {
   PointerEvent as ReactPointerEvent,
 } from "react"
 import type { Guest, Seat, TableShape } from "@/stores/planner.store"
+import { getInitials } from "@/lib/memberIdentity"
 import { resolveSeatOccupants } from "@/lib/seats"
 import { cn } from "@/lib/utils"
 import { usePlannerStore } from "@/stores/planner.store"
@@ -82,11 +83,10 @@ export const TableSeats = ({
     // the Radix trigger - so we don't open it manually here.
     e.stopPropagation()
     draggedRef.current = false
-    // Capture immediately, not on the first threshold-crossing move. Seat
-    // markers are tiny, so a quick flick onto the table can leave the marker
-    // before any pointermove fires on it - without early capture the move/up
-    // events route to the table underneath instead, stranding the drag state
-    // (it never gets cleared) and leaking a click that opens the table editor.
+    // Capture immediately, not on the first threshold-crossing move: seat markers
+    // are tiny, so a quick flick can leave the marker before any pointermove
+    // fires on it, routing move/up to the table underneath - which strands the
+    // drag state and leaks a click that opens the table editor.
     e.currentTarget.setPointerCapture(e.pointerId)
     setDrag({
       seatId,
@@ -104,9 +104,8 @@ export const TableSeats = ({
     const dy = e.clientY - drag.startY
     const moved = Math.hypot(dx, dy) > DRAG_THRESHOLD
     // Mark as a real drag once past the threshold so the trailing click is
-    // swallowed (a plain click still reaches the popover trigger). Close any
-    // open assign popover - the canvas is too busy to drag a seat and keep the
-    // menu up. Pointer capture is already established in onPointerDown.
+    // swallowed; a plain click still reaches the popover trigger. Close any open
+    // assign popover - too busy to drag a seat and keep the menu up.
     if (moved && !drag.moved) {
       draggedRef.current = true
       setOpenSeatId(null)
@@ -186,10 +185,8 @@ export const TableSeats = ({
             role="button"
             // Still a button in the accessibility tree, but an unavailable one:
             // dropping the role would take the aria-label's reliable exposure
-            // with it (a bare div's label is inconsistently announced), and
-            // leaving it a plain button would advertise an action that has no
-            // handlers behind it. tabIndex -1 keeps it out of the tab order to
-            // match, the way a native disabled control behaves.
+            // with it, and a plain button would advertise an action with no
+            // handlers behind it. tabIndex -1 matches a native disabled control.
             aria-disabled={isInert}
             tabIndex={isInert ? -1 : 0}
             aria-label={guest ? guest.name : t("seats.empty")}

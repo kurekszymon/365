@@ -1,10 +1,13 @@
 import { useTranslation } from "react-i18next"
 import { useShallow } from "zustand/react/shallow"
-import { ChevronRightIcon, PlusIcon } from "lucide-react"
+import { ChevronRightIcon, LayoutTemplateIcon, PlusIcon } from "lucide-react"
 import { DEFAULT_HALL, usePlannerStore } from "@/stores/planner.store"
 import { usePanelStore } from "@/stores/panel.store"
 import { selectCanEdit, useGlobalStore } from "@/stores/global.store"
 import { Button } from "@/components/ui/button"
+import { useDialogStore } from "@/stores/dialog.store"
+import { useStaffTenant } from "@/hooks/useStaffTenant"
+import { isLocalWedding } from "@/lib/localWedding"
 
 // The halls overview: one row per hall (name/floor/size + entity counts),
 // tapping a row opens that hall's settings, plus the "add hall" entry point.
@@ -23,6 +26,16 @@ export const HallsPanelContent = () => {
   )
   const openHallEdit = usePanelStore((state) => state.openHallEdit)
   const canEdit = useGlobalStore(selectCanEdit)
+  const { weddingId, venue } = useGlobalStore(
+    useShallow((state) => ({ weddingId: state.weddingId, venue: state.venue }))
+  )
+  const openDialog = useDialogStore((state) => state.open)
+  const staffTenant = useStaffTenant()
+
+  // Venue layouts: a linked couple starts from one, venue staff save one. The
+  // two halves of LayoutPresetsDialog, so the button shows for either.
+  const canPickPreset = !!venue && !!weddingId && !isLocalWedding(weddingId)
+  const showPresets = canEdit && (canPickPreset || !!staffTenant)
 
   const entityCount = (hallId: string) =>
     tables.filter((t2) => t2.hallId === hallId).length +
@@ -70,6 +83,18 @@ export const HallsPanelContent = () => {
         >
           <PlusIcon />
           {t("hall.add")}
+        </Button>
+      )}
+
+      {showPresets && (
+        <Button
+          variant="outline"
+          onClick={() => openDialog("Planner.LayoutPresets")}
+        >
+          <LayoutTemplateIcon />
+          {canPickPreset
+            ? t("layout_presets.open_pick", { venue: venue.name })
+            : t("layout_presets.open_save")}
         </Button>
       )}
     </div>

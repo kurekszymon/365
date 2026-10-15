@@ -1,0 +1,26 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;width:1080px;height:1350px;overflow:hidden}
+body{background:#f4f1e9;font-family:Inter,sans-serif;color:#241f1a;position:relative;
+ background-image:radial-gradient(680px 680px at 92% -10%,#dceadb 0%,rgba(217,234,217,0) 62%),
+ radial-gradient(620px 620px at 4% 108%,#e8f3e6 0%,rgba(232,243,230,0) 60%)}
+.wrap{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding:120px 32px 160px;box-sizing:border-box}
+h1{font-family:'Playfair Display',serif;font-weight:400;font-size:96px;margin:26px 0 0;letter-spacing:.02em}
+.rule{width:64px;height:1px;background:#c9c2b4;margin:34px 0 0}
+.sub{font-family:'Playfair Display',serif;font-style:italic;font-size:30px;color:#5b544c;margin-top:30px}
+.card{margin-top:auto;margin-bottom:auto;background:#fdfbf6;border-radius:22px;padding:14px;
+ box-shadow:0 30px 70px rgba(40,52,40,.14),0 2px 6px rgba(40,52,40,.06)}
+.card img{display:block;width:988px;border-radius:12px}
+.foot{display:flex;align-items:center;gap:18px}
+.foot svg{width:62px;height:62px}
+.foot span{font-family:'Playfair Display',serif;font-weight:600;font-size:46px;color:#241f1a;letter-spacing:-.005em;line-height:1;transform:translateY(-0.15em)}
+</style></head><body><div class="wrap">
+<h1>{{DATE}}</h1>
+<div class="rule"></div>
+<div class="sub">{{SUBTITLE}}</div>
+<div class="card"><img src="plan.png"></div>
+<div class="foot">
+<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="33" fill="#43684b"/><g fill="#9ec2a2"><circle cx="60" cy="107" r="9"/><circle cx="13" cy="60" r="9"/><circle cx="93" cy="27" r="9"/><circle cx="27" cy="93" r="9"/><circle cx="93" cy="93" r="9"/><circle cx="27" cy="27" r="9"/></g><circle cx="60" cy="13" r="10" fill="#a9592b"/><circle cx="107" cy="60" r="10" fill="#a9592b"/></svg>
+<span>easywed.</span></div>
+</div></body></html>

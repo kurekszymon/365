@@ -5,8 +5,12 @@ import viteReact from "@vitejs/plugin-react"
 import viteTsConfigPaths from "vite-tsconfig-paths"
 import tailwindcss from "@tailwindcss/vite"
 import { nitro } from "nitro/vite"
-
-const SITE = "https://easywed.app"
+// Relative, not "@/lib/site": vite-tsconfig-paths applies to the app build,
+// not to this config file, so the alias would not resolve here. The explicit
+// `.ts` is what Vite 8's `configLoader: "native"` needs - it hands the config
+// to Node, which does not guess extensions - and it is already the default in
+// waiting, so the extensionless form only warns today.
+import { SITE_ORIGIN as SITE } from "./src/lib/site.ts"
 
 // The marketing surface, in both locales. Everything here is prerendered to
 // real HTML at build time; every other route stays a client-rendered SPA served
@@ -33,12 +37,11 @@ const alternateRefs = (sub: string) => [
   { href: `${SITE}/pl${sub}`, hreflang: "x-default" },
 ]
 
-// App surfaces. Prerendered so the URL returns real HTML - a crawler can only
-// read the noindex meta tag off a page it can actually fetch - but excluded from
-// the sitemap, which is a list of pages you want indexed and so the exact
-// opposite of these. They must be listed by hand: without them the route falls
-// through to Cloudflare's SPA fallback, which serves index.html, and index.html
-// is now the landing - so /home would answer with indexable marketing copy.
+// App surfaces. Prerendered so the URL answers 200 with real HTML - a crawler
+// can only read the noindex meta tag off a page it can actually fetch - but
+// excluded from the sitemap, which is a list of pages you want indexed and so
+// the exact opposite of these. They must be listed by hand: anything unlisted
+// falls through to the SPA shell, served as 404.html (see `spa` below).
 const APP_ROUTES = [
   "/home",
   "/login",
@@ -49,6 +52,14 @@ const APP_ROUTES = [
   "/reset-password",
   "/wedding/local",
   "/wedding/local/planner",
+  // Tenant-host surfaces. They render nothing without the right host and the
+  // right session, but still answer with real noindex HTML for the reason
+  // above. Static CRM sections go here as they ship; the dynamic
+  // /crm/wedding/$id must not - robots.txt blocks that prefix instead.
+  "/venue",
+  "/crm",
+  "/crm/roster",
+  "/crm/menus",
 ]
 
 const pages = [
@@ -130,6 +141,21 @@ const config = defineConfig({
         enabled: true,
         crawlLinks: false,
         autoStaticPathsDiscovery: false,
+        // Emit `pl.html`, not `pl/index.html`. Cloudflare Pages derives the
+        // trailing slash from the filename: a directory index makes `/pl` a 308
+        // to `/pl/`, and every canonical, hreflang, og:url and sitemap <loc> we
+        // emit is the *extensionless* form (see lib/site.ts + seo/localeHead).
+        // So the whole sitemap answered 308 - "Page with redirect", i.e. not
+        // indexed - and the hreflang cluster pointed at non-canonical URLs,
+        // which is the exact thing the comment in localeHead.ts warns about.
+        // Flat files invert the redirect: `/pl` is 200, `/pl/` 308s into it.
+        //
+        // This is a *Start* prerender option, not Nitro's. Start runs its own
+        // prerenderer and Nitro's never sees these pages, so setting it under
+        // the nitro() plugin is silently inert. Per-page `prerender` blocks in
+        // `pages` above only set `enabled`/`crawlLinks`, and the merge is a
+        // shallow spread, so this global value survives for every page.
+        autoSubfolderIndex: false,
       },
       sitemap: { enabled: true, host: SITE, outputPath: "sitemap.xml" },
     }),

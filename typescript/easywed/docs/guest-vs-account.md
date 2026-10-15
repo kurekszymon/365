@@ -7,13 +7,13 @@ hang it on.
 
 ## The two modes
 
-|                    | Guest (not signed in)                          | Signed in                                          |
-| ------------------ | ---------------------------------------------- | -------------------------------------------------- |
-| Entry point        | `/wedding/local` (landing CTAs, `/home`)       | `/home` → `/wedding/$id/planner`                   |
-| `weddingId`        | `"local"` sentinel (`LOCAL_WEDDING_ID`)        | Supabase wedding uuid                              |
-| Storage            | `localStorage`, this browser only              | Postgres (Supabase), RLS-scoped                    |
-| Role               | always `owner` (forced in `wedding.local.tsx`) | from `wedding_members` (`owner`/`editor`/`viewer`) |
-| Number of weddings | exactly one                                    | many                                               |
+|                    | Guest (not signed in)                          | Signed in                                         |
+| ------------------ | ---------------------------------------------- | ------------------------------------------------- |
+| Entry point        | `/wedding/local` (landing CTAs, `/home`)       | `/home` → `/wedding/$id/planner`                  |
+| `weddingId`        | `"local"` sentinel (`LOCAL_WEDDING_ID`)        | Supabase wedding uuid                             |
+| Storage            | `localStorage`, this browser only              | Postgres (Supabase), RLS-scoped                   |
+| Role               | always `owner` (forced in `wedding.local.tsx`) | `my_wedding_role` RPC (`owner`/`editor`/`viewer`) |
+| Number of weddings | exactly one                                    | many                                              |
 
 **How the mode is decided:** `isLocalWedding(weddingId)` in
 `src/lib/localWedding.ts`. There is no auth check in the planner itself - the
@@ -23,11 +23,11 @@ on it.
 ## Routing and guards
 
 - `PUBLIC_PATHS` in `src/components/auth/AuthGate.tsx` lists what renders
-  without waiting for session hydration: `/`, `/home`, `/login`,
-  `/auth/callback`, `/pl`, `/en`, `/wedding/local`.
+  without waiting for session hydration - among them `/`, `/home`, the auth
+  screens, `/pl`, `/en` and `/wedding/local`.
 - `requireAuth()` (`src/lib/auth/guards.ts`) is what actually redirects. It
-  runs in `beforeLoad` of `/wedding/$id` and `/invite/$token`; `/wedding/local`
-  deliberately has none.
+  runs in `beforeLoad` of `/wedding/$id`, `/invite/$token`, `/settings` and
+  `/accept-terms`; `/wedding/local` deliberately has none.
 - `/home` renders for everyone: signed in it lists the user's weddings, signed
   out it offers "Start planning" → `/wedding/local`.
 
@@ -88,6 +88,9 @@ Reminders carry two extra wrinkles the planner/global keys don't:
 | Leaving a wedding                    |  ❌   |    ✅     | row menu on `/home`, members only              |
 | Deleting a wedding                   |  ❌   |    ✅     | row menu on `/home`, owner only                |
 | Deleting your account                |  ❌   |    ✅     | `delete_own_account()`; guest data is local    |
+| Linking a venue, venue access        |  ❌   |    ✅     | owner only; `VenueButton` hidden in guest mode |
+| Venue menu                           |  ❌   |    ✅     | requires a linked venue; no tenant, no tab     |
+| Venue layout presets                 |  ❌   |    ✅     | requires a linked venue (or venue staff)       |
 
 ## The members gate (free plan)
 
@@ -98,8 +101,9 @@ the `"local"` sentinel as a wedding id.
 - `WeddingMembersDialog` renders `MembersUpgradeNotice` in place of
   `InvitationManager` when `canInvite` is false. `MemberList` stays mounted; it
   renders nothing when empty.
-- The header button in `Planner.tsx` is shown to any `owner`, guests included,
-  so the feature is discoverable and the upsell has somewhere to live.
+- The header avatar stack (`MemberAvatars`) always renders for an `owner`,
+  guests included, so the feature is discoverable and the upsell has somewhere
+  to live.
 - The upgrade path is signing in, not a payment - copy lives under
   `members.locked.*` in `en.json` / `pl.json`.
 
@@ -127,12 +131,15 @@ account and no server row to act on.
   "your changes are stored on this device", plus a sign-in link.
 - `LocalWeddingMigrationPrompt` is mounted at the root and listens for
   Supabase's `SIGNED_IN` event (not `INITIAL_SESSION`, so a returning user is
-  not re-prompted). If `hasLocalWeddingData()` is true it opens
-  `MigrateLocalWeddingDialog`, which creates a wedding row, pushes the layout
-  through `replacePlannerLayout`, then inserts guests and reminders in
-  parallel (`insertGuests` / `insertReminders`). Only a layout failure rolls
-  the wedding back; a guests/reminders failure keeps the wedding and surfaces
-  `guest_mode.migrate.partial_failed` as a toast after navigating.
+  not re-prompted). If `hasLocalWeddingData()` is true, the account has
+  accepted the terms, and it has no weddings yet, it opens
+  `MigrateLocalWeddingDialog`. The commit sequence lives in
+  `src/lib/sync/migrateLocalWedding.ts`: create a wedding row, push the layout
+  through `replacePlannerLayout`, then insert guests and reminders in parallel
+  (`insertGuests` / `insertReminders`). It is all or nothing - any failure
+  deletes the new wedding and leaves `localStorage` untouched, so "try again"
+  re-runs the whole thing. Local storage is cleared only once every write
+  landed.
 - Dismissal is remembered in `sessionStorage` (`easywed.guest_migration_dismissed`).
 
 ## Adding a new account-only feature

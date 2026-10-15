@@ -61,16 +61,14 @@ export const supabaseWrites: MigrationWrites = {
 }
 
 // `date` comes from localStorage, which readLocalGlobalSnapshot already filters
-// for unparsable strings - re-checked here because guest-mode data is treated
-// as potentially corrupted throughout, and toISOString() throws on an Invalid
-// Date.
+// for unparsable strings - re-checked because guest-mode data is treated as
+// potentially corrupted throughout, and toISOString() throws on an Invalid Date.
 const toDateColumn = (date: Date | undefined): string | null =>
   date && !Number.isNaN(date.getTime()) ? date.toISOString().slice(0, 10) : null
 
-// Every write maps its store rows synchronously before it awaits anything, so a
-// malformed locally-persisted row (a table with no `size`, a reminder whose
-// `createdAt` isn't a Date) throws rather than resolving false. Both failures
-// have to reach the rollback below, so they collapse into the same boolean.
+// Every write maps its store rows synchronously before awaiting, so a malformed
+// persisted row throws rather than resolving false. Both failures have to reach
+// the rollback below, so they collapse into one boolean.
 const attempt = async (
   label: string,
   write: () => Promise<boolean>
@@ -110,16 +108,14 @@ export interface MigrateInput {
  * Adopts the device-local guest wedding into the signed-in user's account.
  *
  * All or nothing. Layout, guests and reminders are three separate writes (only
- * the layout has an atomic RPC), so a partial failure is reachable - and the
- * local snapshot is the only other copy of any of it. Any failure therefore
- * rolls the new wedding back and leaves localStorage untouched, so the dialog's
- * "try again" re-runs the whole thing from the same source instead of stacking
- * up a second wedding.
+ * the layout has an atomic RPC), so a partial failure is reachable, and the
+ * local snapshot is the only other copy. Any failure rolls the new wedding back
+ * and leaves localStorage untouched, so "try again" re-runs the whole thing
+ * instead of stacking up a second wedding.
  *
- * That reverses the earlier "the layout is real and worth keeping" stance,
- * which paid for a successful layout write with the guest list - not a trade
- * the user was ever offered. Re-doing a discarded layout costs one round trip;
- * a discarded guest list is typed back in by hand.
+ * Keeping a successfully written layout would pay for it with the guest list, a
+ * trade the user was never offered: re-doing a layout costs one round trip, a
+ * guest list is typed back in by hand.
  *
  * localStorage is cleared only once every write has landed.
  */
@@ -139,10 +135,9 @@ export const migrateLocalWedding = async (
   if (!weddingId) return { ok: false }
 
   // Every write below scopes itself with getWeddingId(), so the new wedding has
-  // to be the active one before any of them run. Snapshot the whole slice
-  // rather than just the id: discardWedding() clears name/date/role/members too
-  // when it deletes the active wedding (forgetIfCurrent), and the rollback path
-  // leaves the user sitting in guest mode where those still drive the header.
+  // to be active first. Snapshot the whole slice rather than the id alone:
+  // discardWedding() also clears name/date/role/members, and the rollback path
+  // leaves the user in guest mode where those still drive the header.
   const previous = useGlobalStore.getState()
   const restore = {
     weddingId: previous.weddingId,
@@ -151,15 +146,13 @@ export const migrateLocalWedding = async (
     role: previous.role,
     members: previous.members,
   }
-  // `role` goes with the id, and not just for tidiness: run() refuses every
-  // write unless selectCanEdit passes, and it fails closed on an unset role.
-  // Nothing sets one here - loadWedding and wedding.local.tsx are the only two
-  // writers, and neither has run when the prompt fires after an OAuth round
-  // trip (the page reloaded into /auth/callback, and `partialize` doesn't
-  // persist role). Without this, every write below is blocked, the migration
-  // rolls back a wedding that was created fine, and the user is told it failed.
-  // "owner" is true by construction: createWedding just set owner_id to this
-  // user, and the trigger on `weddings` inserts their `owner` membership row.
+  // `role` goes with the id: run() refuses every write unless selectCanEdit
+  // passes, and it fails closed on an unset role. Nothing sets one here -
+  // loadWedding and wedding.local.tsx are the only writers, and neither has run
+  // when the prompt fires after an OAuth round trip. Without this every write
+  // below is blocked and the migration rolls back a wedding created fine.
+  // "owner" is true by construction: createWedding just set owner_id, and the
+  // trigger on `weddings` inserts the membership row.
   useGlobalStore.setState({ weddingId, role: "owner" })
 
   const rollback = async (): Promise<MigrateResult> => {

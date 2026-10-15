@@ -10,6 +10,7 @@ import { salesMailto } from "./salesMailto"
 import type { Lang } from "@/components/landing/LocaleLanding"
 import { CookieSettingsButton } from "@/components/consent/CookieSettingsButton"
 import { Button } from "@/components/ui/button"
+import { localeDocPath } from "@/lib/site"
 import i18n from "@/i18n"
 
 // B2B landing for wedding venue owners (/pl/venues, /en/venues). Same
@@ -81,19 +82,19 @@ export function VenueLanding({ lang }: { lang: Lang }) {
           </p>
           <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
             <Link
-              to={lang === "pl" ? "/pl/changelog" : "/en/changelog"}
+              to={localeDocPath("changelog", lang)}
               className="transition-colors hover:text-foreground"
             >
               {t("landing.footer.changelog", { lng: lang })}
             </Link>
             <Link
-              to={lang === "pl" ? "/pl/terms" : "/en/terms"}
+              to={localeDocPath("terms", lang)}
               className="transition-colors hover:text-foreground"
             >
               {t("landing.footer.terms", { lng: lang })}
             </Link>
             <Link
-              to={lang === "pl" ? "/pl/privacy" : "/en/privacy"}
+              to={localeDocPath("privacy", lang)}
               className="transition-colors hover:text-foreground"
             >
               {t("landing.footer.privacy", { lng: lang })}

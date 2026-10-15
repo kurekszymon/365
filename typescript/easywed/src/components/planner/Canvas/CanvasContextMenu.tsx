@@ -41,7 +41,8 @@ export const CanvasContextMenu = ({
   })
   const [inHall, setInHall] = useState(false)
   const [target, setTarget] = useState<CapturedElement>({ kind: "hall" })
-  // hack to render at correct position
+  // Bumped on every open to remount the content, so Radix positions it at the
+  // new pointer rather than where the previous menu was.
   const [contentKey, setContentKey] = useState(0)
 
   return (

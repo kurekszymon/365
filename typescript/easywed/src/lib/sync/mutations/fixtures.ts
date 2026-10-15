@@ -56,8 +56,7 @@ export const updateFixturePos = (
 export const softDeleteFixture = (id: string): Promise<boolean> =>
   markDeleted("fixtures", id)
 
-// Bulk counterpart for wiping a hall's fixtures (deleteHall): one soft-delete
-// covering every id. Fixtures have no guests to unassign, so this is a thin
-// wrapper over markDeletedMany.
+// Bulk soft-delete for wiping a hall's fixtures (deleteHall). Unlike
+// softDeleteTables there are no guests to unassign first.
 export const softDeleteFixtures = (ids: Array<string>): Promise<boolean> =>
   markDeletedMany("fixtures", ids)

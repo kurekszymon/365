@@ -50,9 +50,8 @@ const FIXTURE_ICONS: Record<FixtureIcon, typeof ShapesIcon> = {
 
 // "Dodaj do sali" visual-card picker: segmented Stoły/Elementy sali filter +
 // a grid of preset cards. Tapping a card inserts it centered in the hall and
-// routes straight to its edit view - same short-circuit already used by the
-// canvas's paste-at-cursor and right-click "Add table" flows, no intermediate
-// add-form step.
+// routes straight to its edit view - the same insert-then-edit flow as the
+// canvas's paste-at-cursor and right-click "Add table".
 export const AddHubContent = ({
   initialCategory = "tables",
   onInserted,
@@ -115,7 +114,7 @@ export const AddHubContent = ({
     // The "custom" card carries no name - it drops a starter polygon (a
     // clipped-corner rectangle, so it visibly isn't the plain rectangle) and
     // lets the edit view do the shaping, same insert-then-edit shortcut as
-    // every other card (there is no separate add form anymore).
+    // every other card.
     const fixtureId = addFixture(
       {
         name: preset.custom ? "" : t(preset.labelKey),

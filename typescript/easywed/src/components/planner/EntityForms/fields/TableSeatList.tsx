@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { InfoIcon } from "lucide-react"
-import { getInitials } from "../../Canvas/utils"
 import { SeatAssignPopover } from "../../Canvas/SeatAssignPopover"
+import { getInitials } from "@/lib/memberIdentity"
 import { resolveSeatOccupants, seatSlotsForCapacity } from "@/lib/seats"
 import { usePlannerStore } from "@/stores/planner.store"
 import { Button } from "@/components/ui/button"
@@ -21,7 +21,7 @@ type TableSeatListProps = {
   fillHeight?: boolean
 }
 
-// Numbered seat list for the table edit form's "Szczegóły stołu" sub-view.
+// Numbered seat list in the table edit form.
 // Reuses `SeatAssignPopover` per seat (same search/clear/displacement logic as
 // the canvas's seat markers) rather than a third assign UI. Seat ids are
 // order-based only (no geometry), so this also works for `custom` polygon

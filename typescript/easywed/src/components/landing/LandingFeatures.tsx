@@ -10,11 +10,10 @@ import { useTranslation } from "react-i18next"
 import type { LucideIcon } from "lucide-react"
 import type { Lang } from "./LocaleLanding"
 
-// The rest of the app, as one-liners. This used to be a six-card grid of the
-// headline features; the hero and the two story rows now carry those, so what
-// is left is the things a couple finds once they are inside - deliberately a
-// plain list rather than cards, so it reads as "also in there" and not as a
-// second pitch.
+// The rest of the app, as one-liners. The hero and the two story rows carry
+// the headline features, so this is what a couple finds once they are inside -
+// deliberately a plain list rather than cards, so it reads as "also in there"
+// and not as a second pitch.
 const FEATURES: Array<{ key: string; icon: LucideIcon }> = [
   { key: "import", icon: FileSpreadsheet },
   { key: "print", icon: Printer },

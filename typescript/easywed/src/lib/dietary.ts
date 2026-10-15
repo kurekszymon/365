@@ -47,7 +47,7 @@ export const dietaryTone = (tag: string): TagTone =>
   PRESET_TONES[tag] ?? toneFromKey(tag)
 
 // Normalize a raw tag for comparison/dedupe. Presets have a fixed normalized
-// form so "Wegan", "vegan" and "  VEGAN " all collapse to the same key.
+// form so "Vegan", "vegan" and "  VEGAN " all collapse to the same key.
 const normalizedPreset = (raw: string): string | null => {
   // The only multi-word preset is "gluten-free"; a space form ("gluten free")
   // should still snap to it. Nothing else needs whitespace-to-hyphen folding.

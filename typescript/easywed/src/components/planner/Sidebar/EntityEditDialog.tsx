@@ -25,11 +25,9 @@ const DIALOG_KINDS: ReadonlySet<PanelView["kind"]> = new Set([
 ])
 
 /**
- * Desktop replacement for the old right-hand PropertyPanel column: watches
- * `panel.store` and renders the current table/fixture/hall form in a modal
- * dialog. Canvas selection, `openTableEdit`/`openFixtureEdit` callers and the
- * header's "Konfiguruj salę" entry all keep working unchanged - only the
- * surface the form renders in differs per platform.
+ * Desktop host for the panel views: watches `panel.store` and renders the
+ * current table/fixture/hall form in a modal dialog. Mobile renders the same
+ * forms in `MobilePanelDrawer`; callers just set the view.
  */
 export const EntityEditDialog = () => {
   const { t } = useTranslation()

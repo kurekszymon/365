@@ -19,9 +19,8 @@ import {
 import { usePanelStore } from "@/stores/panel.store"
 
 /**
- * Edit form for one fixture. Add flows don't come through here anymore - new
- * fixtures are inserted directly (add hub presets, canvas context menu) and
- * then routed to this edit view.
+ * Edit form for one fixture. There is no add form: new fixtures are inserted
+ * directly (add hub presets, canvas context menu) and then routed here.
  */
 export const FixturePanelContent = ({ fixtureId }: { fixtureId: string }) => {
   const { t } = useTranslation()

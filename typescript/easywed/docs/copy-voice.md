@@ -104,16 +104,16 @@ strings, most of them legal prose), so leave it alone. EN takes no curly quotes.
 
 ## What we may not claim
 
-Copied verbatim from `.claude/skills/video-plan/SKILL.md` §4, because the
-highest-risk failure in any copy pass is promising a feature that does not
-exist:
+Adapted from `.claude/skills/video-plan/SKILL.md` §4 (which is pinned to the
+`easywed/v1.1.2` tag), because the highest-risk failure in any copy pass is
+promising a feature that does not exist:
 
 - ❌ **Live sync.** There is no Realtime. Collaborators see changes on reload.
 - ❌ **Plus-ones / "osoby towarzyszące".** No such field on the guest model.
 - ❌ RSVP, sending invitations, collecting guest replies.
 - ❌ Offline or installable. A manifest exists; there is no service worker.
-- ❌ Venue templates, or "import the venue's floor plan". That is manual founder
-  work.
+- ❌ "Import the venue's floor plan". Drawing the room is manual work. Venue
+  layout presets exist, but someone draws each one by hand in the planner.
 - ❌ A generated PDF _file_. Export opens the browser print dialog
   (`plan_printed` says as much).
 - ❌ Free or included AI. It needs the user's own API key.

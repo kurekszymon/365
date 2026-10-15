@@ -15,11 +15,11 @@ export type OwnedWeddingRow = {
 /**
  * Which of the user's owned weddings block deletion, and by how many people.
  *
- * Split out from the query because it's the whole decision: get the "who else
+ * Split out from the query because it is the whole decision: get the "who else
  * is here" count wrong and we either refuse a deletion we owe the user, or
  * cascade someone else's wedding out from under them. The owner is always a
- * member of their own wedding (handle_new_wedding inserts that row), so they
- * have to come out of the count - a solo wedding has one member, not zero.
+ * member of their own wedding, so they come out of the count - a solo wedding
+ * has one member, not zero.
  */
 export const toBlockingWeddings = (
   rows: Array<OwnedWeddingRow>,
@@ -78,21 +78,16 @@ export const deleteOwnAccount = async (): Promise<DeleteAccountResult> => {
 
   console.error("[account] deleteOwnAccount failed", error)
 
-  // `account_has_shared_weddings` is raised when the caller still owns a shared
-  // wedding - the server's own copy of the check the UI ran before offering the
-  // button, and the only failure the dialog can do anything useful about.
-  //
-  // The function's other sentinels stay `unknown` on purpose. 'Not
-  // authenticated' and `account_not_deleted` (the delete matched no row) both
-  // leave the user with nothing to act on, so they get the generic failure
-  // message - what matters is that they land here at all rather than on the
-  // success path, which signs the user out claiming the account is gone.
+  // `account_has_shared_weddings` is the server's copy of the check the UI ran
+  // before offering the button, and the only failure the dialog can do anything
+  // useful about. The other sentinels stay `unknown` on purpose - they leave the
+  // user nothing to act on, and what matters is that they land here rather than
+  // on the success path, which signs the user out claiming the account is gone.
   //
   // Both halves of the match are load-bearing. P0001 is the generic
-  // `raise_exception` code every one of those raises carries, so the code alone
-  // can't tell them apart. And the sentinel is matched with `includes` rather
-  // than equality because PostgREST owns the framing of `message`; a prefix it
-  // adds later would break `===` while leaving the sentinel intact.
+  // `raise_exception` code all of those carry, so the code alone cannot tell
+  // them apart; and the sentinel is matched with `includes` because PostgREST
+  // owns the framing of `message`, so a prefix it adds later would break `===`.
   return {
     ok: false,
     reason:
