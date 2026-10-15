@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next"
 import { CanvasActionButton } from "./CanvasActionButton"
 import { FixtureVisual } from "./FixtureVisual"
 import { useDropSettle } from "./useDropSettle"
+import { deleteFixtureWithUndo } from "./deleteWithUndo"
 import type { Fixture } from "@/stores/planner.store"
 import { cn } from "@/lib/utils"
 import { usePlannerStore } from "@/stores/planner.store"
@@ -37,7 +38,6 @@ const DraggableFixtureBase = ({ fixture, ppm }: DraggableFixtureProps) => {
   const openFixtureEdit = usePanelStore((state) => state.openFixtureEdit)
   const deselectPanel = usePanelStore((state) => state.deselect)
   const duplicateFixture = usePlannerStore((state) => state.duplicateFixture)
-  const deleteFixture = usePlannerStore((state) => state.deleteFixture)
   const copyToClipboard = useClipboardStore((state) => state.copy)
   const canEdit = useGlobalStore(selectCanEdit)
 
@@ -104,7 +104,7 @@ const DraggableFixtureBase = ({ fixture, ppm }: DraggableFixtureProps) => {
                 variant="danger"
                 onClick={(e) => {
                   e.stopPropagation()
-                  deleteFixture(fixture.id)
+                  deleteFixtureWithUndo(fixture.id)
                   deselectPanel()
                 }}
               />

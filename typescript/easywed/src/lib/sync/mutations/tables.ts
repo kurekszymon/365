@@ -5,6 +5,7 @@ import {
   getWeddingId,
   markDeleted,
   markDeletedMany,
+  markRestored,
   run,
   tableRow,
   toJsonOrNull,
@@ -102,6 +103,20 @@ export const softDeleteTable = async (id: string): Promise<boolean> => {
       .eq("table_id", id)
   )
   return markDeleted("tables", id)
+}
+
+// Undo of softDeleteTable: un-delete the row, then seat the roster back through
+// save_table. The order matters - enforce_table_capacity only counts a table
+// with `deleted_at is null`, so re-seating guests at a still-deleted table
+// would be refused. save_table also rewrites the attributes, which are the
+// snapshot's and so unchanged.
+export const restoreTableRow = async (
+  table: Table,
+  roster: Array<{ id: string; seatId: string | null }>
+): Promise<boolean> => {
+  const ok = await markRestored("tables", table.id)
+  if (!ok || roster.length === 0) return ok
+  return saveTableRow(table, roster)
 }
 
 // Bulk counterpart to softDeleteTable for wiping a hall's tables (deleteHall):

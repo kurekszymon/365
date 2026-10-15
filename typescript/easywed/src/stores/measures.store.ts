@@ -33,6 +33,12 @@ type Action = {
     dy: number
   ) => void
   removeObjectMeasurements: (weddingId: string, objectId: string) => void
+  // Puts back lines removeObjectMeasurements dropped (undo of a delete);
+  // ones already present are skipped.
+  restoreMeasurements: (
+    weddingId: string,
+    measurements: Array<Measurement>
+  ) => void
   updateMeasurementPoint: (
     weddingId: string,
     measurementId: string,
@@ -118,6 +124,23 @@ export const useMeasuresStore = create<State & Action>()(
             ),
           },
         }))
+      },
+
+      restoreMeasurements: (weddingId, measurements) => {
+        if (measurements.length === 0) return
+        set((state) => {
+          const current = state.byWedding[weddingId] ?? []
+          const present = new Set(current.map((m) => m.id))
+          return {
+            byWedding: {
+              ...state.byWedding,
+              [weddingId]: [
+                ...current,
+                ...measurements.filter((m) => !present.has(m.id)),
+              ],
+            },
+          }
+        })
       },
     }),
     { name: "easywed.measures" }

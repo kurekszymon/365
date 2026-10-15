@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
+import type { Measurement } from "@/stores/measures.store"
 import {
   PLANNER_STORAGE_KEY,
   localPlannerStorage,
@@ -14,6 +15,8 @@ import {
   insertTable,
   insertTables,
   reassignTableGuests,
+  restoreFixtureRow,
+  restoreTableRow,
   saveTableRow,
   softDeleteFixture,
   softDeleteFixtures,
@@ -222,7 +225,12 @@ type Action = {
   ) => void
   saveTable: (id: string) => void
   duplicateTable: (id: string) => string | null
-  deleteTable: (id: string) => void
+  // Returns what restoreTable needs to undo the delete, or null when there
+  // was nothing to delete.
+  deleteTable: (id: string) => DeletedTable | null
+  // Undo of deleteTable. False when the snapshot no longer fits the plan (a
+  // different wedding is loaded, the hall is gone, the table is back already).
+  restoreTable: (deleted: DeletedTable) => boolean
   addGuest: (guest: Omit<Guest, "id">) => void
   addGuests: (guests: Array<Omit<Guest, "id">>) => Promise<boolean>
   // Edits a guest's details (name/dietary/age group/note); seating is left
@@ -286,7 +294,8 @@ type Action = {
   ) => void
   saveFixture: (id: string) => void
   duplicateFixture: (id: string) => string | null
-  deleteFixture: (id: string) => void
+  deleteFixture: (id: string) => DeletedFixture | null
+  restoreFixture: (deleted: DeletedFixture) => boolean
   updateFixturePosition: (
     id: string,
     x: number,
@@ -300,6 +309,58 @@ export const DEFAULT_HALL: Omit<Hall, "id" | "position"> = {
   preset: "rectangle",
   size: { width: 20, height: 12 },
 }
+
+// What a delete takes with it, kept so an undo can put it back. `index` is the
+// entity's place in its array (= its paint order on the canvas), and
+// `measurements` the local-only measure lines that were attached to it.
+export interface DeletedTable {
+  weddingId: string | undefined
+  table: Table
+  index: number
+  // The guests seated here, each with their pin - deleteTable unassigns them.
+  roster: Array<{ id: string; seatId: string | null }>
+  measurements: Array<Measurement>
+}
+
+export interface DeletedFixture {
+  weddingId: string | undefined
+  fixture: Fixture
+  index: number
+  measurements: Array<Measurement>
+}
+
+// Soft-deletes still in flight, so an undo can't overtake its own delete: a
+// quick Undo could otherwise un-delete the row before the delete lands, and
+// the late delete would then win.
+const pendingDeletes = new Map<string, Promise<boolean>>()
+
+const trackDelete = (id: string, write: Promise<boolean>) => {
+  pendingDeletes.set(id, write)
+  void write.finally(() => {
+    if (pendingDeletes.get(id) === write) pendingDeletes.delete(id)
+  })
+}
+
+const afterDelete = (id: string, fn: () => void) => {
+  const pending = pendingDeletes.get(id)
+  if (!pending) fn()
+  else void pending.then(fn)
+}
+
+// Measure lines touching an object, captured before removeObjectMeasurements
+// drops them.
+const measurementsOf = (weddingId: string | undefined, objectId: string) =>
+  weddingId
+    ? (useMeasuresStore.getState().byWedding[weddingId] ?? []).filter(
+        (m) => m.a.objectId === objectId || m.b.objectId === objectId
+      )
+    : []
+
+const insertAt = <T>(list: Array<T>, index: number, item: T) => [
+  ...list.slice(0, index),
+  item,
+  ...list.slice(index),
+]
 
 // New halls whose insert is still in flight, so entity inserts targeting them
 // can chain on the hall row landing first (hall_id FK). Fire-and-forget
@@ -631,16 +692,65 @@ const createPlannerStore = (
     return newId
   },
   deleteTable: (id) => {
+    const { tables, guests } = get()
+    const index = tables.findIndex((t) => t.id === id)
+    if (index === -1) return null
+    const weddingId = useGlobalStore.getState().weddingId
+    const deleted: DeletedTable = {
+      weddingId,
+      table: tables[index],
+      index,
+      roster: guests
+        .filter((g) => g.tableId === id)
+        .map((g) => ({ id: g.id, seatId: g.seatId ?? null })),
+      measurements: measurementsOf(weddingId, id),
+    }
     set((state) => ({
       tables: state.tables.filter((t) => t.id !== id),
       guests: state.guests.map((g) =>
         g.tableId === id ? { ...g, tableId: null, seatId: null } : g
       ),
     }))
-    void softDeleteTable(id)
-    const weddingId = useGlobalStore.getState().weddingId
+    trackDelete(id, softDeleteTable(id))
     if (weddingId)
       useMeasuresStore.getState().removeObjectMeasurements(weddingId, id)
+    return deleted
+  },
+  restoreTable: (deleted) => {
+    const { table } = deleted
+    const weddingId = useGlobalStore.getState().weddingId
+    const state = get()
+    if (
+      weddingId !== deleted.weddingId ||
+      !state.halls.some((h) => h.id === table.hallId) ||
+      state.tables.some((t) => t.id === table.id)
+    )
+      return false
+    // Only guests still waiting unassigned go back - one the user has seated
+    // elsewhere (or deleted) since stays where they put them.
+    const waiting = new Set(
+      state.guests.filter((g) => g.tableId === null).map((g) => g.id)
+    )
+    const roster = deleted.roster.filter((g) => waiting.has(g.id))
+    const seatOf = new Map(roster.map((g) => [g.id, g.seatId]))
+    set((s) => ({
+      tables: insertAt(
+        s.tables,
+        Math.min(deleted.index, s.tables.length),
+        table
+      ),
+      guests: s.guests.map((g) =>
+        seatOf.has(g.id)
+          ? { ...g, tableId: table.id, seatId: seatOf.get(g.id) ?? null }
+          : g
+      ),
+    }))
+    afterDelete(table.id, () => void restoreTableRow(table, roster))
+    if (weddingId)
+      useMeasuresStore
+        .getState()
+        .restoreMeasurements(weddingId, deleted.measurements)
+    return true
   },
   addGuest: (guest) => {
     const newGuest: Guest = { ...guest, id: crypto.randomUUID() }
@@ -1094,13 +1204,47 @@ const createPlannerStore = (
     return newId
   },
   deleteFixture: (id) => {
+    const { fixtures } = get()
+    const index = fixtures.findIndex((f) => f.id === id)
+    if (index === -1) return null
+    const weddingId = useGlobalStore.getState().weddingId
+    const deleted: DeletedFixture = {
+      weddingId,
+      fixture: fixtures[index],
+      index,
+      measurements: measurementsOf(weddingId, id),
+    }
     set((state) => ({
       fixtures: state.fixtures.filter((f) => f.id !== id),
     }))
-    void softDeleteFixture(id)
-    const weddingId = useGlobalStore.getState().weddingId
+    trackDelete(id, softDeleteFixture(id))
     if (weddingId)
       useMeasuresStore.getState().removeObjectMeasurements(weddingId, id)
+    return deleted
+  },
+  restoreFixture: (deleted) => {
+    const { fixture } = deleted
+    const weddingId = useGlobalStore.getState().weddingId
+    const state = get()
+    if (
+      weddingId !== deleted.weddingId ||
+      !state.halls.some((h) => h.id === fixture.hallId) ||
+      state.fixtures.some((f) => f.id === fixture.id)
+    )
+      return false
+    set((s) => ({
+      fixtures: insertAt(
+        s.fixtures,
+        Math.min(deleted.index, s.fixtures.length),
+        fixture
+      ),
+    }))
+    afterDelete(fixture.id, () => void restoreFixtureRow(fixture.id))
+    if (weddingId)
+      useMeasuresStore
+        .getState()
+        .restoreMeasurements(weddingId, deleted.measurements)
+    return true
   },
   updateFixturePosition: (id, x, y, hallId) => {
     set((state) => ({

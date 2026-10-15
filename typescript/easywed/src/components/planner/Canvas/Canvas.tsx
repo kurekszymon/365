@@ -37,6 +37,7 @@ import { useCanvasPan } from "./useCanvasPan"
 import { useCameraAnimation } from "./useCameraAnimation"
 import { useCanvasWheelPan } from "./useCanvasWheelPan"
 import { useCanvasClipboard } from "./useCanvasClipboard"
+import { deleteFixtureWithUndo, deleteTableWithUndo } from "./deleteWithUndo"
 import type { HallSurfaceMethods } from "./HallSurface"
 import type { WorldBounds } from "./utils"
 import type { Position } from "@/stores/planner.store"
@@ -88,8 +89,6 @@ export const Canvas = () => {
 
   const addTable = usePlannerStore((state) => state.addTable)
   const addFixture = usePlannerStore((state) => state.addFixture)
-  const deleteTable = usePlannerStore((state) => state.deleteTable)
-  const deleteFixture = usePlannerStore((state) => state.deleteFixture)
   const panel = usePanelStore(
     useShallow((state) => ({
       selectedId: state.selectedId,
@@ -392,7 +391,7 @@ export const Canvas = () => {
                     className="text-destructive focus:bg-destructive/10 focus:text-destructive"
                     onSelect={() => {
                       if (panel.selectedId === target.id) panel.deselect()
-                      deleteTable(target.id)
+                      deleteTableWithUndo(target.id)
                     }}
                   >
                     <Trash2Icon className="size-4" />
@@ -404,7 +403,7 @@ export const Canvas = () => {
                     className="text-destructive focus:bg-destructive/10 focus:text-destructive"
                     onSelect={() => {
                       if (panel.selectedId === target.id) panel.deselect()
-                      deleteFixture(target.id)
+                      deleteFixtureWithUndo(target.id)
                     }}
                   >
                     <Trash2Icon className="size-4" />

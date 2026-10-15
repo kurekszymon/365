@@ -165,6 +165,18 @@ export const markDeleted = (
       .eq("id", id)
   )
 
+// Undo of markDeleted: clears `deleted_at` so the row is live again. The row
+// was never removed, so its id, position and every column come back as they
+// were - only the guest roster (unassigned on delete) needs writing back.
+export const markRestored = (
+  table: "tables" | "fixtures",
+  id: string
+): Promise<boolean> =>
+  run(
+    `restore:${table}`,
+    supabase.from(table).update({ deleted_at: null }).eq("id", id)
+  )
+
 // Bulk soft-delete: marks every listed id deleted in a single UPDATE, so a
 // hall wipe (deleteHall) is one write instead of one per row. Empty list is a
 // no-op success - `.in("id", [])` would still round-trip to match nothing.

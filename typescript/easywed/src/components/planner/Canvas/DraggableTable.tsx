@@ -12,6 +12,7 @@ import { TableVisual } from "./TableVisual"
 import { useDropSettle } from "./useDropSettle"
 import { seatSizePx } from "./utils"
 import { SEAT_OFFSET_M } from "./seatLayout"
+import { deleteTableWithUndo } from "./deleteWithUndo"
 import type { Guest, Table } from "@/stores/planner.store"
 import { cn } from "@/lib/utils"
 
@@ -48,7 +49,6 @@ const DraggableTableBase = ({
   const openTableEdit = usePanelStore((state) => state.openTableEdit)
   const deselectPanel = usePanelStore((state) => state.deselect)
   const duplicateTable = usePlannerStore((state) => state.duplicateTable)
-  const deleteTable = usePlannerStore((state) => state.deleteTable)
   const copyToClipboard = useClipboardStore((state) => state.copy)
   const canEdit = useGlobalStore(selectCanEdit)
 
@@ -133,7 +133,7 @@ const DraggableTableBase = ({
                 variant="danger"
                 onClick={(e) => {
                   e.stopPropagation()
-                  deleteTable(table.id)
+                  deleteTableWithUndo(table.id)
                   deselectPanel()
                 }}
               />

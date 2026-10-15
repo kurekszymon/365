@@ -10,6 +10,7 @@ import {
   getWeddingId,
   markDeleted,
   markDeletedMany,
+  markRestored,
   run,
   updatePos,
   withGeometry,
@@ -55,6 +56,9 @@ export const updateFixturePos = (
 
 export const softDeleteFixture = (id: string): Promise<boolean> =>
   markDeleted("fixtures", id)
+
+export const restoreFixtureRow = (id: string): Promise<boolean> =>
+  markRestored("fixtures", id)
 
 // Bulk counterpart for wiping a hall's fixtures (deleteHall): one soft-delete
 // covering every id. Fixtures have no guests to unassign, so this is a thin
