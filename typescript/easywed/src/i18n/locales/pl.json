@@ -542,6 +542,7 @@
 
   "guest_mode.start_planning": "Zacznij planować",
   "guest_mode.banner": "Planujesz jako gość. Twoje zmiany są zapisywane tylko na tym urządzeniu - nie będą dostępne na innych urządzeniach ani po wyczyszczeniu danych przeglądarki.",
+  "guest_mode.banner_dismiss": "Ukryj ten komunikat",
   "guest_mode.migrate.title": "Zapisać wesele na swoim koncie?",
   "guest_mode.migrate.body": "Ten plan jest zapisany na tym urządzeniu. Dodaj go do konta, a będzie czekał na telefonie, na laptopie i po wyczyszczeniu przeglądarki.",
   "guest_mode.migrate.confirm": "Zapisz na moim koncie",

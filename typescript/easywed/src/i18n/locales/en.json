@@ -542,6 +542,7 @@
 
   "guest_mode.start_planning": "Start planning",
   "guest_mode.banner": "You're planning as a guest. Your changes are stored only on this device - they won't be available on other devices or if you clear your browser data.",
+  "guest_mode.banner_dismiss": "Hide this message",
   "guest_mode.migrate.title": "Save your wedding to your account?",
   "guest_mode.migrate.body": "This plan is saved on this device. Add it to your account and it will be there on your phone, your laptop, and after you clear your browser.",
   "guest_mode.migrate.confirm": "Save to my account",
