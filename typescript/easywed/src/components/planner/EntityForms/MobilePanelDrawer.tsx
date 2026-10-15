@@ -11,6 +11,52 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer"
 
+// Android's on-screen keyboard covers the lower half of the drawer, hiding
+// whatever field you just tapped. The keyboard shrinks the visual viewport as
+// it slides in, firing `resize` through the animation, so the field is
+// scrolled into view once those stop for a beat - right when the keyboard has
+// settled, however fast or slow the device. This replaced a fixed 300ms wait,
+// which was late on slow phones and needlessly slow on fast ones.
+const KEYBOARD_SETTLE_MS = 100
+// No resize at all - a hardware keyboard, or a field that needs none.
+const NO_KEYBOARD_MS = 500
+// visualViewport this much shorter than the window = the keyboard is already
+// up (moving between fields), so there's nothing to wait for.
+const KEYBOARD_OPEN_PX = 150
+
+const scrollIntoViewOnceKeyboardSettles = (target: Element) => {
+  const scroll = () =>
+    target.scrollIntoView({ block: "center", behavior: "smooth" })
+  const viewport = window.visualViewport
+  if (!viewport) {
+    window.setTimeout(scroll, 300)
+    return
+  }
+  if (window.innerHeight - viewport.height > KEYBOARD_OPEN_PX) {
+    scroll()
+    return
+  }
+
+  let timer = 0
+  const stop = () => {
+    window.clearTimeout(timer)
+    viewport.removeEventListener("resize", onResize)
+    target.removeEventListener("blur", stop)
+  }
+  const settle = () => {
+    stop()
+    scroll()
+  }
+  const onResize = () => {
+    window.clearTimeout(timer)
+    timer = window.setTimeout(settle, KEYBOARD_SETTLE_MS)
+  }
+  viewport.addEventListener("resize", onResize)
+  // Focus moving on before the keyboard settles - the next field takes over.
+  target.addEventListener("blur", stop)
+  timer = window.setTimeout(settle, NO_KEYBOARD_MS)
+}
+
 /**
  * Mobile-only bottom drawer for the panel views (table/fixture/hall forms,
  * the add hub, the AI chat). On desktop the same views render in
@@ -43,16 +89,11 @@ export const MobilePanelDrawer = () => {
     view.kind !== "shape.edit"
   const body = view ? <PanelBody view={view} /> : null
 
-  // Android's on-screen keyboard covers the lower half of the drawer, hiding
-  // whatever field you just tapped. Bring the focused control back into view
-  // once the keyboard has had a moment to animate in.
   const scrollFocusedIntoView = (e: React.FocusEvent<HTMLDivElement>) => {
     const target = e.target
     if (!target.matches("input, textarea, select, [contenteditable='true']"))
       return
-    window.setTimeout(() => {
-      target.scrollIntoView({ block: "center", behavior: "smooth" })
-    }, 300)
+    scrollIntoViewOnceKeyboardSettles(target)
   }
 
   return (

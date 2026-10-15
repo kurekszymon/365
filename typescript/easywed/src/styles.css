@@ -82,6 +82,13 @@
 /* Radius is shared across themes; only the color tokens change per palette. */
 :root {
   --radius: 0.625rem;
+  /* The app is light-only (the `.dark` block below is dead - nothing sets the
+     class). `only` also tells browsers that darken pages on their own
+     (Chrome's "darken websites", Samsung Internet's dark mode) to leave it
+     alone, rather than inverting a palette that was never designed for it.
+     Mirrored by the color-scheme meta in __root.tsx, which applies before
+     this stylesheet loads. */
+  color-scheme: only light;
 
   /* Brand seat colors - the logo's green + terracotta. Constant across
        palettes so an assigned seat always reads the same "taken" orange. */

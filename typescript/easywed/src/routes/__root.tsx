@@ -107,6 +107,12 @@ export const Route = createRootRoute({
           name: "viewport",
           content: "width=device-width, initial-scale=1",
         },
+        // See `color-scheme` on :root in styles.css - light-only, and not
+        // to be force-darkened by the browser.
+        {
+          name: "color-scheme",
+          content: "only light",
+        },
         {
           title,
         },
