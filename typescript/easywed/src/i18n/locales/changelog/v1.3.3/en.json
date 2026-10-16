@@ -1,0 +1,5 @@
+{
+  "title": "No drag handle on a single hall",
+  "summary": "A small fix in the planner.",
+  "i1": "When your plan has only one hall, its label no longer shows a drag handle - a lone hall has nothing to be arranged against, so the handle was just in the way. Clicking the label still opens the hall's settings, and the handle comes back as soon as you add a second hall."
+}
