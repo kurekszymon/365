@@ -1,0 +1,5 @@
+{
+  "title": "Jedna sala stoi w miejscu",
+  "summary": "Mała poprawka w planerze.",
+  "i1": "Gdy w planie jest tylko jedna sala, nie można jej już przeciągać - przesuwanie przydaje się dopiero wtedy, gdy trzeba ustawić kilka sal obok siebie. Kliknięcie nazwy sali nadal otwiera jej ustawienia, a uchwyt do przesuwania pojawi się, kiedy dodasz drugą salę."
+}

@@ -2,6 +2,10 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 16.10
+
+- 1.3.3: a lone hall has no drag handle. the label chip only becomes the `useDraggable` handle (grip icon, `cursor-grab`, listeners) when `halls.length > 1` - with one hall there's nothing to arrange it against. the chip is still the settings button either way
+
 ### 04.10
 
 - posthog session replay, behind a cookie banner. `cookieless_mode: "on_reject"` + `opt_out_capturing_by_default`: no answer counts as no, which is the cookieless capture everyone had before - accepting is the only thing that writes `ph_*` or starts a recording. the project's cookieless setting stays on, the reject path depends on it
