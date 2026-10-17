@@ -10,7 +10,7 @@ import { FILE_NAME, SHEET_HEADERS, sheetFor } from "../sheet";
 /** Revealed word by word. */
 const LINE = tl.importFilm.line;
 
-/** Word stagger - the last word has settled by frame 42, inside the 1.5 s hook. */
+/** Word stagger - the last word has settled by frame 37, inside the 1.5 s hook. */
 const WORD_FROM = 2;
 const WORD_STEP = 5;
 const WORD_OVER = 20;

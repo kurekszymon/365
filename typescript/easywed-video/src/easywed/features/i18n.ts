@@ -2,9 +2,9 @@
 
 export const pl = {
   importFilm: {
-    /** Revealed word by word; "w" is bound to "Excelu." with a no-break space so the line never ends on it. */
-    line: ["Twoja", "lista", "gości", "mieszka", "w Excelu."],
-    ctaAction: "Wczytaj swoją listę gości",
+    /** Revealed word by word; "w" is bound to "Excelu?" with a no-break space so the line never ends on it. */
+    line: ["Masz", "listę", "gości", "w Excelu?"],
+    ctaAction: "Zaimportuj gości z Excela",
   },
 
   report: {
@@ -12,16 +12,17 @@ export const pl = {
     messages: [
       ["Sala", "prosi", "o plan stołów."],
       ["Florystka", "pyta,", "jak", "rozłożyć", "winietki."],
-      ["Kuchnia", "pyta,", "gdzie", "podać", "dania wege."],
+      ["Kuchnia", "pyta,", "kto", "jest", "na wege."],
     ],
-    payoff: "Wydrukuj i podaj dalej.",
-    ctaAction: "Dodaj preferencje żywieniowe gości",
+    /** "po" is bound to "sprawie." so the line never ends on it. */
+    payoff: "Drukujesz i po\u00a0sprawie.",
+    ctaAction: "Oznacz diety gości",
   },
 
   swapCut: {
-    hook: "Ciocia chce siedzieć przy innym stole?",
+    hook: "Ciocia chce się przesiąść?",
     /** "z" is bound to "planu." so the line never ends on it. */
-    payoff: "Nikt nie znika z\u00a0planu.",
+    payoff: "Nikt nie wypada z\u00a0planu.",
     /** "i" is bound to "wybierz" for the same reason. */
     ctaAction: "Kliknij miejsce i\u00a0wybierz gościa",
   },
@@ -29,7 +30,8 @@ export const pl = {
   kids: {
     /** Revealed word by word; "na" is bound to "weselu?" so the line never ends on it. */
     hook: ["Ile", "dzieci", "będzie", "na weselu?"],
-    payoff: "Każde dziecko policzone.",
+    /** "co do jednego" is one idiom, so it never breaks across lines. */
+    payoff: "Dzieci policzone co\u00a0do\u00a0jednego.",
     ctaAction: "Oznacz dzieci na liście gości",
   },
 };
