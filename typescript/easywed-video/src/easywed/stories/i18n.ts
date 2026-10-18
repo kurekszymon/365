@@ -12,14 +12,14 @@ export const pl = {
      * after the question.
      */
     hook: "Wujek Zbyszek i\u00a0mikrofon? Daleko\u00a0od\u00a0DJ\u2011a.",
-    /** "w" is bound to "stół?" so the line never breaks after it. */
-    parentsLine: "Twoi rodzice nie mogą siedzieć stół w\u00a0stół?",
+    /** "po" is bound to "sąsiedzku?" so the line never breaks after it. */
+    parentsLine: "Twoi rodzice nie mogą siedzieć po\u00a0sąsiedzku?",
     dragLine: "Cały stół na drugą stronę parkietu.",
     /** "swoich" is bound to "miejscach." so the last word never wraps alone. */
     guestsLine: "Goście zostają na swoich\u00a0miejscach.",
-    /** "z" is bound to "gośćmi." so the line never ends on it. */
-    payoff: "Przesuwacie stół, razem z\u00a0gośćmi.",
-    ctaAction: "Zacznij planowanie bez konta",
+    /** "a" and "z" are each bound to the next word so the line never ends on one. */
+    payoff: "Przesuwacie stół, a\u00a0goście razem z\u00a0nim.",
+    ctaAction: "Zacznijcie planować bez konta",
   },
 
   mama: {
@@ -33,11 +33,11 @@ export const pl = {
     bubbles: [
       "A\u00a0wujek Zbyszek gdzie siedzi?",
       "Wyślij ten plan jakoś inaczej",
-      "Bo nie widać nic na tym zdjęciu",
+      "Bo na tym zdjęciu nic nie widać",
     ],
     /** What mum types into the guest search - the name she knows him by. */
     search: "Zbyszek",
-    captionLine: "Zamiast zdjęcia kartki - link.",
+    captionLine: "Zamiast zdjęcia kartki wysyłasz link.",
     payoff: "Mama sprawdzi sama.",
     ctaAction: "Wyślij mamie link do planu",
   },
@@ -51,7 +51,7 @@ export const pl = {
     /** "i" is bound to "do". */
     tea: "Herbata i\u00a0do dzieła.",
     floor: "Parkiet na środek.",
-    headTable: "Stół pary młodej naprzeciwko.",
+    headTable: "Nasz stół naprzeciwko.",
     howMany: "Ile nam tych stołów wyszło?",
     /** The answer is read off the room - `COUCH_HALL.tables.length`, spelled out. */
     tableCount: (count: number) => `${spelled(count, PL_NUMBERS)}. Pasuje.`,
@@ -61,11 +61,11 @@ export const pl = {
     /** "z" is bound to "pracy". */
     work: "Twoi z\u00a0pracy przy barze?",
     /** "A" is bound to "gdzie". */
-    whereElse: "A\u00a0gdzie indziej.",
+    whereElse: "A\u00a0gdzie by indziej?",
     everyone: "To wszyscy?",
     seated: "Wszyscy siedzą.",
     payoff: "Jeden laptop, jedna kanapa, cały plan.",
-    ctaAction: "Usiądźcie do planu razem",
+    ctaAction: "Usiądźcie razem do planu",
   },
 
   ciocie: {
@@ -80,8 +80,8 @@ export const pl = {
     aunts: "Ciocie",
     singlesLine: "Single - tutaj.",
     auntsLine: "Ciocie - tam.",
-    /** "nikt nie zapyta." is bound into one piece, so the last word never wraps alone. */
-    payoff: "Przez cały parkiet nikt\u00a0nie\u00a0zapyta.",
+    /** "nie" is bound to "dokrzyczą." so the last word never wraps alone. */
+    payoff: "Przez cały parkiet nie\u00a0dokrzyczą.",
     ctaAction: "Nazwijcie stoły po swojemu",
   },
 };

@@ -20,7 +20,7 @@ export const pl = {
   listSeat: {
     hook: "Kuzyn Tomek jednak przyjedzie.",
     where: "Gdzie go posadzić?",
-    fullTables: "Pełne stoły odpadają same.",
+    fullTables: "Pełne stoły same odpadają.",
     beside: "Widzisz, obok kogo siądzie.",
     payoff: "Tomek siedzi przy swoich. Reszta nawet nie drgnęła.",
     /** "z" is bound to "listy" so the line never ends on it. */
@@ -41,13 +41,13 @@ export const pl = {
     /** "I" is bound to "wzdłuż" for the same reason. */
     wall: "I\u00a0wzdłuż ściany.",
     payoff: "Ci sami goście, inny stół.",
-    ctaAction: "Sprawdźcie oba warianty na planie",
+    ctaAction: "Sprawdźcie oba układy na planie",
   },
 
   /** Every count here is read off the room the batch form builds (`TEN_TABLES_HALL`), never typed. */
   tenTables: {
     hook: (tables: number, seats: number) =>
-      `Sala mówi: ${spelledCount(tables, PL_NUMBERS, PL_TENS).toLowerCase()} okrągłych po ${spelledCount(
+      `Z sali piszą: ${spelledCount(tables, PL_NUMBERS, PL_TENS).toLowerCase()} okrągłych po ${spelledCount(
         seats,
         PL_NUMBERS,
         PL_TENS,
@@ -85,7 +85,7 @@ export const pl = {
      */
     payoff:
       "Co załatwione, a\u00a0co\u00a0jeszcze\u00a0nie\u00a0- w\u00a0jednym\u00a0miejscu.",
-    ctaAction: "Wpiszcie, co jeszcze załatwić",
+    ctaAction: "Wpiszcie, co zostało do załatwienia",
     items: {
       deposit: "Zaliczka dla DJ-a",
       plan: "Wysłać sali plan stołów",

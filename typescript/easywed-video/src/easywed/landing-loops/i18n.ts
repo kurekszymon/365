@@ -13,7 +13,7 @@ export const pl = {
   },
 
   shape: {
-    hook: "Sala nie jest prostokątem?",
+    hook: "Sala nie jest prostokątna?",
     /** "naprawdę" is bound to "stoją." so the last word never wraps alone. */
     payoff: "Ściany tam, gdzie naprawdę\u00a0stoją.",
   },

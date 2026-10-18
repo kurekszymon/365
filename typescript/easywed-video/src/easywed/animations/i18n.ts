@@ -16,9 +16,9 @@ export const pl = {
   },
   extraChair: {
     motto: [
-      ["Jeszcze dwie osoby?"],
-      [{ accent: "dwa krzesła więcej" }],
-      ["przy tym samym stole"],
+      ["Dwie osoby więcej?"],
+      [{ accent: "dostaw dwa krzesła" }],
+      ["do tego samego stołu"],
     ] as Motto,
   },
 };

@@ -5,28 +5,28 @@ export const pl = {
     tagline: "Planer rozsadzenia gości weselnych.", // landing.footer.tagline
     outroTitle: "Narysujcie salę. Posadźcie wszystkich.", // after landing.hero.title
     features: [
-      "Plan sali „przeciągnij i upuść”",
-      "Import CSV i XLSX",
+      "Stoły przeciągasz po planie",
+      "Import z CSV i Excela",
       "Plan gotowy do druku",
       "Sale i piętra",
-      "Planujcie razem",
+      "Wspólne planowanie",
     ],
     outroAction: "Ustaw pierwszy stół",
     hall: {
       step: "Krok 01",
       title: "Narysujcie salę", // landing.steps.one.title
       subtitle:
-        "Stoły okrągłe i prostokątne, parkiet i wyposażenie - ustaw salę dokładnie tak, jak będzie wyglądać w dniu wesela.", // the film's own line; landing.features.planner.desc was dropped in v1.1
-      yourHall: "Twoja sala",
+        "Okrągłe i prostokątne stoły, parkiet, wyposażenie - ułóżcie salę tak, jak będzie wyglądać w dniu wesela.", // the film's own line; landing.features.planner.desc was dropped in v1.1
+      yourHall: "Wasza sala",
     },
     guests: {
       step: "Krok 02",
       title: "Dodajcie gości", // landing.steps.two.title
       // landing.features.guests.desc, with its plus-ones - a field v1 does not
       // have - swapped for the age groups it does (guests.add.age_group,
-      // lib/ageGroup.ts). "i" and "z" are bound to the next word.
+      // lib/ageGroup.ts). "i", "a" and "w" are bound to the next word.
       subtitle:
-        "Diety, grupy wiekowe i\u00a0przypisane miejsca są zawsze przy nazwisku - koniec z\u00a0trzema arkuszami naraz.",
+        "Dieta, grupa wiekowa i\u00a0miejsce przy stole - wszystko przy nazwisku gościa, a\u00a0nie w\u00a0trzech arkuszach.",
       importPill: "Import z CSV lub Excela",
       exportPill: "Plan gotowy do druku",
     },
@@ -34,7 +34,7 @@ export const pl = {
       step: "Krok 03",
       title: "Posadźcie wszystkich", // landing.steps.three.title
       subtitle:
-        "Przeciągnij gości na miejsca, wyrównaj obłożenie stołów i wyeksportuj gotowy plan do druku dla sali.",
+        "Przeciągnijcie gości na miejsca, rozłóżcie ich równo między stoły i wydrukujcie gotowy plan dla sali.",
       ofSeated: (total: number) => `z ${total} gości przy stołach`,
       emptySeat: "Wolne miejsce", // seats.empty
       taken: "Zajęte",
@@ -47,7 +47,7 @@ export const pl = {
     sting: "Trzy dni przed weselem.",
     files: ["goscie.xlsx", "goscie_final.xlsx", "goscie_final_OSTATECZNA.xlsx"],
     notes: ["Ciocia Basia NIE obok Marka", "Wujek Janusz - bez glutenu?"],
-    chaos: "Arkusz, karteczki i grupa na czacie.",
+    chaos: "Arkusz, karteczki i rodzinny czat.",
     plan: "Albo jeden plan sali.",
     hasSeat: "gości ma swoje miejsce",
     ctaTitle: "Rozsadź gości w jeden wieczór",
@@ -59,7 +59,7 @@ export const pl = {
     hook: "Pusta sala, lista gości i\u00a0żadnego planu?",
     /** Each "na" is bound to the word after it, so neither line ends on one. */
     floors: "Obiad na\u00a0dole, tańce na\u00a0górze?",
-    outroTitle: "Wasza sala, Wasi goście, jeden plan.",
+    outroTitle: "Wasza sala, wasi goście, jeden plan.",
     outroAction: "Narysujcie swoją salę",
   },
 };
