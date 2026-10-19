@@ -9,6 +9,7 @@ Web Summit Lisbon is a thing - a pretty big one. Since I changed projects and st
 When I found out about Web Summit in Lisbon, it felt like I'd hit a bullseye - great opportunity for me to have a _business justification_ to go to Portugal and meet my colleagues in the office, great!
 
 It was not so great when I visited _Book tickets_ page - 900€ (1295€ as of writing this post)?!
+
 ![Web Summit ticket prices](../../assets/websummit-tickets.png)
 
 I was talking about it with my team lead, and he told me about [the developer program](https://websummit.com/developers) where you can join the conference for free if you have some open-source contributions, or based on the info from the website:
