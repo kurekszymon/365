@@ -46,12 +46,14 @@ export const LoopReel: React.FC<{
   children: React.ReactNode;
   /** The motto's size, for a line too long to stay on one line at the default. */
   textSize?: number;
-}> = ({ motto, durationInFrames, children, textSize = TEXT }) => {
+  /** Pixels what slides through reaches past the mark's own box (labels round it), so it still leaves the canvas. */
+  overhang?: number;
+}> = ({ motto, durationInFrames, children, textSize = TEXT, overhang = 0 }) => {
   const frame = useCurrentFrame();
   const { width } = useVideoConfig();
 
   // Off-canvas on both sides: half the canvas plus half the mark, with room for the ripple.
-  const offstage = width / 2 + LOOP_MARK / 2 + 40;
+  const offstage = width / 2 + LOOP_MARK / 2 + 40 + overhang;
   const slideIn = interpolate(frame, [0, LOOP_SLIDE], [-offstage, 0], {
     extrapolateRight: "clamp",
     easing: Easing.out(Easing.cubic),

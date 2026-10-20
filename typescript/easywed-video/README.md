@@ -62,8 +62,11 @@
 - **the extra-chair loop** - 4.6 seconds for Reels, 9:16 only, a brand loop on the stress-away
   stage: the logo's table slides in full, its seat count goes from 8 to 10 so the chairs close up
   round the same table, two more guests sit down, and it slides out. No CTA - the caption carries it.
+- **the seat-number loop** - 4.9 seconds for Reels, 9:16 only, a brand loop on the stress-away
+  stage: the logo's table slides in empty, its chairs are numbered 1-8 clockwise from 12 o'clock,
+  chair 5 is picked and a guest drops onto it, and it slides out. No CTA - the caption carries it.
 
-All but the loops, the keep-apart, mama-link, sunday-couch, ciocie-single, list-seat, table-shape, ten-tables, try-now, todo-list, stress-away and extra-chair cuts render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
+All but the loops, the keep-apart, mama-link, sunday-couch, ciocie-single, list-seat, table-shape, ten-tables, try-now, todo-list, stress-away, extra-chair and seat-number cuts render in 16:9 (1920x1080) and 9:16 (1080x1920), and all
 are in Polish - except the stress-away loop's motto, which is English in both languages.
 
 It is a standalone package on purpose - it sits next to `easywed/` rather than inside it, so it
@@ -129,6 +132,8 @@ pnpm run render:try-now:vertical  # -> out/pl/chill-wed/easywed-trynow-vertical.
 pnpm run render:stress-away  # -> out/pl/animations/easywed-stress-away-vertical.mp4 (9:16, its only size)
 
 pnpm run render:extra-chair  # -> out/pl/animations/easywed-extra-chair-vertical.mp4 (9:16, its only size)
+
+pnpm run render:seat-number  # -> out/pl/animations/easywed-seat-number-vertical.mp4 (9:16, its only size)
 
 pnpm run render:all     # all of the above
 pnpm run render:all:en  # all of the above in English -> out/en/
@@ -336,6 +341,7 @@ stills, and adds the new on-screen lines to the burned list so the next plan won
 | ------------------------------ | ------ | -------------------------------------------------------------------- |
 | `easywed-stress-away-vertical` | 148f   | the 4.9 s stress-away loop, 9:16 only - one shot, no scenes to split |
 | `easywed-extra-chair-vertical` | 138f   | the 4.6 s extra-chair loop, 9:16 only - one shot, no scenes to split |
+| `easywed-seat-number-vertical` | 148f   | the 4.9 s seat-number loop, 9:16 only - one shot, no scenes to split |
 
 The long walkthrough's other fifteen chapters are the scenes registered above, from the short
 walkthrough and the other cuts; only `Floors` is its own. The 9:16 cut leaves out `ScaleMeasure`:
@@ -493,6 +499,8 @@ src/easywed/
     stress-away/         StressAway, a looping 9:16 Reel on LoopReel
     extra-chair/         ExtraChair, a looping 9:16 Reel on LoopReel: a full table's seat
                          count goes 8 -> 10 and two more guests sit; its beats in timeline.ts
+    seat-number/         SeatNumber, a looping 9:16 Reel on LoopReel: the chairs numbered
+                         1-8 and a guest dropped onto chair 5; its beats in timeline.ts
 ```
 
 The teaser reuses `useFormat()`, `HallCanvas` and `PlannerCanvas`, so it adapts to both aspect

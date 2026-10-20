@@ -10,7 +10,7 @@ import { colors } from "../theme";
  * chair `i` is the app's *Miejsce i + 1*.
  */
 const TABLE_RADIUS = 33;
-const ORBIT = 47;
+export const ORBIT = 47;
 
 export type SeatAt = {
   /** 0-based, clockwise from 12 o'clock. */

@@ -21,6 +21,13 @@ export const pl = {
       ["do tego samego stołu"],
     ] as Motto,
   },
+  seatNumber: {
+    motto: [
+      ["Przy którym stole"],
+      [{ accent: "i na którym" }],
+      ["krześle"],
+    ] as Motto,
+  },
 };
 
 export const en: typeof pl = {
@@ -33,5 +40,8 @@ export const en: typeof pl = {
       [{ accent: "two more chairs" }],
       ["at the same table"],
     ],
+  },
+  seatNumber: {
+    motto: [["Which table"], [{ accent: "and which" }], ["chair"]],
   },
 };

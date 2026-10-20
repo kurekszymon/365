@@ -286,6 +286,24 @@ Built from `docs/video-plans/stress-loops-9x16-2026-10-06.md`, brief 1 `extra-ch
 2026-10-06), so its third line stays on one line. English via `REMOTION_LANG=en`: *"Two more
 coming?"* / *"two more chairs"* / *"at the same table"*.
 
+## The seat-number loop - `easywed-seat-number-vertical`, 148f (4.9 s), 9:16 only
+
+a brand loop on `LoopReel` (motto on top, the *easywed.* signature at the bottom, both static from
+frame 0; no CTA card, the action line is the caption's): the logo's table slides in with all eight
+chairs free - a breath - the numerals 1-8 fade in just outside the chairs, clockwise from 12
+o'clock, one every 4 frames (the app's *Miejsce N*, `seats.numbered`, in `computeSeatPositions`'
+order) - held - chair 5 at 6 o'clock breathes its ring and its numeral turns terracotta - a
+guest, drawn over the table's centre and larger as if above it, drops in a bow to the right onto
+chair 5, which fills with `stress-away`'s bounce and ring - held, one guest on chair 5 and seven
+free - it slides out right, numerals with it, an empty stage on the last frame that matches frame 0.
+The beat - chairs numbered round a table and one guest put on one numbered chair - is spent.
+Beats 18 in + 6 empty + 36 numerals + 10 numbered + 16 highlight + 20 land + 10 settle + 14 hold +
+18 out = 148, one shot with no `TransitionSeries`.
+Built from `docs/video-plans/stress-loops-9x16-2026-10-06.md`, brief 2 `seat-number`, against
+`easywed/v1.2.0`. The numerals are the film's abstraction of *Miejsce N*: the app's seat markers
+carry initials, not numbers (`TableSeats.tsx`). English via `REMOTION_LANG=en`: *"Which table"* /
+*"and which"* / *"chair"*.
+
 ## The ciocie-single cut - `easywed-ciocie-vertical`, 480f (16 s), 9:16 only
 
 a comedy strand of its own, outside *Wesele bez spiny* - no series tag (the user's call,
@@ -581,7 +599,13 @@ Polish rendering of them would repeat the beat.
 
 The extra-chair loop's motto: *"Jeszcze dwie osoby?"* · *"dwa krzesła"* · *"więcej przy tym samym
 stole"*, and its caption's action line *"Dostawcie krzesło na planie - easywed.app"*. The signature
-*"easywed."* recurs on every brand loop by design.
+*"easywed."* recurs on every brand loop by design. Since 2026-10-18 (`08c10a9`, the native rewrite)
+the motto on screen reads *"Dwie osoby więcej?"* · *"dostaw dwa krzesła"* · *"do tego samego
+stołu"* - spent as well, alongside the wording above that it replaced.
+
+The seat-number loop's motto: *"Przy którym stole"* · *"i na którym"* (italic, terracotta) ·
+*"krześle"*, the numerals *"1"* to *"8"* round a table, and its caption's action line *"Wybierzcie
+gościowi krzesło - easywed.app"*.
 
 From the ciocie-single cut: *"Ciocie pytają singli: „A ty kiedy?”"* (its hook) · *"Single -
 tutaj."* · *"Ciocie - tam."* · *"Przez cały parkiet nikt nie zapyta."* (its payoff) - and the
