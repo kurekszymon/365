@@ -2,9 +2,65 @@
 
 <!-- wrangler picks up HEAD by default, running `git rev-parse --short HEAD` gives last commit hash for DEPLOY MARKING -->
 
+### 20.10
+
+- `seat-number` loop: numbered chairs, one guest landing on chair 5
+
+### 18.10
+
+- polish copy rewritten natively across every film, not translated from the english
+- `render:all:vertical` renders every vertical film, not a subset
+
 ### 16.10
 
 - 1.3.3: a lone hall has no drag handle. the label chip only becomes the `useDraggable` handle (grip icon, `cursor-grab`, listeners) when `halls.length > 1` - with one hall there's nothing to arrange it against. the chip is still the settings button either way
+
+### 15.10
+
+- 1.3.2: `scripts/check-release.mjs` as a predeploy check - compares tags with origin, handles rollbacks, hotfixes, early tags and utc dates, warns on an untagged previous release
+
+### 14.10
+
+- password reset on a venue host lands via `authLandingPath`; unseated guests number last
+
+### 13.10
+
+- invite-claim errors translated, slug-era link copy dropped
+
+### 12.10
+
+- comments and docs audited against the code
+
+### 11.10
+
+- preview-first venue invitation page: `tenant_invitation_preview` + `accept_customer_invitation` (joins and links in one step), nothing spent on page load
+- crm roster: invite labels and accepted-invitation history
+- venue dialog links to the couple's own venue, no slug field
+- `scripts/provision-venue.sql`, `docs/current-state.md` for the venue side as built
+
+### 10.10
+
+- 1.3.1: cookie banner scoped to the privacy policy only
+
+### 09.10
+
+- 1.3.0: unseen releases flagged with a dot in the account menu
+
+### 08.10
+
+- video: `ciocie-single` cut
+
+### 07.10
+
+- layout presets in the venue crm
+
+### 06.10
+
+- video: `stress-away` and `extra-chair` loops, `LoopReel` and `TableMark` lifted out as shared components
+
+### 05.10
+
+- video: films grouped by series - root, i18n and render output split per group
 
 ### 04.10
 
@@ -13,6 +69,53 @@
 - replay masks every text node and input (`maskTextSelector: "*"`). a recording of the planner is otherwise a recording of the guest list, dietary notes included. no `identify` either, the policy says recordings aren't linked to the account
 - `/invite/`, `/reset-password`, `/auth/callback` on the replay url blocklist in posthog - `scrubInviteTokens` still doesn't walk `$snapshot`
 - privacy policy: two tiers (cookieless on legitimate interest, cookie + replay on consent), banner described, 30-day recording retention. `replayRetentionDays` in legal config, `legal:check` keeps the prose honest about it. regulamin untouched, so no § 16 notice; no accounts yet, so the policy changed in place
+
+### 02.10
+
+- 1.1.3: minimap hidden until zoomed, posthog bumped
+- 1.1.4: header wordmark centred on the brand mark
+
+### 01.10
+
+- video: chill wed #4 speedrun
+
+### 30.09
+
+- video: carousel, chill wed #5 drafted, skills updated
+
+### 29.09
+
+- 1.1.2: seo - landing faq and json-ld
+- video: chill wed #3 ten-tables, mama cut improved
+
+### 28.09
+
+- video: chill wed #1 list-seat, #2 table-shape
+
+### 27.09
+
+- video: `sunday-couch` cut
+
+### 26.09
+
+- video: `mama-link` cut, more reels planned
+
+### 25.09
+
+- video: `wujek-zbyszek` cut
+
+### 24.09
+
+- pilot sale one-pager for venue outreach (`docs/outreach/`)
+
+### 21.09
+
+- vite 8
+
+### 20.09
+
+- 1.1.0 / 1.1.1: landing shows the rendered planner loops (both languages) instead of photos, posters no longer cost 700 KB a visit
+- copy pass - first-run screens, export, sharing, settings and the assistant say plainly what they do; wcag fixes; two strings the v1.1 merge dropped restored
 
 ### 19.09
 
