@@ -20,9 +20,11 @@
 -- carries no seats, no names and no notes. That is what lets the couple-side
 -- SELECT below stay independent of `venue_access`, the same way the menu does.
 --
--- This migration introduces no policy helper and no function. Every predicate
--- calls `is_tenant_staff` or `is_wedding_member`, which already exist and keep
--- their `anon` EXECUTE grant for the reason 20260817000001's header gives.
+-- This migration introduces no policy helper. Every predicate calls
+-- `is_tenant_staff` or `is_wedding_member`, which already exist and keep their
+-- `anon` EXECUTE grant for the reason 20260817000001's header gives. It does
+-- redefine `replace_planner_layout` (last section), because applying a preset
+-- is the first caller to run it against a wedding that already has guests.
 
 create table public.layout_presets (
   id uuid primary key default gen_random_uuid(),
@@ -116,3 +118,121 @@ create policy "wedding members can view their venue's layout presets"
         and public.is_wedding_member(w.id)
     )
   );
+
+-- ---------------------------------------------------------------------------
+-- replace_planner_layout: unseat guests before the layout goes
+-- ---------------------------------------------------------------------------
+-- The delete below takes every table, and `guests.table_id` is `on delete set
+-- null` - but `seat_id` is not a foreign key, so it survives and trips
+-- `guests_seat_requires_table`, aborting the whole apply for any wedding with
+-- one pinned guest. Unseat everyone first: the new tables have new ids, so no
+-- assignment could carry over anyway. Unchanged from 20260719000001 otherwise;
+-- `create or replace` keeps the grants 20260806000001 set.
+create or replace function public.replace_planner_layout(
+  p_wedding_id uuid,
+  p_halls jsonb,
+  p_tables jsonb,
+  p_fixtures jsonb
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  caller_role text;
+begin
+  caller_role := public.wedding_role(p_wedding_id);
+  if caller_role is null or caller_role not in ('owner', 'editor') then
+    raise exception 'not authorized to replace planner layout for wedding %', p_wedding_id
+      using errcode = '42501';
+  end if;
+
+  -- 1. Unseat every guest, soft-deleted ones included (see the header above).
+  update public.guests
+  set table_id = null, seat_id = null
+  where wedding_id = p_wedding_id
+    and table_id is not null;
+
+  -- 2. Wipe the existing layout. Tables/fixtures first for clarity; their
+  --    hall_id FK is `on delete set null` so order is not load-bearing.
+  delete from public.tables where wedding_id = p_wedding_id;
+  delete from public.fixtures where wedding_id = p_wedding_id;
+  delete from public.halls where wedding_id = p_wedding_id;
+
+  -- 3. Insert halls. Ids are client-generated so tables/fixtures below can
+  --    reference them.
+  -- Normalize preset/geometry together, mirroring the app-side load path
+  -- (loadWedding.ts): geometry is kept only for a non-rectangle preset, and a
+  -- preset whose geometry drops out falls back to 'rectangle'. Without this a
+  -- CAD-import payload with a preset/geometry mismatch would hard-fail the
+  -- halls_geometry_required_for_polygon CHECK instead of self-healing.
+  insert into public.halls (id, wedding_id, name, floor, preset, width, height, pos_x, pos_y, geometry)
+  select
+    (h->>'id')::uuid,
+    p_wedding_id,
+    coalesce(h->>'name', ''),
+    (h->>'floor')::int,
+    case when norm.geometry is not null then h->>'preset' else 'rectangle' end,
+    (h->>'width')::numeric,
+    (h->>'height')::numeric,
+    coalesce((h->>'pos_x')::numeric, 0),
+    coalesce((h->>'pos_y')::numeric, 0),
+    norm.geometry
+  from jsonb_array_elements(coalesce(p_halls, '[]'::jsonb)) as h,
+  lateral (
+    select case
+      when h->>'preset' is distinct from 'rectangle'
+        and h ? 'geometry'
+        and (h->'geometry') is not null
+        and (h->'geometry') <> 'null'::jsonb
+        and jsonb_typeof(h->'geometry') = 'object'
+      then h->'geometry'
+      else null
+    end as geometry
+  ) norm;
+
+  -- 4. Insert new tables.
+  insert into public.tables (
+    id, wedding_id, hall_id, name, shape, capacity, width, height,
+    rotation, pos_x, pos_y, geometry
+  )
+  select
+    (t->>'id')::uuid,
+    p_wedding_id,
+    (t->>'hall_id')::uuid,
+    coalesce(t->>'name', ''),
+    t->>'shape',
+    (t->>'capacity')::int,
+    (t->>'width')::numeric,
+    (t->>'height')::numeric,
+    coalesce((t->>'rotation')::int, 0),
+    (t->>'pos_x')::numeric,
+    (t->>'pos_y')::numeric,
+    case when t ? 'geometry' and (t->'geometry') is not null and (t->'geometry') <> 'null'::jsonb
+         then t->'geometry'
+         else null end
+  from jsonb_array_elements(coalesce(p_tables, '[]'::jsonb)) as t;
+
+  -- 5. Insert new fixtures.
+  insert into public.fixtures (
+    id, wedding_id, hall_id, name, shape, width, height,
+    rotation, pos_x, pos_y, geometry
+  )
+  select
+    (f->>'id')::uuid,
+    p_wedding_id,
+    (f->>'hall_id')::uuid,
+    coalesce(f->>'name', ''),
+    f->>'shape',
+    (f->>'width')::numeric,
+    (f->>'height')::numeric,
+    coalesce((f->>'rotation')::int, 0),
+    (f->>'pos_x')::numeric,
+    (f->>'pos_y')::numeric,
+    case when f ? 'geometry' and (f->'geometry') is not null and (f->'geometry') <> 'null'::jsonb
+         then f->'geometry'
+         else null end
+  from jsonb_array_elements(coalesce(p_fixtures, '[]'::jsonb)) as f;
+end;
+$$;

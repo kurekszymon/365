@@ -499,8 +499,7 @@ The PT410 paths are tested against the seeded suspended `stodola`; nothing tests
 
 ### 11.5 Known bugs (found 2026-10-12)
 
-1. **Applying a layout preset fails when any guest is seat-pinned.** `replace_planner_layout` hard-deletes `tables`; the FK's `on delete set null` clears `guests.table_id` but leaves `seat_id`, which trips `guests_seat_requires_table` and aborts the RPC. Reproduced with `psql`. Fix needs a new migration (clear `seat_id` for the wedding's guests before the delete).
-2. **Seat overrides are dropped when a guest plan moves into an account.** `replace_planner_layout` never writes `tables.seats`, so custom seat positions from guest mode are lost on migration (and on preset apply, which is a fresh layout anyway).
+1. **Seat overrides are dropped when a guest plan moves into an account.** `replace_planner_layout` never writes `tables.seats`, so custom seat positions from guest mode are lost on migration (and on preset apply, which is a fresh layout anyway).
 
 ### 11.6 Marketing copy vs code (`venues.*` in `pl.json`)
 

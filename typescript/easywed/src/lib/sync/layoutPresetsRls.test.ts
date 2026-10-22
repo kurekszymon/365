@@ -340,6 +340,61 @@ describe.skipIf(!reachable)("venue layout presets", () => {
         await couple.from("weddings").delete().in("id", scratch)
       }
     })
+
+    /**
+     * A wedding with a seat-pinned guest, which is every wedding a couple has
+     * actually started seating. The table delete inside the RPC nulls
+     * `table_id` through the FK but not `seat_id`, which used to trip
+     * `guests_seat_requires_table` and abort the whole apply.
+     */
+    it("applies over a wedding with a seat-pinned guest", async () => {
+      const userId = (await couple.auth.getUser()).data.user!.id
+      const id = crypto.randomUUID()
+      const first = rekeyLayout(PAYLOAD)
+      const guestId = crypto.randomUUID()
+
+      try {
+        const created = await couple
+          .from("weddings")
+          .insert({ id, owner_id: userId, name: "Pinned probe" })
+        expect(created.error).toBeNull()
+
+        const seeded = await couple.rpc("replace_planner_layout", {
+          p_wedding_id: id,
+          p_halls: first.halls as unknown as Json,
+          p_tables: first.tables as unknown as Json,
+          p_fixtures: first.fixtures as unknown as Json,
+        })
+        expect(seeded.error).toBeNull()
+
+        const seated = await couple.from("guests").insert({
+          id: guestId,
+          wedding_id: id,
+          name: "Anna",
+          table_id: first.tables[0].id,
+          seat_id: "seat-0",
+        })
+        expect(seated.error).toBeNull()
+
+        const second = rekeyLayout(PAYLOAD)
+        const applied = await couple.rpc("replace_planner_layout", {
+          p_wedding_id: id,
+          p_halls: second.halls as unknown as Json,
+          p_tables: second.tables as unknown as Json,
+          p_fixtures: second.fixtures as unknown as Json,
+        })
+        expect(applied.error).toBeNull()
+
+        const { data: guest } = await couple
+          .from("guests")
+          .select("table_id, seat_id")
+          .eq("id", guestId)
+          .single()
+        expect(guest).toEqual({ table_id: null, seat_id: null })
+      } finally {
+        await couple.from("weddings").delete().eq("id", id)
+      }
+    })
   })
 
   describe("strangers", () => {
