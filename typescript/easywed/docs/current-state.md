@@ -487,7 +487,7 @@ The PT410 paths are tested against the seeded suspended `stodola`; nothing tests
 
 ### 11.4 CRM gaps
 
-1. **The CRM doesn't show the couple's chosen package or their wedding-level dish selections.** The venue is allowed to read them, but the peek never queries them. Only per-guest plated dishes are counted.
+1. **The CRM doesn't show the couple's wedding-level dish selections.** The venue is allowed to read them, but the peek never queries them. It names the chosen package (`VenuePeekSummary`) and counts per-guest plated dishes.
 2. **No notifications.** There is no email anywhere in this flow. Invite links are copied by hand, and nothing tells a venue when access is granted or dishes change.
 3. **No live updates.** Neither `channel(` nor `realtime` appears in `src/`, so the peek needs a reload.
 4. **Presets can't be managed from the CRM.** They are saved only from the apex planner. There is no restore, rename or delete UI.
