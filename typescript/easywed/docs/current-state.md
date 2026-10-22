@@ -421,7 +421,7 @@ Files: `20261007000001`, `lib/sync/layoutPresets.ts`, `components/dialogs/planne
 
 | Event | Emitted from |
 |---|---|
-| `venue_access_requested { source }` | `VenueLinkStep` and the invitation page's accept, with `source: "couple"` only. **`"venue"` is declared but never emitted** - even the venue-started customer invitation is recorded as `"couple"` when the couple accepts |
+| `venue_access_requested { source }` | `VenueLinkStep` (`source: "couple"`) and the invitation page's accept (`source: "venue"`, since the venue issued the link; recorded as `"couple"` before 2026-10-23) |
 | `venue_access_granted` | `VenueGrantStep` |
 | `venue_peek_opened` | `/crm/wedding/$id` |
 | `layout_preset_saved`, `layout_preset_applied` | Preset dialog |
@@ -481,7 +481,7 @@ The PT410 paths are tested against the seeded suspended `stodola`; nothing tests
 
 1. **The front door drops the venue - by design.** `/venue` -> `/signup` carries nothing; a hint says the venue sends an invitation link, and that link is what carries the venue.
 2. **No unlink.** Once linked, a wedding can be revoked or relinked, but `tenant_id` can never return to null from the client.
-3. **The venue can't see pending links.** RLS hides them, and there is no count or request flow. `venue_access_requested { source: "venue" }` is declared but not emitted. The roster's Accepted list is the only signal that a couple accepted.
+3. **The venue can't see pending links.** RLS hides them, and there is no count or request flow. The roster's Accepted list is the only signal that a couple accepted.
 4. **Switching venue works through the new venue's link; there is still no standalone "leave venue" UI.** A customer of venue A opening venue B's invite is asked "Leave A?" and swapped atomically. Staff of a venue still cannot become a couple elsewhere on the same account (`PT409`), and a couple who simply wants off A's list has no button for it.
 5. **Open linking is unreachable from the UI.** The slug field is gone; `open_linking` still exists in the schema, the seed (`dworek`, used by `menuRls.test.ts`) and `provision-venue.sql`.
 

@@ -158,7 +158,8 @@ export function useCustomerInviteAccept({
       wedding: isNew ? "new" : "existing",
       switched_venue: leaveCurrent,
     })
-    track("venue_access_requested", { source: "couple" })
+    // "venue": the link this accept spends is one the venue issued.
+    track("venue_access_requested", { source: "venue" })
 
     // Left `submitting` on purpose: the page is about to be replaced, and a
     // button that re-enables for a frame invites a second accept.

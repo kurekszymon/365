@@ -87,10 +87,9 @@ export type AnalyticsEvents = {
    * disclosure - `pending` shows the venue nothing. The venue itself is
    * attributed with a PostHog **group**, never a property here.
    *
-   * "venue" is declared but not emitted: even the customer-invitation flow,
-   * which the venue starts, is recorded as "couple" when the couple accepts.
-   * Declaring it now keeps the property from widening later, which is the
-   * change that quietly reshapes an existing insight.
+   * `source` is who started the link: "couple" when they link from the venue
+   * dialog, "venue" when they accept a customer invitation the venue issued.
+   * Before 2026-10-23 the invitation accept was recorded as "couple" too.
    */
   venue_access_requested: { source: "couple" | "venue" }
   /**
