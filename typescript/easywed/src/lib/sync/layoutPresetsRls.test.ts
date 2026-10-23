@@ -395,6 +395,46 @@ describe.skipIf(!reachable)("venue layout presets", () => {
         await couple.from("weddings").delete().eq("id", id)
       }
     })
+
+    /**
+     * Not a preset path - a preset carries no seats - but the same RPC is how a
+     * guest-mode plan moves into an account, and `tableRow` sends the seat
+     * overrides along. The insert used to drop them.
+     */
+    it("keeps the seat overrides a layout is sent with", async () => {
+      const userId = (await couple.auth.getUser()).data.user!.id
+      const id = crypto.randomUUID()
+      const layout = rekeyLayout(PAYLOAD)
+      const seats = [{ id: "seat-0", x: 0.6, y: -0.35 }]
+
+      try {
+        const created = await couple
+          .from("weddings")
+          .insert({ id, owner_id: userId, name: "Seats probe" })
+        expect(created.error).toBeNull()
+
+        const applied = await couple.rpc("replace_planner_layout", {
+          p_wedding_id: id,
+          p_halls: layout.halls as unknown as Json,
+          p_tables: [
+            { ...layout.tables[0], seats },
+            layout.tables[1],
+          ] as unknown as Json,
+          p_fixtures: layout.fixtures as unknown as Json,
+        })
+        expect(applied.error).toBeNull()
+
+        const { data } = await couple
+          .from("tables")
+          .select("id, seats")
+          .eq("wedding_id", id)
+        const byId = new Map(data?.map((t) => [t.id, t.seats]))
+        expect(byId.get(layout.tables[0].id)).toEqual(seats)
+        expect(byId.get(layout.tables[1].id)).toEqual([])
+      } finally {
+        await couple.from("weddings").delete().eq("id", id)
+      }
+    })
   })
 
   describe("strangers", () => {

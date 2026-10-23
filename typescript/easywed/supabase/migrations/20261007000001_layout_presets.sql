@@ -126,7 +126,11 @@ create policy "wedding members can view their venue's layout presets"
 -- null` - but `seat_id` is not a foreign key, so it survives and trips
 -- `guests_seat_requires_table`, aborting the whole apply for any wedding with
 -- one pinned guest. Unseat everyone first: the new tables have new ids, so no
--- assignment could carry over anyway. Unchanged from 20260719000001 otherwise;
+-- assignment could carry over anyway.
+--
+-- It also writes `tables.seats` now. `tableRow` always sent it, and the insert
+-- dropped it, so custom seat positions from guest mode were lost when the plan
+-- moved into an account. Unchanged from 20260719000001 otherwise;
 -- `create or replace` keeps the grants 20260806000001 set.
 create or replace function public.replace_planner_layout(
   p_wedding_id uuid,
@@ -195,7 +199,7 @@ begin
   -- 4. Insert new tables.
   insert into public.tables (
     id, wedding_id, hall_id, name, shape, capacity, width, height,
-    rotation, pos_x, pos_y, geometry
+    rotation, pos_x, pos_y, geometry, seats
   )
   select
     (t->>'id')::uuid,
@@ -211,7 +215,11 @@ begin
     (t->>'pos_y')::numeric,
     case when t ? 'geometry' and (t->'geometry') is not null and (t->'geometry') <> 'null'::jsonb
          then t->'geometry'
-         else null end
+         else null end,
+    -- Seat overrides. A preset row carries none, so it falls back to the
+    -- column default.
+    case when jsonb_typeof(t->'seats') = 'array' then t->'seats'
+         else '[]'::jsonb end
   from jsonb_array_elements(coalesce(p_tables, '[]'::jsonb)) as t;
 
   -- 5. Insert new fixtures.

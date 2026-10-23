@@ -499,7 +499,7 @@ The PT410 paths are tested against the seeded suspended `stodola`; nothing tests
 
 ### 11.5 Known bugs (found 2026-10-12)
 
-1. **Seat overrides are dropped when a guest plan moves into an account.** `replace_planner_layout` never writes `tables.seats`, so custom seat positions from guest mode are lost on migration (and on preset apply, which is a fresh layout anyway).
+None open. Both were fixed in `20261007000001` by redefining `replace_planner_layout`: guests are unseated before the tables are deleted, and `tables.seats` is written.
 
 ### 11.6 Marketing copy vs code (`venues.*` in `pl.json`)
 
