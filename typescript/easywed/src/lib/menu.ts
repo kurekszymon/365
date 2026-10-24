@@ -185,6 +185,33 @@ export const dishNameIndex = (
 ): Map<string, string> =>
   new Map(options.map((option) => [option.id, option.name]))
 
+/**
+ * The couple's order, course by course: what the venue reads off the CRM peek.
+ *
+ * Keeps catalogue order (every read sorts by position). An archived course
+ * stays listed while it still holds a served dish, for the same reason
+ * `dishNameIndex` reads unfiltered - an order already placed has to stay
+ * readable. A live course with nothing picked is listed empty, so the venue
+ * sees what is still open.
+ */
+export const servedByCourse = <
+  TCourse extends Pick<MenuCourse, "id" | "menu_package_id" | "archived_at">,
+  TOption extends Pick<MenuOption, "id" | "menu_course_id">,
+>(
+  packageId: string,
+  courses: Array<TCourse>,
+  options: Array<TOption>,
+  servedIds: Array<string>
+): Array<{ course: TCourse; dishes: Array<TOption> }> => {
+  const served = new Set(servedIds)
+  return coursesOf(courses, packageId)
+    .map((course) => ({
+      course,
+      dishes: optionsOf(options, course.id).filter((o) => served.has(o.id)),
+    }))
+    .filter(({ course, dishes }) => isLive(course) || dishes.length > 0)
+}
+
 /** Portions per dish, plus the ones whose dish could not be named. */
 export type DishTally = {
   rows: Array<{ id: string; name: string; count: number }>

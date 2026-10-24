@@ -631,6 +631,7 @@
   "crm.wedding.seated_one": "{{count}} seat taken",
   "crm.wedding.package_title": "Menu",
   "crm.wedding.package_none": "The couple hasn't picked a menu yet.",
+  "crm.wedding.course_empty": "Nothing picked yet.",
   "crm.wedding.dietary_title": "Dietary tags",
   "crm.wedding.dietary_none": "Nobody has flagged a dietary requirement.",
   "crm.wedding.dishes_title": "Dishes",

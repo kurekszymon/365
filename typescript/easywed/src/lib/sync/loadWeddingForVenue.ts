@@ -37,7 +37,7 @@ import i18n from "@/i18n"
  * adopted for display only.
  */
 export const loadWeddingForVenue = async (id: string, signal: AbortSignal) => {
-  const [weddingRes, hallsRes, tablesRes, fixturesRes, seatsRes] =
+  const [weddingRes, hallsRes, tablesRes, fixturesRes, seatsRes, servedRes] =
     await Promise.all([
       supabase
         .from("weddings")
@@ -82,6 +82,14 @@ export const loadWeddingForVenue = async (id: string, signal: AbortSignal) => {
         .select("id, table_id, seat_id, dietary, age_group, menu_option_id")
         .eq("wedding_id", id)
         .abortSignal(signal),
+
+      // The served set - uuids of the venue's own catalogue, readable by the
+      // 'venue' role since 20260822000002.
+      supabase
+        .from("wedding_menu_selections")
+        .select("menu_option_id")
+        .eq("wedding_id", id)
+        .abortSignal(signal),
     ])
 
   if (weddingRes.error) throw weddingRes.error
@@ -89,6 +97,7 @@ export const loadWeddingForVenue = async (id: string, signal: AbortSignal) => {
   if (tablesRes.error) throw tablesRes.error
   if (fixturesRes.error) throw fixturesRes.error
   if (seatsRes.error) throw seatsRes.error
+  if (servedRes.error) throw servedRes.error
 
   const tenant = weddingRes.data.tenants
 
@@ -172,11 +181,14 @@ export const loadWeddingForVenue = async (id: string, signal: AbortSignal) => {
   // `archived_at`, so a dish archived after a couple ordered it is still
   // nameable on the kitchen report.
   //
-  // The package id comes along so the report can group by course. The served set
-  // deliberately does not: the kitchen cooks what the guests hold, and an
+  // The package and the served set are the couple's order, shown as-is. The
+  // kitchen tally still counts what the guests hold, not the served set - an
   // unpicked dish is already cleared off every guest by 20260822000003.
   useMenuStore.getState().clear()
-  useMenuStore.getState().setOrder(weddingRes.data.menu_package_id, [])
+  useMenuStore.getState().setOrder(
+    weddingRes.data.menu_package_id,
+    servedRes.data.map((row) => row.menu_option_id)
+  )
   if (tenant) void loadMenuCatalogue(tenant.id, signal)
 
   // Cleared rather than left alone: these stores are module singletons, so a

@@ -3,12 +3,12 @@ import { useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { useShallow } from "zustand/react/shallow"
+import { VenueMenuOrder } from "@/components/crm/VenueMenuOrder"
 import { Button } from "@/components/ui/button"
 import { TagBadge } from "@/components/ui/tag-badge"
 import { dietaryLabel, dietaryTone } from "@/lib/dietary"
 import { setVenueAccess } from "@/lib/sync/venue"
 import { useGlobalStore } from "@/stores/global.store"
-import { useMenuStore } from "@/stores/menu.store"
 import { usePlannerStore } from "@/stores/planner.store"
 
 /**
@@ -17,8 +17,7 @@ import { usePlannerStore } from "@/stores/planner.store"
  *
  * Counted from the pseudonymous guests `loadWeddingForVenue` put in the planner
  * store, so there is no second query and nothing here can reach a name - the
- * rows never carried one. The ordered package comes from `menu.store`, filled
- * by the same load.
+ * rows never carried one. The couple's menu order renders in `VenueMenuOrder`.
  *
  * The "give up access" button is the venue's own half of the consent story. The
  * database lets staff call `set_venue_access(false)` and refuses them `true`
@@ -30,12 +29,6 @@ export const VenuePeekSummary = ({ weddingId }: { weddingId: string }) => {
   const navigate = useNavigate()
 
   const guests = usePlannerStore((s) => s.guests)
-  // The ordered package, named from the venue's own catalogue. Unfiltered by
-  // `archived_at`, so a package retired after the couple ordered it still reads.
-  const chosenPackage = useMenuStore((s) =>
-    s.packages.find((p) => p.id === s.packageId)
-  )
-  const packageId = useMenuStore((s) => s.packageId)
   const { venue, venueAccess } = useGlobalStore(
     useShallow((s) => ({ venue: s.venue, venueAccess: s.venueAccess }))
   )
@@ -86,19 +79,7 @@ export const VenuePeekSummary = ({ weddingId }: { weddingId: string }) => {
         {t("crm.wedding.seated", { count: seated })}
       </p>
 
-      {/* A package id with no name yet is the catalogue still in flight. */}
-      {packageId === null ? (
-        <p className="text-sm text-muted-foreground">
-          {t("crm.wedding.package_none")}
-        </p>
-      ) : chosenPackage ? (
-        <div className="flex flex-col gap-1">
-          <p className="text-sm font-medium">
-            {t("crm.wedding.package_title")}
-          </p>
-          <p className="text-sm">{chosenPackage.name}</p>
-        </div>
-      ) : null}
+      <VenueMenuOrder />
 
       <div className="flex flex-col gap-2">
         <p className="text-sm font-medium">{t("crm.wedding.dietary_title")}</p>

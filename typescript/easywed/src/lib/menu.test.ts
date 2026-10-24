@@ -12,6 +12,7 @@ import {
   menuOptionTone,
   optionsOf,
   parseChooseCount,
+  servedByCourse,
   tallyByOption,
   toggleArchivedAt,
 } from "./menu"
@@ -110,6 +111,40 @@ describe("coursesOf / optionsOf", () => {
       { id: "y", menu_course_id: "b" },
     ]
     expect(optionsOf(options, "b").map((o) => o.id)).toEqual(["y"])
+  })
+})
+
+describe("servedByCourse", () => {
+  const courses = [
+    { id: "soup", menu_package_id: "p1", archived_at: null },
+    { id: "main", menu_package_id: "p1", archived_at: null },
+    { id: "old", menu_package_id: "p1", archived_at: "2026-01-01" },
+    { id: "gone", menu_package_id: "p1", archived_at: "2026-01-01" },
+    { id: "other", menu_package_id: "p2", archived_at: null },
+  ]
+  const options = [
+    { id: "rosol", menu_course_id: "soup" },
+    { id: "zurek", menu_course_id: "soup" },
+    { id: "schab", menu_course_id: "main" },
+    { id: "pierogi", menu_course_id: "old" },
+    { id: "barszcz", menu_course_id: "gone" },
+    { id: "elsewhere", menu_course_id: "other" },
+  ]
+
+  it("groups the served dishes by course, in catalogue order", () => {
+    const result = servedByCourse("p1", courses, options, [
+      "zurek",
+      "rosol",
+      "pierogi",
+      "elsewhere",
+    ])
+    expect(
+      result.map(({ course, dishes }) => [course.id, dishes.map((d) => d.id)])
+    ).toEqual([
+      ["soup", ["rosol", "zurek"]],
+      ["main", []],
+      ["old", ["pierogi"]],
+    ])
   })
 })
 

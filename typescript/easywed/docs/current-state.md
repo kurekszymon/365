@@ -487,15 +487,14 @@ The PT410 paths are tested against the seeded suspended `stodola`; nothing tests
 
 ### 11.4 CRM gaps
 
-1. **The CRM doesn't show the couple's wedding-level dish selections.** The venue is allowed to read them, but the peek never queries them. It names the chosen package (`VenuePeekSummary`) and counts per-guest plated dishes.
-2. **No notifications.** There is no email anywhere in this flow. Invite links are copied by hand, and nothing tells a venue when access is granted or dishes change.
-3. **No live updates.** Neither `channel(` nor `realtime` appears in `src/`, so the peek needs a reload.
-4. **Presets can't be managed from the CRM.** They are saved only from the apex planner. There is no restore, rename or delete UI.
-5. **Read-only toward the couple.** Staff cannot enter dishes, edit the layout, or annotate a wedding. There are no event-level fields (headcount confirmation, deadlines, notes).
-6. **No export from the CRM.** The kitchen report is `window.print` via `triggerPdfExport`; there is no CSV of counts.
-7. **Invite list hygiene - mostly done.** Labels, an Accepted history and expired-last sorting exist. Expired invites still linger until revoked (deliberately - a vanished link reads as "never sent"), and a label cannot be edited after creation (no UPDATE policy).
-8. **Branding is mostly inert.** `accent_color` is unused, `primary_color` only tints the text wordmark, `locale` is unused, and the login and signup pages are unbranded.
-9. **Menu rules.** `choose_count` is unenforced, and there are no totals or children's pricing.
+1. **No notifications.** There is no email anywhere in this flow. Invite links are copied by hand, and nothing tells a venue when access is granted or dishes change.
+2. **No live updates.** Neither `channel(` nor `realtime` appears in `src/`, so the peek needs a reload.
+3. **Presets can't be managed from the CRM.** They are saved only from the apex planner. There is no restore, rename or delete UI.
+4. **Read-only toward the couple.** Staff cannot enter dishes, edit the layout, or annotate a wedding. There are no event-level fields (headcount confirmation, deadlines, notes).
+5. **No export from the CRM.** The kitchen report is `window.print` via `triggerPdfExport`; there is no CSV of counts.
+6. **Invite list hygiene - mostly done.** Labels, an Accepted history and expired-last sorting exist. Expired invites still linger until revoked (deliberately - a vanished link reads as "never sent"), and a label cannot be edited after creation (no UPDATE policy).
+7. **Branding is mostly inert.** `accent_color` is unused, `primary_color` only tints the text wordmark, `locale` is unused, and the login and signup pages are unbranded.
+8. **Menu rules.** `choose_count` is unenforced, and there are no totals or children's pricing.
 
 ### 11.5 Known bugs (found 2026-10-12)
 

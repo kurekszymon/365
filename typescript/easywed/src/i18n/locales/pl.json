@@ -633,6 +633,7 @@
   "crm.wedding.seated_many": "{{count}} zajętych miejsc",
   "crm.wedding.package_title": "Menu",
   "crm.wedding.package_none": "Para młoda nie wybrała jeszcze menu.",
+  "crm.wedding.course_empty": "Para młoda nic tu jeszcze nie wybrała.",
   "crm.wedding.dietary_title": "Diety",
   "crm.wedding.dietary_none": "Nikt nie zgłosił szczególnej diety.",
   "crm.wedding.dishes_title": "Dania",
