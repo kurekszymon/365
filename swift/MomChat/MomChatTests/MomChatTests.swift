@@ -1,19 +1,11 @@
-//
-//  MomChatTests.swift
-//  MomChatTests
-//
-//  Created by Szymon Kurek on 25/10/2026.
-//
-
+import Foundation
 import Testing
 @testable import MomChat
 
-struct MomChatTests {
-
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
-        // Swift Testing Documentation
-        // https://developer.apple.com/documentation/testing
+struct LocalizationTests {
+    @Test func appShipsEnglishAndPolish() {
+        let localizations = Bundle.main.localizations
+        #expect(localizations.contains("en"))
+        #expect(localizations.contains("pl"))
     }
-
 }
