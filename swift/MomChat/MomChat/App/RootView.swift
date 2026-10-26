@@ -1,9 +1,22 @@
 import SwiftUI
 
 struct RootView: View {
+    // Hardcoded until Stage 4 saves a real MomProfile.
+    @State private var hasProfile = false
+
     var body: some View {
-        Text("MomChat")
-            .font(.largeTitle)
+        Group {
+            if hasProfile {
+                NavigationStack {
+                    ChatView()
+                }
+            } else {
+                OnboardingPlaceholderView {
+                    hasProfile = true
+                }
+            }
+        }
+        .animation(.default, value: hasProfile)
     }
 }
 

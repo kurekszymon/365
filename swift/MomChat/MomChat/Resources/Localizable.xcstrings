@@ -1,21 +1,68 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "MomChat" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "MomChat"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "MomChat"
-          }
-        }
-      }
+    "1st trimester" : {
+      "comment" : "Chat header subtitle under the week."
+    },
+    "2nd trimester" : {
+      "comment" : "Chat header subtitle under the week."
+    },
+    "3rd trimester" : {
+      "comment" : "Chat header subtitle under the week."
+    },
+    "Answers for you and your baby, private on your phone." : {
+      "comment" : "Onboarding placeholder subtitle."
+    },
+    "Ask anything…" : {
+      "comment" : "Placeholder in the chat input field."
+    },
+    "Baby kicks" : {
+      "comment" : "Quick-action chip above the input (pregnancy)."
+    },
+    "Back pain" : {
+      "comment" : "Quick-action chip above the input (pregnancy)."
+    },
+    "Coming soon" : {
+      "comment" : "Empty Settings screen placeholder."
+    },
+    "Done" : {
+      "comment" : "Closes the Settings screen."
+    },
+    "Get started" : {
+      "comment" : "Onboarding placeholder button."
+    },
+    "If the pain is sharp, comes in waves, or you also have bleeding, call your midwife. Otherwise, gentle stretching and a warm (not hot) shower can help." : {
+      "comment" : "Demo answer (temporary, Stage 1 only)."
+    },
+    "MomChat gives information, not medical advice." : {
+      "comment" : "Small disclaimer above the chat messages."
+    },
+    "My back hurts a lot at night. Is that normal at 24 weeks?" : {
+      "comment" : "Demo message from the mom (temporary, Stage 1 only)."
+    },
+    "Send" : {
+      "comment" : "VoiceOver label for the send button."
+    },
+    "Settings" : {
+      "comment" : "Settings screen title and the gear button's label."
+    },
+    "Sleep positions" : {
+      "comment" : "Quick-action chip above the input (pregnancy)."
+    },
+    "Week %lld" : {
+      "comment" : "Chat header title. The number is the pregnancy week."
+    },
+    "Welcome to MomChat" : {
+      "comment" : "Onboarding placeholder title."
+    },
+    "What if it gets worse?" : {
+      "comment" : "Demo message from the mom (temporary, Stage 1 only)."
+    },
+    "What to eat" : {
+      "comment" : "Quick-action chip above the input (pregnancy)."
+    },
+    "Yes, it's very common around now. Your bump is growing and your posture is shifting. Try sleeping on your side with a pillow between your knees." : {
+      "comment" : "Demo answer (temporary, Stage 1 only)."
     }
   },
   "version" : "1.0"
