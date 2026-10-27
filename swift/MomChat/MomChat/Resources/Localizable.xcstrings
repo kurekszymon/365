@@ -13,6 +13,12 @@
     "Answers for you and your baby, private on your phone." : {
       "comment" : "Onboarding placeholder subtitle."
     },
+    "Apple Intelligence is still downloading to your iPhone. This can take a while, so keep it on Wi-Fi and charging. MomChat will continue on its own when it's done." : {
+      "comment" : "Apple Intelligence check screen: shown while the model downloads."
+    },
+    "Apple Intelligence isn't available right now" : {
+      "comment" : "Apple Intelligence check screen: title for any other reason."
+    },
     "Ask anything…" : {
       "comment" : "Placeholder in the chat input field."
     },
@@ -21,6 +27,9 @@
     },
     "Back pain" : {
       "comment" : "Quick-action chip above the input (pregnancy)."
+    },
+    "Check that Apple Intelligence is on and that your iPhone is set to a supported language, then try again." : {
+      "comment" : "Apple Intelligence check screen: shown for unknown reasons."
     },
     "Coming soon" : {
       "comment" : "Empty Settings screen placeholder."
@@ -31,14 +40,44 @@
     "Get started" : {
       "comment" : "Onboarding placeholder button."
     },
+    "Getting ready…" : {
+      "comment" : "Apple Intelligence check screen: title while the model downloads."
+    },
     "If the pain is sharp, comes in waves, or you also have bleeding, call your midwife. Otherwise, gentle stretching and a warm (not hot) shower can help." : {
       "comment" : "Demo answer (temporary, Stage 1 only)."
+    },
+    "MomChat" : {
+      "comment" : "App name. Not translated.",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MomChat"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MomChat"
+          }
+        }
+      }
     },
     "MomChat gives information, not medical advice." : {
       "comment" : "Small disclaimer above the chat messages."
     },
+    "MomChat needs Apple Intelligence, which works on iPhone 15 Pro and newer. Everything happens on your phone, so there's no online version we could offer instead." : {
+      "comment" : "Apple Intelligence check screen: honest explanation for unsupported phones."
+    },
+    "MomChat runs entirely on your iPhone using Apple Intelligence. Open Settings, go to Apple Intelligence & Siri, turn it on, then come back here." : {
+      "comment" : "Apple Intelligence check screen: steps to turn Apple Intelligence on. 'Apple Intelligence & Siri' is the Settings item name."
+    },
     "My back hurts a lot at night. Is that normal at 24 weeks?" : {
       "comment" : "Demo message from the mom (temporary, Stage 1 only)."
+    },
+    "Open Settings" : {
+      "comment" : "Apple Intelligence check screen: button that opens the Settings app."
     },
     "Send" : {
       "comment" : "VoiceOver label for the send button."
@@ -48,6 +87,15 @@
     },
     "Sleep positions" : {
       "comment" : "Quick-action chip above the input (pregnancy)."
+    },
+    "This iPhone can't run MomChat" : {
+      "comment" : "Apple Intelligence check screen: title on phones older than iPhone 15 Pro."
+    },
+    "Try again" : {
+      "comment" : "Apple Intelligence check screen: button that checks again."
+    },
+    "Turn on Apple Intelligence" : {
+      "comment" : "Apple Intelligence check screen: title when Apple Intelligence is off."
     },
     "Week %lld" : {
       "comment" : "Chat header title. The number is the pregnancy week."

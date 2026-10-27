@@ -9,6 +9,13 @@ struct SettingsView: View {
                 .foregroundStyle(Palette.textSecondary)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Palette.background)
+                #if DEBUG
+                .safeAreaInset(edge: .bottom) {
+                    NavigationLink(String("Developer tools")) { DebugView() }
+                        .font(Typography.caption)
+                        .padding(Spacing.l)
+                }
+                #endif
                 .navigationTitle("Settings")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
