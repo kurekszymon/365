@@ -31,6 +31,7 @@ struct DebugView: View {
             Section {
                 NavigationLink(String("Playground")) { PlaygroundView(settings: settings) }
                 NavigationLink(String("Question runner")) { QuestionRunnerView(settings: settings) }
+                NavigationLink(String("Dates & storage")) { DatesDebugView() }
             }
         }
         .navigationTitle(Text(verbatim: "Developer"))

@@ -209,7 +209,7 @@ No third-party dependencies. Only Apple frameworks: SwiftUI, SwiftData, Foundati
 1. Welcome + privacy promise
 2. Device check (reuses Stage 2)
 3. **"Where are you right now?"** (Expecting / Baby is here / Both)
-4. Detail forms for each stage (due date or last period; birth date, born early, delivery type, feeding; optional conditions)
+4. Detail forms for each stage (due date or last period, number of babies (1 or more); birth date, born early, delivery type, feeding; optional conditions). "Baby is here" with twins/triplets creates one child per baby with a shared `multipleBirthID`
 5. Saves the `MomProfile` + `Child` profile(s)
 6. **Paywall placeholder** ("Continue" button) for now
 7. Lands in the chat (still fake answers)
@@ -230,13 +230,14 @@ No third-party dependencies. Only Apple frameworks: SwiftUI, SwiftData, Foundati
 - A profile list (mom + children), switching the active child, editing every field.
 - Adding a second child or pregnancy later.
 - **Birth transition:** the "Has your baby arrived?" banner from week 37 (plus a manual entry point), and a form that switches the profile to `.born`.
+  - **Twins/triplets:** the form shows one name/sex/feeding block per baby (from `multiples`, no upper limit) and calls `Child.recordBirth` (built in Stage 3), which splits the profile into one child per baby. The banner is earlier for multiples (twins are usually born around 36–37 weeks, triplets earlier). Decide in this stage whether the pregnancy conversations also appear under the siblings (they stay on the first baby's record).
 - **End/archive a pregnancy** (the loss flow, UI only; copy finalized in Stage 8).
 
 **You prepare:** write the birth-transition copy (it's a happy moment, so make it warm).
 
 **Demo:** set the due date to tomorrow, see the banner, mark the baby as born, and the header changes to "Baby · 1 day".
 
-**Done when:** you can go through pregnancy → born → second pregnancy with no data lost.
+**Done when:** you can go through pregnancy → born → second pregnancy with no data lost, and a twin pregnancy becomes two children.
 
 ---
 

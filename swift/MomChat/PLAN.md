@@ -72,7 +72,8 @@ There are two kinds of profile: one **mom profile**, and one **child profile per
     var stage: Stage              // .expecting / .born / .archived
     var dueDate: Date?            // required while expecting; used for corrected age later
     var birthDate: Date?          // set when the baby arrives
-    var multiples: Int            // 1 = singleton, 2 = twins…
+    var multiples: Int            // 1 = singleton, 2 = twins, 3 = triplets… (no upper limit)
+    var multipleBirthID: UUID?    // shared by twins/triplets after birth
     var sex: Sex?                 // optional, can be "unknown / not telling"
     // Pregnancy
     var pregnancyConditions: [String]   // e.g. "placenta previa", "high blood pressure"
@@ -102,7 +103,9 @@ From week 37, a gentle banner appears on the chat screen: **"Has your baby arriv
 - Delivery type
 - Feeding plan
 
-The profile switches to `.born`. The pregnancy conversations stay visible in history under the same child. Starter chips switch from pregnancy topics to newborn topics. The banner can also be opened from the profile at any time (for early births).
+The profile switches to `.born`.
+
+**Twins, triplets and more.** One profile covers the whole pregnancy. At birth the form asks for name, sex and feeding **for each baby**, and the profile splits into one child per baby. The first baby keeps the original record, with the pregnancy conversations and notes. The others share the due date, birth date, delivery type and pregnancy conditions. All of them get the same `multipleBirthID`, so the prompt can say "twin of Kuba". Fewer babies than expected is allowed, but the copy for that case needs the same care as pregnancy loss. The pregnancy conversations stay visible in history under the same child. Starter chips switch from pregnancy topics to newborn topics. The banner can also be opened from the profile at any time (for early births).
 
 ### Pregnancy Loss
 
