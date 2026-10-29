@@ -23,7 +23,9 @@ enum Palette {
     static let onChip = Color(light: 0x2F4A35, dark: 0xB0D4B4)
 }
 
-extension Color {
+// `nonisolated`: SwiftUI can resolve colors on a background render thread, and a main-actor
+// provider closure crashes there.
+nonisolated extension Color {
     /// A color that follows the system appearance, given as 0xRRGGBB values.
     init(light: UInt32, dark: UInt32) {
         self.init(uiColor: UIColor { traits in
@@ -32,7 +34,7 @@ extension Color {
     }
 }
 
-private extension UIColor {
+private nonisolated extension UIColor {
     convenience init(hex: UInt32) {
         self.init(
             red: CGFloat((hex >> 16) & 0xFF) / 255,

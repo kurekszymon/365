@@ -1,55 +1,41 @@
+import SwiftData
 import SwiftUI
 
+/// Onboarding until a profile is saved, then the chat. The model check runs at every launch too,
+/// because Apple Intelligence can be turned off or the language changed later.
 struct RootView: View {
-    // Hardcoded until Stage 4 saves a real MomProfile.
-    @State private var hasProfile = false
+    @Query private var moms: [MomProfile]
+    @Query(sort: \Child.createdAt) private var children: [Child]
     @State private var availability = ModelAvailability()
-    #if DEBUG
-    // Lets the UI be checked on a simulator whose Mac has Apple Intelligence off.
-    @State private var skipsModelCheck = false
-    #endif
 
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         Group {
-            if !isModelReady {
-                ModelUnavailableView(state: availability.state) {
-                    availability.refresh()
-                }
-                #if DEBUG
-                .overlay(alignment: .topTrailing) {
-                    Button(String("Skip (debug)")) { skipsModelCheck = true }
-                        .font(Typography.caption)
-                        .padding()
-                }
-                #endif
-            } else if hasProfile {
-                NavigationStack {
-                    ChatView()
-                }
+            if moms.isEmpty {
+                OnboardingView(availability: availability)
+            } else if !availability.isReady {
+                DeviceCheckView(availability: availability)
             } else {
-                OnboardingPlaceholderView {
-                    hasProfile = true
+                NavigationStack {
+                    ChatView(child: activeChild)
                 }
             }
         }
-        .animation(.default, value: hasProfile)
-        .animation(.default, value: availability.state)
+        .animation(.default, value: moms.isEmpty)
+        .animation(.default, value: availability.isReady)
         // Coming back from Settings after turning Apple Intelligence on.
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { availability.refresh() }
         }
     }
 
-    private var isModelReady: Bool {
-        #if DEBUG
-        if skipsModelCheck { return true }
-        #endif
-        return availability.state == .available
+    private var activeChild: Child? {
+        moms.first?.activeChild ?? children.first
     }
 }
 
 #Preview {
     RootView()
+        .modelContainer(try! DataStore.makeInMemoryContainer())
 }

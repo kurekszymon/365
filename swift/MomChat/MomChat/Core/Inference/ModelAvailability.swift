@@ -15,6 +15,17 @@ final class ModelAvailability {
     }
 
     private(set) var state: State = .checking
+    #if DEBUG
+    /// Lets the UI be checked on a simulator whose Mac has Apple Intelligence off.
+    var isSkipped = false
+    #endif
+
+    var isReady: Bool {
+        #if DEBUG
+        if isSkipped { return true }
+        #endif
+        return state == .available
+    }
     private var pollTask: Task<Void, Never>?
 
     init() {

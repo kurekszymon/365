@@ -1,10 +1,13 @@
 #if DEBUG
 import FoundationModels
+import SwiftData
 import SwiftUI
 
 /// Developer tools, reachable from Settings in debug builds only. English-only on purpose.
 struct DebugView: View {
     @State private var settings = ModelProbe.Settings()
+    @State private var isConfirmingReset = false
+    @Environment(\.modelContext) private var context
 
     private let model = SystemLanguageModel.default
 
@@ -33,9 +36,33 @@ struct DebugView: View {
                 NavigationLink(String("Question runner")) { QuestionRunnerView(settings: settings) }
                 NavigationLink(String("Dates & storage")) { DatesDebugView() }
             }
+
+            Section {
+                Button(String("Delete all data and restart onboarding"), role: .destructive) {
+                    isConfirmingReset = true
+                }
+            } footer: {
+                Text(verbatim: "Same as deleting and reinstalling the app, minus the reinstall.")
+            }
+        }
+        .confirmationDialog(String("Delete every profile and conversation?"), isPresented: $isConfirmingReset, titleVisibility: .visible) {
+            Button(String("Delete all data"), role: .destructive, action: deleteAllData)
         }
         .navigationTitle(Text(verbatim: "Developer"))
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func deleteAllData() {
+        do {
+            try context.delete(model: Message.self)
+            try context.delete(model: Conversation.self)
+            try context.delete(model: ProfileNote.self)
+            try context.delete(model: Child.self)
+            try context.delete(model: MomProfile.self)
+            try context.save()
+        } catch {
+            assertionFailure("Reset failed: \(error)")
+        }
     }
 }
 

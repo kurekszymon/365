@@ -64,26 +64,14 @@ struct ModelUnavailableView: View {
     private var actions: some View {
         switch state {
         case .notEnabled:
-            primaryButton("Open Settings") {
+            PrimaryButton("Open Settings") {
                 if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
             }
         case .unavailable, .available:
-            primaryButton("Try again", action: onRetry)
+            PrimaryButton("Try again", action: onRetry)
         case .downloading, .checking, .deviceNotEligible:
             EmptyView()
         }
-    }
-
-    private func primaryButton(_ title: LocalizedStringResource, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, Spacing.m)
-        }
-        .buttonStyle(.borderedProminent)
-        .buttonBorderShape(.capsule)
-        .foregroundStyle(Palette.onAccent)
     }
 }
 

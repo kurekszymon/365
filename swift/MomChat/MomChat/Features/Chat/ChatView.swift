@@ -1,30 +1,11 @@
 import SwiftUI
 
-enum Trimester {
-    case first, second, third
-
-    var title: LocalizedStringResource {
-        switch self {
-        case .first: "1st trimester"
-        case .second: "2nd trimester"
-        case .third: "3rd trimester"
-        }
-    }
-}
-
 struct ChatView: View {
-    // Hardcoded stage until profiles exist (Stage 3–4).
-    private let week = 24
-    private let trimester = Trimester.second
+    /// `nil` only in previews or if the profile was deleted underneath.
+    let child: Child?
 
-    private let chips: [LocalizedStringResource] = [
-        "Back pain",
-        "Sleep positions",
-        "Baby kicks",
-        "What to eat",
-    ]
-
-    @State private var messages = ChatMessage.samples
+    // Not saved yet, and no answers: the model is wired up in Stage 6.
+    @State private var messages: [ChatMessage] = []
     @State private var draft = ""
     @State private var isShowingSettings = false
 
@@ -53,8 +34,8 @@ struct ChatView: View {
             .padding(.bottom, Spacing.s)
             .background(Palette.background)
         }
-        .navigationTitle(Text("Week \(week)"))
-        .navigationSubtitle(Text(trimester.title))
+        .navigationTitle(Text(verbatim: header.title))
+        .navigationSubtitle(Text(verbatim: header.subtitle ?? ""))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -65,6 +46,19 @@ struct ChatView: View {
         }
         .sheet(isPresented: $isShowingSettings) {
             SettingsView()
+        }
+    }
+
+    private var header: ChatHeader {
+        ChatHeader(child: child)
+    }
+
+    /// Placeholders until Stage 6 picks starter chips for the exact stage.
+    private var chips: [LocalizedStringResource] {
+        if child?.stage == .born {
+            ["Sleep", "Feeding", "Crying", "Poop"]
+        } else {
+            ["Back pain", "Sleep positions", "Baby kicks", "What to eat"]
         }
     }
 
@@ -129,8 +123,14 @@ struct ChatView: View {
     }
 }
 
-#Preview {
+#Preview("Pregnant") {
     NavigationStack {
-        ChatView()
+        ChatView(child: Child(stage: .expecting, dueDate: .now.addingTimeInterval(109 * 86_400)))
+    }
+}
+
+#Preview("Born") {
+    NavigationStack {
+        ChatView(child: Child(name: "Emma", stage: .born, birthDate: .now.addingTimeInterval(-213 * 86_400)))
     }
 }

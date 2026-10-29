@@ -1,6 +1,12 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ before due date" : {
+      "comment" : "Chat header subtitle for a premature baby who hasn't reached the due date yet. The value is a duration, e.g. \"3 weeks 2 days\"."
+    },
+    "%@ · %@" : {
+      "comment" : "Chat header title for a born child: name, then age, e.g. \"Emma · 7 months\"."
+    },
     "1st trimester" : {
       "comment" : "Chat header subtitle under the week."
     },
@@ -10,8 +16,20 @@
     "3rd trimester" : {
       "comment" : "Chat header subtitle under the week."
     },
+    "A newborn, baby or toddler up to 3" : {
+      "comment" : "Onboarding, \"Where are you right now?\" card detail under \"My baby is here\"."
+    },
+    "Allergies (optional)" : {
+      "comment" : "Onboarding baby form: text field placeholder, one per baby. Items separated by commas."
+    },
+    "Answers are written right on your iPhone by Apple Intelligence." : {
+      "comment" : "Onboarding welcome: privacy promise line."
+    },
     "Answers for you and your baby, private on your phone." : {
-      "comment" : "Onboarding placeholder subtitle."
+      "comment" : "Onboarding welcome screen subtitle."
+    },
+    "Anything your doctor is watching?" : {
+      "comment" : "Onboarding pregnancy form: section header for pregnancy conditions (free text)."
     },
     "Apple Intelligence is still downloading to your iPhone. This can take a while, so keep it on Wi-Fi and charging. MomChat will continue on its own when it's done." : {
       "comment" : "Apple Intelligence check screen: shown while the model downloads."
@@ -22,11 +40,47 @@
     "Ask anything…" : {
       "comment" : "Placeholder in the chat input field."
     },
+    "Babies born 4 or more weeks early get a corrected age too." : {
+      "comment" : "Onboarding baby form: footer when \"Born early\" is on."
+    },
+    "Babies: %lld" : {
+      "comment" : "Onboarding forms: stepper for the number of babies (twins = 2). Kept as \"label: number\" so no plural forms are needed."
+    },
+    "Baby" : {
+      "comment" : "Default name for a child without one, e.g. in the chat header \"Baby · 3 weeks\"."
+    },
+    "Baby %lld" : {
+      "comment" : "Onboarding baby form: section header for each baby when there are twins or more, e.g. \"Baby 2\"."
+    },
+    "Baby (optional)" : {
+      "comment" : "Onboarding pregnancy form: section header for the baby's name and sex."
+    },
     "Baby kicks" : {
       "comment" : "Quick-action chip above the input (pregnancy)."
     },
     "Back pain" : {
       "comment" : "Quick-action chip above the input (pregnancy)."
+    },
+    "Birth date" : {
+      "comment" : "Onboarding baby form: date picker label."
+    },
+    "Born early" : {
+      "comment" : "Onboarding baby form: toggle: the baby was born before the due date."
+    },
+    "Both" : {
+      "comment" : "Onboarding, \"Where are you right now?\" card title: pregnant and already has a child."
+    },
+    "Boy" : {
+      "comment" : "Onboarding forms: sex picker option."
+    },
+    "Breast milk and formula" : {
+      "comment" : "Onboarding baby form: feeding picker option (mixed feeding)."
+    },
+    "Breastfeeding" : {
+      "comment" : "Onboarding baby form: feeding picker option."
+    },
+    "C-section" : {
+      "comment" : "Onboarding baby form: delivery picker option."
     },
     "Check that Apple Intelligence is on and that your iPhone is set to a supported language, then try again." : {
       "comment" : "Apple Intelligence check screen: shown for unknown reasons."
@@ -34,21 +88,68 @@
     "Coming soon" : {
       "comment" : "Empty Settings screen placeholder."
     },
+    "Continue" : {
+      "comment" : "Button to go to the next onboarding step."
+    },
+    "Corrected age %@" : {
+      "comment" : "Chat header subtitle for a premature baby. The value is a duration, e.g. \"6 months\"."
+    },
+    "Couldn't save your profile" : {
+      "comment" : "Alert title when saving at the end of onboarding fails."
+    },
+    "Count from" : {
+      "comment" : "Onboarding pregnancy form: label of the due date / last period switch (hidden, read by VoiceOver)."
+    },
+    "Crying" : {
+      "comment" : "Chat quick-action chip for a born baby."
+    },
+    "Delivery" : {
+      "comment" : "Onboarding baby form: picker label for the delivery type."
+    },
+    "Don't know yet" : {
+      "comment" : "Onboarding pregnancy form: sex picker option while expecting."
+    },
     "Done" : {
       "comment" : "Closes the Settings screen."
     },
+    "Due date" : {
+      "comment" : "Onboarding pregnancy form: segment and date picker label."
+    },
+    "Due date: %@" : {
+      "comment" : "Onboarding pregnancy form: footer showing the due date calculated from the last period. The value is a long date."
+    },
+    "Feeding" : {
+      "comment" : "Chat quick-action chip for a born baby, and the feeding picker label in the onboarding baby form."
+    },
+    "First day of last period" : {
+      "comment" : "Onboarding pregnancy form: date picker label."
+    },
+    "First pregnancy?" : {
+      "comment" : "Onboarding pregnancy form: picker label. Options: Skip / Yes / No."
+    },
+    "Formula" : {
+      "comment" : "Onboarding baby form: feeding picker option."
+    },
     "Get started" : {
-      "comment" : "Onboarding placeholder button."
+      "comment" : "Onboarding welcome screen button."
     },
     "Getting ready…" : {
       "comment" : "Apple Intelligence check screen: title while the model downloads."
     },
-    "If the pain is sharp, comes in waves, or you also have bleeding, call your midwife. Otherwise, gentle stretching and a warm (not hot) shower can help." : {
-      "comment" : "Demo answer (temporary, Stage 1 only)."
+    "Girl" : {
+      "comment" : "Onboarding forms: sex picker option."
+    },
+    "Health conditions (optional)" : {
+      "comment" : "Onboarding baby form: text field placeholder, one per baby. Items separated by commas."
+    },
+    "I'm expecting" : {
+      "comment" : "Onboarding, \"Where are you right now?\" card title."
+    },
+    "Last period" : {
+      "comment" : "Onboarding pregnancy form: segment: count from the first day of the last period. Keep short."
     },
     "MomChat" : {
-      "comment" : "App name. Not translated.",
-      "extractionState" : "stale",
+      "comment" : "App name, also the chat header when there's no active child. Not translated.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -73,11 +174,44 @@
     "MomChat runs entirely on your iPhone using Apple Intelligence. Open Settings, go to Apple Intelligence & Siri, turn it on, then come back here." : {
       "comment" : "Apple Intelligence check screen: steps to turn Apple Intelligence on. 'Apple Intelligence & Siri' is the Settings item name."
     },
-    "My back hurts a lot at night. Is that normal at 24 weeks?" : {
-      "comment" : "Demo message from the mom (temporary, Stage 1 only)."
+    "My baby is here" : {
+      "comment" : "Onboarding, \"Where are you right now?\" card title."
+    },
+    "Name" : {
+      "comment" : "Onboarding baby form: text field placeholder for the baby's name."
+    },
+    "Name, if you've picked one" : {
+      "comment" : "Onboarding pregnancy form: text field placeholder for the baby's name."
+    },
+    "No" : {
+      "comment" : "Onboarding pregnancy form: \"First pregnancy?\" answer."
+    },
+    "No account and no sign-up." : {
+      "comment" : "Onboarding welcome: privacy promise line."
+    },
+    "Not saying" : {
+      "comment" : "Onboarding baby form: picker option when the parent skips the question."
+    },
+    "OK" : {
+      "comment" : "Alert button."
     },
     "Open Settings" : {
       "comment" : "Apple Intelligence check screen: button that opens the Settings app."
+    },
+    "Optional. Separate things with commas." : {
+      "comment" : "Onboarding pregnancy form: footer under the doctor field."
+    },
+    "Plans and the free trial will appear here." : {
+      "comment" : "Paywall placeholder at the end of onboarding (temporary, replaced in Stage 10)."
+    },
+    "Poop" : {
+      "comment" : "Chat quick-action chip for a born baby."
+    },
+    "Pregnant with one baby or more" : {
+      "comment" : "Onboarding, \"Where are you right now?\" card detail under \"I'm expecting\"."
+    },
+    "Pregnant, with a little one already at home" : {
+      "comment" : "Onboarding, \"Where are you right now?\" card detail under \"Both\"."
     },
     "Send" : {
       "comment" : "VoiceOver label for the send button."
@@ -85,8 +219,23 @@
     "Settings" : {
       "comment" : "Settings screen title and the gear button's label."
     },
+    "Sex" : {
+      "comment" : "Onboarding forms: picker label for the baby's sex."
+    },
+    "Skip" : {
+      "comment" : "Onboarding pregnancy form: \"First pregnancy?\" option for not answering."
+    },
+    "Sleep" : {
+      "comment" : "Chat quick-action chip for a born baby."
+    },
     "Sleep positions" : {
       "comment" : "Quick-action chip above the input (pregnancy)."
+    },
+    "Solids and milk" : {
+      "comment" : "Onboarding baby form: feeding picker option for an older baby."
+    },
+    "The birth (optional)" : {
+      "comment" : "Onboarding baby form: section header for born early, delivery and feeding."
     },
     "This iPhone can't run MomChat" : {
       "comment" : "Apple Intelligence check screen: title on phones older than iPhone 15 Pro."
@@ -97,20 +246,53 @@
     "Turn on Apple Intelligence" : {
       "comment" : "Apple Intelligence check screen: title when Apple Intelligence is off."
     },
+    "Twins or more? Each baby gets their own profile." : {
+      "comment" : "Onboarding baby form: footer under the number of babies."
+    },
+    "Vaginal birth" : {
+      "comment" : "Onboarding baby form: delivery picker option."
+    },
     "Week %lld" : {
       "comment" : "Chat header title. The number is the pregnancy week."
     },
-    "Welcome to MomChat" : {
-      "comment" : "Onboarding placeholder title."
+    "Weeks early: %lld" : {
+      "comment" : "Onboarding baby form: stepper for how many weeks before the due date the baby was born."
     },
-    "What if it gets worse?" : {
-      "comment" : "Demo message from the mom (temporary, Stage 1 only)."
+    "Welcome to MomChat" : {
+      "comment" : "Onboarding welcome screen title."
     },
     "What to eat" : {
       "comment" : "Quick-action chip above the input (pregnancy)."
     },
-    "Yes, it's very common around now. Your bump is growing and your posture is shifting. Try sleeping on your side with a pillow between your knees." : {
-      "comment" : "Demo answer (temporary, Stage 1 only)."
+    "When is the baby due?" : {
+      "comment" : "Onboarding pregnancy form: section header."
+    },
+    "Where are you right now?" : {
+      "comment" : "Onboarding, \"Where are you right now?\" screen title."
+    },
+    "Yes" : {
+      "comment" : "Onboarding pregnancy form: \"First pregnancy?\" answer."
+    },
+    "You'll add a name for each baby when they arrive." : {
+      "comment" : "Onboarding pregnancy form: footer shown for twins or more."
+    },
+    "You're all set" : {
+      "comment" : "Paywall placeholder title at the end of onboarding (temporary, replaced in Stage 10)."
+    },
+    "Your baby" : {
+      "comment" : "Onboarding baby form: screen title, and section header for a single baby."
+    },
+    "Your pregnancy" : {
+      "comment" : "Onboarding pregnancy form: screen title."
+    },
+    "Your questions never leave this phone." : {
+      "comment" : "Onboarding welcome: privacy promise line."
+    },
+    "born today" : {
+      "comment" : "Chat header: age of a baby born today, after the name, e.g. \"Emma · born today\"."
+    },
+    "e.g. low iron, placenta position" : {
+      "comment" : "Onboarding pregnancy form: text field placeholder for what the doctor is watching."
     }
   },
   "version" : "1.0"
