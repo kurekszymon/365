@@ -20,4 +20,12 @@
 - Feedback fixed: twins/triplets can't share one born profile → birth split built now, form planned in Stage 5; no upper limit on `multiples`
 - Deferred: birth form + earlier banner for multiples, whether pregnancy conversations show under siblings (→ Stage 5); copy for fewer babies than expected (→ Stage 8, midwife review); "0 days" for a baby born today (→ Stage 4/5 header); trimester label (→ Stage 4, String Catalog); store-open failure is a `fatalError` (→ schema lock + error screen before Stage 14)
 - Decisions: Polish plurals come from Foundation's `DateComponentsFormatter` (CLDR), not hand-written rules; corrected age only for babies born before 37w0d, until 24 months chronological; last-period date not stored; `sex = nil` means unknown; no speculative model fields — additive changes migrate automatically until TestFlight, `VersionedSchema` before Stage 14
-- Open: Stage 2 go/no-go decision and the phone's Polish support result are still not logged
+- Stage 2 decision (2026-10-29): **go EN-only for now**. Model answers in English; Polish UI strings keep going into the String Catalog but don't block any stage
+
+## Stage 4: Onboarding (decisions made, not started)
+
+- Required fields: Expecting = due date **or** first day of last period. Baby is here = birth date. Both = both. Everything else optional: number of babies (default 1, no upper limit), first pregnancy?, baby name (nil = "Baby"), born early + weeks early (due date = birth + weeks), sex, delivery type, feeding, allergies/conditions, what the doctor is watching. "Both" skips "first pregnancy?"
+- Validation: due date from ~2 weeks ago to 40 weeks ahead; birth date not in the future, not more than 3 years ago
+- Corrected age confirmed: only for babies born before 37w0d
+- Out of scope: FaceID step (→ Stage 11, leave a slot in the flow); real paywall (→ Stage 10, "Continue" placeholder)
+- Copy: Claude writes English and adds every key to the catalog; the user writes Polish natively (Stage 1–2 Polish also still missing)
