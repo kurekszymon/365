@@ -1,13 +1,14 @@
 import SwiftData
 import SwiftUI
 
-/// Welcome → device check → "Where are you right now?" → details → paywall → chat.
+/// Welcome → device check → "Where are you right now?" → details → free questions → chat.
+/// There's no payment step: the paywall comes after the free questions (Stage 10).
 /// Nothing is saved until the last step, so quitting halfway starts over cleanly.
 struct OnboardingView: View {
     let availability: ModelAvailability
 
     enum Step: Hashable {
-        case deviceCheck, path, pregnancy, birth, paywall
+        case deviceCheck, path, pregnancy, birth, freeQuestions
     }
 
     @Environment(\.modelContext) private var context
@@ -33,9 +34,9 @@ struct OnboardingView: View {
                     PregnancyDetailsStep(draft: $draft) { advance(from: .pregnancy) }
                 case .birth:
                     BirthDetailsStep(draft: $draft) { advance(from: .birth) }
-                case .paywall:
+                case .freeQuestions:
                     // Never reached on a phone that can't run the model: the device check has no way forward.
-                    PaywallPlaceholderStep(onContinue: finish)
+                    FreeQuestionsStep(onStart: finish)
                 }
             }
         }
@@ -54,12 +55,12 @@ struct OnboardingView: View {
     }
 
     /// The steps after choosing a path. "Both" asks about the baby first, then the pregnancy.
-    /// Stage 11 adds the optional FaceID lock between the details and the paywall.
+    /// Stage 11 adds the optional FaceID lock between the details and the free questions screen.
     private var sequence: [Step] {
         var steps = [Step.path]
         if draft.path?.includesBirth == true { steps.append(.birth) }
         if draft.path?.includesPregnancy == true { steps.append(.pregnancy) }
-        steps.append(.paywall)
+        steps.append(.freeQuestions)
         return steps
     }
 
@@ -166,24 +167,27 @@ struct PathStep: View {
     }
 }
 
-/// Stands in for the real paywall (Stage 10).
-struct PaywallPlaceholderStep: View {
-    let onContinue: () -> Void
+/// The last onboarding step. Nothing to buy here: she starts asking right away.
+struct FreeQuestionsStep: View {
+    let onStart: () -> Void
 
     var body: some View {
         VStack(spacing: Spacing.l) {
             Spacer()
-            Image(systemName: "sparkles")
+            Image(systemName: "gift")
                 .font(.system(size: 48))
                 .foregroundStyle(Palette.accent)
-            Text("You're all set")
+            Text("You have \(FreeQuestions.limit) free questions")
                 .font(Typography.largeTitle)
                 .foregroundStyle(Palette.textPrimary)
-            Text("Plans and the free trial will appear here.")
+            Text("Ask about your pregnancy, your baby or yourself, any time of day or night. Enjoy them!")
                 .font(Typography.body)
                 .foregroundStyle(Palette.textSecondary)
             Spacer()
-            PrimaryButton("Continue", action: onContinue)
+            Text("After that, you can pick a plan. Your history and profiles stay on your phone either way.")
+                .font(Typography.caption)
+                .foregroundStyle(Palette.textSecondary)
+            PrimaryButton("Start asking", action: onStart)
         }
         .multilineTextAlignment(.center)
         .padding(Spacing.xl)

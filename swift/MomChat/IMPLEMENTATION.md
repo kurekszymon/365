@@ -211,7 +211,7 @@ No third-party dependencies. Only Apple frameworks: SwiftUI, SwiftData, Foundati
 3. **"Where are you right now?"** (Expecting / Baby is here / Both)
 4. Detail forms for each stage (due date or last period, number of babies (1 or more); birth date, born early, delivery type, feeding; optional conditions). "Baby is here" with twins/triplets creates one child per baby with a shared `multipleBirthID`
 5. Saves the `MomProfile` + `Child` profile(s)
-6. **Paywall placeholder** ("Continue" button) for now
+6. **"You have 20 free questions" screen** ("Start asking" button). No payment step in onboarding; the counter itself comes in Stage 10
 7. Lands in the chat (still fake answers)
 
 **You prepare**
@@ -315,21 +315,22 @@ No third-party dependencies. Only Apple frameworks: SwiftUI, SwiftData, Foundati
 ## Stage 10: Paywall
 
 **Build**
-- A local `MomChat.storekit` config: monthly, yearly (7-day trial), lifetime. You can test everything without App Store Connect.
+- **Free questions:** a `FreeQuestions` counter in the Keychain (survives reinstall), 20 per phone. Each sent question counts once, the emergency gate never counts. A "N free questions left" line above the input bar from 5 left. The 20th question is answered in full, then the paywall opens.
+- A local `MomChat.storekit` config: monthly, yearly, lifetime (no trial: the 20 free questions replace it). You can test everything without App Store Connect.
 - The paywall screen with stage-dependent copy, yearly pre-selected, Restore, close.
 - An `Entitlements` service on top of `Transaction.currentEntitlements` + `Transaction.updates`.
-- Locking sending (but not reading) when there's no entitlement.
-- Replaces the onboarding placeholder from Stage 4.
+- Locking sending (but not reading) when the free questions are used up and there's no entitlement.
+- Wires the onboarding "20 free questions" screen from Stage 4 to the real counter.
 
 **You prepare**
 - Checklist item 5 must be **active** by now.
-- In App Store Connect: create the app record, a subscription group, the 3 products with **the same IDs as the `.storekit` file**, prices for each country, and a 7-day introductory offer on yearly. Turn on Family Sharing.
+- In App Store Connect: create the app record, a subscription group, the 3 products with **the same IDs as the `.storekit` file**, and prices for each country (no introductory offer). Turn on Family Sharing.
 - Final prices (Open Question #2).
 - A sandbox tester account (App Store Connect → Users and Access → Sandbox).
 
-**Demo:** buy yearly in the simulator, use Xcode's *Debug → StoreKit → Manage Transactions* to make the trial expire, and sending gets locked while history is still readable.
+**Demo:** use up the 20 free questions (a debug button can set the counter), see the paywall, buy yearly in the simulator, use Xcode's *Debug → StoreKit → Manage Transactions* to expire the subscription, and sending gets locked while history is still readable.
 
-**Done when:** purchase, restore, expiry and lifetime all work, locally and in the sandbox on your phone.
+**Done when:** the free allowance survives a reinstall, and purchase, restore, expiry and lifetime all work, locally and in the sandbox on your phone.
 
 ---
 

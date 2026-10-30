@@ -27,5 +27,6 @@
 - Required fields: Expecting = due date **or** first day of last period. Baby is here = birth date. Both = both. Everything else optional: number of babies (default 1, no upper limit), first pregnancy?, baby name (nil = "Baby"), born early + weeks early (due date = birth + weeks), sex, delivery type, feeding, allergies/conditions, what the doctor is watching. "Both" skips "first pregnancy?"
 - Validation: due date from ~2 weeks ago to 40 weeks ahead; birth date not in the future, not more than 3 years ago
 - Corrected age confirmed: only for babies born before 37w0d
-- Out of scope: FaceID step (→ Stage 11, leave a slot in the flow); real paywall (→ Stage 10, "Continue" placeholder)
+- Out of scope: FaceID step (→ Stage 11, leave a slot in the flow); free-questions counter + paywall (→ Stage 10)
+- Monetization changed (2026-10-30): **no payment step in onboarding and no free trial**. 20 free questions per phone (Keychain counter, emergency gate never counts), then the paywall with monthly / yearly / lifetime
 - Copy: Claude writes English and adds every key to the catalog; the user writes Polish natively (Stage 1–2 Polish also still missing)

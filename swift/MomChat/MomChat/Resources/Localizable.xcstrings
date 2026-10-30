@@ -19,6 +19,9 @@
     "A newborn, baby or toddler up to 3" : {
       "comment" : "Onboarding, \"Where are you right now?\" card detail under \"My baby is here\"."
     },
+    "After that, you can pick a plan. Your history and profiles stay on your phone either way." : {
+      "comment" : "Onboarding, last screen (no payment step; the paywall comes after the free questions): small print above the button."
+    },
     "Allergies (optional)" : {
       "comment" : "Onboarding baby form: text field placeholder, one per baby. Items separated by commas."
     },
@@ -36,6 +39,9 @@
     },
     "Apple Intelligence isn't available right now" : {
       "comment" : "Apple Intelligence check screen: title for any other reason."
+    },
+    "Ask about your pregnancy, your baby or yourself, any time of day or night. Enjoy them!" : {
+      "comment" : "Onboarding, last screen (no payment step; the paywall comes after the free questions): subtitle."
     },
     "Ask anything…" : {
       "comment" : "Placeholder in the chat input field."
@@ -201,9 +207,6 @@
     "Optional. Separate things with commas." : {
       "comment" : "Onboarding pregnancy form: footer under the doctor field."
     },
-    "Plans and the free trial will appear here." : {
-      "comment" : "Paywall placeholder at the end of onboarding (temporary, replaced in Stage 10)."
-    },
     "Poop" : {
       "comment" : "Chat quick-action chip for a born baby."
     },
@@ -233,6 +236,9 @@
     },
     "Solids and milk" : {
       "comment" : "Onboarding baby form: feeding picker option for an older baby."
+    },
+    "Start asking" : {
+      "comment" : "Onboarding, last screen (no payment step; the paywall comes after the free questions): button that opens the chat."
     },
     "The birth (optional)" : {
       "comment" : "Onboarding baby form: section header for born early, delivery and feeding."
@@ -273,11 +279,11 @@
     "Yes" : {
       "comment" : "Onboarding pregnancy form: \"First pregnancy?\" answer."
     },
+    "You have %lld free questions" : {
+      "comment" : "Onboarding, last screen (no payment step; the paywall comes after the free questions): title. The number is the free allowance (20). Needs plural forms in Polish."
+    },
     "You'll add a name for each baby when they arrive." : {
       "comment" : "Onboarding pregnancy form: footer shown for twins or more."
-    },
-    "You're all set" : {
-      "comment" : "Paywall placeholder title at the end of onboarding (temporary, replaced in Stage 10)."
     },
     "Your baby" : {
       "comment" : "Onboarding baby form: screen title, and section header for a single baby."

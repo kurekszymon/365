@@ -46,9 +46,9 @@ Because unsupported phones must never reach the paywall, the app is a free downl
 | 5 | **Profile Memory** | A model tool that *proposes* profile updates found in chat. The user confirms each one with a single tap |
 | 6 | **Chat** | Streaming bubbles, quick-action chips, conversation list per child, search |
 | 7 | **Export** | One conversation becomes a PDF (child summary + Q&A + date) through the share sheet, for doctor visits |
-| 8 | **Paywall** | StoreKit 2 subscriptions + lifetime purchase, trial, restore, checking what the user is entitled to |
+| 8 | **Paywall** | 20 free questions (Keychain counter), StoreKit 2 subscriptions + lifetime purchase, restore, checking what the user is entitled to |
 | 9 | **Privacy** | Optional FaceID lock, file protection, encrypted backup export/import, "delete everything" |
-| 10 | **Onboarding** | Privacy promise, device check, first child profile, paywall |
+| 10 | **Onboarding** | Privacy promise, device check, first child profile, "20 free questions" screen |
 
 A single app target. Modules start as folders and are split into a local Swift Package only when tests or build times call for it.
 
@@ -189,14 +189,18 @@ When the history gets too long, the oldest turns are compacted into a short summ
 ## Monetization
 
 - Free download, so the device check happens before any payment.
-- **Hard paywall at the end of onboarding with a 7-day free trial** (StoreKit introductory offer). The child profile already exists at that point, so the first answers during the trial are personalized.
-- Products: **monthly**, **yearly** (with the trial), **lifetime** (one-time). Since inference is on-device we have no per-message costs, so lifetime is sustainable.
+- **20 free questions first, no payment step in onboarding** (decided 2026-10-30). Onboarding ends with "You have 20 free questions", and she starts asking with her profile already set up, so even the free answers are personalized. Inference is on-device, so free questions cost us nothing.
+- **What counts:** each question she sends counts as one. Starter chips count once sent. The emergency gate (Stage 8) never counts and is never locked.
+- **The counter** lives in the Keychain, not SwiftData, so deleting and reinstalling the app doesn't reset it. Only erasing the phone does, which is acceptable.
+- **In the chat:** nothing is shown until 5 are left, then a small line above the input bar ("4 free questions left"). The 20th question is still answered in full, and the paywall opens after it. She is never cut off mid-answer.
+- **After the free questions:** the paywall. **No free trial** (decided 2026-10-30): the 20 questions are the trial.
+- Products: **monthly**, **yearly**, **lifetime** (one-time). Since inference is on-device we have no per-message costs, so lifetime is sustainable.
 - No account. StoreKit 2 + `Transaction.currentEntitlements`, a "Restore Purchases" button, and Family Sharing turned on.
-- After the trial expires: history and profiles stay readable, sending new messages is locked.
+- Without an entitlement once the free questions are used up (or when a subscription lapses): history and profiles stay readable, sending new messages is locked.
 
 ### Paywall by Stage
 
-**The trial is the same for everyone: 7 days.** No special trial lengths. Only the paywall copy and the highlighted plan change with the stage chosen in onboarding:
+**The free allowance is the same for everyone: 20 questions.** No special allowances. Only the paywall copy and the highlighted plan change with the stage chosen in onboarding:
 
 | Stage | Headline | Plan selected by default |
 |---|---|---|
@@ -207,8 +211,9 @@ When the history gets too long, the oldest turns are compacted into a short summ
 Keep it easy:
 - **One screen.** The headline, 3 short benefits (private, knows your baby/pregnancy, any time), the plans, one button.
 - **Three plans at most.** Yearly is selected by default, with monthly and lifetime next to it.
-- **Plain trial wording:** "7 days free, then $29.99/year. Cancel anytime in Settings." No small print.
-- **Visible way out:** a "Restore" button and a close button that goes back to the profile (she can read her profile but not chat).
+- **Plain price wording:** "$29.99/year. Cancel anytime in Settings." No small print.
+- **Visible way out:** a "Restore" button and a close button that goes back to the chat (she can read her history and profile but not send).
+- **Also reachable before the free questions run out**, from Settings and from the "free questions left" line.
 - **No account and no forms.** One tap goes straight to Apple's payment sheet.
 - Everything is native SwiftUI on top of StoreKit 2 (`SubscriptionStoreView` where it fits), with no third-party paywall SDK.
 
@@ -237,7 +242,7 @@ Keep it easy:
    - **Expecting:** due date *or* first day of last period, first pregnancy?, twins?, baby name (optional), anything your doctor is watching (optional)
    - **Born:** baby's name, birth date, born early? (weeks), delivery type, feeding, allergies / conditions (optional)
 5. FaceID lock (optional)
-6. Paywall with trial
+6. "You have 20 free questions" (no payment step; the paywall comes after the 20th question)
 7. Chat, with starter chips for the stage:
    - Expecting: "Is this cramping normal at 8 weeks?", "What can I eat?", "What to pack for the hospital?"
    - Born: "How much should a 6-week-old sleep?", "Is this poop normal?", "When can I exercise after a C-section?"
