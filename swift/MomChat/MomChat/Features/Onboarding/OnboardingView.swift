@@ -47,8 +47,8 @@ struct OnboardingView: View {
                 steps[steps.count - 1] = .path
             }
         }
-        .alert("Couldn't save your profile", isPresented: Binding(get: { saveError != nil }, set: { if !$0 { saveError = nil } })) {
-            Button("OK") {}
+        .alert(Text(.onboardingSaveErrorTitle), isPresented: Binding(get: { saveError != nil }, set: { if !$0 { saveError = nil } })) {
+            Button(.commonOk) {}
         } message: {
             Text(verbatim: saveError ?? "")
         }
@@ -88,19 +88,19 @@ struct WelcomeStep: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.xl) {
             Spacer()
-            Text("Welcome to MomChat")
+            Text(.onboardingWelcomeTitle)
                 .font(Typography.largeTitle)
                 .foregroundStyle(Palette.textPrimary)
-            Text("Answers for you and your baby, private on your phone.")
+            Text(.onboardingWelcomeSubtitle)
                 .font(Typography.body)
                 .foregroundStyle(Palette.textSecondary)
             VStack(alignment: .leading, spacing: Spacing.l) {
-                promise("lock.shield", "Your questions never leave this phone.")
-                promise("apple.intelligence", "Answers are written right on your iPhone by Apple Intelligence.")
-                promise("person.crop.circle.badge.xmark", "No account and no sign-up.")
+                promise("lock.shield", .onboardingWelcomePromisePrivate)
+                promise("apple.intelligence", .onboardingWelcomePromiseOnDevice)
+                promise("person.crop.circle.badge.xmark", .onboardingWelcomePromiseNoAccount)
             }
             Spacer()
-            PrimaryButton("Get started", action: onStart)
+            PrimaryButton(.onboardingWelcomeStart, action: onStart)
         }
         .padding(Spacing.xl)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -127,13 +127,13 @@ struct PathStep: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.m) {
-                Text("Where are you right now?")
+                Text(.onboardingPathTitle)
                     .font(Typography.largeTitle)
                     .foregroundStyle(Palette.textPrimary)
                     .padding(.bottom, Spacing.s)
-                card(.expecting, title: "I'm expecting", detail: "Pregnant with one baby or more")
-                card(.born, title: "My baby is here", detail: "A newborn, baby or toddler up to 3")
-                card(.both, title: "Both", detail: "Pregnant, with a little one already at home")
+                card(.expecting, title: .onboardingPathExpectingTitle, detail: .onboardingPathExpectingDetail)
+                card(.born, title: .onboardingPathBornTitle, detail: .onboardingPathBornDetail)
+                card(.both, title: .onboardingPathBothTitle, detail: .onboardingPathBothDetail)
             }
             .padding(Spacing.xl)
         }
@@ -177,17 +177,17 @@ struct FreeQuestionsStep: View {
             Image(systemName: "gift")
                 .font(.system(size: 48))
                 .foregroundStyle(Palette.accent)
-            Text("You have \(FreeQuestions.limit) free questions")
+            Text(.onboardingFreeQuestionsTitle(FreeQuestions.limit))
                 .font(Typography.largeTitle)
                 .foregroundStyle(Palette.textPrimary)
-            Text("Ask about your pregnancy, your baby or yourself, any time of day or night. Enjoy them!")
+            Text(.onboardingFreeQuestionsSubtitle)
                 .font(Typography.body)
                 .foregroundStyle(Palette.textSecondary)
             Spacer()
-            Text("After that, you can pick a plan. Your history and profiles stay on your phone either way.")
+            Text(.onboardingFreeQuestionsFootnote)
                 .font(Typography.caption)
                 .foregroundStyle(Palette.textSecondary)
-            PrimaryButton("Start asking", action: onStart)
+            PrimaryButton(.onboardingFreeQuestionsStart, action: onStart)
         }
         .multilineTextAlignment(.center)
         .padding(Spacing.xl)
@@ -202,7 +202,7 @@ struct ContinueBar: View {
     let action: () -> Void
 
     var body: some View {
-        PrimaryButton("Continue", action: action)
+        PrimaryButton(.onboardingContinue, action: action)
             .disabled(!isEnabled)
             .padding(.horizontal, Spacing.xl)
             .padding(.vertical, Spacing.m)

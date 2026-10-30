@@ -12,7 +12,7 @@ struct ChatView: View {
     var body: some View {
         ScrollView {
             LazyVStack(spacing: Spacing.m) {
-                Text("MomChat gives information, not medical advice.")
+                Text(.chatDisclaimer)
                     .font(Typography.caption)
                     .foregroundStyle(Palette.textSecondary)
                     .multilineTextAlignment(.center)
@@ -39,7 +39,7 @@ struct ChatView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Settings", systemImage: "gearshape") {
+                Button(.settingsTitle, systemImage: "gearshape") {
                     isShowingSettings = true
                 }
             }
@@ -56,9 +56,9 @@ struct ChatView: View {
     /// Placeholders until Stage 6 picks starter chips for the exact stage.
     private var chips: [LocalizedStringResource] {
         if child?.stage == .born {
-            ["Sleep", "Feeding", "Crying", "Poop"]
+            [.chatChipSleep, .chatChipFeeding, .chatChipCrying, .chatChipPoop]
         } else {
-            ["Back pain", "Sleep positions", "Baby kicks", "What to eat"]
+            [.chatChipBackPain, .chatChipSleepPositions, .chatChipBabyKicks, .chatChipWhatToEat]
         }
     }
 
@@ -86,7 +86,7 @@ struct ChatView: View {
 
     private var inputBar: some View {
         HStack(alignment: .bottom, spacing: Spacing.s) {
-            TextField("Ask anything…", text: $draft, axis: .vertical)
+            TextField(String(localized: .chatInputPlaceholder), text: $draft, axis: .vertical)
                 .font(Typography.body)
                 .foregroundStyle(Palette.textPrimary)
                 .lineLimit(1...5)
@@ -105,7 +105,7 @@ struct ChatView: View {
                     .frame(width: 44, height: 44)
                     .background(Palette.accent, in: .circle)
             }
-            .accessibilityLabel(Text("Send"))
+            .accessibilityLabel(Text(.chatInputSend))
             .disabled(trimmedDraft.isEmpty)
             .opacity(trimmedDraft.isEmpty ? 0.4 : 1)
         }

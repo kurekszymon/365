@@ -30,3 +30,4 @@
 - Out of scope: FaceID step (→ Stage 11, leave a slot in the flow); free-questions counter + paywall (→ Stage 10)
 - Monetization changed (2026-10-30): **no payment step in onboarding and no free trial**. 20 free questions per phone (Keychain counter, emergency gate never counts), then the paywall with monthly / yearly / lifetime
 - Copy: Claude writes English and adds every key to the catalog; the user writes Polish natively (Stage 1–2 Polish also still missing)
+- Strings (2026-10-30): **no inline literals in app code**. Every user-facing string is a dotted catalog key (`onboarding.welcome.title`) with the English as its value, used through generated symbols (`Text(.onboardingWelcomeTitle)`). The same word in different contexts gets separate keys. Developer tools stay plain English. Check: after a build, `.stringsdata` only lists `GeneratedStringSymbols_Localizable`

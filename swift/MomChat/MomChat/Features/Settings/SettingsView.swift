@@ -5,7 +5,7 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
-            ContentUnavailableView("Coming soon", systemImage: "gearshape")
+            ContentUnavailableView(String(localized: .settingsComingSoon), systemImage: "gearshape")
                 .foregroundStyle(Palette.textSecondary)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Palette.background)
@@ -16,11 +16,11 @@ struct SettingsView: View {
                         .padding(Spacing.l)
                 }
                 #endif
-                .navigationTitle("Settings")
+                .navigationTitle(Text(.settingsTitle))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") { dismiss() }
+                        Button(.commonDone) { dismiss() }
                     }
                 }
         }

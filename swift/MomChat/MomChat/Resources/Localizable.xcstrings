@@ -1,161 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "%@ before due date" : {
-      "comment" : "Chat header subtitle for a premature baby who hasn't reached the due date yet. The value is a duration, e.g. \"3 weeks 2 days\"."
-    },
-    "%@ · %@" : {
-      "comment" : "Chat header title for a born child: name, then age, e.g. \"Emma · 7 months\"."
-    },
-    "1st trimester" : {
-      "comment" : "Chat header subtitle under the week."
-    },
-    "2nd trimester" : {
-      "comment" : "Chat header subtitle under the week."
-    },
-    "3rd trimester" : {
-      "comment" : "Chat header subtitle under the week."
-    },
-    "A newborn, baby or toddler up to 3" : {
-      "comment" : "Onboarding, \"Where are you right now?\" card detail under \"My baby is here\"."
-    },
-    "After that, you can pick a plan. Your history and profiles stay on your phone either way." : {
-      "comment" : "Onboarding, last screen (no payment step; the paywall comes after the free questions): small print above the button."
-    },
-    "Allergies (optional)" : {
-      "comment" : "Onboarding baby form: text field placeholder, one per baby. Items separated by commas."
-    },
-    "Answers are written right on your iPhone by Apple Intelligence." : {
-      "comment" : "Onboarding welcome: privacy promise line."
-    },
-    "Answers for you and your baby, private on your phone." : {
-      "comment" : "Onboarding welcome screen subtitle."
-    },
-    "Anything your doctor is watching?" : {
-      "comment" : "Onboarding pregnancy form: section header for pregnancy conditions (free text)."
-    },
-    "Apple Intelligence is still downloading to your iPhone. This can take a while, so keep it on Wi-Fi and charging. MomChat will continue on its own when it's done." : {
-      "comment" : "Apple Intelligence check screen: shown while the model downloads."
-    },
-    "Apple Intelligence isn't available right now" : {
-      "comment" : "Apple Intelligence check screen: title for any other reason."
-    },
-    "Ask about your pregnancy, your baby or yourself, any time of day or night. Enjoy them!" : {
-      "comment" : "Onboarding, last screen (no payment step; the paywall comes after the free questions): subtitle."
-    },
-    "Ask anything…" : {
-      "comment" : "Placeholder in the chat input field."
-    },
-    "Babies born 4 or more weeks early get a corrected age too." : {
-      "comment" : "Onboarding baby form: footer when \"Born early\" is on."
-    },
-    "Babies: %lld" : {
-      "comment" : "Onboarding forms: stepper for the number of babies (twins = 2). Kept as \"label: number\" so no plural forms are needed."
-    },
-    "Baby" : {
-      "comment" : "Default name for a child without one, e.g. in the chat header \"Baby · 3 weeks\"."
-    },
-    "Baby %lld" : {
-      "comment" : "Onboarding baby form: section header for each baby when there are twins or more, e.g. \"Baby 2\"."
-    },
-    "Baby (optional)" : {
-      "comment" : "Onboarding pregnancy form: section header for the baby's name and sex."
-    },
-    "Baby kicks" : {
-      "comment" : "Quick-action chip above the input (pregnancy)."
-    },
-    "Back pain" : {
-      "comment" : "Quick-action chip above the input (pregnancy)."
-    },
-    "Birth date" : {
-      "comment" : "Onboarding baby form: date picker label."
-    },
-    "Born early" : {
-      "comment" : "Onboarding baby form: toggle: the baby was born before the due date."
-    },
-    "Both" : {
-      "comment" : "Onboarding, \"Where are you right now?\" card title: pregnant and already has a child."
-    },
-    "Boy" : {
-      "comment" : "Onboarding forms: sex picker option."
-    },
-    "Breast milk and formula" : {
-      "comment" : "Onboarding baby form: feeding picker option (mixed feeding)."
-    },
-    "Breastfeeding" : {
-      "comment" : "Onboarding baby form: feeding picker option."
-    },
-    "C-section" : {
-      "comment" : "Onboarding baby form: delivery picker option."
-    },
-    "Check that Apple Intelligence is on and that your iPhone is set to a supported language, then try again." : {
-      "comment" : "Apple Intelligence check screen: shown for unknown reasons."
-    },
-    "Coming soon" : {
-      "comment" : "Empty Settings screen placeholder."
-    },
-    "Continue" : {
-      "comment" : "Button to go to the next onboarding step."
-    },
-    "Corrected age %@" : {
-      "comment" : "Chat header subtitle for a premature baby. The value is a duration, e.g. \"6 months\"."
-    },
-    "Couldn't save your profile" : {
-      "comment" : "Alert title when saving at the end of onboarding fails."
-    },
-    "Count from" : {
-      "comment" : "Onboarding pregnancy form: label of the due date / last period switch (hidden, read by VoiceOver)."
-    },
-    "Crying" : {
-      "comment" : "Chat quick-action chip for a born baby."
-    },
-    "Delivery" : {
-      "comment" : "Onboarding baby form: picker label for the delivery type."
-    },
-    "Don't know yet" : {
-      "comment" : "Onboarding pregnancy form: sex picker option while expecting."
-    },
-    "Done" : {
-      "comment" : "Closes the Settings screen."
-    },
-    "Due date" : {
-      "comment" : "Onboarding pregnancy form: segment and date picker label."
-    },
-    "Due date: %@" : {
-      "comment" : "Onboarding pregnancy form: footer showing the due date calculated from the last period. The value is a long date."
-    },
-    "Feeding" : {
-      "comment" : "Chat quick-action chip for a born baby, and the feeding picker label in the onboarding baby form."
-    },
-    "First day of last period" : {
-      "comment" : "Onboarding pregnancy form: date picker label."
-    },
-    "First pregnancy?" : {
-      "comment" : "Onboarding pregnancy form: picker label. Options: Skip / Yes / No."
-    },
-    "Formula" : {
-      "comment" : "Onboarding baby form: feeding picker option."
-    },
-    "Get started" : {
-      "comment" : "Onboarding welcome screen button."
-    },
-    "Getting ready…" : {
-      "comment" : "Apple Intelligence check screen: title while the model downloads."
-    },
-    "Girl" : {
-      "comment" : "Onboarding forms: sex picker option."
-    },
-    "Health conditions (optional)" : {
-      "comment" : "Onboarding baby form: text field placeholder, one per baby. Items separated by commas."
-    },
-    "I'm expecting" : {
-      "comment" : "Onboarding, \"Where are you right now?\" card title."
-    },
-    "Last period" : {
-      "comment" : "Onboarding pregnancy form: segment: count from the first day of the last period. Keep short."
-    },
-    "MomChat" : {
+    "app.name" : {
       "comment" : "App name, also the chat header when there's no active child. Not translated.",
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -171,134 +19,1181 @@
         }
       }
     },
-    "MomChat gives information, not medical advice." : {
-      "comment" : "Small disclaimer above the chat messages."
+    "chat.chip.babyKicks" : {
+      "comment" : "Quick-action chip above the input (pregnancy).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baby kicks"
+          }
+        }
+      }
     },
-    "MomChat needs Apple Intelligence, which works on iPhone 15 Pro and newer. Everything happens on your phone, so there's no online version we could offer instead." : {
-      "comment" : "Apple Intelligence check screen: honest explanation for unsupported phones."
+    "chat.chip.backPain" : {
+      "comment" : "Quick-action chip above the input (pregnancy).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back pain"
+          }
+        }
+      }
     },
-    "MomChat runs entirely on your iPhone using Apple Intelligence. Open Settings, go to Apple Intelligence & Siri, turn it on, then come back here." : {
-      "comment" : "Apple Intelligence check screen: steps to turn Apple Intelligence on. 'Apple Intelligence & Siri' is the Settings item name."
+    "chat.chip.crying" : {
+      "comment" : "Chat quick-action chip for a born baby.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crying"
+          }
+        }
+      }
     },
-    "My baby is here" : {
-      "comment" : "Onboarding, \"Where are you right now?\" card title."
+    "chat.chip.feeding" : {
+      "comment" : "Chat quick-action chip for a born baby.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feeding"
+          }
+        }
+      }
     },
-    "Name" : {
-      "comment" : "Onboarding baby form: text field placeholder for the baby's name."
+    "chat.chip.poop" : {
+      "comment" : "Chat quick-action chip for a born baby.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poop"
+          }
+        }
+      }
     },
-    "Name, if you've picked one" : {
-      "comment" : "Onboarding pregnancy form: text field placeholder for the baby's name."
+    "chat.chip.sleep" : {
+      "comment" : "Chat quick-action chip for a born baby.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep"
+          }
+        }
+      }
     },
-    "No" : {
-      "comment" : "Onboarding pregnancy form: \"First pregnancy?\" answer."
+    "chat.chip.sleepPositions" : {
+      "comment" : "Quick-action chip above the input (pregnancy).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep positions"
+          }
+        }
+      }
     },
-    "No account and no sign-up." : {
-      "comment" : "Onboarding welcome: privacy promise line."
+    "chat.chip.whatToEat" : {
+      "comment" : "Quick-action chip above the input (pregnancy).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What to eat"
+          }
+        }
+      }
     },
-    "Not saying" : {
-      "comment" : "Onboarding baby form: picker option when the parent skips the question."
+    "chat.disclaimer" : {
+      "comment" : "Small disclaimer above the chat messages.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MomChat gives information, not medical advice."
+          }
+        }
+      }
     },
-    "OK" : {
-      "comment" : "Alert button."
+    "chat.header.beforeDueDate" : {
+      "comment" : "Chat header subtitle for a premature baby who hasn't reached the due date yet. The value is a duration, e.g. \"3 weeks 2 days\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ before due date"
+          }
+        }
+      }
     },
-    "Open Settings" : {
-      "comment" : "Apple Intelligence check screen: button that opens the Settings app."
+    "chat.header.bornToday" : {
+      "comment" : "Chat header: age of a baby born today, after the name, e.g. \"Emma · born today\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "born today"
+          }
+        }
+      }
     },
-    "Optional. Separate things with commas." : {
-      "comment" : "Onboarding pregnancy form: footer under the doctor field."
+    "chat.header.correctedAge" : {
+      "comment" : "Chat header subtitle for a premature baby. The value is a duration, e.g. \"6 months\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corrected age %@"
+          }
+        }
+      }
     },
-    "Poop" : {
-      "comment" : "Chat quick-action chip for a born baby."
+    "chat.header.nameAndAge" : {
+      "comment" : "Chat header title for a born child: name, then age, e.g. \"Emma · 7 months\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · %@"
+          }
+        }
+      }
     },
-    "Pregnant with one baby or more" : {
-      "comment" : "Onboarding, \"Where are you right now?\" card detail under \"I'm expecting\"."
+    "chat.header.trimester1" : {
+      "comment" : "Chat header subtitle under the week.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1st trimester"
+          }
+        }
+      }
     },
-    "Pregnant, with a little one already at home" : {
-      "comment" : "Onboarding, \"Where are you right now?\" card detail under \"Both\"."
+    "chat.header.trimester2" : {
+      "comment" : "Chat header subtitle under the week.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2nd trimester"
+          }
+        }
+      }
     },
-    "Send" : {
-      "comment" : "VoiceOver label for the send button."
+    "chat.header.trimester3" : {
+      "comment" : "Chat header subtitle under the week.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3rd trimester"
+          }
+        }
+      }
     },
-    "Settings" : {
-      "comment" : "Settings screen title and the gear button's label."
+    "chat.header.week" : {
+      "comment" : "Chat header title. The number is the pregnancy week.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Week %lld"
+          }
+        }
+      }
     },
-    "Sex" : {
-      "comment" : "Onboarding forms: picker label for the baby's sex."
+    "chat.input.placeholder" : {
+      "comment" : "Placeholder in the chat input field.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask anything…"
+          }
+        }
+      }
     },
-    "Skip" : {
-      "comment" : "Onboarding pregnancy form: \"First pregnancy?\" option for not answering."
+    "chat.input.send" : {
+      "comment" : "VoiceOver label for the send button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send"
+          }
+        }
+      }
     },
-    "Sleep" : {
-      "comment" : "Chat quick-action chip for a born baby."
+    "child.defaultName" : {
+      "comment" : "Default name for a child without one, e.g. in the chat header \"Baby · 3 weeks\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baby"
+          }
+        }
+      }
     },
-    "Sleep positions" : {
-      "comment" : "Quick-action chip above the input (pregnancy)."
+    "common.done" : {
+      "comment" : "Closes the Settings screen.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        }
+      }
     },
-    "Solids and milk" : {
-      "comment" : "Onboarding baby form: feeding picker option for an older baby."
+    "common.ok" : {
+      "comment" : "Alert button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        }
+      }
     },
-    "Start asking" : {
-      "comment" : "Onboarding, last screen (no payment step; the paywall comes after the free questions): button that opens the chat."
+    "deviceCheck.downloading.message" : {
+      "comment" : "Apple Intelligence check screen: shown while the model downloads.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligence is still downloading to your iPhone. This can take a while, so keep it on Wi-Fi and charging. MomChat will continue on its own when it's done."
+          }
+        }
+      }
     },
-    "The birth (optional)" : {
-      "comment" : "Onboarding baby form: section header for born early, delivery and feeding."
+    "deviceCheck.downloading.title" : {
+      "comment" : "Apple Intelligence check screen: title while the model downloads.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Getting ready…"
+          }
+        }
+      }
     },
-    "This iPhone can't run MomChat" : {
-      "comment" : "Apple Intelligence check screen: title on phones older than iPhone 15 Pro."
+    "deviceCheck.notEligible.message" : {
+      "comment" : "Apple Intelligence check screen: honest explanation for unsupported phones.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MomChat needs Apple Intelligence, which works on iPhone 15 Pro and newer. Everything happens on your phone, so there's no online version we could offer instead."
+          }
+        }
+      }
     },
-    "Try again" : {
-      "comment" : "Apple Intelligence check screen: button that checks again."
+    "deviceCheck.notEligible.title" : {
+      "comment" : "Apple Intelligence check screen: title on phones older than iPhone 15 Pro.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This iPhone can't run MomChat"
+          }
+        }
+      }
     },
-    "Turn on Apple Intelligence" : {
-      "comment" : "Apple Intelligence check screen: title when Apple Intelligence is off."
+    "deviceCheck.notEnabled.message" : {
+      "comment" : "Apple Intelligence check screen: steps to turn Apple Intelligence on. 'Apple Intelligence & Siri' is the Settings item name.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MomChat runs entirely on your iPhone using Apple Intelligence. Open Settings, go to Apple Intelligence & Siri, turn it on, then come back here."
+          }
+        }
+      }
     },
-    "Twins or more? Each baby gets their own profile." : {
-      "comment" : "Onboarding baby form: footer under the number of babies."
+    "deviceCheck.notEnabled.openSettings" : {
+      "comment" : "Apple Intelligence check screen: button that opens the Settings app.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Settings"
+          }
+        }
+      }
     },
-    "Vaginal birth" : {
-      "comment" : "Onboarding baby form: delivery picker option."
+    "deviceCheck.notEnabled.title" : {
+      "comment" : "Apple Intelligence check screen: title when Apple Intelligence is off.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn on Apple Intelligence"
+          }
+        }
+      }
     },
-    "Week %lld" : {
-      "comment" : "Chat header title. The number is the pregnancy week."
+    "deviceCheck.tryAgain" : {
+      "comment" : "Apple Intelligence check screen: button that checks again.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try again"
+          }
+        }
+      }
     },
-    "Weeks early: %lld" : {
-      "comment" : "Onboarding baby form: stepper for how many weeks before the due date the baby was born."
+    "deviceCheck.unavailable.message" : {
+      "comment" : "Apple Intelligence check screen: shown for unknown reasons.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check that Apple Intelligence is on and that your iPhone is set to a supported language, then try again."
+          }
+        }
+      }
     },
-    "Welcome to MomChat" : {
-      "comment" : "Onboarding welcome screen title."
+    "deviceCheck.unavailable.title" : {
+      "comment" : "Apple Intelligence check screen: title for any other reason.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligence isn't available right now"
+          }
+        }
+      }
     },
-    "What to eat" : {
-      "comment" : "Quick-action chip above the input (pregnancy)."
+    "onboarding.babiesCount" : {
+      "comment" : "Onboarding forms: stepper for the number of babies (twins = 2). Kept as \"label: number\" so no plural forms are needed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Babies: %lld"
+          }
+        }
+      }
     },
-    "When is the baby due?" : {
-      "comment" : "Onboarding pregnancy form: section header."
+    "onboarding.birth.allergies" : {
+      "comment" : "Onboarding baby form: text field placeholder, one per baby. Items separated by commas.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allergies (optional)"
+          }
+        }
+      }
     },
-    "Where are you right now?" : {
-      "comment" : "Onboarding, \"Where are you right now?\" screen title."
+    "onboarding.birth.babiesFooter" : {
+      "comment" : "Onboarding baby form: footer under the number of babies.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Twins or more? Each baby gets their own profile."
+          }
+        }
+      }
     },
-    "Yes" : {
-      "comment" : "Onboarding pregnancy form: \"First pregnancy?\" answer."
+    "onboarding.birth.babyNumber" : {
+      "comment" : "Onboarding baby form: section header for each baby when there are twins or more, e.g. \"Baby 2\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baby %lld"
+          }
+        }
+      }
     },
-    "You have %lld free questions" : {
-      "comment" : "Onboarding, last screen (no payment step; the paywall comes after the free questions): title. The number is the free allowance (20). Needs plural forms in Polish."
+    "onboarding.birth.birthDate" : {
+      "comment" : "Onboarding baby form: date picker label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Birth date"
+          }
+        }
+      }
     },
-    "You'll add a name for each baby when they arrive." : {
-      "comment" : "Onboarding pregnancy form: footer shown for twins or more."
+    "onboarding.birth.birthHeader" : {
+      "comment" : "Onboarding baby form: section header for born early, delivery and feeding.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The birth (optional)"
+          }
+        }
+      }
     },
-    "Your baby" : {
-      "comment" : "Onboarding baby form: screen title, and section header for a single baby."
+    "onboarding.birth.bornEarly" : {
+      "comment" : "Onboarding baby form: toggle: the baby was born before the due date.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Born early"
+          }
+        }
+      }
     },
-    "Your pregnancy" : {
-      "comment" : "Onboarding pregnancy form: screen title."
+    "onboarding.birth.bornEarlyFooter" : {
+      "comment" : "Onboarding baby form: footer when \"Born early\" is on.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Babies born 4 or more weeks early get a corrected age too."
+          }
+        }
+      }
     },
-    "Your questions never leave this phone." : {
-      "comment" : "Onboarding welcome: privacy promise line."
+    "onboarding.birth.conditions" : {
+      "comment" : "Onboarding baby form: text field placeholder, one per baby. Items separated by commas.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Health conditions (optional)"
+          }
+        }
+      }
     },
-    "born today" : {
-      "comment" : "Chat header: age of a baby born today, after the name, e.g. \"Emma · born today\"."
+    "onboarding.birth.delivery" : {
+      "comment" : "Onboarding baby form: picker label for the delivery type.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delivery"
+          }
+        }
+      }
     },
-    "e.g. low iron, placenta position" : {
-      "comment" : "Onboarding pregnancy form: text field placeholder for what the doctor is watching."
+    "onboarding.birth.delivery.cesarean" : {
+      "comment" : "Onboarding baby form: delivery picker option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C-section"
+          }
+        }
+      }
+    },
+    "onboarding.birth.delivery.notSaying" : {
+      "comment" : "Onboarding baby form: delivery picker option when the parent skips the question.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not saying"
+          }
+        }
+      }
+    },
+    "onboarding.birth.delivery.vaginal" : {
+      "comment" : "Onboarding baby form: delivery picker option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaginal birth"
+          }
+        }
+      }
+    },
+    "onboarding.birth.feeding" : {
+      "comment" : "Onboarding baby form: picker label for how the baby is fed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feeding"
+          }
+        }
+      }
+    },
+    "onboarding.birth.feeding.breast" : {
+      "comment" : "Onboarding baby form: feeding picker option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breastfeeding"
+          }
+        }
+      }
+    },
+    "onboarding.birth.feeding.formula" : {
+      "comment" : "Onboarding baby form: feeding picker option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formula"
+          }
+        }
+      }
+    },
+    "onboarding.birth.feeding.mixed" : {
+      "comment" : "Onboarding baby form: feeding picker option (mixed feeding).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breast milk and formula"
+          }
+        }
+      }
+    },
+    "onboarding.birth.feeding.notSaying" : {
+      "comment" : "Onboarding baby form: feeding picker option when the parent skips the question.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not saying"
+          }
+        }
+      }
+    },
+    "onboarding.birth.feeding.solidsAndMilk" : {
+      "comment" : "Onboarding baby form: feeding picker option for an older baby.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solids and milk"
+          }
+        }
+      }
+    },
+    "onboarding.birth.name" : {
+      "comment" : "Onboarding baby form: text field placeholder for the baby's name.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name"
+          }
+        }
+      }
+    },
+    "onboarding.birth.sexNotSaying" : {
+      "comment" : "Onboarding baby form: sex picker option when the parent skips the question.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not saying"
+          }
+        }
+      }
+    },
+    "onboarding.birth.singleBabyHeader" : {
+      "comment" : "Onboarding baby form: section header when there's one baby.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your baby"
+          }
+        }
+      }
+    },
+    "onboarding.birth.title" : {
+      "comment" : "Onboarding baby form: screen title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your baby"
+          }
+        }
+      }
+    },
+    "onboarding.birth.weeksEarly" : {
+      "comment" : "Onboarding baby form: stepper for how many weeks before the due date the baby was born.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weeks early: %lld"
+          }
+        }
+      }
+    },
+    "onboarding.continue" : {
+      "comment" : "Button to go to the next onboarding step.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue"
+          }
+        }
+      }
+    },
+    "onboarding.freeQuestions.footnote" : {
+      "comment" : "Onboarding, last screen (no payment step; the paywall comes after the free questions): small print above the button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "After that, you can pick a plan. Your history and profiles stay on your phone either way."
+          }
+        }
+      }
+    },
+    "onboarding.freeQuestions.start" : {
+      "comment" : "Onboarding, last screen (no payment step; the paywall comes after the free questions): button that opens the chat.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start asking"
+          }
+        }
+      }
+    },
+    "onboarding.freeQuestions.subtitle" : {
+      "comment" : "Onboarding, last screen (no payment step; the paywall comes after the free questions): subtitle.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask about your pregnancy, your baby or yourself, any time of day or night. Enjoy them!"
+          }
+        }
+      }
+    },
+    "onboarding.freeQuestions.title" : {
+      "comment" : "Onboarding, last screen (no payment step; the paywall comes after the free questions): title. The number is the free allowance (20). Needs plural forms in Polish.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You have %lld free questions"
+          }
+        }
+      }
+    },
+    "onboarding.path.born.detail" : {
+      "comment" : "Onboarding, \"Where are you right now?\" card detail under \"My baby is here\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A newborn, baby or toddler up to 3"
+          }
+        }
+      }
+    },
+    "onboarding.path.born.title" : {
+      "comment" : "Onboarding, \"Where are you right now?\" card title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My baby is here"
+          }
+        }
+      }
+    },
+    "onboarding.path.both.detail" : {
+      "comment" : "Onboarding, \"Where are you right now?\" card detail under \"Both\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pregnant, with a little one already at home"
+          }
+        }
+      }
+    },
+    "onboarding.path.both.title" : {
+      "comment" : "Onboarding, \"Where are you right now?\" card title: pregnant and already has a child.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Both"
+          }
+        }
+      }
+    },
+    "onboarding.path.expecting.detail" : {
+      "comment" : "Onboarding, \"Where are you right now?\" card detail under \"I'm expecting\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pregnant with one baby or more"
+          }
+        }
+      }
+    },
+    "onboarding.path.expecting.title" : {
+      "comment" : "Onboarding, \"Where are you right now?\" card title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I'm expecting"
+          }
+        }
+      }
+    },
+    "onboarding.path.title" : {
+      "comment" : "Onboarding, \"Where are you right now?\" screen title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Where are you right now?"
+          }
+        }
+      }
+    },
+    "onboarding.pregnancy.babyHeader" : {
+      "comment" : "Onboarding pregnancy form: section header for the baby's name and sex.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baby (optional)"
+          }
+        }
+      }
+    },
+    "onboarding.pregnancy.calculatedDueDate" : {
+      "comment" : "Onboarding pregnancy form: footer showing the due date calculated from the last period. The value is a long date.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Due date: %@"
+          }
+        }
+      }
+    },
+    "onboarding.pregnancy.countFrom" : {
+      "comment" : "Onboarding pregnancy form: label of the due date / last period switch (hidden, read by VoiceOver).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Count from"
+          }
+        }
+      }
+    },
+    "onboarding.pregnancy.doctorFooter" : {
+      "comment" : "Onboarding pregnancy form: footer under the doctor field.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optional. Separate things with commas."
+          }
+        }
+      }
+    },
+    "onboarding.pregnancy.doctorHeader" : {
+      "comment" : "Onboarding pregnancy form: section header for pregnancy conditions (free text).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anything your doctor is watching?"
+          }
+        }
+      }
+    },
+    "onboarding.pregnancy.doctorPlaceholder" : {
+      "comment" : "Onboarding pregnancy form: text field placeholder for what the doctor is watching.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "e.g. low iron, placenta position"
+          }
+        }
+      }
+    },
+    "onboarding.pregnancy.dueDate" : {
+      "comment" : "Onboarding pregnancy form: segment and date picker label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Due date"
+          }
+        }
+      }
+    },
+    "onboarding.pregnancy.dueHeader" : {
+      "comment" : "Onboarding pregnancy form: section header.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When is the baby due?"
+          }
+        }
+      }
+    },
+    "onboarding.pregnancy.firstPregnancy" : {
+      "comment" : "Onboarding pregnancy form: picker label. Options: Skip / Yes / No.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "First pregnancy?"
+          }
+        }
+      }
+    },
+    "onboarding.pregnancy.firstPregnancy.no" : {
+      "comment" : "Onboarding pregnancy form: \"First pregnancy?\" answer.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No"
+          }
+        }
+      }
+    },
+    "onboarding.pregnancy.firstPregnancy.skip" : {
+      "comment" : "Onboarding pregnancy form: \"First pregnancy?\" option for not answering.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip"
+          }
+        }
+      }
+    },
+    "onboarding.pregnancy.firstPregnancy.yes" : {
+      "comment" : "Onboarding pregnancy form: \"First pregnancy?\" answer.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yes"
+          }
+        }
+      }
+    },
+    "onboarding.pregnancy.lastPeriodDate" : {
+      "comment" : "Onboarding pregnancy form: date picker label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "First day of last period"
+          }
+        }
+      }
+    },
+    "onboarding.pregnancy.lastPeriodSegment" : {
+      "comment" : "Onboarding pregnancy form: segment: count from the first day of the last period. Keep short.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last period"
+          }
+        }
+      }
+    },
+    "onboarding.pregnancy.multiplesFooter" : {
+      "comment" : "Onboarding pregnancy form: footer shown for twins or more.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You'll add a name for each baby when they arrive."
+          }
+        }
+      }
+    },
+    "onboarding.pregnancy.name" : {
+      "comment" : "Onboarding pregnancy form: text field placeholder for the baby's name.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name, if you've picked one"
+          }
+        }
+      }
+    },
+    "onboarding.pregnancy.sexUnknown" : {
+      "comment" : "Onboarding pregnancy form: sex picker option while expecting.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don't know yet"
+          }
+        }
+      }
+    },
+    "onboarding.pregnancy.title" : {
+      "comment" : "Onboarding pregnancy form: screen title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your pregnancy"
+          }
+        }
+      }
+    },
+    "onboarding.saveError.title" : {
+      "comment" : "Alert title when saving at the end of onboarding fails.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't save your profile"
+          }
+        }
+      }
+    },
+    "onboarding.sex" : {
+      "comment" : "Onboarding forms: picker label for the baby's sex.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sex"
+          }
+        }
+      }
+    },
+    "onboarding.sex.boy" : {
+      "comment" : "Onboarding forms: sex picker option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Boy"
+          }
+        }
+      }
+    },
+    "onboarding.sex.girl" : {
+      "comment" : "Onboarding forms: sex picker option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Girl"
+          }
+        }
+      }
+    },
+    "onboarding.welcome.promiseNoAccount" : {
+      "comment" : "Onboarding welcome: privacy promise line.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No account and no sign-up."
+          }
+        }
+      }
+    },
+    "onboarding.welcome.promiseOnDevice" : {
+      "comment" : "Onboarding welcome: privacy promise line.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Answers are written right on your iPhone by Apple Intelligence."
+          }
+        }
+      }
+    },
+    "onboarding.welcome.promisePrivate" : {
+      "comment" : "Onboarding welcome: privacy promise line.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your questions never leave this phone."
+          }
+        }
+      }
+    },
+    "onboarding.welcome.start" : {
+      "comment" : "Onboarding welcome screen button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Get started"
+          }
+        }
+      }
+    },
+    "onboarding.welcome.subtitle" : {
+      "comment" : "Onboarding welcome screen subtitle.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Answers for you and your baby, private on your phone."
+          }
+        }
+      }
+    },
+    "onboarding.welcome.title" : {
+      "comment" : "Onboarding welcome screen title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welcome to MomChat"
+          }
+        }
+      }
+    },
+    "settings.comingSoon" : {
+      "comment" : "Empty Settings screen placeholder.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coming soon"
+          }
+        }
+      }
+    },
+    "settings.title" : {
+      "comment" : "Settings screen title and the gear button's label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

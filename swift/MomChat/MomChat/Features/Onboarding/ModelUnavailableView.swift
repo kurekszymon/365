@@ -40,23 +40,23 @@ struct ModelUnavailableView: View {
 
     private var title: LocalizedStringResource {
         switch state {
-        case .notEnabled: "Turn on Apple Intelligence"
-        case .downloading, .checking: "Getting ready…"
-        case .deviceNotEligible: "This iPhone can't run MomChat"
-        case .available, .unavailable: "Apple Intelligence isn't available right now"
+        case .notEnabled: .deviceCheckNotEnabledTitle
+        case .downloading, .checking: .deviceCheckDownloadingTitle
+        case .deviceNotEligible: .deviceCheckNotEligibleTitle
+        case .available, .unavailable: .deviceCheckUnavailableTitle
         }
     }
 
     private var message: LocalizedStringResource {
         switch state {
         case .notEnabled:
-            "MomChat runs entirely on your iPhone using Apple Intelligence. Open Settings, go to Apple Intelligence & Siri, turn it on, then come back here."
+            .deviceCheckNotEnabledMessage
         case .downloading, .checking:
-            "Apple Intelligence is still downloading to your iPhone. This can take a while, so keep it on Wi-Fi and charging. MomChat will continue on its own when it's done."
+            .deviceCheckDownloadingMessage
         case .deviceNotEligible:
-            "MomChat needs Apple Intelligence, which works on iPhone 15 Pro and newer. Everything happens on your phone, so there's no online version we could offer instead."
+            .deviceCheckNotEligibleMessage
         case .available, .unavailable:
-            "Check that Apple Intelligence is on and that your iPhone is set to a supported language, then try again."
+            .deviceCheckUnavailableMessage
         }
     }
 
@@ -64,11 +64,11 @@ struct ModelUnavailableView: View {
     private var actions: some View {
         switch state {
         case .notEnabled:
-            PrimaryButton("Open Settings") {
+            PrimaryButton(.deviceCheckNotEnabledOpenSettings) {
                 if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
             }
         case .unavailable, .available:
-            PrimaryButton("Try again", action: onRetry)
+            PrimaryButton(.deviceCheckTryAgain, action: onRetry)
         case .downloading, .checking, .deviceNotEligible:
             EmptyView()
         }

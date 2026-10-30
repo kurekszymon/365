@@ -7,16 +7,16 @@ struct ChatHeader: Equatable {
 
     init(child: Child?, on date: Date = .now, calendar: Calendar = .current, locale: Locale = .current) {
         if let child, let progress = child.pregnancy(on: date, calendar: calendar) {
-            title = String(localized: "Week \(progress.weeks)")
+            title = String(localized: .chatHeaderWeek(progress.weeks))
             subtitle = String(localized: Trimester(progress.trimester).title)
         } else if let child, let age = child.age(on: date, calendar: calendar) {
-            let name = child.name ?? String(localized: "Baby")
-            let ageText = age == .days(0) ? String(localized: "born today") : DurationText.age(age, locale: locale)
-            title = String(localized: "\(name) · \(ageText)")
+            let name = child.name ?? String(localized: .childDefaultName)
+            let ageText = age == .days(0) ? String(localized: .chatHeaderBornToday) : DurationText.age(age, locale: locale)
+            title = String(localized: .chatHeaderNameAndAge(name, ageText))
             subtitle = child.correctedAge(on: date, calendar: calendar).map { Self.corrected($0, locale: locale) }
         } else {
             // No profile yet, or an archived pregnancy.
-            title = String(localized: "MomChat")
+            title = String(localized: .appName)
             subtitle = nil
         }
     }
@@ -24,8 +24,8 @@ struct ChatHeader: Equatable {
     private static func corrected(_ age: CorrectedAge, locale: Locale) -> String {
         let duration = DurationText.corrected(age, locale: locale)
         switch age {
-        case .age: return String(localized: "Corrected age \(duration)")
-        case .beforeDueDate: return String(localized: "\(duration) before due date")
+        case .age: return String(localized: .chatHeaderCorrectedAge(duration))
+        case .beforeDueDate: return String(localized: .chatHeaderBeforeDueDate(duration))
         }
     }
 }
@@ -44,9 +44,9 @@ enum Trimester {
 
     var title: LocalizedStringResource {
         switch self {
-        case .first: "1st trimester"
-        case .second: "2nd trimester"
-        case .third: "3rd trimester"
+        case .first: .chatHeaderTrimester1
+        case .second: .chatHeaderTrimester2
+        case .third: .chatHeaderTrimester3
         }
     }
 }

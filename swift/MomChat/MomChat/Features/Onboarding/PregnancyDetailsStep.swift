@@ -7,69 +7,81 @@ struct PregnancyDetailsStep: View {
     var body: some View {
         Form {
             Section {
-                Picker("Count from", selection: $draft.pregnancy.source) {
-                    Text("Due date").tag(OnboardingDraft.DueDateSource.dueDate)
-                    Text("Last period").tag(OnboardingDraft.DueDateSource.lastPeriod)
+                Picker(selection: $draft.pregnancy.source) {
+                    Text(.onboardingPregnancyDueDate).tag(OnboardingDraft.DueDateSource.dueDate)
+                    Text(.onboardingPregnancyLastPeriodSegment).tag(OnboardingDraft.DueDateSource.lastPeriod)
+                } label: {
+                    Text(.onboardingPregnancyCountFrom)
                 }
                 .pickerStyle(.segmented)
                 switch draft.pregnancy.source {
                 case .dueDate:
-                    DatePicker("Due date", selection: $draft.pregnancy.dueDate, in: draft.dueDateRange, displayedComponents: .date)
+                    DatePicker(selection: $draft.pregnancy.dueDate, in: draft.dueDateRange, displayedComponents: .date) {
+                        Text(.onboardingPregnancyDueDate)
+                    }
                 case .lastPeriod:
-                    DatePicker("First day of last period", selection: $draft.pregnancy.lastPeriod, in: draft.lastPeriodRange, displayedComponents: .date)
+                    DatePicker(selection: $draft.pregnancy.lastPeriod, in: draft.lastPeriodRange, displayedComponents: .date) {
+                        Text(.onboardingPregnancyLastPeriodDate)
+                    }
                 }
             } header: {
-                Text("When is the baby due?")
+                Text(.onboardingPregnancyDueHeader)
             } footer: {
                 if draft.pregnancy.source == .lastPeriod {
-                    Text("Due date: \(draft.resolvedDueDate.formatted(date: .long, time: .omitted))")
+                    Text(.onboardingPregnancyCalculatedDueDate(draft.resolvedDueDate.formatted(date: .long, time: .omitted)))
                 }
             }
 
             Section {
-                Stepper("Babies: \(draft.pregnancy.babies)", value: $draft.pregnancy.babies, in: 1...Int.max)
+                Stepper(value: $draft.pregnancy.babies, in: 1...Int.max) {
+                    Text(.onboardingBabiesCount(draft.pregnancy.babies))
+                }
             } footer: {
                 if draft.pregnancy.babies > 1 {
-                    Text("You'll add a name for each baby when they arrive.")
+                    Text(.onboardingPregnancyMultiplesFooter)
                 }
             }
 
             if draft.path == .expecting {
                 Section {
-                    Picker("First pregnancy?", selection: $draft.pregnancy.isFirstPregnancy) {
-                        Text("Skip").tag(Bool?.none)
-                        Text("Yes").tag(Bool?.some(true))
-                        Text("No").tag(Bool?.some(false))
+                    Picker(selection: $draft.pregnancy.isFirstPregnancy) {
+                        Text(.onboardingPregnancyFirstPregnancySkip).tag(Bool?.none)
+                        Text(.onboardingPregnancyFirstPregnancyYes).tag(Bool?.some(true))
+                        Text(.onboardingPregnancyFirstPregnancyNo).tag(Bool?.some(false))
+                    } label: {
+                        Text(.onboardingPregnancyFirstPregnancy)
                     }
                 }
             }
 
             if draft.pregnancy.babies == 1 {
                 Section {
-                    TextField("Name, if you've picked one", text: $draft.pregnancy.name)
+                    TextField(String(localized: .onboardingPregnancyName), text: $draft.pregnancy.name)
                         .textContentType(.givenName)
-                    Picker("Sex", selection: $draft.pregnancy.sex) {
-                        Text("Don't know yet").tag(Child.Sex?.none)
-                        Text("Girl").tag(Child.Sex?.some(.girl))
-                        Text("Boy").tag(Child.Sex?.some(.boy))
+                    Picker(selection: $draft.pregnancy.sex) {
+                        Text(.onboardingPregnancySexUnknown).tag(Child.Sex?.none)
+                        Text(.onboardingSexGirl).tag(Child.Sex?.some(.girl))
+                        Text(.onboardingSexBoy).tag(Child.Sex?.some(.boy))
+                    } label: {
+                        Text(.onboardingSex)
                     }
                 } header: {
-                    Text("Baby (optional)")
+                    Text(.onboardingPregnancyBabyHeader)
                 }
             }
 
             Section {
-                TextField("e.g. low iron, placenta position", text: $draft.pregnancy.doctorNotes, axis: .vertical)
+                TextField(String(localized: .onboardingPregnancyDoctorPlaceholder), text: $draft.pregnancy.doctorNotes, axis: .vertical)
                     .lineLimit(1...4)
             } header: {
-                Text("Anything your doctor is watching?")
+                Text(.onboardingPregnancyDoctorHeader)
             } footer: {
-                Text("Optional. Separate things with commas.")
+                Text(.onboardingPregnancyDoctorFooter)
             }
         }
         .scrollContentBackground(.hidden)
         .background(Palette.background)
-        .navigationTitle("Your pregnancy")
+        .navigationTitle(Text(.onboardingPregnancyTitle))
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             ContinueBar(isEnabled: draft.isPregnancyValid, action: onContinue)
