@@ -198,11 +198,12 @@ struct FreeQuestionsStep: View {
 
 /// The bottom button on the form steps.
 struct ContinueBar: View {
+    var title: LocalizedStringResource = .onboardingContinue
     let isEnabled: Bool
     let action: () -> Void
 
     var body: some View {
-        PrimaryButton(.onboardingContinue, action: action)
+        PrimaryButton(title, action: action)
             .disabled(!isEnabled)
             .padding(.horizontal, Spacing.xl)
             .padding(.vertical, Spacing.m)

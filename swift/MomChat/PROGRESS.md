@@ -31,3 +31,10 @@
 - Monetization changed (2026-10-30): **no payment step in onboarding and no free trial**. 20 free questions per phone (Keychain counter, emergency gate never counts), then the paywall with monthly / yearly / lifetime
 - Copy: Claude writes English and adds every key to the catalog; the user writes Polish natively (Stage 1–2 Polish also still missing)
 - Strings (2026-10-30): **no inline literals in app code**. Every user-facing string is a dotted catalog key (`onboarding.welcome.title`) with the English as its value, used through generated symbols (`Text(.onboardingWelcomeTitle)`). The same word in different contexts gets separate keys. Developer tools stay plain English. Check: after a build, `.stringsdata` only lists `GeneratedStringSymbols_Localizable`
+
+## Stage 5: Profiles Screen (decisions made, not started)
+
+- Birth banner: from 37w0d for a singleton, **34w0d for twins, 32w0d for triplets or more**. Also reachable by hand from the profile at any time (early births)
+- Pregnancy conversations after a multiple birth: they stay on the first baby's record (Stage 3), and **every sibling's history shows them too** (found through the shared `multipleBirthID`)
+- The profiles screen opens from **both** the chat header (tap the title) and Settings
+- Ending a pregnancy: it moves to `.archived` and **its history is kept by default**. Deleting it is a separate, explicit action. Loss copy is finalized in Stage 8 (midwife review)

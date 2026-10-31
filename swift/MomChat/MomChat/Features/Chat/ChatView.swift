@@ -8,6 +8,10 @@ struct ChatView: View {
     @State private var messages: [ChatMessage] = []
     @State private var draft = ""
     @State private var isShowingSettings = false
+    @State private var isShowingProfiles = false
+    @State private var isRecordingBirth = false
+    /// The day "Not yet" was tapped on the birth banner, as seconds since 1970. 0 = never.
+    @AppStorage("birthBanner.dismissedOn") private var bannerDismissedOn: Double = 0
 
     var body: some View {
         ScrollView {
@@ -34,10 +38,21 @@ struct ChatView: View {
             .padding(.bottom, Spacing.s)
             .background(Palette.background)
         }
-        .navigationTitle(Text(verbatim: header.title))
-        .navigationSubtitle(Text(verbatim: header.subtitle ?? ""))
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if let child, isShowingBirthBanner {
+                BirthBannerView(multiples: child.multiples) {
+                    isRecordingBirth = true
+                } onNotYet: {
+                    withAnimation { bannerDismissedOn = Date.now.timeIntervalSince1970 }
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .principal) {
+                titleButton
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button(.settingsTitle, systemImage: "gearshape") {
                     isShowingSettings = true
@@ -47,10 +62,57 @@ struct ChatView: View {
         .sheet(isPresented: $isShowingSettings) {
             SettingsView()
         }
+        .sheet(isPresented: $isShowingProfiles) {
+            NavigationStack {
+                ProfilesView(dismissesOnSelect: true)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button(.commonDone) { isShowingProfiles = false }
+                        }
+                    }
+            }
+            .tint(Palette.accent)
+        }
+        .sheet(isPresented: $isRecordingBirth) {
+            if let child {
+                BirthFormView(pregnancy: child)
+            }
+        }
     }
 
     private var header: ChatHeader {
         ChatHeader(child: child)
+    }
+
+    private var isShowingBirthBanner: Bool {
+        guard let child else { return false }
+        let dismissedOn = bannerDismissedOn > 0 ? Date(timeIntervalSince1970: bannerDismissedOn) : nil
+        return BirthBanner.isShown(for: child, dismissedOn: dismissedOn)
+    }
+
+    /// The chat title doubles as the way to switch profiles.
+    private var titleButton: some View {
+        Button {
+            isShowingProfiles = true
+        } label: {
+            VStack(spacing: 0) {
+                HStack(spacing: Spacing.xs) {
+                    Text(verbatim: header.title)
+                        .font(.headline)
+                    Image(systemName: "chevron.down")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Palette.textSecondary)
+                }
+                if let subtitle = header.subtitle {
+                    Text(verbatim: subtitle)
+                        .font(Typography.caption)
+                        .foregroundStyle(Palette.textSecondary)
+                }
+            }
+            .foregroundStyle(Palette.textPrimary)
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint(Text(.chatHeaderOpenProfiles))
     }
 
     /// Placeholders until Stage 6 picks starter chips for the exact stage.

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct BirthDetailsStep: View {
     @Binding var draft: OnboardingDraft
+    var continueTitle: LocalizedStringResource = .onboardingContinue
     let onContinue: () -> Void
 
     private var babyCount: Binding<Int> {
@@ -81,7 +82,7 @@ struct BirthDetailsStep: View {
         .navigationTitle(Text(.onboardingBirthTitle))
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            ContinueBar(isEnabled: draft.isBirthValid, action: onContinue)
+            ContinueBar(title: continueTitle, isEnabled: draft.isBirthValid, action: onContinue)
         }
     }
 }

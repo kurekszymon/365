@@ -11,7 +11,7 @@ import SwiftData
     var medications: [String] = []
     @Relationship(deleteRule: .cascade, inverse: \ProfileNote.mom)
     var notes: [ProfileNote] = []
-    /// The child or pregnancy the chat is about. Switching comes in Stage 5.
+    /// The child or pregnancy the chat is about, switched on the profiles screen.
     var activeChild: Child?
     var createdAt: Date
 

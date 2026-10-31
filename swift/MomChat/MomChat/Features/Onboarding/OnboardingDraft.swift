@@ -49,6 +49,8 @@ struct OnboardingDraft {
     static let weeksEarlyRange = 1...17
 
     var path: Path?
+    /// Adding a child or pregnancy from the profiles screen, after onboarding.
+    var isAddingToProfile = false
     var pregnancy: Pregnancy
     var birth: Birth
 
@@ -98,6 +100,11 @@ struct OnboardingDraft {
         birthDateRange.contains(birth.birthDate) && !birth.babies.isEmpty
     }
 
+    /// Only asked of a mom who's only expecting, during onboarding.
+    var asksFirstPregnancy: Bool {
+        path == .expecting && !isAddingToProfile
+    }
+
     var isComplete: Bool {
         guard let path else { return false }
         return (!path.includesPregnancy || isPregnancyValid) && (!path.includesBirth || isBirthValid)
@@ -123,14 +130,29 @@ struct OnboardingDraft {
 
         let mom = MomProfile(previousBirths: previousBirths(for: path))
         context.insert(mom)
+        mom.activeChild = makeChildren(for: path, in: context)
+        return mom
+    }
 
+    /// Adds a pregnancy or a baby to an existing profile. The chat moves to it.
+    @discardableResult
+    func addChildren(to mom: MomProfile, in context: ModelContext) -> Child? {
+        precondition(isComplete, "add only a complete draft")
+        let child = makeChildren(for: path!, in: context)
+        mom.activeChild = child
+        return child
+    }
+
+    /// The child the chat opens on: the pregnancy if there is one, else the first baby.
+    private func makeChildren(for path: Path, in context: ModelContext) -> Child? {
+        var active: Child?
         if path.includesBirth {
-            mom.activeChild = makeBorn(in: context).first
+            active = makeBorn(in: context).first
         }
         if path.includesPregnancy {
-            mom.activeChild = makePregnancy(in: context)
+            active = makePregnancy(in: context)
         }
-        return mom
+        return active
     }
 
     /// 0 = first-time mom. "No" only tells us there were earlier births, so it's stored as 1.

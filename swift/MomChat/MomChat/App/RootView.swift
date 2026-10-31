@@ -31,7 +31,7 @@ struct RootView: View {
     }
 
     private var activeChild: Child? {
-        moms.first?.activeChild ?? children.first
+        moms.first?.activeChild ?? children.first { $0.stage != .archived }
     }
 }
 

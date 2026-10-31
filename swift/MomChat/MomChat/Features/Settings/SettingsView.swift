@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 struct SettingsView: View {
@@ -5,28 +6,40 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
-            ContentUnavailableView(String(localized: .settingsComingSoon), systemImage: "gearshape")
-                .foregroundStyle(Palette.textSecondary)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Palette.background)
-                #if DEBUG
-                .safeAreaInset(edge: .bottom) {
-                    NavigationLink(String("Developer tools")) { DebugView() }
-                        .font(Typography.caption)
-                        .padding(Spacing.l)
-                }
-                #endif
-                .navigationTitle(Text(.settingsTitle))
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button(.commonDone) { dismiss() }
+            List {
+                Section {
+                    NavigationLink {
+                        ProfilesView()
+                    } label: {
+                        Label {
+                            Text(.settingsProfiles)
+                        } icon: {
+                            Image(systemName: "person.2")
+                        }
                     }
                 }
+
+                #if DEBUG
+                Section {
+                    NavigationLink(String("Developer tools")) { DebugView() }
+                }
+                #endif
+            }
+            .scrollContentBackground(.hidden)
+            .background(Palette.background)
+            .navigationTitle(Text(.settingsTitle))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(.commonDone) { dismiss() }
+                }
+            }
         }
+        .tint(Palette.accent)
     }
 }
 
 #Preview {
     SettingsView()
+        .modelContainer(try! DataStore.makeInMemoryContainer())
 }

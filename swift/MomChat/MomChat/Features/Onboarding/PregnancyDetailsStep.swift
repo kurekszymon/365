@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PregnancyDetailsStep: View {
     @Binding var draft: OnboardingDraft
+    var continueTitle: LocalizedStringResource = .onboardingContinue
     let onContinue: () -> Void
 
     var body: some View {
@@ -42,7 +43,7 @@ struct PregnancyDetailsStep: View {
                 }
             }
 
-            if draft.path == .expecting {
+            if draft.asksFirstPregnancy {
                 Section {
                     Picker(selection: $draft.pregnancy.isFirstPregnancy) {
                         Text(.onboardingPregnancyFirstPregnancySkip).tag(Bool?.none)
@@ -84,7 +85,7 @@ struct PregnancyDetailsStep: View {
         .navigationTitle(Text(.onboardingPregnancyTitle))
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            ContinueBar(isEnabled: draft.isPregnancyValid, action: onContinue)
+            ContinueBar(title: continueTitle, isEnabled: draft.isPregnancyValid, action: onContinue)
         }
     }
 }

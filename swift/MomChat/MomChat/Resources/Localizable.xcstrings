@@ -1,6 +1,78 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "addChild.born.detail" : {
+      "comment" : "Add a profile: detail under \"A baby who's already here\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A newborn, baby or toddler up to 3"
+          }
+        }
+      }
+    },
+    "addChild.born.title" : {
+      "comment" : "Add a profile: option for a child already born.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A baby who's already here"
+          }
+        }
+      }
+    },
+    "addChild.pregnancy.detail" : {
+      "comment" : "Add a profile: detail under \"A new pregnancy\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expecting again, with one baby or more"
+          }
+        }
+      }
+    },
+    "addChild.pregnancy.title" : {
+      "comment" : "Add a profile: option for a new pregnancy.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A new pregnancy"
+          }
+        }
+      }
+    },
+    "addChild.save" : {
+      "comment" : "Add a profile: button at the bottom of the form that saves the new profile.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add"
+          }
+        }
+      }
+    },
+    "addChild.title" : {
+      "comment" : "Title of the sheet that adds a baby or a new pregnancy.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a profile"
+          }
+        }
+      }
+    },
     "app.name" : {
       "comment" : "App name, also the chat header when there's no active child. Not translated.",
       "extractionState" : "manual",
@@ -15,6 +87,366 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "MomChat"
+          }
+        }
+      }
+    },
+    "birth.banner.message" : {
+      "comment" : "Chat birth banner: message under the title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tell MomChat about your little one, and the answers will be about your newborn from then on."
+          }
+        }
+      }
+    },
+    "birth.banner.messageMultiples" : {
+      "comment" : "Chat birth banner for twins/triplets: message under the title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tell MomChat about your little ones, and each baby gets their own profile."
+          }
+        }
+      }
+    },
+    "birth.banner.notYet" : {
+      "comment" : "Chat birth banner: hides it until tomorrow.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not yet"
+          }
+        }
+      }
+    },
+    "birth.banner.title" : {
+      "comment" : "Chat banner from 37 weeks. Warm, happy, not pushy.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Has your baby arrived?"
+          }
+        }
+      }
+    },
+    "birth.banner.titleMultiples" : {
+      "comment" : "Chat banner for twins/triplets (from 34/32 weeks).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Have your babies arrived?"
+          }
+        }
+      }
+    },
+    "birth.banner.yes" : {
+      "comment" : "Chat birth banner: button that opens the birth form.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yes, they're here!"
+          }
+        }
+      }
+    },
+    "birth.banner.yesMultiples" : {
+      "comment" : "Chat birth banner for twins/triplets: button that opens the birth form.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yes, they're here!"
+          }
+        }
+      }
+    },
+    "birth.form.babyHeader" : {
+      "comment" : "Birth form: section header for a single baby.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your baby"
+          }
+        }
+      }
+    },
+    "birth.form.babyNumber" : {
+      "comment" : "Birth form: section header for each twin/triplet, e.g. \"Baby 2\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baby %lld"
+          }
+        }
+      }
+    },
+    "birth.form.birthDate" : {
+      "comment" : "Birth form: birth date field.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Birth date"
+          }
+        }
+      }
+    },
+    "birth.form.dateFooter" : {
+      "comment" : "Birth form: footer under the birth date and delivery fields.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Born before the due date? Corrected age is worked out from your due date automatically."
+          }
+        }
+      }
+    },
+    "birth.form.delivery" : {
+      "comment" : "Birth form: delivery type picker label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delivery"
+          }
+        }
+      }
+    },
+    "birth.form.delivery.cesarean" : {
+      "comment" : "Birth form: delivery option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C-section"
+          }
+        }
+      }
+    },
+    "birth.form.delivery.notSaying" : {
+      "comment" : "Birth form: delivery option when she'd rather not say.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not saying"
+          }
+        }
+      }
+    },
+    "birth.form.delivery.vaginal" : {
+      "comment" : "Birth form: delivery option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaginal birth"
+          }
+        }
+      }
+    },
+    "birth.form.feeding" : {
+      "comment" : "Birth form: feeding picker label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feeding"
+          }
+        }
+      }
+    },
+    "birth.form.feeding.breast" : {
+      "comment" : "Birth form: feeding option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breastfeeding"
+          }
+        }
+      }
+    },
+    "birth.form.feeding.formula" : {
+      "comment" : "Birth form: feeding option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formula"
+          }
+        }
+      }
+    },
+    "birth.form.feeding.mixed" : {
+      "comment" : "Birth form: feeding option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breast milk and formula"
+          }
+        }
+      }
+    },
+    "birth.form.feeding.notSaying" : {
+      "comment" : "Birth form: feeding option; many moms haven't settled on one in the first days.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not decided yet"
+          }
+        }
+      }
+    },
+    "birth.form.intro" : {
+      "comment" : "Birth form: intro text at the top.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Congratulations! Only the birth date is needed now. Everything else can wait until you've had some sleep."
+          }
+        }
+      }
+    },
+    "birth.form.introMultiples" : {
+      "comment" : "Birth form for twins/triplets: intro text at the top.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Congratulations! Only the birth date is needed now. Each baby gets their own profile, and everything else can wait until you've had some sleep."
+          }
+        }
+      }
+    },
+    "birth.form.name" : {
+      "comment" : "Birth form: baby's name field placeholder.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name"
+          }
+        }
+      }
+    },
+    "birth.form.save" : {
+      "comment" : "Birth form: confirm button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        }
+      }
+    },
+    "birth.form.sex" : {
+      "comment" : "Birth form: sex picker label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sex"
+          }
+        }
+      }
+    },
+    "birth.form.sex.boy" : {
+      "comment" : "Birth form: sex option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Boy"
+          }
+        }
+      }
+    },
+    "birth.form.sex.girl" : {
+      "comment" : "Birth form: sex option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Girl"
+          }
+        }
+      }
+    },
+    "birth.form.sexNotSaying" : {
+      "comment" : "Birth form: sex option when she'd rather not say.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not saying"
+          }
+        }
+      }
+    },
+    "birth.form.title" : {
+      "comment" : "Birth form title. A happy moment, make it warm.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welcome, little one"
+          }
+        }
+      }
+    },
+    "birth.form.titleMultiples" : {
+      "comment" : "Birth form title for twins/triplets.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welcome, little ones"
           }
         }
       }
@@ -175,6 +607,18 @@
         }
       }
     },
+    "chat.header.openProfiles" : {
+      "comment" : "VoiceOver hint on the chat title, which opens the profiles screen.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens profiles to switch who the chat is about"
+          }
+        }
+      }
+    },
     "chat.header.trimester1" : {
       "comment" : "Chat header subtitle under the week.",
       "extractionState" : "manual",
@@ -255,6 +699,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Baby"
+          }
+        }
+      }
+    },
+    "common.cancel" : {
+      "comment" : "Closes a form without saving (birth form, add a profile).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
           }
         }
       }
@@ -1171,14 +1627,818 @@
         }
       }
     },
-    "settings.comingSoon" : {
-      "comment" : "Empty Settings screen placeholder.",
+    "profile.child.allergies" : {
+      "comment" : "Baby profile: allergies field placeholder.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Coming soon"
+            "value" : "Allergies"
+          }
+        }
+      }
+    },
+    "profile.child.archivedFooter" : {
+      "comment" : "Archived pregnancy screen: footer. Placeholder wording until Stage 8 (midwife review).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This pregnancy is archived. Its chats are kept until you delete it."
+          }
+        }
+      }
+    },
+    "profile.child.babiesArrived" : {
+      "comment" : "Twin/triplet pregnancy profile: button that opens the birth form.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My babies have arrived"
+          }
+        }
+      }
+    },
+    "profile.child.babiesCount" : {
+      "comment" : "Pregnancy profile: stepper for the number of babies expected.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Babies: %lld"
+          }
+        }
+      }
+    },
+    "profile.child.babyArrived" : {
+      "comment" : "Pregnancy profile: button that opens the birth form. Warm, happy moment.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My baby has arrived"
+          }
+        }
+      }
+    },
+    "profile.child.birthDate" : {
+      "comment" : "Baby profile: birth date field label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Birth date"
+          }
+        }
+      }
+    },
+    "profile.child.birthHeader" : {
+      "comment" : "Baby profile: section header above birth date, born early and delivery.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The birth"
+          }
+        }
+      }
+    },
+    "profile.child.bornEarly" : {
+      "comment" : "Baby profile: toggle for a premature baby.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Born early"
+          }
+        }
+      }
+    },
+    "profile.child.bornEarlyFooter" : {
+      "comment" : "Baby profile: footer under the birth section when born early is on.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Babies born 4 or more weeks early get a corrected age too."
+          }
+        }
+      }
+    },
+    "profile.child.conditions" : {
+      "comment" : "Baby profile: conditions field placeholder.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Health conditions"
+          }
+        }
+      }
+    },
+    "profile.child.delete" : {
+      "comment" : "Archived pregnancy screen: destructive button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete pregnancy and chats"
+          }
+        }
+      }
+    },
+    "profile.child.deleteConfirm.action" : {
+      "comment" : "Confirmation button that deletes an archived pregnancy.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        }
+      }
+    },
+    "profile.child.deleteConfirm.message" : {
+      "comment" : "Confirmation message before deleting an archived pregnancy.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Its profile and every chat about it will be deleted from this phone. This can't be undone."
+          }
+        }
+      }
+    },
+    "profile.child.deleteConfirm.title" : {
+      "comment" : "Confirmation title before deleting an archived pregnancy.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this pregnancy?"
+          }
+        }
+      }
+    },
+    "profile.child.delivery" : {
+      "comment" : "Baby profile: delivery type picker label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delivery"
+          }
+        }
+      }
+    },
+    "profile.child.delivery.cesarean" : {
+      "comment" : "Baby profile: delivery option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C-section"
+          }
+        }
+      }
+    },
+    "profile.child.delivery.notSaying" : {
+      "comment" : "Baby profile: delivery option when she'd rather not say.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not saying"
+          }
+        }
+      }
+    },
+    "profile.child.delivery.vaginal" : {
+      "comment" : "Baby profile: delivery option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaginal birth"
+          }
+        }
+      }
+    },
+    "profile.child.dueDate" : {
+      "comment" : "Pregnancy profile: due date field label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Due date"
+          }
+        }
+      }
+    },
+    "profile.child.end" : {
+      "comment" : "Pregnancy profile: destructive button that archives the pregnancy (loss). Placeholder wording until Stage 8 (midwife review).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "End this pregnancy"
+          }
+        }
+      }
+    },
+    "profile.child.endConfirm.action" : {
+      "comment" : "Confirmation button that archives a pregnancy. Placeholder wording until Stage 8 (midwife review).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "End pregnancy"
+          }
+        }
+      }
+    },
+    "profile.child.endConfirm.message" : {
+      "comment" : "Confirmation message before archiving a pregnancy. Placeholder wording until Stage 8 (midwife review).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It moves to Archived and its chats are kept. You can delete it from there at any time."
+          }
+        }
+      }
+    },
+    "profile.child.endConfirm.title" : {
+      "comment" : "Confirmation title before archiving a pregnancy. Placeholder wording until Stage 8 (midwife review).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "End this pregnancy?"
+          }
+        }
+      }
+    },
+    "profile.child.feeding" : {
+      "comment" : "Baby profile: feeding picker label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feeding"
+          }
+        }
+      }
+    },
+    "profile.child.feeding.breast" : {
+      "comment" : "Baby profile: feeding option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breastfeeding"
+          }
+        }
+      }
+    },
+    "profile.child.feeding.formula" : {
+      "comment" : "Baby profile: feeding option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formula"
+          }
+        }
+      }
+    },
+    "profile.child.feeding.mixed" : {
+      "comment" : "Baby profile: feeding option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breast milk and formula"
+          }
+        }
+      }
+    },
+    "profile.child.feeding.notSaying" : {
+      "comment" : "Baby profile: feeding option when she'd rather not say.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not saying"
+          }
+        }
+      }
+    },
+    "profile.child.feeding.solidsAndMilk" : {
+      "comment" : "Baby profile: feeding option for an older baby or toddler.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solids and milk"
+          }
+        }
+      }
+    },
+    "profile.child.healthHeader" : {
+      "comment" : "Baby profile: section header above allergies, conditions and medications.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Health (optional)"
+          }
+        }
+      }
+    },
+    "profile.child.medications" : {
+      "comment" : "Baby profile: medications field placeholder.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medications"
+          }
+        }
+      }
+    },
+    "profile.child.name" : {
+      "comment" : "Baby profile: name field placeholder.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name"
+          }
+        }
+      }
+    },
+    "profile.child.nameIfPicked" : {
+      "comment" : "Pregnancy profile: placeholder of the baby's name field.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name, if you've picked one"
+          }
+        }
+      }
+    },
+    "profile.child.pregnancyConditions" : {
+      "comment" : "Pregnancy profile: placeholder of the pregnancy conditions field.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "e.g. low iron, placenta position"
+          }
+        }
+      }
+    },
+    "profile.child.pregnancyConditionsHeader" : {
+      "comment" : "Pregnancy profile: section header above pregnancy conditions (low iron, placenta position…).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What your doctor is watching"
+          }
+        }
+      }
+    },
+    "profile.child.restore" : {
+      "comment" : "Archived pregnancy screen: button that makes it an active pregnancy again (e.g. archived by mistake).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore pregnancy"
+          }
+        }
+      }
+    },
+    "profile.child.sex" : {
+      "comment" : "Child profile: sex picker label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sex"
+          }
+        }
+      }
+    },
+    "profile.child.sex.boy" : {
+      "comment" : "Child profile: sex option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Boy"
+          }
+        }
+      }
+    },
+    "profile.child.sex.girl" : {
+      "comment" : "Child profile: sex option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Girl"
+          }
+        }
+      }
+    },
+    "profile.child.sexNotSaying" : {
+      "comment" : "Baby profile: sex option when she'd rather not say.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not saying"
+          }
+        }
+      }
+    },
+    "profile.child.sexUnknown" : {
+      "comment" : "Pregnancy profile: sex option before it's known.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don't know yet"
+          }
+        }
+      }
+    },
+    "profile.child.sharedBirthFooter" : {
+      "comment" : "Baby profile of a twin/triplet: footer explaining shared fields.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Birth date, born early and delivery change for all babies from this birth."
+          }
+        }
+      }
+    },
+    "profile.child.weeksEarly" : {
+      "comment" : "Baby profile: stepper for how many weeks early the baby was born.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weeks early: %lld"
+          }
+        }
+      }
+    },
+    "profile.listFooter" : {
+      "comment" : "Profile editing: footer under list fields (allergies, conditions, medications).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Separate things with commas."
+          }
+        }
+      }
+    },
+    "profile.mom.conditions" : {
+      "comment" : "Mom's details: placeholder of the conditions field.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Health conditions, e.g. thyroid"
+          }
+        }
+      }
+    },
+    "profile.mom.firstTime" : {
+      "comment" : "Mom's details: picker label. Changes how much detail answers give.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "First-time mom?"
+          }
+        }
+      }
+    },
+    "profile.mom.firstTime.no" : {
+      "comment" : "Mom's details: \"First-time mom?\" option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No"
+          }
+        }
+      }
+    },
+    "profile.mom.firstTime.skip" : {
+      "comment" : "Mom's details: \"First-time mom?\" option when she'd rather not answer.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not saying"
+          }
+        }
+      }
+    },
+    "profile.mom.firstTime.yes" : {
+      "comment" : "Mom's details: \"First-time mom?\" option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yes"
+          }
+        }
+      }
+    },
+    "profile.mom.healthHeader" : {
+      "comment" : "Mom's details: section header above her conditions and medications.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your health (optional)"
+          }
+        }
+      }
+    },
+    "profile.mom.medications" : {
+      "comment" : "Mom's details: placeholder of the medications field.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medications you take"
+          }
+        }
+      }
+    },
+    "profile.mom.name" : {
+      "comment" : "Mom's details: placeholder of the name field.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your name (optional)"
+          }
+        }
+      }
+    },
+    "profile.mom.title" : {
+      "comment" : "Title of the screen where the mom edits her own details.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You"
+          }
+        }
+      }
+    },
+    "profile.saveError.title" : {
+      "comment" : "Alert title when saving a profile change fails.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't save the change"
+          }
+        }
+      }
+    },
+    "profiles.add" : {
+      "comment" : "Profiles screen: button to add another child or a new pregnancy.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a baby or pregnancy"
+          }
+        }
+      }
+    },
+    "profiles.edit" : {
+      "comment" : "VoiceOver label for the info button on a child's row.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit profile"
+          }
+        }
+      }
+    },
+    "profiles.footer" : {
+      "comment" : "Profiles screen: footer under the children list. Tapping a row switches the chat to that child.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap a profile to chat about it."
+          }
+        }
+      }
+    },
+    "profiles.momRow" : {
+      "comment" : "Profiles screen: the mom's row when she hasn't given a name.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your details"
+          }
+        }
+      }
+    },
+    "profiles.row.bornToday" : {
+      "comment" : "Profiles screen: subtitle for a baby born today. Sentence case, starts the line.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Born today"
+          }
+        }
+      }
+    },
+    "profiles.row.due" : {
+      "comment" : "Profiles screen: subtitle for an archived pregnancy (or one not started yet). The text is the due date.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Due %@"
+          }
+        }
+      }
+    },
+    "profiles.row.pregnancy" : {
+      "comment" : "Profiles screen: row title for a pregnancy without a chosen name.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pregnancy"
+          }
+        }
+      }
+    },
+    "profiles.row.pregnancyMultiples" : {
+      "comment" : "Profiles screen: row title for a twin/triplet pregnancy. The number is the number of babies (2 or more). Needs plural forms in Polish.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pregnancy with %lld babies"
+          }
+        }
+      }
+    },
+    "profiles.row.week" : {
+      "comment" : "Profiles screen: pregnancy row subtitle. The number is the pregnancy week, the text is the due date, e.g. \"Week 24 · due 12 January 2027\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Week %lld · due %@"
+          }
+        }
+      }
+    },
+    "profiles.section.archived" : {
+      "comment" : "Profiles screen: section header for pregnancies that were ended. Placeholder wording until Stage 8 (midwife review).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archived"
+          }
+        }
+      }
+    },
+    "profiles.section.children" : {
+      "comment" : "Profiles screen: section header above the children and pregnancies.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your little ones"
+          }
+        }
+      }
+    },
+    "profiles.section.you" : {
+      "comment" : "Profiles screen: section header above the mom's own profile.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You"
+          }
+        }
+      }
+    },
+    "profiles.title" : {
+      "comment" : "Title of the profiles screen: the mom and her children/pregnancies.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profiles"
+          }
+        }
+      }
+    },
+    "settings.profiles" : {
+      "comment" : "Settings row that opens the profiles screen (mom and children).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profiles"
           }
         }
       }
