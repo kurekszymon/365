@@ -1,17 +1,19 @@
+import SwiftData
 import SwiftUI
 
 struct ChatView: View {
     /// `nil` only in previews or if the profile was deleted underneath.
     let child: Child?
 
-    // Not saved yet, and no answers: the model is wired up in Stage 6.
-    @State private var messages: [ChatMessage] = []
+    @State private var chat: ChatController?
     @State private var draft = ""
     @State private var isShowingSettings = false
     @State private var isShowingProfiles = false
+    @State private var isShowingHistory = false
     @State private var isRecordingBirth = false
     /// The day "Not yet" was tapped on the birth banner, as seconds since 1970. 0 = never.
     @AppStorage("birthBanner.dismissedOn") private var bannerDismissedOn: Double = 0
+    @Environment(\.modelContext) private var context
 
     var body: some View {
         ScrollView {
@@ -21,18 +23,33 @@ struct ChatView: View {
                     .foregroundStyle(Palette.textSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.bottom, Spacing.s)
-                ForEach(messages) { message in
-                    MessageBubble(message: message)
+                ForEach(chat?.messages ?? []) { message in
+                    MessageBubble(role: message.role, text: message.text)
+                }
+                if let streaming = chat?.streamingText {
+                    if streaming.isEmpty {
+                        MessageBubble(isUser: false) { WritingIndicator() }
+                    } else {
+                        MessageBubble(role: .assistant, text: streaming)
+                    }
+                }
+                if let failure = chat?.failure {
+                    FailureBubble(failure: failure) {
+                        chat?.retry()
+                    } onNewChat: {
+                        startNewChat()
+                    }
                 }
             }
             .padding(Spacing.l)
         }
         .defaultScrollAnchor(.bottom)
+        .defaultScrollAnchor(.bottom, for: .sizeChanges)
         .scrollDismissesKeyboard(.interactively)
         .background(Palette.background)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: Spacing.s) {
-                chipRow
+                if isShowingStarters { chipRow }
                 inputBar
             }
             .padding(.bottom, Spacing.s)
@@ -50,19 +67,34 @@ struct ChatView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button(.chatToolbarHistory, systemImage: "list.bullet") {
+                    isShowingHistory = true
+                }
+                .disabled(child == nil)
+            }
             ToolbarItem(placement: .principal) {
                 titleButton
             }
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                Button(.chatToolbarNewChat, systemImage: "square.and.pencil", action: startNewChat)
+                    .disabled(chat?.conversation == nil)
                 Button(.settingsTitle, systemImage: "gearshape") {
                     isShowingSettings = true
                 }
             }
         }
+        .onChange(of: child?.persistentModelID, initial: true) {
+            openChat(resuming: true)
+        }
+        // A birth changes the whole profile: the model needs the new one, the chat stays.
+        .onChange(of: child?.stage) {
+            chat?.profileDidChange()
+        }
         .sheet(isPresented: $isShowingSettings) {
             SettingsView()
         }
-        .sheet(isPresented: $isShowingProfiles) {
+        .sheet(isPresented: $isShowingProfiles, onDismiss: { chat?.profileDidChange() }) {
             NavigationStack {
                 ProfilesView(dismissesOnSelect: true)
                     .toolbar {
@@ -73,11 +105,61 @@ struct ChatView: View {
             }
             .tint(Palette.accent)
         }
+        .sheet(isPresented: $isShowingHistory) {
+            if let child {
+                NavigationStack {
+                    ConversationListView(child: child, current: chat?.conversation) { conversation in
+                        open(conversation)
+                    } onDeleteCurrent: {
+                        openChat(resuming: false)
+                    }
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button(.commonDone) { isShowingHistory = false }
+                        }
+                    }
+                }
+                .tint(Palette.accent)
+            }
+        }
         .sheet(isPresented: $isRecordingBirth) {
             if let child {
                 BirthFormView(pregnancy: child)
             }
         }
+    }
+
+    // MARK: Chat
+
+    /// Resuming reopens the latest chat if it's recent; otherwise a fresh, unsaved one.
+    private func openChat(resuming: Bool) {
+        let recent = resuming ? child.flatMap { try? $0.history(in: context) }.flatMap { ConversationResume.conversation(from: $0) } : nil
+        open(recent)
+    }
+
+    private func open(_ conversation: Conversation?) {
+        chat?.close()
+        draft = ""
+        guard let child else {
+            chat = nil
+            return
+        }
+        let controller = ChatController(child: child, conversation: conversation, context: context)
+        controller.prewarm()
+        chat = controller
+    }
+
+    private func startNewChat() {
+        open(nil)
+    }
+
+    private var isShowingStarters: Bool {
+        guard let chat else { return false }
+        return chat.messages.isEmpty && !chat.isResponding && !starters.isEmpty
+    }
+
+    private var starters: [StarterChip] {
+        StarterChip.chips(for: child)
     }
 
     private var header: ChatHeader {
@@ -115,23 +197,14 @@ struct ChatView: View {
         .accessibilityHint(Text(.chatHeaderOpenProfiles))
     }
 
-    /// Placeholders until Stage 6 picks starter chips for the exact stage.
-    private var chips: [LocalizedStringResource] {
-        if child?.stage == .born {
-            [.chatChipSleep, .chatChipFeeding, .chatChipCrying, .chatChipPoop]
-        } else {
-            [.chatChipBackPain, .chatChipSleepPositions, .chatChipBabyKicks, .chatChipWhatToEat]
-        }
-    }
-
     private var chipRow: some View {
         ScrollView(.horizontal) {
             HStack(spacing: Spacing.s) {
-                ForEach(chips, id: \.key) { chip in
+                ForEach(starters) { chip in
                     Button {
-                        draft = String(localized: chip)
+                        draft = String(localized: chip.question)
                     } label: {
-                        Text(chip)
+                        Text(chip.label)
                             .font(Typography.chip)
                             .foregroundStyle(Palette.onChip)
                             .padding(.horizontal, Spacing.m)
@@ -160,16 +233,29 @@ struct ChatView: View {
                         .strokeBorder(Palette.separator)
                 )
 
-            Button(action: send) {
-                Image(systemName: "arrow.up")
-                    .font(.headline)
-                    .foregroundStyle(Palette.onAccent)
-                    .frame(width: 44, height: 44)
-                    .background(Palette.accent, in: .circle)
+            if chat?.isResponding == true {
+                Button {
+                    chat?.stop()
+                } label: {
+                    Image(systemName: "stop.fill")
+                        .font(.headline)
+                        .foregroundStyle(Palette.onAccent)
+                        .frame(width: 44, height: 44)
+                        .background(Palette.accent, in: .circle)
+                }
+                .accessibilityLabel(Text(.chatInputStop))
+            } else {
+                Button(action: send) {
+                    Image(systemName: "arrow.up")
+                        .font(.headline)
+                        .foregroundStyle(Palette.onAccent)
+                        .frame(width: 44, height: 44)
+                        .background(Palette.accent, in: .circle)
+                }
+                .accessibilityLabel(Text(.chatInputSend))
+                .disabled(!canSend)
+                .opacity(canSend ? 1 : 0.4)
             }
-            .accessibilityLabel(Text(.chatInputSend))
-            .disabled(trimmedDraft.isEmpty)
-            .opacity(trimmedDraft.isEmpty ? 0.4 : 1)
         }
         .padding(.horizontal, Spacing.l)
     }
@@ -178,9 +264,13 @@ struct ChatView: View {
         draft.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private var canSend: Bool {
+        chat != nil && !trimmedDraft.isEmpty
+    }
+
     private func send() {
-        guard !trimmedDraft.isEmpty else { return }
-        messages.append(ChatMessage(role: .user, content: .verbatim(trimmedDraft)))
+        guard canSend else { return }
+        chat?.send(trimmedDraft)
         draft = ""
     }
 }
@@ -189,10 +279,12 @@ struct ChatView: View {
     NavigationStack {
         ChatView(child: Child(stage: .expecting, dueDate: .now.addingTimeInterval(109 * 86_400)))
     }
+    .modelContainer(try! DataStore.makeInMemoryContainer())
 }
 
 #Preview("Born") {
     NavigationStack {
         ChatView(child: Child(name: "Emma", stage: .born, birthDate: .now.addingTimeInterval(-213 * 86_400)))
     }
+    .modelContainer(try! DataStore.makeInMemoryContainer())
 }

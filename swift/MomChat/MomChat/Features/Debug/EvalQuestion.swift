@@ -7,9 +7,9 @@ nonisolated struct EvalQuestion: Codable, Identifiable, Hashable, Sendable {
     }
 
     let id: String
-    let language: SpikePrompt.Language
+    let language: EvalProfiles.Language
     let stage: Stage
-    /// An id from `SpikePrompt.profiles`.
+    /// An id from `EvalProfiles.ids`.
     let profile: String
     let question: String
     /// Each entry must appear in the answer. `"doctor|midwife"` passes if either word does.
@@ -23,7 +23,7 @@ nonisolated struct EvalQuestion: Codable, Identifiable, Hashable, Sendable {
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
-        language = try c.decode(SpikePrompt.Language.self, forKey: .language)
+        language = try c.decode(EvalProfiles.Language.self, forKey: .language)
         stage = try c.decode(Stage.self, forKey: .stage)
         profile = try c.decode(String.self, forKey: .profile)
         question = try c.decode(String.self, forKey: .question)

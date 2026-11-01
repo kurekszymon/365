@@ -36,27 +36,28 @@ final class EvalRunner {
         }
         do {
             questions = try EvalQuestionSet.load(from: url).questions
-            let unknown = Set(questions.map(\.profile)).filter { SpikePrompt.profile(id: $0) == nil }
+            let unknown = Set(questions.map(\.profile)).filter { !EvalProfiles.ids.contains($0) }
             loadError = unknown.isEmpty ? nil : "Unknown profile ids: \(unknown.sorted().joined(separator: ", "))"
         } catch {
             loadError = "Couldn't read questions.json: \(error)"
         }
     }
 
-    func start(languages: Set<SpikePrompt.Language>) {
+    func start(languages: Set<EvalProfiles.Language>) {
         guard task == nil else { return }
         let selected = questions.filter { languages.contains($0.language) }
         results = []
         startedAt = .now
         task = Task {
+            let profiles = EvalProfiles.profiles()
             for question in selected {
                 guard !Task.isCancelled else { break }
-                guard let profile = SpikePrompt.profile(id: question.profile) else { continue }
+                guard let profile = profiles.first(where: { $0.id == question.profile }) else { continue }
                 current = question
                 currentPartial = ""
                 let outcome = await ModelProbe.run(
                     question: question.question,
-                    instructions: SpikePrompt.instructions(profile: profile, language: question.language),
+                    instructions: EvalProfiles.instructions(profile: profile),
                     settings: settings
                 ) { [weak self] partial in
                     self?.currentPartial = partial
@@ -99,6 +100,7 @@ enum EvalReport {
         lines.append("# MomChat eval: \(date.formatted(date: .abbreviated, time: .shortened))")
         lines.append("")
         lines.append("- Device: \(device)")
+        lines.append("- Prompt: Instructions v\(Instructions.version) + ProfileBlock (answers always in English)")
         lines.append("- Guardrails: \(settings.permissiveGuardrails ? "permissiveContentTransformations" : "default"), max \(settings.maximumResponseTokens) response tokens")
         lines.append("- Questions run: \(results.count)")
         lines.append("- Refused (guardrail or model): \(refused.count) (\(percent(refused.count, of: results.count)))")

@@ -71,29 +71,27 @@ struct PlaygroundView: View {
     let settings: ModelProbe.Settings
 
     @State private var profileID = "pregnant-8w"
-    @State private var language = SpikePrompt.Language.en
     @State private var question = "Is cramping normal at 8 weeks?"
     @State private var answer = ""
     @State private var outcome: ModelProbe.Outcome?
     @State private var task: Task<Void, Never>?
     @State private var isShowingInstructions = false
 
-    private var profile: SpikePrompt.Profile {
-        SpikePrompt.profile(id: profileID) ?? SpikePrompt.profiles[0]
+    @State private var profiles = EvalProfiles.profiles()
+
+    private var profile: EvalProfiles.Profile {
+        profiles.first { $0.id == profileID } ?? profiles[0]
     }
 
     private var instructions: String {
-        SpikePrompt.instructions(profile: profile, language: language)
+        EvalProfiles.instructions(profile: profile)
     }
 
     var body: some View {
         Form {
             Section {
                 Picker(String("Profile"), selection: $profileID) {
-                    ForEach(SpikePrompt.profiles) { Text(verbatim: $0.name).tag($0.id) }
-                }
-                Picker(String("Answer language"), selection: $language) {
-                    ForEach(SpikePrompt.Language.allCases) { Text(verbatim: $0.name).tag($0) }
+                    ForEach(profiles) { Text(verbatim: $0.name).tag($0.id) }
                 }
                 Button(String(isShowingInstructions ? "Hide instructions" : "Show instructions")) {
                     isShowingInstructions.toggle()
@@ -170,7 +168,7 @@ struct QuestionRunnerView: View {
     let settings: ModelProbe.Settings
 
     @State private var runner = EvalRunner()
-    @State private var languages: Set<SpikePrompt.Language> = [.en, .pl]
+    @State private var languages: Set<EvalProfiles.Language> = [.en, .pl]
     @State private var exportURL: URL?
     @State private var exportError: String?
 
@@ -185,7 +183,7 @@ struct QuestionRunnerView: View {
                     Text(verbatim: error).foregroundStyle(.red)
                 }
                 LabeledContent(String("Questions loaded"), value: "\(runner.questions.count)")
-                ForEach(SpikePrompt.Language.allCases) { language in
+                ForEach(EvalProfiles.Language.allCases) { language in
                     Toggle(isOn: Binding(
                         get: { languages.contains(language) },
                         set: { if $0 { languages.insert(language) } else { languages.remove(language) } }

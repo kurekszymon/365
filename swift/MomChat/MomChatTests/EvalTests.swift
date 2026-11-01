@@ -34,7 +34,7 @@ struct EvalQuestionSetTests {
         #expect(!set.questions.isEmpty)
         #expect(Set(set.questions.map(\.id)).count == set.questions.count, "question ids must be unique")
         for question in set.questions {
-            #expect(SpikePrompt.profile(id: question.profile) != nil, "unknown profile \(question.profile) in \(question.id)")
+            #expect(EvalProfiles.ids.contains(question.profile), "unknown profile \(question.profile) in \(question.id)")
         }
     }
 

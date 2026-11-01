@@ -451,102 +451,6 @@
         }
       }
     },
-    "chat.chip.babyKicks" : {
-      "comment" : "Quick-action chip above the input (pregnancy).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Baby kicks"
-          }
-        }
-      }
-    },
-    "chat.chip.backPain" : {
-      "comment" : "Quick-action chip above the input (pregnancy).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Back pain"
-          }
-        }
-      }
-    },
-    "chat.chip.crying" : {
-      "comment" : "Chat quick-action chip for a born baby.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crying"
-          }
-        }
-      }
-    },
-    "chat.chip.feeding" : {
-      "comment" : "Chat quick-action chip for a born baby.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Feeding"
-          }
-        }
-      }
-    },
-    "chat.chip.poop" : {
-      "comment" : "Chat quick-action chip for a born baby.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Poop"
-          }
-        }
-      }
-    },
-    "chat.chip.sleep" : {
-      "comment" : "Chat quick-action chip for a born baby.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sleep"
-          }
-        }
-      }
-    },
-    "chat.chip.sleepPositions" : {
-      "comment" : "Quick-action chip above the input (pregnancy).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sleep positions"
-          }
-        }
-      }
-    },
-    "chat.chip.whatToEat" : {
-      "comment" : "Quick-action chip above the input (pregnancy).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "What to eat"
-          }
-        }
-      }
-    },
     "chat.disclaimer" : {
       "comment" : "Small disclaimer above the chat messages.",
       "extractionState" : "manual",
@@ -555,6 +459,90 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "MomChat gives information, not medical advice."
+          }
+        }
+      }
+    },
+    "chat.failure.declined" : {
+      "comment" : "Shown instead of an answer when Apple's safety filter or the model declines the question.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I can't answer that one here. Your midwife, doctor or pediatrician can help with it."
+          }
+        }
+      }
+    },
+    "chat.failure.modelUnavailable" : {
+      "comment" : "Shown when the on-device model is turned off or updating.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The assistant isn't available right now. Check that Apple Intelligence is on, then try again."
+          }
+        }
+      }
+    },
+    "chat.failure.newChat" : {
+      "comment" : "Button under the \"chat has gotten long\" message: starts a new chat.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New chat"
+          }
+        }
+      }
+    },
+    "chat.failure.retry" : {
+      "comment" : "Button under a failed answer: asks the same question again.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try again"
+          }
+        }
+      }
+    },
+    "chat.failure.retryable" : {
+      "comment" : "Shown when an answer failed for an unexpected reason. A \"Try again\" button follows.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Something went wrong with that answer."
+          }
+        }
+      }
+    },
+    "chat.failure.tooLong" : {
+      "comment" : "Shown when the conversation no longer fits in the model's memory.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This chat has gotten long. Start a new chat to keep going."
+          }
+        }
+      }
+    },
+    "chat.failure.unsupportedLanguage" : {
+      "comment" : "Shown instead of an answer when the question is in a language the model does not support.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I can only answer in English for now. Could you ask again in English?"
           }
         }
       }
@@ -667,6 +655,78 @@
         }
       }
     },
+    "chat.history.delete" : {
+      "comment" : "Swipe action that deletes a chat.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        }
+      }
+    },
+    "chat.history.emptyDetail" : {
+      "comment" : "Detail under \"No chats yet\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questions you ask here will be saved on this phone."
+          }
+        }
+      }
+    },
+    "chat.history.emptyTitle" : {
+      "comment" : "Shown in the chat list before the first question.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No chats yet"
+          }
+        }
+      }
+    },
+    "chat.history.searchPrompt" : {
+      "comment" : "Placeholder of the search field in the list of past chats.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search chats"
+          }
+        }
+      }
+    },
+    "chat.history.title" : {
+      "comment" : "Title of the list of past chats for the current child or pregnancy.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chats"
+          }
+        }
+      }
+    },
+    "chat.history.untitled" : {
+      "comment" : "Fallback title for a chat with no title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chat"
+          }
+        }
+      }
+    },
     "chat.input.placeholder" : {
       "comment" : "Placeholder in the chat input field.",
       "extractionState" : "manual",
@@ -687,6 +747,582 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Send"
+          }
+        }
+      }
+    },
+    "chat.input.stop" : {
+      "comment" : "Accessibility label of the button that stops an answer while it is being written.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop"
+          }
+        }
+      }
+    },
+    "chat.starter.babyKicks.label" : {
+      "comment" : "Starter chip on an empty chat (2nd trimester). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baby kicks"
+          }
+        }
+      }
+    },
+    "chat.starter.babyKicks.question" : {
+      "comment" : "The question a starter chip puts in the input field (2nd trimester). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When should I feel the baby move, and how often?"
+          }
+        }
+      }
+    },
+    "chat.starter.backPain.label" : {
+      "comment" : "Starter chip on an empty chat (2nd trimester). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back pain"
+          }
+        }
+      }
+    },
+    "chat.starter.backPain.question" : {
+      "comment" : "The question a starter chip puts in the input field (2nd trimester). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What can I do about back pain?"
+          }
+        }
+      }
+    },
+    "chat.starter.cesareanRecovery.label" : {
+      "comment" : "Starter chip on an empty chat (newborn, shown only after a C-section). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C-section recovery"
+          }
+        }
+      }
+    },
+    "chat.starter.cesareanRecovery.question" : {
+      "comment" : "The question a starter chip puts in the input field (newborn, shown only after a C-section). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When can I exercise after a C-section?"
+          }
+        }
+      }
+    },
+    "chat.starter.contractions.label" : {
+      "comment" : "Starter chip on an empty chat (3rd trimester). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contractions"
+          }
+        }
+      }
+    },
+    "chat.starter.contractions.question" : {
+      "comment" : "The question a starter chip puts in the input field (3rd trimester). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How do I tell real contractions from Braxton Hicks?"
+          }
+        }
+      }
+    },
+    "chat.starter.cramping.label" : {
+      "comment" : "Starter chip on an empty chat (1st trimester). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cramping"
+          }
+        }
+      }
+    },
+    "chat.starter.cramping.question" : {
+      "comment" : "The question a starter chip puts in the input field (1st trimester). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Is some cramping normal at this stage?"
+          }
+        }
+      }
+    },
+    "chat.starter.crying.label" : {
+      "comment" : "Starter chip on an empty chat (newborn, under 3 months). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crying"
+          }
+        }
+      }
+    },
+    "chat.starter.crying.question" : {
+      "comment" : "The question a starter chip puts in the input field (newborn, under 3 months). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My baby won't stop crying. What can I try?"
+          }
+        }
+      }
+    },
+    "chat.starter.exercise.label" : {
+      "comment" : "Starter chip on an empty chat (1st trimester). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercise"
+          }
+        }
+      }
+    },
+    "chat.starter.exercise.question" : {
+      "comment" : "The question a starter chip puts in the input field (1st trimester). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What exercise is OK for me right now?"
+          }
+        }
+      }
+    },
+    "chat.starter.feedingEnough.label" : {
+      "comment" : "Starter chip on an empty chat (newborn, under 3 months). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feeding"
+          }
+        }
+      }
+    },
+    "chat.starter.feedingEnough.question" : {
+      "comment" : "The question a starter chip puts in the input field (newborn, under 3 months). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How do I know my baby is eating enough?"
+          }
+        }
+      }
+    },
+    "chat.starter.foodsToAvoid.label" : {
+      "comment" : "Starter chip on an empty chat (1st trimester). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foods to avoid"
+          }
+        }
+      }
+    },
+    "chat.starter.foodsToAvoid.question" : {
+      "comment" : "The question a starter chip puts in the input field (1st trimester). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Which foods should I avoid while pregnant?"
+          }
+        }
+      }
+    },
+    "chat.starter.hospitalBag.label" : {
+      "comment" : "Starter chip on an empty chat (3rd trimester). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hospital bag"
+          }
+        }
+      }
+    },
+    "chat.starter.hospitalBag.question" : {
+      "comment" : "The question a starter chip puts in the input field (3rd trimester). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What should I pack for the hospital?"
+          }
+        }
+      }
+    },
+    "chat.starter.milestones.label" : {
+      "comment" : "Starter chip on an empty chat (baby, 3 to 11 months). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Milestones"
+          }
+        }
+      }
+    },
+    "chat.starter.milestones.question" : {
+      "comment" : "The question a starter chip puts in the input field (baby, 3 to 11 months). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What should my baby be doing at this age?"
+          }
+        }
+      }
+    },
+    "chat.starter.nausea.label" : {
+      "comment" : "Starter chip on an empty chat (1st trimester). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nausea"
+          }
+        }
+      }
+    },
+    "chat.starter.nausea.question" : {
+      "comment" : "The question a starter chip puts in the input field (1st trimester). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What helps with morning sickness?"
+          }
+        }
+      }
+    },
+    "chat.starter.pickyEating.label" : {
+      "comment" : "Starter chip on an empty chat (toddler, 1 to 3 years). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Picky eating"
+          }
+        }
+      }
+    },
+    "chat.starter.pickyEating.question" : {
+      "comment" : "The question a starter chip puts in the input field (toddler, 1 to 3 years). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My toddler barely eats. Is that normal?"
+          }
+        }
+      }
+    },
+    "chat.starter.poop.label" : {
+      "comment" : "Starter chip on an empty chat (newborn, under 3 months). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poop"
+          }
+        }
+      }
+    },
+    "chat.starter.poop.question" : {
+      "comment" : "The question a starter chip puts in the input field (newborn, under 3 months). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Is my baby's poop normal?"
+          }
+        }
+      }
+    },
+    "chat.starter.signsOfLabor.label" : {
+      "comment" : "Starter chip on an empty chat (3rd trimester). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signs of labor"
+          }
+        }
+      }
+    },
+    "chat.starter.signsOfLabor.question" : {
+      "comment" : "The question a starter chip puts in the input field (3rd trimester). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What are the signs that labor is starting?"
+          }
+        }
+      }
+    },
+    "chat.starter.sleep.label" : {
+      "comment" : "Starter chip on an empty chat (baby and toddler, any age). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep"
+          }
+        }
+      }
+    },
+    "chat.starter.sleep.question" : {
+      "comment" : "The question a starter chip puts in the input field (baby and toddler, any age). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How much sleep does my little one need at this age?"
+          }
+        }
+      }
+    },
+    "chat.starter.sleepPositions.label" : {
+      "comment" : "Starter chip on an empty chat (2nd and 3rd trimester). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep positions"
+          }
+        }
+      }
+    },
+    "chat.starter.sleepPositions.question" : {
+      "comment" : "The question a starter chip puts in the input field (2nd and 3rd trimester). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What's the best position to sleep in now?"
+          }
+        }
+      }
+    },
+    "chat.starter.solids.label" : {
+      "comment" : "Starter chip on an empty chat (baby, 3 to 11 months). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starting solids"
+          }
+        }
+      }
+    },
+    "chat.starter.solids.question" : {
+      "comment" : "The question a starter chip puts in the input field (baby, 3 to 11 months). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How do I start solid foods?"
+          }
+        }
+      }
+    },
+    "chat.starter.talking.label" : {
+      "comment" : "Starter chip on an empty chat (toddler, 1 to 3 years). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Talking"
+          }
+        }
+      }
+    },
+    "chat.starter.talking.question" : {
+      "comment" : "The question a starter chip puts in the input field (toddler, 1 to 3 years). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How many words should my child say at this age?"
+          }
+        }
+      }
+    },
+    "chat.starter.tantrums.label" : {
+      "comment" : "Starter chip on an empty chat (toddler, 1 to 3 years). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tantrums"
+          }
+        }
+      }
+    },
+    "chat.starter.tantrums.question" : {
+      "comment" : "The question a starter chip puts in the input field (toddler, 1 to 3 years). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How should I handle tantrums?"
+          }
+        }
+      }
+    },
+    "chat.starter.teething.label" : {
+      "comment" : "Starter chip on an empty chat (baby, 3 to 11 months). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teething"
+          }
+        }
+      }
+    },
+    "chat.starter.teething.question" : {
+      "comment" : "The question a starter chip puts in the input field (baby, 3 to 11 months). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How can I help with teething pain?"
+          }
+        }
+      }
+    },
+    "chat.starter.whatToEat.label" : {
+      "comment" : "Starter chip on an empty chat (2nd trimester). Short label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What to eat"
+          }
+        }
+      }
+    },
+    "chat.starter.whatToEat.question" : {
+      "comment" : "The question a starter chip puts in the input field (2nd trimester). She can edit it before sending.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What should I be eating at this stage?"
+          }
+        }
+      }
+    },
+    "chat.toolbar.history" : {
+      "comment" : "Chat toolbar button: opens the list of past chats.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chats"
+          }
+        }
+      }
+    },
+    "chat.toolbar.newChat" : {
+      "comment" : "Chat toolbar button: starts a new, empty chat.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New chat"
+          }
+        }
+      }
+    },
+    "chat.writing" : {
+      "comment" : "Accessibility label of the dots shown before the first word of an answer arrives.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Writing an answer"
           }
         }
       }
