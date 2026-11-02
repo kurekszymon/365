@@ -14,6 +14,9 @@ struct ChatView: View {
     /// The day "Not yet" was tapped on the birth banner, as seconds since 1970. 0 = never.
     @AppStorage("birthBanner.dismissedOn") private var bannerDismissedOn: Double = 0
     @Environment(\.modelContext) private var context
+    #if DEBUG
+    @AppStorage(DebugKeys.tokenOverlay) private var showsTokenOverlay = false
+    #endif
 
     var body: some View {
         ScrollView {
@@ -36,8 +39,6 @@ struct ChatView: View {
                 if let failure = chat?.failure {
                     FailureBubble(failure: failure) {
                         chat?.retry()
-                    } onNewChat: {
-                        startNewChat()
                     }
                 }
             }
@@ -55,6 +56,14 @@ struct ChatView: View {
             .padding(.bottom, Spacing.s)
             .background(Palette.background)
         }
+        #if DEBUG
+        .overlay(alignment: .topTrailing) {
+            if showsTokenOverlay, let chat {
+                TokenOverlay(chat: chat)
+                    .padding(Spacing.s)
+            }
+        }
+        #endif
         .safeAreaInset(edge: .top, spacing: 0) {
             if let child, isShowingBirthBanner {
                 BirthBannerView(multiples: child.multiples) {

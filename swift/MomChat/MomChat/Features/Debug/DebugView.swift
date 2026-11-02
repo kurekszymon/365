@@ -7,6 +7,8 @@ import SwiftUI
 struct DebugView: View {
     @State private var settings = ModelProbe.Settings()
     @State private var isConfirmingReset = false
+    @AppStorage(DebugKeys.tokenOverlay) private var showsTokenOverlay = false
+    @AppStorage(DebugKeys.contextSizeOverride) private var contextSizeOverride = 0
     @Environment(\.modelContext) private var context
 
     private let model = SystemLanguageModel.default
@@ -29,6 +31,20 @@ struct DebugView: View {
                 Text(verbatim: "Settings")
             } footer: {
                 Text(verbatim: "Used by the playground and the question runner. Permissive mode only relaxes the filter for text answers.")
+            }
+
+            Section {
+                Toggle(String("Token overlay in chat"), isOn: $showsTokenOverlay)
+                Picker(String("Pretend context is"), selection: $contextSizeOverride) {
+                    Text(verbatim: "Real (\(model.contextSize))").tag(0)
+                    ForEach([1_500, 2_000, 2_500, 3_000], id: \.self) { size in
+                        Text(verbatim: "\(size) tokens").tag(size)
+                    }
+                }
+            } header: {
+                Text(verbatim: "Context")
+            } footer: {
+                Text(verbatim: "A smaller pretend context makes the chat compact after a few questions. The overlay shows prompt + answer reserve against the window; tap it for details and the current summary.")
             }
 
             Section {

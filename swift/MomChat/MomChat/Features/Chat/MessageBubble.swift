@@ -73,7 +73,6 @@ struct WritingIndicator: View {
 struct FailureBubble: View {
     let failure: ChatFailure
     let onRetry: () -> Void
-    let onNewChat: () -> Void
 
     var body: some View {
         MessageBubble(isUser: false) {
@@ -82,10 +81,6 @@ struct FailureBubble: View {
                     .foregroundStyle(Palette.textSecondary)
                 if failure.canRetry {
                     Button(.chatFailureRetry, action: onRetry)
-                        .font(Typography.chip)
-                        .tint(Palette.accent)
-                } else if failure == .tooLong {
-                    Button(.chatFailureNewChat, action: onNewChat)
                         .font(Typography.chip)
                         .tint(Palette.accent)
                 }

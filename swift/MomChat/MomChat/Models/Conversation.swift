@@ -7,6 +7,11 @@ import SwiftData
     @Relationship(deleteRule: .cascade, inverse: \Message.conversation)
     var messages: [Message] = []
     var title: String?
+    /// Short notes standing in for the oldest messages once the chat outgrew the model's context
+    /// (Stage 7). Only the model sees them; every message stays on screen and in search.
+    var summary: String? = nil
+    /// How many of `sortedMessages`, from the start, `summary` covers. Those aren't sent word for word.
+    var summarizedMessageCount: Int = 0
     var createdAt: Date
     var updatedAt: Date
 

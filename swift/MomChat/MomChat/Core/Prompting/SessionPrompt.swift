@@ -3,8 +3,8 @@ import SwiftData
 
 /// Builds the instructions for a chat about `child` from what's in the store.
 enum SessionPrompt {
-    static func instructions(for child: Child, in context: ModelContext, on date: Date = .now, calendar: Calendar = .current) -> String {
-        Instructions.make(profileBlock: profileBlock(for: child, in: context, on: date, calendar: calendar), on: date, calendar: calendar)
+    static func instructions(for child: Child, in context: ModelContext, earlierSummary: String? = nil, on date: Date = .now, calendar: Calendar = .current) -> String {
+        Instructions.make(profileBlock: profileBlock(for: child, in: context, on: date, calendar: calendar), earlierSummary: earlierSummary, on: date, calendar: calendar)
     }
 
     static func profileBlock(for child: Child, in context: ModelContext, on date: Date = .now, calendar: Calendar = .current) -> String {

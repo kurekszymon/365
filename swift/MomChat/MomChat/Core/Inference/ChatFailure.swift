@@ -7,7 +7,8 @@ nonisolated enum ChatFailure: Equatable, Sendable {
     case declined
     /// She wrote in a language the model doesn't support.
     case unsupportedLanguage
-    /// The conversation no longer fits. Stage 7 compacts instead; for now she starts a new chat.
+    /// The message alone doesn't fit, even after compacting the whole chat and retrying once.
+    /// A long chat never ends up here: older turns are summarized (`ChatController`).
     case tooLong
     /// Apple Intelligence was turned off or the model is being updated.
     case modelUnavailable

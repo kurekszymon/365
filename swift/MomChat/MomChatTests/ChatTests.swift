@@ -138,6 +138,17 @@ struct ProfileBlockTests {
         #expect(instructions.contains("Today is Sunday, November 1, 2026."))
         #expect(instructions.contains("Always answer in English."))
     }
+
+    @Test func summaryGoesAfterTheProfileOnlyWhenThereIsOne() {
+        let plain = Instructions.make(profileBlock: "Mom: 30", on: today, calendar: calendar)
+        #expect(Instructions.make(profileBlock: "Mom: 30", earlierSummary: nil, on: today, calendar: calendar) == plain)
+        #expect(Instructions.make(profileBlock: "Mom: 30", earlierSummary: "", on: today, calendar: calendar) == plain)
+        #expect(!plain.contains("Earlier in this chat"))
+
+        let withSummary = Instructions.make(profileBlock: "Mom: 30", earlierSummary: "- Emma had a rash on day 3", on: today, calendar: calendar)
+        #expect(withSummary.hasPrefix(plain))
+        #expect(withSummary.hasSuffix("- Emma had a rash on day 3"))
+    }
 }
 
 struct ChatHistoryTests {
@@ -149,15 +160,19 @@ struct ChatHistoryTests {
             (.user, "q2"), (.assistant, "a2"),
             (.user, "unanswered"),
         ])
-        #expect(turns == [.init(question: "q1", answer: "a1"), .init(question: "q2", answer: "a2")])
+        #expect(turns == [.init(question: "q1", answer: "a1", end: 3), .init(question: "q2", answer: "a2", end: 6)])
     }
 
-    @Test func keepsTheNewestTurnsThatFit() {
-        let messages: [(role: Message.Role, text: String)] = (1...5).flatMap { index in
-            [(Message.Role.user, "q\(index)"), (.assistant, String(repeating: "x", count: 98))]
-        }
-        let turns = ChatHistory.turns(from: messages, budget: 300)
-        #expect(turns.map(\.question) == ["q3", "q4", "q5"])
+    @Test func skipsWhatTheSummaryCovers() {
+        let messages: [(role: Message.Role, text: String)] = [
+            (.user, "q1"), (.assistant, "a1"),
+            (.user, "q2"), (.assistant, "a2"),
+            (.user, "q3"), (.assistant, "a3"),
+        ]
+        #expect(ChatHistory.turns(from: messages, startingAt: 4).map(\.question) == ["q3"])
+        #expect(ChatHistory.turns(from: messages, startingAt: 6).isEmpty)
+        // A cut between a question and its answer leaves the orphan answer out.
+        #expect(ChatHistory.turns(from: messages, startingAt: 3).map(\.question) == ["q3"])
     }
 
     @Test func transcriptHasInstructionsThenTurns() {
@@ -172,6 +187,107 @@ struct ChatHistoryTests {
             return
         }
     }
+}
+
+struct ContextBudgetTests {
+    private let budget = ContextBudget(contextSize: 4_096)
+
+    @Test func followsThePlanTable() {
+        #expect(budget.answerReserve == ChatController.maximumResponseTokens)
+        #expect(budget.promptLimit == 4_096 - 600)
+        var withTools = budget
+        withTools.toolReserve = 150
+        #expect(withTools.promptLimit == 4_096 - 750)
+    }
+
+    @Test func keepsTheNewestTurnsInTheKeepShare() {
+        // Room for history: 3496 - 700 - 250 - 46 = 2500; keep 40% = 1000 → the newest three 300s.
+        let turns = [300, 300, 300, 300, 300, 300]
+        #expect(budget.turnsToCompact(turnTokens: turns, baseInstructions: 700, question: 46) == 3)
+    }
+
+    @Test func keepsNothingThatDoesntFitEvenIfItsTheNewest() {
+        #expect(budget.turnsToCompact(turnTokens: [100, 100, 1_500], baseInstructions: 700, question: 46) == 3)
+    }
+
+    @Test func retryCompactsEverything() {
+        #expect(budget.turnsToCompact(turnTokens: [10, 10, 10], baseInstructions: 700, question: 46, keepShare: 0) == 3)
+    }
+
+    @Test func aHugeQuestionCompactsEverythingWithoutCrashing() {
+        #expect(budget.turnsToCompact(turnTokens: [100, 100], baseInstructions: 700, question: 9_000) == 2)
+        #expect(budget.turnsToCompact(turnTokens: [], baseInstructions: 700, question: 9_000) == 0)
+    }
+
+    /// After a compaction the kept turns, a full summary and the question leave room for more
+    /// questions before the next one.
+    @Test func compactionLeavesHeadroom() {
+        let turns = Array(repeating: 250, count: 20)
+        let compacted = budget.turnsToCompact(turnTokens: turns, baseInstructions: 700, question: 50)
+        let kept = turns.dropFirst(compacted).reduce(0, +)
+        let after = 700 + budget.summaryReserve + kept + 50
+        #expect(budget.promptLimit - after >= 1_000)
+    }
+
+    @Test func usageFits() {
+        let usage = ContextUsage(instructions: 700, summary: 0, history: 2_000, turns: 6, question: 50, contextSize: 4_096, promptLimit: 3_496, isExact: true)
+        #expect(usage.total == 2_750)
+        #expect(usage.fits)
+        var over = usage
+        over.history = 3_000
+        #expect(!over.fits)
+    }
+
+    @Test func estimateErrsHigh() {
+        // English is ~4 characters per token; the estimate assumes 3.
+        let text = String(repeating: "abcd", count: 100)
+        #expect(TokenCounter.estimate(text) >= 400 / 3)
+        #expect(TokenCounter(usesModel: false).isExact == false)
+    }
+}
+
+struct CompactorTests {
+    @Test func firstSummaryHasNoPreviousNotes() {
+        let prompt = Compactor.prompt(previous: nil, turns: [.init(question: "Emma has a rash", answer: "Watch for fever.")])
+        #expect(!prompt.contains("Notes so far"))
+        #expect(prompt.contains("Mom: Emma has a rash\nMomChat: Watch for fever."))
+        #expect(prompt.hasSuffix("Write the notes."))
+    }
+
+    @Test func laterSummariesMergeThePreviousNotes() {
+        let prompt = Compactor.prompt(previous: "- rash on day 3", turns: [.init(question: "q", answer: "a")])
+        #expect(prompt.hasPrefix("Notes so far:\n- rash on day 3"))
+        #expect(prompt.contains("merging"))
+    }
+
+    @Test func longAnswersAreClipped() {
+        let long = String(repeating: "a", count: 5_000)
+        let prompt = Compactor.prompt(previous: nil, turns: [.init(question: long, answer: long)])
+        #expect(prompt.count < Compactor.questionClip + Compactor.answerClip + 200)
+    }
+
+    @Test func shortRunsAreOneBatch() {
+        let turns = (1...6).map { ChatHistory.Turn(question: "q\($0)", answer: String(repeating: "a", count: 500), end: $0 * 2) }
+        #expect(Compactor.batches(turns, contextSize: 4_096) == [turns])
+        #expect(Compactor.batches([], contextSize: 4_096).isEmpty)
+    }
+
+    /// A long chat saved before compaction existed is folded in over several calls, each fitting
+    /// the summarizer's context, in order.
+    @Test func longRunsAreSplitIntoBatchesThatFit() {
+        let turn = ChatHistory.Turn(question: String(repeating: "q", count: 2_000), answer: String(repeating: "a", count: 3_000))
+        let turns = Array(repeating: turn, count: 40)
+        let batches = Compactor.batches(turns, contextSize: 4_096)
+        #expect(batches.count > 1)
+        #expect(batches.flatMap { $0 }.count == 40)
+        let previous = String(repeating: "n", count: Compactor.maximumSummaryTokens * 3)
+        for batch in batches {
+            let prompt = Compactor.prompt(previous: previous, turns: batch)
+            let tokens = TokenCounter.estimate(Compactor.instructions) + TokenCounter.estimate(prompt) + Compactor.maximumSummaryTokens
+            #expect(tokens <= 4_096, "\(tokens)")
+        }
+    }
+
 }
 
 struct ChatFailureTests {

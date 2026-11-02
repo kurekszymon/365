@@ -487,18 +487,6 @@
         }
       }
     },
-    "chat.failure.newChat" : {
-      "comment" : "Button under the \"chat has gotten long\" message: starts a new chat.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New chat"
-          }
-        }
-      }
-    },
     "chat.failure.retry" : {
       "comment" : "Button under a failed answer: asks the same question again.",
       "extractionState" : "manual",
@@ -524,13 +512,13 @@
       }
     },
     "chat.failure.tooLong" : {
-      "comment" : "Shown when the conversation no longer fits in the model's memory.",
+      "comment" : "Shown instead of an answer when one message is too long for the model to read, even after older messages were summarized.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "This chat has gotten long. Start a new chat to keep going."
+            "value" : "That message is too long for me to read in one go. Try asking in a few shorter messages."
           }
         }
       }

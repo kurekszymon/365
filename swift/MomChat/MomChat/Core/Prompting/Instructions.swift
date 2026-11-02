@@ -7,11 +7,13 @@ enum Instructions {
     /// Bump when the wording changes, so eval reports can say which prompt they ran.
     static let version = 1
 
-    static func make(profileBlock: String, on date: Date = .now, calendar: Calendar = .current) -> String {
+    /// `earlierSummary`: notes on the older part of a long chat (Stage 7). Absent in a short chat,
+    /// so single questions (and the eval set) see exactly the version-1 text.
+    static func make(profileBlock: String, earlierSummary: String? = nil, on date: Date = .now, calendar: Calendar = .current) -> String {
         let style = Date.FormatStyle(date: .complete, time: .omitted, locale: ProfileBlock.locale, calendar: calendar, timeZone: calendar.timeZone)
         let today = date.formatted(style)
 
-        return """
+        let base = """
             You are MomChat, a calm and experienced midwife who answers questions from pregnant women and new moms. \
             You help with pregnancy, recovery after birth, and caring for babies and children up to age 3.
 
@@ -36,6 +38,13 @@ enum Instructions {
 
             Profile:
             \(profileBlock)
+            """
+        guard let earlierSummary, !earlierSummary.isEmpty else { return base }
+        return base + """
+
+
+            Earlier in this chat (notes on older messages; use them as background, don't mention the notes):
+            \(earlierSummary)
             """
     }
 }
