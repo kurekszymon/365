@@ -126,6 +126,7 @@ enum ProfileBlock {
 
     private static func correctedText(_ corrected: CorrectedAge) -> String {
         switch corrected {
+        case .age(.days(0)): "due date today"
         case .age(let age): "corrected \(DurationText.age(age, locale: locale))"
         case .beforeDueDate(let days): "\(DurationText.corrected(.beforeDueDate(days: days), locale: locale)) before due date"
         }
@@ -143,7 +144,7 @@ enum ProfileBlock {
         case .born, .archived:
             let name = other.name ?? "a child"
             guard let age = other.age(on: date, calendar: calendar) else { return name }
-            return "\(name) (\(DurationText.age(age, locale: locale)))"
+            return "\(name) (\(age == .days(0) ? "born today" : DurationText.age(age, locale: locale)))"
         }
     }
 

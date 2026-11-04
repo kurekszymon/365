@@ -24,6 +24,7 @@ struct ChatHeader: Equatable {
     private static func corrected(_ age: CorrectedAge, locale: Locale) -> String {
         let duration = DurationText.corrected(age, locale: locale)
         switch age {
+        case .age(.days(0)): return String(localized: .chatHeaderDueDateToday)
         case .age: return String(localized: .chatHeaderCorrectedAge(duration))
         case .beforeDueDate: return String(localized: .chatHeaderBeforeDueDate(duration))
         }

@@ -559,6 +559,18 @@
         }
       }
     },
+    "chat.header.dueDateToday" : {
+      "comment" : "Chat header subtitle for a premature baby on the day they reach their original due date (corrected age is zero).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Due date today"
+          }
+        }
+      }
+    },
     "chat.header.correctedAge" : {
       "comment" : "Chat header subtitle for a premature baby. The value is a duration, e.g. \"6 months\".",
       "extractionState" : "manual",

@@ -251,6 +251,11 @@ struct ChatHeaderTests {
         #expect(early.subtitle == "6 weeks 4 days before due date")
     }
 
+    @Test func pretermOnTheDueDateSaysSoInsteadOfZeroDays() {
+        let header = header(Child(stage: .born, dueDate: day(0), birthDate: day(-30)))
+        #expect(header.subtitle == "Due date today")
+    }
+
     @Test func noChildOrArchivedShowsAppName() {
         #expect(header(nil).title == "MomChat")
         #expect(header(Child(stage: .archived, dueDate: day(60))).title == "MomChat")

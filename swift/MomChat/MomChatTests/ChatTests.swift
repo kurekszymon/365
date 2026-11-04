@@ -71,6 +71,16 @@ struct ProfileBlockTests {
         #expect(block.contains("Her other children: a pregnancy at 25 weeks."))
     }
 
+    @Test func neverSaysZeroDays() {
+        let leo = Child(name: "Leo", stage: .born, birthDate: day(0))
+        let preemie = Child(name: "Ola", stage: .born, dueDate: day(0), birthDate: day(-30))
+        let block = ProfileBlock.make(mom: nil, child: preemie, others: [leo], on: today, calendar: calendar)
+        #expect(block.contains("due date today"))
+        #expect(block.contains("Leo (born today)"))
+        #expect(!block.contains("corrected 0 days"))
+        #expect(!block.contains("(0 days)"))
+    }
+
     @Test func multiplesPregnancy() {
         let child = Child(name: "Kuba", stage: .expecting, dueDate: day(70), multiples: 2)
         child.sex = .boy
