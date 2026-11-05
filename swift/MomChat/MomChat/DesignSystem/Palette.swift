@@ -19,8 +19,8 @@ enum Palette {
     static let bubbleUser = Color(light: 0xEBDDD4, dark: 0x4E3644)
     static let bubbleAssistant = Color(light: 0xFFFFFF, dark: 0x2C252C)
 
-    static let chip = Color(light: 0xDCEDDE, dark: 0x24302A)
-    static let onChip = Color(light: 0x2F4A35, dark: 0xB0D4B4)
+    static let chip = Color(light: 0xE5EDE6, dark: 0x272D29)
+    static let onChip = Color(light: 0x3D5042, dark: 0xA9C2AC)
 }
 
 // `nonisolated`: SwiftUI can resolve colors on a background render thread, and a main-actor
