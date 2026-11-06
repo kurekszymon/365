@@ -2,7 +2,8 @@ import Foundation
 import FoundationModels
 
 /// Why an answer didn't come, in terms the chat can show. Never a raw error.
-nonisolated enum ChatFailure: Equatable, Sendable {
+/// The raw value is saved on the question (`Message.failureReason`) so a reopened chat still shows it.
+nonisolated enum ChatFailure: String, Equatable, Sendable {
     /// Apple's filter, or the model itself, declined. Often innocent questions (breastfeeding, rashes).
     case declined
     /// She wrote in a language the model doesn't support.

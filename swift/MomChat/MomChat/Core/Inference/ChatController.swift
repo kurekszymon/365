@@ -44,6 +44,10 @@ final class ChatController {
         self.child = child
         self.conversation = conversation
         self.context = context
+        // A reopened chat whose last question went unanswered shows why, with Try again where it helps.
+        if let last = conversation?.sortedMessages.last, last.role == .user {
+            failure = last.failure
+        }
     }
 
     /// Saved messages, oldest first.
@@ -236,8 +240,14 @@ final class ChatController {
     private func finish(failure: ChatFailure?) {
         let wasStopped = task?.isCancelled == true
         let text = (streamingText ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let question = messages.last { $0.role == .user }
         if let conversation, !text.isEmpty {
+            question?.failure = nil
             append(Message(role: .assistant, text: text), to: conversation)
+        } else if let failure, let question, messages.last === question {
+            // Saved so the chat still explains the gap after it's reopened.
+            question.failure = failure
+            save()
         }
         // After a stop or an error the session's transcript no longer matches what was saved.
         if wasStopped || failure != nil { session = nil }

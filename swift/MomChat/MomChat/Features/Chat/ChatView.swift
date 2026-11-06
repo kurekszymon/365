@@ -28,6 +28,10 @@ struct ChatView: View {
                     .padding(.bottom, Spacing.s)
                 ForEach(chat?.messages ?? []) { message in
                     MessageBubble(role: message.role, text: message.text)
+                    // Earlier unanswered questions. The last one is `chat.failure` below, with Try again.
+                    if let saved = message.failure, message !== chat?.messages.last {
+                        FailureBubble(failure: saved)
+                    }
                 }
                 if let streaming = chat?.streamingText {
                     if streaming.isEmpty {

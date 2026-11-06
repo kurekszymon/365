@@ -35,11 +35,18 @@ import SwiftData
     var conversation: Conversation?
     var role: Role
     var text: String
+    /// On a question whose answer never came: why (`ChatFailure.rawValue`). Cleared once it's answered.
+    var failureReason: String? = nil
     var createdAt: Date
 
     init(role: Role, text: String, createdAt: Date = .now) {
         self.role = role
         self.text = text
         self.createdAt = createdAt
+    }
+
+    var failure: ChatFailure? {
+        get { failureReason.flatMap(ChatFailure.init(rawValue:)) }
+        set { failureReason = newValue?.rawValue }
     }
 }

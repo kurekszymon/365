@@ -72,14 +72,15 @@ struct WritingIndicator: View {
 /// A friendly message where an answer would be, with a way forward when there is one.
 struct FailureBubble: View {
     let failure: ChatFailure
-    let onRetry: () -> Void
+    /// `nil` for a failure further up a reopened chat: only the latest question can be retried.
+    var onRetry: (() -> Void)? = nil
 
     var body: some View {
         MessageBubble(isUser: false) {
             VStack(alignment: .leading, spacing: Spacing.s) {
                 Text(message)
                     .foregroundStyle(Palette.textSecondary)
-                if failure.canRetry {
+                if failure.canRetry, let onRetry {
                     Button(.chatFailureRetry, action: onRetry)
                         .font(Typography.chip)
                         .tint(Palette.accent)

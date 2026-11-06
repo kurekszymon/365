@@ -360,6 +360,39 @@ struct ConversationTests {
         #expect(ConversationSearch.search("teeth", in: [sleep, rash]).isEmpty)
     }
 
+    @Test func reopenedChatShowsWhyTheLastQuestionWentUnanswered() throws {
+        let container = try DataStore.makeInMemoryContainer()
+        let context = container.mainContext
+        let child = Child(name: "Emma", stage: .born, birthDate: .now.addingTimeInterval(-90 * 86_400))
+        context.insert(child)
+
+        func chat(_ messages: [(Message.Role, String, ChatFailure?)]) -> ChatController {
+            let conversation = Conversation(child: child)
+            context.insert(conversation)
+            for (offset, (role, text, failure)) in messages.enumerated() {
+                let message = Message(role: role, text: text, createdAt: Date(timeIntervalSince1970: Double(offset)))
+                message.failure = failure
+                context.insert(message)
+                message.conversation = conversation
+            }
+            return ChatController(child: child, conversation: conversation, context: context)
+        }
+
+        #expect(chat([(.user, "Is this rash normal?", .declined)]).failure == .declined)
+        #expect(chat([(.user, "Hi", .retryable)]).failure?.canRetry == true)
+        // An earlier refusal stays on its question; the live failure is only for the last one.
+        #expect(chat([(.user, "Rash?", .declined), (.user, "Sleep?", nil), (.assistant, "Most babies…", nil)]).failure == nil)
+        #expect(chat([(.user, "Stopped before the first word", nil)]).failure == nil)
+    }
+
+    @Test func failureIsSavedAsItsRawValue() {
+        let message = Message(role: .user, text: "Q")
+        message.failure = .unsupportedLanguage
+        #expect(message.failureReason == "unsupportedLanguage")
+        message.failureReason = "somethingFromAFutureVersion"
+        #expect(message.failure == nil)
+    }
+
     @Test func snippetStartsNearTheMatch() {
         let text = String(repeating: "filler ", count: 30) + "the match is here" + String(repeating: " tail", count: 30)
         let snippet = ConversationSearch.snippet(text, around: "match")
