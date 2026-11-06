@@ -14,6 +14,12 @@
 - Deferred: Polish translations for all Stage 1 strings (→ before Stage 4 / Stage 13); sage chips stand out a bit much, tone down later; large Dynamic Type sizes not checked (→ Stage 13)
 - Decisions: palette from the user's Figma swatches (mauve accent, taupe user bubbles, sage chips); colors defined in code, not the asset catalog (only AccentColor lives there); `xcodebuild` doesn't sync the String Catalog, so keys are added by hand and checked against the compiler's extracted strings
 
+## Stage 2: Model Spike — committed 2026-10-27 (`cde6161`), approval not logged
+
+- Built: `ModelAvailability` gate before onboarding (not enabled / downloading / not eligible screens, rechecked on foreground, *Skip (debug)* in debug builds); Developer tools → model info, guardrail + answer-length settings, streaming playground with 6 hand-written profiles, question runner over `evals/questions.json` with timing, token count, refusals and export; `evals/README.md` + a 10-question template (symlinked into the app)
+- Deferred: the real 50 questions (checklist item 9); debug code and `questions.json` still built into Release (→ remove before TestFlight); Polish for the new strings
+- Decisions: **go EN-only for now** (2026-10-29, also logged under Stage 3)
+
 ## Stage 3: Data Models + Date Logic ✅ approved 2026-10-28
 
 - Built: SwiftData models `MomProfile`, `Child` (stage/sex/delivery/feeding enums, `multiples`, `multipleBirthID`), `Conversation` + `Message`, `ProfileNote`, with cascade deletes; `DataStore` in its own `Application Support/Store/` folder with `.complete` file protection, excluded from backup, CloudKit off, opened lazily (prewarm before first unlock); `Core/Dates`: due date from last period, pregnancy week + trimester, age (days → weeks → months → years), corrected age, EN + PL text; `Child.recordBirth` splits a multiples pregnancy into one child per baby; Developer tools → *Dates & storage* screen; 25 new tests (36 total)
@@ -22,7 +28,11 @@
 - Decisions: Polish plurals come from Foundation's `DateComponentsFormatter` (CLDR), not hand-written rules; corrected age only for babies born before 37w0d, until 24 months chronological; last-period date not stored; `sex = nil` means unknown; no speculative model fields — additive changes migrate automatically until TestFlight, `VersionedSchema` before Stage 14
 - Stage 2 decision (2026-10-29): **go EN-only for now**. Model answers in English; Polish UI strings keep going into the String Catalog but don't block any stage
 
-## Stage 4: Onboarding (decisions made, not started)
+## Stage 4: Onboarding — committed 2026-10-29 (`fb6e2bd`, follow-ups `f1e7ded`, `aa3c9a2`), approval not logged
+
+- Built: welcome → device check → "Where are you right now?" → pregnancy / birth details → "You have 20 free questions" → chat; nothing saved until the last step; one `Child` per baby for born multiples (shared `multipleBirthID`), `multiples = n` while expecting; `ChatHeader` ("Week 24 · 2nd trimester", "Emma · 7 months", "Baby · born today", corrected-age subtitle); stage-dependent chips; `MomProfile.activeChild`; `PrimaryButton`; Developer tools → delete all data and restart onboarding; every UI string moved to keyed catalog entries
+- Open questions from the hand-off (answers not logged): "Both" opens on the pregnancy; "First pregnancy? → No" saved as 1 earlier birth; twin pregnancies skip name/sex; birth date without time
+- Deferred: Polish for all keys; free-questions counter (→ Stage 10); FaceID slot (→ Stage 11); "Born early" toggle and dark mode not checked in the simulator
 
 - Required fields: Expecting = due date **or** first day of last period. Baby is here = birth date. Both = both. Everything else optional: number of babies (default 1, no upper limit), first pregnancy?, baby name (nil = "Baby"), born early + weeks early (due date = birth + weeks), sex, delivery type, feeding, allergies/conditions, what the doctor is watching. "Both" skips "first pregnancy?"
 - Validation: due date from ~2 weeks ago to 40 weeks ahead; birth date not in the future, not more than 3 years ago
@@ -32,9 +42,28 @@
 - Copy: Claude writes English and adds every key to the catalog; the user writes Polish natively (Stage 1–2 Polish also still missing)
 - Strings (2026-10-30): **no inline literals in app code**. Every user-facing string is a dotted catalog key (`onboarding.welcome.title`) with the English as its value, used through generated symbols (`Text(.onboardingWelcomeTitle)`). The same word in different contexts gets separate keys. Developer tools stay plain English. Check: after a build, `.stringsdata` only lists `GeneratedStringSymbols_Localizable`
 
-## Stage 5: Profiles Screen (decisions made, not started)
+## Stage 5: Profiles Screen — committed 2026-10-31 (`85523e2`), approval not logged
+
+- Built: `ProfilesView` (opened from the chat header and Settings), switching the active child, `MomEditView` / `ChildEditView` for every field, `AddChildView`, `BirthBannerView` + `BirthFormView` (one block per baby for multiples, via `Child.recordBirth`), archive flow; `Child+Profiles` helpers; `ProfilesTests`
+- Note: `MomChatUITests/Stage5Throwaway.swift` was committed with this stage, though throwaway UI tests are meant to stay out of git
 
 - Birth banner: from 37w0d for a singleton, **34w0d for twins, 32w0d for triplets or more**. Also reachable by hand from the profile at any time (early births)
 - Pregnancy conversations after a multiple birth: they stay on the first baby's record (Stage 3), and **every sibling's history shows them too** (found through the shared `multipleBirthID`)
 - The profiles screen opens from **both** the chat header (tap the title) and Settings
 - Ending a pregnancy: it moves to `.archived` and **its history is kept by default**. Deleting it is a separate, explicit action. Loss copy is finalized in Stage 8 (midwife review)
+
+## Stage 6: Real Chat — committed 2026-11-01 (`4203bfb`), approval not logged
+
+- Built: `Instructions` (calm-midwife voice, English answers, 3–6 sentences, safety rules, ≤500 tokens, test-enforced) + `ProfileBlock` from saved data (≤~190 tokens) + `SessionPrompt`; `ChatController` with one streaming session per chat and Stop; saved questions/answers fed back via `ChatHistory`; profile edits refresh the prompt; 6-hour resume rule; chats list with search and swipe-to-delete, shared pregnancy chats for twins; 22 stage-dependent starter chips; `ChatFailure` error mapping; `EvalProfiles` replaces `SpikePrompt`, runner reports the prompt version
+- Deferred: refusals aren't saved (a reopened chat shows the question with no answer); 6-hour rule not checked on return from background; what the model is told for an archived pregnancy (→ Stage 8); 10 eval questions instead of 50; Polish for new keys; check the top bar isn't crowded
+
+## Stage 7: Context Management — built 2026-11-02 (`673b67a`), waiting for the phone test
+
+- Built: `ContextBudget` (window from `SystemLanguageModel.contextSize`, 600 answer / 0 tools / 250 summary reserve, exact tokenizer on iOS 26.4+, ~3 chars/token estimate before that); `Compactor` folds the oldest turns into ≤250-token notes saved on `Conversation` (`summary`, `summarizedMessageCount`), newest turns kept up to 40% of history room; silent full compaction + one retry on `exceededContextWindowSize`; "too long" message only for a single oversized message; token overlay and *Pretend context is…* in Developer tools; testing guide in `STAGE7-TESTING.md`
+- Not yet checked: real compaction and token counts (Apple Intelligence is off on the Mac)
+- Known gaps: summarizer output isn't measured exactly before use; a single message over ~2,500 tokens can't be answered
+
+## Small fixes between stages
+
+- 2026-11-04 (`3294a5c`): never show "0 days": "Due date today" header subtitle for a preterm baby on the original due date, "born today" / "due date today" in the profile block (closes the Stage 3 deferred item)
+- 2026-11-05 (`c1af5a6`): softer sage starter chips, contrast still ≥7:1 (closes the Stage 1 deferred item)
