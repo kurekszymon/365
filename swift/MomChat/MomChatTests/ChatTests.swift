@@ -339,6 +339,15 @@ struct ConversationTests {
         #expect(ConversationResume.conversation(from: [], now: now) == nil)
     }
 
+    @Test func openChatGoesStaleAfterTheSameWindow() {
+        let now = Date(timeIntervalSince1970: 1_000_000)
+        #expect(!ConversationResume.isStale(Conversation(child: nil, createdAt: now.addingTimeInterval(-5 * 3600)), now: now))
+        #expect(ConversationResume.isStale(Conversation(child: nil, createdAt: now.addingTimeInterval(-7 * 3600)), now: now))
+        #expect(ConversationResume.isStale(Conversation(child: nil, createdAt: now.addingTimeInterval(-ConversationResume.window)), now: now))
+        // An empty chat isn't saved yet, so it's already fresh.
+        #expect(!ConversationResume.isStale(nil, now: now))
+    }
+
     @Test func searchMatchesTitlesAndMessages() throws {
         let container = try DataStore.makeInMemoryContainer()
         let context = container.mainContext

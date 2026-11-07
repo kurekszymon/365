@@ -7,6 +7,9 @@ struct ChatView: View {
 
     @State private var chat: ChatController?
     @State private var draft = ""
+    /// The chat that went quiet when the app started a fresh one on its own. Shown as a notice
+    /// with a way back until she sends something or opens another chat.
+    @State private var freshStartFrom: Conversation?
     @State private var isShowingSettings = false
     @State private var isShowingProfiles = false
     @State private var isShowingHistory = false
@@ -14,6 +17,7 @@ struct ChatView: View {
     /// The day "Not yet" was tapped on the birth banner, as seconds since 1970. 0 = never.
     @AppStorage("birthBanner.dismissedOn") private var bannerDismissedOn: Double = 0
     @Environment(\.modelContext) private var context
+    @Environment(\.scenePhase) private var scenePhase
     #if DEBUG
     @AppStorage(DebugKeys.tokenOverlay) private var showsTokenOverlay = false
     #endif
@@ -26,6 +30,9 @@ struct ChatView: View {
                     .foregroundStyle(Palette.textSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.bottom, Spacing.s)
+                if let previous = freshStartFrom, chat?.messages.isEmpty == true {
+                    freshStartNotice(previous)
+                }
                 ForEach(chat?.messages ?? []) { message in
                     MessageBubble(role: message.role, text: message.text)
                     // Earlier unanswered questions. The last one is `chat.failure` below, with Try again.
@@ -100,6 +107,15 @@ struct ChatView: View {
         .onChange(of: child?.persistentModelID, initial: true) {
             openChat(resuming: true)
         }
+        // The 6-hour rule also applies when the app comes back from the background (left open
+        // overnight), unless an answer is still coming or she's mid-sentence.
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active, let chat, !chat.isResponding,
+                  draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  let stale = chat.conversation, ConversationResume.isStale(stale) else { return }
+            startNewChat()
+            freshStartFrom = stale
+        }
         // A birth changes the whole profile: the model needs the new one, the chat stays.
         .onChange(of: child?.stage) {
             chat?.profileDidChange()
@@ -153,6 +169,7 @@ struct ChatView: View {
     private func open(_ conversation: Conversation?) {
         chat?.close()
         draft = ""
+        freshStartFrom = nil
         guard let child else {
             chat = nil
             return
@@ -164,6 +181,23 @@ struct ChatView: View {
 
     private func startNewChat() {
         open(nil)
+    }
+
+    private func freshStartNotice(_ previous: Conversation) -> some View {
+        VStack(spacing: Spacing.s) {
+            Text(.chatFreshStartNotice)
+                .font(Typography.caption)
+                .foregroundStyle(Palette.textSecondary)
+                .multilineTextAlignment(.center)
+            Button(.chatFreshStartBack) {
+                open(previous)
+            }
+            .font(Typography.chip)
+            .tint(Palette.accent)
+        }
+        .padding(Spacing.m)
+        .frame(maxWidth: .infinity)
+        .background(Palette.surface, in: RoundedRectangle(cornerRadius: Radius.bubble))
     }
 
     private var isShowingStarters: Bool {

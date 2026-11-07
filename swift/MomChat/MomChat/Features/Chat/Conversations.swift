@@ -30,6 +30,13 @@ enum ConversationResume {
         guard let latest = history.first, now.timeIntervalSince(latest.updatedAt) < window else { return nil }
         return latest
     }
+
+    /// Back from the background: the open chat went quiet longer than `window` ago, so it's
+    /// time for a fresh one, the same as at launch. An empty, unsaved chat is already fresh.
+    static func isStale(_ current: Conversation?, now: Date = .now) -> Bool {
+        guard let current else { return false }
+        return now.timeIntervalSince(current.updatedAt) >= window
+    }
 }
 
 /// Search over a child's chats: titles and every message.

@@ -655,6 +655,30 @@
         }
       }
     },
+    "chat.freshStart.back" : {
+      "comment" : "Button under the fresh-start notice: reopens the chat she had before the app started a new one.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue that chat"
+          }
+        }
+      }
+    },
+    "chat.freshStart.notice" : {
+      "comment" : "Shown at the top of a new, empty chat that the app opened by itself because the previous one had been quiet for 6+ hours (e.g. the app was left open overnight). \"Chats\" is the list of past chats, opened from the top-left button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It's been a few hours, so this is a new chat. Your last one is saved in Chats."
+          }
+        }
+      }
+    },
     "chat.history.delete" : {
       "comment" : "Swipe action that deletes a chat.",
       "extractionState" : "manual",

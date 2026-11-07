@@ -68,3 +68,4 @@
 - 2026-11-04 (`3294a5c`): never show "0 days": "Due date today" header subtitle for a preterm baby on the original due date, "born today" / "due date today" in the profile block (closes the Stage 3 deferred item)
 - 2026-11-05 (`c1af5a6`): softer sage starter chips, contrast still ≥7:1 (closes the Stage 1 deferred item)
 - 2026-11-06: refusals and other failures are saved on the question (`Message.failureReason`, additive), so a reopened chat still explains an unanswered question; the latest one keeps Try again (closes the Stage 6 known gap). Removed the committed `Stage5Throwaway.swift` UI test
+- 2026-11-07: the 6-hour rule also runs when the app comes back from the background (not while an answer streams or with unsent text); a notice in the new chat says why and offers "Continue that chat" (closes the Stage 6 known gap)
