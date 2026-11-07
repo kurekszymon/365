@@ -787,6 +787,30 @@
         }
       }
     },
+    "chat.noProfile.detail" : {
+      "comment" : "Chat screen when no baby or pregnancy is selected, e.g. right after she archived her only pregnancy (often after a loss). Keep it gentle and don't guess why.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a baby or a pregnancy to start a new chat. Your earlier chats are kept."
+          }
+        }
+      }
+    },
+    "chat.noProfile.title" : {
+      "comment" : "Title of the chat screen when no baby or pregnancy is selected, e.g. right after she archived her only pregnancy (often after a loss). Gentle, no pressure.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Whenever you're ready"
+          }
+        }
+      }
+    },
     "chat.starter.babyKicks.label" : {
       "comment" : "Starter chip on an empty chat (2nd trimester). Short label.",
       "extractionState" : "manual",

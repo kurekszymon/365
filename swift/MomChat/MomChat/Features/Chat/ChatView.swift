@@ -14,6 +14,7 @@ struct ChatView: View {
     @State private var isShowingProfiles = false
     @State private var isShowingHistory = false
     @State private var isRecordingBirth = false
+    @State private var isAddingChild = false
     /// The day "Not yet" was tapped on the birth banner, as seconds since 1970. 0 = never.
     @AppStorage("birthBanner.dismissedOn") private var bannerDismissedOn: Double = 0
     @Environment(\.modelContext) private var context
@@ -60,12 +61,18 @@ struct ChatView: View {
         .scrollDismissesKeyboard(.interactively)
         .background(Palette.background)
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            VStack(spacing: Spacing.s) {
-                if isShowingStarters { chipRow }
-                inputBar
+            if child != nil {
+                VStack(spacing: Spacing.s) {
+                    if isShowingStarters { chipRow }
+                    inputBar
+                }
+                .padding(.bottom, Spacing.s)
+                .background(Palette.background)
             }
-            .padding(.bottom, Spacing.s)
-            .background(Palette.background)
+        }
+        // No profile to talk about, e.g. right after archiving her only pregnancy.
+        .overlay {
+            if child == nil { noProfileState }
         }
         #if DEBUG
         .overlay(alignment: .topTrailing) {
@@ -120,8 +127,12 @@ struct ChatView: View {
         .onChange(of: child?.stage) {
             chat?.profileDidChange()
         }
-        .sheet(isPresented: $isShowingSettings) {
+        // Profiles can be edited from Settings too, so the model needs the fresh profile either way.
+        .sheet(isPresented: $isShowingSettings, onDismiss: { chat?.profileDidChange() }) {
             SettingsView()
+        }
+        .sheet(isPresented: $isAddingChild) {
+            AddChildView()
         }
         .sheet(isPresented: $isShowingProfiles, onDismiss: { chat?.profileDidChange() }) {
             NavigationStack {
@@ -198,6 +209,19 @@ struct ChatView: View {
         .padding(Spacing.m)
         .frame(maxWidth: .infinity)
         .background(Palette.surface, in: RoundedRectangle(cornerRadius: Radius.bubble))
+    }
+
+    private var noProfileState: some View {
+        ContentUnavailableView {
+            Label(.chatNoProfileTitle, systemImage: "heart")
+        } description: {
+            Text(.chatNoProfileDetail)
+        } actions: {
+            Button(.profilesAdd) { isAddingChild = true }
+                .buttonStyle(.borderedProminent)
+                .tint(Palette.accent)
+        }
+        .background(Palette.background)
     }
 
     private var isShowingStarters: Bool {
@@ -325,6 +349,13 @@ struct ChatView: View {
 #Preview("Pregnant") {
     NavigationStack {
         ChatView(child: Child(stage: .expecting, dueDate: .now.addingTimeInterval(109 * 86_400)))
+    }
+    .modelContainer(try! DataStore.makeInMemoryContainer())
+}
+
+#Preview("No profile") {
+    NavigationStack {
+        ChatView(child: nil)
     }
     .modelContainer(try! DataStore.makeInMemoryContainer())
 }
