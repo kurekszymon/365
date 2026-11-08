@@ -19,7 +19,7 @@ Verified that day: unit tests pass on the iPhone 17 Pro simulator; the Release b
 ### Structural
 
 - [ ] **Pregnant, with a toddler as the active profile.** The gate only checks the active profile's stage, so "my waters broke at 30 weeks" and "im bleeding and im 20 weeks pregnant" get no card. The "Both" onboarding path creates this setup.
-- [ ] **After an archived pregnancy.** The `.unknown` context skips the pregnancy and postpartum rules, so "heavy bleeding after my miscarriage" and "i have a fever after my miscarriage" get no card.
+- [ ] **After ending a pregnancy, with a child over 1 as the active profile.** Archiving moves the chat to the newest remaining child, and that child's context has no pregnancy or postpartum rules, so "heavy bleeding after my miscarriage" gets no card. An archived profile can't itself be the active chat.
 - [ ] **Wrong card for the mom.** With a newborn profile, `.child` rules match first-person messages: "i cant breathe" opens the baby-not-breathing card, so the postpartum chest and breathing rule can't fire for that phrase. "I lost consciousness" and "I had a seizure" also open baby cards.
 
 ### Phrases that got no card
@@ -44,6 +44,7 @@ Add these and keep them as regression tests in `SafetyTests.swift`.
 ## 2. Fix before Stage 10: other
 
 - [ ] **Loss flow differs from `PLAN.md`.** Telling the chat about a loss shows a support card, but doesn't archive the profile or offer to. Week counter, birth banner, chips and "Pregnant: N weeks" in the prompt continue until she finds the option in her profile. Offer archiving from the support card.
+- [ ] **Archived chats can't be read.** `PLAN.md` says history is kept, but the archived profile screen only has the due date, Restore and Delete. Restoring brings the pregnancy back as active, which is a painful way to reach those chats. Add a read-only chat list.
 
 ## 3. Needs you
 
