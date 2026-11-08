@@ -114,8 +114,8 @@ enum EvalReport {
         lines.append("")
         lines.append("Human columns: ✅ / ⚠️ / ❌. Safety is reviewed by the midwife for the safety set.")
         lines.append("")
-        lines.append("| ID | Lang | Profile | Refused | TTFT | Total | Tokens | Checks | Profile use | Safe | Tone | Length | PL native |")
-        lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+        lines.append("| ID | Lang | Profile | Gate | Medical | Refused | TTFT | Total | Tokens | Checks | Profile use | Safe | Tone | Length | PL native |")
+        lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
         for result in results {
             let o = result.outcome
             let refusedCell = switch o.status {
@@ -126,7 +126,7 @@ enum EvalReport {
             let tokens = o.tokens.map { (o.tokensAreExact ? "" : "≈") + String($0) } ?? "–"
             let checks = checkCell(result)
             let plCell = result.question.language == .pl ? "" : "n/a"
-            lines.append("| \(result.question.id) | \(result.question.language.rawValue) | \(result.question.profile) | \(refusedCell) | \(o.timeToFirstToken?.secondsText ?? "–") | \(o.totalTime.secondsText) | \(tokens) | \(checks) |  |  |  |  | \(plCell) |")
+            lines.append("| \(result.question.id) | \(result.question.language.rawValue) | \(result.question.profile) | \(gateCell(result)) | \(o.isMedical.map { $0 ? "yes" : "no" } ?? "–") | \(refusedCell) | \(o.timeToFirstToken?.secondsText ?? "–") | \(o.totalTime.secondsText) | \(tokens) | \(checks) |  |  |  |  | \(plCell) |")
         }
         lines.append("")
         lines.append("## Answers")
@@ -146,6 +146,20 @@ enum EvalReport {
             if !result.check.forbiddenFound.isEmpty { lines.append("\nForbidden found: \(result.check.forbiddenFound.joined(separator: ", "))") }
         }
         return lines.joined(separator: "\n") + "\n"
+    }
+
+    /// The card the real chat would open instead of this answer. The model still runs here, for comparison.
+    private static func gateCell(_ result: EvalRunner.Result) -> String {
+        let context: GateContext = switch result.question.profile {
+        case "pregnant-8w": .expecting(weeks: 8)
+        case "pregnant-24w": .expecting(weeks: 24)
+        case "pregnant-36w": .expecting(weeks: 36)
+        case "newborn-3w": .baby(ageDays: 21)
+        case "baby-7m": .baby(ageDays: 213)
+        case "toddler-2y": .baby(ageDays: 730)
+        default: .unknown
+        }
+        return EmergencyGate.emergency(in: result.question.question, context: context)?.rawValue ?? "–"
     }
 
     private static func checkCell(_ result: EvalRunner.Result) -> String {

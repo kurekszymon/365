@@ -36,6 +36,15 @@ struct ChatView: View {
                 }
                 ForEach(chat?.messages ?? []) { message in
                     MessageBubble(role: message.role, text: message.text)
+                    if message.showsDisclaimer {
+                        MedicalFootnote()
+                    }
+                    if let topic = message.emergency {
+                        EmergencyNotice { chat?.presentedEmergency = topic }
+                    }
+                    if let support = message.support {
+                        SupportCard(topic: support)
+                    }
                     // Earlier unanswered questions. The last one is `chat.failure` below, with Try again.
                     if let saved = message.failure, message !== chat?.messages.last {
                         FailureBubble(failure: saved)
@@ -131,6 +140,13 @@ struct ChatView: View {
         .sheet(isPresented: $isShowingSettings, onDismiss: { chat?.profileDidChange() }) {
             SettingsView()
         }
+        .fullScreenCover(item: presentedEmergency) { topic in
+            EmergencyCardView(
+                topic: topic,
+                onAskAnyway: chat?.canAskAnyway == true ? { chat?.askAnyway() } : nil,
+                onClose: { chat?.presentedEmergency = nil }
+            )
+        }
         .sheet(isPresented: $isAddingChild) {
             AddChildView()
         }
@@ -167,6 +183,10 @@ struct ChatView: View {
                 BirthFormView(pregnancy: child)
             }
         }
+    }
+
+    private var presentedEmergency: Binding<EmergencyTopic?> {
+        Binding(get: { chat?.presentedEmergency }, set: { chat?.presentedEmergency = $0 })
     }
 
     // MARK: Chat

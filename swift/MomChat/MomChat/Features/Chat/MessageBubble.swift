@@ -48,6 +48,17 @@ struct MessageText: View {
     }
 }
 
+/// Under an answer the model marked as medical.
+struct MedicalFootnote: View {
+    var body: some View {
+        Text(.chatMedicalFootnote)
+            .font(Typography.caption)
+            .foregroundStyle(Palette.textSecondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, Spacing.l)
+    }
+}
+
 /// Three dots until the first word arrives.
 struct WritingIndicator: View {
     @State private var isAnimating = false

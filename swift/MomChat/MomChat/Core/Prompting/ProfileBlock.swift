@@ -30,8 +30,7 @@ enum ProfileBlock {
         case .born:
             lines += bornLines(child, twins: twins, on: date, calendar: calendar)
         case .archived:
-            // Stage 8 decides what the model is told about a pregnancy that ended.
-            break
+            lines.append("This pregnancy has ended in a loss. Don't mention weeks, due dates or the baby's development. Be gentle.")
         }
 
         if !others.isEmpty {

@@ -535,6 +535,30 @@
         }
       }
     },
+    "chat.freshStart.back" : {
+      "comment" : "Button under the fresh-start notice: reopens the chat she had before the app started a new one.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue that chat"
+          }
+        }
+      }
+    },
+    "chat.freshStart.notice" : {
+      "comment" : "Shown at the top of a new, empty chat that the app opened by itself because the previous one had been quiet for 6+ hours (e.g. the app was left open overnight). \"Chats\" is the list of past chats, opened from the top-left button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It's been a few hours, so this is a new chat. Your last one is saved in Chats."
+          }
+        }
+      }
+    },
     "chat.header.beforeDueDate" : {
       "comment" : "Chat header subtitle for a premature baby who hasn't reached the due date yet. The value is a duration, e.g. \"3 weeks 2 days\".",
       "extractionState" : "manual",
@@ -559,18 +583,6 @@
         }
       }
     },
-    "chat.header.dueDateToday" : {
-      "comment" : "Chat header subtitle for a premature baby on the day they reach their original due date (corrected age is zero).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Due date today"
-          }
-        }
-      }
-    },
     "chat.header.correctedAge" : {
       "comment" : "Chat header subtitle for a premature baby. The value is a duration, e.g. \"6 months\".",
       "extractionState" : "manual",
@@ -579,6 +591,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Corrected age %@"
+          }
+        }
+      }
+    },
+    "chat.header.dueDateToday" : {
+      "comment" : "Chat header subtitle for a premature baby on the day they reach their original due date (corrected age is zero).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Due date today"
           }
         }
       }
@@ -651,30 +675,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Week %lld"
-          }
-        }
-      }
-    },
-    "chat.freshStart.back" : {
-      "comment" : "Button under the fresh-start notice: reopens the chat she had before the app started a new one.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Continue that chat"
-          }
-        }
-      }
-    },
-    "chat.freshStart.notice" : {
-      "comment" : "Shown at the top of a new, empty chat that the app opened by itself because the previous one had been quiet for 6+ hours (e.g. the app was left open overnight). \"Chats\" is the list of past chats, opened from the top-left button.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "It's been a few hours, so this is a new chat. Your last one is saved in Chats."
           }
         }
       }
@@ -783,6 +783,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stop"
+          }
+        }
+      }
+    },
+    "chat.medicalFootnote" : {
+      "comment" : "Chat: footer under answers on medical topics.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Please check with your pediatrician or midwife."
           }
         }
       }
@@ -1539,6 +1551,1062 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apple Intelligence isn't available right now"
+          }
+        }
+      }
+    },
+    "emergency.action.call" : {
+      "comment" : "Emergency card: call button. %@ is the phone number.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call %@"
+          }
+        }
+      }
+    },
+    "emergency.action.callAdvice" : {
+      "comment" : "Midwife card, UK: call button for the advice line.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call %@ for medical advice"
+          }
+        }
+      }
+    },
+    "emergency.action.callCrisis" : {
+      "comment" : "Crisis card: call button. %@ is the phone number.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call the support line: %@"
+          }
+        }
+      }
+    },
+    "emergency.askAnyway" : {
+      "comment" : "Emergency card: for a false alarm. Sends the message to the assistant.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This isn't happening right now"
+          }
+        }
+      }
+    },
+    "emergency.babyChoking.step1" : {
+      "comment" : "Emergency card step 1: babyChoking. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call now and put the phone on speaker."
+          }
+        }
+      }
+    },
+    "emergency.babyChoking.step2" : {
+      "comment" : "Emergency card step 2: babyChoking. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don't put your fingers in the mouth to search for what's stuck."
+          }
+        }
+      }
+    },
+    "emergency.babyChoking.step3" : {
+      "comment" : "Emergency card step 3: babyChoking. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Follow what the dispatcher tells you, step by step."
+          }
+        }
+      }
+    },
+    "emergency.babyChoking.title" : {
+      "comment" : "Emergency card title: babyChoking. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your baby may be choking"
+          }
+        }
+      }
+    },
+    "emergency.babyDehydration.step1" : {
+      "comment" : "Emergency card step 1: babyDehydration. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call now or go to the nearest emergency department."
+          }
+        }
+      }
+    },
+    "emergency.babyDehydration.step2" : {
+      "comment" : "Emergency card step 2: babyDehydration. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep offering small, frequent feeds if your baby can swallow."
+          }
+        }
+      }
+    },
+    "emergency.babyDehydration.step3" : {
+      "comment" : "Emergency card step 3: babyDehydration. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note when the last wet nappy was."
+          }
+        }
+      }
+    },
+    "emergency.babyDehydration.title" : {
+      "comment" : "Emergency card title: babyDehydration. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "These can be signs of serious dehydration"
+          }
+        }
+      }
+    },
+    "emergency.babyFever.step1" : {
+      "comment" : "Emergency card step 1: babyFever. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call now, or go to the nearest emergency department."
+          }
+        }
+      }
+    },
+    "emergency.babyFever.step2" : {
+      "comment" : "Emergency card step 2: babyFever. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don't give any medicine unless a doctor tells you to."
+          }
+        }
+      }
+    },
+    "emergency.babyFever.step3" : {
+      "comment" : "Emergency card step 3: babyFever. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep offering feeds and write down the temperature and the time."
+          }
+        }
+      }
+    },
+    "emergency.babyFever.title" : {
+      "comment" : "Emergency card title: babyFever. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A fever in a baby under 3 months needs a doctor now"
+          }
+        }
+      }
+    },
+    "emergency.babyHeadInjury.step1" : {
+      "comment" : "Emergency card step 1: babyHeadInjury. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call now."
+          }
+        }
+      }
+    },
+    "emergency.babyHeadInjury.step2" : {
+      "comment" : "Emergency card step 2: babyHeadInjury. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep your child still and awake enough to watch closely."
+          }
+        }
+      }
+    },
+    "emergency.babyHeadInjury.step3" : {
+      "comment" : "Emergency card step 3: babyHeadInjury. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don't give food, drink or medicine until a medic has seen them."
+          }
+        }
+      }
+    },
+    "emergency.babyHeadInjury.title" : {
+      "comment" : "Emergency card title: babyHeadInjury. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vomiting after a blow to the head needs urgent help"
+          }
+        }
+      }
+    },
+    "emergency.babyNotBreathing.step1" : {
+      "comment" : "Emergency card step 1: babyNotBreathing. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call now and put the phone on speaker."
+          }
+        }
+      }
+    },
+    "emergency.babyNotBreathing.step2" : {
+      "comment" : "Emergency card step 2: babyNotBreathing. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tell them your baby's age and that breathing is the problem."
+          }
+        }
+      }
+    },
+    "emergency.babyNotBreathing.step3" : {
+      "comment" : "Emergency card step 3: babyNotBreathing. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Follow what the dispatcher tells you, step by step."
+          }
+        }
+      }
+    },
+    "emergency.babyNotBreathing.title" : {
+      "comment" : "Emergency card title: babyNotBreathing. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your baby may not be breathing properly"
+          }
+        }
+      }
+    },
+    "emergency.babyPoisoning.step1" : {
+      "comment" : "Emergency card step 1: babyPoisoning. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call now."
+          }
+        }
+      }
+    },
+    "emergency.babyPoisoning.step2" : {
+      "comment" : "Emergency card step 2: babyPoisoning. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don't try to make your child vomit."
+          }
+        }
+      }
+    },
+    "emergency.babyPoisoning.step3" : {
+      "comment" : "Emergency card step 3: babyPoisoning. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep the packet or bottle to show the medics."
+          }
+        }
+      }
+    },
+    "emergency.babyPoisoning.title" : {
+      "comment" : "Emergency card title: babyPoisoning. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your child may have swallowed something dangerous"
+          }
+        }
+      }
+    },
+    "emergency.babySeizure.step1" : {
+      "comment" : "Emergency card step 1: babySeizure. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call now."
+          }
+        }
+      }
+    },
+    "emergency.babySeizure.step2" : {
+      "comment" : "Emergency card step 2: babySeizure. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lay your baby on their side on a safe surface."
+          }
+        }
+      }
+    },
+    "emergency.babySeizure.step3" : {
+      "comment" : "Emergency card step 3: babySeizure. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don't put anything in the mouth and don't hold them down."
+          }
+        }
+      }
+    },
+    "emergency.babySeizure.title" : {
+      "comment" : "Emergency card title: babySeizure. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A seizure needs urgent help"
+          }
+        }
+      }
+    },
+    "emergency.babyUnresponsive.step1" : {
+      "comment" : "Emergency card step 1: babyUnresponsive. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call now and put the phone on speaker."
+          }
+        }
+      }
+    },
+    "emergency.babyUnresponsive.step2" : {
+      "comment" : "Emergency card step 2: babyUnresponsive. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep your baby on a firm, flat surface where you can see them breathing."
+          }
+        }
+      }
+    },
+    "emergency.babyUnresponsive.step3" : {
+      "comment" : "Emergency card step 3: babyUnresponsive. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Follow what the dispatcher tells you."
+          }
+        }
+      }
+    },
+    "emergency.babyUnresponsive.title" : {
+      "comment" : "Emergency card title: babyUnresponsive. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your baby may need urgent help"
+          }
+        }
+      }
+    },
+    "emergency.close" : {
+      "comment" : "Emergency card: closes it without asking the assistant.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        }
+      }
+    },
+    "emergency.crisis.body" : {
+      "comment" : "Crisis card: body.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thoughts like these can happen, especially after a birth, and they can be treated. Having them doesn't make you a bad mother. Please talk to someone today."
+          }
+        }
+      }
+    },
+    "emergency.crisis.danger" : {
+      "comment" : "Crisis card: above the emergency button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If you or your baby are in danger right now, call emergency services."
+          }
+        }
+      }
+    },
+    "emergency.crisis.noLine" : {
+      "comment" : "Crisis card: when we have no number for the region.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Please call a local crisis line, your doctor or someone you trust today."
+          }
+        }
+      }
+    },
+    "emergency.headline.crisis" : {
+      "comment" : "Crisis card: main heading. Must be gentle.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You don't have to get through this alone"
+          }
+        }
+      }
+    },
+    "emergency.headline.emergency" : {
+      "comment" : "Emergency card: main heading.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call for help now"
+          }
+        }
+      }
+    },
+    "emergency.headline.midwife" : {
+      "comment" : "Emergency card, less acute cases: main heading.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call your midwife or maternity ward now"
+          }
+        }
+      }
+    },
+    "emergency.localNumber" : {
+      "comment" : "Emergency card: when we have no number for the region.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call your local emergency number now."
+          }
+        }
+      }
+    },
+    "emergency.midwife.fallback" : {
+      "comment" : "Midwife card: above the emergency button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If you can't reach anyone, or it gets worse, call emergency services."
+          }
+        }
+      }
+    },
+    "emergency.notice" : {
+      "comment" : "Chat: shown under a message that opened an emergency card.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A safety card opened for this message."
+          }
+        }
+      }
+    },
+    "emergency.notice.open" : {
+      "comment" : "Chat: reopens the emergency card.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show it again"
+          }
+        }
+      }
+    },
+    "emergency.postpartumBleeding.step1" : {
+      "comment" : "Emergency card step 1: postpartumBleeding. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call now and say when you gave birth."
+          }
+        }
+      }
+    },
+    "emergency.postpartumBleeding.step2" : {
+      "comment" : "Emergency card step 2: postpartumBleeding. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lie down flat while you wait."
+          }
+        }
+      }
+    },
+    "emergency.postpartumBleeding.step3" : {
+      "comment" : "Emergency card step 3: postpartumBleeding. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask someone to stay with you and the baby."
+          }
+        }
+      }
+    },
+    "emergency.postpartumBleeding.title" : {
+      "comment" : "Emergency card title: postpartumBleeding. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heavy bleeding after birth needs urgent help"
+          }
+        }
+      }
+    },
+    "emergency.postpartumChestOrBreathing.step1" : {
+      "comment" : "Emergency card step 1: postpartumChestOrBreathing. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call now and say when you gave birth."
+          }
+        }
+      }
+    },
+    "emergency.postpartumChestOrBreathing.step2" : {
+      "comment" : "Emergency card step 2: postpartumChestOrBreathing. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sit upright and stay as still as you can."
+          }
+        }
+      }
+    },
+    "emergency.postpartumChestOrBreathing.step3" : {
+      "comment" : "Emergency card step 3: postpartumChestOrBreathing. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask someone to stay with you and the baby."
+          }
+        }
+      }
+    },
+    "emergency.postpartumChestOrBreathing.title" : {
+      "comment" : "Emergency card title: postpartumChestOrBreathing. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chest pain or trouble breathing needs urgent help"
+          }
+        }
+      }
+    },
+    "emergency.postpartumInfection.step1" : {
+      "comment" : "Emergency card step 1: postpartumInfection. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call now and say when you gave birth and how."
+          }
+        }
+      }
+    },
+    "emergency.postpartumInfection.step2" : {
+      "comment" : "Emergency card step 2: postpartumInfection. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Write down your temperature if you can take it."
+          }
+        }
+      }
+    },
+    "emergency.postpartumInfection.step3" : {
+      "comment" : "Emergency card step 3: postpartumInfection. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go to emergency care if you feel shivery, confused or much worse."
+          }
+        }
+      }
+    },
+    "emergency.postpartumInfection.title" : {
+      "comment" : "Emergency card title: postpartumInfection. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A possible infection after birth should be checked today"
+          }
+        }
+      }
+    },
+    "emergency.pregnancyAbdominalPain.step1" : {
+      "comment" : "Emergency card step 1: pregnancyAbdominalPain. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call now and say how many weeks pregnant you are."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyAbdominalPain.step2" : {
+      "comment" : "Emergency card step 2: pregnancyAbdominalPain. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lie down on your side while you wait."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyAbdominalPain.step3" : {
+      "comment" : "Emergency card step 3: pregnancyAbdominalPain. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don't take any painkillers until someone has told you to."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyAbdominalPain.title" : {
+      "comment" : "Emergency card title: pregnancyAbdominalPain. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Severe pain in pregnancy needs checking now"
+          }
+        }
+      }
+    },
+    "emergency.pregnancyBleeding.step1" : {
+      "comment" : "Emergency card step 1: pregnancyBleeding. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call now and say how many weeks pregnant you are."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyBleeding.step2" : {
+      "comment" : "Emergency card step 2: pregnancyBleeding. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lie down and rest while you wait."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyBleeding.step3" : {
+      "comment" : "Emergency card step 3: pregnancyBleeding. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep any pad you've used to show the medics."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyBleeding.title" : {
+      "comment" : "Emergency card title: pregnancyBleeding. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bleeding in pregnancy needs checking now"
+          }
+        }
+      }
+    },
+    "emergency.pregnancyFainting.step1" : {
+      "comment" : "Emergency card step 1: pregnancyFainting. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call now and say how many weeks pregnant you are."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyFainting.step2" : {
+      "comment" : "Emergency card step 2: pregnancyFainting. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lie on your left side and don't get up quickly."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyFainting.step3" : {
+      "comment" : "Emergency card step 3: pregnancyFainting. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask someone to stay with you if you can."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyFainting.title" : {
+      "comment" : "Emergency card title: pregnancyFainting. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fainting in pregnancy needs checking now"
+          }
+        }
+      }
+    },
+    "emergency.pregnancyFever.step1" : {
+      "comment" : "Emergency card step 1: pregnancyFever. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call now and say how many weeks pregnant you are."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyFever.step2" : {
+      "comment" : "Emergency card step 2: pregnancyFever. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Write down your temperature and the time."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyFever.step3" : {
+      "comment" : "Emergency card step 3: pregnancyFever. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask them what you can take before taking any medicine."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyFever.title" : {
+      "comment" : "Emergency card title: pregnancyFever. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A fever in pregnancy should be checked today"
+          }
+        }
+      }
+    },
+    "emergency.pregnancyPreeclampsia.step1" : {
+      "comment" : "Emergency card step 1: pregnancyPreeclampsia. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call now and say how many weeks pregnant you are."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyPreeclampsia.step2" : {
+      "comment" : "Emergency card step 2: pregnancyPreeclampsia. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tell them about any headache, vision changes or swelling."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyPreeclampsia.step3" : {
+      "comment" : "Emergency card step 3: pregnancyPreeclampsia. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rest while you wait for advice."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyPreeclampsia.title" : {
+      "comment" : "Emergency card title: pregnancyPreeclampsia. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "These can be signs of high blood pressure in pregnancy"
+          }
+        }
+      }
+    },
+    "emergency.pregnancyReducedMovement.step1" : {
+      "comment" : "Emergency card step 1: pregnancyReducedMovement. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call now. Don't wait until tomorrow."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyReducedMovement.step2" : {
+      "comment" : "Emergency card step 2: pregnancyReducedMovement. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Say how many weeks pregnant you are and when you last felt movement."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyReducedMovement.step3" : {
+      "comment" : "Emergency card step 3: pregnancyReducedMovement. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don't rely on a home doppler to reassure yourself."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyReducedMovement.title" : {
+      "comment" : "Emergency card title: pregnancyReducedMovement. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A change in your baby's movements should be checked today"
+          }
+        }
+      }
+    },
+    "emergency.pregnancyWatersOrContractions.step1" : {
+      "comment" : "Emergency card step 1: pregnancyWatersOrContractions. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call now and say how many weeks pregnant you are."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyWatersOrContractions.step2" : {
+      "comment" : "Emergency card step 2: pregnancyWatersOrContractions. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If your waters have gone, use a pad, not a tampon, and note the color."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyWatersOrContractions.step3" : {
+      "comment" : "Emergency card step 3: pregnancyWatersOrContractions. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time your contractions while you wait."
+          }
+        }
+      }
+    },
+    "emergency.pregnancyWatersOrContractions.title" : {
+      "comment" : "Emergency card title: pregnancyWatersOrContractions. Needs professional review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This could be early labor"
+          }
+        }
+      }
+    },
+    "emergency.steps.header" : {
+      "comment" : "Emergency card: heading above the steps.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What to do"
           }
         }
       }
@@ -2330,7 +3398,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "This pregnancy is archived. Its chats are kept until you delete it."
+            "value" : "This pregnancy has ended. Its chats stay here until you choose to delete them."
           }
         }
       }
@@ -2570,7 +3638,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "It moves to Archived and its chats are kept. You can delete it from there at any time."
+            "value" : "Week counters and reminders stop, and its chats are kept until you choose to delete them. We're so sorry if you're going through a loss."
           }
         }
       }
@@ -3135,6 +4203,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Settings"
+          }
+        }
+      }
+    },
+    "support.loss.body" : {
+      "comment" : "Support card: pregnancy or baby loss.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your midwife or doctor can tell you about bereavement support near you. You don't have to go through this alone, and a support line is there if you need to talk."
+          }
+        }
+      }
+    },
+    "support.loss.title" : {
+      "comment" : "Support card under an answer about a loss.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We're so sorry"
+          }
+        }
+      }
+    },
+    "support.mentalHealth.body" : {
+      "comment" : "Support card: low mood.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feeling this way after a birth is common and it can be treated. Your doctor or midwife can help, and a support line is there if you need to talk today."
+          }
+        }
+      }
+    },
+    "support.mentalHealth.title" : {
+      "comment" : "Support card under an answer about low mood.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You're not alone in this"
           }
         }
       }

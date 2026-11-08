@@ -27,6 +27,7 @@ enum ModelProbe {
 
         var status: Status
         var answer: String
+        var isMedical: Bool?
         var timeToFirstToken: Duration?
         var totalTime: Duration
         var tokens: Int?
@@ -55,14 +56,18 @@ enum ModelProbe {
         let start = clock.now
         var firstToken: Duration?
         var answer = ""
+        var isMedical: Bool?
         var status = Outcome.Status.answered
 
         do {
-            for try await snapshot in session.streamResponse(to: question, options: options) {
-                if firstToken == nil, !snapshot.content.isEmpty {
+            // The same structured output as the real chat, so the eval measures what ships.
+            for try await snapshot in session.streamResponse(to: question, generating: SafeAnswer.self, options: options) {
+                let partial = snapshot.content.answer ?? ""
+                if firstToken == nil, !partial.isEmpty {
                     firstToken = clock.now - start
                 }
-                answer = snapshot.content
+                answer = partial
+                isMedical = snapshot.content.isMedical
                 onPartial(answer)
             }
             if Task.isCancelled { status = .cancelled }
@@ -86,6 +91,7 @@ enum ModelProbe {
         return Outcome(
             status: status,
             answer: answer,
+            isMedical: isMedical,
             timeToFirstToken: firstToken,
             totalTime: total,
             tokens: tokens,

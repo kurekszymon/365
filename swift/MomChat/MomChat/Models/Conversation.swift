@@ -37,6 +37,12 @@ import SwiftData
     var text: String
     /// On a question whose answer never came: why (`ChatFailure.rawValue`). Cleared once it's answered.
     var failureReason: String? = nil
+    /// On a question that opened an emergency card (`EmergencyTopic.rawValue`). The model wasn't called.
+    var emergencyTopic: String? = nil
+    /// `SupportTopic.rawValue`: support details to show. On the answer, or on the question if none came.
+    var supportTopic: String? = nil
+    /// On an answer the model marked as medical. Shown as a footer, never sent back to the model.
+    var showsDisclaimer: Bool = false
     var createdAt: Date
 
     init(role: Role, text: String, createdAt: Date = .now) {
@@ -48,5 +54,15 @@ import SwiftData
     var failure: ChatFailure? {
         get { failureReason.flatMap(ChatFailure.init(rawValue:)) }
         set { failureReason = newValue?.rawValue }
+    }
+
+    var emergency: EmergencyTopic? {
+        get { emergencyTopic.flatMap(EmergencyTopic.init(rawValue:)) }
+        set { emergencyTopic = newValue?.rawValue }
+    }
+
+    var support: SupportTopic? {
+        get { supportTopic.flatMap(SupportTopic.init(rawValue:)) }
+        set { supportTopic = newValue?.rawValue }
     }
 }

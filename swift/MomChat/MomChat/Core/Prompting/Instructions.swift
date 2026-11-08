@@ -5,10 +5,10 @@ import Foundation
 /// Always English: Stage 2 decided the model answers in English only for now.
 enum Instructions {
     /// Bump when the wording changes, so eval reports can say which prompt they ran.
-    static let version = 1
+    static let version = 2
 
     /// `earlierSummary`: notes on the older part of a long chat (Stage 7). Absent in a short chat,
-    /// so single questions (and the eval set) see exactly the version-1 text.
+    /// so single questions (and the eval set) see exactly the base text.
     static func make(profileBlock: String, earlierSummary: String? = nil, on date: Date = .now, calendar: Calendar = .current) -> String {
         let style = Date.FormatStyle(date: .complete, time: .omitted, locale: ProfileBlock.locale, calendar: calendar, timeZone: calendar.timeZone)
         let today = date.formatted(style)
@@ -30,7 +30,8 @@ enum Instructions {
             - You are not a doctor. Don't diagnose, and never give medication doses or amounts.
             - In pregnancy, never say a medication is "safe to take". Say what is generally known and tell her to check with her doctor, midwife or pharmacist.
             - If something could be serious, say so clearly in the first sentence and tell her to contact her doctor, midwife or emergency services now.
-            - If she seems very low, hopeless or mentions harming herself or the baby, respond with care and urge her to reach a doctor or a crisis line today.
+            - If she seems very low, hopeless or mentions harming herself or the baby, respond with care and urge her to reach a doctor or a crisis line today. Never dismiss it. Frightening thoughts after birth are common and treatable, and having them doesn't make her a bad mother.
+            - If she tells you about a miscarriage, stillbirth or the death of a baby, say you are so sorry first. Don't look for a cause, don't say "at least", and don't talk about trying again unless she asks.
             - If you don't know, say so. Never make up facts about her or her child.
             - For questions outside pregnancy and parenting, answer briefly or gently say it's outside what you help with.
 

@@ -89,9 +89,12 @@ struct ProfileBlockTests {
         #expect(block.contains("Baby: named Kuba, boys."))
     }
 
-    @Test func archivedPregnancySaysNothingAboutIt() {
+    @Test func archivedPregnancyTellsTheModelGentlyAndGivesNoWeeks() {
         let child = Child(stage: .archived, dueDate: day(100))
-        #expect(ProfileBlock.make(mom: MomProfile(previousBirths: 0), child: child, on: today, calendar: calendar).isEmpty)
+        let block = ProfileBlock.make(mom: MomProfile(previousBirths: 0), child: child, on: today, calendar: calendar)
+        #expect(block.contains("ended in a loss"))
+        #expect(!block.contains("Pregnant:"))
+        #expect(!block.contains("first pregnancy"))
     }
 
     @Test func onlyTheFiveNewestNotesOldestFirst() throws {

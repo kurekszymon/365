@@ -19,6 +19,8 @@ final class ChatController {
     private(set) var streamingText: String?
     /// Why the last answer didn't come. Cleared by the next question or a retry.
     private(set) var failure: ChatFailure?
+    /// The emergency card on screen. Set by the gate, before the model is involved.
+    var presentedEmergency: EmergencyTopic?
 
     // For the debug overlay.
     /// What the last prompt cost, measured before sending.
@@ -37,6 +39,8 @@ final class ChatController {
     private let counter = TokenCounter()
     @ObservationIgnored private var session: LanguageModelSession?
     @ObservationIgnored private var task: Task<Void, Never>?
+    /// `nil` until the model has said, which is never if the answer was stopped.
+    @ObservationIgnored private var streamingIsMedical: Bool?
     /// Turns don't change once saved, so each is counted once.
     @ObservationIgnored private var turnTokenCache: [ChatHistory.Turn: Int] = [:]
 
@@ -57,7 +61,7 @@ final class ChatController {
 
     var budget: ContextBudget {
         var budget = ContextBudget(contextSize: SystemLanguageModel.default.contextSize)
-        budget.answerReserve = Self.maximumResponseTokens
+        budget.answerReserve = Self.maximumResponseTokens + SafeAnswer.schemaTokenReserve
         #if DEBUG
         // Developer tools can pretend the window is smaller, to see compaction after a few questions.
         let override = UserDefaults.standard.integer(forKey: DebugKeys.contextSizeOverride)
@@ -79,8 +83,31 @@ final class ChatController {
         guard !question.isEmpty, !isResponding else { return }
 
         let conversation = self.conversation ?? startConversation(title: ConversationTitle.make(from: question))
-        append(Message(role: .user, text: question), to: conversation)
-        respond(to: question)
+        let message = Message(role: .user, text: question)
+        // The gate comes first: a red flag never reaches the model.
+        let topic = EmergencyGate.emergency(in: question, context: GateContext(child: child))
+        message.emergency = topic
+        append(message, to: conversation)
+        if let topic {
+            failure = nil
+            presentedEmergency = topic
+        } else {
+            respond(to: question)
+        }
+    }
+
+    /// From the card: "this isn't happening now". The only way a red-flag message reaches the model.
+    func askAnyway() {
+        presentedEmergency = nil
+        guard !isResponding, let last = messages.last, last.role == .user, last.emergency != nil else { return }
+        last.emergency = nil
+        save()
+        respond(to: last.text)
+    }
+
+    /// Only the latest question can still be sent to the model from its card.
+    var canAskAnyway: Bool {
+        messages.last?.emergency != nil && !isResponding
     }
 
     /// Asks the last question again after a failure.
@@ -113,6 +140,7 @@ final class ChatController {
     private func respond(to question: String) {
         failure = nil
         streamingText = ""
+        streamingIsMedical = nil
         task = Task { [weak self] in
             await self?.run(question, isRetry: false)
         }
@@ -123,9 +151,10 @@ final class ChatController {
             let session = try await prepareSession(for: question, compactEverything: isRetry)
             try Task.checkCancellation()
             let options = GenerationOptions(maximumResponseTokens: Self.maximumResponseTokens)
-            for try await snapshot in session.streamResponse(to: question, options: options) {
+            for try await snapshot in session.streamResponse(to: question, generating: SafeAnswer.self, options: options) {
                 guard !Task.isCancelled else { break }
-                streamingText = snapshot.content
+                streamingText = snapshot.content.answer ?? ""
+                streamingIsMedical = snapshot.content.isMedical
             }
             finish(failure: nil)
         } catch is CancellationError {
@@ -243,10 +272,16 @@ final class ChatController {
         let question = messages.last { $0.role == .user }
         if let conversation, !text.isEmpty {
             question?.failure = nil
-            append(Message(role: .assistant, text: text), to: conversation)
+            question?.support = nil
+            let answer = Message(role: .assistant, text: text)
+            // No verdict from the model (a stopped answer) gets the disclaimer: the safer default.
+            answer.showsDisclaimer = streamingIsMedical ?? true
+            answer.support = question.flatMap { EmergencyGate.support(in: $0.text) }
+            append(answer, to: conversation)
         } else if let failure, let question, messages.last === question {
             // Saved so the chat still explains the gap after it's reopened.
             question.failure = failure
+            question.support = EmergencyGate.support(in: question.text)
             save()
         }
         // After a stop or an error the session's transcript no longer matches what was saved.
@@ -289,6 +324,23 @@ final class ChatController {
             try context.save()
         } catch {
             assertionFailure("Couldn't save the chat: \(error)")
+        }
+    }
+}
+
+extension GateContext {
+    init(child: Child, on date: Date = .now, calendar: Calendar = .current) {
+        switch child.stage {
+        case .expecting:
+            self = .expecting(weeks: child.pregnancy(on: date, calendar: calendar)?.weeks)
+        case .born:
+            if let birthDate = child.birthDate {
+                self = .baby(ageDays: max(calendar.daysBetween(birthDate, date), 0))
+            } else {
+                self = .unknown
+            }
+        case .archived:
+            self = .unknown
         }
     }
 }
