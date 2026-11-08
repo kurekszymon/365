@@ -17,7 +17,7 @@
 ## Stage 2: Model Spike — committed 2026-10-27 (`cde6161`), approval not logged
 
 - Built: `ModelAvailability` gate before onboarding (not enabled / downloading / not eligible screens, rechecked on foreground, *Skip (debug)* in debug builds); Developer tools → model info, guardrail + answer-length settings, streaming playground with 6 hand-written profiles, question runner over `evals/questions.json` with timing, token count, refusals and export; `evals/README.md` + a 10-question template (symlinked into the app)
-- Deferred: the real 50 questions (checklist item 9); debug code and `questions.json` still built into Release (→ remove before TestFlight); Polish for the new strings
+- Deferred: the real 50 questions (checklist item 9); Polish for the new strings. Debug code and `questions.json` are now kept out of Release
 - Decisions: **go EN-only for now** (2026-10-29, also logged under Stage 3)
 
 ## Stage 3: Data Models + Date Logic ✅ approved 2026-10-28

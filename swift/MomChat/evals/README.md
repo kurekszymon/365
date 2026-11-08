@@ -1,7 +1,7 @@
 # Evals
 
 `questions.json` is the answer-quality test set (see "Answer Quality Checks" in `IMPLEMENTATION.md`).
-The app bundles it through the symlink `MomChat/Resources/questions.json`, so edit it here and rebuild.
+Debug builds bundle it through the symlink `MomChat/Resources/questions.json`, so edit it here and rebuild. Release builds leave it out (`EXCLUDED_SOURCE_FILE_NAMES` on the app target).
 
 ## Question format
 

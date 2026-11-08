@@ -1,3 +1,4 @@
+#if DEBUG
 import Foundation
 import FoundationModels
 
@@ -112,3 +113,4 @@ extension Duration {
         return seconds.formatted(.number.precision(.fractionLength(2))) + " s"
     }
 }
+#endif

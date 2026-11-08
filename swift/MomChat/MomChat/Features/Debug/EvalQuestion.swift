@@ -1,3 +1,4 @@
+#if DEBUG
 import Foundation
 
 /// One entry of `evals/questions.json`.
@@ -73,3 +74,4 @@ nonisolated enum EvalCheck {
             .trimmingCharacters(in: .whitespaces)
     }
 }
+#endif

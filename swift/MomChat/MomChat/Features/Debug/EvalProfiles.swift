@@ -1,3 +1,4 @@
+#if DEBUG
 import Foundation
 
 /// Sample profiles for the playground and the question runner. They are real (unsaved) `MomProfile`
@@ -83,3 +84,4 @@ enum EvalProfiles {
         Instructions.make(profileBlock: profile.block(on: date), on: date)
     }
 }
+#endif

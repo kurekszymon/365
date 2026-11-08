@@ -1,3 +1,4 @@
+#if DEBUG
 import Foundation
 import Observation
 import UIKit
@@ -161,3 +162,4 @@ enum EvalReport {
         values.isEmpty ? nil : values[values.count / 2]
     }
 }
+#endif
