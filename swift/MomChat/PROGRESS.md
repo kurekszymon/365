@@ -69,3 +69,10 @@
 - 2026-11-05 (`c1af5a6`): softer sage starter chips, contrast still ≥7:1 (closes the Stage 1 deferred item)
 - 2026-11-06: refusals and other failures are saved on the question (`Message.failureReason`, additive), so a reopened chat still explains an unanswered question; the latest one keeps Try again (closes the Stage 6 known gap). Removed the committed `Stage5Throwaway.swift` UI test
 - 2026-11-07: the 6-hour rule also runs when the app comes back from the background (not while an answer streams or with unsent text); a notice in the new chat says why and offers "Continue that chat" (closes the Stage 6 known gap)
+
+## Stage 9: Profile Memory — built 2026-11-08, waiting for the phone test
+
+- Built: `proposeProfileUpdate` tool that only fills an inbox; `ProposalFilter` (must share a word with her message, no repeats, ≤60 characters); Save / Dismiss card under the answer, kept on `Message` (additive fields) so it survives a reopen; `ProfileNotes.save`, called only from Save; "Saved from chats" section to edit and delete notes on child, pregnancy and mom; 150-token tool reserve; eval runner uses the tool, `expectsNote` scores false and missed cards, 30 note messages written by Claude; guide in `docs/testing/STAGE9-TESTING.md`
+- Not yet checked: real tool behaviour, false-proposal rate and any speed change (Apple Intelligence is off on the Mac; the user will check speed later)
+- Decisions: no card for grief or crisis messages, questions sent on from an emergency card, stopped or failed answers, or ended pregnancies; an ended pregnancy's notes leave the prompt; one card per answer
+- Known gaps: Polish messages rarely get a card (the word check compares Polish with an English note); a note goes only on the active twin; Polish for 9 new keys

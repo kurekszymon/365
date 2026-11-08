@@ -45,6 +45,7 @@ struct ChatView: View {
                     if let support = message.support {
                         SupportCard(topic: support)
                     }
+                    noteCard(for: message)
                     // Earlier unanswered questions. The last one is `chat.failure` below, with Try again.
                     if let saved = message.failure, message !== chat?.messages.last {
                         FailureBubble(failure: saved)
@@ -229,6 +230,24 @@ struct ChatView: View {
         .padding(Spacing.m)
         .frame(maxWidth: .infinity)
         .background(Palette.surface, in: RoundedRectangle(cornerRadius: Radius.bubble))
+    }
+
+    @ViewBuilder
+    private func noteCard(for message: Message) -> some View {
+        if let child, child.stage != .archived, let proposal = message.noteProposal {
+            switch message.noteProposalState {
+            case .pending:
+                ProfileNoteCard(proposal: proposal, child: child) {
+                    chat?.saveProposal(on: message)
+                } onDismiss: {
+                    chat?.dismissProposal(on: message)
+                }
+            case .saved:
+                ProfileNoteSavedLine()
+            case .dismissed, nil:
+                EmptyView()
+            }
+        }
     }
 
     private var noProfileState: some View {

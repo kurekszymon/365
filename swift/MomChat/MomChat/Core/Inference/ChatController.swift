@@ -34,6 +34,7 @@ final class ChatController {
     var isResponding: Bool { task != nil }
 
     nonisolated static let maximumResponseTokens = 600
+    nonisolated static let toolTokenReserve = 150
 
     private let context: ModelContext
     private let counter = TokenCounter()
@@ -41,6 +42,12 @@ final class ChatController {
     @ObservationIgnored private var task: Task<Void, Never>?
     /// `nil` until the model has said, which is never if the answer was stopped.
     @ObservationIgnored private var streamingIsMedical: Bool?
+    /// Filled by the model's tool while it answers; read when the answer is finished.
+    @ObservationIgnored private let proposals = ProposalInbox()
+    /// False for a question sent on from an emergency card ("this isn't happening now").
+    @ObservationIgnored private var proposalsAllowed = true
+    /// The profile changed during an answer, so the session is replaced after it.
+    @ObservationIgnored private var profileIsStale = false
     /// Turns don't change once saved, so each is counted once.
     @ObservationIgnored private var turnTokenCache: [ChatHistory.Turn: Int] = [:]
 
@@ -62,6 +69,7 @@ final class ChatController {
     var budget: ContextBudget {
         var budget = ContextBudget(contextSize: SystemLanguageModel.default.contextSize)
         budget.answerReserve = Self.maximumResponseTokens + SafeAnswer.schemaTokenReserve
+        budget.toolReserve = Self.toolTokenReserve
         #if DEBUG
         // Developer tools can pretend the window is smaller, to see compaction after a few questions.
         let override = UserDefaults.standard.integer(forKey: DebugKeys.contextSizeOverride)
@@ -81,6 +89,7 @@ final class ChatController {
     func send(_ text: String) {
         let question = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !question.isEmpty, !isResponding else { return }
+        proposalsAllowed = true
 
         let conversation = self.conversation ?? startConversation(title: ConversationTitle.make(from: question))
         let message = Message(role: .user, text: question)
@@ -101,6 +110,7 @@ final class ChatController {
         presentedEmergency = nil
         guard !isResponding, let last = messages.last, last.role == .user, last.emergency != nil else { return }
         last.emergency = nil
+        proposalsAllowed = false
         save()
         respond(to: last.text)
     }
@@ -125,9 +135,24 @@ final class ChatController {
     /// The profile was edited or the baby was born: the next answer uses the new profile block.
     /// An answer in progress finishes with the old one.
     func profileDidChange() {
-        guard !isResponding else { return }
+        guard !isResponding else {
+            profileIsStale = true
+            return
+        }
         session = nil
         prewarm()
+    }
+
+    /// The card's Save button: the only way a fact from the chat reaches the profile.
+    func saveProposal(on message: Message) {
+        guard ProfileNotes.save(proposalOn: message, child: child, in: context) else { return }
+        save()
+        profileDidChange()
+    }
+
+    func dismissProposal(on message: Message) {
+        ProfileNotes.dismiss(proposalOn: message)
+        save()
     }
 
     /// Before switching to another conversation or child.
@@ -141,6 +166,7 @@ final class ChatController {
         failure = nil
         streamingText = ""
         streamingIsMedical = nil
+        _ = proposals.drain()
         task = Task { [weak self] in
             await self?.run(question, isRetry: false)
         }
@@ -166,6 +192,7 @@ final class ChatController {
             lastEvent = "overflow → compact all + retry"
             streamingText = ""
             session = nil
+            _ = proposals.drain()
             await run(question, isRetry: true)
         } catch {
             finish(failure: ChatFailure(error))
@@ -270,6 +297,7 @@ final class ChatController {
         let wasStopped = task?.isCancelled == true
         let text = (streamingText ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         let question = messages.last { $0.role == .user }
+        let proposed = proposals.drain()
         if let conversation, !text.isEmpty {
             question?.failure = nil
             question?.support = nil
@@ -277,6 +305,9 @@ final class ChatController {
             // No verdict from the model (a stopped answer) gets the disclaimer: the safer default.
             answer.showsDisclaimer = streamingIsMedical ?? true
             answer.support = question.flatMap { EmergencyGate.support(in: $0.text) }
+            if !wasStopped, failure == nil, let question {
+                answer.noteProposal = acceptedProposal(from: proposed, question: question.text, conversation: conversation)
+            }
             append(answer, to: conversation)
         } else if let failure, let question, messages.last === question {
             // Saved so the chat still explains the gap after it's reopened.
@@ -285,7 +316,9 @@ final class ChatController {
             save()
         }
         // After a stop or an error the session's transcript no longer matches what was saved.
-        if wasStopped || failure != nil { session = nil }
+        // A tool call also takes up room that the saved messages don't account for.
+        if wasStopped || failure != nil || !proposed.isEmpty || profileIsStale { session = nil }
+        profileIsStale = false
         self.failure = text.isEmpty ? failure : nil
         streamingText = nil
         task = nil
@@ -299,9 +332,22 @@ final class ChatController {
         #endif
     }
 
+    private func acceptedProposal(from proposed: [ProfileProposal], question: String, conversation: Conversation) -> ProfileProposal? {
+        guard proposalsAllowed, child.stage != .archived else { return nil }
+        let mom = (try? context.fetch(FetchDescriptor<MomProfile>()))?.first
+        let known = ProfileNotes.knownFacts(child: child, mom: mom, conversation: conversation)
+        return ProposalFilter.accepted(proposed, question: question, childName: child.name, knownFacts: known)
+    }
+
     private func makeSession() -> LanguageModelSession {
-        let transcript = ChatHistory.transcript(instructions: instructions(summary: conversation?.summary), turns: liveTurns)
-        return LanguageModelSession(model: .default, tools: [], transcript: transcript)
+        // After a loss the model doesn't collect facts about the pregnancy.
+        let tool = child.stage == .archived ? nil : ProposeProfileUpdateTool(inbox: proposals)
+        let transcript = ChatHistory.transcript(
+            instructions: instructions(summary: conversation?.summary),
+            turns: liveTurns,
+            toolDefinitions: tool.map { [Transcript.ToolDefinition(tool: $0)] } ?? []
+        )
+        return LanguageModelSession(model: .default, tools: tool.map { [$0] } ?? [], transcript: transcript)
     }
 
     private func startConversation(title: String) -> Conversation {

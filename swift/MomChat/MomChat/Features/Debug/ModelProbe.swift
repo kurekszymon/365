@@ -28,6 +28,8 @@ enum ModelProbe {
         var status: Status
         var answer: String
         var isMedical: Bool?
+        /// What the card would offer, after `ProposalFilter`. `nil` = no card.
+        var proposal: ProfileProposal?
         var timeToFirstToken: Duration?
         var totalTime: Duration
         var tokens: Int?
@@ -50,7 +52,8 @@ enum ModelProbe {
         settings: Settings,
         onPartial: (String) -> Void = { _ in }
     ) async -> Outcome {
-        let session = LanguageModelSession(model: settings.model, instructions: instructions)
+        let inbox = ProposalInbox()
+        let session = LanguageModelSession(model: settings.model, tools: [ProposeProfileUpdateTool(inbox: inbox)], instructions: instructions)
         let options = GenerationOptions(maximumResponseTokens: settings.maximumResponseTokens)
         let clock = ContinuousClock()
         let start = clock.now
@@ -92,6 +95,7 @@ enum ModelProbe {
             status: status,
             answer: answer,
             isMedical: isMedical,
+            proposal: ProposalFilter.accepted(inbox.drain(), question: question, childName: nil, knownFacts: []),
             timeToFirstToken: firstToken,
             totalTime: total,
             tokens: tokens,

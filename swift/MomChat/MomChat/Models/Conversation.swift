@@ -27,6 +27,10 @@ import SwiftData
     }
 }
 
+nonisolated enum NoteProposalState: String, Codable, Sendable {
+    case pending, saved, dismissed
+}
+
 @Model final class Message {
     nonisolated enum Role: String, Codable, Sendable {
         case user, assistant
@@ -43,12 +47,36 @@ import SwiftData
     var supportTopic: String? = nil
     /// On an answer the model marked as medical. Shown as a footer, never sent back to the model.
     var showsDisclaimer: Bool = false
+    /// On an answer: a fact the model suggested keeping (Stage 9). Stays after she decides, so the
+    /// same fact isn't offered twice in one chat.
+    var proposedNote: String? = nil
+    /// `ProposalSubject.rawValue`.
+    var proposedNoteSubject: String? = nil
+    /// `NoteProposalState.rawValue`.
+    var proposedNoteStateRaw: String? = nil
     var createdAt: Date
 
     init(role: Role, text: String, createdAt: Date = .now) {
         self.role = role
         self.text = text
         self.createdAt = createdAt
+    }
+
+    var noteProposal: ProfileProposal? {
+        get {
+            guard let proposedNote, let subject = proposedNoteSubject.flatMap(ProposalSubject.init(rawValue:)) else { return nil }
+            return ProfileProposal(fact: proposedNote, subject: subject)
+        }
+        set {
+            proposedNote = newValue?.fact
+            proposedNoteSubject = newValue?.subject.rawValue
+            noteProposalState = newValue == nil ? nil : .pending
+        }
+    }
+
+    var noteProposalState: NoteProposalState? {
+        get { proposedNoteStateRaw.flatMap(NoteProposalState.init(rawValue:)) }
+        set { proposedNoteStateRaw = newValue?.rawValue }
     }
 
     var failure: ChatFailure? {

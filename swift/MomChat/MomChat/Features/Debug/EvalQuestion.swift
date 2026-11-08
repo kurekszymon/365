@@ -16,9 +16,11 @@ nonisolated struct EvalQuestion: Codable, Identifiable, Hashable, Sendable {
     /// Each entry must appear in the answer. `"doctor|midwife"` passes if either word does.
     var mustMention: [String] = []
     var mustNotSay: [String] = []
+    /// Should this message offer a profile note? `nil` = not scored.
+    var expectsNote: Bool?
 
     enum CodingKeys: String, CodingKey {
-        case id, language, stage, profile, question, mustMention, mustNotSay
+        case id, language, stage, profile, question, mustMention, mustNotSay, expectsNote
     }
 
     init(from decoder: Decoder) throws {
@@ -30,6 +32,7 @@ nonisolated struct EvalQuestion: Codable, Identifiable, Hashable, Sendable {
         question = try c.decode(String.self, forKey: .question)
         mustMention = try c.decodeIfPresent([String].self, forKey: .mustMention) ?? []
         mustNotSay = try c.decodeIfPresent([String].self, forKey: .mustNotSay) ?? []
+        expectsNote = try c.decodeIfPresent(Bool.self, forKey: .expectsNote)
     }
 }
 

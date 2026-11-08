@@ -8,7 +8,7 @@ nonisolated struct ContextBudget: Equatable, Sendable {
     var contextSize: Int
     /// Kept free for the answer. Matches `ChatController.maximumResponseTokens`.
     var answerReserve = 600
-    /// Tool definitions. None yet; Stage 9 adds `proposeProfileUpdate` (~150).
+    /// Tool definitions. `ChatController` sets ~150 for `proposeProfileUpdate`.
     var toolReserve = 0
     /// What a summary may grow to (`Compactor.maximumSummaryTokens`).
     var summaryReserve = 250

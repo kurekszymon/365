@@ -799,6 +799,78 @@
         }
       }
     },
+    "chat.memory.dismiss" : {
+      "comment" : "Card under an answer: button that declines the suggested fact.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dismiss"
+          }
+        }
+      }
+    },
+    "chat.memory.save" : {
+      "comment" : "Card under an answer: button that saves the suggested fact to the profile.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        }
+      }
+    },
+    "chat.memory.saved" : {
+      "comment" : "Short confirmation under an answer after the fact was saved.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved to the profile"
+          }
+        }
+      }
+    },
+    "chat.memory.title.child" : {
+      "comment" : "Card under an answer: offers to save a fact to the child's profile. %@ is the child's name.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save to %@'s profile?"
+          }
+        }
+      }
+    },
+    "chat.memory.title.mom" : {
+      "comment" : "Card under an answer: offers to save a fact about the mom to her own profile.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save to your profile?"
+          }
+        }
+      }
+    },
+    "chat.memory.title.pregnancy" : {
+      "comment" : "Card under an answer: offers to save a fact to the pregnancy's profile.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save to your pregnancy profile?"
+          }
+        }
+      }
+    },
     "chat.noProfile.detail" : {
       "comment" : "Chat screen when no baby or pregnancy is selected, e.g. right after she archived her only pregnancy (often after a loss). Keep it gentle and don't guess why.",
       "extractionState" : "manual",
@@ -4011,6 +4083,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "You"
+          }
+        }
+      }
+    },
+    "profile.notes.field" : {
+      "comment" : "Profile form: placeholder for the text of a saved fact.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note"
+          }
+        }
+      }
+    },
+    "profile.notes.footer" : {
+      "comment" : "Profile form: footer under saved facts. %lld is how many are sent to the model.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The %lld most recent are used in answers. Swipe left to delete."
+          }
+        }
+      }
+    },
+    "profile.notes.header" : {
+      "comment" : "Profile form: section header for facts saved from conversations.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved from chats"
           }
         }
       }

@@ -33,12 +33,14 @@ nonisolated enum ChatHistory {
         return turns
     }
 
-    static func transcript(instructions: String, turns: [Turn]) -> Transcript {
-        Transcript(entries: [instructionsEntry(instructions)] + turns.flatMap(entries(for:)))
+    /// A session built from a transcript only offers the model the tools declared in it, so
+    /// `toolDefinitions` has to match the session's `tools`.
+    static func transcript(instructions: String, turns: [Turn], toolDefinitions: [Transcript.ToolDefinition] = []) -> Transcript {
+        Transcript(entries: [instructionsEntry(instructions, toolDefinitions: toolDefinitions)] + turns.flatMap(entries(for:)))
     }
 
-    static func instructionsEntry(_ text: String) -> Transcript.Entry {
-        .instructions(Transcript.Instructions(segments: [.text(.init(content: text))], toolDefinitions: []))
+    static func instructionsEntry(_ text: String, toolDefinitions: [Transcript.ToolDefinition] = []) -> Transcript.Entry {
+        .instructions(Transcript.Instructions(segments: [.text(.init(content: text))], toolDefinitions: toolDefinitions))
     }
 
     static func promptEntry(_ text: String) -> Transcript.Entry {

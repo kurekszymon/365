@@ -101,6 +101,8 @@ struct ChildEditView: View {
             Text(.profileListFooter)
         }
 
+        ProfileNotesSection(notes: child.notes)
+
         Section {
             Button(role: .destructive) {
                 isConfirmingEnd = true
@@ -185,6 +187,8 @@ struct ChildEditView: View {
         } footer: {
             Text(.profileListFooter)
         }
+
+        ProfileNotesSection(notes: child.notes)
     }
 
     private var birthDateRange: ClosedRange<Date> {

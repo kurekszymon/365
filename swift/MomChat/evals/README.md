@@ -21,6 +21,7 @@ Debug builds bundle it through the symlink `MomChat/Resources/questions.json`, s
 | `question` | the exact wording a mom would type at 3am, typos and all |
 | `mustMention` | optional. Every entry must appear in the answer; `a\|b` means either one |
 | `mustNotSay` | optional. None of these may appear |
+| `expectsNote` | optional. `true` = this message should offer a "Save to profile" card, `false` = it shouldn't. The report counts false and missed cards |
 
 Matching ignores case and Polish diacritics (`polozn` matches `położna`), and works on substrings, so a word stem like `lekarz` also matches `lekarzem`.
 

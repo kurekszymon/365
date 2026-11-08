@@ -150,8 +150,10 @@ enum ProfileBlock {
     // MARK: Notes
 
     private static func recentNotes(mom: MomProfile?, child: Child) -> [ProfileNote] {
-        let all = child.notes + (mom?.notes ?? [])
-        return Array(all.sorted { $0.createdAt > $1.createdAt }.prefix(noteLimit)).reversed()
+        // An ended pregnancy's notes would bring up what she's asked not to be reminded of.
+        let all = (child.stage == .archived ? [] : child.notes) + (mom?.notes ?? [])
+        let filled = all.filter { !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        return Array(filled.sorted { $0.createdAt > $1.createdAt }.prefix(noteLimit)).reversed()
     }
 
     // MARK: Text helpers

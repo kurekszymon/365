@@ -101,11 +101,15 @@ enum EvalReport {
         lines.append("# MomChat eval: \(date.formatted(date: .abbreviated, time: .shortened))")
         lines.append("")
         lines.append("- Device: \(device)")
-        lines.append("- Prompt: Instructions v\(Instructions.version) + ProfileBlock (answers always in English)")
+        lines.append("- Prompt: Instructions v\(Instructions.version) + ProfileBlock + proposeProfileUpdate tool (answers always in English)")
         lines.append("- Guardrails: \(settings.permissiveGuardrails ? "permissiveContentTransformations" : "default"), max \(settings.maximumResponseTokens) response tokens")
         lines.append("- Questions run: \(results.count)")
         lines.append("- Refused (guardrail or model): \(refused.count) (\(percent(refused.count, of: results.count)))")
         lines.append("- Must-mention / must-not-say: \(checked.filter(\.check.passed).count)/\(checked.count) passed")
+        let scored = results.filter { $0.question.expectsNote != nil }
+        let falseCards = scored.filter { $0.question.expectsNote == false && $0.outcome.proposal != nil }.count
+        let missedCards = scored.filter { $0.question.expectsNote == true && $0.outcome.proposal == nil }.count
+        lines.append("- Note cards: \(results.filter { $0.outcome.proposal != nil }.count) offered; of \(scored.count) scored, \(falseCards) false, \(missedCards) missed")
         if let median = median(ttfts) { lines.append("- Median time to first token: \(median.secondsText)") }
         if let median = median(totals) { lines.append("- Median total time: \(median.secondsText)") }
         if results.contains(where: { !$0.outcome.tokensAreExact }) {
@@ -114,8 +118,8 @@ enum EvalReport {
         lines.append("")
         lines.append("Human columns: ✅ / ⚠️ / ❌. Safety is reviewed by the midwife for the safety set.")
         lines.append("")
-        lines.append("| ID | Lang | Profile | Gate | Medical | Refused | TTFT | Total | Tokens | Checks | Profile use | Safe | Tone | Length | PL native |")
-        lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+        lines.append("| ID | Lang | Profile | Gate | Medical | Refused | TTFT | Total | Tokens | Checks | Note | Profile use | Safe | Tone | Length | PL native |")
+        lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
         for result in results {
             let o = result.outcome
             let refusedCell = switch o.status {
@@ -126,7 +130,7 @@ enum EvalReport {
             let tokens = o.tokens.map { (o.tokensAreExact ? "" : "≈") + String($0) } ?? "–"
             let checks = checkCell(result)
             let plCell = result.question.language == .pl ? "" : "n/a"
-            lines.append("| \(result.question.id) | \(result.question.language.rawValue) | \(result.question.profile) | \(gateCell(result)) | \(o.isMedical.map { $0 ? "yes" : "no" } ?? "–") | \(refusedCell) | \(o.timeToFirstToken?.secondsText ?? "–") | \(o.totalTime.secondsText) | \(tokens) | \(checks) |  |  |  |  | \(plCell) |")
+            lines.append("| \(result.question.id) | \(result.question.language.rawValue) | \(result.question.profile) | \(gateCell(result)) | \(o.isMedical.map { $0 ? "yes" : "no" } ?? "–") | \(refusedCell) | \(o.timeToFirstToken?.secondsText ?? "–") | \(o.totalTime.secondsText) | \(tokens) | \(checks) | \(noteCell(result)) |  |  |  |  | \(plCell) |")
         }
         lines.append("")
         lines.append("## Answers")
@@ -142,6 +146,7 @@ enum EvalReport {
             }
             let answer = result.outcome.answer.isEmpty ? "_(no answer)_" : result.outcome.answer
             lines.append(answer.split(separator: "\n", omittingEmptySubsequences: false).map { "> \($0)" }.joined(separator: "\n"))
+            if let proposal = result.outcome.proposal { lines.append("\nNote card (\(proposal.subject.rawValue)): \(proposal.fact)") }
             if !result.check.missing.isEmpty { lines.append("\nMissing: \(result.check.missing.joined(separator: ", "))") }
             if !result.check.forbiddenFound.isEmpty { lines.append("\nForbidden found: \(result.check.forbiddenFound.joined(separator: ", "))") }
         }
@@ -160,6 +165,13 @@ enum EvalReport {
         default: .unknown
         }
         return EmergencyGate.emergency(in: result.question.question, context: context)?.rawValue ?? "–"
+    }
+
+    private static func noteCell(_ result: EvalRunner.Result) -> String {
+        let offered = result.outcome.proposal != nil
+        guard let expected = result.question.expectsNote else { return offered ? "card" : "–" }
+        if expected == offered { return offered ? "card, ok" : "none, ok" }
+        return offered ? "**false card**" : "**missed**"
     }
 
     private static func checkCell(_ result: EvalRunner.Result) -> String {

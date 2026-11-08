@@ -40,6 +40,8 @@ struct MomEditView: View {
             } footer: {
                 Text(.profileListFooter)
             }
+
+            ProfileNotesSection(notes: mom.notes)
         }
         .scrollContentBackground(.hidden)
         .background(Palette.background)
