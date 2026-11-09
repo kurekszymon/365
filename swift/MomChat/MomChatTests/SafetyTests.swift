@@ -166,7 +166,7 @@ struct EmergencyFlowTests {
     private func makeChat(_ child: Child) throws -> (ChatController, Any) {
         let container = try DataStore.makeInMemoryContainer()
         container.mainContext.insert(child)
-        return (ChatController(child: child, conversation: nil, context: container.mainContext), container)
+        return (ChatController(child: child, conversation: nil, context: container.mainContext, access: QuestionAccess(store: InMemoryUsedQuestionsStore(), skipStore: InMemoryUsedQuestionsStore())), container)
     }
 
     @Test func aRedFlagOpensTheCardAndNeverStartsTheModel() throws {

@@ -9,6 +9,7 @@ struct RootView: View {
     @State private var availability = ModelAvailability()
 
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(QuestionAccess.self) private var access
 
     var body: some View {
         Group {
@@ -24,9 +25,12 @@ struct RootView: View {
         }
         .animation(.default, value: moms.isEmpty)
         .animation(.default, value: availability.isReady)
-        // Coming back from Settings after turning Apple Intelligence on.
+        .task { await access.start() }
+        // Coming back from Settings after turning Apple Intelligence on, or after a plan changed.
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { availability.refresh() }
+            guard phase == .active else { return }
+            availability.refresh()
+            Task { await access.refresh() }
         }
     }
 
@@ -37,5 +41,6 @@ struct RootView: View {
 
 #Preview {
     RootView()
+        .environment(QuestionAccess())
         .modelContainer(try! DataStore.makeInMemoryContainer())
 }

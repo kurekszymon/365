@@ -535,6 +535,42 @@
         }
       }
     },
+    "chat.freeQuestions.left" : {
+      "comment" : "Chat, above the input bar, from 5 left. Tapping opens the paywall.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld free question left"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld free questions left"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "chat.freeQuestions.usedUp" : {
+      "comment" : "Chat, above the input bar: the free questions are used up. Tapping opens the paywall.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your free questions are used up. See plans"
+          }
+        }
+      }
+    },
     "chat.freshStart.back" : {
       "comment" : "Button under the fresh-start notice: reopens the chat she had before the app started a new one.",
       "extractionState" : "manual",
@@ -2983,6 +3019,18 @@
         }
       }
     },
+    "onboarding.freeQuestions.continue" : {
+      "comment" : "Onboarding, last step: button when there are no free questions to start on.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue"
+          }
+        }
+      }
+    },
     "onboarding.freeQuestions.footnote" : {
       "comment" : "Onboarding, last screen (no payment step; the paywall comes after the free questions): small print above the button.",
       "extractionState" : "manual",
@@ -2991,6 +3039,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "After that, you can pick a plan. Your history and profiles stay on your phone either way."
+          }
+        }
+      }
+    },
+    "onboarding.freeQuestions.fullAccess.subtitle" : {
+      "comment" : "Onboarding, last step, when she has already paid.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask about your pregnancy, your baby or yourself, any time of day or night."
+          }
+        }
+      }
+    },
+    "onboarding.freeQuestions.fullAccess.title" : {
+      "comment" : "Onboarding, last step, when she has already paid (a reinstall).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You have full access"
           }
         }
       }
@@ -3020,13 +3092,49 @@
       }
     },
     "onboarding.freeQuestions.title" : {
-      "comment" : "Onboarding, last screen (no payment step; the paywall comes after the free questions): title. The number is the free allowance (20). Needs plural forms in Polish.",
+      "comment" : "Onboarding, last step. Lower than 20 after a reinstall.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "You have %lld free question"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "You have %lld free questions"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "onboarding.freeQuestions.usedUp.subtitle" : {
+      "comment" : "Onboarding, last step, after a reinstall with no free questions left.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "You have %lld free questions"
+            "value" : "You can pick a plan whenever you're ready. Emergency help in the chat always works."
+          }
+        }
+      }
+    },
+    "onboarding.freeQuestions.usedUp.title" : {
+      "comment" : "Onboarding, last step, after a reinstall with no free questions left.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your free questions are used up"
           }
         }
       }
@@ -3447,6 +3555,294 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Welcome to MomChat"
+          }
+        }
+      }
+    },
+    "paywall.benefit.anyTime" : {
+      "comment" : "Paywall benefit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "There any time, day or night"
+          }
+        }
+      }
+    },
+    "paywall.benefit.knowsBaby" : {
+      "comment" : "Paywall benefit for a parent of a baby.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Knows your baby's age and needs"
+          }
+        }
+      }
+    },
+    "paywall.benefit.knowsBoth" : {
+      "comment" : "Paywall benefit for someone expecting who also has a child.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Knows your pregnancy and your little one"
+          }
+        }
+      }
+    },
+    "paywall.benefit.knowsPregnancy" : {
+      "comment" : "Paywall benefit for someone expecting.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Knows your pregnancy, week by week"
+          }
+        }
+      }
+    },
+    "paywall.benefit.private" : {
+      "comment" : "Paywall benefit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Private: everything stays on your phone"
+          }
+        }
+      }
+    },
+    "paywall.close" : {
+      "comment" : "Paywall close button, read by VoiceOver.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        }
+      }
+    },
+    "paywall.continue" : {
+      "comment" : "Paywall main button. Opens Apple's payment sheet.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue"
+          }
+        }
+      }
+    },
+    "paywall.headline.baby" : {
+      "comment" : "Paywall headline for a parent of a baby. Also used after a loss, so it must not mention pregnancy.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Answers at 3am, private to you"
+          }
+        }
+      }
+    },
+    "paywall.headline.both" : {
+      "comment" : "Paywall headline for someone expecting who also has a child.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One app for the bump and the little one"
+          }
+        }
+      }
+    },
+    "paywall.headline.expecting" : {
+      "comment" : "Paywall headline for someone expecting.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With you through pregnancy, birth and beyond"
+          }
+        }
+      }
+    },
+    "paywall.loadFailed" : {
+      "comment" : "Paywall: the plans couldn't load.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't load the plans. Check your connection and try again."
+          }
+        }
+      }
+    },
+    "paywall.notNow" : {
+      "comment" : "Paywall: skip it for now and ask one more question. Only shown the first few times.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not now"
+          }
+        }
+      }
+    },
+    "paywall.nothingToRestore" : {
+      "comment" : "Paywall: restore finished and found nothing.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No earlier purchase found for this Apple Account."
+          }
+        }
+      }
+    },
+    "paywall.pending" : {
+      "comment" : "Paywall: the purchase is waiting for approval, e.g. Ask to Buy.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting for approval. Your plan starts as soon as it's approved."
+          }
+        }
+      }
+    },
+    "paywall.plan.lifetime" : {
+      "comment" : "Paywall plan name.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lifetime"
+          }
+        }
+      }
+    },
+    "paywall.plan.lifetime.price" : {
+      "comment" : "Paywall price line for the one-time purchase. %@ is the price with currency.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ once. No subscription."
+          }
+        }
+      }
+    },
+    "paywall.plan.monthly" : {
+      "comment" : "Paywall plan name.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monthly"
+          }
+        }
+      }
+    },
+    "paywall.plan.monthly.price" : {
+      "comment" : "Paywall price line. %@ is the price with currency.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@/month. Cancel anytime in Settings."
+          }
+        }
+      }
+    },
+    "paywall.plan.yearly" : {
+      "comment" : "Paywall plan name.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yearly"
+          }
+        }
+      }
+    },
+    "paywall.plan.yearly.price" : {
+      "comment" : "Paywall price line. %@ is the price with currency.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@/year. Cancel anytime in Settings."
+          }
+        }
+      }
+    },
+    "paywall.purchaseFailed" : {
+      "comment" : "Paywall: the purchase didn't go through.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The purchase didn't go through, and you weren't charged. Please try again."
+          }
+        }
+      }
+    },
+    "paywall.restore" : {
+      "comment" : "Paywall button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore"
+          }
+        }
+      }
+    },
+    "paywall.restoreFailed" : {
+      "comment" : "Paywall: restoring failed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't restore right now. Check your connection and try again."
+          }
+        }
+      }
+    },
+    "paywall.tryAgain" : {
+      "comment" : "Paywall: reload the plans.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try again"
           }
         }
       }
@@ -4287,6 +4683,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Profiles"
+          }
+        }
+      }
+    },
+    "settings.plan.freeLeft" : {
+      "comment" : "Settings: free questions remaining.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld free question left"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld free questions left"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "settings.plan.fullAccess" : {
+      "comment" : "Settings: she has a subscription or lifetime purchase.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full access"
+          }
+        }
+      }
+    },
+    "settings.plan.seePlans" : {
+      "comment" : "Settings: row that opens the paywall.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See plans"
           }
         }
       }

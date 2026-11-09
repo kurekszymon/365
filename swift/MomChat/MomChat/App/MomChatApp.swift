@@ -3,9 +3,12 @@ import SwiftUI
 
 @main
 struct MomChatApp: App {
+    @State private var access = QuestionAccess()
+
     var body: some Scene {
         WindowGroup {
             RootView()
+                .environment(access)
         }
         .modelContainer(sharedContainer)
     }

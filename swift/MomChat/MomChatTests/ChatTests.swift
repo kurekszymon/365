@@ -387,7 +387,7 @@ struct ConversationTests {
                 context.insert(message)
                 message.conversation = conversation
             }
-            return ChatController(child: child, conversation: conversation, context: context)
+            return ChatController(child: child, conversation: conversation, context: context, access: QuestionAccess(store: InMemoryUsedQuestionsStore(), skipStore: InMemoryUsedQuestionsStore()))
         }
 
         #expect(chat([(.user, "Is this rash normal?", .declined)]).failure == .declined)

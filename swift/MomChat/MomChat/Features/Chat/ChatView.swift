@@ -15,6 +15,8 @@ struct ChatView: View {
     @State private var isShowingHistory = false
     @State private var isRecordingBirth = false
     @State private var isAddingChild = false
+    @State private var isShowingPaywall = false
+    @Environment(QuestionAccess.self) private var access
     /// The day "Not yet" was tapped on the birth banner, as seconds since 1970. 0 = never.
     @AppStorage("birthBanner.dismissedOn") private var bannerDismissedOn: Double = 0
     @Environment(\.modelContext) private var context
@@ -74,6 +76,7 @@ struct ChatView: View {
             if child != nil {
                 VStack(spacing: Spacing.s) {
                     if isShowingStarters { chipRow }
+                    allowanceLine
                     inputBar
                 }
                 .padding(.bottom, Spacing.s)
@@ -151,6 +154,14 @@ struct ChatView: View {
         .sheet(isPresented: $isAddingChild) {
             AddChildView()
         }
+        .onChange(of: chat?.isPaywallDue) { _, isDue in
+            guard isDue == true else { return }
+            chat?.isPaywallDue = false
+            if access.isLocked { isShowingPaywall = true }
+        }
+        .sheet(isPresented: $isShowingPaywall) {
+            PaywallView()
+        }
         .sheet(isPresented: $isShowingProfiles, onDismiss: { chat?.profileDidChange() }) {
             NavigationStack {
                 ProfilesView(dismissesOnSelect: true)
@@ -206,7 +217,7 @@ struct ChatView: View {
             chat = nil
             return
         }
-        let controller = ChatController(child: child, conversation: conversation, context: context)
+        let controller = ChatController(child: child, conversation: conversation, context: context, access: access)
         controller.prewarm()
         chat = controller
     }
@@ -329,6 +340,30 @@ struct ChatView: View {
         .scrollIndicators(.hidden)
     }
 
+    /// Nothing until 5 are left. The field stays usable when locked, because the emergency gate
+    /// has to keep working.
+    @ViewBuilder
+    private var allowanceLine: some View {
+        if access.isLocked, chat?.isResponding != true {
+            allowanceButton(.chatFreeQuestionsUsedUp)
+        } else if let remaining = access.remainingToShow {
+            allowanceButton(.chatFreeQuestionsLeft(remaining))
+        }
+    }
+
+    private func allowanceButton(_ text: LocalizedStringResource) -> some View {
+        Button {
+            isShowingPaywall = true
+        } label: {
+            Text(text)
+                .font(Typography.caption)
+                .foregroundStyle(Palette.textSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, Spacing.l)
+    }
+
     private var inputBar: some View {
         HStack(alignment: .bottom, spacing: Spacing.s) {
             TextField(String(localized: .chatInputPlaceholder), text: $draft, axis: .vertical)
@@ -380,8 +415,12 @@ struct ChatView: View {
 
     private func send() {
         guard canSend else { return }
-        chat?.send(trimmedDraft)
-        draft = ""
+        if chat?.send(trimmedDraft) == .locked {
+            // Her words stay in the field for after she's picked a plan.
+            isShowingPaywall = true
+        } else {
+            draft = ""
+        }
     }
 }
 
@@ -389,6 +428,7 @@ struct ChatView: View {
     NavigationStack {
         ChatView(child: Child(stage: .expecting, dueDate: .now.addingTimeInterval(109 * 86_400)))
     }
+    .environment(QuestionAccess())
     .modelContainer(try! DataStore.makeInMemoryContainer())
 }
 
@@ -396,6 +436,7 @@ struct ChatView: View {
     NavigationStack {
         ChatView(child: nil)
     }
+    .environment(QuestionAccess())
     .modelContainer(try! DataStore.makeInMemoryContainer())
 }
 
@@ -403,5 +444,6 @@ struct ChatView: View {
     NavigationStack {
         ChatView(child: Child(name: "Emma", stage: .born, birthDate: .now.addingTimeInterval(-213 * 86_400)))
     }
+    .environment(QuestionAccess())
     .modelContainer(try! DataStore.makeInMemoryContainer())
 }

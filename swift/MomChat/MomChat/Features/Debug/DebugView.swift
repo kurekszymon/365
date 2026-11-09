@@ -10,11 +10,28 @@ struct DebugView: View {
     @AppStorage(DebugKeys.tokenOverlay) private var showsTokenOverlay = false
     @AppStorage(DebugKeys.contextSizeOverride) private var contextSizeOverride = 0
     @Environment(\.modelContext) private var context
+    @Environment(QuestionAccess.self) private var access
 
     private let model = SystemLanguageModel.default
 
     var body: some View {
         List {
+            Section {
+                LabeledContent(String("Used"), value: "\(access.free.used) of \(FreeQuestions.limit)")
+                LabeledContent(String("Skips"), value: "\(access.free.skips) of \(FreeQuestions.skips)")
+                LabeledContent(String("Entitled"), value: access.entitlements.isEntitled ? "yes" : "no")
+                ForEach([0, 15, 19, 20], id: \.self) { used in
+                    Button(String("Set used to \(used)")) { access.free.debugSetUsed(used) }
+                }
+                Button(String("Locked, no skips left")) {
+                    access.free.debugSetUsed(FreeQuestions.limit + FreeQuestions.skips, skips: FreeQuestions.skips)
+                }
+            } header: {
+                Text(verbatim: "Free questions")
+            } footer: {
+                Text(verbatim: "19 used: the next question is the last free one, and the paywall follows its answer.")
+            }
+
             Section {
                 LabeledContent(String("Availability"), value: String(describing: ModelAvailability.map(model.availability)))
                 LabeledContent(String("Supports English"), value: model.supportsLocale(Locale(identifier: "en_US")) ? "yes" : "no")

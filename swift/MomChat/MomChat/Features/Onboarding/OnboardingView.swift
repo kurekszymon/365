@@ -171,23 +171,42 @@ struct PathStep: View {
 struct FreeQuestionsStep: View {
     let onStart: () -> Void
 
+    @Environment(QuestionAccess.self) private var access
+
+    /// The Keychain counter survives a reinstall, so she may not have the full allowance.
+    private var hasFreeQuestions: Bool {
+        !access.entitlements.isEntitled && !access.free.isUsedUp
+    }
+
+    private var title: LocalizedStringResource {
+        if access.entitlements.isEntitled { return .onboardingFreeQuestionsFullAccessTitle }
+        return access.free.isUsedUp ? .onboardingFreeQuestionsUsedUpTitle : .onboardingFreeQuestionsTitle(access.free.remaining)
+    }
+
+    private var subtitle: LocalizedStringResource {
+        if access.entitlements.isEntitled { return .onboardingFreeQuestionsFullAccessSubtitle }
+        return access.free.isUsedUp ? .onboardingFreeQuestionsUsedUpSubtitle : .onboardingFreeQuestionsSubtitle
+    }
+
     var body: some View {
         VStack(spacing: Spacing.l) {
             Spacer()
             Image(systemName: "gift")
                 .font(.system(size: 48))
                 .foregroundStyle(Palette.accent)
-            Text(.onboardingFreeQuestionsTitle(FreeQuestions.limit))
+            Text(title)
                 .font(Typography.largeTitle)
                 .foregroundStyle(Palette.textPrimary)
-            Text(.onboardingFreeQuestionsSubtitle)
+            Text(subtitle)
                 .font(Typography.body)
                 .foregroundStyle(Palette.textSecondary)
             Spacer()
-            Text(.onboardingFreeQuestionsFootnote)
-                .font(Typography.caption)
-                .foregroundStyle(Palette.textSecondary)
-            PrimaryButton(.onboardingFreeQuestionsStart, action: onStart)
+            if hasFreeQuestions {
+                Text(.onboardingFreeQuestionsFootnote)
+                    .font(Typography.caption)
+                    .foregroundStyle(Palette.textSecondary)
+            }
+            PrimaryButton(access.free.isUsedUp && !access.entitlements.isEntitled ? .onboardingFreeQuestionsContinue : .onboardingFreeQuestionsStart, action: onStart)
         }
         .multilineTextAlignment(.center)
         .padding(Spacing.xl)
@@ -213,5 +232,6 @@ struct ContinueBar: View {
 
 #Preview {
     OnboardingView(availability: ModelAvailability())
+        .environment(QuestionAccess())
         .modelContainer(try! DataStore.makeInMemoryContainer())
 }

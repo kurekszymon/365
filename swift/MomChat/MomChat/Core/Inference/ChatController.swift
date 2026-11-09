@@ -21,6 +21,15 @@ final class ChatController {
     private(set) var failure: ChatFailure?
     /// The emergency card on screen. Set by the gate, before the model is involved.
     var presentedEmergency: EmergencyTopic?
+    /// The answer to her last free question has arrived. The view opens the paywall and clears this.
+    var isPaywallDue = false
+
+    /// What happened to a question she tried to send.
+    enum SendResult {
+        case handled
+        /// Nothing was sent or saved: she needs a plan to ask this.
+        case locked
+    }
 
     // For the debug overlay.
     /// What the last prompt cost, measured before sending.
@@ -37,7 +46,10 @@ final class ChatController {
     nonisolated static let toolTokenReserve = 150
 
     private let context: ModelContext
+    private let access: QuestionAccess
     private let counter = TokenCounter()
+    /// Stays set through a failed answer, so Try again still ends in the paywall.
+    @ObservationIgnored private var paywallFollowsAnswer = false
     @ObservationIgnored private var session: LanguageModelSession?
     @ObservationIgnored private var task: Task<Void, Never>?
     /// `nil` until the model has said, which is never if the answer was stopped.
@@ -51,10 +63,11 @@ final class ChatController {
     /// Turns don't change once saved, so each is counted once.
     @ObservationIgnored private var turnTokenCache: [ChatHistory.Turn: Int] = [:]
 
-    init(child: Child, conversation: Conversation?, context: ModelContext) {
+    init(child: Child, conversation: Conversation?, context: ModelContext, access: QuestionAccess) {
         self.child = child
         self.conversation = conversation
         self.context = context
+        self.access = access
         // A reopened chat whose last question went unanswered shows why, with Try again where it helps.
         if let last = conversation?.sortedMessages.last, last.role == .user {
             failure = last.failure
@@ -86,15 +99,23 @@ final class ChatController {
         self.session = session
     }
 
-    func send(_ text: String) {
+    @discardableResult
+    func send(_ text: String) -> SendResult {
         let question = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !question.isEmpty, !isResponding else { return }
+        guard !question.isEmpty, !isResponding else { return .handled }
+
+        // The gate comes first: a red flag never reaches the model and is never locked or counted.
+        // Nor is a crisis or grief message, which still gets an answer and its support card.
+        let topic = EmergencyGate.emergency(in: question, context: GateContext(child: child))
+        let isSafetyMessage = topic != nil || EmergencyGate.support(in: question) != nil
+        guard case .allowed(let isLastFree) = access.admit(isSafetyMessage: isSafetyMessage) else {
+            return .locked
+        }
+        paywallFollowsAnswer = isLastFree
         proposalsAllowed = true
 
         let conversation = self.conversation ?? startConversation(title: ConversationTitle.make(from: question))
         let message = Message(role: .user, text: question)
-        // The gate comes first: a red flag never reaches the model.
-        let topic = EmergencyGate.emergency(in: question, context: GateContext(child: child))
         message.emergency = topic
         append(message, to: conversation)
         if let topic {
@@ -103,6 +124,7 @@ final class ChatController {
         } else {
             respond(to: question)
         }
+        return .handled
     }
 
     /// From the card: "this isn't happening now". The only way a red-flag message reaches the model.
@@ -322,6 +344,10 @@ final class ChatController {
         self.failure = text.isEmpty ? failure : nil
         streamingText = nil
         task = nil
+        if paywallFollowsAnswer, !text.isEmpty {
+            paywallFollowsAnswer = false
+            isPaywallDue = true
+        }
         #if DEBUG
         if let transcript = session?.transcript {
             Task { [weak self, counter] in

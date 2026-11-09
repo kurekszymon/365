@@ -212,7 +212,8 @@ Keep it easy:
 - **One screen.** The headline, 3 short benefits (private, knows your baby/pregnancy, any time), the plans, one button.
 - **Three plans at most.** Yearly is selected by default, with monthly and lifetime next to it.
 - **Plain price wording:** "$29.99/year. Cancel anytime in Settings." No small print.
-- **Visible way out:** a "Restore" button and a close button that goes back to the chat (she can read her history and profile but not send).
+- **Soft at first (decided 2026-11-09):** the first 3 times the paywall appears she can skip it with "Not now" (the close button and swiping away do the same), and each skip gives one more question. The Keychain counter keeps the skips too.
+- **Visible way out:** a "Restore" button and a close button that goes back to the chat. Once the skips are gone she can read her history and profile but not send.
 - **Also reachable before the free questions run out**, from Settings and from the "free questions left" line.
 - **No account and no forms.** One tap goes straight to Apple's payment sheet.
 - Everything is native SwiftUI on top of StoreKit 2 (`SubscriptionStoreView` where it fits), with no third-party paywall SDK.
