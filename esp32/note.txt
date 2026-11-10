@@ -1,0 +1,17 @@
+10 nov 2026
+
+need a iot project for my university
+
+i could do a smart lamp that will have a timer and be accessible via internet / bluetooth to set and start a timer 
+
+the idea is to dim the lamp from 100 - 0 % over the set time so that the kid will have easier time to adjust to dimming light befre it turns out completely 
+
+inventory list: 
+- esp32 (ofc)
+- mosfet
+- 12-24 dc adapter 
+- step down trnasformer 
+- resistors for pull back 
+- potentiometer 
+
+add more if needed.
