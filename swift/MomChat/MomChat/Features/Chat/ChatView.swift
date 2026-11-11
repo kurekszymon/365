@@ -18,7 +18,7 @@ struct ChatView: View {
     @State private var isShowingPaywall = false
     @Environment(QuestionAccess.self) private var access
     /// The day "Not yet" was tapped on the birth banner, as seconds since 1970. 0 = never.
-    @AppStorage("birthBanner.dismissedOn") private var bannerDismissedOn: Double = 0
+    @AppStorage(BirthBanner.dismissedOnKey) private var bannerDismissedOn: Double = 0
     @Environment(\.modelContext) private var context
     @Environment(\.scenePhase) private var scenePhase
     #if DEBUG
@@ -429,6 +429,7 @@ struct ChatView: View {
         ChatView(child: Child(stage: .expecting, dueDate: .now.addingTimeInterval(109 * 86_400)))
     }
     .environment(QuestionAccess())
+    .environment(AppLock())
     .modelContainer(try! DataStore.makeInMemoryContainer())
 }
 
@@ -437,6 +438,7 @@ struct ChatView: View {
         ChatView(child: nil)
     }
     .environment(QuestionAccess())
+    .environment(AppLock())
     .modelContainer(try! DataStore.makeInMemoryContainer())
 }
 
@@ -445,5 +447,6 @@ struct ChatView: View {
         ChatView(child: Child(name: "Emma", stage: .born, birthDate: .now.addingTimeInterval(-213 * 86_400)))
     }
     .environment(QuestionAccess())
+    .environment(AppLock())
     .modelContainer(try! DataStore.makeInMemoryContainer())
 }

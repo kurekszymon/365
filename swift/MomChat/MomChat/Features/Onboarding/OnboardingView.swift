@@ -1,18 +1,22 @@
 import SwiftData
 import SwiftUI
 
-/// Welcome → device check → "Where are you right now?" → details → free questions → chat.
+/// Welcome → device check → "Where are you right now?" → details → app lock → free questions → chat.
+/// The welcome screen also offers restoring a backup, for a new phone.
 /// There's no payment step: the paywall comes after the free questions (Stage 10).
 /// Nothing is saved until the last step, so quitting halfway starts over cleanly.
 struct OnboardingView: View {
     let availability: ModelAvailability
 
     enum Step: Hashable {
-        case deviceCheck, path, pregnancy, birth, freeQuestions
+        case restore, deviceCheck, path, pregnancy, birth, lock, freeQuestions
     }
 
     @Environment(\.modelContext) private var context
+    @Environment(AppLock.self) private var lock
     @State private var draft = OnboardingDraft()
+    /// Confirmed with Face ID on the lock step, turned on only once the profile is saved.
+    @State private var turnsOnLock = false
     @State private var steps: [Step] = []
     @State private var saveError: String?
 
@@ -20,9 +24,13 @@ struct OnboardingView: View {
         NavigationStack(path: $steps) {
             WelcomeStep {
                 steps.append(availability.isReady ? .path : .deviceCheck)
+            } onRestore: {
+                steps.append(.restore)
             }
             .navigationDestination(for: Step.self) { step in
                 switch step {
+                case .restore:
+                    BackupImportView(replacesExisting: false)
                 case .deviceCheck:
                     DeviceCheckView(availability: availability)
                 case .path:
@@ -34,6 +42,11 @@ struct OnboardingView: View {
                     PregnancyDetailsStep(draft: $draft) { advance(from: .pregnancy) }
                 case .birth:
                     BirthDetailsStep(draft: $draft) { advance(from: .birth) }
+                case .lock:
+                    LockStep { turnOn in
+                        turnsOnLock = turnOn
+                        advance(from: .lock)
+                    }
                 case .freeQuestions:
                     // Never reached on a phone that can't run the model: the device check has no way forward.
                     FreeQuestionsStep(onStart: finish)
@@ -55,11 +68,12 @@ struct OnboardingView: View {
     }
 
     /// The steps after choosing a path. "Both" asks about the baby first, then the pregnancy.
-    /// Stage 11 adds the optional FaceID lock between the details and the free questions screen.
+    /// The lock step is skipped on a phone with no passcode, where no lock is possible.
     private var sequence: [Step] {
         var steps = [Step.path]
         if draft.path?.includesBirth == true { steps.append(.birth) }
         if draft.path?.includesPregnancy == true { steps.append(.pregnancy) }
+        if lock.method != nil { steps.append(.lock) }
         steps.append(.freeQuestions)
         return steps
     }
@@ -73,6 +87,7 @@ struct OnboardingView: View {
         draft.save(in: context)
         do {
             try context.save()
+            if turnsOnLock { lock.setEnabled(true) }
         } catch {
             context.rollback()
             saveError = error.localizedDescription
@@ -84,6 +99,7 @@ struct OnboardingView: View {
 
 struct WelcomeStep: View {
     let onStart: () -> Void
+    let onRestore: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.xl) {
@@ -100,7 +116,12 @@ struct WelcomeStep: View {
                 promise("person.crop.circle.badge.xmark", .onboardingWelcomePromiseNoAccount)
             }
             Spacer()
-            PrimaryButton(.onboardingWelcomeStart, action: onStart)
+            VStack(spacing: Spacing.m) {
+                PrimaryButton(.onboardingWelcomeStart, action: onStart)
+                Button(.onboardingWelcomeRestore, action: onRestore)
+                    .font(Typography.body)
+                    .frame(maxWidth: .infinity)
+            }
         }
         .padding(Spacing.xl)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -164,6 +185,49 @@ struct PathStep: View {
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// Optional: ask for Face ID (or the passcode) each time the app opens.
+struct LockStep: View {
+    let onDone: (_ turnOn: Bool) -> Void
+
+    @Environment(AppLock.self) private var lock
+
+    var body: some View {
+        VStack(spacing: Spacing.l) {
+            Spacer()
+            Image(systemName: lock.method == .faceID ? "faceid" : "lock")
+                .font(.system(size: 48))
+                .foregroundStyle(Palette.accent)
+                .accessibilityHidden(true)
+            Text(.onboardingLockTitle)
+                .font(Typography.largeTitle)
+                .foregroundStyle(Palette.textPrimary)
+            Text(.onboardingLockSubtitle)
+                .font(Typography.body)
+                .foregroundStyle(Palette.textSecondary)
+            Spacer()
+            VStack(spacing: Spacing.m) {
+                PrimaryButton(lock.method == .faceID ? .onboardingLockTurnOnFaceID : .onboardingLockTurnOnPasscode) {
+                    // If she cancels Face ID she stays here and can choose again.
+                    Task {
+                        if await lock.confirmOwner() { onDone(true) }
+                    }
+                }
+                .disabled(lock.isAuthenticating)
+                Button(.onboardingLockNotNow) { onDone(false) }
+                    .font(Typography.body)
+                    .frame(maxWidth: .infinity)
+            }
+            Text(.onboardingLockFootnote)
+                .font(Typography.caption)
+                .foregroundStyle(Palette.textSecondary)
+        }
+        .multilineTextAlignment(.center)
+        .padding(Spacing.xl)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Palette.background)
     }
 }
 
@@ -233,5 +297,6 @@ struct ContinueBar: View {
 #Preview {
     OnboardingView(availability: ModelAvailability())
         .environment(QuestionAccess())
+        .environment(AppLock())
         .modelContainer(try! DataStore.makeInMemoryContainer())
 }

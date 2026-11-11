@@ -76,3 +76,10 @@
 - Not yet checked: real tool behaviour, false-proposal rate and any speed change (Apple Intelligence is off on the Mac; the user will check speed later)
 - Decisions: no card for grief or crisis messages, questions sent on from an emergency card, stopped or failed answers, or ended pregnancies; an ended pregnancy's notes leave the prompt; one card per answer
 - Known gaps: Polish messages rarely get a card (the word check compares Polish with an English note); a note goes only on the active twin; Polish for 9 new keys
+
+## Stage 11: Privacy — built 2026-11-11, waiting for the phone test
+
+- Built: optional `AppLock` (Face ID, passcode fallback; asked before turning it on or off; locks on background, asks once on return; emergency number on the lock screen); privacy cover whenever the app isn't active; encrypted backup (`BackupArchive` → JSON → LZFSE → AES-GCM, key from PBKDF2-SHA256 600k via CommonCrypto, authenticated header); restore from Settings (replaces, after confirming) and from the welcome screen; `DataWipe` for "Delete everything" and the Developer reset; Settings sections Plan (manage subscription, restore purchases), Privacy (lock, back up, restore, "How your data is kept"), Delete everything; onboarding lock step; `NSFaceIDUsageDescription` + `InfoPlist.xcstrings`; 4 new test suites in `PrivacyTests.swift`; guide in `docs/testing/STAGE11-TESTING.md`
+- Decisions: lock off by default and locks immediately (no grace period); cover always on, even without the lock; the lock setting, free-question count and purchases aren't in the backup; "Delete everything" keeps the free-question count; new screens in `Features/Privacy/`
+- Known gaps: privacy policy / terms / support rows hidden until `AppLinks` has URLs; the SQLite file isn't compacted after "Delete everything"; Polish for 73 new keys; `set: setLock` in `SettingsView` crashed the Swift 6.3 compiler, so it's a closure (commented)
+- Test status: 2 `StoreKitFlowTests` fail with `.notEntitled`, already failing at `4171963`

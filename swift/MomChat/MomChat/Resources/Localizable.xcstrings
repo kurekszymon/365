@@ -91,6 +91,330 @@
         }
       }
     },
+    "backup.error.newerVersion" : {
+      "comment" : "Restore: backup made by a newer app version.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This backup comes from a newer version of MomChat. Update the app, then try again."
+          }
+        }
+      }
+    },
+    "backup.error.notABackup" : {
+      "comment" : "Restore: wrong kind of file.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This file isn't a MomChat backup, or it's damaged."
+          }
+        }
+      }
+    },
+    "backup.error.restoreFailed" : {
+      "comment" : "Restore: saving failed after decrypting.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The backup opened, but it couldn't be restored. Nothing on this phone was changed."
+          }
+        }
+      }
+    },
+    "backup.error.unreadable" : {
+      "comment" : "Restore: the picked file can't be read.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This file couldn't be opened. Try choosing it again."
+          }
+        }
+      }
+    },
+    "backup.error.wrongPassword" : {
+      "comment" : "Restore: wrong password. Nothing on the phone changed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That password doesn't open this backup. Check it and try again."
+          }
+        }
+      }
+    },
+    "backup.export.confirm" : {
+      "comment" : "Back up: second password field placeholder.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeat password"
+          }
+        }
+      }
+    },
+    "backup.export.create" : {
+      "comment" : "Back up: button that encrypts and writes the file.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create backup"
+          }
+        }
+      }
+    },
+    "backup.export.failed" : {
+      "comment" : "Back up: alert when writing the file fails.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The backup couldn't be created. Please try again."
+          }
+        }
+      }
+    },
+    "backup.export.intro" : {
+      "comment" : "Back up screen: explanation at the top.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saves your profiles, saved notes and every chat in one file, locked with a password you choose. To move to a new phone, install MomChat there and choose “Restore a backup”."
+          }
+        }
+      }
+    },
+    "backup.export.password" : {
+      "comment" : "Back up: first password field placeholder.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Password"
+          }
+        }
+      }
+    },
+    "backup.export.passwordMismatch" : {
+      "comment" : "Back up: hint when the two password fields differ.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The passwords don't match."
+          }
+        }
+      }
+    },
+    "backup.export.passwordTooShort" : {
+      "comment" : "Back up: password hint under the fields.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Use at least %lld character."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Use at least %lld characters."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "backup.export.share" : {
+      "comment" : "Back up: share button once the file is ready.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save or send the backup"
+          }
+        }
+      }
+    },
+    "backup.export.shareFooter" : {
+      "comment" : "Back up: hint under the share button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose “Save to Files”, or AirDrop it straight to your new phone. The file stays locked with your password."
+          }
+        }
+      }
+    },
+    "backup.export.title" : {
+      "comment" : "Back up screen title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back up"
+          }
+        }
+      }
+    },
+    "backup.export.warning" : {
+      "comment" : "Back up: warning under the password fields.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If you forget this password, nobody can open the backup, not even us."
+          }
+        }
+      }
+    },
+    "backup.fileName" : {
+      "comment" : "Name of the backup file. %@ = date as 2026-11-11. No slashes or colons.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MomChat Backup %@"
+          }
+        }
+      }
+    },
+    "backup.import.choose" : {
+      "comment" : "Restore: opens the file picker.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose backup file"
+          }
+        }
+      }
+    },
+    "backup.import.confirm.action" : {
+      "comment" : "Restore from Settings: destructive confirm button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replace with backup"
+          }
+        }
+      }
+    },
+    "backup.import.confirm.message" : {
+      "comment" : "Restore from Settings: confirmation message.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The profiles and chats on this phone will be replaced by the ones in the backup."
+          }
+        }
+      }
+    },
+    "backup.import.confirm.title" : {
+      "comment" : "Restore from Settings: confirmation title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replace everything on this phone?"
+          }
+        }
+      }
+    },
+    "backup.import.intro" : {
+      "comment" : "Restore screen opened from the welcome screen (new phone).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose the backup file from your old phone and enter its password."
+          }
+        }
+      }
+    },
+    "backup.import.introReplace" : {
+      "comment" : "Restore screen opened from Settings.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a backup file and enter its password. Everything on this phone will be replaced by what's in the backup."
+          }
+        }
+      }
+    },
+    "backup.import.password" : {
+      "comment" : "Restore: password field placeholder.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup password"
+          }
+        }
+      }
+    },
+    "backup.import.restore" : {
+      "comment" : "Restore: button that decrypts and restores.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore"
+          }
+        }
+      }
+    },
+    "backup.import.title" : {
+      "comment" : "Restore screen title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore a backup"
+          }
+        }
+      }
+    },
     "birth.banner.message" : {
       "comment" : "Chat birth banner: message under the title.",
       "extractionState" : "manual",
@@ -2719,6 +3043,66 @@
         }
       }
     },
+    "lock.emergency" : {
+      "comment" : "Lock screen link that calls the local emergency number without unlocking. %@ = number, e.g. 112.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emergency? Call %@"
+          }
+        }
+      }
+    },
+    "lock.reason" : {
+      "comment" : "Shown by iOS in the passcode prompt when unlocking the app or changing the lock.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlock MomChat"
+          }
+        }
+      }
+    },
+    "lock.title" : {
+      "comment" : "Lock screen title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MomChat is locked"
+          }
+        }
+      }
+    },
+    "lock.unlock.faceID" : {
+      "comment" : "Lock screen button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlock with Face ID"
+          }
+        }
+      }
+    },
+    "lock.unlock.passcode" : {
+      "comment" : "Lock screen button on a phone without Face ID set up.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlock with passcode"
+          }
+        }
+      }
+    },
     "onboarding.babiesCount" : {
       "comment" : "Onboarding forms: stepper for the number of babies (twins = 2). Kept as \"label: number\" so no plural forms are needed.",
       "extractionState" : "manual",
@@ -3139,6 +3523,78 @@
         }
       }
     },
+    "onboarding.lock.footnote" : {
+      "comment" : "Onboarding lock step: footnote.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can change this any time in Settings."
+          }
+        }
+      }
+    },
+    "onboarding.lock.notNow" : {
+      "comment" : "Onboarding lock step: skip.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not now"
+          }
+        }
+      }
+    },
+    "onboarding.lock.subtitle" : {
+      "comment" : "Onboarding lock step subtitle.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MomChat can ask for Face ID or your passcode each time it opens, so no one else holding your phone can read your chats."
+          }
+        }
+      }
+    },
+    "onboarding.lock.title" : {
+      "comment" : "Onboarding lock step title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep your chats private"
+          }
+        }
+      }
+    },
+    "onboarding.lock.turnOn.faceID" : {
+      "comment" : "Onboarding lock step: main button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn on Face ID"
+          }
+        }
+      }
+    },
+    "onboarding.lock.turnOn.passcode" : {
+      "comment" : "Onboarding lock step: main button without Face ID set up.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use my passcode"
+          }
+        }
+      }
+    },
     "onboarding.path.born.detail" : {
       "comment" : "Onboarding, \"Where are you right now?\" card detail under \"My baby is here\".",
       "extractionState" : "manual",
@@ -3523,6 +3979,18 @@
         }
       }
     },
+    "onboarding.welcome.restore" : {
+      "comment" : "Welcome screen: secondary button under Get started.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moving from another phone? Restore a backup"
+          }
+        }
+      }
+    },
     "onboarding.welcome.start" : {
       "comment" : "Onboarding welcome screen button.",
       "extractionState" : "manual",
@@ -3843,6 +4311,162 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Try again"
+          }
+        }
+      }
+    },
+    "privacyInfo.delete.detail" : {
+      "comment" : "Privacy explanation.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“Delete everything” in Settings removes every profile and chat from this phone at once."
+          }
+        }
+      }
+    },
+    "privacyInfo.delete.title" : {
+      "comment" : "Privacy explanation: heading.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete it any time"
+          }
+        }
+      }
+    },
+    "privacyInfo.encrypted.detail" : {
+      "comment" : "Privacy explanation.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Everything is stored encrypted and can't be read while your phone is locked. Turn on the lock in Settings to protect the app too."
+          }
+        }
+      }
+    },
+    "privacyInfo.encrypted.title" : {
+      "comment" : "Privacy explanation: heading.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encrypted by iOS"
+          }
+        }
+      }
+    },
+    "privacyInfo.noAccount.detail" : {
+      "comment" : "Privacy explanation.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No sign-up, no analytics, no ads. We can't see your chats or your profile."
+          }
+        }
+      }
+    },
+    "privacyInfo.noAccount.title" : {
+      "comment" : "Privacy explanation: heading.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No account, nothing tracked"
+          }
+        }
+      }
+    },
+    "privacyInfo.noCloud.detail" : {
+      "comment" : "Privacy explanation.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your chats stay on this phone only. To move to a new phone, make a backup file locked with your own password."
+          }
+        }
+      }
+    },
+    "privacyInfo.noCloud.title" : {
+      "comment" : "Privacy explanation: heading.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not in iCloud or computer backups"
+          }
+        }
+      }
+    },
+    "privacyInfo.onDevice.detail" : {
+      "comment" : "Privacy explanation.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple's on-device model writes every answer. Your questions never leave your phone."
+          }
+        }
+      }
+    },
+    "privacyInfo.onDevice.title" : {
+      "comment" : "Privacy explanation: heading.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Answered on this iPhone"
+          }
+        }
+      }
+    },
+    "privacyInfo.purchases.detail" : {
+      "comment" : "Privacy explanation.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple handles every payment. We never see your name, email or card."
+          }
+        }
+      }
+    },
+    "privacyInfo.purchases.title" : {
+      "comment" : "Privacy explanation: heading.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Payments go through Apple"
+          }
+        }
+      }
+    },
+    "privacyInfo.title" : {
+      "comment" : "Privacy explanation screen title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How your data is kept"
           }
         }
       }
@@ -4687,6 +5311,150 @@
         }
       }
     },
+    "settings.backup.export" : {
+      "comment" : "Settings: row.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back up to a file"
+          }
+        }
+      }
+    },
+    "settings.backup.import" : {
+      "comment" : "Settings: row.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore a backup"
+          }
+        }
+      }
+    },
+    "settings.delete.confirm.action" : {
+      "comment" : "Settings: destructive button in the delete confirmation.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete everything"
+          }
+        }
+      }
+    },
+    "settings.delete.confirm.message" : {
+      "comment" : "Settings: delete confirmation message.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every profile, saved note and chat on this phone will be deleted. This can't be undone. Make a backup first if you want to keep them."
+          }
+        }
+      }
+    },
+    "settings.delete.confirm.title" : {
+      "comment" : "Settings: delete confirmation title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete everything?"
+          }
+        }
+      }
+    },
+    "settings.delete.failed" : {
+      "comment" : "Settings: alert when deleting fails.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Something went wrong and nothing was deleted. Please try again."
+          }
+        }
+      }
+    },
+    "settings.deleteEverything" : {
+      "comment" : "Settings: destructive row.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete everything"
+          }
+        }
+      }
+    },
+    "settings.deleteEverythingFooter" : {
+      "comment" : "Settings: footer under Delete everything.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Removes every profile, saved note and chat from this phone, and turns off the lock. Purchases stay with your Apple Account."
+          }
+        }
+      }
+    },
+    "settings.lock.faceID" : {
+      "comment" : "Settings: lock toggle.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lock with Face ID"
+          }
+        }
+      }
+    },
+    "settings.lock.footer" : {
+      "comment" : "Settings: privacy section footer.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With the lock on, MomChat asks for Face ID or your passcode each time you open it."
+          }
+        }
+      }
+    },
+    "settings.lock.passcode" : {
+      "comment" : "Settings: lock toggle on a phone without Face ID set up.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lock with passcode"
+          }
+        }
+      }
+    },
+    "settings.lock.unavailable" : {
+      "comment" : "Settings: shown instead of the toggle when the phone has no passcode.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To lock MomChat, set a passcode for your iPhone first."
+          }
+        }
+      }
+    },
     "settings.plan.freeLeft" : {
       "comment" : "Settings: free questions remaining.",
       "extractionState" : "manual",
@@ -4723,6 +5491,54 @@
         }
       }
     },
+    "settings.plan.header" : {
+      "comment" : "Settings: section header for the plan.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plan"
+          }
+        }
+      }
+    },
+    "settings.plan.manage" : {
+      "comment" : "Settings: opens Apple's subscription sheet.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage subscription"
+          }
+        }
+      }
+    },
+    "settings.plan.restore" : {
+      "comment" : "Settings: restore row.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore purchases"
+          }
+        }
+      }
+    },
+    "settings.plan.restored" : {
+      "comment" : "Settings: alert after a successful restore.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your purchase is restored."
+          }
+        }
+      }
+    },
     "settings.plan.seePlans" : {
       "comment" : "Settings: row that opens the paywall.",
       "extractionState" : "manual",
@@ -4735,6 +5551,42 @@
         }
       }
     },
+    "settings.privacy.header" : {
+      "comment" : "Settings: section header.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy"
+          }
+        }
+      }
+    },
+    "settings.privacy.info" : {
+      "comment" : "Settings: row opening the privacy explanation.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How your data is kept"
+          }
+        }
+      }
+    },
+    "settings.privacy.policy" : {
+      "comment" : "Settings: link.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy policy"
+          }
+        }
+      }
+    },
     "settings.profiles" : {
       "comment" : "Settings row that opens the profiles screen (mom and children).",
       "extractionState" : "manual",
@@ -4743,6 +5595,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Profiles"
+          }
+        }
+      }
+    },
+    "settings.support.contact" : {
+      "comment" : "Settings: opens a Mail draft.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contact support"
+          }
+        }
+      }
+    },
+    "settings.support.header" : {
+      "comment" : "Settings: section header.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Support"
+          }
+        }
+      }
+    },
+    "settings.support.terms" : {
+      "comment" : "Settings: link.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terms of use"
           }
         }
       }

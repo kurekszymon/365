@@ -81,10 +81,14 @@ Add these and keep them as regression tests in `SafetyTests.swift`.
 - [ ] Stage 9 known gaps: Polish messages rarely get a save card; a note only goes on the active twin
 - [ ] Support lines for EU countries (none listed)
 
+- [ ] Stage 11: privacy policy, terms and support rows are hidden until `AppLinks` (`MomChat/Features/Privacy/PrivacyInfoView.swift`) has the URLs (checklist #7, #8)
+- [ ] Stage 11: "Delete everything" deletes the records but doesn't compact the SQLite file, so deleted text can stay on disk until it's overwritten (the file is still encrypted by iOS)
+- [ ] Polish for the 73 Stage 11 keys
+- [ ] `StoreKitFlowTests`: `aSubscriptionGrantsAccessUntilItExpires` and `lifetimeGrantsAccess` fail with `.notEntitled`, already at `4171963` (Stage 10). Not looked into yet
+
 ## 7. Not started
 
 - [ ] **Stage 10, Paywall:** Keychain counter, `.storekit` file, entitlements, paywall screen, send lock. The emergency gate must never count or be locked
-- [ ] **Stage 11, Privacy:** FaceID lock, app-switcher blur, encrypted backup, "delete everything", Settings content
 - [ ] **Stage 12, PDF export**
 - [ ] **Stage 13, Polish pass:** app icon, Dynamic Type at large sizes, VoiceOver, performance check
 - [ ] **Stage 14, TestFlight**, with in-app feedback

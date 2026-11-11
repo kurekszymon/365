@@ -41,6 +41,9 @@ extension Child {
 
 /// When the chat asks "Has your baby arrived?". Twins and triplets usually come earlier.
 nonisolated enum BirthBanner {
+    /// UserDefaults: the day she tapped "Not now".
+    static let dismissedOnKey = "birthBanner.dismissedOn"
+
     static func startWeek(multiples: Int) -> Int {
         switch multiples {
         case ...1: 37

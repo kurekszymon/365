@@ -4,11 +4,13 @@ import SwiftUI
 @main
 struct MomChatApp: App {
     @State private var access = QuestionAccess()
+    @State private var lock = AppLock()
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environment(access)
+                .environment(lock)
         }
         .modelContainer(sharedContainer)
     }

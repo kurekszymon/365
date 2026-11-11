@@ -11,6 +11,7 @@ struct DebugView: View {
     @AppStorage(DebugKeys.contextSizeOverride) private var contextSizeOverride = 0
     @Environment(\.modelContext) private var context
     @Environment(QuestionAccess.self) private var access
+    @Environment(AppLock.self) private var lock
 
     private let model = SystemLanguageModel.default
 
@@ -87,12 +88,7 @@ struct DebugView: View {
 
     private func deleteAllData() {
         do {
-            try context.delete(model: Message.self)
-            try context.delete(model: Conversation.self)
-            try context.delete(model: ProfileNote.self)
-            try context.delete(model: Child.self)
-            try context.delete(model: MomProfile.self)
-            try context.save()
+            try DataWipe.everything(in: context, lock: lock)
         } catch {
             assertionFailure("Reset failed: \(error)")
         }
