@@ -31,6 +31,9 @@ struct ConversationListView: View {
                         delete(hit.conversation)
                     }
                 }
+                .contextMenu {
+                    ConversationShareButton(conversation: hit.conversation)
+                }
             }
         }
         .overlay {

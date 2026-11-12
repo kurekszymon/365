@@ -83,3 +83,10 @@
 - Decisions: lock off by default and locks immediately (no grace period); cover always on, even without the lock; the lock setting, free-question count and purchases aren't in the backup; "Delete everything" keeps the free-question count; new screens in `Features/Privacy/`
 - Known gaps: privacy policy / terms / support rows hidden until `AppLinks` has URLs; the SQLite file isn't compacted after "Delete everything"; Polish for 73 new keys; `set: setLock` in `SettingsView` crashed the Swift 6.3 compiler, so it's a closure (commented)
 - Test status: 2 `StoreKitFlowTests` fail with `.notEntitled`, already failing at `4171963`
+
+## Stage 12: PDF Export — built 2026-11-12, waiting for the phone test
+
+- Built: `ConversationReport` (the PDF's content in the app language: baby or pregnancy with age / week *on the day of the chat*, corrected age, born early, delivery, feeding, health; up to 5 saved notes; mom; questions and answers with times, a date line when the day changes, the medical footnote, a line where the emergency screen opened or no answer came); `ConversationPDF` (TextKit pages, A4 or Letter from the phone's measurement system, Markdown bold kept, on-device footer + "1 / 3" on every page); `ConversationPDFItem` made only when she picks a destination, written with complete file protection to a temp folder emptied on each export; Share in the chat toolbar (greyed out until something is saved) and on long-press in the chat history; 33 new keys; 11 new tests in `ExportTests.swift`; guide in `docs/testing/STAGE12-TESTING.md`
+- Decisions (to confirm): mom's details included; an ended pregnancy shows "Pregnancy ended" and no saved notes; lists joined with commas so two conditions don't read as one
+- Known gaps: a "Question" label can land alone at the bottom of a page (TextKit 1 has no keep-with-next); Polish for 33 new keys
+- Test status: same 2 `StoreKitFlowTests` failures (`.notEntitled`) as at `4171963`

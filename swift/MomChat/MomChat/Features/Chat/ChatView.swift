@@ -113,6 +113,9 @@ struct ChatView: View {
                 }
                 .disabled(child == nil)
             }
+            ToolbarItem(placement: .topBarLeading) {
+                ConversationShareButton(conversation: chat?.conversation)
+            }
             ToolbarItem(placement: .principal) {
                 titleButton
             }
