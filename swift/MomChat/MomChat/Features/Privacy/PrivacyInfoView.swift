@@ -38,14 +38,11 @@ struct PrivacyInfoView: View {
 }
 
 /// Pages that don't exist yet (checklist #7, #8). Their Settings rows stay hidden while `nil`.
+/// `supportEmail` is also where Settings → Send feedback drafts go (Stage 14).
 nonisolated enum AppLinks {
     static let privacyPolicy: URL? = nil
     static let terms: URL? = nil
     static let supportEmail: String? = nil
-
-    static var supportMail: URL? {
-        supportEmail.flatMap { URL(string: "mailto:\($0)") }
-    }
 }
 
 #Preview {

@@ -4,7 +4,7 @@ import SwiftData
 /// The on-disk SwiftData store. It lives in its own folder so file protection and the backup
 /// exclusion cover the database and its `-wal`/`-shm` side files.
 nonisolated enum DataStore {
-    static let schema = Schema([MomProfile.self, Child.self, ProfileNote.self, Conversation.self, Message.self])
+    static let schema = Schema(versionedSchema: MomChatSchemaV1.self)
 
     static var defaultDirectory: URL {
         URL.applicationSupportDirectory.appending(path: "Store", directoryHint: .isDirectory)
@@ -17,7 +17,7 @@ nonisolated enum DataStore {
             url: directory.appending(path: "MomChat.store"),
             cloudKitDatabase: .none
         )
-        return try ModelContainer(for: schema, configurations: configuration)
+        return try ModelContainer(for: schema, migrationPlan: MomChatMigrationPlan.self, configurations: configuration)
     }
 
     static func makeInMemoryContainer() throws -> ModelContainer {
@@ -41,4 +41,24 @@ nonisolated enum DataStore {
         values.isExcludedFromBackup = true
         try directory.setResourceValues(values)
     }
+}
+
+/// The schema testers' and users' stores were first written with (TestFlight, Stage 14).
+///
+/// Additive changes (a new optional property, a new model) still migrate on their own. Anything
+/// else (renaming, changing a type, making a property required) needs a new version:
+/// 1. Copy today's model classes into `MomChatSchemaV1` as nested types, so V1 stays frozen.
+/// 2. Add `MomChatSchemaV2` listing the changed top-level models, with version 2.0.0.
+/// 3. Append it to `schemas` and add a `MigrationStage` (lightweight or custom) to `stages`.
+nonisolated enum MomChatSchemaV1: VersionedSchema {
+    static let versionIdentifier = Schema.Version(1, 0, 0)
+
+    static var models: [any PersistentModel.Type] {
+        [MomProfile.self, Child.self, ProfileNote.self, Conversation.self, Message.self]
+    }
+}
+
+nonisolated enum MomChatMigrationPlan: SchemaMigrationPlan {
+    static var schemas: [any VersionedSchema.Type] { [MomChatSchemaV1.self] }
+    static var stages: [MigrationStage] { [] }
 }

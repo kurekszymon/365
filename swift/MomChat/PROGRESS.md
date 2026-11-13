@@ -90,3 +90,14 @@
 - Decisions (to confirm): mom's details included; an ended pregnancy shows "Pregnancy ended" and no saved notes; lists joined with commas so two conditions don't read as one
 - Known gaps: a "Question" label can land alone at the bottom of a page (TextKit 1 has no keep-with-next); Polish for 33 new keys
 - Test status: same 2 `StoreKitFlowTests` failures (`.notEntitled`) as at `4171963`
+
+## Stage 13: Polish Pass — not built (skipped 2026-11-13)
+
+- Only the placeholder app icon was done, as part of Stage 14. Still open: accessibility (VoiceOver, Dynamic Type up to XXL, contrast), launch screen, haptics, empty states, animations, performance check
+- Decision (2026-11-13): **ship EN-only, Polish later**. Polish copy (502 keys) waits for the user
+
+## Stage 14: TestFlight — built 2026-11-13, waiting for the first upload
+
+- Built: placeholder icon (bubble + heart from the palette; light, dark, tinted; the light one has no alpha, as App Store Connect requires); Settings → Send feedback opens a `mailto:` draft in her mail app with app version, build, iOS, iPhone model and app language, and no chats or profile data (`FeedbackMail`), hidden until `AppLinks.supportEmail` is set; the store has a version (`MomChatSchemaV1` + `MomChatMigrationPlan`), and pre-versioning stores open unchanged (tested); `StoreErrorView` with Try again and the emergency number replaces the `fatalError` when the store can't open; TestFlight copy in `docs/testflight/TESTFLIGHT-NOTES.md` (EN; PL left to write); upload steps and phone script in `docs/testing/STAGE14-TESTING.md`; 8 new keys, `settings.support.contact` removed; 5 new tests in `ReleaseTests.swift`
+- Decisions: feedback through `mailto:` (works with Gmail and other default mail apps), not `MFMailComposeViewController`; the user archives and uploads from Xcode's Organizer; `ITSAppUsesNonExemptEncryption` not set until the user decides the export-compliance answer
+- Known gaps: external testers should wait for the midwife review, verified phone numbers, a privacy policy URL and the support email; build number is raised by hand; 2 `StoreKitFlowTests` still fail with `.notEntitled` (test harness only, since Stage 10)

@@ -7,6 +7,7 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Environment(QuestionAccess.self) private var access
     @Environment(AppLock.self) private var lock
+    @Environment(\.openURL) private var openURL
 
     @State private var isShowingPaywall = false
     @State private var isManagingSubscription = false
@@ -131,10 +132,10 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var supportSection: some View {
-        if AppLinks.supportMail != nil || AppLinks.terms != nil {
+        if AppLinks.supportEmail != nil || AppLinks.terms != nil {
             Section {
-                if let url = AppLinks.supportMail {
-                    Link(destination: url) { Text(.settingsSupportContact) }
+                if let address = AppLinks.supportEmail {
+                    Button(.settingsFeedbackSend) { sendFeedback(to: address) }
                 }
                 if let url = AppLinks.terms {
                     Link(destination: url) { Text(.settingsSupportTerms) }
@@ -146,6 +147,14 @@ struct SettingsView: View {
     }
 
     // MARK: Actions
+
+    /// Opens a draft in her mail app. Without one, tells her the address to write to.
+    private func sendFeedback(to address: String) {
+        guard let url = FeedbackMail.current.url(to: address) else { return }
+        openURL(url) { opened in
+            if !opened { notice = .settingsFeedbackNoMail(address) }
+        }
+    }
 
     /// Turning the lock on or off asks for Face ID first, so someone holding an unlocked phone can't switch it off.
     private func setLock(_ enabled: Bool) {

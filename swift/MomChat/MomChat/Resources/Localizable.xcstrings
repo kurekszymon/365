@@ -5815,6 +5815,54 @@
         }
       }
     },
+    "settings.feedback.body" : {
+      "comment" : "Body of the feedback email draft. The empty lines at the top are where she writes. %1$@ = app version, %2$@ = build number, %3$@ = iOS version, %4$@ = iPhone model code (e.g. iPhone16,1), %5$@ = app language code.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\n\n\n—\nThese details help us fix problems. They don't include your chats or your profile.\nApp version: %1$@ (%2$@)\niOS: %3$@\niPhone: %4$@\nApp language: %5$@"
+          }
+        }
+      }
+    },
+    "settings.feedback.noMail" : {
+      "comment" : "Alert when the feedback email draft can't be opened. %@ = support email address.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No mail app is set up on this iPhone. You can write to us at %@."
+          }
+        }
+      }
+    },
+    "settings.feedback.send" : {
+      "comment" : "Settings, Support section: opens a draft email in her mail app. Nothing is sent automatically.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send feedback"
+          }
+        }
+      }
+    },
+    "settings.feedback.subject" : {
+      "comment" : "Subject of the feedback email draft. %1$@ = app name, %2$@ = app version, e.g. \"MomChat feedback (1.0)\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ feedback (%2$@)"
+          }
+        }
+      }
+    },
     "settings.lock.faceID" : {
       "comment" : "Settings: lock toggle.",
       "extractionState" : "manual",
@@ -6007,18 +6055,6 @@
         }
       }
     },
-    "settings.support.contact" : {
-      "comment" : "Settings: opens a Mail draft.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Contact support"
-          }
-        }
-      }
-    },
     "settings.support.header" : {
       "comment" : "Settings: section header.",
       "extractionState" : "manual",
@@ -6051,6 +6087,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Settings"
+          }
+        }
+      }
+    },
+    "store.error.detail" : {
+      "comment" : "Under the title on the data error screen.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing has been deleted. Try again, or restart your iPhone. If this keeps happening, please let us know."
+          }
+        }
+      }
+    },
+    "store.error.emergency" : {
+      "comment" : "Link on the data error screen that calls the local emergency number. %@ = number, e.g. 112.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emergency? Call %@"
+          }
+        }
+      }
+    },
+    "store.error.retry" : {
+      "comment" : "Button on the data error screen: tries to open the saved data again.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try again"
+          }
+        }
+      }
+    },
+    "store.error.title" : {
+      "comment" : "Full screen shown when the saved data can't be opened at launch.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your chats can't be opened right now"
           }
         }
       }
