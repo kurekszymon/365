@@ -1,3 +1,9 @@
+14 nov 
+
+started wiring the schema - todo: upload a schema 
+remember how breadboard works
+set transformer 230 -> 24 v -> 5v output to not burn esp
+
 11 nov 
 
 ordered parts
