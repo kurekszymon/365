@@ -7,13 +7,15 @@ Created this repo to (due to lack of a better word) _force_ myself to do somethi
     - [mine](#mine)
     - [not mine](#not-mine)
     - [papers](#papers)
-  - [webrtc](#webrtc)
-  - [electron](#electron)
-  - [webgpu](#webgpu)
   - [rust](#rust)
-  - [easywed](#easywed)
-  - [easywed-video](#easywed-video)
-  - [astro](#astro)
+  - [typescript](#typescript)
+    - [webrtc](#webrtc)
+    - [electron](#electron)
+    - [easywed](#easywed)
+    - [easywed-video](#easywed-video)
+    - [astro](#astro)
+    - [webgpu](#webgpu)
+  - [esp32](#esp32)
 
 ## articles
 
@@ -113,3 +115,12 @@ I want to come back to it when I will have bit more time a day to be able to dra
 - got to know what's the process of using WebGPU
 - was able to render some squares based on shaders
 - future reference listed in #docs section in [read more](./typescript/webgpu/readme.md)
+
+## esp32
+
+**project goal** build an iot project for university: a smart lamp with a timer, controllable over the internet / bluetooth, that dims from 100% to 0% over the set time so a kid can adjust to the fading light before it turns off completely.
+
+- esp32, mosfet, 12-24v dc adapter, step down to 5v so the esp doesn't burn, potentiometer
+- parts ordered, wiring the schema in progress
+
+[notes](./esp32/note.txt)
