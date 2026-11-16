@@ -1,3 +1,7 @@
+16 nov
+
+further wiring, dialing in diagram
+
 14 nov 
 
 started wiring the schema - todo: upload a schema 
