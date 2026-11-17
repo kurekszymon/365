@@ -6,7 +6,9 @@ should i order esp32 not devkit?
 
 should i get wider breadboard for esp32? 
 
-electronics seems easy and hard at the same time
+note to self: electronics seems easy and hard at the same time
+
+edit: seems like my esp32 devkit DOES have VIN input, im just blind. rest stand - do i need another / wider breadboard
 
 16 nov
 
