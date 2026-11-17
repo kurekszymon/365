@@ -1,3 +1,13 @@
+17 nov
+
+research on
+how to supply 5 v to esp32 devkit - do i need to rewire usb? 
+should i order esp32 not devkit? 
+
+should i get wider breadboard for esp32? 
+
+electronics seems easy and hard at the same time
+
 16 nov
 
 further wiring, dialing in diagram
