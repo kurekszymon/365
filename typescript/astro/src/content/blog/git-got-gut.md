@@ -18,9 +18,7 @@ this will be solely based on my experience and the way I like to work with git. 
 
 ## assumption
 
-Like in all cases, one needs to make _some_ assumptions about the end user / consumer. And while I don't expect any consumers of this article (besides those I've forcefully requested to read it - sorry guys).
-
-I will assume the reader knows at least basics of git.
+Like in all cases, one needs to make _some_ assumptions about the end user / consumer. And while I don't expect any consumers of this article (besides those I've forcefully requested to read it - sorry guys), I will assume the reader knows at least basics of git.
 
 - pull
 - switch / checkout
@@ -144,7 +142,7 @@ Date:   Thu Jan 29 22:34:12 2026 +0100
 For me reflog is the last safety net - if I mess up rebases, resets, commits in order I would go back in time to place before I started to mess up.
 It's also very convenient you don't have to do _anything_ in order to get this bookkeeping and all benefits that come from this.
 
-Note: `reflog` is a **LOCAL** tracker of your changes - your peers or the remote does not know about this. Reflog also eventually expires, but I have never experienced a case where I would need to worry about the time of it - most commonly I reach for it when I messed up just now, or relatively not a long time ago.
+Note: `reflog` is a **LOCAL** tracker of your changes - your peers or the remote do not know about this. Reflog also eventually expires, but I have never experienced a case where I would need to worry about the time of it - most commonly I reach for it when I messed up just now, or relatively not a long time ago.
 
 ## wrapping up
 
@@ -159,6 +157,6 @@ Push it to the remote even - because no one cares, unless you _actually_ open a 
 Before opening a pr you can squash your commits and nobody will know that you've changed one variable name 14 times because you didn't know if it should be named `isCorrectFilterApplied` or `isFilterCorrectlyApplied`.
 Rewrite your history before the pr.
 Open branch with no changes if you are scared to do so - do everything you need to feel _safe_ before pushing it to the remote.
-Your company won't care about an extra branch opened, especially if you don't push it to the remote (no one will track you down if you do it - unless you don't open a PR, in most setups reviewers won't be notified, look up CODEOWNERS file in your project).
+Your company won't care about an extra branch opened, especially if you don't push it to the remote (no one will track you down if you do it - unless you open a PR, in most setups reviewers won't be notified, look up CODEOWNERS file in your project).
 
 Most importantly - do your own research on git commands, make them yours, feel good and safe when using this, experiment on your personal projects and custom branches - it's not that hard. Be mindful of what might happen, paste it to LLM if you are not sure (please don't paste any company secrets there).
