@@ -1,3 +1,7 @@
+18 nov 
+
+wired the schema, upload esp32 pin board for reference
+
 17 nov
 
 research on
