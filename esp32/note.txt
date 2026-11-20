@@ -1,3 +1,10 @@
+20 nov
+
+picked up resistors from post office
+ordered potentiometer, that somehow got lost, perfboard and soldering iron.
+started designing pcb
+contacted 3d printer guy to potentially print out the case for the lamp
+
 19 nov 
 
 unplug stepdown transformer, supply power from pc 
