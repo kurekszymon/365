@@ -1,0 +1,316 @@
+<title>Fade Lamp Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one reading column of workbench notes; drawings break wider and scroll sideways on phones */
+:root {
+  --bg: #f2f4f1; --surface: #ffffff; --ink: #1b2420; --muted: #5a665f; --line: #d3dad3;
+  --accent: #a85a22; --accent-soft: #f6e9de; --warn: #b3261e; --warn-soft: #fbe9e7;
+  --board: #dcd2ac; --board-edge: #a69866; --hole: #8c7f57; --board-ink: #1f241f; --mod: #2f5d9e; --copper: #c08a3e;
+  --v24: #cf3f28; --gnd: #2b302d; --drain: #8746cc; --gate: #2470cc; --pwm: #0f93b3;
+  --v5: #df9310; --v5b: #a86c00; --btn: #148f6b; --pot: #cf3584; --v3: #5a8d12;
+  --f-display: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111513; --surface: #181e1b; --ink: #e2e8e3; --muted: #9ba79f; --line: #2a332e;
+  --accent: #e0905a; --accent-soft: #2c211a; --warn: #ff8a80; --warn-soft: #2e1a18;
+  --board: #4b4632; --board-edge: #6e6547; --hole: #29261a; --board-ink: #f1ecd9; --mod: #8db4ee; --copper: #c99556;
+  --v24: #ff7058; --gnd: #e4e6e2; --drain: #b98cf2; --gate: #6aa6f5; --pwm: #4cc9e6;
+  --v5: #ffbe4a; --v5b: #e3a43a; --btn: #45d0a6; --pot: #f57ab7; --v3: #9cd24f; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111513; --surface: #181e1b; --ink: #e2e8e3; --muted: #9ba79f; --line: #2a332e;
+  --accent: #e0905a; --accent-soft: #2c211a; --warn: #ff8a80; --warn-soft: #2e1a18;
+  --board: #4b4632; --board-edge: #6e6547; --hole: #29261a; --board-ink: #f1ecd9; --mod: #8db4ee; --copper: #c99556;
+  --v24: #ff7058; --gnd: #e4e6e2; --drain: #b98cf2; --gate: #6aa6f5; --pwm: #4cc9e6;
+  --v5: #ffbe4a; --v5b: #e3a43a; --btn: #45d0a6; --pot: #f57ab7; --v3: #9cd24f; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--f-body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(2rem, 5vw, 2.9rem); letter-spacing: -0.02em; }
+h2 { font-size: 1.45rem; }
+h3 { font-size: 1.05rem; }
+p { margin: 0; max-width: 68ch; }
+section { display: grid; gap: 18px; min-width: 0; }
+.eyebrow { font: 500 12px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.lede { color: var(--muted); font-size: 1.05rem; }
+.mono, code { font-family: var(--f-mono); font-size: .9em; }
+code { background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+
+.specs { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 0; }
+.specs div { background: var(--surface); padding: 12px 14px; display: grid; gap: 2px; }
+.specs dt { font: 500 11px/1.3 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.specs dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.changes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.change { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+.change b { font-family: var(--f-mono); font-weight: 500; color: var(--accent); }
+.alert { border: 1px solid var(--warn); background: var(--warn-soft); border-radius: 8px; padding: 14px 16px; display: grid; gap: 6px; }
+.alert strong { color: var(--warn); }
+
+.fig { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; overflow-x: auto; }
+.fig svg { display: block; width: 100%; min-width: 640px; height: auto; }
+.figcap { font-size: 13px; color: var(--muted); }
+
+/* schematic */
+.sch .w { stroke: var(--ink); stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.sch .blk, .sch .part { fill: var(--surface); stroke: var(--ink); stroke-width: 1.6; }
+.sch .esp { fill: var(--accent-soft); }
+.sch .term { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+.sch .jmp { fill: var(--accent); }
+.sch .arrow, .sch .dot circle { fill: var(--ink); }
+.sch text { fill: var(--ink); font-family: var(--f-body); }
+.sch .ref { font: 600 14px var(--f-display); }
+.sch .val { font-size: 12.5px; fill: var(--muted); }
+.sch .tiny { font-size: 11px; fill: var(--muted); }
+.sch .pm { font: 700 15px var(--f-body); }
+.sch .pinl text { font: 500 12px var(--f-mono); }
+.sch .rail { font: 600 12px var(--f-mono); fill: var(--accent); }
+
+/* perfboard */
+.n-V24 { --c: var(--v24); } .n-GND { --c: var(--gnd); } .n-DRAIN { --c: var(--drain); } .n-GATE { --c: var(--gate); }
+.n-PWM { --c: var(--pwm); } .n-V5 { --c: var(--v5); } .n-V5B { --c: var(--v5b); } .n-BTN { --c: var(--btn); }
+.n-POT { --c: var(--pot); } .n-V3 { --c: var(--v3); }
+.pb .board { fill: var(--board); stroke: var(--board-edge); stroke-width: 1.5; }
+.pb .hole { fill: var(--hole); }
+.pb .ax { font: 10px var(--f-mono); fill: var(--muted); text-anchor: middle; }
+.pb .xr { fill: none; stroke: var(--c); stroke-width: 3; opacity: .4; stroke-linecap: round; stroke-linejoin: round; }
+.pb .tr { fill: none; stroke: var(--c); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+.pb .pad { fill: var(--c); stroke: var(--board-edge); stroke-width: 1.5; }
+.pb .pad.idle { fill: var(--copper); }
+.pb .mod { fill: var(--mod); fill-opacity: .14; stroke: var(--mod); stroke-width: 1.5; stroke-dasharray: 6 4; }
+.pb .modpad { fill: var(--board); stroke: var(--board-ink); stroke-width: 1.3; }
+.pb .esp { fill: var(--board-ink); fill-opacity: .1; stroke: var(--board-ink); stroke-width: 1.5; }
+.pb .usb { fill: var(--muted); stroke: var(--board-ink); }
+.pb .hdr { fill: var(--c, var(--board-ink)); stroke: var(--board-ink); stroke-width: 1; }
+.pb .hdr.idle { fill: var(--board-ink); fill-opacity: .75; }
+.pb .term { fill: #2a8a4a; fill-opacity: .3; stroke: #2a8a4a; stroke-width: 1.5; }
+.pb .conn { fill: var(--board-ink); fill-opacity: .12; stroke: var(--board-ink); }
+.pb .cap { fill: var(--mod); fill-opacity: .22; stroke: var(--mod); stroke-width: 1.5; }
+.pb .capband { fill: none; stroke: var(--mod); stroke-width: 4; }
+.pb .fet { fill: var(--board-ink); fill-opacity: .55; stroke: var(--board-ink); }
+.pb .res { fill: #d9b886; stroke: #7a5a20; }
+.pb .lead { stroke: var(--muted); stroke-width: 2; }
+.pb .cer { fill: #e3a33a; stroke: #8a5a10; }
+.pb .pin { fill: var(--c); stroke: var(--board); stroke-width: 1.4; }
+.pb .land { fill: none; stroke: var(--c); stroke-width: 2.6; }
+.pb .wire { fill: none; stroke: var(--c); stroke-width: 2.2; stroke-dasharray: 5 3; }
+.pb .ghost { fill: none; stroke: var(--board-ink); stroke-opacity: .5; stroke-dasharray: 3 3; }
+.pb text { fill: var(--board-ink); font-family: var(--f-body); }
+.pb .modlab, .pb .esplab, .pb .ghostlab { font: 600 13px var(--f-display); text-anchor: middle; }
+.pb .modsub, .pb .espsub { font-size: 11px; text-anchor: middle; }
+.pb .pinlab { font: 9px var(--f-mono); text-anchor: start; }
+.pb .ref { font: 700 11px var(--f-display); text-anchor: middle; }
+.pb .ref.inv { fill: var(--board); }
+.pb .padlab, .pb .plab { font-size: 10px; }
+.pb .pm { font: 700 13px var(--f-body); text-anchor: middle; }
+.pb .pinmini { font: 9px var(--f-mono); text-anchor: middle; }
+.pb .cerlab { font-size: 8px; text-anchor: middle; fill: #2a1a05; }
+.views.sel [class*="n-"] { opacity: .12; }
+.views.sel .on { opacity: 1 !important; }
+.views.sel .xr.on { opacity: .9 !important; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px; }
+.leg { font: 500 13px var(--f-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px 5px 8px; display: inline-flex; align-items: center; gap: 7px; cursor: pointer; }
+.leg:hover { border-color: var(--muted); }
+.leg[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.leg:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chip { width: 12px; height: 12px; border-radius: 3px; background: var(--c); display: inline-block; flex: none; }
+
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 11px/1.3 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td:first-child { white-space: nowrap; font-weight: 600; }
+td .chip { margin-right: 8px; vertical-align: -1px; }
+tr.hl td { background: var(--accent-soft); }
+.tag { font: 500 11px var(--f-mono); padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; color: var(--muted); }
+.tag.have { color: var(--btn); border-color: var(--btn); }
+.tag.buy { color: var(--accent); border-color: var(--accent); }
+
+ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 14px; max-width: 76ch; }
+ol.steps li { counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 12px; }
+ol.steps li::before { content: counter(s); font: 600 14px/28px var(--f-mono); text-align: center; width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); }
+ol.steps li div { display: grid; gap: 3px; min-width: 0; }
+pre { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font: 13px/1.55 var(--f-mono); }
+ul.plain { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 72ch; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+.two > * { min-width: 0; }
+@media (prefers-reduced-motion: no-preference) { .pb [class*="n-"] { transition: opacity .15s; } }
+</style>
+
+<div class="wrap">
+<header style="display:grid;gap:16px">
+  <span class="eyebrow">ESP32 · perfboard rev A</span>
+  <h1>Fade Lamp Board</h1>
+  <p class="lede">The whole lamp controller on one 7×9 cm perfboard. A 24 V adapter feeds the LED strip through a MOSFET and the ESP32 through a buck module. A knob sets 0–60 s and a button starts the fade from the current brightness to off.</p>
+  <dl class="specs">
+    <div><dt>Board</dt><dd>7×9 cm · 30×24 holes</dd></div>
+    <div><dt>Supply</dt><dd>24 V DC adapter</dd></div>
+    <div><dt>LED drive</dt><dd>IO13 → MOSFET, 5 kHz PWM</dd></div>
+    <div><dt>Knob</dt><dd>IO36 · 0–60 s</dd></div>
+    <div><dt>Button</dt><dd>IO32 · to GND</dd></div>
+    <div><dt>Mains on board</dt><dd>None</dd></div>
+  </dl>
+</header>
+
+<section>
+  <h2>What changes from your breadboard</h2>
+  <div class="changes">
+    <div class="change"><b>GPIO17 → GPIO13</b><p>The gate signal moves to IO13. On the board's top header it sits right next to GND, so the gate trace runs straight to the MOSFET without crossing anything. In <code>led.cpp</code> that is one line: <code>LED_PIN = 13</code>.</p></div>
+    <div class="change"><b>Pot on GPIO36</b><p>Use an ADC1 pin. ADC2 pins stop reading once WiFi is on. IO36 has no internal pull resistors, which suits a pot.</p></div>
+    <div class="change"><b>Button on GPIO32</b><p>The button connects the pin to GND. The internal pull-up holds it high, and C3 smooths the contact bounce, so R3 isn't needed.</p></div>
+    <div class="change"><b>JP1 jumper on 5 V</b><p>Pull JP1 before you plug in USB, so the PC and the buck don't both drive the 5 V rail. This puts your "unplug the step-down" habit from 19 Nov on the board.</p></div>
+  </div>
+  <div class="alert"><strong>230 V never touches this board.</strong><p>Only the 24 V side of a closed adapter connects to J1. If your 230→24 V supply is an open frame (screw terminals for L and N), it goes in its own covered part of the case. Add an inline fuse on the 24 V lead rated about 1.25× the strip current.</p></div>
+</section>
+
+<section>
+  <span class="eyebrow">Circuit</span>
+  <h2>Schematic</h2>
+  <div class="fig">{{SCHEMATIC}}</div>
+  <p class="figcap">The MOSFET switches the strip's negative side (low-side switching). R2 holds the gate low while the ESP32 boots, so the strip stays dark at power-up. R1 slows the gate edges a little, which reduces ringing.</p>
+</section>
+
+<section>
+  <span class="eyebrow">Build plan</span>
+  <h2>Perfboard layout</h2>
+  <p>Rows <span class="mono">A–X</span> run top to bottom and columns <span class="mono">1–30</span> run left to right, as seen from the component side. So <span class="mono">F9</span> means row F, column 9. Copy the grid onto the board with a fine marker before you start. The solder side is a mirror image, so column 1 is on the right there. Tap a net to highlight it in both views.</p>
+  <div class="legend" id="legend">{{LEGEND}}</div>
+  <div class="views" id="views" style="display:grid;gap:18px">
+    <figure class="fig" style="margin:0;display:grid;gap:8px">
+      <h3>Component side</h3>
+      {{TOP}}
+      <figcaption class="figcap">Faint lines show the copper runs underneath. Dashed curves are the four insulated wires from the buck module's pads. Circled holes are where those wires land.</figcaption>
+    </figure>
+    <figure class="fig" style="margin:0;display:grid;gap:8px">
+      <h3>Solder side (flipped)</h3>
+      {{BOTTOM}}
+      <figcaption class="figcap">Thick lines are bare tinned wire laid along the holes and soldered at every pad. Copper dots are the joints. The bottom ESP32 header row (W) carries no signals. It is only there to hold the board.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <h2>Solder runs</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Net</th><th>Connects</th><th>Runs on the solder side</th><th>Wire</th></tr></thead>
+    <tbody id="runs">{{TRACE_ROWS}}</tbody>
+  </table></div>
+  <div class="two">
+    <div style="display:grid;gap:10px">
+      <h3>Buck module wires</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Module pad</th><th>Lands in</th><th>Net</th></tr></thead>
+        <tbody>
+          <tr><td>IN+</td><td class="mono">F4</td><td><span class="chip n-V24"></span>+24 V</td></tr>
+          <tr><td>IN−</td><td class="mono">C12</td><td><span class="chip n-GND"></span>GND</td></tr>
+          <tr><td>OUT+</td><td class="mono">K12</td><td><span class="chip n-V5B"></span>5 V buck</td></tr>
+          <tr><td>OUT−</td><td class="mono">K16</td><td><span class="chip n-GND"></span>GND</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div style="display:grid;gap:10px">
+      <h3>Off-board connections</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Header</th><th>Pins</th><th>To</th></tr></thead>
+        <tbody>
+          <tr><td>J1</td><td class="mono">B2 −, D2 +</td><td>24 V adapter</td></tr>
+          <tr><td>J2</td><td class="mono">G2 +, I2 −</td><td>LED strip</td></tr>
+          <tr><td>J3</td><td class="mono">J25 GND, J26 W, J27 3V3</td><td>pot: outer, middle, outer</td></tr>
+          <tr><td>J4</td><td class="mono">J21 GND, J22 SW</td><td>push button</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Parts list</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Ref</th><th>Part</th><th>Notes</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>U2</td><td>ESP32-WROOM DevKit, 38-pin</td><td>Pin rows must be 10 holes (25.4 mm) apart. See step 1.</td><td><span class="tag have">have</span></td></tr>
+      <tr><td>U1</td><td>Buck module 24 → 5 V</td><td>Input rating ≥ 30 V. An LM2596 (40 V) is safe and MP1584 (28 V) is OK. A Mini-360 is not: it is rated for about 23 V.</td><td><span class="tag have">have · check</span></td></tr>
+      <tr><td>Q1</td><td>N-channel MOSFET, TO-220, logic-level</td><td>IRLB8721, IRLZ44N or IRL540N. IRFZ44N and IRF520 don't switch fully on at 3.3 V.</td><td><span class="tag have">have · check</span></td></tr>
+      <tr><td>R1</td><td>100 Ω, ¼ W</td><td>Gate series resistor, mounted standing</td><td><span class="tag have">have</span></td></tr>
+      <tr><td>R2</td><td>10 kΩ, ¼ W</td><td>Gate pull-down, mounted standing</td><td><span class="tag have">have</span></td></tr>
+      <tr><td>C1</td><td>470 µF, 35 V electrolytic, 10 mm</td><td>Stripe (−) goes in C6, + goes in E6</td><td><span class="tag buy">buy</span></td></tr>
+      <tr><td>C3, C4</td><td>100 nF ceramic</td><td>Debounce and pot filter</td><td><span class="tag buy">buy</span></td></tr>
+      <tr><td>RV1</td><td>10 kΩ linear pot (B10K)</td><td>Panel mount if the knob sits on the case</td><td><span class="tag">ordered</span></td></tr>
+      <tr><td>SW1</td><td>Through-hole push button</td><td>6×6 mm tact switch or a 12/16 mm panel button. Your SMD buttons won't fit perfboard.</td><td><span class="tag buy">buy</span></td></tr>
+      <tr><td>J1, J2</td><td>2-pin screw terminal, 5.08 mm</td><td>Rated ≥ 10 A</td><td><span class="tag buy">buy</span></td></tr>
+      <tr><td>J3, J4, JP1</td><td>Male pin header 2.54 mm + 1 jumper cap</td><td>3 + 2 + 2 pins</td><td><span class="tag buy">buy</span></td></tr>
+      <tr><td>—</td><td>2× female header 1×19, 2.54 mm</td><td>ESP32 socket, so the devkit stays removable</td><td><span class="tag buy">buy</span></td></tr>
+      <tr><td>—</td><td>Perfboard 7×9 cm, tinned wire 1 mm and 0.5 mm, hookup wire, foam tape</td><td>Foam tape holds the buck module and insulates it from the top pads</td><td><span class="tag">ordered</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Build and first power-up</h2>
+  <ol class="steps">
+    <li><div><strong>Check the ESP32 fits first.</strong><span>Plug both female headers onto the devkit, set it on the board, and check the pins land in rows M and W, columns 10–28. If your devkit's rows are 9 holes apart, use row V for the bottom header. Nothing connects to that row, so the rest of the plan stays the same.</span></div></li>
+    <li><div><strong>Solder the low parts first.</strong><span>Solder the female headers, then JP1, J3, J4, R1, R2, C3 and C4. Tack one pin of each part, check it sits straight, then solder the rest.</span></div></li>
+    <li><div><strong>Then the power parts.</strong><span>Next fit Q1 (S in F9, D in G9, G in H9), then C1, then J1 and J2. Check C1's polarity twice.</span></div></li>
+    <li><div><strong>Lay the high-current runs.</strong><span>Use 1 mm bare wire for <span class="mono">B2→B15</span>, <span class="mono">B9→F9</span>, <span class="mono">D2→G2</span> and the drain run <span class="mono">G9→G4→I4→I2</span>. Do the signal runs after those.</span></div></li>
+    <li><div><strong>Mount the buck module.</strong><span>Stick the module on foam tape over the dashed area. Solder its four wires to F4, C12, K12 and K16.</span></div></li>
+    <li><div><strong>Check for shorts with the ESP32 out.</strong><span>Beep J1 + to −: there must be no short. Beep B2 to M15 and B2 to F9: both must beep. Beep M10 to M15: no short.</span></div></li>
+    <li><div><strong>Set the buck to 5 V.</strong><span>Leave the ESP32 out and JP1 off, then connect 24 V. Turn the trimmer until K12 reads 5.0 V against K16.</span></div></li>
+    <li><div><strong>Power the ESP32.</strong><span>Fit JP1 and check for 5 V between M10 and M15. Power off, plug in the ESP32 and power on again. The strip should stay dark until the firmware drives it.</span></div></li>
+    <li><div><strong>Flash over USB with JP1 off.</strong><span>Then fit JP1 again and connect the LED strip last.</span></div></li>
+  </ol>
+</section>
+
+<section>
+  <h2>Firmware to match</h2>
+  <p>Only the pin numbers change in your current <code>led.cpp</code>. The knob reading below gives 0–60 s with a light snap to 0, 15, 30, 45 and 60, so the marks are easy to hit and values in between still work. Pressing the button starts the existing timer with that duration. 0 s switches off at once.</p>
+  <pre>const int LED_PIN = 13;   // was 17
+const int BTN_PIN = 32;   // to GND, pinMode(BTN_PIN, INPUT_PULLUP)
+const int POT_PIN = 36;   // ADC1, keeps working with WiFi on
+
+int readFadeSeconds() {
+  long sum = 0;
+  for (int i = 0; i &lt; 16; i++) sum += analogRead(POT_PIN);
+  float secs = (sum / 16) * 60.0f / 4095.0f;
+  int mark = (int)((secs + 7.5f) / 15) * 15;          // nearest of 0/15/30/45/60
+  return fabsf(secs - mark) &lt; 2.0f ? mark : (int)(secs + 0.5f);
+}</pre>
+</section>
+
+<section>
+  <h2>Before you order the PCB</h2>
+  <ul class="plain">
+    <li>Once the perfboard works, this becomes a 2-layer KiCad board of about 76×61 mm. Two layers remove the routing limits, so the GPIO choices can stay or change.</li>
+    <li>Make the +24 V, LED − and GND traces at least 2 mm wide (1 oz copper, up to about 5 A). Signal traces can be 0.3 mm.</li>
+    <li>Confirm these from the real parts first: the buck module's pad positions, the MOSFET part number, the pot type (panel or PCB mount), the button and the devkit's row spacing.</li>
+    <li>Add M3 mounting holes where the 3D-printed case needs them, and agree on the board outline with whoever prints the case.</li>
+    <li>Estimate the strip current as watts ÷ 24 V. For example, 5 m of 10 W/m COB is 50 W, about 2.1 A. A logic-level TO-220 handles that without a heatsink. After 10 minutes at 100 %, check it by touch.</li>
+  </ul>
+</section>
+</div>
+
+<script>
+(function () {
+  const views = document.getElementById("views");
+  const legend = document.getElementById("legend");
+  const runs = document.getElementById("runs");
+  let current = null;
+  function apply(net) {
+    current = current === net ? null : net;
+    views.classList.toggle("sel", !!current);
+    views.querySelectorAll(".on").forEach(el => el.classList.remove("on"));
+    if (current) views.querySelectorAll(".n-" + current).forEach(el => el.classList.add("on"));
+    legend.querySelectorAll(".leg").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.net === current)));
+    runs.querySelectorAll("tr").forEach(tr => tr.classList.toggle("hl", tr.dataset.net === current));
+  }
+  legend.querySelectorAll(".leg").forEach(b => { b.setAttribute("aria-pressed", "false"); b.addEventListener("click", () => apply(b.dataset.net)); });
+  runs.querySelectorAll("tr").forEach(tr => { tr.style.cursor = "pointer"; tr.addEventListener("click", () => apply(tr.dataset.net)); });
+})();
+</script>
