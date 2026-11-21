@@ -1,6 +1,6 @@
 # Stage 8: Safety — Overview, Testing and Tweaking
 
-Status (2026-11-08): built, 213 unit tests pass, **not approved and not committed**. See [Before Stage 8 can close](#before-stage-8-can-close).
+Status (2026-11-08): built, 213 unit tests pass, committed (`e8d5247`), **not approved**. See [Before Stage 8 can close](#before-stage-8-can-close).
 
 ## What Stage 8 does
 

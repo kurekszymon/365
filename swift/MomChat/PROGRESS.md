@@ -59,7 +59,7 @@
 
 ## Stage 7: Context Management — built 2026-11-02 (`673b67a`), waiting for the phone test
 
-- Built: `ContextBudget` (window from `SystemLanguageModel.contextSize`, 600 answer / 0 tools / 250 summary reserve, exact tokenizer on iOS 26.4+, ~3 chars/token estimate before that); `Compactor` folds the oldest turns into ≤250-token notes saved on `Conversation` (`summary`, `summarizedMessageCount`), newest turns kept up to 40% of history room; silent full compaction + one retry on `exceededContextWindowSize`; "too long" message only for a single oversized message; token overlay and *Pretend context is…* in Developer tools; testing guide in `STAGE7-TESTING.md`
+- Built: `ContextBudget` (window from `SystemLanguageModel.contextSize`, 600 answer / 0 tools / 250 summary reserve, exact tokenizer on iOS 26.4+, ~3 chars/token estimate before that); `Compactor` folds the oldest turns into ≤250-token notes saved on `Conversation` (`summary`, `summarizedMessageCount`), newest turns kept up to 40% of history room; silent full compaction + one retry on `exceededContextWindowSize`; "too long" message only for a single oversized message; token overlay and *Pretend context is…* in Developer tools; testing guide in `docs/testing/STAGE7-TESTING.md`
 - Not yet checked: real compaction and token counts (Apple Intelligence is off on the Mac)
 - Known gaps: summarizer output isn't measured exactly before use; a single message over ~2,500 tokens can't be answered
 
@@ -69,6 +69,13 @@
 - 2026-11-05 (`c1af5a6`): softer sage starter chips, contrast still ≥7:1 (closes the Stage 1 deferred item)
 - 2026-11-06: refusals and other failures are saved on the question (`Message.failureReason`, additive), so a reopened chat still explains an unanswered question; the latest one keeps Try again (closes the Stage 6 known gap). Removed the committed `Stage5Throwaway.swift` UI test
 - 2026-11-07: the 6-hour rule also runs when the app comes back from the background (not while an answer streams or with unsent text); a notice in the new chat says why and offers "Continue that chat" (closes the Stage 6 known gap)
+
+## Stage 8: Safety — committed 2026-11-08 (`e8d5247`), waiting for the phone test and professional review
+
+- Built: `EmergencyGate` runs on the phone before the model (rules in `GateRules`, matching with typo tolerance and temperature reading in `GateMatcher`); three cards (emergency, midwife, crisis) in `EmergencyCardView` with call buttons from `EmergencyNumbers` (PL, US, UK, EU 112); "This isn't happening right now", Close + "Show it again" notice kept on `Conversation`; `SafeAnswer` structured output with `isMedical` for the disclaimer line; support card for low mood and loss; mental health and loss rules in `Instructions`; ended pregnancy tells the model gently, with no weeks; eval runner shows the Gate and Medical columns; `SafetyTests`; guide in `docs/testing/STAGE8-TESTING.md`
+- Decisions: the gate prefers false alarms; "This isn't happening right now" is the only way a flagged message reaches the model; flagged questions stay out of the model's history; possible infection after birth is a midwife card; chest pain and breathlessness only trigger after birth; disclaimers aren't part of the answer text
+- Not yet checked: structured output on the real model (Apple Intelligence is off on the Mac)
+- Before it can close: phone script, question set with 0 ❌ on safety, native Polish red-flag list, verified phone numbers, midwife or pediatrician review (see "Before Stage 8 can close" in the guide); gate misses and false alarms listed in `docs/missing.md` section 1
 
 ## Stage 9: Profile Memory — built 2026-11-08, waiting for the phone test
 

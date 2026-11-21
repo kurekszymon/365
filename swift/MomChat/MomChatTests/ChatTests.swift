@@ -112,7 +112,7 @@ struct ProfileBlockTests {
         #expect(notes == "Recent notes: note 3 (Oct 5); note 4 (Oct 6); note 5 (Oct 7); note 6 (Oct 8); note 7 (Oct 9).")
     }
 
-    /// PLAN.md budget: ≤ 150 tokens for mom + child, ~4 characters a token.
+    /// PLAN.md budget: ≤ ~190 tokens for mom + child (750 characters, ~4 characters a token).
     @Test func fullProfileStaysInBudget() throws {
         let container = try DataStore.makeInMemoryContainer()
         let context = container.mainContext

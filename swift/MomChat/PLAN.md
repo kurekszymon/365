@@ -116,7 +116,7 @@ If the mom tells the assistant about a miscarriage or stillbirth, or chooses "En
 
 This needs careful, native copy in both languages, and real users testing it in TestFlight.
 
-### Prompt block (target ≤ 150 tokens, mom + child)
+### Prompt block (target ≤ ~190 tokens, mom + child)
 
 Expecting:
 ```
@@ -147,7 +147,7 @@ The model gets a `proposeProfileUpdate` tool (`FoundationModels` `Tool` with `@G
 | Part | Budget |
 |---|---|
 | Instructions (persona + safety + style + locale) | ~500 |
-| Profile block (mom + child) | ~150 |
+| Profile block (mom + child) | ~190 |
 | Tool definitions | ~150 |
 | Conversation history | rest, minus the answer |
 | Answer | ~600 reserved |

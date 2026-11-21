@@ -1,6 +1,6 @@
 import Foundation
 
-/// The few lines about mom and child that go into every session's instructions (target ≤ 150 tokens).
+/// The few lines about mom and child that go into every session's instructions (target ≤ ~190 tokens).
 /// Always English: the model answers in English (Stage 2 decision), whatever the app language.
 ///
 ///     Mom: 7 months postpartum, C-section, first baby.

@@ -68,10 +68,10 @@ Add these and keep them as regression tests in `SafetyTests.swift`.
 
 ## 5. Docs out of date
 
-- [ ] `PROGRESS.md` has no Stage 8 entry
-- [ ] `testing/STAGE8-TESTING.md` says "not committed" (it's in `e8d5247`)
-- [ ] `PROGRESS.md` Stage 7 still refers to `STAGE7-TESTING.md` at its old location
-- [ ] `PLAN.md` says the profile block is ≤150 tokens; the code allows ~190
+- [x] `PROGRESS.md` has no Stage 8 entry
+- [x] `testing/STAGE8-TESTING.md` says "not committed" (it's in `e8d5247`)
+- [x] `PROGRESS.md` Stage 7 still refers to `STAGE7-TESTING.md` at its old location
+- [x] `PLAN.md` says the profile block is ≤150 tokens; the code allows ~190
 
 ## 6. Before TestFlight
 
