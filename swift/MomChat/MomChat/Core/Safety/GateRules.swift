@@ -19,7 +19,10 @@ nonisolated enum GateRules {
             "dlawi sie", "zadlawil*", "zadlawi*", "zakrztusil* sie",
         ]]),
         GateRule(topic: .babyUnresponsive, scope: .child, groups: [[
-            "unresponsive", "not responding", "wont|cant wake up", "cant wake her|him", "limp", "floppy", "lost consciousness",
+            "unresponsive", "not responding", "wont|cant wake up", "cant wake her|him", "floppy", "lost consciousness",
+            // "limp" only as a state, so "he walks with a limp" doesn't fire.
+            "is|shes|hes|was|are|gone|went|going|goes|seems|seemed|looks|looked|feels|felt|very|completely|totally|suddenly|all|so|and limp",
+            "limp body|arms|legs|baby",
             "nie reaguje", "nie moge .. dobudzic|obudzic", "nie mozna .. dobudzic|obudzic", "wiotki|wiotka", "stracil|stracila przytomnosc", "nieprzytomn*",
         ]]),
         GateRule(topic: .babySeizure, scope: .child, groups: [[

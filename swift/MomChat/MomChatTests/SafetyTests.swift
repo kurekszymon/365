@@ -25,6 +25,11 @@ struct EmergencyGateTests {
         ("synek się zadławił", .babyChoking),
         ("she's unresponsive", .babyUnresponsive),
         ("nie moge go dobudzic", .babyUnresponsive),
+        ("she went limp", .babyUnresponsive),
+        ("he's completely limp", .babyUnresponsive),
+        ("her body is limp and pale", .babyUnresponsive),
+        ("baby is floppy and limp", .babyUnresponsive),
+        ("he has limp arms", .babyUnresponsive),
         ("he had a seizure", .babySeizure),
         ("ma drgawki", .babySeizure),
         ("she swallowed a button battery", .babyPoisoning),
@@ -141,6 +146,9 @@ struct EmergencyGateTests {
         "no fever but a runny nose",
         "she has a little rash",
         "breathing sounds snuffly when she sleeps",
+        "he walks with a limp",
+        "she's limping on her left leg",
+        "she has a slight limp since yesterday",
     ])
     func babyQuestionsPass(text: String) {
         #expect(topic(text, newborn) == nil)

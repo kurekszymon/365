@@ -39,7 +39,7 @@ Add these and keep them as regression tests in `SafetyTests.swift`.
 
 **For the midwife to decide:** should "i am spotting" and "plamienie" open a card? They currently don't.
 
-**False alarms (cheaper, still worth a look):** "he walks with a limp" opens the unresponsive-baby card; "she drank her medicine fine" opens the poisoning card.
+**False alarms (cheaper, still worth a look):** "she drank her medicine fine" opens the poisoning card. ("he walks with a limp" fixed: "limp" now only fires as a state, e.g. "went limp", "is limp", "limp body".)
 
 ## 2. Fix before Stage 10: other
 
