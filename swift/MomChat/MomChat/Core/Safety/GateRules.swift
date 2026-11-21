@@ -32,6 +32,10 @@ nonisolated enum GateRules {
             ["swallowed", "ate", "drank", "eaten", "drunk", "polknal*", "zjadl*", "wypil*", "napil*"],
             ["bleach", "detergent", "battery", "batteries", "pills", "tablets", "medicine", "poison", "cleaner", "chemical*",
              "tabletk*", "leki", "lekow", "lekarstw*", "bateri*", "baterie", "detergent*", "wybielacz*", "domestos", "chemi*", "trucizn*"],
+        ], excluding: [
+            // Her own dose going down well ("she drank her medicine fine"). Adjacent words only, and no
+            // "ok" or "without", so "drank his medicine, ok what now" and "without us noticing" still fire.
+            "her|his medicine|medicines fine|well|easily|happily|nicely",
         ]),
         GateRule(topic: .babyHeadInjury, scope: .child, groups: [
             ["head", "glowk*", "glowa", "glowe", "glowie"],

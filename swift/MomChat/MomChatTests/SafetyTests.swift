@@ -34,6 +34,11 @@ struct EmergencyGateTests {
         ("ma drgawki", .babySeizure),
         ("she swallowed a button battery", .babyPoisoning),
         ("połknął tabletki", .babyPoisoning),
+        ("she drank his medicine", .babyPoisoning),
+        ("he drank my medicine", .babyPoisoning),
+        ("she drank her whole bottle of medicine", .babyPoisoning),
+        ("she drank her medicine, is she ok?", .babyPoisoning),
+        ("he swallowed his medicine without us noticing", .babyPoisoning),
         ("he fell and hit his head and now he vomited", .babyHeadInjury),
         ("no wet nappies since this morning", .babyDehydration),
         ("ma zapadnięte ciemiączko", .babyDehydration),
@@ -149,6 +154,8 @@ struct EmergencyGateTests {
         "he walks with a limp",
         "she's limping on her left leg",
         "she has a slight limp since yesterday",
+        "she drank her medicine fine",
+        "he swallowed his medicine easily this time",
     ])
     func babyQuestionsPass(text: String) {
         #expect(topic(text, newborn) == nil)
