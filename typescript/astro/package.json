@@ -10,10 +10,10 @@
     "deploy": "astro build && yarn dlx wrangler pages deploy ./dist"
   },
   "dependencies": {
-    "@astrojs/mdx": "8.0.1",
-    "@astrojs/sitemap": "3.7.4",
-    "astro": "7.3.2",
+    "@astrojs/mdx": "8.1.6",
+    "@astrojs/sitemap": "3.7.6",
+    "astro": "7.4.13",
     "sharp": "^0.34.3"
   },
-  "packageManager": "yarn@4.18.0"
+  "packageManager": "yarn@4.19.0"
 }
