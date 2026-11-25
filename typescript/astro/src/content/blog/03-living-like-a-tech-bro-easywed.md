@@ -1,5 +1,5 @@
 ---
-title: "easywed log 1: easywed. is a startup? living like a tech bro"
+title: "03: easywed. is a startup? living like a tech bro"
 description: "how easywed. got to Web Summit in Lisbon"
 pubDate: "Oct 17, 2026"
 ---

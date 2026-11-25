@@ -1,5 +1,5 @@
 ---
-title: "easywed log 0: no analytics is the worst analytics"
+title: "02: no analytics is the worst analytics - easywed."
 description: "Note to myself to do one last check before"
 pubDate: "Sep 25, 2026"
 ---
