@@ -1,5 +1,5 @@
 ---
-title: "git got gut"
+title: "01: git got good"
 description: "Overview on the git workflow from reversibility perspective"
 pubDate: "Feb 01, 2026"
 ---
@@ -79,7 +79,7 @@ While I find using `revert` good for actually reverting changes that introduce b
 
 what I really needed in this case was good ol'
 
-## reset (the goat)
+## reset
 
 `git reset` allows you to reverse what you did in previous commits (including staged and unstaged changes, depending on the flag you pass to it)
 
@@ -102,7 +102,7 @@ git reset --soft HEAD~X && git stash && git rebase <target> && git stash apply
 Just remember, that after rewinding your commits with reset, you'd need to `push --force` or `push --force-with-lease`.
 Not everything goes smoothly with resets and rebases, sometimes you push wrong state to the remote branch, and that's why you can always rely on the bookkeeping:
 
-## reflog (time machine)
+## reflog
 
 Whatever (that changes HEAD) you do in git is being tracked. Fortunately for you, it's not your personal data, processed by some company, but local history of your edits. One can see it as a safety net, where all else has failed you.
 

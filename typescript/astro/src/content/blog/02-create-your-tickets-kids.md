@@ -1,5 +1,5 @@
 ---
-title: "create your tickets kids"
+title: "02: create your tickets kids"
 description: "impact is measured in tickets, not fixes"
 pubDate: "Nov 24, 2026"
 ---
