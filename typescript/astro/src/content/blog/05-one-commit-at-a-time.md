@@ -87,3 +87,17 @@ As a sidenote, after trying multiple code editors, like aforementioned Zed, Neov
 In March I also tried diving more into backend, trying to reproduce PostHog's session replays with rrweb and Fastify. Touched some Java and PHP and since we started to plan the wedding, and my spatial imagination is worse than a 7-year-old's - I started to write easywed. and that's what taught me the most this year.
 
 ## April - October (being the product owner?)
+
+easywed. started as something to just visualize how much space we'd have for the dancefloor given constraints of the wedding hall and amount of guests we'd invite to our wedding. It would then evolve to whatever was needed for our wedding - who is seated at which table, how much room we have, how many kids are there and who's vegetarian (of course we didn't mark everyone correctly).
+
+It was such a great journey, we had so much fun planning our wedding with a tool I had total control over. easywed. evolved so much that I was willing to showcase it to other people - I was showing it to family, friends, and even recruiters that wanted me to work on different projects.
+
+As a person that always seeks opportunity to make their own product, I thought to myself - this is it. That's finally something I was looking for ever since I started programming. Vibecoded tool, rewritten manually, back to AI development, back to refactoring, evolving into a whole startup with CRM for wedding venues and wedding planners... I was really proud of it.
+
+I started to reach out to wedding planners and... nothing! no response but a few likes and a few dms exchanged. I offered this product for free to wedding planners and got no answer, even when I tailored it for the needs I saw on their Instagram stories, with no further recognition.
+
+I think that if a person doesn't need to invest anything in your product - it has no value to them. So I changed my strategy. I started to offer it for free to couples, or to anyone on the internet, and decided I'd develop a CRM for wedding venues, since they still operate on outdated Excel sheets or pieces of paper.
+
+Changes were made, easywed. was deployed and I started to make some videos with Remotion, posting on Instagram and TikTok and wedding planners signed up on their own - even ones who never replied when I reached out months earlier. Social media has a real influence, even if you don't think of it this way.
+
+easywed. gained momentum, I felt that too. I applied for startup programmes for PostHog and Web Summit. Got accepted for both. It really felt amazing.
