@@ -84,13 +84,13 @@ _Opus 4.6 changed me, for sure_.
 
 As a sidenote, after trying multiple code editors, like aforementioned Zed, Neovim or Cursor, I decided to finally stick with VSCode. I'm really proficient with it, and spending time to learn different editors felt like a waste of time, especially since all of them are similar but very different. I will probably write a post about it in the future, and if I do I'll link it here.
 
-In March I also tried diving more into backend, trying to reproduce PostHog's session replays with rrweb and Fastify. Touched some Java and PHP and since we started to plan the wedding, and my spatial imagination is worse than a 7-year-old's - I started to write easywed. and that's what taught me the most this year.
+In March I also tried diving more into backend, trying to reproduce PostHog's session replays with rrweb and Fastify. Touched some Java and PHP and since we started to plan the wedding, and my spatial imagination is worse than a 7-year-old's - I started to create easywed. and that's what taught me the most this year.
 
 ## April - October (being the product owner?)
 
 easywed. started as something to just visualize how much space we'd have for the dancefloor given constraints of the wedding hall and amount of guests we'd invite to our wedding. It would then evolve to whatever was needed for our wedding - who is seated at which table, how much room we have, how many kids are there and who's vegetarian (of course we didn't mark everyone correctly).
 
-It was such a great journey, we had so much fun planning our wedding with a tool I had total control over. easywed. evolved so much that I was willing to showcase it to other people - I was showing it to family, friends, and even recruiters that wanted me to work on different projects.
+It was such a great journey, we had so much fun planning our wedding with a tool I had total control over. easywed. involved so much that I was willing to showcase it to other people - I was showing it to family, friends, and even recruiters that wanted me to work on different projects.
 
 As a person that always seeks opportunity to make their own product, I thought to myself - this is it. That's finally something I was looking for ever since I started programming. Vibecoded tool, rewritten manually, back to AI development, back to refactoring, evolving into a whole startup with CRM for wedding venues and wedding planners... I was really proud of it.
 
@@ -101,3 +101,49 @@ I think that if a person doesn't need to invest anything in your product - it ha
 Changes were made, easywed. was deployed and I started to make some videos with Remotion, posting on Instagram and TikTok and wedding planners signed up on their own - even ones who never replied when I reached out months earlier. Social media has a real influence, even if you don't think of it this way.
 
 easywed. gained momentum, I felt that too. I applied for startup programmes for PostHog and Web Summit. Got accepted for both. It really felt amazing.
+
+And then life happened and unfortunately efforts on easywed. were paused, due to being low on time and resources to continue. Not everything is gone though. Idea is there, progress was made and I think it doesn't need much to be up and running again. Web Summit crew offered we could join next year so that our entry is not lost - this is class, I appreciate that very much.
+
+From being an only dev, infra guy, marketer, sales person on this project - it really showed me how much effort can running a product be.
+
+- Marketing is hard.
+- Recording videos is hard.
+- Creating content is hard.
+- Developing set of checks before a deployment.. helps. Bonus points for making that interactive so it requires your input before deploying.
+- Maintaining two versions - CRM locally on main and released as a branch/tag is hard.. I only did that because of how contributions are counted on github. I'd much rather switch it to have released version on main/dev and then new version as a different branch - probably that's why it is a common practice, to have `stable` at main, and then feature branches that you can rebase off of main.
+
+Some statistics gathered by claude.
+
+Main project
+
+- easywed: 609. Active every month. The peaks were July (123), April (121), June (105) and August (104). There was a dip in May (58), and it slowed down in September (30) and
+  October (38).
+- easywed-video: 46. September (34) and October (12).
+
+Ongoing smaller projects
+
+- astro: 32. This is the blog. Mostly September (12) and March (9), plus a few commits in April, May, August and October.
+- 365: 11. Repo housekeeping, spread through the period.
+- utils: 4. April and June.
+
+March: exploring
+
+- java: 15.
+- vvscode: 14.
+- php: 7.
+- replays: 5. The PostHog session replay rebuild with rrweb.
+- posts: 24. 4 in March, the other 20 in May.
+- rust: 4.
+- fastify: 3.
+
+May: side projects
+
+- offboard: 12. 11 in May, 1 in June.
+- designver: 8. 7 in May, plus 1 commit labelled desginver (a typo).
+- cad: 4.
+- eddy: 2.
+- lrn-a-lng: 2.
+
+and same presented on chart
+
+![commits to projects between March and October](../../assets/commits-easywed-march-oct.png)
